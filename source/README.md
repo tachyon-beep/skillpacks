@@ -19,11 +19,11 @@ Universal skill packs for Claude Code providing:
 
 ## Current Phase: Foundation (Phase 1)
 
-**Next 4 Skills to Implement**:
-1. `ordis/security-architect/using-security-architect` (meta-skill, routing)
-2. `ordis/security-architect/threat-modeling` (core technique)
-3. `muna/technical-writer/using-technical-writer` (meta-skill, routing)
-4. `muna/technical-writer/documentation-structure` (core reference)
+**Phase 1 Skills Progress**:
+1. ✅ `ordis/security-architect/using-security-architect` (meta-skill, routing) - **COMPLETE**
+2. 🔄 `ordis/security-architect/threat-modeling` (core technique) - **IN PROGRESS**
+3. ⏳ `muna/technical-writer/using-technical-writer` (meta-skill, routing)
+4. ⏳ `muna/technical-writer/documentation-structure` (core reference)
 
 **Estimated Effort**: 10-15 hours
 
