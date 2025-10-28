@@ -1,10 +1,16 @@
-# Security Architect & Technical Writer Skills for Claude Code
+# Claude Code Skillpacks
 
-Professional security architecture and technical writing skills that teach Claude Code how to perform threat modeling, design security controls, create compliance documentation, write incident response runbooks, and more.
+**A modular skill system for Claude Code** - Professional skillpacks that teach Claude expert-level capabilities across specialized domains.
 
-**18 skills total:** 2 meta-skills for routing + 8 universal core skills + 8 specialized extension skills
+## Current Release: Security & Documentation (Phase 1)
+
+**18 skills across 2 complete skillpacks:**
+- **Ordis/Security-Architect** (9 skills) - Threat modeling, security controls, compliance, ATO
+- **Muna/Technical-Writer** (8 skills) - Documentation structure, clarity, security-aware docs, incident response
 
 **Ready for:** Security professionals, technical writers, and developers learning these domains
+
+**Architecture:** Modular skillpacks organized by 6 thematic factions (Ordis, Muna, Axiom, Bravos, Lyra, Yzmir) - 2 factions complete, 4 planned for future releases
 
 ---
 
@@ -187,7 +193,21 @@ End-to-end tutorials showing realistic skill usage:
 
 ## Architecture
 
-**Layered Design:**
+**Faction-Based Organization:**
+Skills are organized into 6 thematic factions inspired by Altered TCG:
+
+- **Ordis** (Protectors of Order) - Security, governance, compliance [COMPLETE]
+- **Muna** (Weavers of Harmony) - Documentation, synthesis, clarity [COMPLETE]
+- **Axiom** (Creators of Marvels) - Tooling, infrastructure, automation [PLANNED]
+- **Bravos** (Champions of Action) - Practical tactics, execution [PLANNED]
+- **Lyra** (Nomadic Artists) - UX, creative solutions, design [PLANNED]
+- **Yzmir** (Magicians of Mind) - Theory, algorithms, architecture [PLANNED]
+
+**Current Release (Phase 1):** Ordis and Muna factions complete with 9 skills each (18 total). Future releases will add remaining factions with domain-specific skillpacks.
+
+See [FACTIONS.md](FACTIONS.md) for detailed faction descriptions and contribution guidelines.
+
+**Layered Skill Design:**
 - **Meta-skills** route to appropriate skills based on task
 - **Core skills** are universal (any project, any domain)
 - **Extension skills** specialize for high-security/regulated contexts
