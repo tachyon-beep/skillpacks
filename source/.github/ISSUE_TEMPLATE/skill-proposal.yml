@@ -1,0 +1,81 @@
+name: Propose a new skill
+description: Suggest a new skill to add to the skillpacks collection
+title: "[SKILL PROPOSAL] "
+labels: ["skill-proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for proposing a new skill! Please fill out the details below to help us understand your proposal.
+
+  - type: text
+    id: skill-name
+    attributes:
+      label: Skill name
+      description: What should this skill be called?
+      placeholder: e.g., "async-python-patterns"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: faction
+    attributes:
+      label: Faction
+      description: Which faction does this skill belong to?
+      options:
+        - Ordis
+        - Muna
+        - Axiom
+        - Bravos
+        - Lyra
+        - Yzmir
+        - Other (please describe in core teaching points)
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: What problem does this skill solve or what capability does it enable?
+      placeholder: Describe the primary use cases for this skill
+    validations:
+      required: true
+
+  - type: textarea
+    id: baseline-test
+    attributes:
+      label: Baseline test scenario
+      description: Describe a test scenario that would validate this skill works
+      placeholder: |
+        Example:
+        - User has a Python project with race conditions
+        - Skill should help identify and fix timing issues
+        - Verify test passes consistently with the fix applied
+    validations:
+      required: true
+
+  - type: textarea
+    id: core-points
+    attributes:
+      label: Core teaching points
+      description: What key concepts or techniques should this skill teach?
+      placeholder: |
+        List the main learning objectives:
+        - Point 1
+        - Point 2
+        - Point 3
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission checklist
+      options:
+        - label: This skill solves a real problem or enables a valuable capability
+          required: true
+        - label: I have reviewed similar existing skills
+          required: true
+        - label: I can provide example code or scenarios
+          required: false

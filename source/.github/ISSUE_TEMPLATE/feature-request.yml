@@ -1,0 +1,63 @@
+name: Request a feature
+description: Suggest an improvement or enhancement to the skillpacks
+title: "[FEATURE] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting an improvement! Please help us understand your feature request.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What feature or improvement would you like to see?
+      placeholder: Describe the feature in detail
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: What problem does this feature solve or what workflow does it enable?
+      placeholder: |
+        Explain how this would be useful:
+        - Current pain point
+        - How this feature addresses it
+        - Expected benefit
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other solutions or workarounds have you considered?
+      placeholder: |
+        - Alternative 1: Why it doesn't work as well
+        - Alternative 2: Why it doesn't work as well
+        - Why your proposal is better
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Any other information that might be helpful?
+      placeholder: Screenshots, examples, references, etc.
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission checklist
+      options:
+        - label: This feature addresses a real need
+          required: true
+        - label: I have searched for similar feature requests
+          required: true
+        - label: I have considered potential drawbacks
+          required: false

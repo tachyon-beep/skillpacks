@@ -1,0 +1,82 @@
+name: Report a bug
+description: Report an issue with a skill
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug! Please provide detailed information to help us fix the issue.
+
+  - type: text
+    id: skill-name
+    attributes:
+      label: Skill name
+      description: Which skill is affected by this bug?
+      placeholder: e.g., "test-driven-development"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+      placeholder: Describe the expected behavior in detail
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual behavior
+      description: What actually happened instead?
+      placeholder: Describe what went wrong
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Reproduction steps
+      description: How can we reproduce this bug?
+      placeholder: |
+        1. First step
+        2. Second step
+        3. Third step
+        ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: What is your environment?
+      placeholder: |
+        - Claude Code version: [e.g., 0.1.0]
+        - Python version: [if applicable]
+        - Operating system: [e.g., macOS 14.0]
+        - Claude model: [e.g., claude-opus-4]
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Any other information that might be helpful?
+      placeholder: Screenshots, error messages, logs, etc.
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission checklist
+      options:
+        - label: I have searched for existing bug reports
+          required: true
+        - label: I have provided clear reproduction steps
+          required: true
+        - label: This bug is reproducible
+          required: true
