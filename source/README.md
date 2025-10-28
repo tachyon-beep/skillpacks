@@ -1,6 +1,6 @@
 # Security Architect & Technical Writer Skill Packs
 
-**Status**: Phase 1 Complete! Foundation Proven, Moving to Phase 2
+**Status**: Phase 2 Complete! Core Skills Proven, Moving to Phase 3
 **Created**: 2025-10-28
 **Packs**: 2 (security-architect, technical-writer)
 **Total Skills**: 16 (2 meta + 8 core + 6 extensions)
@@ -17,17 +17,29 @@ Universal skill packs for Claude Code providing:
 
 ---
 
-## Current Phase: Foundation (Phase 1)
+## Current Phase: Core Skills (Phase 2)
 
-**Phase 1 Skills Progress**:
+**Phase 1 Skills Progress** (Foundation - Meta + Initial Core):
 1. ✅ `ordis/security-architect/using-security-architect` (meta-skill, routing) - **COMPLETE**
 2. ✅ `ordis/security-architect/threat-modeling` (core technique) - **COMPLETE**
 3. ✅ `muna/technical-writer/using-technical-writer` (meta-skill, routing) - **COMPLETE**
 4. ✅ `muna/technical-writer/documentation-structure` (core reference) - **COMPLETE**
 
-**Phase 1 Complete!** All 4 foundation skills implemented, tested, and committed.
+**Phase 1 Complete!** Foundation proven with meta-skills + 2 core skills.
 
-**Estimated Effort**: 10-15 hours
+---
+
+**Phase 2 Skills Progress** (Core Skills - Universal Applicability):
+1. ✅ `ordis/security-architect/security-controls-design` (defense-in-depth, boundaries) - **COMPLETE**
+2. ✅ `muna/technical-writer/clarity-and-style` (active voice, concrete examples) - **COMPLETE**
+3. ✅ `ordis/security-architect/secure-by-design-patterns` (zero-trust, immutable) - **COMPLETE**
+4. ✅ `muna/technical-writer/diagram-conventions` (decision tree, semantic labels) - **COMPLETE**
+5. ✅ `ordis/security-architect/security-architecture-review` (systematic checklists) - **COMPLETE**
+6. ✅ `muna/technical-writer/documentation-testing` (5 dimensions: completeness, accuracy, findability, examples, walkthrough) - **COMPLETE**
+
+**Phase 2 Complete!** All 6 core skills implemented with rigorous RED-GREEN-REFACTOR testing. Universal skills applicable to any project.
+
+**Total Effort (Phase 1 + 2)**: ~25 hours
 
 ---
 
@@ -113,21 +125,31 @@ This project is **orthogonal to Elspeth** (the project where it was designed). I
 | Phase | Skills | Effort | Status |
 |-------|--------|--------|--------|
 | **Phase 1: Foundation** | 4 (2 meta + 2 core) | 10-15h | ✅ Complete |
-| **Phase 2: Core Skills** | 6 core | 18-30h | 📋 Planned |
+| **Phase 2: Core Skills** | 6 core | 18-30h | ✅ Complete |
 | **Phase 3: Extensions** | 8 specialized | 24-40h | 📋 Planned |
 | **Phase 4: Polish** | Docs + public release | 8-15h | 📋 Planned |
 
 **Total**: 60-100 hours over 8-9 weeks
+**Completed**: ~25 hours (Phases 1-2)
+**Remaining**: ~35-75 hours (Phases 3-4)
 
 ---
 
-## Phase 1 Exit Criteria
+## Phase 1 Exit Criteria (✅ Complete)
 
 - ✅ All 4 skills pass RED-GREEN-REFACTOR
 - ✅ Meta-skills route correctly to core skills
 - ✅ Cross-references work (threat-modeling ↔ documentation-structure)
 - ✅ Personal use validated on real scenario
 - ✅ Committed to git with clear messages
+
+## Phase 2 Exit Criteria (✅ Complete)
+
+- ✅ All 6 core skills pass RED-GREEN-REFACTOR
+- ✅ Skills applicable across different project types (APIs, services, pipelines, docs)
+- ✅ Security skills complement writing skills (bidirectional cross-references)
+- ✅ Each skill tested with baseline → skill → verification cycle
+- ✅ Committed to git with detailed RED-GREEN-REFACTOR messages
 
 ---
 
