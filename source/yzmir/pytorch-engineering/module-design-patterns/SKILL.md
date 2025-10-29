@@ -1261,6 +1261,557 @@ for name, module in block1.named_modules():
 
 ---
 
+## Edge Cases and Advanced Scenarios
+
+### Edge Case 1: Dynamic Module Lists (nn.ModuleList)
+
+**Scenario:** Need variable number of layers based on config.
+
+```python
+# ❌ WRONG: Using Python list for modules
+class DynamicModel(nn.Module):
+    def __init__(self, num_layers):
+        super().__init__()
+        self.layers = []  # ❌ Python list, parameters not registered!
+        for i in range(num_layers):
+            self.layers.append(nn.Linear(10, 10))
+
+    def forward(self, x):
+        for layer in self.layers:
+            x = layer(x)
+        return x
+
+# model.parameters() is empty! DDP breaks!
+
+# ✅ CORRECT: Use nn.ModuleList
+class DynamicModel(nn.Module):
+    def __init__(self, num_layers):
+        super().__init__()
+        self.layers = nn.ModuleList([  # ✅ Registers all parameters
+            nn.Linear(10, 10) for _ in range(num_layers)
+        ])
+
+    def forward(self, x):
+        for layer in self.layers:
+            x = layer(x)
+        return x
+```
+
+**Rule:** Use `nn.ModuleList` for lists of modules, `nn.ModuleDict` for dicts.
+
+---
+
+### Edge Case 2: Hooks on nn.Sequential
+
+**Problem:** Hooking specific layers inside nn.Sequential.
+
+```python
+model = nn.Sequential(
+    nn.Linear(10, 20),
+    nn.ReLU(),
+    nn.Linear(20, 20),
+    nn.ReLU(),
+    nn.Linear(20, 10)
+)
+
+# ❌ WRONG: Can't access by name easily
+# model.layer2.register_forward_hook(hook)  # AttributeError
+
+# ✅ CORRECT: Access by index
+handle = model[2].register_forward_hook(hook)  # Third layer (Linear 20->20)
+
+# ✅ BETTER: Use named modules
+for name, module in model.named_modules():
+    if isinstance(module, nn.Linear):
+        print(f"Hooking {name}")
+        module.register_forward_hook(hook)
+```
+
+**Best practice:** For hookable models, use explicit named attributes instead of Sequential:
+
+```python
+class HookableModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.layer1 = nn.Linear(10, 20)
+        self.act1 = nn.ReLU()
+        self.layer2 = nn.Linear(20, 20)  # ✅ Named, easy to hook
+        self.act2 = nn.ReLU()
+        self.layer3 = nn.Linear(20, 10)
+
+    def forward(self, x):
+        x = self.act1(self.layer1(x))
+        x = self.act2(self.layer2(x))
+        return self.layer3(x)
+
+# Easy to hook specific layers:
+model.layer2.register_forward_hook(hook)
+```
+
+---
+
+### Edge Case 3: Hooks with In-Place Operations
+
+**Problem:** In-place operations modify hooked tensors.
+
+```python
+class ModelWithInPlace(nn.Module):
+    def forward(self, x):
+        x = self.layer1(x)  # Hook here
+        x += 10  # ❌ In-place modification!
+        x = self.layer2(x)
+        return x
+
+# Hook only using detach():
+def hook(module, input, output):
+    features['layer1'] = output.detach()  # ❌ Still shares memory!
+
+# After forward pass, features['layer1'] has been modified!
+
+# ✅ CORRECT: Detach AND clone
+def hook(module, input, output):
+    features['layer1'] = output.detach().clone()  # ✅ Independent copy
+```
+
+**Decision tree for hooks:**
+
+```
+Is output modified in-place later?
+├─ Yes → Use .detach().clone()
+└─ No → Use .detach() (sufficient)
+
+Need gradients for analysis?
+├─ Yes → Don't detach (but ensure short lifetime!)
+└─ No → Detach (prevents memory leak)
+```
+
+---
+
+### Edge Case 4: Partial State Dict Loading
+
+**Scenario:** Loading checkpoint with different architecture.
+
+```python
+# Original model
+class ModelV1(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.encoder = nn.Linear(10, 20)
+        self.decoder = nn.Linear(20, 10)
+
+# New model with additional layer
+class ModelV2(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.encoder = nn.Linear(10, 20)
+        self.middle = nn.Linear(20, 20)  # New layer!
+        self.decoder = nn.Linear(20, 10)
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        # ✅ Initialize all layers
+        for module in self.modules():
+            if isinstance(module, nn.Linear):
+                nn.init.xavier_uniform_(module.weight)
+                if module.bias is not None:
+                    nn.init.zeros_(module.bias)
+
+# Load V1 checkpoint into V2 model
+model_v2 = ModelV2()
+checkpoint = torch.load('model_v1.pth')
+
+# ✅ Use strict=False for partial loading
+model_v2.load_state_dict(checkpoint, strict=False)
+
+# ✅ Re-initialize new layers only
+model_v2.middle.reset_parameters()  # New layer needs init
+```
+
+**Pattern:** When loading partial checkpoints:
+1. Load with `strict=False`
+2. Check which keys are missing/unexpected
+3. Re-initialize only new layers (not loaded ones)
+
+---
+
+### Edge Case 5: Hook Removal During Forward Pass
+
+**Problem:** Removing hooks while iterating causes issues.
+
+```python
+class Model(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.layer = nn.Linear(10, 10)
+        self.hook_handles = []
+
+    def add_temporary_hook(self):
+        def hook(module, input, output):
+            print("Hook called!")
+            # ❌ WRONG: Removing handle inside hook
+            for h in self.hook_handles:
+                h.remove()  # Dangerous during iteration!
+
+        handle = self.layer.register_forward_hook(hook)
+        self.hook_handles.append(handle)
+
+# ✅ CORRECT: Flag for removal, remove after forward pass
+class Model(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.layer = nn.Linear(10, 10)
+        self.hook_handles = []
+        self.hooks_to_remove = []
+
+    def add_temporary_hook(self):
+        def hook(module, input, output):
+            print("Hook called!")
+            # ✅ Flag for removal
+            self.hooks_to_remove.append(handle)
+
+        handle = self.layer.register_forward_hook(hook)
+        self.hook_handles.append(handle)
+
+    def cleanup_hooks(self):
+        """Call after forward pass"""
+        for handle in self.hooks_to_remove:
+            handle.remove()
+            self.hook_handles.remove(handle)
+        self.hooks_to_remove.clear()
+```
+
+**Rule:** Never modify hook handles during forward pass. Flag for removal and clean up after.
+
+---
+
+### Edge Case 6: Custom Modules with Buffers
+
+**Pattern:** Buffers are non-parameter tensors that should be saved/moved with model.
+
+```python
+class RunningStatsModule(nn.Module):
+    def __init__(self, num_features):
+        super().__init__()
+
+        # ❌ WRONG: Just store as attribute
+        self.running_mean = torch.zeros(num_features)  # Not registered!
+
+        # ✅ CORRECT: Register as buffer
+        self.register_buffer('running_mean', torch.zeros(num_features))
+        self.register_buffer('running_var', torch.ones(num_features))
+
+        # Parameters (learnable)
+        self.weight = nn.Parameter(torch.ones(num_features))
+        self.bias = nn.Parameter(torch.zeros(num_features))
+
+    def forward(self, x):
+        # Update running stats (in training mode)
+        if self.training:
+            mean = x.mean(dim=0)
+            var = x.var(dim=0)
+            # ✅ In-place update of buffers
+            self.running_mean.mul_(0.9).add_(mean, alpha=0.1)
+            self.running_var.mul_(0.9).add_(var, alpha=0.1)
+
+        # Normalize using running stats
+        normalized = (x - self.running_mean) / torch.sqrt(self.running_var + 1e-5)
+        return normalized * self.weight + self.bias
+
+# Buffers are moved with model:
+model = RunningStatsModule(10)
+model.cuda()  # ✅ running_mean and running_var moved to GPU
+
+# Buffers are saved in state_dict:
+torch.save(model.state_dict(), 'model.pth')  # ✅ Includes buffers
+```
+
+**When to use buffers:**
+- Running statistics (BatchNorm-style)
+- Fixed embeddings (not updated by optimizer)
+- Positional encodings (not learned)
+- Masks or indices
+
+**Rule:** Use `register_buffer()` for tensors that aren't parameters but should be saved/moved.
+
+---
+
+## Common Rationalizations (Don't Do These)
+
+| Excuse | Reality | Correct Approach |
+|--------|---------|------------------|
+| "User wants quick solution, I'll use None" | Quick becomes slow when DDP breaks | Always use nn.Identity(), same speed |
+| "It's just a prototype, proper patterns later" | Prototype becomes production, tech debt compounds | Build correctly from start, no extra time |
+| "F.relu() is more Pythonic/simpler" | True, but prevents hooks and modification | Use nn.ReLU() if any chance of needing hooks |
+| "I'll fix initialization in training loop" | Defeats purpose of reset_parameters() | Put in reset_parameters(), 5 extra lines |
+| "Bias is almost always there" | False! Many models use bias=False | Check if bias is not None, always |
+| "Hooks are advanced, user won't use them" | Until they need debugging or feature extraction | Design hookable from start, no cost |
+| "I'll clean up hooks manually later" | Later never comes, memory leaks persist | Context manager takes 10 lines, bulletproof |
+| "This module is simple, no need for modularity" | Simple modules get extended and reused | Substitutable components from start |
+| "State dict loading always matches architecture" | False! Checkpoints get reused across versions | Implement reset_parameters() for partial loads |
+| "In-place ops are fine, I'll remember detach+clone" | Won't remember under pressure | Document decision in code, add comment |
+
+**Critical insight:** "Shortcuts for simplicity" become "bugs in production." Proper patterns take seconds more, prevent hours of debugging.
+
+---
+
+## Decision Frameworks
+
+### Framework 1: Module vs Functional Operations
+
+**Question:** Should I use `nn.ReLU()` or `F.relu()`?
+
+```
+Will you ever need to:
+├─ Register hooks on this operation? → Use nn.ReLU()
+├─ Inspect architecture (model.named_modules())? → Use nn.ReLU()
+├─ Swap activation (ReLU→GELU)? → Use nn.ReLU()
+├─ Use quantization? → Use nn.ReLU()
+└─ None of above AND performance critical? → F.relu() acceptable
+```
+
+**Default:** When in doubt, use module version. Performance difference negligible.
+
+---
+
+### Framework 2: Hook Detachment Strategy
+
+**Question:** In my hook, should I use `detach()`, `detach().clone()`, or neither?
+
+```
+Do you need gradients for analysis?
+├─ Yes → Don't detach (but ensure short lifetime!)
+└─ No → Continue...
+
+Will the output be modified in-place later?
+├─ Yes → Use .detach().clone()
+├─ Unsure → Use .detach().clone() (safer)
+└─ No → Use .detach() (sufficient)
+```
+
+**Example decision:**
+```python
+# Scenario: Extract features for visualization (no gradients needed, no in-place)
+def hook(module, input, output):
+    return output.detach()  # ✅ Sufficient
+
+# Scenario: Extract features, model has in-place ops (x += y)
+def hook(module, input, output):
+    return output.detach().clone()  # ✅ Necessary
+
+# Scenario: Gradient analysis (rare!)
+def hook(module, input, output):
+    return output  # ⚠️ Keep gradients, but ensure short lifetime
+```
+
+---
+
+### Framework 3: Initialization Strategy Selection
+
+**Question:** Which initialization should I use?
+
+```
+Activation function?
+├─ ReLU family → Kaiming (He) initialization
+├─ Tanh/Sigmoid → Xavier (Glorot) initialization
+├─ GELU/Swish → Xavier or Kaiming (experiment)
+└─ None/Linear → Xavier
+
+Layer type?
+├─ Conv → Usually Kaiming with mode='fan_out'
+├─ Linear → Kaiming or Xavier depending on activation
+├─ Embedding → Normal(0, 1) or Xavier
+└─ LSTM/GRU → Xavier for gates
+
+Special considerations?
+├─ ResNet-style → Last layer of block: small gain (e.g., 0.5)
+├─ Transformer → Xavier uniform, specific scale for embeddings
+├─ GAN → Careful initialization critical (see paper)
+└─ Pre-trained → Don't re-initialize! Load checkpoint
+```
+
+**Code example:**
+```python
+def reset_parameters(self):
+    for module in self.modules():
+        if isinstance(module, nn.Conv2d):
+            # ReLU activation → Kaiming
+            nn.init.kaiming_normal_(module.weight, mode='fan_out', nonlinearity='relu')
+            if module.bias is not None:
+                nn.init.zeros_(module.bias)
+
+        elif isinstance(module, nn.Linear):
+            # Check what activation follows (from self.config or hardcoded)
+            if self.activation == 'relu':
+                nn.init.kaiming_uniform_(module.weight, nonlinearity='relu')
+            else:
+                nn.init.xavier_uniform_(module.weight)
+
+            if module.bias is not None:
+                nn.init.zeros_(module.bias)
+```
+
+---
+
+### Framework 4: When to Use Buffers vs Parameters vs Attributes
+
+**Decision tree:**
+
+```
+Is it a tensor that needs to be saved with the model?
+└─ No → Regular attribute (self.x = value)
+└─ Yes → Continue...
+
+Should it be updated by optimizer?
+└─ Yes → nn.Parameter()
+└─ No → Continue...
+
+Should it move with model (.to(device))?
+└─ Yes → register_buffer()
+└─ No → Regular attribute
+
+Examples:
+- Model weights → nn.Parameter()
+- Running statistics (BatchNorm) → register_buffer()
+- Configuration dict → Regular attribute
+- Fixed positional encoding → register_buffer()
+- Dropout probability → Regular attribute
+- Learnable temperature → nn.Parameter()
+```
+
+---
+
+## Pressure Testing Scenarios
+
+### Scenario 1: Time Pressure
+
+**User:** "I need this module quickly, just make it work."
+
+**Agent thought:** "I'll use None and functional ops, faster to write."
+
+**Reality:** Taking 30 seconds more to use nn.Identity() and nn.ReLU() prevents hours of debugging DDP issues.
+
+**Correct response:** Apply patterns anyway. They're not slower to write once familiar.
+
+---
+
+### Scenario 2: "Simple" Module
+
+**User:** "This is a simple block, don't overcomplicate it."
+
+**Agent thought:** "I'll hardcode ReLU and BatchNorm, it's just a prototype."
+
+**Reality:** Prototypes become production. Making activation/norm substitutable takes one extra line.
+
+**Correct response:** Design modularly from the start. "Simple" doesn't mean "brittle."
+
+---
+
+### Scenario 3: Existing Codebase
+
+**User:** "The existing code uses None for optional modules."
+
+**Agent thought:** "I should match existing style for consistency."
+
+**Reality:** Existing code may have bugs. Improving patterns is better than perpetuating anti-patterns.
+
+**Correct response:** Use correct patterns. Offer to refactor existing code if user wants.
+
+---
+
+### Scenario 4: "Just Getting Started"
+
+**User:** "I'm just experimenting, I'll clean it up later."
+
+**Agent thought:** "Proper patterns can wait until it works."
+
+**Reality:** Later never comes. Or worse, you can't iterate quickly because of accumulated tech debt.
+
+**Correct response:** Proper patterns don't slow down experimentation. They enable faster iteration.
+
+---
+
+## Red Flags Checklist
+
+Before writing `__init__` or `forward`, check yourself:
+
+### Module Definition Red Flags
+- [ ] Am I assigning `None` to a module attribute?
+  - **FIX:** Use `nn.Identity()`
+- [ ] Am I using functional ops (F.relu) without considering hooks?
+  - **ASK:** Will this ever need inspection/modification?
+- [ ] Am I hardcoding architecture choices (ReLU, BatchNorm)?
+  - **FIX:** Make them substitutable parameters
+- [ ] Am I creating modules in `forward()`?
+  - **FIX:** All modules in `__init__`
+
+### Hook Usage Red Flags
+- [ ] Am I storing hook output without detaching?
+  - **FIX:** Use `.detach()` or `.detach().clone()`
+- [ ] Am I registering hooks without storing handles?
+  - **FIX:** Store handles, clean up in `__exit__`
+- [ ] Am I using global variables in hook closures?
+  - **FIX:** Encapsulate in a class
+- [ ] Am I modifying hook handles during forward pass?
+  - **FIX:** Flag for removal, clean up after
+
+### Initialization Red Flags
+- [ ] Am I initializing weights in `__init__`?
+  - **FIX:** Define `reset_parameters()`, call from `__init__`
+- [ ] Am I accessing `.bias` without checking if it exists?
+  - **FIX:** Check `if module.bias is not None:`
+- [ ] Am I using one initialization for all layers?
+  - **ASK:** Should different layers have different strategies?
+
+### State Management Red Flags
+- [ ] Am I storing intermediate results as `self.*`?
+  - **FIX:** Use local variables only
+- [ ] Am I using Python list for modules?
+  - **FIX:** Use `nn.ModuleList`
+- [ ] Do I have tensors that should be buffers but aren't?
+  - **FIX:** Use `register_buffer()`
+
+**If ANY red flag is true, STOP and apply the pattern before proceeding.**
+
+---
+
+## Quick Reference Cards
+
+### Card 1: Module Design Checklist
+```
+✓ super().__init__() called first
+✓ All modules defined in __init__ (not forward)
+✓ No None assignments (use nn.Identity())
+✓ Substitutable components (norm_layer, activation args)
+✓ reset_parameters() defined and called
+✓ Defensive checks (if bias is not None)
+✓ Buffers registered (register_buffer())
+✓ No self.* assignments in forward()
+```
+
+### Card 2: Hook Checklist
+```
+✓ Hook detaches output (.detach() or .detach().clone())
+✓ Hook handles stored in list
+✓ Context manager for cleanup (__enter__/__exit__)
+✓ No global state mutation
+✓ Error handling (try/except in hook)
+✓ Documented whether hook modifies output
+```
+
+### Card 3: Initialization Checklist
+```
+✓ reset_parameters() method defined
+✓ Called from __init__
+✓ Iterates through modules or layers
+✓ Checks if bias is not None
+✓ Uses appropriate init strategy (Kaiming/Xavier)
+✓ Documents why this initialization
+✓ Can be called to re-initialize
+```
+
+---
+
 ## References
 
 **PyTorch Documentation:**
