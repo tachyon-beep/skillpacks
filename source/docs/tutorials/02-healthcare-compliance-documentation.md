@@ -158,20 +158,82 @@ Please create:
 
 The skill will generate:
 
-**HIPAA Control Mapping Matrix:**
-- Administrative Safeguards → Access Control, IAM, Audit Logging, Training Programs
-- Physical Safeguards → Data Center Controls, Workstation Security, Device Management
-- Technical Safeguards → Encryption, Access Controls, Audit Controls, Key Management
+**HIPAA Control Mapping Matrix Example:**
 
-**SOC 2 Alignment:**
-- Security: Unauthorized access prevention measures
-- Availability: Disaster recovery and business continuity
-- Processing Integrity: Data accuracy and completeness
-- Confidentiality: PHI encryption and access controls
+| HIPAA Requirement | Technical Control | Implementation | Evidence |
+|------------------|------------------|----------------|----------|
+| **Security Management Process (164.308(a)(1))** | Risk assessment program | Annual risk assessments documented | Risk assessment reports (2023, 2024) |
+| | Risk management planning | Documented remediation for identified risks | Risk register with remediation tracking |
+| | Sanctions policy | Non-compliance escalation procedures | Policy GOV-2024-001, training records |
+| | Information system monitoring | CloudWatch + CloudTrail logging | Log retention in S3 (7 years) |
+| **Assigned Security Responsibility (164.308(a)(2))** | HIPAA compliance officer | Designated CISO with written authorization | Org chart, job description |
+| | Compliance committee | Monthly security review meetings | Meeting minutes, attendees, action items |
+| **Workforce Security (164.308(a)(3))** | Authorization procedures | Role-based access control matrix | Access approval workflow (ServiceNow) |
+| | Supervision & oversight | Quarterly access reviews by managers | Completed access review certifications |
+| | Termination procedures | Access removal checklist within 24 hours | Termination tickets with verification |
+| **Information Access Management (164.308(a)(4))** | Access determination | Role definitions (8 roles) with permissions | RACI matrix, access control list |
+| | Access review | Quarterly access reviews for all users | Manager certifications (100% coverage) |
+| **Security Awareness & Training (164.308(a)(5))** | Security training | Annual HIPAA training (mandatory) | Completion tracking in LMS |
+| | Password management training | MFA setup training for new users | Training checklist per employee |
+| | Log-in monitoring training | Alerting on unusual access patterns | Training module + test |
+| **Security Incident Procedures (164.308(a)(6))** | Incident response plan | Documented IR procedures with SLAs | Policy GOV-2024-003, drill results |
+| | Incident reporting | Breach notification process (<60 days) | Breach log, HHS notifications |
+| **Contingency Planning (164.308(a)(7))** | Data backup & recovery | Daily incremental, weekly full backups | Backup logs, restore test results |
+| | Disaster recovery plan | RTO <4 hours, RPO <1 hour | DR plan, failover procedures, tests |
+| **Business Associate Management (164.308(b))** | BA agreements | HIPAA BAA with AWS, vendors | Signed BAAs on file (AWS, Okta, etc.) |
+| | BA compliance monitoring | Annual BA compliance assessments | Assessment reports, audit results |
+| **Physical Access Controls (164.310(a))** | Facility access | Data center with biometric access | AWS compliance certificate |
+| | Workstation placement | Servers in secure, locked cabinets | Data center photos, access logs |
+| **Workstation Use Security (164.310(b))** | Workstation use policy | Screen lock after 15 min inactivity | Endpoint security policy |
+| | Secure destruction | Disk wiping before device reuse | Data disposal procedures |
+| **Access Controls (164.312(a)(2))** | Unique user ID | Each user has unique identifier | Active Directory user list |
+| | Emergency access | Break-glass access with audit trail | Emergency access procedures |
+| | Encryption & key management | AES-256 at rest, TLS 1.3 in transit | Key rotation log (quarterly) |
+| **Audit Controls (164.312(b))** | Audit logging | All PHI access logged with user/timestamp | CloudTrail, RDS audit logs |
+| | Log review | Daily automated log review with alerts | CloudWatch rules, SNS notifications |
+| **Integrity Controls (164.312(c)(2))** | Checksums | MD5 checksums on backups | Backup verification logs |
+| | Data integrity monitoring | Database constraints + application validation | Schema documentation |
+| **Transmission Security (164.312(e))** | TLS encryption | TLS 1.3 for all data in transit | SSL certificate audit |
+| | VPN for remote access | VPN required for remote clinician access | VPN logs, device management |
 
-**Gap Analysis:**
-- Identify any HIPAA requirements not currently addressed
-- Prioritize gaps by risk level and implementation effort
+**SOC 2 Trust Service Criteria Alignment:**
+
+**CC (Common Criteria):**
+- CC1: Organization obtains or generates, uses, and communicates relevant, quality information
+  - HIPAA Control: Audit logging and monitoring
+  - Implementation: CloudTrail for all API calls
+  - Evidence: Log retention policy (7 years)
+
+- CC6: The organization obtains or generates, uses, and communicates relevant, quality information
+  - HIPAA Control: Unique user identification
+  - Implementation: RBAC with 8 roles per user
+  - Evidence: Access control list
+
+**C (Confidentiality):**
+- C1: The system is protected against unauthorized internal and external access
+  - HIPAA Control: Encryption at rest and in transit
+  - Implementation: AES-256 + TLS 1.3
+  - Evidence: Key management procedures
+
+**A (Availability):**
+- A1: The system is protected against disruption of operations
+  - HIPAA Control: Disaster recovery planning
+  - Implementation: RTO <4 hours, RPO <1 hour
+  - Evidence: DR plan + monthly test results
+
+**Gap Analysis Example:**
+
+| Control Area | Status | Gap | Priority | Remediation |
+|-------------|--------|-----|----------|-------------|
+| Encryption at rest | Implemented | Uses AES-256, no gaps | N/A | Continue current practice |
+| Encryption in transit | Implemented | TLS 1.3 on APIs, but legacy SFTP unencrypted | High | Implement SFTP over TLS for vendor data |
+| Key rotation | Implemented | Quarterly rotation documented | Low | Automate key rotation (currently manual) |
+| Audit logging | Implemented | Logs retained 7 years, meets HIPAA | N/A | Review annually |
+| Access reviews | Partial | Quarterly for employees, missing contractors | Medium | Expand access review scope to all contractors |
+| Incident response | Implemented | Plan exists, but no recent drill | Medium | Schedule quarterly IR drills |
+| Business associate agreements | Partial | AWS, Okta signed; missing small vendors | High | Execute BAAs with all vendors accessing PHI |
+| Workstation security | Gap | No mandatory endpoint encryption | High | Deploy endpoint encryption to all workstations |
+| Multi-factor authentication | Implemented | TOTP enforced for all users, no gaps | N/A | Continue current practice |
 
 ### Observations
 
@@ -307,7 +369,7 @@ Please create:
 
 ## Step 3: Create Operational Acceptance Documentation
 
-**Estimated Time:** 15 minutes
+**Estimated Time:** 20 minutes
 
 **Objective:** Develop operational runbooks and acceptance criteria for PHI handling procedures.
 
@@ -316,8 +378,197 @@ Please create:
 Use the operational acceptance documentation skill:
 
 ```
-I'm using ordis/security-architect/operational-acceptance-documentation for operational procedures.
+I'm using muna/technical-writer/operational-acceptance-documentation for operational procedures.
 ```
+
+### Runbook Template: User Access Provisioning
+
+Create detailed runbooks following this structure:
+
+**RUNBOOK: New User Access Provisioning**
+
+**Purpose:** Establish secure access for new clinical and administrative staff to the EHR system
+
+**Scope:** Applies to all new hires, contractors, and third-party users
+
+**Prerequisites:**
+- Manager approval documented
+- Role and access levels pre-approved
+- Identity verification completed
+- HIPAA training certification completed
+
+**Procedure Steps:**
+
+1. **Access Request Submission**
+   - Manager submits access request via ServiceNow
+   - Include: User name, role, clinic location, start date, managed by manager name
+   - Compliance officer reviews within 24 hours
+   - Approval triggers provisioning automation
+
+2. **Identity and Access Control Setup**
+   - Create Active Directory account following naming convention: firstname.lastname@company.ehr
+   - Assign to appropriate security groups based on role:
+     - Clinical staff: [clinic-name]-clinicians
+     - Administrative: [clinic-name]-admin
+     - Physicians: [clinic-name]-physicians
+     - Patient access: patient-portal-users
+   - Generate temporary password using HashiCorp Vault
+   - Create MFA secret (TOTP) and backup codes
+   - Log all actions in CloudTrail (automated)
+
+3. **EHR System Provisioning**
+   - Provision Django user account with assigned role
+   - Apply row-level security rules for clinic data isolation
+   - Grant database schema access per role requirements
+   - Configure audit logging to capture all user actions
+   - Enable session monitoring and real-time alerting
+
+4. **First-Time Onboarding**
+   - User receives credential delivery package (encrypted)
+   - Forced password change on first login
+   - Required acceptance of HIPAA Business Associate Agreement
+   - MFA setup verification
+   - System orientation training (30 minutes)
+   - Test access to assigned clinics and data
+
+5. **Audit Trail Documentation**
+   - Record: creation timestamp, creator, approver, access level
+   - Generate access certificate for audit file
+   - Store credentials in encrypted credential vault
+   - Enable real-time audit logging in CloudWatch
+
+**Success Criteria:**
+- User successfully logs in with MFA
+- Access to assigned clinic data only
+- No access to other clinics' PHI
+- Audit logs show all provisioning steps
+- User completes MFA setup and training
+- Completion time: <2 business hours
+
+**Exception Handling:**
+- Emergency access: Requires VP approval + 24-hour audit review
+- Vendor access: Separate process with temporary credentials (90-day max)
+- After-hours access: Logs require next-day review by security officer
+
+---
+
+### Runbook Template: Backup and Disaster Recovery
+
+**RUNBOOK: Daily Backup Verification and Testing**
+
+**Purpose:** Ensure backup integrity and disaster recovery capability
+
+**Frequency:** Daily for incremental, weekly for full backups, monthly for restore testing
+
+**Critical Metrics:**
+- RTO (Recovery Time Objective): <4 hours for full system recovery
+- RPO (Recovery Point Objective): <1 hour of data loss
+- Backup success rate: 99.9%
+- Restore verification: 100% of backups tested monthly
+
+**Backup Schedule:**
+- Full backup: Sundays 2:00-4:00 AM EST (off-peak)
+- Incremental backups: Daily 3:00 AM EST
+- Backup retention: 30 days local, 90 days in S3 Glacier
+- All backups encrypted with AES-256 (managed by AWS KMS)
+
+**Daily Backup Verification Process:**
+
+1. **Automated Backup Completion Check**
+   - CloudWatch monitors backup completion status
+   - Alert if backup takes >120 minutes (threshold)
+   - Alert if backup fails or is missing
+   - Verify backup size within expected range (±10%)
+
+2. **Backup Integrity Validation**
+   - Calculate MD5 checksum of backup file
+   - Compare against expected hash (stored in DynamoDB)
+   - Flag any discrepancies for investigation
+   - Document validation in backup log
+
+3. **Encryption Verification**
+   - Confirm all backups encrypted with correct KMS key
+   - Verify key access logs (CloudTrail)
+   - Ensure key rotation schedule maintained
+   - Alert on any unauthorized key access attempts
+
+4. **Backup Restore Testing (Monthly)**
+   - Restore from previous month's full backup to isolated environment
+   - Verify data completeness (row count, checksum)
+   - Test database functionality:
+     - Patient record retrieval
+     - Report generation
+     - User authentication
+     - Audit log access
+   - Document restore time (should be <2 hours for full database)
+   - Clean up test environment
+
+5. **Documentation and Reporting**
+   - Log backup details: size, duration, checksum, completion time
+   - Generate monthly backup report for compliance
+   - Include: success rate, failures, restore test results
+   - Attach to audit file for annual review
+
+**Success Criteria:**
+- All backups complete within SLA window
+- Backup integrity validation passes 100%
+- Monthly restore test successful
+- Recovery time within RTO
+- No data loss during restore (RPO met)
+
+**Failure Procedures:**
+- Backup failure: Alert security team immediately, investigate root cause, manual backup if needed
+- Restore failure: Escalate to DBA, analyze logs, restore from previous backup
+- Encryption failure: Check KMS key status, verify IAM permissions, attempt re-encryption
+
+---
+
+### Healthcare-Specific Acceptance Criteria
+
+**Electronic Protected Health Information (ePHI) Handling Verification:**
+
+1. **Access Logging Requirements**
+   - Every read/write of patient ePHI logged with:
+     - User ID and timestamp
+     - Patient MRN accessed
+     - Data elements accessed (diagnosis, prescription, lab)
+     - Purpose of access
+     - System action (view, download, print, export)
+   - Logs retained for 6 years (HIPAA requirement)
+   - Real-time alerting for suspicious access patterns
+
+2. **HIPAA Breach Notification Rule Compliance**
+   - Breach definition: Unauthorized access/disclosure of unsecured ePHI
+   - Detection: System alert within 1 hour of breach discovery
+   - Investigation: Root cause analysis within 24 hours
+   - Notification timeline:
+     - Affected individuals: within 60 days
+     - Media (if 500+ affected): within 60 days
+     - HHS Secretary: within 60 days
+   - Documentation required:
+     - Dates of breach and discovery
+     - Affected individuals and data elements
+     - Remedial actions taken
+     - Investigation findings
+
+3. **Data Minimization and Audit Trail**
+   - Only necessary ePHI displayed in UI (no SSN in logs)
+   - Bulk exports require multi-factor approval
+   - Export audit trail includes recipient and use case
+   - Business associate data sharing tracked separately
+   - Patient can request access log audit
+
+**Acceptance Testing Checklist:**
+- [ ] All new user access verified in CloudWatch logs
+- [ ] Privilege escalation blocked and alerted
+- [ ] MFA required for all users (100% enforcement)
+- [ ] Backup restoration successful in <4 hours
+- [ ] No ePHI found in application logs or error messages
+- [ ] Patient access audit trail generated successfully
+- [ ] Encrypt-in-transit validation (TLS 1.3)
+- [ ] Encrypt-at-rest validation (AES-256)
+- [ ] Segregation of duties enforced (no single admin access)
+- [ ] Audit logs immutable and tamper-evident
 
 ### Input Prompt
 
@@ -431,7 +682,7 @@ Please create:
 
 ## Step 4: Establish Governance Policies and ITIL Framework
 
-**Estimated Time:** 15 minutes
+**Estimated Time:** 25 minutes
 
 **Objective:** Create IT governance policies and establish ITIL-based service management framework.
 
@@ -440,8 +691,371 @@ Please create:
 Use the governance and ITIL documentation skill:
 
 ```
-I'm using ordis/security-architect/itil-and-governance-documentation for governance policies.
+I'm using muna/technical-writer/itil-and-governance-documentation for governance policies.
 ```
+
+### IT Governance Policy Templates
+
+#### Policy Template: Change Management
+
+**POLICY: Change Management for Healthcare EHR Systems**
+
+**Policy Number:** GOV-2024-001-CM
+**Effective Date:** [Date]
+**Last Reviewed:** [Date]
+**Next Review:** [Date + 1 year]
+**Owner:** Chief Information Officer
+
+**1. Purpose and Scope**
+
+This policy establishes mandatory change management procedures for all changes to the healthcare EHR system to ensure:
+- Service availability and reliability (99.95% target)
+- Regulatory compliance (HIPAA, SOC 2, state laws)
+- Data integrity and security
+- Audit trail for all changes
+- Zero unplanned outages
+
+Applies to:
+- Production database schema changes
+- Application code deployments
+- Infrastructure changes (servers, networks)
+- Security configuration modifications
+- Third-party integration updates
+
+Does NOT apply to:
+- Configuration within application UI
+- Non-production environments
+- Emergency patches (managed separately)
+
+**2. Change Classification and Approval Authority**
+
+**Standard Changes (Low Risk):**
+- Configuration updates within existing parameters
+- Documentation updates
+- Approved vendor patches
+- Approval: Change Manager
+- Testing: Non-production only
+- Deployment window: Anytime (non-production)
+
+**Normal Changes (Medium Risk):**
+- Application feature releases
+- Infrastructure scaling
+- Moderate database modifications
+- Approval: Change Advisory Board (CAB)
+- Testing: Staging environment (production-equivalent)
+- Deployment window: 8 AM - 2 PM EST, non-weekend
+- Rollback plan: Required
+
+**Emergency Changes (High Risk):**
+- Security patches for vulnerabilities
+- Emergency infrastructure changes
+- Incident remediation
+- Approval: VP Operations + CISO
+- Testing: Expedited (minimum 1 hour)
+- Deployment window: Immediate
+- Rollback plan: Tested before deployment
+
+**3. Change Request Process (Normal Changes)**
+
+**Step 1: Initiation**
+- Requestor completes change request form in ServiceNow:
+  - Change title and description
+  - Business justification and risk assessment
+  - Affected systems and dependencies
+  - Estimated duration and testing time
+  - Rollback procedure
+  - Estimated downtime (if any)
+
+**Step 2: Assessment**
+- Change Manager reviews for completeness within 24 hours
+- Technical lead performs impact analysis:
+  - System dependencies map
+  - Database schema impact
+  - Performance implications
+  - Security implications
+- Estimated risk level assigned (Low/Medium/High)
+
+**Step 3: CAB Approval**
+- CAB meets weekly (Mondays, 2 PM EST)
+- Members: CISO, VP Operations, Engineering Lead, Compliance Officer
+- Voting: All present members must approve
+- Approval documented in ServiceNow
+- Requestor notified within 2 hours of meeting
+
+**Step 4: Implementation Planning**
+- Change owner develops detailed implementation plan:
+  - Step-by-step procedures
+  - Parallel testing procedures
+  - Success criteria and validation
+  - Rollback triggers and procedures
+  - Communication plan for affected users
+- Test environment setup (mirror of production)
+- Data backup before change (automated)
+
+**Step 5: Testing and Validation**
+- Minimum 1-week testing window for Normal changes
+- Functional testing: All affected features verified
+- Security testing: No new vulnerabilities introduced
+- Performance testing: Baseline metrics met
+- Accessibility testing: Compliance verified
+- Document test results in change log
+
+**Step 6: Deployment and Monitoring**
+- Deployment window approved by CAB
+- Deployment team follows procedures exactly
+- Real-time monitoring during deployment:
+  - Application performance metrics
+  - Error rate and exceptions
+  - User access and authentication
+  - Database performance
+- Canary deployment (10% of servers first) for large changes
+- Full rollback capability until change is declared "stable"
+
+**Step 7: Post-Implementation Review**
+- Change verified successful within 24 hours
+- Actual vs. estimated duration recorded
+- Any issues or workarounds documented
+- User feedback collected and documented
+- Change marked "Completed" or "Closed"
+- Lessons learned documented for future changes
+
+**4. Deployment Windows and Schedules**
+
+**Standard Deployment Windows:**
+- **Production:** 8 AM - 2 PM EST, Monday-Friday
+- **Estimated downtime:** Maximum 15 minutes (communicated 48 hours prior)
+- **Patient notification:** Automated email if downtime expected
+- **Clinician notification:** In-app banner 48 hours before
+
+**Emergency Deployment:**
+- Available 24/7 for critical security patches
+- VP Operations approval required
+- Incident ticket created and referenced
+- Downtime minimized with load balancing
+
+**Blackout Periods (No Changes Allowed):**
+- December 23 - January 2 (holiday)
+- Week before and after major compliance audits
+- During disaster recovery drills
+
+**5. Audit Trail and Compliance**
+
+All changes logged with:
+- Change request ID and approver
+- Deployment timestamp and duration
+- Changed components and before/after states
+- CloudTrail entries for AWS changes
+- Git commit log for code changes
+- Database schema version records
+- Rollback history (if applicable)
+
+Retention: 7 years (per HIPAA requirements)
+
+Access control: Only authorized personnel can view change details
+
+---
+
+#### Policy Template: Access and Authorization
+
+**POLICY: Access and Authorization Governance**
+
+**Policy Number:** GOV-2024-002-ACCESS
+**Owner:** Chief Information Security Officer
+
+**1. Access Principle: Least Privilege**
+
+Every user granted only minimum access necessary for their role:
+- Role-based access control (RBAC) with 8 predefined roles
+- No permanent super-admin access
+- Periodic access reviews (quarterly minimum)
+- Just-in-time (JIT) privileged access (temporary, time-limited)
+
+**2. Access Roles and Permissions**
+
+| Role | Data Access | Write Access | Admin Functions |
+|------|-----------|-------------|-----------------|
+| Patient | Own records only | Update own profile | None |
+| Clinician | Assigned clinic records | Enter clinical notes | None |
+| Physician | Full clinic records | Clinical decisions | Referrals |
+| Clinic Admin | Clinic billing/admin | User management | Clinic reporting |
+| System Admin | All data (audited) | Emergency only | System configuration |
+| Auditor | All records (read-only) | None | Audit logging |
+| DBA | Database schema | Migration scripts | Database tuning |
+| Security Officer | Security logs | Alert review | Security reporting |
+
+**3. Access Request and Approval Workflow**
+
+- Employee's manager submits request (with business justification)
+- Role owner (department head) approves appropriateness
+- Compliance officer reviews for segregation of duties violations
+- All approvals documented in access request ticket
+- System provisioning within 24 hours of approval
+- User notified with access details and responsibilities
+- Training required before access granted
+
+**4. Periodic Access Reviews**
+
+**Quarterly Access Review:**
+- For all users (100% coverage)
+- Manager certifies: "I have reviewed access for [user] and confirm it is appropriate for their current role"
+- Compliance officer flags any exceptions
+- Exceptions require VP sign-off
+- Results documented in audit file
+
+**Annual Comprehensive Review:**
+- Access rights recertified from scratch (zero-based)
+- Reports generated: users by role, permissions by data type
+- Segregation of duties violations identified
+- Unnecessary access removed
+
+**Triggered Reviews:**
+- Within 24 hours of:
+  - Role change
+  - Department transfer
+  - Disciplinary action
+  - Suspicious access detected
+
+**5. Segregation of Duties Enforcement**
+
+These combinations of access are prohibited (mutually exclusive):
+- Approver + Implementer: Can't approve own change requests
+- Preparer + Approver: Can't approve own financial transactions
+- Access Approver + Access Recipient: Compliance officer can't request own access
+- Audit access + System admin: Can't audit own administrative actions
+
+Violations automatically prevented by role configuration.
+
+**6. Emergency Access Procedures**
+
+**Authorization:**
+- VP Operations approves emergency access
+- Reason documented: security incident, production outage, etc.
+- Time limit: 4 hours maximum (renewable)
+
+**Execution:**
+- Temporary account created with elevated privileges
+- All actions logged to tamper-evident audit trail
+- Real-time alerts if access used unusually
+- Screenshots/recordings of all system changes
+
+**Post-Event:**
+- Access revoked immediately when not needed
+- Audit logs reviewed by CISO within 24 hours
+- Any system changes independently verified
+- Documentation added to incident file
+
+**7. Credential Management**
+
+- **Passwords:** Minimum 12 characters, complexity required
+- **Password expiration:** 90 days (enforced by Active Directory)
+- **Password reuse:** Last 10 passwords blocked
+- **Shared accounts:** Prohibited (except break-glass emergency)
+- **API keys:** Rotated every 30 days
+- **Secrets storage:** HashiCorp Vault (encrypted)
+- **Temporary credentials:** 4-hour maximum validity
+- **MFA:** Mandatory for all users (TOTP or hardware key)
+
+---
+
+### ITIL Service Management Process Flowchart
+
+**Incident Management Workflow:**
+
+```
+User reports issue (phone/email/portal)
+                 |
+                 v
+Create Incident ticket (ServiceNow)
+Assign severity (Critical/High/Medium/Low)
+                 |
+    +--------+---+---+--------+
+    |        |       |        |
+(Critical)(High)(Medium)(Low)
+    |        |       |        |
+    v        v       v        v
+Response SLA: 1h   4h    8h   24h
+Resolution SLA: 4h  8h   24h  72h
+                 |
+    +-------+----+----+
+    |       |    |    |
+Incident assigned to support teams
+                 |
+                 v
+Diagnosis: Root cause identified
+                 |
+    +----+---+---+
+    |    |   |
+Can we fix it? (Yes/No/Escalate)
+    |    |   |
+    v    v   v
+   Fix   Workaround  Escalate to
+                     Engineering
+    |    |   |
+    +----+---+
+         |
+         v
+    Apply solution
+         |
+         v
+    User verifies fix
+         |
+    Yes-+--No
+    |       |
+    v       v
+Incident  Reopen &
+Closed    Reassign
+    |       |
+    +---+---+
+        |
+        v
+    Schedule post-incident review
+    (if sev 1-2)
+```
+
+**Change Management Workflow:**
+
+```
+Change request submitted → CAB review → Approved?
+                                         Yes → Implementation planning
+                                         No  → Return to requestor
+
+Implementation planning → Testing in staging
+                              ↓
+                         All tests pass?
+                         Yes → Schedule deployment
+                         No  → Fix issues, retest
+
+Deploy to production → Monitor for 4 hours
+                        ↓
+                     Issues detected?
+                     Yes → Rollback & investigate
+                     No  → Mark complete
+```
+
+---
+
+### Governance Dashboard and Metrics
+
+Track compliance with governance framework:
+
+**Key Performance Indicators (KPIs):**
+- **Change Success Rate:** % of changes deployed without rollback (Target: 99%)
+- **Change Cycle Time:** Days from request to deployment (Target: <7 days for normal changes)
+- **Incident MTTR:** Mean time to resolution by severity
+- **Access Review Compliance:** % of users with current access certification (Target: 100%)
+- **Policy Compliance:** % of staff trained on policies (Target: 100% annually)
+- **Audit Findings:** Critical/high findings from annual compliance audit
+- **Security Incidents:** Number and severity of security incidents
+- **Unplanned Outages:** Incidents causing service unavailability
+
+**Monthly Governance Report:**
+- Summary of approved/deployed changes
+- Incidents by severity and resolution time
+- Access review status and exceptions
+- Security findings and remediation status
+- Policy compliance metrics
+- Risk register updates
+- Trends and recommendations
 
 ### Input Prompt
 
