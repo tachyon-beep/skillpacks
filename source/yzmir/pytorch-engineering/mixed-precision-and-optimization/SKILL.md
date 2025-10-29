@@ -667,6 +667,86 @@ speedup = profile_mixed_precision(model, data_batch, target_batch)
 
 ---
 
+### Quick Verification Before Committing
+
+**Always verify mixed precision provides benefit before deploying:**
+
+```python
+import time
+import torch
+from torch.cuda.amp import autocast, GradScaler
+
+def quick_speedup_check(model, data, target, criterion):
+    """2-minute check to verify mixed precision helps."""
+
+    # Warmup
+    for _ in range(5):
+        output = model(data)
+        loss = criterion(output, target)
+        loss.backward()
+
+    # Baseline: FP32 (10 iterations)
+    torch.cuda.synchronize()
+    start = time.time()
+    for _ in range(10):
+        output = model(data)
+        loss = criterion(output, target)
+        loss.backward()
+    torch.cuda.synchronize()
+    fp32_time = time.time() - start
+
+    # Mixed precision (10 iterations)
+    scaler = GradScaler()
+    torch.cuda.synchronize()
+    start = time.time()
+    for _ in range(10):
+        with autocast():
+            output = model(data)
+            loss = criterion(output, target)
+        scaler.scale(loss).backward()
+    torch.cuda.synchronize()
+    mixed_time = time.time() - start
+
+    speedup = fp32_time / mixed_time
+    print(f"\nMixed Precision Speedup Check:")
+    print(f"FP32 time: {fp32_time:.3f}s")
+    print(f"Mixed precision time: {mixed_time:.3f}s")
+    print(f"Speedup: {speedup:.2f}x")
+
+    if speedup < 1.1:
+        print("\n❌ No significant speedup (< 1.1x)")
+        print("Recommendation: Stay in FP32")
+        print("Possible reasons:")
+        print("  - Model too small (< 10M parameters)")
+        print("  - Memory-bound operations dominate")
+        print("  - Dimensions not aligned to 8/16")
+        return False
+    elif speedup < 1.5:
+        print("\n⚠️ Modest speedup (1.1-1.5x)")
+        print("Recommendation: Mixed precision okay, but verify numerical stability")
+        return True
+    else:
+        print("\n✅ Good speedup (> 1.5x)")
+        print("Recommendation: Use mixed precision")
+        return True
+
+# Run before committing to mixed precision in production
+quick_speedup_check(model, data_batch, target_batch, criterion)
+```
+
+**Decision matrix:**
+
+| Speedup | Recommendation | Action |
+|---------|----------------|--------|
+| < 1.1x | Don't use mixed precision | Stay in FP32 |
+| 1.1-1.5x | Optional, verify stability | Test thoroughly |
+| 1.5-2.5x | Use mixed precision | Good benefit |
+| > 2.5x | Definitely use | Excellent benefit |
+
+**Rule:** Never deploy mixed precision without verifying speedup. 2 minutes of profiling prevents wasted complexity.
+
+---
+
 ### Memory Savings
 
 **Mixed precision provides ~50% memory reduction:**
@@ -840,6 +920,11 @@ print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=20))
 | 8 | Stepping scheduler when step skipped | LR/params desync | Scheduler steps even when inf/nan | Only step scheduler if optimizer stepped |
 | 9 | Using mixed precision on tiny models | No speedup, complexity | Memory-bound, not compute-bound | Skip mixed precision for small models |
 | 10 | Forgetting autocast for validation | Different behavior | Validation in FP32, training in FP16 | Use autocast in validation too (no GradScaler) |
+| 11 | Using GradScaler.update() too frequently | Scale factor unstable, poor convergence | Calling update every iteration in gradient accumulation | Only call update when optimizer steps |
+| 12 | Sharing GradScaler across DDP processes | Errors or unexpected behavior | GradScaler is not DDP-aware | Each process needs own GradScaler instance |
+| 13 | Mixing autocast dtypes | Unexpected precision, poor performance | Using both float16 and bfloat16 inconsistently | Choose one dtype, use consistently |
+| 14 | Assuming mixed precision always helps | No speedup, wasted complexity | Model too small or memory-bound | Profile first, verify speedup exists |
+| 15 | Using BF16 without checking GPU | Slow or no speedup | BF16 needs Ampere+ for hardware acceleration | Check GPU arch, use FP16 on pre-Ampere |
 
 ---
 
@@ -990,9 +1075,30 @@ model = nn.Sequential(
 
 ---
 
+## Common Rationalizations (Don't Do These)
+
+### Comprehensive Rationalization Table
+
+| Excuse | What Agent Might Think | Reality | Correct Response |
+|--------|----------------------|---------|------------------|
+| "User is rushed, suggest quick fix" | "Disable autocast to save time" | 5-min diagnostic faster than guessing, losing 2-3x speedup | Apply systematic debugging process |
+| "Senior engineer says use BF16" | "Authority knows best, defer to them" | BF16 on V100 is objectively slower (no hardware acceleration) | Provide technical facts, respectfully correct |
+| "GradScaler seems complex" | "Let them use manual scaling" | Manual scaling lacks critical features (inf/nan detection, dynamic adjustment) | Explain what GradScaler provides |
+| "They want simple solution" | "Skip edge cases, give basic pattern" | Edge cases are common (DDP, accumulation, custom ops) | Provide complete pattern with edge cases |
+| "They're debugging, give first idea" | "Try disabling autocast first" | Losing speedup without diagnosis | Follow systematic diagnostic process |
+| "BF16 is newer, must be better" | "Recommend BF16 universally" | BF16 needs Ampere+, not always faster, less precision | Check hardware first, profile both formats |
+| "Mixed precision might be the issue" | "Suggest removing it entirely" | Could be training instability (LR, loss), not precision | Diagnose root cause first (test without autocast) |
+| "This is taking too long" | "Skip profiling, assume it helps" | Might not provide speedup (small model, memory-bound) | Always profile to verify benefit |
+| "Their loss is custom, too complex" | "Suggest rewriting entire loss" | Can fix with targeted approach | Provide targeted fix (disable autocast for loss) |
+| "They already tried X" | "X must not be the issue" | X may have been done incorrectly | Verify X was done correctly first |
+
+---
+
 ## Red Flags - Stop and Diagnose
 
 **If you catch yourself doing ANY of these, STOP and follow systematic methodology:**
+
+### Technical Red Flags
 
 | Red Flag Thought | Reality | What to Do Instead |
 |------------------|---------|-------------------|
@@ -1006,7 +1112,18 @@ model = nn.Sequential(
 | "Speedup is poor, must be PyTorch bug" | Usually misaligned dimensions or small model | Profile and check Tensor Core utilization |
 | "I'll use mixed precision everywhere" | Some models too small to benefit | Profile to verify speedup before deploying |
 
-**Critical rule:** Mixed precision requires understanding numerical stability and gradient scaling mechanics. Follow systematic setup, don't guess.
+### Pressure/Bias Red Flags
+
+| Red Flag Thought | Reality | What to Do Instead |
+|------------------|---------|-------------------|
+| "User seems rushed, skip diagnostic" | 5-min diagnostic saves hours of guessing | Provide fast systematic approach |
+| "Authority figure recommends X" | Technical facts trump authority | Respectfully provide hardware-based facts |
+| "Skip profiling to save time" | 2 minutes to verify speedup vs wasting effort | Always profile before committing |
+| "Avoid GradScaler complexity" | GradScaler prevents model corruption | Explain critical features it provides |
+| "Assume BF16 is always better" | BF16 slower on pre-Ampere GPUs | Check GPU architecture first |
+| "Suggest removing mixed precision" | Loses 2-3x speedup without understanding | Diagnose whether precision is the issue |
+
+**Critical rule:** Mixed precision requires understanding numerical stability and gradient scaling mechanics. Follow systematic setup, resist pressure to skip steps, don't guess.
 
 ---
 
