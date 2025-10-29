@@ -383,6 +383,89 @@ max_lr = optimal_lr * 10  # Use 10x optimal as max_lr
 
 ---
 
+## Advanced OneCycleLR Tuning
+
+If lowering max_lr doesn't resolve instability, try these advanced tuning options:
+
+**1. Adjust pct_start (warmup fraction):**
+
+```python
+# Default: 0.3 (30% warmup, 70% cooldown)
+scheduler = OneCycleLR(optimizer, max_lr=0.1, epochs=20,
+                       steps_per_epoch=len(train_loader),
+                       pct_start=0.3)  # Default
+
+# If unstable at peak: Increase to 0.4 or 0.5 (longer warmup)
+scheduler = OneCycleLR(optimizer, max_lr=0.1, epochs=20,
+                       steps_per_epoch=len(train_loader),
+                       pct_start=0.5)  # Gentler ramp to peak
+
+# If unstable in cooldown: Decrease to 0.2 (shorter warmup, gentler descent)
+scheduler = OneCycleLR(optimizer, max_lr=0.1, epochs=20,
+                       steps_per_epoch=len(train_loader),
+                       pct_start=0.2)
+```
+
+**2. Adjust div_factor (initial LR):**
+
+```python
+# Default: 25 (initial_lr = max_lr / 25)
+scheduler = OneCycleLR(optimizer, max_lr=0.1, epochs=20,
+                       steps_per_epoch=len(train_loader),
+                       div_factor=25)  # Start at 0.004
+
+# If unstable at start: Increase to 50 or 100 (start even lower)
+scheduler = OneCycleLR(optimizer, max_lr=0.1, epochs=20,
+                       steps_per_epoch=len(train_loader),
+                       div_factor=100)  # Start at 0.001
+```
+
+**3. Adjust final_div_factor (final LR):**
+
+```python
+# Default: 10000 (final_lr = max_lr / 10000)
+scheduler = OneCycleLR(optimizer, max_lr=0.1, epochs=20,
+                       steps_per_epoch=len(train_loader),
+                       final_div_factor=10000)  # End at 0.00001
+
+# If unstable at end: Decrease to 1000 (end at higher LR)
+scheduler = OneCycleLR(optimizer, max_lr=0.1, epochs=20,
+                       steps_per_epoch=len(train_loader),
+                       final_div_factor=1000)  # End at 0.0001
+```
+
+**4. Add gradient clipping:**
+
+```python
+# In training loop
+for batch in train_loader:
+    loss = train_step(model, batch, optimizer)
+    loss.backward()
+
+    # Clip gradients to prevent instability
+    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+
+    optimizer.step()
+    scheduler.step()
+```
+
+**5. Consider OneCycle may not be right for your problem:**
+
+- **Very deep networks (>100 layers):** May be too unstable for OneCycle's aggressive schedule
+- **Large models (>100M params):** May need gentler schedule (Cosine + warmup)
+- **Sensitive architectures (some transformers):** OneCycle's rapid LR changes can destabilize
+
+**Alternative:** Use CosineAnnealing + warmup for more stable training:
+
+```python
+# More stable alternative to OneCycle
+warmup = LinearLR(optimizer, start_factor=0.01, total_iters=5)
+cosine = CosineAnnealingLR(optimizer, T_max=15, eta_min=1e-5)
+scheduler = SequentialLR(optimizer, [warmup, cosine], [5])
+```
+
+---
+
 ## LinearLR (Warmup)
 
 **Use When:**
@@ -745,6 +828,101 @@ for epoch in range(epochs):
 
 ---
 
+## "But My Transformer Trained Fine Without Warmup"
+
+Some users report training transformers without warmup successfully. Here's the reality:
+
+**What "fine" actually means:**
+- Training didn't diverge (NaN loss) - that's a low bar
+- Got reasonable accuracy - but NOT optimal accuracy
+- One successful run doesn't mean it's optimal or reliable
+
+**What you're missing without warmup:**
+
+**1. Performance gap (1-3% accuracy):**
+
+```
+Without warmup: Training works, achieves 85% accuracy
+With warmup: Same model achieves 87-88% accuracy
+```
+
+That 2-3% is SIGNIFICANT:
+- Difference between competitive and SOTA
+- Difference between accepted and rejected paper
+- Difference between passing and failing business metrics
+
+**2. Training stability:**
+
+```
+Without warmup:
+- Some runs diverge → need to restart with lower LR
+- Sensitive to initialization seed
+- Requires careful LR tuning
+- Success rate: 60-80% of runs
+
+With warmup:
+- Stable training → consistent results
+- Robust to initialization
+- Wider stable LR range
+- Success rate: 95-100% of runs
+```
+
+**3. Hyperparameter sensitivity:**
+
+Without warmup:
+- Very sensitive to initial LR choice (0.001 works, 0.0015 diverges)
+- Sensitive to batch size
+- Sensitive to optimizer settings
+
+With warmup:
+- More forgiving LR range (0.0005-0.002 all work)
+- Less sensitive to batch size
+- Robust optimizer configuration
+
+**Empirical Evidence - Published Papers:**
+
+Check transformer papers - ALL use warmup:
+
+| Model | Paper | Warmup |
+|-------|-------|--------|
+| ViT | Dosovitskiy et al., 2020 | ✅ Linear, 10k steps |
+| DeiT | Touvron et al., 2021 | ✅ Linear, 5 epochs |
+| Swin | Liu et al., 2021 | ✅ Linear, 20 epochs |
+| BERT | Devlin et al., 2018 | ✅ Linear, 10k steps |
+| GPT-2 | Radford et al., 2019 | ✅ Linear warmup |
+| GPT-3 | Brown et al., 2020 | ✅ Linear warmup |
+| T5 | Raffel et al., 2020 | ✅ Inverse sqrt warmup |
+
+**Every competitive transformer model uses warmup - there's a reason.**
+
+**"But I got 85% accuracy without warmup!"**
+
+Great! Now try with warmup and see if you get 87-88%. You probably will.
+
+**The cost-benefit analysis:**
+
+```python
+# Cost: One line of code
+warmup = LinearLR(optimizer, start_factor=0.01, total_iters=5)
+scheduler = SequentialLR(optimizer, [warmup, main], [5])
+
+# Benefit:
+# - 1-3% better accuracy
+# - More stable training
+# - Higher success rate
+# - Wider stable hyperparameter range
+```
+
+**Recommendation:**
+
+1. Run ablation study: Train your model with and without warmup
+2. Compare: Final test accuracy, training stability, number of failed runs
+3. You'll find warmup gives better results with minimal complexity
+
+**Bottom line:** Just because something "works" doesn't mean it's optimal. Warmup is standard practice for transformers because it consistently improves results.
+
+---
+
 ### 5. LR Finder - Finding Optimal Initial LR
 
 ## What is LR Finder?
@@ -1058,6 +1236,129 @@ Loss
 - **High budget (100+ epochs):** CosineAnnealing or MultiStepLR
 - **Low budget (10-20 epochs):** OneCycleLR
 - **Adaptive budget:** ReduceLROnPlateau (stops when plateau)
+
+---
+
+## Paper Recipe vs Modern Best Practices
+
+**If goal is EXACT REPRODUCTION:**
+
+Use paper's exact schedule (down to every detail):
+
+```python
+# Example: Reproducing ResNet paper (He et al., 2015)
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
+scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30, 60, 90], gamma=0.1)
+# No warmup (paper didn't use it)
+# Train for 100 epochs
+```
+
+**Rationale:**
+- Reproduce results exactly
+- Enable apples-to-apples comparison
+- Validate paper's claims
+- Establish baseline before improvements
+
+**If goal is BEST PERFORMANCE:**
+
+Use modern recipe (benefit from years of community learning):
+
+```python
+# Modern equivalent: ResNet with modern practices
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
+warmup = LinearLR(optimizer, start_factor=0.01, total_iters=5)
+cosine = CosineAnnealingLR(optimizer, T_max=95, eta_min=1e-5)
+scheduler = SequentialLR(optimizer, [warmup, cosine], [5])
+# Train for 100 epochs
+```
+
+**Rationale:**
+- Typically +0.5-2% better accuracy than original paper
+- More stable training
+- Reflects 5-10 years of community improvements
+- SOTA competitive performance
+
+**Evolution of LR Scheduling Practices:**
+
+**Early Deep Learning (2012-2016):**
+- Scheduler: StepLR with manual milestones
+- Warmup: Not used (not yet discovered)
+- Optimizer: SGD with momentum
+- Examples: AlexNet, VGG, ResNet, Inception
+
+**Mid Period (2017-2019):**
+- Scheduler: CosineAnnealing introduced, OneCycleLR popular
+- Warmup: Starting to be used for large batch training
+- Optimizer: SGD still dominant, Adam increasingly common
+- Examples: ResNeXt, DenseNet, MobileNet
+
+**Modern Era (2020-2025):**
+- Scheduler: CosineAnnealing default, OneCycle for fast training
+- Warmup: Standard practice (mandatory for transformers)
+- Optimizer: AdamW increasingly preferred for transformers
+- Examples: ViT, EfficientNet, ConvNeXt, Swin, DeiT
+
+**Practical Workflow:**
+
+**Step 1: Reproduce paper recipe**
+```python
+# Use exact paper settings
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
+scheduler = MultiStepLR(optimizer, milestones=[30, 60, 90], gamma=0.1)
+# Should match paper's reported accuracy (e.g., 76.5%)
+```
+
+**Step 2: Validate reproduction**
+- If you get 76.5% (matches paper): ✅ Reproduction successful
+- If you get 74% (2% worse): ❌ Implementation bug, fix first
+- If you get 78% (2% better): ✅ Great! Proceed to modern recipe
+
+**Step 3: Try modern recipe**
+```python
+# Add warmup + cosine
+warmup = LinearLR(optimizer, start_factor=0.01, total_iters=5)
+cosine = CosineAnnealingLR(optimizer, T_max=95, eta_min=1e-5)
+scheduler = SequentialLR(optimizer, [warmup, cosine], [5])
+# Expect +0.5-2% improvement (e.g., 77-78.5%)
+```
+
+**Step 4: Compare results**
+
+| Version | Accuracy | Notes |
+|---------|----------|-------|
+| Paper recipe | 76.5% | Baseline (reproduces paper) |
+| Modern recipe | 78.0% | +1.5% from warmup + cosine |
+
+**When to Use Which:**
+
+**Use Paper Recipe:**
+- Publishing reproduction study
+- Comparing to paper's baseline
+- Validating implementation correctness
+- Research requiring exact reproducibility
+
+**Use Modern Recipe:**
+- Building production system (want best performance)
+- Competing in benchmark (need SOTA results)
+- Publishing new method (should use modern baseline)
+- Limited compute (modern practices more efficient)
+
+**Trade-off Table:**
+
+| Aspect | Paper Recipe | Modern Recipe |
+|--------|--------------|---------------|
+| Reproducibility | ✅ Exact | ⚠️ Better but different |
+| Performance | ⚠️ Good (for its time) | ✅ Better (+0.5-2%) |
+| Comparability | ✅ To paper | ✅ To SOTA |
+| Compute efficiency | ⚠️ May be suboptimal | ✅ Modern optimizations |
+| Training stability | ⚠️ Variable | ✅ More stable (warmup) |
+
+**Bottom Line:**
+
+Both are valid depending on your goal:
+- **Research/reproduction:** Start with paper recipe
+- **Production/competition:** Use modern recipe
+- **Best practice:** Validate with paper recipe, deploy with modern recipe
 
 ---
 
@@ -2129,6 +2430,137 @@ for epoch in range(10):
   ```python
   torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
   ```
+
+---
+
+## Issue: ReduceLROnPlateau Never Reduces LR
+
+**Symptoms:**
+- Using ReduceLROnPlateau for 50+ epochs
+- Validation loss clearly plateaued
+- Learning rate never reduces
+
+**Debugging Steps:**
+
+**1. Verify metric is being passed:**
+
+```python
+val_loss = validate(model, val_loader)
+print(f"Epoch {epoch}: val_loss = {val_loss:.6f}")  # Print metric
+scheduler.step(val_loss)  # Ensure passing metric
+```
+
+**2. Check mode is correct:**
+
+```python
+# For loss (want to minimize):
+scheduler = ReduceLROnPlateau(optimizer, mode='min')
+
+# For accuracy (want to maximize):
+scheduler = ReduceLROnPlateau(optimizer, mode='max')
+```
+
+Wrong mode means scheduler waits for opposite direction (loss increasing instead of decreasing).
+
+**3. Check threshold isn't too strict:**
+
+```python
+# Default threshold=1e-4 (0.01% improvement threshold)
+# If val_loss 0.5000 → 0.4999 (0.02% improvement), counts as improvement
+# If threshold too high, tiny improvements prevent reduction
+
+# Solution: Lower threshold to be more sensitive
+scheduler = ReduceLROnPlateau(optimizer, threshold=1e-5)
+
+# Or remove threshold entirely
+scheduler = ReduceLROnPlateau(optimizer, threshold=0)
+```
+
+**4. Enable verbose logging:**
+
+```python
+scheduler = ReduceLROnPlateau(optimizer, verbose=True)
+# Prints: "Epoch 00042: reducing learning rate of group 0 to 1.0000e-04"
+# when it reduces
+```
+
+**5. Verify plateau is real:**
+
+```python
+# Plot validation loss over time
+import matplotlib.pyplot as plt
+plt.figure(figsize=(10, 6))
+plt.plot(val_losses)
+plt.xlabel('Epoch')
+plt.ylabel('Validation Loss')
+plt.title('Validation Loss Over Time')
+plt.grid(True, alpha=0.3)
+plt.show()
+
+# Check: Is loss truly flat, or still slowly improving?
+# Tiny improvements (0.4500 → 0.4499) count as progress
+```
+
+**6. Check cooldown isn't preventing reduction:**
+
+```python
+# Default cooldown=0, but if set higher, prevents reduction after recent reduction
+scheduler = ReduceLROnPlateau(optimizer, cooldown=0)  # No cooldown
+```
+
+**Common Causes Table:**
+
+| Problem | Symptom | Solution |
+|---------|---------|----------|
+| Not passing metric | Error or no reduction | `scheduler.step(val_loss)` |
+| Wrong mode | Never reduces | `mode='min'` for loss, `mode='max'` for accuracy |
+| Threshold too strict | Ignores small improvements | Lower to `threshold=1e-5` or `0` |
+| Metric still improving | Not actually plateaued | Increase patience or accept slow progress |
+| Cooldown active | Reducing but waiting | Set `cooldown=0` |
+| Min_lr reached | Can't reduce further | Check current LR, may be at min_lr |
+
+**Example Fix:**
+
+```python
+scheduler = ReduceLROnPlateau(
+    optimizer,
+    mode='min',          # For loss minimization
+    factor=0.1,          # Reduce by 10x
+    patience=10,         # Wait 10 epochs
+    threshold=0,         # Accept any improvement (most sensitive)
+    threshold_mode='rel',
+    cooldown=0,          # No cooldown period
+    min_lr=1e-6,         # Minimum LR allowed
+    verbose=True         # Print when reducing
+)
+
+# Training loop
+for epoch in range(epochs):
+    train_loss = train_one_epoch(model, train_loader, optimizer)
+    val_loss = validate(model, val_loader)
+
+    print(f"Epoch {epoch}: train_loss={train_loss:.4f}, val_loss={val_loss:.4f}")
+
+    scheduler.step(val_loss)  # Pass validation loss
+
+    # Print current LR
+    current_lr = optimizer.param_groups[0]['lr']
+    print(f"  Current LR: {current_lr:.6e}")
+```
+
+**Advanced Debugging:**
+
+If still not reducing, manually check scheduler logic:
+
+```python
+# Get scheduler state
+print(f"Best metric so far: {scheduler.best}")
+print(f"Epochs without improvement: {scheduler.num_bad_epochs}")
+print(f"Patience: {scheduler.patience}")
+
+# If num_bad_epochs < patience, it's still waiting
+# If num_bad_epochs >= patience, should reduce next step
+```
 
 ---
 
