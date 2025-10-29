@@ -1634,16 +1634,70 @@ profile_communication_overhead(model, train_loader, device)
 
 ## Common Rationalizations (Don't Do These)
 
-| Excuse | Reality | Correct Approach |
-|--------|---------|------------------|
-| "DataParallel is simpler, I'll use it" | DataParallel 2-3x slower, deprecated | DDP setup takes 10 more lines, 3-4x faster |
-| "I'll move model to device after DDP" | Wrong order causes device errors | ALWAYS to(device) BEFORE DDP() |
-| "DistributedSampler too complex" | Without it, all GPUs see same data | Use DistributedSampler, it's 2 lines |
-| "Batch norm should work automatically" | Per-GPU statistics cause divergence | Use SyncBatchNorm for small batches |
-| "Scaling not perfect, must tune NCCL" | Likely configuration or model size | Profile first, NCCL tuning is last resort |
-| "I'll debug multi-node after single-node works" | Multi-node has different failure modes | Test NCCL communication separately |
-| "Communication slow, need better network" | May be configuration (bucketing, accumulation) | Profile to identify bottleneck first |
-| "find_unused_parameters=True just in case" | Adds 10-20% overhead | Only use for dynamic graphs |
+### Comprehensive Rationalization Table
+
+| Excuse | What Agent Might Think | Reality | Correct Response |
+|--------|----------------------|---------|------------------|
+| "User is rushed" | "I'll skip the checklist to save time" | Checklist takes <5 min, wrong fix wastes 30+ min | Follow systematic methodology |
+| "They already tried X" | "X must not be the issue, move to Y" | X may have been done incorrectly | Verify X was done correctly first |
+| "Senior engineer says use DataParallel" | "Authority knows best, defer to them" | DataParallel is objectively slower/deprecated | Recommend DDP with evidence |
+| "They've been debugging for hours" | "They must have ruled out obvious issues" | Fatigue causes mistakes, start from basics | Apply systematic checklist regardless |
+| "Multi-node is complex" | "Just give them a working config" | Config must match their environment | Diagnose specific failure |
+| "Profiling takes time" | "User wants quick answer, skip profiling" | Profiling finds exact bottleneck in minutes | Always profile before optimizing |
+| "This is a complex interaction" | "Too complex to debug systematically" | Systematic testing isolates interaction | Test components independently |
+| "Network must be the issue" | "Skip other checks, assume network" | Could be config, NCCL, or code | Check network AFTER code checks |
+| "NCCL tuning will fix it" | "Jump to NCCL environment variables" | NCCL tuning is last resort | Profile to confirm communication bound |
+| "Just use fewer GPUs" | "Scaling is hard, reduce parallelism" | Likely a configuration issue | Fix configuration, don't reduce scale |
+| "DataParallel is simpler" | "Avoid DDP complexity" | DataParallel 2-3x slower, deprecated | DDP setup takes 10 more lines, 3-4x faster |
+| "I'll move model after DDP" | "Order doesn't matter much" | Wrong order causes device errors | ALWAYS to(device) BEFORE DDP() |
+| "DistributedSampler too complex" | "Skip it for now" | Without it, all GPUs see same data | Use DistributedSampler, it's 2 lines |
+| "Batch norm should work" | "PyTorch handles it automatically" | Per-GPU statistics cause divergence | Use SyncBatchNorm for small batches |
+| "find_unused_parameters=True just in case" | "Better safe than sorry" | Adds 10-20% overhead | Only use for dynamic graphs |
+
+---
+
+## Red Flags Checklist - Expanded
+
+**Before suggesting any fix, check these red flags:**
+
+### Setup Red Flags
+- [ ] Am I suggesting DataParallel? (❌ Always use DDP)
+- [ ] Am I wrapping before moving to device? (❌ Device first, then DDP)
+- [ ] Am I missing DistributedSampler? (❌ Required for data parallelism)
+- [ ] Am I hardcoding device=cuda:0? (❌ Use LOCAL_RANK)
+- [ ] Am I skipping set_epoch()? (❌ Required for proper shuffling)
+
+### Synchronization Red Flags
+- [ ] Am I using regular BatchNorm with small batches? (❌ Use SyncBatchNorm)
+- [ ] Am I assuming initialization is synced? (❌ Set seed explicitly)
+- [ ] Am I ignoring buffer synchronization? (❌ Keep broadcast_buffers=True)
+- [ ] Am I using find_unused_parameters unnecessarily? (❌ Adds overhead)
+
+### Performance Red Flags
+- [ ] Am I suggesting NCCL tuning before profiling? (❌ Profile first)
+- [ ] Am I using gradient accumulation without no_sync()? (❌ Wastes communication)
+- [ ] Am I ignoring model size vs communication tradeoff? (❌ Small models scale poorly)
+- [ ] Am I assuming perfect scaling? (❌ 80-90% efficiency is realistic)
+
+### Debugging Red Flags
+- [ ] Am I skipping single-GPU verification? (❌ Verify single-GPU first)
+- [ ] Am I not checking environment variables? (❌ Verify RANK, LOCAL_RANK, etc.)
+- [ ] Am I assuming device placement without checking? (❌ Use diagnostic function)
+- [ ] Am I guessing bottleneck without profiling? (❌ Always profile)
+
+### Multi-Node Red Flags
+- [ ] Am I assuming network works without testing? (❌ Test connectivity)
+- [ ] Am I not checking NCCL logs? (❌ Enable NCCL_DEBUG=INFO)
+- [ ] Am I ignoring network interface specification? (❌ Set NCCL_SOCKET_IFNAME)
+- [ ] Am I assuming allreduce works without testing? (❌ Run communication test)
+
+### Pressure/Bias Red Flags
+- [ ] Am I skipping systematic checks due to time pressure? (❌ Checklist faster than guessing)
+- [ ] Am I accepting user's diagnosis without verification? (❌ Profile to confirm)
+- [ ] Am I deferring to authority over facts? (❌ DDP is objectively better)
+- [ ] Am I providing config without understanding failure? (❌ Diagnose first)
+
+**If ANY red flag is true, STOP and apply the correct pattern.**
 
 ---
 
