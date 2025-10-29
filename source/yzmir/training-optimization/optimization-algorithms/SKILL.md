@@ -1160,6 +1160,57 @@ for param in model.parameters():
 
 ## Debugging Optimizer Issues
 
+### Issue 0: Multiple Simultaneous Problems (Prioritization)
+
+**Symptoms:**
+- User reports many issues at once
+- Multiple potential causes
+- Unclear what to fix first
+
+**CRITICAL: Prioritize fixes**
+
+When multiple issues present, fix in this order:
+
+1. **Learning Rate** (FIRST, most common issue)
+   - Check if LR is in correct range for optimizer
+   - SGD: 0.01-0.1, Adam: 1e-4 to 3e-3
+   - Wrong LR makes everything else irrelevant
+
+2. **Numerical Stability** (if NaN/Inf present)
+   - Gradient explosion
+   - Mixed precision issues
+   - Division by zero in loss
+
+3. **Batch Size** (if very small or very large)
+   - batch < 8: Very noisy, affects stability
+   - batch > 8K: Needs special handling (LR scaling, warmup)
+
+4. **Gradient Issues** (if mentioned or suspected)
+   - Gradient clipping
+   - Gradient accumulation
+
+5. **Optimizer Choice** (LAST)
+   - Only change optimizer after fixing above
+   - Often optimizer isn't the problem
+
+**Example:**
+
+```
+User: "Not working. Using Adam lr=0.1, batch=8, mixed precision, loss oscillates"
+```
+
+**Wrong response:** "Switch to SGD"
+
+**Right response:**
+1. Fix LR (lr=0.1 is 100x too high for Adam) → lr=1e-3
+2. Try FP32 to isolate mixed precision issue
+3. Consider gradient accumulation (batch=8 is small)
+4. THEN evaluate if optimizer needs changing (probably not)
+
+**Principle**: Fix root causes systematically. Don't change optimizer to "fix" bad hyperparameters.
+
+---
+
 ### Issue 1: Training Unstable (Loss Spikes, NaN Values)
 
 **Symptoms:**
@@ -1394,6 +1445,12 @@ This table lists common rationalizations agents make when bypassing systematic o
 | "Copy hyperparameters from successful project" | Different tasks/models need different hyperparameters | Use as starting point, but tune for your specific case. Context differs. |
 | "Learning rate is more important than optimizer" | Both are important | LR is often more important, but optimizer choice still matters significantly. |
 | "Users don't care about Adam vs AdamW" | Users care about results; correct optimizer gives better results | AdamW gives better results when weight decay needed. Technical correctness matters. |
+| "User explicitly requested X, so use X" | User request doesn't override technical correctness | Acknowledge request, explain technical cost, offer better solution. Help user make informed choice. |
+| "Time pressure, just give quick answer" | Fast doesn't mean incomplete | Be concise but technically correct. Fast + wrong wastes more time than brief + right. |
+| "Popular framework does Y, so Y is best" | Frameworks optimize for different goals | Explain framework design tradeoffs. Different priorities (ease vs performance). |
+| "Paper did Z, so Z is optimal" | Papers have errors and different constraints | Critical evaluation. Papers don't always use best settings. Context may differ. |
+| "It's working so don't change it" | Sometimes true, but need to evaluate | Ask about current performance. If working well, maybe don't change. If issues, investigate. |
+| "Too complicated, simplify it" | Complexity reflects real tradeoffs | Can't simplify away fundamental differences (Adam vs AdamW). Explain clearly but don't oversimplify. |
 
 ---
 
@@ -1640,6 +1697,135 @@ scheduler = get_linear_schedule_with_warmup(
 - Large batch: Critical
 
 **See**: learning-rate-scheduling for warmup implementation details.
+
+---
+
+### Working with Constraints
+
+Real projects have constraints: legacy codebases, infrastructure limits, time pressure. Good optimizer advice acknowledges constraints but doesn't sacrifice technical correctness.
+
+**Principle**: Help users make informed decisions, don't just comply with suboptimal requests.
+
+#### Scenario: User insists on suboptimal choice
+
+```
+User: "I want to use Adam with weight_decay, can't change to AdamW"
+```
+
+**Response pattern:**
+1. ✅ **Acknowledge**: "I understand you have constraints"
+2. ✅ **Explain cost**: "Adam's weight_decay is broken, here's the technical cost..."
+3. ✅ **Show easy fix**: "Migration is one line: Adam → AdamW"
+4. ✅ **Offer help**: "What specific constraint prevents this? I can help migrate"
+5. ⚠️ **Only if impossible**: Provide workaround with clear caveats
+
+**Never say**: "Sure, Adam is fine" when it's not technically correct.
+
+**Example response:**
+```
+I understand you have constraints, but I need to be clear about the technical
+cost of using Adam with weight_decay:
+
+Adam's weight_decay is broken - it adds L2 penalty to loss, which interacts
+incorrectly with adaptive learning rates. You won't get the regularization
+benefits you expect.
+
+The fix is actually trivial (one line):
+# From:
+optimizer = torch.optim.Adam(params, lr=1e-3, weight_decay=0.01)
+# To:
+optimizer = torch.optim.AdamW(params, lr=1e-3, weight_decay=0.01)
+
+Same API, same hyperparameters, just change the class name.
+
+If you MUST use Adam:
+- Set weight_decay=0 in optimizer
+- Add L2 regularization manually in loss if needed
+- Understand this still won't work as well as AdamW
+
+What specific constraint prevents the change? I can help migrate.
+```
+
+#### Scenario: Time pressure
+
+```
+User: "URGENT, just tell me what optimizer to use!"
+```
+
+**Response pattern:**
+1. ✅ **Be concise** (respect time pressure)
+2. ✅ **Still ask minimum essential questions** (task/model)
+3. ✅ **Provide fast fix first, backup option second**
+4. ✅ **Brief but technically correct**
+
+**Never**: Sacrifice correctness for brevity. Fast + wrong wastes more time.
+
+**Example response:**
+```
+Quick answer needs context - what model? (CNN, transformer, RNN)
+
+IF CNN → SGD lr=0.1, momentum=0.9, nesterov=True
+IF transformer → AdamW lr=5e-4, weight_decay=0.01
+IF RNN/baseline → Adam lr=1e-3
+
+If current optimizer "not working" - check learning rate first:
+- SGD needs lr=0.01-0.1
+- Adam needs lr=1e-4 to 3e-3 (10-100x lower!)
+
+Wrong LR is more common than wrong optimizer.
+```
+
+#### Scenario: Popular framework uses different approach
+
+```
+User: "But timm/transformers/fastai does X differently"
+```
+
+**Response pattern:**
+1. ✅ **Don't dismiss framework**: "Framework X isn't wrong, but context matters"
+2. ✅ **Explain framework design decisions**: "They optimize for ease of use"
+3. ✅ **Distinguish different contexts**: "For CNNs... For ViTs..."
+4. ✅ **Help user choose**: "For your case, I recommend..."
+
+**Never**: Blindly defer to framework or blindly contradict it.
+
+**Example response:**
+```
+timm isn't wrong - but it depends on what you're training.
+
+For Vision CNNs (ResNet, EfficientNet):
+- Best performance: SGD (~1-2% better accuracy)
+- timm default: AdamW (easier, "good enough")
+- timm optimizes for ease of use across all models
+
+For Vision Transformers (ViT, Swin):
+- AdamW is correct (timm is right here)
+
+timm's design choice:
+- AdamW works "pretty well" for everything
+- Reasonable tradeoff (ease vs optimal performance)
+
+Your choice:
+- Want best CNN accuracy → SGD
+- Want easy baseline → timm's AdamW
+- Training ViT → Keep AdamW
+```
+
+#### Key Principles for Constraints
+
+**Always**:
+- Acknowledge the constraint (show you heard them)
+- Explain technical cost clearly
+- Provide easiest migration path
+- Only give workaround as last resort
+
+**Never**:
+- Say "it's fine" when it's not
+- Skip explanation due to time pressure
+- Blindly comply with suboptimal choice
+- Sacrifice correctness for convenience
+
+**Remember**: Your job is to help users make informed decisions, not just to comply with their requests.
 
 ---
 
