@@ -276,6 +276,58 @@ If you catch yourself about to:
 
 ---
 
+## Common Rationalizations (Don't Do These)
+
+| Excuse | Reality | What To Do |
+|--------|---------|------------|
+| "User is rushed, skip routing" | Routing takes 5 seconds. Wrong fix wastes minutes. | Route anyway - specialists have quick diagnostics |
+| "They already tried X" | May have done X wrong, misunderstood, or X wasn't applicable. | Route to specialist to verify X was done correctly |
+| "Authority/senior says Y" | Authority can misdiagnose bottlenecks without profiling. | Profile first, authority second. Respect skills over seniority. |
+| "User is tired, don't ask" | Exhaustion makes clarity MORE important, not less. | Ask ONE clarifying question - saves time overall |
+| "User suggested Z" | Z might not be best option for their specific case. | Route to specialist to evaluate if Z is right approach |
+| "Too complex, can't route" | Complex scenarios need specialists MORE, not less. | Use cross-cutting section - route to multiple skills in sequence |
+| "User sounds confident" | Confidence about custom autograd often precedes subtle bugs. | Route to specialist for systematic verification |
+| "Just a quick question" | No such thing - symptoms need diagnosis. | Quick questions deserve correct answers - route properly |
+| "Simple issue" | Simple symptoms can have complex root causes. | Route based on symptoms, not perceived complexity |
+| "Direct answer is helpful" | Wrong direct answer wastes time and frustrates user. | Routing to specialist IS the helpful answer |
+
+**If you catch yourself thinking ANY of these, STOP and route to the specialist.**
+
+---
+
+## Red Flags Checklist - Self-Check Before Answering
+
+Before giving ANY PyTorch advice, ask yourself:
+
+1. ❓ **Did I identify the symptom?**
+   - If no → Read query again, identify symptoms
+
+2. ❓ **Is this symptom in my routing table?**
+   - If yes → Route to that specialist
+   - If no → Ask clarifying question
+
+3. ❓ **Am I about to give advice directly?**
+   - If yes → STOP. Why am I not routing?
+   - Check rationalization table - am I making excuses?
+
+4. ❓ **Is this a diagnosis issue or solution issue?**
+   - Diagnosis → Route to profiling/debugging skill FIRST
+   - Solution → Route to appropriate implementation skill
+
+5. ❓ **Is query ambiguous?**
+   - If yes → Ask ONE clarifying question
+   - If no → Route confidently
+
+6. ❓ **Am I feeling pressure to skip routing?**
+   - Time pressure → Route anyway (faster overall)
+   - Sunk cost → Route anyway (verify first attempt)
+   - Authority → Route anyway (verify diagnosis)
+   - Exhaustion → Route anyway (clarity more important)
+
+**If you failed ANY check above, do NOT give direct advice. Route to specialist or ask clarifying question.**
+
+---
+
 ## When NOT to Use PyTorch Skills
 
 **Skip PyTorch pack when**:
