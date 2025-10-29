@@ -500,7 +500,55 @@ torch.cuda.memory._record_memory_history(enabled=None)
 
 ---
 
+## Red Flags - Stop and Diagnose
+
+**If you catch yourself thinking ANY of these, STOP and follow systematic methodology:**
+
+| Red Flag Thought | Reality | What to Do Instead |
+|------------------|---------|-------------------|
+| "I'll just reduce batch size" | Avoids root cause, wastes GPU capacity | Follow memory leak diagnosis first |
+| "I'll add more GPU memory" | Expensive non-solution if there's a leak | Diagnose leak, don't throw hardware at it |
+| "Memory leaks are normal in PyTorch" | FALSE - PyTorch has excellent memory management | There IS a bug in your code, find it |
+| "Too complex to debug, I'll refactor" | Avoidance - same bug will appear in new code | Debug systematically, learn the issue |
+| "Skip profiling, I know what's slow" | Guessing wastes time, profiling gives facts | Always profile before optimizing |
+| "Mixed precision is broken" | AMP works when used correctly | Check autocast context boundaries |
+| "Quick fix: just call empty_cache()" | Doesn't fix leaks, just masks symptoms | Find and fix the leak |
+
+**Critical rule:** Memory issues have root causes. Systematic diagnosis ALWAYS faster than guessing.
+
+---
+
+## Common Rationalizations (Don't Do These)
+
+| Excuse | What Really Happens | Correct Approach |
+|--------|-------------------|------------------|
+| "User seems rushed, skip methodology" | Guessing wastes MORE time than systematic diagnosis | 5 minutes of diagnosis saves hours of guessing |
+| "I already tried profiling" | May have looked at wrong metrics or misinterpreted | Re-profile with specific focus from methodology |
+| "This worked on smaller model" | Scaling exposes hidden issues | Same methodology applies, just reveals different bugs |
+| "Documentation says to do X" | May be misunderstanding context or outdated | Check PyTorch version, verify applicability |
+| "I'll optimize later" | Memory issues prevent finishing now | Fix memory first, then optimize if still needed |
+| "It's a CUDA bug" | 99.9% of time it's your code | Assume your bug until proven otherwise |
+
+---
+
 ## Common Pitfalls
+
+### Consolidated Pitfall Table
+
+| # | Pitfall | Symptom | Root Cause | Fix |
+|---|---------|---------|------------|-----|
+| 1 | Accumulating metrics without detachment | Memory grows linearly with iterations | Storing tensors retains computation graph | Use `.item()` for scalars, `.detach()` for tensors |
+| 2 | Hidden state chaining (RNNs) | Memory grows across batches | Hidden states chain gradients indefinitely | Detach hidden states between batches |
+| 3 | Missing `torch.no_grad()` in eval | High memory usage during validation | Evaluation builds unnecessary graphs | Wrap evaluation in `torch.no_grad()` |
+| 4 | Repeated CPU-GPU transfers | Low GPU utilization, slow training | PCIe bandwidth bottleneck | Move to GPU once, keep there |
+| 5 | Non-contiguous tensor operations | Unexpectedly slow operations | Strided memory access inefficiency | Call `.contiguous()` before repeated ops |
+| 6 | Allocations in loops | Slow iterations, fragmentation | Memory allocation overhead | Pre-allocate and reuse buffers |
+| 7 | Gradient accumulation without clearing | OOM after few iterations | Gradients accumulate unbounded | `optimizer.zero_grad()` every iteration |
+| 8 | Mixed precision context boundaries | Intermittent crashes, NaN values | Loss computed outside autocast | Keep forward + loss inside `autocast()` |
+| 9 | Device inconsistency | "device-side assert" errors | Tensors on different devices | Systematic device checking |
+| 10 | Logging with tensors instead of scalars | Memory growth during training | Retaining graphs for logging | Always use `.item()` for logging |
+
+---
 
 ### Memory Leak Pitfalls
 
@@ -705,6 +753,205 @@ print(prof.key_averages().table(sort_by="cuda_time_total"))
 # - print() statements with tensor values
 # - Assertions on tensor values
 ```
+
+---
+
+## Edge Cases and Advanced Scenarios
+
+### Edge Case 1: Gradient Checkpointing Interaction
+
+**Scenario:** Using gradient checkpointing for large models but still getting OOM
+
+```python
+from torch.utils.checkpoint import checkpoint
+
+# Gradient checkpointing trades compute for memory
+# But you can still leak memory!
+
+# ❌ WRONG: Leaking even with checkpointing
+class Model(nn.Module):
+    def forward(self, x):
+        # Checkpointing helps, but if you retain intermediate results...
+        intermediate = checkpoint(self.layer1, x)
+        self.cached_intermediate = intermediate  # ❌ Retains graph!
+        return checkpoint(self.layer2, intermediate)
+
+# ✅ CORRECT: Don't cache checkpointed results
+class Model(nn.Module):
+    def forward(self, x):
+        intermediate = checkpoint(self.layer1, x)
+        return checkpoint(self.layer2, intermediate)
+        # No caching, memory saved
+```
+
+**Key insight:** Gradient checkpointing recomputes forward pass during backward. Caching checkpointed results defeats the purpose and leaks memory.
+
+---
+
+### Edge Case 2: Dynamic Computation Graphs
+
+**Scenario:** Graph structure changes each iteration (e.g., different sequence lengths, variable branches)
+
+```python
+# Dynamic graphs can cause memory issues if not careful
+
+# ❌ WRONG: Accumulating different graphs
+graph_stats = []
+for batch in dataloader:
+    # Sequence length varies each batch
+    output = model(batch)  # Different graph each time
+    graph_stats.append(output.grad_fn)  # ❌ Retains ALL graphs!
+
+# ✅ CORRECT: Don't retain grad_fn, detach appropriately
+for batch in dataloader:
+    output = model(batch)
+    loss = criterion(output, target)
+    loss.backward()
+    # Don't store anything with .grad_fn
+    optimizer.step()
+    optimizer.zero_grad()
+```
+
+**Key insight:** Dynamic graphs are fine, but don't accumulate references to different graphs across iterations.
+
+---
+
+### Edge Case 3: DistributedDataParallel (DDP) Memory Management
+
+**Scenario:** DDP training with memory issues
+
+```python
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
+
+# ❌ WRONG: Multiple issues with DDP
+model = MyModel().cuda()
+model = DDP(model)  # Missing device_ids!
+
+for batch in dataloader:
+    output = model(batch)
+    loss = criterion(output, target)
+    loss.backward()
+    # Missing: optimizer.zero_grad() BEFORE backward in some DDP scenarios
+
+# ✅ CORRECT: Proper DDP setup
+local_rank = int(os.environ["LOCAL_RANK"])
+device = torch.device(f"cuda:{local_rank}")
+
+model = MyModel().to(device)
+model = DDP(model, device_ids=[local_rank], output_device=local_rank)
+
+for batch in dataloader:
+    batch = batch.to(device)
+    target = target.to(device)
+
+    optimizer.zero_grad(set_to_none=True)  # Before forward in DDP
+    output = model(batch)
+    loss = criterion(output, target)
+    loss.backward()
+    optimizer.step()
+```
+
+**Key insights:**
+- Specify `device_ids` and `output_device` explicitly
+- `zero_grad()` placement critical in DDP
+- Ensure all data on correct local device
+
+---
+
+### Edge Case 4: Custom CUDA Kernels Memory Management
+
+**Scenario:** Using custom CUDA kernels or third-party extensions
+
+```python
+# Custom CUDA kernels may not play nice with PyTorch's memory management
+
+import custom_cuda_kernel  # Hypothetical extension
+
+# ❌ WRONG: Not checking tensor lifetime
+def forward(x):
+    y = custom_cuda_kernel.process(x)  # Allocates CUDA memory
+    # If kernel doesn't register with PyTorch, memory not tracked!
+    return y
+
+# ✅ CORRECT: Verify kernel registers memory with PyTorch
+def forward(x):
+    y = custom_cuda_kernel.process(x)
+
+    # Check if memory is tracked
+    print(f"PyTorch tracked: {torch.cuda.memory_allocated()}")
+    # If custom kernel allocated memory not shown, manual cleanup needed
+
+    return y
+```
+
+**Key insight:** Custom CUDA code may bypass PyTorch's memory tracking. Use `torch.cuda.memory_allocated()` to verify, and ensure custom kernels use PyTorch's allocator.
+
+---
+
+### Edge Case 5: Nested Autocast Contexts
+
+**Scenario:** Nested autocast contexts (e.g., custom training loop with autocast, calling library that also uses autocast)
+
+```python
+from torch.cuda.amp import autocast
+
+# ❌ POTENTIAL ISSUE: Nested autocast with different settings
+with autocast():  # Outer context
+    output1 = model1(x)
+    with autocast(enabled=False):  # Inner context disables
+        output2 = model2(output1)  # Back to float32
+    # output1 is float16, output2 is float32
+    loss = criterion(output1, output2)  # Type mismatch possible!
+
+# ✅ CORRECT: Be aware of autocast nesting
+with autocast():
+    output1 = model1(x)
+    # If you need float32 for specific operation:
+    with autocast(enabled=False):
+        output2_float32 = model2(output1.float())  # Explicit cast
+    loss = criterion(output1, output2_float32.half())  # Explicit cast back
+```
+
+**Key insight:** Autocast contexts can nest. Be explicit about dtype when mixing precision contexts.
+
+---
+
+### Edge Case 6: Memory Fragmentation with Varying Batch Sizes
+
+**Scenario:** Training with variable batch sizes causing fragmentation
+
+```python
+# Variable batch sizes can fragment memory over time
+
+# ❌ WRONG: Varying allocations fragment memory pool
+for batch in dataloader:  # Batch sizes: 32, 64, 32, 128, 32...
+    output = model(batch)  # Different allocations each time
+    # CUDA memory becomes fragmented
+    # Reserved >> Allocated
+
+# ✅ BETTER: Use gradient accumulation with fixed effective batch size
+accumulation_steps = 4
+effective_batch_size = 32
+
+for i, batch in enumerate(dataloader):
+    # Always process fixed size mini-batches
+    mini_batch = batch[:effective_batch_size]  # Fixed size
+    output = model(mini_batch)
+    loss = criterion(output, target) / accumulation_steps
+    loss.backward()
+
+    if (i + 1) % accumulation_steps == 0:
+        optimizer.step()
+        optimizer.zero_grad()
+
+# ✅ OR: Periodically defragment
+if epoch % 10 == 0:
+    torch.cuda.empty_cache()  # Release fragmented memory
+    gc.collect()
+```
+
+**Key insight:** Variable batch sizes fragment CUDA memory pool. Use fixed sizes or periodic cleanup.
 
 ---
 
