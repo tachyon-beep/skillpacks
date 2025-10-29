@@ -1,0 +1,112 @@
+{
+  "name": "skillpacks-security-documentation",
+  "version": "1.0.0",
+  "description": "Professional security architecture and technical writing skills for Claude Code",
+  "author": "tachyon-beep",
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "categories": [
+    "security",
+    "documentation",
+    "compliance"
+  ],
+  "keywords": [
+    "security",
+    "threat-modeling",
+    "documentation",
+    "technical-writing",
+    "compliance",
+    "architecture"
+  ],
+  "skills": [
+    {
+      "name": "clarity-and-style",
+      "path": "muna/technical-writer/clarity-and-style",
+      "description": "Use when writing or reviewing technical content - applies active voice, concrete examples, progressive disclosure, audience adaptation, and scannable structure to create clear, actionable documentation that readers can immediately use"
+    },
+    {
+      "name": "diagram-conventions",
+      "path": "muna/technical-writer/diagram-conventions",
+      "description": "Use when creating visual documentation - provides decision tree for choosing diagram types (sequence, component, data flow, state), semantic labeling standards, meaningful relationships, and guidance on when flowcharts become anti-patterns"
+    },
+    {
+      "name": "documentation-structure",
+      "path": "muna/technical-writer/documentation-structure",
+      "description": "Use when creating new documentation or choosing documentation patterns - provides complete structures for ADRs (with all sections), API references (auth, pagination, versioning), runbooks (prerequisites, procedures, troubleshooting), and READMEs (simple, standard, comprehensive) to ensure consistent, complete, findable documentation"
+    },
+    {
+      "name": "documentation-testing",
+      "path": "muna/technical-writer/documentation-testing",
+      "description": "Use when preparing documentation for release - provides testing framework for completeness (can task be accomplished?), accuracy (do examples run?), findability (can users locate?), example verification (copy-paste-run), and walkthrough validation (does it work for new users?)"
+    },
+    {
+      "name": "incident-response-documentation",
+      "path": "muna/technical-writer/incident-response-documentation",
+      "description": "Use when creating runbooks for security incidents or operational emergencies - provides response template (detection, containment, investigation, recovery, lessons), escalation paths, time-critical clarity patterns, and post-incident report structure"
+    },
+    {
+      "name": "itil-and-governance-documentation",
+      "path": "muna/technical-writer/itil-and-governance-documentation",
+      "description": "Use when working in formal IT service management environments - covers change requests (RFC), service documentation, configuration management (CMDB), release docs, operational handover, business continuity (DR/RTO/RPO), capacity planning, and problem management"
+    },
+    {
+      "name": "operational-acceptance-documentation",
+      "path": "muna/technical-writer/operational-acceptance-documentation",
+      "description": "Use when preparing systems for production deployment or operational handover - covers security authorization (SSP/SAR/POA&M/ATO), operational readiness, test & evaluation, go-live approval, transition planning, acceptance criteria, and residual risk documentation for multi-stakeholder acceptance gates"
+    },
+    {
+      "name": "security-aware-documentation",
+      "path": "muna/technical-writer/security-aware-documentation",
+      "description": "Use when documenting systems with sensitive data or security features - covers sanitizing examples (never use real credentials/PII), threat disclosure decisions, compliance sensitivity, redaction patterns, and security feature documentation"
+    },
+    {
+      "name": "using-technical-writer",
+      "path": "muna/technical-writer/using-technical-writer",
+      "description": "Use when starting documentation work, writing technical content, or creating user guides - routes to specific Muna writing skills based on document type (ADRs, APIs, runbooks, security docs), audience (developers, operators, executives), and determines when documentation skills are needed versus simple writing"
+    },
+    {
+      "name": "classified-systems-security",
+      "path": "ordis/security-architect/classified-systems-security",
+      "description": "Use when handling classified data or implementing multi-level security - applies Bell-LaPadula model, fail-fast enforcement, trusted downgrade patterns, and immutability to prevent unauthorized information flow in government/defense systems"
+    },
+    {
+      "name": "compliance-awareness-and-mapping",
+      "path": "ordis/security-architect/compliance-awareness-and-mapping",
+      "description": "Use when working in regulated environments or preparing for audits - teaches framework discovery process (ISM/IRAP, HIPAA, PCI-DSS, SOC2, FedRAMP vary by jurisdiction/industry), control mapping patterns, and traceability documentation across diverse compliance landscapes"
+    },
+    {
+      "name": "documenting-threats-and-controls",
+      "path": "ordis/security-architect/documenting-threats-and-controls",
+      "description": "Use when writing threat models, security ADRs, or control documentation - provides patterns for threat descriptions, security decision records, control documentation, and requirements traceability with cross-references to technical-writer skills"
+    },
+    {
+      "name": "secure-by-design-patterns",
+      "path": "ordis/security-architect/secure-by-design-patterns",
+      "description": "Use when designing greenfield systems or refactoring architecture - applies zero-trust, immutable infrastructure, security boundaries, TCB minimization, and fail-fast security to build security into system foundations rather than bolting it on"
+    },
+    {
+      "name": "security-architecture-review",
+      "path": "ordis/security-architect/security-architecture-review",
+      "description": "Use when reviewing existing designs or conducting security audits - provides systematic checklists for authentication, authorization, secrets management, data flow, and network security to identify vulnerabilities before implementation"
+    },
+    {
+      "name": "security-authorization-and-accreditation",
+      "path": "ordis/security-architect/security-authorization-and-accreditation",
+      "description": "Use when preparing systems for production authorization in government/defense environments - covers ATO (Authority to Operate), AIS (Authorization to Interconnect), T&E (Test & Evaluation), SSP, SAR, POA&M, and continuous monitoring processes"
+    },
+    {
+      "name": "security-controls-design",
+      "path": "ordis/security-architect/security-controls-design",
+      "description": "Use when implementing protective measures or hardening systems - applies defense-in-depth, least privilege, fail-secure patterns, and separation of duties to create layered security architectures with systematic boundary protection"
+    },
+    {
+      "name": "threat-modeling",
+      "path": "ordis/security-architect/threat-modeling",
+      "description": "Use when analyzing attack surfaces, designing new systems, or conducting security reviews - applies STRIDE methodology systematically, constructs attack trees, identifies property override patterns, checks enforcement gaps at every layer, and scores risks with likelihood-impact matrices to find threats that intuition misses"
+    },
+    {
+      "name": "using-security-architect",
+      "path": "ordis/security-architect/using-security-architect",
+      "description": "Use when starting security architecture work, designing secure systems, reviewing security designs, or documenting security decisions - routes to specific Ordis security skills based on task type and context (threat modeling, architecture review, controls design, secure patterns, compliance, classified systems, authorization)"
+    }
+  ]
+}
