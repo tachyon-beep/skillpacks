@@ -1,0 +1,17 @@
+{
+  "name": "yzmir-pytorch-engineering",
+  "version": "1.0.0",
+  "description": "PyTorch mastery - tensors, modules, distributed training, profiling - 9 skills",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "yzmir",
+    "pytorch",
+    "engineering"
+  ],
+  "category": "ai-ml"
+}

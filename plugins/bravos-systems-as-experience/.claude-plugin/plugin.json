@@ -1,0 +1,17 @@
+{
+  "name": "bravos-systems-as-experience",
+  "version": "1.0.0",
+  "description": "Emergent gameplay and systemic game design - 9 skills",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "bravos",
+    "systems",
+    "experience"
+  ],
+  "category": "game-development"
+}

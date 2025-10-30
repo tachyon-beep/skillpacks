@@ -1,0 +1,17 @@
+{
+  "name": "ordis-security-architect",
+  "version": "1.0.0",
+  "description": "Threat modeling, security controls, compliance, ATO - 9 comprehensive security skills",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "ordis",
+    "security",
+    "architect"
+  ],
+  "category": "security"
+}

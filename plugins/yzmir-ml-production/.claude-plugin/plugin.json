@@ -1,0 +1,16 @@
+{
+  "name": "yzmir-ml-production",
+  "version": "1.0.0",
+  "description": "Production ML - quantization, serving, MLOps, monitoring, debugging - 11 skills",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "yzmir",
+    "production"
+  ],
+  "category": "ai-ml"
+}

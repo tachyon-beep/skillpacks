@@ -1,0 +1,17 @@
+{
+  "name": "yzmir-simulation-foundations",
+  "version": "1.0.0",
+  "description": "Game simulation mathematics - ODEs, stability, control theory - 9 skills",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "yzmir",
+    "simulation",
+    "foundations"
+  ],
+  "category": "ai-ml"
+}

@@ -1,0 +1,17 @@
+{
+  "name": "yzmir-ai-engineering-expert",
+  "version": "1.0.0",
+  "description": "Primary router for all AI/ML engineering skillpacks - directs to specialized packs",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "yzmir",
+    "engineering",
+    "expert"
+  ],
+  "category": "ai-ml"
+}

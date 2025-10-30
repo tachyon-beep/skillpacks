@@ -1,0 +1,16 @@
+{
+  "name": "yzmir-deep-rl",
+  "version": "1.0.0",
+  "description": "Reinforcement learning - DQN, PPO, SAC, reward shaping, exploration - 13 skills",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "yzmir",
+    "deep"
+  ],
+  "category": "ai-ml"
+}
