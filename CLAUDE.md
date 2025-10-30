@@ -12,7 +12,7 @@ This is the **Skillpacks Marketplace** - a modular collection of 13 professional
 
 ### Marketplace Structure
 
-```
+```plaintext
 skillpacks/
 ├── .claude-plugin/
 │   └── marketplace.json          # Marketplace catalog defining all 13 plugins

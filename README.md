@@ -1,6 +1,6 @@
-# Claude Code Skillpacks Marketplace
+# Claude Code Skill Packs Marketplace
 
-**Professional AI/ML, game development, security, documentation, and UX skills for Claude Code**
+## Professional AI/ML, game development, security, documentation, and UX skills for Claude Code**
 
 13 complete skillpacks • 120+ production-ready skills • Install what you need
 
@@ -125,7 +125,7 @@ cd skillpacks
 /plugin install yzmir-deep-rl
 ```
 
-```
+```plaintext
 I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO for continuous character control
 ```
 
@@ -135,7 +135,7 @@ I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO for continuous 
 /plugin install bravos-systems-as-experience
 ```
 
-```
+``````plaintext
 I'm using bravos/systems-as-experience/emergent-gameplay-design to create systemic interactions in my RPG
 ```
 
