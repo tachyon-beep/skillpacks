@@ -1,6 +1,6 @@
 ---
 name: model-compression-techniques
-description: Compress ML models through pruning, knowledge distillation, and architecture optimization for edge deployment and cost reduction. Use when models are too large for deployment constraints or inference costs are too high.
+description: Compress models for edge deployment and cost reduction via pruning, distillation, and optimization.
 ---
 
 # Model Compression Techniques

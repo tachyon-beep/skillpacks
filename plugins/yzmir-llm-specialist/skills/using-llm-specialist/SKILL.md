@@ -1,6 +1,6 @@
 ---
 name: using-llm-specialist
-description: Router skill for LLM engineering. Routes to specialized skills for prompt engineering, fine-tuning, RAG, evaluation, context management, inference optimization, and safety/alignment based on task requirements.
+description: LLM specialist router to prompt engineering, fine-tuning, RAG, evaluation, and safety skills.
 ---
 
 # Using LLM Specialist

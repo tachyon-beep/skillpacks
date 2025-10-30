@@ -1,6 +1,6 @@
 ---
 name: exploration-strategies
-description: Master exploration strategies in deep RL - ε-greedy, UCB, curiosity-driven, RND, intrinsic motivation, decay schedules, when to use each method, sparse reward handling
+description: Master ε-greedy, UCB, curiosity-driven, RND, intrinsic motivation exploration
 ---
 
 # Exploration Strategies in Deep RL

@@ -1,6 +1,6 @@
 ---
 name: secure-by-design-patterns
-description: Use when designing greenfield systems or refactoring architecture - applies zero-trust, immutable infrastructure, security boundaries, TCB minimization, and fail-fast security to build security into system foundations rather than bolting it on
+description: Build security into system foundations - zero-trust, immutable infrastructure, TCB minimization
 ---
 
 # Secure By Design Patterns

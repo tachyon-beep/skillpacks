@@ -1,6 +1,6 @@
 ---
 name: model-serving-patterns
-description: Design production model serving infrastructure with FastAPI, TorchServe, gRPC, ONNX Runtime, request batching, and containerization. Use when deploying ML models to production with performance and reliability requirements.
+description: Design production serving with FastAPI, TorchServe, gRPC, batching, and containerization.
 ---
 
 # Model Serving Patterns Skill

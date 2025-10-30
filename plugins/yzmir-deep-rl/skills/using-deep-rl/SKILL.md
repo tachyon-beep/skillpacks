@@ -1,6 +1,6 @@
 ---
 name: using-deep-rl
-description: Use when implementing reinforcement learning agents, training policies, or solving sequential decision-making problems - routes to appropriate deep-rl skill based on problem type, algorithm family, and context
+description: Routes to appropriate deep-RL skills based on problem type and algorithm family
 ---
 
 # Using Deep RL Meta-Skill

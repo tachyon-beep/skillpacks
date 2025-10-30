@@ -1,6 +1,6 @@
 ---
 name: quantization-for-inference
-description: Reduce model size and increase inference speed through post-training quantization (PTQ), quantization-aware training (QAT), and precision selection. Use when models are too slow or large for CPU/edge deployment.
+description: Reduce model size and speed up inference via PTQ, QAT, and precision selection.
 ---
 
 # Quantization for Inference Skill

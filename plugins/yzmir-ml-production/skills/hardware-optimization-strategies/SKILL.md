@@ -1,6 +1,6 @@
 ---
 name: hardware-optimization-strategies
-description: Optimize ML model inference for specific hardware (GPU, CPU, edge devices) through profiling, acceleration frameworks, batch tuning, and hardware-aware optimization - use when model performance depends on hardware utilization rather than model architecture
+description: Optimize inference for GPU/CPU/edge via profiling and hardware-aware acceleration.
 ---
 
 # Hardware Optimization Strategies

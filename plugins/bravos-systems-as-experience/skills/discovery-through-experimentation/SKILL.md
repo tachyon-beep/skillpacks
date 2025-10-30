@@ -1,6 +1,6 @@
 ---
 name: discovery-through-experimentation
-description: Make experimentation and discovery the core reward loop - hidden depth, secrets, knowledge-based progression, rewarding player curiosity through systemic design (BotW physics, Outer Wilds knowledge gates, Noita alchemy)
+description: Make exploration the core reward - hidden secrets, knowledge progression, player curiosity
 pack: bravos/systems-as-experience
 faction: bravos
 skill_type: specific_application

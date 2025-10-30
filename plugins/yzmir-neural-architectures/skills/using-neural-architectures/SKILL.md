@@ -1,6 +1,6 @@
 ---
 name: using-neural-architectures
-description: Use when selecting neural network architectures, comparing model families (CNNs, Transformers, RNNs, GANs, GNNs), or designing network topology - routes to appropriate architecture skill based on data modality, problem type, and constraints
+description: Architecture selection router: CNNs, Transformers, RNNs, GANs, GNNs by data modality and constraints
 pack: neural-architectures
 faction: yzmir
 ---

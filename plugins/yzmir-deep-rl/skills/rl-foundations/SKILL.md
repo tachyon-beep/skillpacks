@@ -1,6 +1,6 @@
 ---
 name: rl-foundations
-description: Master core RL theory - MDP formulation, value functions, policies, Bellman equations, basic algorithms (value iteration, policy iteration, Monte Carlo, TD learning), exploration vs exploitation - foundational understanding before implementing algorithms
+description: Master RL theory - MDPs, value functions, Bellman equations, value/policy iteration, TD
 ---
 
 # RL Foundations

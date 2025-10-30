@@ -1,6 +1,6 @@
 ---
 name: rl-debugging
-description: Systematic RL debugging methodology - diagnose "why not learning?", common RL bugs, diagnosis trees, what to check first, debugging tools and logging. Eliminates random hyperparameter tweaking.
+description: Systematic RL debugging - diagnose learning failures, common bugs, diagnosis trees
 ---
 
 # RL Debugging Methodology

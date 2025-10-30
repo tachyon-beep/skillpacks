@@ -1,3 +1,8 @@
+---
+name: ecosystem-simulation
+description: Predator-prey dynamics, population control, stable ecosystem mechanics
+---
+
 # Ecosystem Simulation
 
 ## Description

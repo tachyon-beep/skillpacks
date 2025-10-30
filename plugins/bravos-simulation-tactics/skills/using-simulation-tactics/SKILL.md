@@ -1,3 +1,8 @@
+---
+name: using-simulation-tactics
+description: Router skill - analyze requirements and direct to appropriate tactics
+---
+
 # Using Simulation Tactics: The Router Meta-Skill
 
 ## Description

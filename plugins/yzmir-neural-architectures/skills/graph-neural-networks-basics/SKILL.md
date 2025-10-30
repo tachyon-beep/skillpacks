@@ -1,6 +1,6 @@
 ---
 name: graph-neural-networks-basics
-description: Introduction to Graph Neural Networks covering message passing, GCN/GraphSAGE/GAT architectures, when to use vs simple models, and permutation invariance. Use when working with graph-structured data (molecules, social networks, knowledge graphs).
+description: Graph Neural Networks: message passing, GCN, GraphSAGE, GAT architectures and selection
 dependencies:
   - using-neural-architectures
 related:

@@ -1,6 +1,6 @@
 ---
 name: using-ml-production
-description: Use when deploying ML models to production, optimizing inference, setting up MLOps pipelines, or monitoring production models - routes to appropriate ml-production skill based on concern type (optimization, serving, MLOps tooling, or observability)
+description: Router skill directing to deployment, optimization, MLOps, and monitoring guides.
 ---
 
 # Using ML Production

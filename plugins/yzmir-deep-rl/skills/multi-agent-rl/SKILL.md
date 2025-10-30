@@ -1,6 +1,6 @@
 ---
 name: multi-agent-rl
-description: Master multi-agent RL - multiple agents learning simultaneously, QMIX for cooperative value factorization, MADDPG for multi-agent actor-critic learning, centralized training decentralized execution (CTDE), communication protocols, credit assignment in teams, handling non-stationarity from changing agent policies, cooperative vs competitive vs mixed reward structures, when multi-agent RL is needed over single-agent, common multi-agent failure modes.
+description: Master QMIX, MADDPG, CTDE - multi-agent learning with coordination and credit assignment
 ---
 
 # Multi-Agent Reinforcement Learning

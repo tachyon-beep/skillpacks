@@ -1,6 +1,6 @@
 ---
 name: actor-critic-methods
-description: Master actor-critic architecture, A2C, A3C, SAC, TD3 - combining value and policy learning for continuous control. Learn when actor-critic is the right choice, implementation details, sample efficiency, stability tricks, common bugs, and how to choose between algorithms. Comprehensive guidance on continuous action RL from foundations to SOTA (SAC).
+description: Master A2C, A3C, SAC, TD3 - actor-critic methods for continuous control
 ---
 
 # Actor-Critic Methods

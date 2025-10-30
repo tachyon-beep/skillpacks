@@ -1,3 +1,8 @@
+---
+name: performance-optimization-for-sims
+description: Profiling, LOD systems, time-slicing, spatial partitioning for sim scaling
+---
+
 # Performance Optimization for Simulations
 
 **When to use this skill**: When simulations run below target frame rate (typically 60 FPS for PC, 30 FPS for mobile), especially with large agent counts (100+ units), complex AI, physics calculations, or proximity queries. Critical for RTS games, crowd simulations, ecosystem models, traffic systems, and any scenario requiring 1000+ active entities.

@@ -1,3 +1,8 @@
+---
+name: debugging-simulation-chaos
+description: Deterministic simulation, replay systems, debugging chaos synchronization
+---
+
 # Debugging Simulation Chaos
 
 ## Description

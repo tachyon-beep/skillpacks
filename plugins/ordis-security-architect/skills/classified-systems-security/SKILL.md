@@ -1,6 +1,6 @@
 ---
 name: classified-systems-security
-description: Use when handling classified data or implementing multi-level security - applies Bell-LaPadula model, fail-fast enforcement, trusted downgrade patterns, and immutability to prevent unauthorized information flow in government/defense systems
+description: Multi-level security for classified data - Bell-LaPadula, fail-fast enforcement, MAC architecture
 ---
 
 # Classified Systems Security

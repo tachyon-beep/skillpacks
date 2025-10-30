@@ -1,3 +1,8 @@
+---
+name: ai-and-agent-simulation
+description: FSM, behavior trees, utility AI, GOAP, steering behaviors scaling
+---
+
 # AI and Agent Simulation
 
 ## Description

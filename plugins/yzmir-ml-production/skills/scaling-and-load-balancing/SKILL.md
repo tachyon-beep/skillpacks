@@ -1,6 +1,6 @@
 ---
 name: scaling-and-load-balancing
-description: Scale LLM serving infrastructure with horizontal scaling, load balancing strategies, autoscaling, request routing, and cost optimization. Use when building production systems that need to handle variable traffic loads efficiently.
+description: Scale serving with load balancing, autoscaling, and cost-efficient request routing.
 ---
 
 # Scaling and Load Balancing Skill

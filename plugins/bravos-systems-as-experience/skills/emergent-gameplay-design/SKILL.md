@@ -1,3 +1,8 @@
+---
+name: emergent-gameplay-design
+description: Simple rules creating complex, player-discovered behaviors and emergent gameplay
+---
+
 # Emergent Gameplay Design: Simple Rules → Complex Outcomes
 
 ## Purpose

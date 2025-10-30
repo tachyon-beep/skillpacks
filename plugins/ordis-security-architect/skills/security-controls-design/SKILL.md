@@ -1,6 +1,6 @@
 ---
 name: security-controls-design
-description: Use when implementing protective measures or hardening systems - applies defense-in-depth, least privilege, fail-secure patterns, and separation of duties to create layered security architectures with systematic boundary protection
+description: Layered security controls at trust boundaries - defense-in-depth, least privilege, fail-secure
 ---
 
 # Security Controls Design

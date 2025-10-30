@@ -1,6 +1,6 @@
 ---
 name: using-training-optimization
-description: Use when optimizing neural network training, tuning hyperparameters, preventing overfitting, or improving convergence - routes to appropriate training-optimization skill based on symptoms and context
+description: Router to training optimization skills based on symptoms and training problems
 ---
 
 # Using Training Optimization

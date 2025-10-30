@@ -1,6 +1,6 @@
 ---
 name: threat-modeling
-description: Use when analyzing attack surfaces, designing new systems, or conducting security reviews - applies STRIDE methodology systematically, constructs attack trees, identifies property override patterns, checks enforcement gaps at every layer, and scores risks with likelihood-impact matrices to find threats that intuition misses
+description: STRIDE threat modeling - systematic attack surface analysis, attack trees, risk scoring
 ---
 
 # Threat Modeling

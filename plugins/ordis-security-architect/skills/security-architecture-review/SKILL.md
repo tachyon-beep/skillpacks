@@ -1,6 +1,6 @@
 ---
 name: security-architecture-review
-description: Use when reviewing existing designs or conducting security audits - provides systematic checklists for authentication, authorization, secrets management, data flow, and network security to identify vulnerabilities before implementation
+description: Systematic security design review - checklists for auth, authorization, secrets, data flow
 ---
 
 # Security Architecture Review

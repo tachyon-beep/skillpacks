@@ -1,6 +1,6 @@
 ---
 name: web-application-design
-description: Use when designing web applications, SaaS tools, dashboards, or admin panels - responsive patterns (mobile <768px, tablet 768-1024px, desktop >1024px), data visualization, keyboard shortcuts, bulk actions, and progressive enhancement
+description: Design web apps and dashboards with responsive layouts and keyboard workflows
 ---
 
 # Web Application Design

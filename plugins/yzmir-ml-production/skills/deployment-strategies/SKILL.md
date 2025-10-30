@@ -1,6 +1,6 @@
 ---
 name: deployment-strategies
-description: Master safe AI model deployment through A/B testing, canary releases, shadow mode, blue-green deployments, and automated rollback with statistical validation. Use when deploying models to production with traffic splitting and risk mitigation.
+description: Deploy safely with A/B testing, canary releases, blue-green, and automated rollback.
 ---
 
 # Deployment Strategies for AI Models

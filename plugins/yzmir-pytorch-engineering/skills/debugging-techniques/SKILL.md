@@ -1,6 +1,6 @@
 ---
 name: debugging-techniques
-description: Use when encountering PyTorch errors, unexpected behavior, or silent failures - provides systematic debugging methodology using torch.autograd.detect_anomaly(), hooks, gradient inspection, and error pattern recognition to avoid random trial-and-error, print-driven debugging, and fixing symptoms instead of root causes
+description: Systematic debugging - detect_anomaly, hooks, gradient inspection, error patterns
 ---
 
 # Systematic PyTorch Debugging

@@ -1,6 +1,6 @@
 ---
 name: value-based-methods
-description: Master Q-learning, DQN, Double DQN, Dueling DQN, Rainbow - when to use for discrete action spaces, implementation details, common bugs, hyperparameter tuning. Value-based RL for discrete actions with practical guidance on architecture, stability, and debugging.
+description: Master DQN, Double DQN, Dueling DQN, Rainbow - value-based methods for discrete actions
 ---
 
 # Value-Based Methods

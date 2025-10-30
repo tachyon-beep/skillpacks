@@ -1,6 +1,6 @@
 ---
 name: using-security-architect
-description: Use when starting security architecture work, designing secure systems, reviewing security designs, or documenting security decisions - routes to specific Ordis security skills based on task type and context (threat modeling, architecture review, controls design, secure patterns, compliance, classified systems, authorization)
+description: Routes to security architecture skills - threat modeling, controls, compliance, authorization
 ---
 
 # Using Security Architect

@@ -1,6 +1,6 @@
 ---
 name: batch-size-and-memory-tradeoffs
-description: Master batch size selection for optimal training - balance memory constraints, convergence speed, generalization gap, and computational efficiency using linear learning rate scaling, gradient accumulation, and memory optimization techniques
+description: Batch size selection - memory, convergence, generalization, gradient accumulation
 ---
 
 # Batch Size and Memory Tradeoffs

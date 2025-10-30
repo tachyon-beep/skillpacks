@@ -1,6 +1,6 @@
 ---
 name: compliance-awareness-and-mapping
-description: Use when working in regulated environments or preparing for audits - teaches framework discovery process (ISM/IRAP, HIPAA, PCI-DSS, SOC2, FedRAMP vary by jurisdiction/industry), control mapping patterns, and traceability documentation across diverse compliance landscapes
+description: Compliance framework discovery and control mapping across regulated environments
 ---
 
 # Compliance Awareness and Mapping

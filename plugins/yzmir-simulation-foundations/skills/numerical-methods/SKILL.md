@@ -1,6 +1,6 @@
 ---
 name: numerical-methods
-description: Use when integrating ODEs in simulations - demonstrates naive Euler failures, then teaches Euler variants, Runge-Kutta, adaptive timesteps, and symplectic integrators with 30+ physics engine examples spanning cloth, fluids, orbital mechanics, ragdolls, springs, and rigid bodies
+description: ODE integration - Euler, Runge-Kutta, adaptive timesteps, symplectic integrators for physics
 ---
 
 # Numerical Methods for Simulation

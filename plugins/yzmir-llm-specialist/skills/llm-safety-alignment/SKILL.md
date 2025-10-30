@@ -1,6 +1,6 @@
 ---
 name: llm-safety-alignment
-description: Implement safety and alignment measures for LLM applications including content moderation, bias testing/mitigation, jailbreak prevention, PII protection, and safety monitoring. Use when building production systems serving users.
+description: Implement LLM safety: content moderation, bias mitigation, jailbreak prevention, PII protection.
 ---
 
 # LLM Safety and Alignment Skill

@@ -1,6 +1,6 @@
 ---
 name: offline-rl
-description: Master offline RL - learning from fixed datasets without environment interaction, CQL/IQL/BCQ algorithms, distribution shift handling, conservative value estimation, behavior regularization, offline evaluation, when offline RL needed (expensive/dangerous environments), extrapolation error prevention, batch constraints, common failure modes.
+description: Master CQL, IQL, BCQ - offline RL from fixed datasets without environment interaction
 ---
 
 # Offline Reinforcement Learning

@@ -1,3 +1,8 @@
+---
+name: optimization-as-play
+description: Make optimization itself fun - efficiency puzzles and throughput as gameplay
+---
+
 # Optimization as Play: Making Efficiency The Core Gameplay Loop
 
 ## Purpose

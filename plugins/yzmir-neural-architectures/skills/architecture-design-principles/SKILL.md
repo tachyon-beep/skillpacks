@@ -1,6 +1,6 @@
 ---
 name: architecture-design-principles
-description: Master neural architecture design principles including inductive biases, depth-width trade-offs, skip connections, capacity planning, and compute constraints. Use when designing custom architectures, debugging network failures, or selecting between architectural patterns.
+description: Architecture design: inductive biases, depth-width trade-offs, skip connections, capacity planning
 ---
 
 # Architecture Design Principles

@@ -1,6 +1,6 @@
 ---
 name: normalization-techniques
-description: Master normalization techniques (BatchNorm, LayerNorm, GroupNorm, InstanceNorm, RMSNorm) with architecture-specific selection, batch size considerations, and modern placement strategies (pre-norm vs post-norm). Use when designing networks, debugging training instability, or optimizing for small batches.
+description: Normalization: BatchNorm, LayerNorm, GroupNorm, InstanceNorm, RMSNorm with selection strategy
 ---
 
 # Normalization Techniques

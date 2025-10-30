@@ -1,3 +1,8 @@
+---
+name: player-driven-narratives
+description: Generate compelling stories through emergent systems and player agency
+---
+
 # Player-Driven Narratives
 
 ## When to Use This Skill

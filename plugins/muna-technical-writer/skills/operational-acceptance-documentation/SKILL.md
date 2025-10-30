@@ -1,6 +1,6 @@
 ---
 name: operational-acceptance-documentation
-description: Use when preparing systems for production deployment or operational handover - covers security authorization (SSP/SAR/POA&M/ATO), operational readiness, test & evaluation, go-live approval, transition planning, acceptance criteria, and residual risk documentation for multi-stakeholder acceptance gates
+description: Security authorization (SSP/SAR/ATO), operational readiness, go-live approval
 ---
 
 # Operational Acceptance Documentation

@@ -1,3 +1,8 @@
+---
+name: community-meta-gaming
+description: Design for theorycrafting, speedrunning, and community-driven metagames
+---
+
 # Community Meta-Gaming: Theorycrafting, Speedrunning, Social Dynamics
 
 ## Purpose

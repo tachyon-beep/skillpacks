@@ -1,6 +1,6 @@
 ---
 name: checkpointing-and-reproducibility
-description: Use when saving training checkpoints, resuming training, or ensuring reproducible results - provides complete checkpoint strategy (model, optimizer, scheduler, epoch, RNG states), DDP synchronization, reproducibility setup across PyTorch/NumPy/Python/CUDA, and checkpoint management to avoid training divergence on resume, non-deterministic results, and checkpoint corruption
+description: Master checkpoint strategy with model, optimizer, scheduler, RNG states, and DDP synchronization
 ---
 
 # Complete Checkpointing and Reproducibility

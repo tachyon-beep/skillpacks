@@ -1,6 +1,6 @@
 ---
 name: documentation-testing
-description: Use when preparing documentation for release - provides testing framework for completeness (can task be accomplished?), accuracy (do examples run?), findability (can users locate?), example verification (copy-paste-run), and walkthrough validation (does it work for new users?)
+description: Test documentation completeness, accuracy, findability - copy-paste-run validation before release
 ---
 
 # Documentation Testing

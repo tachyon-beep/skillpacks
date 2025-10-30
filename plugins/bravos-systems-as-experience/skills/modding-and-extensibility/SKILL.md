@@ -1,3 +1,8 @@
+---
+name: modding-and-extensibility
+description: Design games as platforms for player-created content and infinite creativity
+---
+
 # Modding and Extensibility: Designing Games for Player Creativity
 
 ## Overview

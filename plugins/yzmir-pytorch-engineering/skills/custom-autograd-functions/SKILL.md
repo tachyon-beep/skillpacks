@@ -2,7 +2,7 @@
 
 ---
 name: custom-autograd-functions
-description: Master torch.autograd.Function for implementing custom differentiable operations with correct gradient computation, numerical verification, and memory efficiency
+description: Master torch.autograd.Function for custom differentiable operations with correct gradients
 pack: pytorch-engineering
 author: yzmir-ai-engineering
 version: 1.0.0

@@ -1,6 +1,6 @@
 ---
 name: training-loop-architecture
-description: Use when implementing training loops, debugging training stability issues, adding checkpointing/resuming, or monitoring training progress - provides complete training loop template with proper train/val/test splits, epoch-based validation, checkpoint/resume patterns, memory management, and integration with optimization techniques
+description: Training loops - checkpointing, validation, memory management, proper train/val/test splits
 ---
 
 # Training Loop Architecture

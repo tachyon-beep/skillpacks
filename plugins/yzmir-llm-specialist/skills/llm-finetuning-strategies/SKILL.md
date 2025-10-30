@@ -1,6 +1,6 @@
 ---
 name: llm-finetuning-strategies
-description: Master LLM fine-tuning strategies including when to fine-tune vs prompt engineering, LoRA vs full fine-tuning, dataset preparation, hyperparameter selection, and evaluation. Use when considering fine-tuning, preparing datasets, or optimizing fine-tuned models.
+description: Master LLM fine-tuning strategies: LoRA, dataset preparation, hyperparameter tuning.
 ---
 
 # LLM Fine-Tuning Strategies

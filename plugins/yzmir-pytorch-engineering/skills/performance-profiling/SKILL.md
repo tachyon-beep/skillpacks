@@ -1,6 +1,6 @@
 ---
 name: performance-profiling
-description: Use when investigating PyTorch performance issues, slow training/inference, or high memory usage - provides systematic profiling methodology using torch.profiler, memory profiling, bottleneck identification, and GPU timing to avoid premature optimization, misinterpreted metrics, and guessing at bottlenecks instead of measuring
+description: Systematic profiling with torch.profiler, memory analysis, bottleneck identification, GPU timing
 ---
 
 # Performance Profiling and Bottleneck Analysis

@@ -1,6 +1,6 @@
 ---
 name: clarity-and-style
-description: Use when writing or reviewing technical content - applies active voice, concrete examples, progressive disclosure, audience adaptation, and scannable structure to create clear, actionable documentation that readers can immediately use
+description: Apply active voice, examples, and scannable structure for clear, actionable documentation
 ---
 
 # Clarity and Style

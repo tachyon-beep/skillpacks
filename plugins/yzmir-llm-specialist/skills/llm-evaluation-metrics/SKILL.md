@@ -1,6 +1,6 @@
 ---
 name: llm-evaluation-metrics
-description: Design and implement comprehensive evaluation strategies for LLM applications across different task types. Use when building classification, generation, summarization, RAG, or chat systems that need rigorous quality measurement and validation.
+description: Design evaluation strategies for LLMs: classification, generation, RAG, summarization, chat.
 ---
 
 # LLM Evaluation Metrics Skill

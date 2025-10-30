@@ -1,6 +1,6 @@
 ---
 name: rl-environments
-description: Gym/gymnasium API mastery - custom environment creation, observation/action spaces, wrappers, vectorized environments, common bugs, testing. Complete guide to building and debugging RL environments.
+description: Gym/gymnasium API - custom environments, spaces, wrappers, vectorization, debugging
 ---
 
 # RL Environments: Building and Debugging Custom Environments

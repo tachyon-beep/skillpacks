@@ -1,6 +1,6 @@
 ---
 name: context-window-management
-description: Manage LLM context windows through token counting, budgeting, intelligent truncation, and conversation context management. Use when handling long documents, multi-turn conversations, RAG systems, or any scenario where context may exceed model limits.
+description: Manage context windows via token counting and truncation for documents and conversations.
 ---
 
 # Context Window Management Skill

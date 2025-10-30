@@ -1,6 +1,6 @@
 ---
 name: using-pytorch-engineering
-description: Use when implementing PyTorch models, encountering memory/performance/distributed training issues, or debugging training problems - routes to appropriate PyTorch specialist skill (tensor operations, distributed strategies, profiling, debugging, checkpointing, etc.) based on symptoms
+description: Routes to appropriate PyTorch specialist skill based on symptoms and problem type
 ---
 
 # Using PyTorch Engineering

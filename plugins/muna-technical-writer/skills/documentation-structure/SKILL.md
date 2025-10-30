@@ -1,6 +1,6 @@
 ---
 name: documentation-structure
-description: Use when creating new documentation or choosing documentation patterns - provides complete structures for ADRs (with all sections), API references (auth, pagination, versioning), runbooks (prerequisites, procedures, troubleshooting), and READMEs (simple, standard, comprehensive) to ensure consistent, complete, findable documentation
+description: Templates for ADRs, API docs, runbooks, READMEs - consistent, complete, findable documentation
 ---
 
 # Documentation Structure

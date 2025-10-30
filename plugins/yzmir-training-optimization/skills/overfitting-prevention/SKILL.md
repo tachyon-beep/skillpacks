@@ -1,6 +1,6 @@
 ---
 name: overfitting-prevention
-description: Use when detecting overfitting, preventing it through regularization (L2, dropout, batch norm, label smoothing), early stopping, model capacity reduction, data augmentation, or combining multiple techniques - provides systematic detection, diagnosis, and multi-technique prevention framework
+description: Overfitting prevention - regularization, dropout, batch norm, early stopping, data augmentation
 ---
 
 # Overfitting Prevention

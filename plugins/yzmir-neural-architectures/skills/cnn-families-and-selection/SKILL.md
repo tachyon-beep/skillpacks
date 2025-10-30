@@ -1,6 +1,6 @@
 ---
 name: cnn-families-and-selection
-description: Use when selecting CNN architectures for vision tasks - covers major CNN families (ResNet, EfficientNet, MobileNet, Inception, DenseNet), trade-offs, and selection based on deployment constraints, dataset size, and task type
+description: CNN families: ResNet, EfficientNet, MobileNet, Inception, DenseNet with selection criteria
 pack: neural-architectures
 faction: yzmir
 ---

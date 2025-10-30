@@ -1,6 +1,6 @@
 ---
 name: using-technical-writer
-description: Use when starting documentation work, writing technical content, or creating user guides - routes to specific Muna writing skills based on document type (ADRs, APIs, runbooks, security docs), audience (developers, operators, executives), and determines when documentation skills are needed versus simple writing
+description: Router for documentation tasks - routes to ADRs, APIs, runbooks, security docs, or governance docs
 ---
 
 # Using Technical Writer

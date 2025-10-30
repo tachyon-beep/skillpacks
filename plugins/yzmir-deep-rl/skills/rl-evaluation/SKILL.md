@@ -1,6 +1,6 @@
 ---
 name: rl-evaluation
-description: Rigorous RL evaluation methodology - statistical protocols, train/test discipline, sample efficiency metrics, generalization testing, and offline evaluation approaches. Use when evaluating RL agents, comparing algorithms, or reporting performance.
+description: Rigorous RL evaluation - statistical protocols, train/test discipline, metrics, generalization
 pack: deep-rl
 faction: yzmir
 ---

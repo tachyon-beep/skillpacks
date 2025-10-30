@@ -1,6 +1,6 @@
 ---
 name: diagram-conventions
-description: Use when creating visual documentation - provides decision tree for choosing diagram types (sequence, component, data flow, state), semantic labeling standards, meaningful relationships, and guidance on when flowcharts become anti-patterns
+description: Choose diagram types (sequence, component, data flow, state) with semantic labeling standards
 ---
 
 # Diagram Conventions

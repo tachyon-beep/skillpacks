@@ -1,6 +1,6 @@
 ---
 name: experiment-tracking
-description: Master experiment tracking for ML training - what to track (hyperparameters, metrics, artifacts), tool selection (TensorBoard, Weights & Biases, MLflow), reproducibility, experiment organization, comparison, and team collaboration
+description: Experiment tracking - metrics, artifacts; TensorBoard, Weights & Biases, MLflow
 ---
 
 # Experiment Tracking Skill

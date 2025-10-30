@@ -1,6 +1,6 @@
 ---
 name: production-debugging-techniques
-description: Master systematic debugging methodologies for production LLM systems including performance profiling, error analysis, A/B test debugging, and post-mortem processes. Use when investigating production incidents, performance issues, model quality problems, or unexpected behavior in deployed systems.
+description: Debug production systems with profiling, error analysis, A/B testing, and incident post-mortems.
 ---
 
 # Production Debugging Techniques Skill

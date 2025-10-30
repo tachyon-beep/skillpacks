@@ -1,6 +1,6 @@
 ---
 name: learning-rate-scheduling
-description: Master learning rate scheduling for optimal training performance - when to schedule, which scheduler to use, warmup strategies, and modern best practices
+description: Learning rate scheduling - warmup, schedulers, decay strategies, modern best practices
 ---
 
 # Learning Rate Scheduling Skill

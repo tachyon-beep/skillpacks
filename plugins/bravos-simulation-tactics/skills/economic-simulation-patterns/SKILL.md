@@ -1,3 +1,8 @@
+---
+name: economic-simulation-patterns
+description: Master game economies - faucets, sinks, arbitrage prevention, pricing
+---
+
 # Economic Simulation Patterns
 
 ## Description

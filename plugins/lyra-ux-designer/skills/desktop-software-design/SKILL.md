@@ -1,6 +1,6 @@
 ---
 name: desktop-software-design
-description: Use when designing native desktop applications (Windows, macOS, Linux) or Electron apps - multi-window management, keyboard shortcuts (Cmd+S, Cmd+N), workspace customization, menu bars, and power-user features like command palettes and macros
+description: Design desktop apps with keyboard efficiency and multi-window workflows
 ---
 
 # Desktop Software Design

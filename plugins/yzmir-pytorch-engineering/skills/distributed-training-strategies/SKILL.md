@@ -1,6 +1,6 @@
 ---
 name: distributed-training-strategies
-description: Use when setting up DistributedDataParallel (DDP), debugging multi-GPU/multi-node training issues, or optimizing distributed training performance - provides systematic methodology for DDP setup, gradient synchronization, batch norm handling, and scaling efficiency to avoid device placement errors, synchronization bugs, and communication bottlenecks
+description: DistributedDataParallel - gradient sync, batch norm handling, scaling efficiency
 ---
 
 # Distributed Training Strategies

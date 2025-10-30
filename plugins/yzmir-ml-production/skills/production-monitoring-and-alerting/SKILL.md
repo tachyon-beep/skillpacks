@@ -1,6 +1,6 @@
 ---
 name: production-monitoring-and-alerting
-description: Use when deploying ML models to production and need to monitor performance, detect drift, set up alerts, or establish SLOs - implements comprehensive observability with metrics, dashboards, drift detection, and actionable alerts
+description: Monitor production models with performance metrics, drift detection, and alerting.
 ---
 
 # Production Monitoring and Alerting

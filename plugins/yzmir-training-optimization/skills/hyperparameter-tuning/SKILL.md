@@ -1,6 +1,6 @@
 ---
 name: hyperparameter-tuning
-description: Master hyperparameter search strategies - when to tune, prioritize learning rate, select search algorithms (grid/random/Bayesian), design search spaces, allocate budgets, and implement early stopping
+description: Hyperparameter search - grid/random/Bayesian strategies, learning rate tuning, early stopping
 ---
 
 # Hyperparameter Tuning Skill

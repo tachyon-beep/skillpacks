@@ -1,3 +1,8 @@
+---
+name: crowd-simulation
+description: Boids algorithm, RVO, social forces, formation patterns, large scale crowds
+---
+
 # Crowd Simulation
 
 **When to use this skill**: When implementing crowds for parades, evacuations, stadium events, city streets, festivals, or any scenario requiring 100+ autonomous agents with realistic movement, collision avoidance, and group behaviors. Critical for open-world games, city builders, event simulators, and tactical games requiring believable crowd dynamics.

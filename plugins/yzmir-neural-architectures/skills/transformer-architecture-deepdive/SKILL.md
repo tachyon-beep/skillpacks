@@ -1,6 +1,6 @@
 ---
 name: transformer-architecture-deepdive
-description: Deep dive into Transformer internals including self-attention, multi-head attention, position encoding, encoder/decoder variants, and Vision Transformers. Use when implementing Transformers from scratch, understanding how they work, or deciding when to use them. Covers modern variants (RoPE, GQA, MQA) and critical implementation details.
+description: Transformer internals: self-attention, position encoding, RoPE/GQA/MQA, Vision Transformers
 dependencies:
   - using-neural-architectures
   - sequence-models-comparison

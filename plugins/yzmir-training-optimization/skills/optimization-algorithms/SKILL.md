@@ -1,6 +1,6 @@
 ---
 name: optimization-algorithms
-description: Use when selecting neural network optimizers (SGD, Adam, AdamW, etc.), configuring optimizer hyperparameters, or debugging optimizer-related training issues - provides systematic decision framework based on task, model, and requirements
+description: Optimizer selection - SGD, Adam, AdamW; configure hyperparameters and debug training issues
 ---
 
 # Optimization Algorithms

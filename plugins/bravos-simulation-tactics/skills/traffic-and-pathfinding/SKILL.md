@@ -1,3 +1,8 @@
+---
+name: traffic-and-pathfinding
+description: A*, pathfinding algorithms, hierarchical navigation, traffic flow control
+---
+
 # Traffic and Pathfinding
 
 **When to use this skill**: When implementing navigation systems, traffic simulation, crowd movement, or any scenario involving multiple agents finding paths through an environment. Critical for city builders, RTS games, open-world navigation, and crowd simulation.

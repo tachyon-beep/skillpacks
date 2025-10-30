@@ -1,6 +1,6 @@
 ---
 name: generative-model-families
-description: Comprehensive guide to generative model families (VAE, GAN, Diffusion, Autoregressive, Flow). Use when selecting generative architecture for images, audio, or other data. Covers quality trade-offs, training stability, speed, and modern recommendations (2025).
+description: Generative models: VAE, GAN, Diffusion, Autoregressive, Flow with trade-offs and selection
 dependencies:
   - using-neural-architectures
   - transformer-architecture-deepdive

@@ -1,6 +1,6 @@
 ---
 name: using-ai-engineering
-description: Use when starting AI/ML engineering tasks, implementing neural networks, training models, or deploying ML systems - routes to appropriate Yzmir pack (pytorch-engineering, deep-rl, llm-specialist, neural-architectures, training-optimization, ml-production) based on task type and context
+description: Route AI/ML tasks to correct Yzmir pack - frameworks, training, RL, LLMs, architectures, production
 ---
 
 # Using AI Engineering

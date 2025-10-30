@@ -1,6 +1,6 @@
 ---
 name: experiment-tracking-and-versioning
-description: Track experiments, version models, and ensure reproducibility with MLflow and Weights & Biases. Use when you cannot reproduce results, lost track of best runs, or need production model lineage.
+description: Track experiments and version models with MLflow and Weights & Biases.
 ---
 
 # Experiment Tracking and Versioning Skill

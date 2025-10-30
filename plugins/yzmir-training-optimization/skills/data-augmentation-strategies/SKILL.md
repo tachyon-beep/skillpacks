@@ -1,6 +1,6 @@
 ---
 name: data-augmentation-strategies
-description: Use when training neural networks on limited data, addressing overfitting, improving model robustness, or selecting domain-specific augmentations - provides systematic guidance on when to augment, what techniques to use (vision, NLP, audio, tabular), strength tuning, and avoiding common pitfalls like augmenting validation data
+description: Data augmentation - techniques (vision, NLP, audio), strength tuning, validation safety
 ---
 
 # Data Augmentation Strategies

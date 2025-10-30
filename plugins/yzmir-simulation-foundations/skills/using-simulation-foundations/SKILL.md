@@ -1,6 +1,6 @@
 ---
 name: using-simulation-foundations
-description: Primary router for simulation-foundations skillpack - identifies which mathematical skills apply to your simulation challenge and orchestrates workflows for ODEs, state-space, stability, control, numerics, chaos, and stochastic systems
+description: Router for simulation math - ODEs, state-space, stability, control, numerics, chaos, stochastic
 pack: yzmir/simulation-foundations
 faction: yzmir
 skill_type: meta_router

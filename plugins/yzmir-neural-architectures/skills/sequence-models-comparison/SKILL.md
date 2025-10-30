@@ -1,6 +1,6 @@
 ---
 name: sequence-models-comparison
-description: Use when selecting sequence models for temporal data - covers RNN/LSTM/GRU (legacy), Transformers (standard), TCN (efficient), Sparse Transformers (long sequences), State Space Models (S4), with selection based on sequence length, data type, and deployment constraints
+description: Sequence models: RNN/LSTM/GRU, Transformers, TCN, Sparse Transformers, S4 with selection
 pack: neural-architectures
 faction: yzmir
 ---

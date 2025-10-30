@@ -1,6 +1,6 @@
 ---
 name: policy-gradient-methods
-description: Master policy gradients - REINFORCE, PPO, TRPO. Understand direct policy optimization, advantage estimation, trust regions, when to use vs value methods, continuous and discrete action handling. Policy gradients excel at continuous control with deep practical guidance on variance reduction, architecture, debugging, and algorithmic choices.
+description: Master REINFORCE, PPO, TRPO - direct policy optimization with trust regions
 ---
 
 # Policy Gradient Methods

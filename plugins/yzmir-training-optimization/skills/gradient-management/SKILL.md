@@ -1,6 +1,6 @@
 ---
 name: gradient-management
-description: Master gradient clipping, accumulation, scaling, and diagnosis - prevent exploding/vanishing gradients, implement correct gradient accumulation, integrate with mixed precision, and systematically debug gradient issues
+description: Gradient management - clipping, accumulation, scaling; prevent exploding/vanishing; mixed precision
 ---
 
 # Gradient Management Skill

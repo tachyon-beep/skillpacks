@@ -1,6 +1,6 @@
 ---
 name: attention-mechanisms-catalog
-description: Comprehensive catalog of attention mechanisms from standard self-attention to modern variants (Flash, sparse, linear). Use when selecting attention for sequence length, memory constraints, or speed requirements. Covers exact vs approximate attention, complexity analysis, and practical trade-offs.
+description: Attention mechanisms: standard, Flash, sparse, linear variants with complexity and trade-offs
 dependencies:
   - transformer-architecture-deepdive
   - using-neural-architectures

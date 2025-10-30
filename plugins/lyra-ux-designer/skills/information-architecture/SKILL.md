@@ -1,6 +1,6 @@
 ---
 name: information-architecture
-description: Use when organizing content, designing navigation, or solving findability issues - applies The Navigation & Discoverability Model (4 layers) to structure information architecture using mental models, navigation systems, information scent, and discoverability patterns
+description: Organize content and design navigation using mental models and discoverability
 ---
 
 # Information Architecture

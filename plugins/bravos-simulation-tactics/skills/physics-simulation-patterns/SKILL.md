@@ -1,3 +1,8 @@
+---
+name: physics-simulation-patterns
+description: Rigid body dynamics, soft bodies, cloth, fluids, deterministic physics
+---
+
 # Physics Simulation Patterns
 
 ## Description

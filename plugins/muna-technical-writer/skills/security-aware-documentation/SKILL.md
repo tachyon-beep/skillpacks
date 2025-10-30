@@ -1,6 +1,6 @@
 ---
 name: security-aware-documentation
-description: Use when documenting systems with sensitive data or security features - covers sanitizing examples (never use real credentials/PII), threat disclosure decisions, compliance sensitivity, redaction patterns, and security feature documentation
+description: Document systems safely - sanitize examples, avoid credentials/PII, handle threat disclosure
 ---
 
 # Security-Aware Documentation

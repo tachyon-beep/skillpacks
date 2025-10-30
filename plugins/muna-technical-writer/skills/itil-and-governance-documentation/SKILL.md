@@ -1,6 +1,6 @@
 ---
 name: itil-and-governance-documentation
-description: Use when working in formal IT service management environments - covers change requests (RFC), service documentation, configuration management (CMDB), release docs, operational handover, business continuity (DR/RTO/RPO), capacity planning, and problem management
+description: ITIL documentation for RFCs, CMDB, release docs, business continuity, disaster recovery planning
 ---
 
 # ITIL and Governance Documentation

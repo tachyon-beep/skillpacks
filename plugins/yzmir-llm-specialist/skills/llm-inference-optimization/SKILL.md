@@ -1,6 +1,6 @@
 ---
 name: llm-inference-optimization
-description: Optimize LLM inference for latency, throughput, and cost through parallelization, caching, model routing, streaming, and cost-latency trade-off analysis. Use when building production systems with performance or cost requirements.
+description: Optimize LLM inference for latency, throughput, and cost in production systems.
 ---
 
 # LLM Inference Optimization Skill

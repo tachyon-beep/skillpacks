@@ -1,6 +1,6 @@
 ---
 name: tensor-operations-and-memory
-description: Use when debugging PyTorch memory leaks, OOM errors, slow tensor operations, or device placement issues - provides systematic methodology for diagnosing and fixing memory/performance problems at the operation level
+description: Systematic diagnosis of memory leaks, OOM errors, slow operations, device placement issues
 ---
 
 # Tensor Operations and Memory Management

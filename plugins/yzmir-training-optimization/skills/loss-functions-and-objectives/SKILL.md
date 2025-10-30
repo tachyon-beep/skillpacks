@@ -1,6 +1,6 @@
 ---
 name: loss-functions-and-objectives
-description: Master loss function selection and implementation - when to use which loss, numerical stability, custom losses, multi-task weighting, and debugging loss issues
+description: Loss function selection - numerical stability, custom losses, multi-task weighting, debugging
 ---
 
 # Loss Functions and Objectives Skill

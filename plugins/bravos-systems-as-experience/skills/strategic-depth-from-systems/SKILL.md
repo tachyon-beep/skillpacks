@@ -1,3 +1,8 @@
+---
+name: strategic-depth-from-systems
+description: Avoid dominant strategies - create meaningful choices and emergent strategy
+---
+
 # Strategic Depth from Systems: Creating Emergent Strategy
 
 ## Purpose

@@ -1,6 +1,6 @@
 ---
 name: mlops-pipeline-automation
-description: Implement CI/CD and automation for ML systems including automated testing, validation gates, feature stores, data validation, model validation, automated retraining, and pipeline orchestration. Use when building production ML systems requiring reliability and automation.
+description: Build ML CI/CD with automated testing, validation gates, and orchestrated retraining pipelines.
 ---
 
 # MLOps Pipeline Automation Skill

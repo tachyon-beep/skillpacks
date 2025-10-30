@@ -1,6 +1,6 @@
 ---
 name: module-design-patterns
-description: Use when designing custom nn.Module classes, managing hooks, or implementing weight initialization - provides expert patterns for modular design, proper hook management, and PyTorch initialization conventions to avoid subtle bugs in serialization, device movement, and model inspection
+description: nn.Module design - hooks, initialization, serialization, device movement
 ---
 
 # PyTorch nn.Module Design Patterns

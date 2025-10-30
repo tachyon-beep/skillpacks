@@ -1,6 +1,6 @@
 ---
 name: mobile-design-patterns
-description: Use when designing iOS/Android apps - iOS HIG and Material Design patterns, touch interactions (44x44pt iOS, 48x48dp Android), gesture conventions, reachability zones, and platform-specific visual consistency
+description: Design native iOS and Android apps with platform patterns and touch interactions
 ---
 
 # Mobile Design Patterns

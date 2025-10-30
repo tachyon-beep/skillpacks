@@ -1,6 +1,6 @@
 ---
 name: interaction-design-patterns
-description: Use when designing interaction patterns, button states, feedback systems, micro-interactions, or touch targets - systematic framework evaluating affordances, feedback timing, animations, state changes, and gesture comfort
+description: Design clear interactions with feedback, animations, and responsive state changes
 ---
 
 # Interaction Design Patterns

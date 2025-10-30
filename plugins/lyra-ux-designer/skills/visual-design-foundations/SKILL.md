@@ -1,6 +1,6 @@
 ---
 name: visual-design-foundations
-description: Use when evaluating visual design, creating layouts, or improving hierarchy - systematic 6-dimension framework (Contrast, Scale, Spacing, Color, Typography, Layout Flow) for both critique and specification modes
+description: Evaluate visual hierarchy using contrast, spacing, color, and typography
 ---
 
 # Visual Design Foundations

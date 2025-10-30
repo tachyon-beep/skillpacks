@@ -1,6 +1,6 @@
 ---
 name: game-ui-design
-description: Use when designing game interfaces - HUDs, menus, inventory screens - balancing immersion with information, optimizing for gamepad/keyboard/touch, matching visual style to game genre, and minimizing performance impact on frame rates
+description: Design game UIs balancing immersion, input methods, and visual coherence
 ---
 
 # Game UI Design

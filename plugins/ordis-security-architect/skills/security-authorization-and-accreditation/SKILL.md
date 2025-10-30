@@ -1,6 +1,6 @@
 ---
 name: security-authorization-and-accreditation
-description: Use when preparing systems for production authorization in government/defense environments - covers ATO (Authority to Operate), AIS (Authorization to Interconnect), T&E (Test & Evaluation), SSP, SAR, POA&M, and continuous monitoring processes
+description: Government/defense authorization processes - ATO, SSP, SAR, POA&M, continuous monitoring
 ---
 
 # Security Authorization and Accreditation

@@ -1,6 +1,6 @@
 ---
 name: reward-shaping-engineering
-description: Master reward function design in RL - understand potential-based shaping (preserves optimal policy), reward hacking patterns, sparse vs dense tradeoffs, reward engineering best practices, auxiliary rewards, inverse RL, and how to validate rewards. Reward design is often the hardest RL problem.
+description: Master reward function design - potential-based shaping, hacking patterns, validation
 ---
 
 # Reward-Shaping Engineering

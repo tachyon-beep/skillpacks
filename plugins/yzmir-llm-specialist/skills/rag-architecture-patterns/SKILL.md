@@ -1,6 +1,6 @@
 ---
 name: rag-architecture-patterns
-description: Master RAG (Retrieval-Augmented Generation) architecture including chunking strategies, hybrid search (dense + sparse), re-ranking, evaluation metrics (MRR, NDCG), and complete pipeline design. Use when building RAG systems, debugging retrieval quality, or optimizing RAG performance.
+description: Master RAG architecture: chunking, hybrid search, re-ranking, pipeline design.
 ---
 
 # RAG Architecture Patterns

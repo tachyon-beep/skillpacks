@@ -1,3 +1,8 @@
+---
+name: sandbox-design-patterns
+description: Creative tools with constraints - pure, guided, and hybrid sandbox approaches
+---
+
 # Sandbox Design Patterns
 
 ## Description

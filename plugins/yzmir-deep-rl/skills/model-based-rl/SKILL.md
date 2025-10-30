@@ -1,6 +1,6 @@
 ---
 name: model-based-rl
-description: Master model-based RL - learning world models, planning with learned dynamics, Dyna-Q, MBPO, Dreamer, when model-based helps (sample efficiency, sim-to-real), model error handling, short rollouts, imagination. Learn why errors compound over long horizons and how to handle model stale data.
+description: Master Dyna-Q, MBPO, Dreamer - model-based RL with world models and planning
 ---
 
 # Model-Based Reinforcement Learning

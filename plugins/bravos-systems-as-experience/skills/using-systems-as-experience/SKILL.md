@@ -1,6 +1,6 @@
 ---
 name: using-systems-as-experience
-description: Primary router for systems-as-experience skillpack - identifies which skills apply to your game design challenge and orchestrates multi-skill workflows for emergence, sandbox, optimization, discovery, narrative, modding, and community meta-gaming
+description: Router for systems-as-experience - emergence, sandbox, optimization, discovery, narrative, modding
 pack: bravos/systems-as-experience
 faction: bravos
 skill_type: meta_router

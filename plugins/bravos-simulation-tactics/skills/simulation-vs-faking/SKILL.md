@@ -1,3 +1,8 @@
+---
+name: simulation-vs-faking
+description: Decide what to simulate vs fake - balance performance vs immersion
+---
+
 # Simulation vs Faking: The Foundational Trade-off
 
 ## Purpose

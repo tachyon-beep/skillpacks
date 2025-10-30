@@ -1,6 +1,6 @@
 ---
 name: using-ux-designer
-description: Use when starting UX/UI design work, critiquing designs, or creating new interfaces - routes to specific Lyra UX skills based on task type (teaching, critique, creation) and platform context (web, mobile, desktop, game)
+description: Route to the right UX skill based on your task and platform context
 ---
 
 # Using UX Designer

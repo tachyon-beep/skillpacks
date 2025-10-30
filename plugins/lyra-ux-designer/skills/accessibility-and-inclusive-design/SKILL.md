@@ -1,6 +1,6 @@
 ---
 name: accessibility-and-inclusive-design
-description: Use when ensuring WCAG compliance, designing for disabilities, or creating inclusive interfaces - provides The Universal Access Model (6 dimensions) with contrast ratios, screen reader testing, keyboard navigation, and accessibility tools
+description: Design inclusive interfaces with WCAG compliance and accessibility frameworks
 ---
 
 # Accessibility and Inclusive Design

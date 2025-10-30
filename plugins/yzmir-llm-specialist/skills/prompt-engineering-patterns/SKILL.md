@@ -1,6 +1,6 @@
 ---
 name: prompt-engineering-patterns
-description: Master prompt engineering patterns including specificity, few-shot learning, chain-of-thought, output formatting, and system message design. Use when writing prompts, debugging LLM outputs, or optimizing for consistency and quality.
+description: Master prompt patterns: few-shot, chain-of-thought, system messages for consistency.
 ---
 
 # Prompt Engineering Patterns

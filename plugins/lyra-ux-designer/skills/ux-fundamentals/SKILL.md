@@ -1,6 +1,6 @@
 ---
 name: ux-fundamentals
-description: Use when explaining UX concepts, teaching design principles, or providing foundational knowledge - covers core UX terminology, mental models, design thinking, and when to use each lyra skill
+description: Learn core UX principles, terminology, and design thinking fundamentals
 ---
 
 # UX Fundamentals

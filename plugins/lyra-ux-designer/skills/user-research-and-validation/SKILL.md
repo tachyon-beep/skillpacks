@@ -1,6 +1,6 @@
 ---
 name: user-research-and-validation
-description: Use when understanding users, testing designs, or validating decisions - provides The User Understanding Model (5 phases) with research methods from discovery through post-launch
+description: Test designs and validate decisions with systematic user research methods
 ---
 
 # User Research and Validation

@@ -1,6 +1,6 @@
 ---
 name: incident-response-documentation
-description: Use when creating runbooks for security incidents or operational emergencies - provides response template (detection, containment, investigation, recovery, lessons), escalation paths, time-critical clarity patterns, and post-incident report structure
+description: Create runbooks for incidents with response template, escalation paths, post-incident reports
 ---
 
 # Incident Response Documentation

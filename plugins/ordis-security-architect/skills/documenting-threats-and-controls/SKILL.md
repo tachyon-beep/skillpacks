@@ -1,6 +1,6 @@
 ---
 name: documenting-threats-and-controls
-description: Use when writing threat models, security ADRs, or control documentation - provides patterns for threat descriptions, security decision records, control documentation, and requirements traceability with cross-references to technical-writer skills
+description: Document security decisions with threat context and traceability
 ---
 
 # Documenting Threats and Controls

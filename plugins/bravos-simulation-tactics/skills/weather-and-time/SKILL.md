@@ -1,3 +1,8 @@
+---
+name: weather-and-time
+description: Day/night cycles, weather simulation, seasonal systems, time mechanics
+---
+
 # Weather and Time Systems
 
 **When to use this skill**: When implementing day/night cycles, weather systems, seasonal changes, or time-based gameplay mechanics in games. Critical for survival games, open-world games, farming simulators, and any game where time and weather affect gameplay.

@@ -1,6 +1,6 @@
 ---
 name: mixed-precision-and-optimization
-description: Use when implementing automatic mixed precision (AMP) training, debugging FP16/BF16 numerical issues, or optimizing mixed precision performance - provides systematic methodology for GradScaler usage, FP16 vs BF16 selection, numerical stability patterns, and Tensor Core optimization to avoid gradient clipping errors, overflow/underflow, and performance degradation
+description: AMP training - GradScaler, FP16/BF16, numerical stability, Tensor Core optimization
 ---
 
 # Mixed Precision and Optimization
