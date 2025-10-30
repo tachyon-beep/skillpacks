@@ -1,6 +1,7 @@
 ---
 name: using-deep-rl
 description: Routes to appropriate deep-RL skills based on problem type and algorithm family
+mode: true
 ---
 
 # Using Deep RL Meta-Skill

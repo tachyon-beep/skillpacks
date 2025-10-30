@@ -1,6 +1,7 @@
 ---
 name: rl-foundations
 description: Master RL theory - MDPs, value functions, Bellman equations, value/policy iteration, TD
+disable-model-invocation: true
 ---
 
 # RL Foundations

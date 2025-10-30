@@ -1,6 +1,7 @@
 ---
 name: policy-gradient-methods
 description: Master REINFORCE, PPO, TRPO - direct policy optimization with trust regions
+disable-model-invocation: true
 ---
 
 # Policy Gradient Methods

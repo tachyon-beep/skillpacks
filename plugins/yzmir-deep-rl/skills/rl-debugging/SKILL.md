@@ -1,6 +1,7 @@
 ---
 name: rl-debugging
 description: Systematic RL debugging - diagnose learning failures, common bugs, diagnosis trees
+disable-model-invocation: true
 ---
 
 # RL Debugging Methodology

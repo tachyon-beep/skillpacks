@@ -1,6 +1,7 @@
 ---
 name: multi-agent-rl
 description: Master QMIX, MADDPG, CTDE - multi-agent learning with coordination and credit assignment
+disable-model-invocation: true
 ---
 
 # Multi-Agent Reinforcement Learning

@@ -1,6 +1,7 @@
 ---
 name: value-based-methods
 description: Master DQN, Double DQN, Dueling DQN, Rainbow - value-based methods for discrete actions
+disable-model-invocation: true
 ---
 
 # Value-Based Methods

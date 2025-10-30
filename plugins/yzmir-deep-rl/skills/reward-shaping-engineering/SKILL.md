@@ -1,6 +1,7 @@
 ---
 name: reward-shaping-engineering
 description: Master reward function design - potential-based shaping, hacking patterns, validation
+disable-model-invocation: true
 ---
 
 # Reward-Shaping Engineering

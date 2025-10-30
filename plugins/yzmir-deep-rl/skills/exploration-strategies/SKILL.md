@@ -1,6 +1,7 @@
 ---
 name: exploration-strategies
 description: Master ε-greedy, UCB, curiosity-driven, RND, intrinsic motivation exploration
+disable-model-invocation: true
 ---
 
 # Exploration Strategies in Deep RL

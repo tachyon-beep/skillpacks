@@ -1,6 +1,7 @@
 ---
 name: actor-critic-methods
 description: Master A2C, A3C, SAC, TD3 - actor-critic methods for continuous control
+disable-model-invocation: true
 ---
 
 # Actor-Critic Methods

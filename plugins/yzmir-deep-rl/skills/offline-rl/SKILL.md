@@ -1,6 +1,7 @@
 ---
 name: offline-rl
 description: Master CQL, IQL, BCQ - offline RL from fixed datasets without environment interaction
+disable-model-invocation: true
 ---
 
 # Offline Reinforcement Learning

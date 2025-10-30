@@ -1,6 +1,7 @@
 ---
 name: rl-evaluation
 description: Rigorous RL evaluation - statistical protocols, train/test discipline, metrics, generalization
+disable-model-invocation: true
 pack: deep-rl
 faction: yzmir
 ---

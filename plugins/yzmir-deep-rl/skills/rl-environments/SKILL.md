@@ -1,6 +1,7 @@
 ---
 name: rl-environments
 description: Gym/gymnasium API - custom environments, spaces, wrappers, vectorization, debugging
+disable-model-invocation: true
 ---
 
 # RL Environments: Building and Debugging Custom Environments

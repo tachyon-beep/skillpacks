@@ -1,6 +1,7 @@
 ---
 name: model-based-rl
 description: Master Dyna-Q, MBPO, Dreamer - model-based RL with world models and planning
+disable-model-invocation: true
 ---
 
 # Model-Based Reinforcement Learning
