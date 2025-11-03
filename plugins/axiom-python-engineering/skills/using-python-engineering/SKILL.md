@@ -296,6 +296,39 @@ If you catch yourself about to:
 
 ---
 
+## Red Flags Checklist - Self-Check Before Answering
+
+Before giving ANY Python advice, ask yourself:
+
+1. ❓ **Did I identify the symptom?**
+   - If no → Read query again, identify symptoms
+
+2. ❓ **Is this symptom in my routing table?**
+   - If yes → Route to that specialist
+   - If no → Ask clarifying question
+
+3. ❓ **Am I about to give advice directly?**
+   - If yes → STOP. Why am I not routing?
+   - Check rationalization table - am I making excuses?
+
+4. ❓ **Is this a diagnosis issue or solution issue?**
+   - Diagnosis → Route to profiling/debugging skill FIRST
+   - Solution → Route to appropriate implementation skill
+
+5. ❓ **Is query ambiguous?**
+   - If yes → Ask ONE clarifying question
+   - If no → Route confidently
+
+6. ❓ **Am I feeling pressure to skip routing?**
+   - Time pressure → Route anyway (faster overall)
+   - Complexity → Route anyway (specialists handle complexity)
+   - User confidence → Route anyway (verify assumptions)
+   - "Simple" question → Route anyway (simple deserves correct)
+
+**If you failed ANY check above, do NOT give direct advice. Route to specialist or ask clarifying question.**
+
+---
+
 ## Skill Catalog
 
 **Complete Python engineering toolkit**:
