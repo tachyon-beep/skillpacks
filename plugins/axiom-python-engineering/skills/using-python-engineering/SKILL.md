@@ -1,0 +1,351 @@
+---
+name: using-python-engineering
+description: Routes to appropriate Python specialist skill based on symptoms and problem type
+---
+
+# Using Python Engineering
+
+## Overview
+
+This meta-skill routes you to the right Python specialist based on symptoms. Python engineering problems fall into distinct categories that require specialized knowledge. Load this skill when you encounter Python-specific issues but aren't sure which specialized skill to use.
+
+**Core Principle**: Different Python problems require different specialists. Match symptoms to the appropriate specialist skill. Don't guess at solutions—route to the expert.
+
+## When to Use
+
+Load this skill when:
+- Working with Python and encountering problems
+- User mentions: "Python", "type hints", "mypy", "pytest", "async", "pandas", "numpy"
+- Need to implement Python projects or optimize performance
+- Setting up Python tooling or fixing lint warnings
+- Debugging Python code or profiling performance
+
+**Don't use for**: Non-Python languages, algorithm theory (not Python-specific), deployment infrastructure (not Python-specific)
+
+---
+
+## Routing by Symptom
+
+### Type Errors and Type Hints
+
+**Symptoms**:
+- "mypy error"
+- "pyright error"
+- "Type hint issues"
+- "Generic types not working"
+- "How to annotate this?"
+- "Protocol vs ABC"
+- "TypeVar issues"
+
+**Route to**: `modern-syntax-and-types`
+
+**Why**: Type system requires deep knowledge of typing module, generics, protocols, and static analysis tools.
+
+**Example queries**:
+- "Getting mypy error about incompatible types"
+- "How to use Python 3.12 type parameter syntax?"
+- "Type hints for this complex generic?"
+
+---
+
+### Project Setup and Tooling
+
+**Symptoms**:
+- "How to structure my Python project?"
+- "Setup pyproject.toml"
+- "Configure ruff/black/mypy"
+- "Dependency management"
+- "Pre-commit hooks"
+- "Package my project"
+- "src layout vs flat layout"
+
+**Route to**: `project-structure-and-tooling`
+
+**Why**: Project setup involves multiple tools (ruff, mypy, pre-commit) and architectural decisions (src vs flat layout). Need comprehensive setup guide.
+
+**Example queries**:
+- "Starting new Python project, how to set up?"
+- "Configure ruff for my team"
+- "Should I use poetry or pip-tools?"
+
+---
+
+### Lint Warnings and Delinting
+
+**Symptoms**:
+- "Too many lint warnings"
+- "Fix ruff errors"
+- "How to delint legacy code?"
+- "Systematic approach to fixing lint"
+- "Don't want to disable warnings"
+- "Clean up codebase lint"
+
+**Route to**: `systematic-delinting`
+
+**Why**: Delinting requires systematic methodology to fix warnings without disabling them or over-refactoring. Process-driven approach needed.
+
+**Example queries**:
+- "1000+ lint warnings, where to start?"
+- "Fix lint warnings systematically"
+- "Legacy code has no linting"
+
+**Note**: If setting UP linting (not fixing), route to `project-structure-and-tooling` first.
+
+---
+
+### Testing Issues
+
+**Symptoms**:
+- "pytest not working"
+- "Flaky tests"
+- "How to structure tests?"
+- "Fixture issues"
+- "Mock/patch problems"
+- "Test coverage"
+- "Property-based testing"
+
+**Route to**: `testing-and-quality`
+
+**Why**: Testing requires understanding pytest architecture, fixture scopes, mocking patterns, and test organization strategies.
+
+**Example queries**:
+- "Tests fail intermittently"
+- "How to use pytest fixtures properly?"
+- "Improve test coverage"
+
+---
+
+### Async/Await Issues
+
+**Symptoms**:
+- "asyncio not working"
+- "async/await errors"
+- "Event loop issues"
+- "Blocking the event loop"
+- "TaskGroup (Python 3.11+)"
+- "Async context managers"
+- "When to use async?"
+
+**Route to**: `async-patterns-and-concurrency`
+
+**Why**: Async programming has unique patterns, pitfalls (blocking event loop), and requires understanding structured concurrency.
+
+**Example queries**:
+- "Getting 'coroutine never awaited' error"
+- "How to use Python 3.11 TaskGroup?"
+- "Async code is slow"
+
+---
+
+### Performance and Profiling
+
+**Symptoms**:
+- "Python code is slow"
+- "How to profile?"
+- "Memory leak"
+- "Optimize performance"
+- "Bottleneck identification"
+- "CPU profiling"
+- "Memory profiling"
+
+**Route to**: `debugging-and-profiling` FIRST
+
+**Why**: MUST profile before optimizing. Many "performance" problems are actually I/O or algorithm issues. Profile to identify the real bottleneck.
+
+**After profiling**, may route to:
+- `async-patterns-and-concurrency` if I/O-bound
+- `scientific-computing-foundations` if array operations slow
+- Same skill for optimization strategies
+
+**Example queries**:
+- "Code is slow, how to speed up?"
+- "Find bottleneck in my code"
+- "Memory usage too high"
+
+---
+
+### Array and DataFrame Operations
+
+**Symptoms**:
+- "NumPy operations"
+- "Pandas DataFrame slow"
+- "Vectorization"
+- "Array performance"
+- "Replace loops with numpy"
+- "DataFrame best practices"
+- "Large dataset processing"
+
+**Route to**: `scientific-computing-foundations`
+
+**Why**: NumPy/pandas have specific patterns for vectorization, memory efficiency, and avoiding anti-patterns (iterrows).
+
+**Example queries**:
+- "How to vectorize this loop?"
+- "Pandas operation too slow"
+- "DataFrame memory usage high"
+
+---
+
+### ML Experiment Tracking and Workflows
+
+**Symptoms**:
+- "Track ML experiments"
+- "MLflow setup"
+- "Reproducible ML pipelines"
+- "ML model lifecycle"
+- "Hyperparameter management"
+- "ML monitoring"
+- "Data versioning"
+
+**Route to**: `ml-engineering-workflows`
+
+**Why**: ML workflows require experiment tracking, reproducibility patterns, configuration management, and monitoring strategies.
+
+**Example queries**:
+- "How to track experiments with MLflow?"
+- "Make ML training reproducible"
+- "Monitor model in production"
+
+---
+
+## Cross-Cutting Scenarios
+
+### Multiple Skills Needed
+
+Some scenarios require multiple specialized skills in sequence:
+
+**New Python project setup with ML**:
+1. Route to `project-structure-and-tooling` (setup)
+2. THEN `ml-engineering-workflows` (ML specifics)
+
+**Legacy code cleanup**:
+1. Route to `project-structure-and-tooling` (setup linting)
+2. THEN `systematic-delinting` (fix warnings)
+
+**Slow pandas code**:
+1. Route to `debugging-and-profiling` (profile)
+2. THEN `scientific-computing-foundations` (optimize)
+
+**Type hints for existing code**:
+1. Route to `project-structure-and-tooling` (setup mypy)
+2. THEN `modern-syntax-and-types` (add types)
+
+**Load in order of execution**: Setup before optimization, diagnosis before fixes, structure before specialization.
+
+---
+
+## Ambiguous Queries - Ask First
+
+When symptom unclear, ASK ONE clarifying question:
+
+**"Fix my Python code"**
+→ Ask: "What specific issue? Type errors? Lint warnings? Tests failing? Performance?"
+
+**"Optimize my code"**
+→ Ask: "Optimize what? Speed? Memory? Code quality?"
+
+**"Setup Python project"**
+→ Ask: "General project or ML-specific? Starting fresh or fixing existing?"
+
+**"My code doesn't work"**
+→ Ask: "What's broken? Import errors? Type errors? Runtime errors? Tests?"
+
+**Never guess when ambiguous. Ask once, route accurately.**
+
+---
+
+## Common Routing Mistakes
+
+| Symptom | Wrong Route | Correct Route | Why |
+|---------|-------------|---------------|-----|
+| "Code slow" | async-patterns | debugging-and-profiling FIRST | Don't optimize without profiling |
+| "Setup linting and fix" | systematic-delinting only | project-structure THEN delinting | Setup before fixing |
+| "Pandas slow" | debugging only | debugging THEN scientific-computing | Profile then vectorize |
+| "Add type hints" | modern-syntax only | project-structure THEN modern-syntax | Setup mypy first |
+| "Fix 1000 lint warnings" | project-structure | systematic-delinting | Process for fixing, not setup |
+
+**Key principle**: Diagnosis before solutions, setup before optimization, profile before performance fixes.
+
+---
+
+## Red Flags - Stop and Route
+
+If you catch yourself about to:
+- Suggest "use async" for slow code → Route to `debugging-and-profiling` to profile first
+- Show pytest example → Route to `testing-and-quality` for complete patterns
+- Suggest "just fix the lint warnings" → Route to `systematic-delinting` for methodology
+- Show type hint syntax → Route to `modern-syntax-and-types` for comprehensive guide
+- Suggest "use numpy instead" → Route to `scientific-computing-foundations` for vectorization patterns
+
+**All of these mean: You're about to give incomplete advice. Route to the specialist instead.**
+
+---
+
+## Common Rationalizations (Don't Do These)
+
+| Excuse | Reality | What To Do |
+|--------|---------|------------|
+| "User is rushed, skip routing" | Routing takes 5 seconds. Wrong fix wastes hours. | Route anyway - specialists have quick answers |
+| "Simple question" | Simple questions deserve complete answers. | Route to specialist for comprehensive coverage |
+| "Just need quick syntax" | Syntax without context leads to misuse. | Route to get syntax + patterns + anti-patterns |
+| "User sounds experienced" | Experience in one area ≠ expertise in all Python. | Route based on symptoms, not perceived skill |
+| "Already tried X" | May have done X wrong or incompletely. | Route to specialist to verify X properly |
+| "Too many skills" | 8 focused skills > 1 overwhelming wall of text. | Use router to navigate - that's its purpose |
+
+**If you catch yourself thinking ANY of these, STOP and route to the specialist.**
+
+---
+
+## Skill Catalog
+
+**Complete Python engineering toolkit**:
+
+1. **modern-syntax-and-types** - Type hints, mypy/pyright, Python 3.10-3.12 features, generics, protocols
+2. **project-structure-and-tooling** - pyproject.toml, ruff, pre-commit, dependency management, packaging
+3. **systematic-delinting** - Process for fixing lint warnings without disabling or over-refactoring
+4. **testing-and-quality** - pytest patterns, fixtures, mocking, coverage, property-based testing
+5. **async-patterns-and-concurrency** - async/await, asyncio, TaskGroup, structured concurrency, threading
+6. **scientific-computing-foundations** - NumPy/pandas, vectorization, memory efficiency, large datasets
+7. **ml-engineering-workflows** - MLflow, experiment tracking, reproducibility, monitoring, model lifecycle
+8. **debugging-and-profiling** - pdb/debugpy, cProfile, memory_profiler, optimization strategies
+
+**Route based on symptoms, not guesses.**
+
+---
+
+## When NOT to Use Python Skills
+
+**Skip Python pack when**:
+- Non-Python language (use appropriate language pack)
+- Algorithm selection (use computer science / algorithms pack)
+- Infrastructure/deployment (use DevOps/infrastructure pack)
+- Database design (use database pack)
+
+**Python pack is for**: Python-specific implementation, tooling, patterns, debugging, and optimization.
+
+---
+
+## Diagnosis-First Principle
+
+**Critical**: Many Python issues require diagnosis before solutions:
+
+| Issue Type | Diagnosis Skill | Then Solution Skill |
+|------------|----------------|---------------------|
+| Performance | debugging-and-profiling | async or scientific-computing |
+| Slow arrays | debugging-and-profiling | scientific-computing-foundations |
+| Type errors | modern-syntax-and-types | modern-syntax-and-types (same) |
+| Lint warnings | systematic-delinting | systematic-delinting (same) |
+
+**If unclear what's wrong, route to diagnostic skill first.**
+
+---
+
+## Integration Notes
+
+**Phase 1 - Standalone**: Python skills are self-contained
+
+**Future cross-references**:
+- superpowers:test-driven-development (TDD methodology before implementing)
+- superpowers:systematic-debugging (systematic debugging before profiling)
+
+**Current focus**: Route within Python pack only. Other packs handle other concerns.
