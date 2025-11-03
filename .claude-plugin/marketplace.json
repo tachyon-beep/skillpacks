@@ -11,6 +11,18 @@
   },
   "plugins": [
     {
+      "name": "axiom-python-engineering",
+      "source": "./plugins/axiom-python-engineering",
+      "description": "Modern Python 3.12+ engineering: types, testing, async, scientific computing, ML workflows - 9 skills",
+      "version": "1.0.0",
+      "keywords": [
+        "axiom",
+        "python",
+        "engineering"
+      ],
+      "category": "development"
+    },
+    {
       "name": "bravos-simulation-tactics",
       "source": "./plugins/bravos-simulation-tactics",
       "description": "Game simulation implementation patterns and tactics - 11 skills",
