@@ -2,7 +2,7 @@
 
 ## Professional AI/ML, game development, security, documentation, and UX skills for Claude Code**
 
-13 complete skillpacks • 120+ production-ready skills • Install what you need
+14 complete skillpacks • 129 skills • Install what you need
 
 ---
 
@@ -52,6 +52,15 @@ cd skillpacks
 - Documentation structure, clarity & style, diagram conventions
 - Security-aware docs, incident response, ITIL/governance
 - `/plugin install muna-technical-writer`
+
+### 🔬 Python Engineering (Axiom)
+
+**axiom-python-engineering** - 9 skills
+
+- Modern Python 3.12+: types, syntax, project structure, delinting
+- Testing, async, debugging, profiling
+- Scientific computing (NumPy/pandas), ML workflows
+- `/plugin install axiom-python-engineering`
 
 ### 🤖 AI/ML Engineering (Yzmir) - 7 Packs
 

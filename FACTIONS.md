@@ -205,29 +205,23 @@ The Muna approach: **Documentation as cultivation, every guide a thread in the g
 
 **Their Bastion**: The Foundry - an enormous factory of stone, metal, and glass where master artisans work day and night. The beating heart of innovation and progress.
 
-### Axiom Skillpacks: The Future's Engineers
+### Axiom Skillpacks: Engineers of Systematic Excellence
 
-*The Axiom represent future skillpacks under development:*
+The Axiom's dedication to making technology accessible through systematic process maps perfectly to Python engineering:
 
-**axiom-game-dev-process** - *The Assembly Line*
+**axiom-python-engineering** - *The Systematic Workshop*
 
-- Systematic game development workflows
-- From concept to deployment through structured phases
-- Reproducible processes for consistent quality
+- Modern Python 3.12+ features and type system mastery
+- Project structure and tooling (ruff, mypy, pre-commit)
+- Systematic delinting without disabling warnings
+- Testing excellence (pytest, coverage, property-based)
+- Async patterns and structured concurrency
+- Performance profiling and optimization strategies
+- Scientific computing foundations (NumPy/pandas vectorization)
+- ML engineering workflows and reproducibility
+- Debugging methodology and systematic troubleshooting
 
-**axiom-skillpack-engineering** - *The Meta-Foundry*
-
-- Creating and testing skillpacks themselves
-- RED-GREEN-REFACTOR for process documentation
-- Engineering expertise transfer at scale
-
-**axiom-idea-contestability** - *The Peer Review*
-
-- Challenge assumptions before building
-- Systematic verification of concepts
-- Fail fast through rigorous testing
-
-The Axiom approach: **Innovation through systematic process, quality through testing, accessibility through clear methodology.** Every workflow repeatable, every technique shareable, every improvement measured.
+The Axiom approach: **Quality through testing, clarity through types, accessibility through documentation.** Every tool is systematic, every process repeatable, every technique shareable.
 
 ---
 

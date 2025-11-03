@@ -5,11 +5,23 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, game development, security, documentation, and UX skills for Claude Code - 13 complete skillpacks with 120+ skills",
-    "version": "1.0.0",
+    "description": "Professional AI/ML, game development, security, documentation, and UX skills for Claude Code - 14 complete skillpacks with 129 skills",
+    "version": "1.1.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
+    {
+      "name": "axiom-python-engineering",
+      "source": "./plugins/axiom-python-engineering",
+      "description": "Modern Python 3.12+ engineering: types, testing, async, scientific computing, ML workflows - 9 skills",
+      "version": "1.0.0",
+      "keywords": [
+        "axiom",
+        "python",
+        "engineering"
+      ],
+      "category": "development"
+    },
     {
       "name": "bravos-simulation-tactics",
       "source": "./plugins/bravos-simulation-tactics",
