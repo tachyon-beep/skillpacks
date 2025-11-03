@@ -1,0 +1,6 @@
+{
+  "name": "axiom-python-engineering",
+  "version": "1.0.0",
+  "description": "Modern Python 3.12+ engineering: types, testing, async, scientific computing, ML workflows",
+  "category": "development"
+}
