@@ -1,7 +1,6 @@
 ---
 name: value-based-methods
 description: Master DQN, Double DQN, Dueling DQN, Rainbow - value-based methods for discrete actions
-disable-model-invocation: true
 ---
 
 # Value-Based Methods
@@ -22,6 +21,7 @@ Invoke this skill when you encounter:
 **This skill provides practical implementation guidance for discrete action RL.**
 
 Do NOT use this skill for:
+
 - Continuous action spaces (route to actor-critic-methods)
 - Policy gradients (route to policy-gradient-methods)
 - Model-based RL (route to model-based-rl)
@@ -35,12 +35,14 @@ Do NOT use this skill for:
 **Value-based methods solve discrete action RL by learning Q(s,a) = expected return from taking action a in state s, then acting greedily. They're powerful for discrete spaces but require careful implementation to avoid instability.**
 
 Key insight: Value methods assume you can enumerate and compare all action values. This breaks down with continuous actions (infinite actions to compare). Use them for:
+
 - Games (Atari, Chess)
 - Discrete control (robot navigation, discrete movement)
 - Dialog systems (discrete utterances)
 - Combinatorial optimization
 
 **Do not use for**:
+
 - Continuous control (robot arm angles, vehicle acceleration)
 - Stochastic policies required (multi-agent, exploration in deterministic policy)
 - Exploration of large action space (too slow to learn all actions)
@@ -54,11 +56,13 @@ Key insight: Value methods assume you can enumerate and compare all action value
 You understand TD learning from rl-foundations. Q-learning extends it to **action-values**.
 
 **TD(0) for V(s)**:
+
 ```
 V[s] ← V[s] + α(r + γV[s'] - V[s])
 ```
 
 **Q-Learning for Q(s,a)**:
+
 ```
 Q[s,a] ← Q[s,a] + α(r + γ max_a' Q[s',a'] - Q[s,a])
 ```
@@ -70,6 +74,7 @@ Q[s,a] ← Q[s,a] + α(r + γ max_a' Q[s',a'] - Q[s,a])
 Q-learning learns the **optimal policy π*(a|s) = argmax_a Q(s,a)** regardless of exploration policy.
 
 **Example: Cliff Walking**
+
 ```
 Agent follows epsilon-greedy (explores 10% random)
 But Q-learning learns: "Take safe path away from cliff" (optimal)
@@ -85,6 +90,7 @@ Q-learning separates:
 ### Convergence Guarantee
 
 **Theorem**: Q-learning converges to Q*(s,a) if:
+
 1. All state-action pairs visited infinitely often
 2. Learning rate α(t) → 0 (e.g., α = 1/N(s,a))
 3. Sufficiently small ε (exploration not zero)
@@ -102,6 +108,7 @@ epsilon = max(epsilon_min, epsilon * decay_rate)
 **Scenario**: User implements tabular Q-learning for Atari.
 
 **Problem**:
+
 ```
 Atari image: 210×160 RGB = 20,160 pixels
 Possible states: 256^20160 (astronomical)
@@ -126,6 +133,7 @@ DQN = Q-learning + neural network + **two critical stability mechanisms**:
 ### Mechanism 1: Experience Replay
 
 **Problem without replay**:
+
 ```python
 # Naive approach (WRONG)
 state = env.reset()
@@ -139,11 +147,13 @@ for t in range(1000):
 ```
 
 **Why this fails**:
+
 - Consecutive transitions are **highly correlated** (state_t and state_{t+1} very similar)
 - Neural network gradient updates are unstable with correlated data
 - Network overfits to recent trajectory
 
 **Experience Replay Solution**:
+
 ```python
 # Collect experiences in buffer
 replay_buffer = []
@@ -174,6 +184,7 @@ for episode in range(num_episodes):
 ```
 
 **Why this works**:
+
 1. **Breaks correlation**: Random sampling decorrelates gradient updates
 2. **Sample efficiency**: Reuse old experiences (learn more from same env interactions)
 3. **Stability**: Averaged gradients are smoother
@@ -181,6 +192,7 @@ for episode in range(num_episodes):
 ### Mechanism 2: Target Network
 
 **Problem without target network**:
+
 ```python
 # Moving target problem (WRONG)
 loss = (Q(s,a) - [r + γ max Q(s_next, a_next)])^2
@@ -193,6 +205,7 @@ loss = (Q(s,a) - [r + γ max Q(s_next, a_next)])^2
 **Analogy**: Trying to hit a moving target that moves whenever you aim.
 
 **Target Network Solution**:
+
 ```python
 # Separate networks
 main_network = create_network()      # Learning network
@@ -209,6 +222,7 @@ if t % update_frequency == 0:
 ```
 
 **Why this works**:
+
 1. **Stability**: Target doesn't move as much (frozen for many steps)
 2. **Bellman consistency**: Gives network time to learn, then adjusts target
 3. **Convergence**: Bootstrapping no longer destabilized by moving target
@@ -293,6 +307,7 @@ replay_buffer_size = 100_000 or 1_000_000
 **Rule of Thumb**: Replay buffer ≥ 10 × episode length (more is usually better)
 
 **Memory vs Sample Efficiency Tradeoff**:
+
 - 10k buffer: Low memory, high correlation (bad)
 - 100k buffer: Moderate memory, good diversity (usually sufficient)
 - 1M buffer: High memory, excellent diversity (overkill unless long episodes)
@@ -314,6 +329,7 @@ state = np.stack([frame_t, frame_{t-1}, frame_{t-2}, frame_{t-3}])
 ```
 
 **Implementation**:
+
 ```python
 from collections import deque
 
@@ -359,6 +375,7 @@ reward = (reward - reward_mean) / reward_std
 **Max operator bias**: In stochastic environments, max over noisy estimates is biased upward.
 
 **Example**:
+
 ```
 True Q*(s,a) values: [10.0, 5.0, 8.0]
 
@@ -373,6 +390,7 @@ Systematic overestimation! Agent thinks actions better than they are.
 ```
 
 **Consequence**:
+
 - Inflated Q-values during training
 - Learned policy (greedy) performs worse than Q-values suggest
 - Especially bad early in training when estimates very noisy
@@ -393,6 +411,7 @@ target = r + γ Q_target(s_next, best_action)  # Evaluate with target network
 ```
 
 **Why it works**:
+
 - Decouples selection and evaluation
 - Removes systematic bias
 - Unbiased estimator of true Q*
@@ -426,11 +445,13 @@ class DoubleDQN(DQNAgent):
 ### When to Use Double DQN
 
 **Use Double DQN if**:
+
 - Training a medium-complexity task (Atari)
 - Suspicious that Q-values are too optimistic
 - Want slightly better sample efficiency
 
 **Standard DQN is OK if**:
+
 - Small action space (less overestimation)
 - Training is otherwise stable
 - Sample efficiency not critical
@@ -444,15 +465,18 @@ class DoubleDQN(DQNAgent):
 ### Dueling Architecture: Separating Value and Advantage
 
 **Insight**: Q(s,a) = V(s) + A(s,a) where:
+
 - **V(s)**: How good is this state? (independent of action)
 - **A(s,a)**: How much better is action a than average? (action-specific advantage)
 
 **Why separate**:
+
 1. **Better feature learning**: Network learns state features independently from action value
 2. **Stabilization**: Value stream sees many states (more gradient signal)
 3. **Generalization**: Advantage stream learns which actions matter
 
 **Example**:
+
 ```
 Atari Breakout:
 V(s) = "Ball in good position, paddle ready" (state value)
@@ -526,11 +550,13 @@ q = v + (a - mean(a))
 ### When to Use Dueling DQN
 
 **Use Dueling if**:
+
 - Training complex environments (Atari)
 - Want better feature learning
 - Training is unstable (helps stabilization)
 
 **Standard DQN is OK if**:
+
 - Simple environments
 - Computational budget tight
 
@@ -552,11 +578,13 @@ batch = random.sample(replay_buffer, batch_size)
 ```
 
 **Problem**:
+
 - Wasted learning on transitions already understood
 - Rare important transitions sampled rarely
 - Sample inefficiency
 
 **Example**:
+
 ```
 Atari agent learns mostly: "Move paddle left-right in routine positions"
 Rarely: "What happens when ball is in corner?" (rare, important)
@@ -648,11 +676,13 @@ loss = mean(weights * (r + γ max Q(s_next) - Q(s,a))^2)
 ### When to Use Prioritized Replay
 
 **Use if**:
+
 - Training large environments (Atari)
 - Sample efficiency critical
 - Have computational budget for priority updates
 
 **Use standard uniform if**:
+
 - Small environments
 - Computational budget tight
 - Standard training is working fine
@@ -677,16 +707,19 @@ loss = mean(weights * (r + γ max Q(s_next) - Q(s,a))^2)
 ### When to Use Rainbow
 
 **Use Rainbow if**:
+
 - Need state-of-the-art Atari performance
 - Have weeks of compute for tuning
 - Paper requires it
 
 **Use Double + Dueling DQN if**:
+
 - Standard DQN training unstable
 - Want good performance with less tuning
 - Typical development
 
 **Use Basic DQN if**:
+
 - Learning the method
 - Sample efficiency not critical
 - Simple environments
@@ -712,6 +745,7 @@ Learning progression:
 **Diagnosis Tree**:
 
 1. **Check target network**:
+
    ```python
    # WRONG - updating every step
    loss = (Q_main(s,a) - [r + γ max Q_main(s_next)])^2
@@ -720,6 +754,7 @@ Learning progression:
    ```
 
 2. **Check learning rate**:
+
    ```python
    # WRONG - too high
    optimizer = torch.optim.Adam(network.parameters(), lr=0.1)
@@ -728,6 +763,7 @@ Learning progression:
    ```
 
 3. **Check reward scale**:
+
    ```python
    # WRONG - rewards too large
    reward = 1000 * indicator  # Values explode
@@ -737,6 +773,7 @@ Learning progression:
    ```
 
 4. **Check replay buffer**:
+
    ```python
    # WRONG - too small
    replay_buffer_size = 1000
@@ -749,6 +786,7 @@ Learning progression:
 **Diagnosis Tree**:
 
 1. **Check replay buffer size**:
+
    ```python
    # Too small → high correlation
    if len(replay_buffer) < 100_000:
@@ -756,6 +794,7 @@ Learning progression:
    ```
 
 2. **Check target network update frequency**:
+
    ```python
    # Too frequent → moving target
    # Too infrequent → slow target adjustment
@@ -765,6 +804,7 @@ Learning progression:
    ```
 
 3. **Check batch size**:
+
    ```python
    # Too small → noisy gradients
    # Too large → slow training
@@ -774,6 +814,7 @@ Learning progression:
    ```
 
 4. **Check epsilon decay**:
+
    ```python
    # Decaying too fast → premature exploitation
    # Decaying too slow → wastes steps exploring
@@ -804,6 +845,7 @@ actual_episode_return = 5.0
 ### Bug #4: Frame Stacking Wrong
 
 **Symptoms**:
+
 - Very slow learning despite "correct" implementation
 - Network can't learn velocity-dependent behaviors
 
@@ -828,6 +870,7 @@ for frame in frames:
 ### Bug #5: Network Architecture Mismatch
 
 **Symptoms**:
+
 - CNN on non-image input (or vice versa)
 - Output layer wrong number of actions
 - Input preprocessing wrong
@@ -854,10 +897,12 @@ assert network.output_size == num_actions
 ### Learning Rate
 
 **Too high** (α > 0.001):
+
 - Divergence, unstable training
 - Q-values explode
 
 **Too low** (α < 0.00001):
+
 - Very slow learning
 - May not converge in reasonable time
 
@@ -876,10 +921,12 @@ if learning_curve_flat:
 ### Replay Buffer Size
 
 **Too small** (< 10k for Atari):
+
 - High correlation in gradients
 - Slow learning, poor sample efficiency
 
 **Too large** (> 10M):
+
 - Excessive memory
 - Stale experiences dominate
 - Diminishing returns
@@ -898,10 +945,12 @@ if learning_slow:
 ### Epsilon Decay
 
 **Too fast** (decay in 10k steps):
+
 - Agent exploits before learning
 - Suboptimal policy
 
 **Too slow** (decay in 1M steps):
+
 - Wasted exploration time
 - Slow performance improvement
 
@@ -916,10 +965,12 @@ epsilon = max(epsilon_min, epsilon * (epsilon_decay_steps / current_step))
 ### Target Network Update Frequency
 
 **Too frequent** (every 100 steps):
+
 - Target still moves rapidly
 - Less stabilization benefit
 
 **Too infrequent** (every 100k steps):
+
 - Network drifts far from target
 - Large jumps in learning
 
@@ -936,13 +987,16 @@ if update_frequency > 10_000:
 ### Reward Scaling
 
 **No scaling** (raw rewards vary wildly):
+
 - Learning rate effects vary by task
 - Convergence issues
 
 **Clipping** (clip to {-1, 0, +1}):
+
 - Good for Atari, loses information in custom envs
 
 **Normalization** (zero-mean, unit variance):
+
 - General solution
 - Preserves reward differences
 
@@ -1050,6 +1104,7 @@ When you see these, suspect bugs:
 **User**: "My DQN is diverging immediately, loss explodes. Implementation looks right. What's wrong?"
 
 **Systematic Debug**:
+
 ```
 1. Check target network
    - Print: "Is target_network separate from main_network?"
@@ -1077,6 +1132,7 @@ When you see these, suspect bugs:
 **User**: "Should I implement Rainbow or just Double DQN? Is Rainbow worth the complexity?"
 
 **Guidance**:
+
 ```
 Double DQN:
 + Fixes overestimation bias
@@ -1105,6 +1161,7 @@ Only go to Rainbow: If need SotA and have time
 **User**: "My agent trains on Atari but learning is slow. How many frames should I stack?"
 
 **Diagnosis**:
+
 ```python
 # Check if frame stacking implemented
 if state.shape != (4, 84, 84):
@@ -1127,6 +1184,7 @@ if state.shape != (4, 84, 84):
 **User**: "I've tuned learning rate, buffer size, epsilon. What else affects performance?"
 
 **Guidance**:
+
 ```
 Priority 1 (Critical):
 - Target network update frequency (1000-5000 steps)
@@ -1150,31 +1208,37 @@ Start with Priority 1, only adjust Priority 2-3 if unstable.
 
 ## Part 13: When to Route Elsewhere
 
-### Route to rl-foundations if:
+### Route to rl-foundations if
+
 - User confused about Bellman equations
 - Unclear on value function definition
 - Needs theory behind Q-learning convergence
 
-### Route to actor-critic-methods if:
+### Route to actor-critic-methods if
+
 - Continuous action space
 - Need deterministic policy gradients
 - Stochastic policy required
 
-### Route to policy-gradient-methods if:
+### Route to policy-gradient-methods if
+
 - Large discrete action space (> 1000 actions)
 - Need policy regularization
 - Exploration by stochasticity useful
 
-### Route to offline-rl-methods if:
+### Route to offline-rl-methods if
+
 - No environment access (batch learning)
 - Learning from logged data only
 
-### Route to rl-debugging if:
+### Route to rl-debugging if
+
 - General training issues
 - Need systematic debugging methodology
 - Credit assignment problems
 
-### Route to reward-shaping if:
+### Route to reward-shaping if
+
 - Sparse rewards
 - Reward design affecting learning
 - Potential-based shaping questions
@@ -1201,6 +1265,7 @@ Start with Priority 1, only adjust Priority 2-3 if unstable.
 8. **Debugging Strategy**: Systematic diagnosis (target network → learning rate → reward scale)
 
 **Key Takeaways**:
+
 - Value methods are for **discrete actions ONLY**
 - DQN requires **target network and experience replay**
 - **Frame stacking** needed for video inputs (Markov property)
@@ -1209,4 +1274,3 @@ Start with Priority 1, only adjust Priority 2-3 if unstable.
 - **Systematic debugging** beats random tuning
 
 **Next**: Implement on simple environment first (CartPole or small custom task), then scale to Atari.
-

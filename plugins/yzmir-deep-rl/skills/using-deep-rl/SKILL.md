@@ -28,6 +28,7 @@ This is the **entry point** for the deep-rl pack. It routes to 12 specialized sk
 **Problem type determines algorithm family.**
 
 Reinforcement learning is not one algorithm. The correct approach depends on:
+
 1. **Action Space**: Discrete (button presses) vs Continuous (joint angles)
 2. **Data Regime**: Online (interact with environment) vs Offline (fixed dataset)
 3. **Experience Level**: Need foundations vs ready to implement
@@ -55,10 +56,12 @@ Reinforcement learning is not one algorithm. The correct approach depends on:
 ### Step 1: Assess Experience Level
 
 **Diagnostic Questions:**
+
 - "Are you new to RL concepts, or do you have a specific problem to solve?"
 - "Do you understand MDPs, value functions, and policy gradients?"
 
 **Routing:**
+
 - If user asks "what is RL" or "how does RL work" → **rl-foundations**
 - If user is confused about value vs policy, on-policy vs off-policy → **rl-foundations**
 - If user has specific problem and RL background → Continue to Step 2
@@ -70,6 +73,7 @@ Reinforcement learning is not one algorithm. The correct approach depends on:
 ### Step 2: Classify Action Space
 
 **Diagnostic Questions:**
+
 - "What actions can your agent take? Discrete choices (e.g., left/right/jump) or continuous values (e.g., joint angles, force)?"
 - "How many possible actions? Small (< 100) or large/infinite?"
 
@@ -78,6 +82,7 @@ Reinforcement learning is not one algorithm. The correct approach depends on:
 **Examples:** Game buttons, menu selections, discrete control signals
 
 **Routing Logic:**
+
 ```
 IF discrete actions AND small action space (< 100) AND online learning:
   → value-based-methods (DQN, Double DQN, Dueling DQN)
@@ -101,6 +106,7 @@ IF discrete actions AND (large action space OR need policy flexibility):
 **Examples:** Robot joint angles, motor forces, steering angles, continuous control
 
 **Routing Logic:**
+
 ```
 IF continuous actions:
   → actor-critic-methods (SAC, TD3, PPO)
@@ -128,12 +134,14 @@ IF continuous actions:
 ### Step 3: Identify Data Regime
 
 **Diagnostic Questions:**
+
 - "Can your agent interact with the environment during training, or do you have a fixed dataset?"
 - "Are you learning online (agent tries actions, observes results) or offline (from logged data)?"
 
 #### Online Learning (Agent Interacts with Environment)
 
 **Routing:**
+
 ```
 IF online AND discrete actions:
   → value-based-methods OR policy-gradient-methods
@@ -156,6 +164,7 @@ IF online AND sample efficiency critical:
 #### Offline Learning (Fixed Dataset, No Interaction)
 
 **Routing:**
+
 ```
 IF offline (fixed dataset):
   → offline-rl (CQL, IQL, Conservative Q-Learning)
@@ -180,11 +189,13 @@ IF offline (fixed dataset):
 #### Multi-Agent Scenarios
 
 **Diagnostic Questions:**
+
 - "Are multiple agents learning simultaneously?"
 - "Do they cooperate, compete, or both?"
 - "Do agents need to communicate?"
 
 **Routing:**
+
 ```
 IF multiple agents:
   → multi-agent-rl (QMIX, COMA, MADDPG)
@@ -206,11 +217,13 @@ IF multiple agents:
 #### Model-Based RL
 
 **Diagnostic Questions:**
+
 - "Is sample efficiency extremely critical? (< 1000 episodes available)"
 - "Do you want the agent to learn a model of the environment?"
 - "Do you need planning or 'imagination'?"
 
 **Routing:**
+
 ```
 IF sample efficiency critical OR want environment model:
   → model-based-rl (MBPO, Dreamer, Dyna)
@@ -233,12 +246,14 @@ IF sample efficiency critical OR want environment model:
 #### "Agent Not Learning" Problems
 
 **Symptoms:**
+
 - Reward not increasing
 - Agent does random actions
 - Training loss explodes/vanishes
 - Performance plateaus immediately
 
 **Routing:**
+
 ```
 IF "not learning" OR "reward stays at 0" OR "loss explodes":
   → rl-debugging (FIRST, before changing algorithms)
@@ -265,12 +280,14 @@ IF "not learning" OR "reward stays at 0" OR "loss explodes":
 #### Exploration Issues
 
 **Symptoms:**
+
 - Agent never explores new states
 - Stuck in local optimum
 - Can't find sparse rewards
 - Training variance too high
 
 **Routing:**
+
 ```
 IF exploration problems:
   → exploration-strategies
@@ -290,12 +307,14 @@ IF exploration problems:
 #### Reward Design Issues
 
 **Symptoms:**
+
 - Sparse rewards (only at episode end)
 - Agent learns wrong behavior
 - Need to design reward function
 - Want inverse RL
 
 **Routing:**
+
 ```
 IF reward design questions OR sparse rewards:
   → reward-shaping
@@ -313,12 +332,14 @@ IF reward design questions OR sparse rewards:
 #### Environment Setup
 
 **Symptoms:**
+
 - Need to create custom environment
 - Gym API questions
 - Vectorization for parallel environments
 - Wrappers, preprocessing
 
 **Routing:**
+
 ```
 IF environment setup questions:
   → rl-environments
@@ -336,12 +357,14 @@ IF environment setup questions:
 #### Evaluation Methodology
 
 **Symptoms:**
+
 - How to evaluate RL agents?
 - Training reward high, test reward low
 - Variance in results
 - Sample efficiency metrics
 
 **Routing:**
+
 ```
 IF evaluation questions:
   → rl-evaluation
@@ -361,6 +384,7 @@ IF evaluation questions:
 ### Scenario: Complete Beginner to RL
 
 **Routing sequence:**
+
 1. **rl-foundations** - Understand MDP, value functions, policy gradients
 2. **value-based-methods** OR **policy-gradient-methods** - Start with simpler algorithm (DQN or REINFORCE)
 3. **rl-debugging** - When things don't work (they won't initially)
@@ -370,6 +394,7 @@ IF evaluation questions:
 ### Scenario: Continuous Control (Robotics)
 
 **Routing sequence:**
+
 1. **actor-critic-methods** - Primary (SAC for sample efficiency, TD3 for stability)
 2. **rl-debugging** - Systematic debugging when training issues arise
 3. **exploration-strategies** - If exploration is insufficient
@@ -379,6 +404,7 @@ IF evaluation questions:
 ### Scenario: Offline RL from Dataset
 
 **Routing sequence:**
+
 1. **offline-rl** - Primary (CQL, IQL, special considerations)
 2. **rl-evaluation** - Evaluation without environment interaction
 3. **rl-debugging** - Debugging without online rollouts (limited tools)
@@ -386,6 +412,7 @@ IF evaluation questions:
 ### Scenario: Multi-Agent Cooperative Task
 
 **Routing sequence:**
+
 1. **multi-agent-rl** - Primary (QMIX, COMA, centralized training)
 2. **reward-shaping** - Team rewards, credit assignment
 3. **policy-gradient-methods** - Often used as base algorithm (PPO + MARL)
@@ -394,6 +421,7 @@ IF evaluation questions:
 ### Scenario: Sample-Efficient Learning
 
 **Routing sequence:**
+
 1. **actor-critic-methods** (SAC) OR **model-based-rl** (MBPO)
 2. **rl-debugging** - Critical to not waste samples on bugs
 3. **rl-evaluation** - Track sample efficiency curves
@@ -401,6 +429,7 @@ IF evaluation questions:
 ### Scenario: Sparse Reward Problem
 
 **Routing sequence:**
+
 1. **reward-shaping** - Potential-based shaping, subgoal rewards
 2. **exploration-strategies** - Curiosity, intrinsic motivation
 3. **rl-debugging** - Verify exploration hyperparameters
@@ -470,24 +499,29 @@ Clarify boundaries with other packs:
 Use these questions to classify problems:
 
 ### Action Space
+
 - "What actions can your agent take? Discrete choices or continuous values?"
 - "How many possible actions? Small (< 100), large (100-10000), or infinite (continuous)?"
 
 ### Data Regime
+
 - "Can your agent interact with the environment during training, or do you have a fixed dataset?"
 - "Are you learning online (agent tries actions) or offline (from logged data)?"
 
 ### Experience Level
+
 - "Are you new to RL, or do you have a specific problem?"
 - "Do you understand MDPs, value functions, and policy gradients?"
 
 ### Special Requirements
+
 - "Are multiple agents involved? Do they cooperate or compete?"
 - "Is sample efficiency critical? How many episodes can you afford?"
 - "Is the reward sparse (only at goal) or dense (every step)?"
 - "Do you need the agent to learn a model of the environment?"
 
 ### Infrastructure
+
 - "Do you have an environment set up, or do you need to create one?"
 - "Are you debugging a training issue, or designing from scratch?"
 - "How will you evaluate the agent?"
@@ -509,11 +543,13 @@ When routing to a skill:
 > "You mentioned continuous joint angles for a robot arm. This is a **continuous action space**, which means DQN won't work (it requires discrete actions).
 >
 > I'm routing you to **actor-critic-methods** because:
+>
 > - Continuous actions need actor-critic (SAC, TD3) or policy gradients (PPO)
 > - SAC is most sample-efficient for continuous control
 > - TD3 is stable and deterministic for robotics
 >
 > You'll also likely need:
+>
 > - **rl-debugging** when training issues arise (they will)
 > - **reward-shaping** if your reward is sparse
 > - **rl-environments** to set up your robot simulation

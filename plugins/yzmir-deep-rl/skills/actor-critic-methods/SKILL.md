@@ -1,7 +1,6 @@
 ---
 name: actor-critic-methods
 description: Master A2C, A3C, SAC, TD3 - actor-critic methods for continuous control
-disable-model-invocation: true
 ---
 
 # Actor-Critic Methods
@@ -26,6 +25,7 @@ Invoke this skill when you encounter:
 **This skill provides practical guidance for continuous action space RL using actor-critic methods.**
 
 Do NOT use this skill for:
+
 - Discrete action spaces (route to value-based-methods for Q-learning/DQN)
 - Pure policy gradient without value baseline (route to policy-gradient-methods)
 - Model-based RL (route to model-based-rl)
@@ -41,6 +41,7 @@ Do NOT use this skill for:
 Key insight: Continuous control has infinite actions to explore. Value-based methods (compare all action values) are infeasible. Policy gradient methods (directly optimize policy) have high variance. **Actor-critic solves this: policy directly outputs action distribution (actor), value function provides stable baseline (critic) to reduce variance.**
 
 Use them for:
+
 - Continuous control (robot arms, locomotion, vehicle control)
 - High-dimensional action spaces (continuous angles, forces, velocities)
 - Sample-efficient learning from sparse experiences
@@ -48,6 +49,7 @@ Use them for:
 - Continuous state/action MDPs (deterministic or stochastic environments)
 
 **Do not use for**:
+
 - Discrete small action spaces (too slow compared to DQN)
 - Imitation learning focused on behavior cloning (use behavior cloning directly)
 - Very high-dimensional continuous spaces without careful design (curse of dimensionality)
@@ -62,6 +64,7 @@ Use them for:
 You understand policy gradient from policy-gradient-methods. Actor-critic extends it with **a value baseline to reduce variance**.
 
 **Pure Policy Gradient (REINFORCE)**:
+
 ```
 ∇J = E_τ[∇log π(a|s) * G_t]
 ```
@@ -69,6 +72,7 @@ You understand policy gradient from policy-gradient-methods. Actor-critic extend
 **Problem**: G_t (cumulative future reward) has high variance. All rollouts pulled toward average. Noisy gradients = slow learning.
 
 **Actor-Critic Solution**:
+
 ```
 ∇J = E_τ[∇log π(a|s) * (G_t - V(s))]
        = E_τ[∇log π(a|s) * A(s,a)]
@@ -80,6 +84,7 @@ where:
 ```
 
 **Why baseline helps**:
+
 ```
 Without baseline: policy gradients = [+10, -2, +5, -3, -1] (noisy, high variance)
 With baseline (subtract mean=2): [+8, -4, +3, -5, -3] (same direction, but cleaner relative to baseline)
@@ -103,22 +108,27 @@ A(s,a) = Q(s,a) - V(s)
 **Three ways to estimate advantage**:
 
 **1. Monte Carlo (full return)**:
+
 ```python
 G_t = r_t + γr_{t+1} + γ²r_{t+2} + ... (full rollout)
 A(s,a) = G_t - V(s)
 ```
+
 - Unbiased but high variance
 - Requires complete episodes or long horizons
 
 **2. TD(0) (one-step bootstrap)**:
+
 ```python
 A(s,a) = r + γV(s') - V(s)
 ```
+
 - Low variance but biased (depends on critic accuracy)
 - One-step lookahead only
 - If V(s') is wrong, advantage is wrong
 
 **3. GAE - Generalized Advantage Estimation** (best practice):
+
 ```python
 A_t = δ_t + (γλ)δ_{t+1} + (γλ)²δ_{t+2} + ...
 δ_t = r_t + γV(s_{t+1}) - V(s_t)  [TD error]
@@ -138,6 +148,7 @@ A_t = δ_t + (γλ)δ_{t+1} + (γλ)²δ_{t+2} + ...
 **Scenario**: User trains actor-critic but critic loss doesn't decrease. Actor improves, but value function plateaus. Agent can't use accurate advantage estimates.
 
 **Problem**:
+
 ```python
 # WRONG - critic loss computed incorrectly
 critic_loss = mean((V(s) - G_t)^2)  # Wrong target!
@@ -145,6 +156,7 @@ critic_loss.backward()
 ```
 
 **The bug**: Critic should learn Bellman equation:
+
 ```
 V(s) = E[r + γV(s')]
 ```
@@ -152,6 +164,7 @@ V(s) = E[r + γV(s')]
 If you compute target as G_t directly, you're using Monte Carlo returns (too noisy). If you use r + γV(s'), you're bootstrapping properly.
 
 **Correct approach**:
+
 ```python
 # RIGHT - Bellman bootstrap target
 V_target = r + gamma * V(s').detach()  # Detach next state value!
@@ -161,6 +174,7 @@ critic_loss = mean((V(s) - V_target)^2)
 **Why detach() matters**: If you don't detach V(s'), gradient flows backward through value function, creating a moving target problem.
 
 **Red Flag**: If critic loss doesn't decrease while actor loss decreases, critic isn't learning Bellman equation. Check:
+
 1. Target computation (should be r + γV(s'), not G_t alone)
 2. Detach next state value
 3. Critic network is separate from actor
@@ -173,6 +187,7 @@ critic_loss = mean((V(s) - V_target)^2)
 **Important distinction**:
 
 **A2C uses critic as baseline**:
+
 ```
 V(s) = value of being in state s
 A(s,a) = r + γV(s') - V(s)  [TD advantage]
@@ -180,6 +195,7 @@ Policy loss = -∇log π(a|s) * A(s,a)
 ```
 
 **SAC/TD3 use critic as Q-function**:
+
 ```
 Q(s,a) = expected return from taking action a in s
 A(s,a) = Q(s,a) - V(s)
@@ -187,6 +203,7 @@ Policy loss = ∇log π(a|s) * Q(s,a) [deterministic policy gradient]
 ```
 
 **Why the difference**: A2C updates actor and critic together (on-policy). SAC/TD3 decouple them (off-policy):
+
 - Actor never sees the replay buffer
 - Critic learns Q from replay buffer
 - Actor uses critic's Q estimate (always lagging slightly)
@@ -316,6 +333,7 @@ J(π) = E[G_t + α H(π(·|s))]
 ```
 
 **Where**:
+
 - G_t = cumulative reward
 - H(π(·|s)) = policy entropy (randomness)
 - α = entropy coefficient (how much we value exploration)
@@ -438,6 +456,7 @@ loss = Q_target - 0.2 * log_prob  # Same penalty regardless of entropy
 ```
 
 **Correct approach**:
+
 ```python
 # RIGHT - α is learned via entropy constraint
 target_entropy = -action_dim  # For Gaussian: typically -action_dim
@@ -454,6 +473,7 @@ alpha_optimizer.step()
 ```
 
 **Red Flag**: If SAC agent explores randomly without improving, check:
+
 1. Is α being optimized? (not fixed value)
 2. Is target entropy set correctly? (usually -action_dim)
 3. Is log_prob computed with squashed action (after tanh)?
@@ -494,6 +514,7 @@ log_prob = log_prob - 2 * (log(2) - x - softplus(-2*x))  # Add Jacobian term
 ```
 
 Or simpler:
+
 ```python
 # PyTorch way
 dist = Normal(mu, sigma)
@@ -503,6 +524,7 @@ log_prob = dist.log_prob(raw_action) - torch.log(1 - action.pow(2) + 1e-6).sum(-
 ```
 
 **Red Flag**: If SAC policy doesn't learn despite updates, check:
+
 1. Are actions being squashed (tanh)?
 2. Is log_prob computed with tanh Jacobian term?
 3. Is squashing adjustment in entropy coefficient update?
@@ -531,6 +553,7 @@ Two critics (clipped double Q-learning):
 ```
 
 **Correct implementation**:
+
 ```python
 # WRONG - one critic
 target = reward + gamma * critic_target(next_state, next_action)
@@ -550,6 +573,7 @@ actor_loss = -(Q_current - alpha * log_prob)
 ```
 
 **Red Flag**: If SAC diverges, check:
+
 1. Are there two Q-networks?
 2. Does target use min(Q1, Q2)?
 3. Are target networks updated (soft or hard)?
@@ -565,6 +589,7 @@ TD3 = Twin Delayed DDPG. It addresses SAC's cost (two networks, more computation
 **DDPG** (older): Deterministic policy, single Q-network, no entropy. Fast but unstable.
 
 **TD3** (newer): Three tricks to stabilize DDPG:
+
 1. **Twin critics**: Two Q-networks (clipped double Q-learning)
 2. **Delayed actor updates**: Update actor every d steps (not every step)
 3. **Target policy smoothing**: Add noise to target action before Q evaluation
@@ -672,6 +697,7 @@ If Q-networks overestimate for certain actions:
 ```
 
 With smoothing:
+
 ```
 Next action = μ_target(s') + ε_smoothing
 - Adds small random noise to target action
@@ -684,6 +710,7 @@ Important: Noise is added at TARGET action, not current action!
 ```
 
 **Correct implementation**:
+
 ```python
 # Trick #3: Target policy smoothing
 next_actions = actor_target(next_states)
@@ -697,6 +724,7 @@ Q_target = min(Q1_target(next_states, next_actions),
 ```
 
 **Red Flag**: If TD3 diverges despite two critics, check:
+
 1. Is noise added to target action (not just actor output)?
 2. Is noise clipped (noise_clip prevents too much noise)?
 3. Are critic targets using smoothed actions?
@@ -717,6 +745,7 @@ Result: Actor chases moving target, training unstable
 ```
 
 With delayed updates:
+
 ```
 Steps 1-4: Update critics only, let them converge
 Step 5: Update actor (once per policy_delay=5)
@@ -726,6 +755,7 @@ Result: Critic stabilizes before actor changes, smoother learning
 ```
 
 **Typical settings**:
+
 ```python
 policy_delay = 2  # Update actor every 2 critic updates
 # or
@@ -733,6 +763,7 @@ policy_delay = 5  # More conservative, every 5 critic updates
 ```
 
 **Correct implementation**:
+
 ```python
 if step % policy_delay == 0:  # Only sometimes!
     actor_loss = -critic1(state, actor(state)).mean()
@@ -747,6 +778,7 @@ if step % policy_delay == 0:  # Only sometimes!
 ```
 
 **Red Flag**: If TD3 training unstable, check:
+
 1. Is actor updated only every policy_delay steps?
 2. Are target networks updated on same schedule (policy_delay)?
 3. Policy_delay typically 2-5
@@ -786,6 +818,7 @@ if step % policy_delay == 0:  # Only sometimes!
    - Simple exploration (policy smoothing enough) → TD3
 
 **Practical recommendation**: Start with SAC. It's more robust (entropy auto-tuning). Switch to TD3 only if you:
+
 - Know you want deterministic policy
 - Have tuning expertise for policy_delay
 - Need slightly faster computation
@@ -810,15 +843,18 @@ raw_action = dist.rsample()  # Reparameterized sample
 ```
 
 **Why log(std)?**: Parameterize log scale instead of scale directly.
+
 - Numerical stability (log prevents underflow)
 - Gradient flow smoother
 - Prevents std from becoming negative
 
 **Why clamp log_std?**: Prevents std from becoming too small or large.
+
 - Too small: policy becomes deterministic, no exploration
 - Too large: policy becomes random, no learning
 
 Typical ranges:
+
 ```python
 log_std_min = -20  # std >= exp(-20) ≈ 2e-9 (small exploration)
 log_std_max = 2    # std <= exp(2) ≈ 7.4 (max randomness)
@@ -844,6 +880,7 @@ action_scaled = (high - low) / 2 * action + (high + low) / 2
 **Off-policy methods** (SAC, TD3) need exploration during data collection:
 
 **Method 1: Action space noise** (simpler):
+
 ```python
 action = actor(state) + noise
 noise = torch.randn_like(action) * exploration_std
@@ -851,6 +888,7 @@ action = torch.clamp(action, -1, 1)  # Ensure in bounds
 ```
 
 **Method 2: Parameter noise** (more complex):
+
 ```
 Add noise to actor network weights periodically
 Action = actor_with_noisy_weights(state)
@@ -858,6 +896,7 @@ Results in correlated action noise across timesteps (more natural exploration)
 ```
 
 **Typical settings**:
+
 ```python
 # For SAC: exploration_std = 0.1 * max_action
 # For TD3: exploration_std starts high, decays over time
@@ -872,12 +911,14 @@ Results in correlated action noise across timesteps (more natural exploration)
 **Symptom**: Critic loss explodes, V(s) becomes huge (1e6+), agent breaks.
 
 **Causes**:
+
 1. **Wrong target computation**: Using wrong Bellman target
 2. **No gradient clipping**: Gradients unstable
 3. **Learning rate too high**: Critic overshoots
 4. **Value targets too large**: Reward scale not normalized
 
 **Diagnosis**:
+
 ```python
 # Check target computation
 print("Reward range:", rewards.min(), rewards.max())
@@ -892,6 +933,7 @@ print("Critic loss:", critic_loss.item())  # Should decrease, not diverge
 ```
 
 **Fix**:
+
 ```python
 # 1. Reward normalization
 rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-8)
@@ -913,12 +955,14 @@ v_target = torch.clamp(v_target, -100, 100)
 **Symptom**: Actor loss decreases but policy doesn't change. Same action sampled repeatedly. No improvement in return.
 
 **Causes**:
+
 1. **Policy output not properly parameterized**: Mean/std wrong
 2. **Critic signal dead**: Q-values all same, no gradient
 3. **Learning rate too low**: Actor updates too small
 4. **Advantage always zero**: Critic perfect (impossible) or wrong
 
 **Diagnosis**:
+
 ```python
 # Check policy output distribution
 actions = [actor.sample(state) for _ in range(1000)]
@@ -936,6 +980,7 @@ print("Advantage std:", advantages.std())  # Should be >0
 ```
 
 **Fix**:
+
 ```python
 # 1. Ensure policy outputs have variance
 assert log_std.mean() < log_std_max - 0.5  # Not clamped to max
@@ -967,6 +1012,7 @@ entropy_loss = -alpha * (log_probs + target_entropy)
 ```
 
 **Fix**:
+
 ```python
 # RIGHT - use log(α) to avoid explosion
 log_alpha = torch.log(alpha)
@@ -997,6 +1043,7 @@ for step in range(1000000):
 ```
 
 **Fix**:
+
 ```python
 # RIGHT - soft update every step (or every N steps for delayed methods)
 tau = 0.005  # Soft update parameter
@@ -1031,6 +1078,7 @@ for step in range(1000):
 ```
 
 **Fix**:
+
 ```python
 # RIGHT - don't detach when computing actor loss
 q_value = critic(state, action)  # No detach!
@@ -1138,54 +1186,64 @@ actor.update(actor_loss)  # Gradient flows through q_value
 ## Part 9: Comprehensive Pitfall Reference
 
 ### 1. Critic Loss Not Decreasing
+
 - Wrong Bellman target (should be r + γV(s'))
 - Critic weights not updating (zero gradients)
 - Learning rate too low
 - Target network staleness (not updated)
 
 ### 2. Actor Not Improving
+
 - Critic broken (no signal)
 - Advantage estimates all zero
 - Actor learning rate too low
 - Policy parameterization wrong (no variance)
 
 ### 3. Training Unstable (Divergence)
+
 - Missing target networks
 - Critic loss exploding (wrong target, high learning rate)
 - Entropy coefficient exploding (SAC: should be log(α))
 - Actor updates every step (should delay, especially TD3)
 
 ### 4. Policy Stuck at Random Actions (SAC)
+
 - Manual α fixed (should be auto-tuned)
 - Target entropy wrong (should be -action_dim)
 - Entropy loss gradient wrong direction
 
 ### 5. Policy Output Clamped to Min/Max Std
+
 - Log_std range too tight (check log_std_min/max)
 - Network initialization pushing to extreme values
 - No gradient clipping preventing adjustment
 
 ### 6. Tanh Squashing Ignored
+
 - Log probability not adjusted for squashing
 - Missing Jacobian term in SAC/policy gradient
 - Action scaling inconsistent
 
 ### 7. Target Networks Never Updated
+
 - Forgot to create target networks
 - Update function called but not applied
 - Update frequency too high (no learning)
 
 ### 8. Off-Policy Break (Experience Replay)
+
 - Actor training on old data (should use current replay buffer)
 - Data distribution shift (actions from old policy)
 - Batch importance weights missing (PER)
 
 ### 9. Advantage Estimates Biased
+
 - GAE parameter λ wrong (should be 0.95-0.99)
 - Bootstrap incorrect (wrong value target)
 - Critic too inaccurate (overcorrection)
 
 ### 10. Entropy Coefficient Issues (SAC)
+
 - Manual tuning instead of auto-tuning
 - Entropy target not set correctly
 - Log(α) optimization not used (causes explosion)
@@ -1199,6 +1257,7 @@ actor.update(actor_loss)  # Gradient flows through q_value
 **Problem**: Robotic arm needs to reach target position. Continuous joint angles.
 
 **Setup**:
+
 ```python
 state_dim = 18  # 6 joint angles + velocities
 action_dim = 6  # Joint torques
@@ -1213,6 +1272,7 @@ alpha = 1.0
 ```
 
 **Training**:
+
 ```python
 for step in range(1000000):
     # Collect experience
@@ -1266,6 +1326,7 @@ for step in range(1000000):
 **Problem**: Vehicle continuous steering/acceleration. Needs stable, deterministic behavior.
 
 **Setup**:
+
 ```python
 state_dim = 32  # Observations (lidar, speed, etc)
 action_dim = 2  # Steering angle, acceleration
@@ -1277,6 +1338,7 @@ critic2 = CriticNetwork(state_dim, action_dim)
 ```
 
 **Training**:
+
 ```python
 for step in range(1000000):
     # Collect with exploration noise
@@ -1366,6 +1428,7 @@ Users often make systematic errors in actor-critic reasoning. Here's how to prev
 **Rationalization**: "TD3 has simpler math (no entropy), just two critics and delayed updates. SAC adds entropy which seems overly complex. Can't I just use TD3?"
 
 **Counter**: SAC's entropy IS the simplicity. By automatically tuning α, SAC handles exploration automatically. TD3 still requires manual tuning of:
+
 - policy_delay (2? 5? 10?)
 - target_policy_noise magnitude
 - noise_clip value
@@ -1381,6 +1444,7 @@ SAC auto-tunes entropy. That's FEWER hyperparameters overall.
 **Rationalization**: "Critic loss is exploding. Reducing learning rate should stabilize it."
 
 **Counter**: Blindly lowering learning rate treats symptom, not cause. If critic is diverging, check:
+
 1. Is the Bellman target correct? (r + γV(s').detach())
 2. Are you gradient clipping?
 3. Are target networks being updated?
@@ -1398,6 +1462,7 @@ A wrong target will diverge at ANY learning rate (will just take longer).
 **Counter**: A2C discards data after one pass. SAC/TD3 reuse data with replay buffer.
 
 For continuous control with limited data:
+
 - A2C: 1 million environment steps = 1 million gradient updates
 - SAC: 1 million environment steps = 4+ million gradient updates (from replay buffer)
 
@@ -1543,6 +1608,7 @@ A(s,a) = δ_0 + (γλ)δ_1 + (γλ)²δ_2 + ...  # GAE combines multiple steps
 ```
 
 **How to fix**:
+
 ```python
 def compute_gae(rewards, values, next_value, gamma, lam):
     advantages = torch.zeros_like(rewards)
@@ -1584,6 +1650,7 @@ critic = nn.Sequential(
 ```
 
 **Fix**: Use similar architectures:
+
 ```python
 actor = nn.Sequential(
     nn.Linear(state_dim, 256),
@@ -1621,6 +1688,7 @@ target = reward_normalized + gamma * v_next
 ```
 
 **Running statistics**:
+
 ```python
 class RunningNorm:
     def __init__(self):

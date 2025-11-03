@@ -1,7 +1,6 @@
 ---
 name: rl-debugging
 description: Systematic RL debugging - diagnose learning failures, common bugs, diagnosis trees
-disable-model-invocation: true
 ---
 
 # RL Debugging Methodology
@@ -536,6 +535,7 @@ sanity_check_env(env)
 ```
 
 **RED FLAGS:**
+
 - NaN or inf in observations/rewards
 - State values exploding (> 1e6)
 - Reward always same (no signal)
@@ -603,6 +603,7 @@ for episode in range(10):
 **Root Cause**: Gradients too large due to reward scale
 
 **Code Example**:
+
 ```python
 # WRONG: Reward in [0, 1000]
 reward = success_count * 1000
@@ -615,6 +616,7 @@ reward = reward / max_possible_reward  # Result: [-1, 1]
 **Fix**: Divide rewards by max possible value
 
 **Detection**:
+
 ```python
 rewards = [collect 100 episodes]
 if max(abs(r) for r in rewards) > 1:
@@ -630,6 +632,7 @@ if max(abs(r) for r in rewards) > 1:
 **Root Cause**: Reset doesn't randomize initial state or returns same state
 
 **Code Example**:
+
 ```python
 # WRONG: Reset always same state
 def reset(self):
@@ -645,6 +648,7 @@ def reset(self):
 **Fix**: Make reset() randomize initial state
 
 **Detection**:
+
 ```python
 states = [env.reset() for _ in range(10)]
 if len(set(map(tuple, states))) == 1:
@@ -660,6 +664,7 @@ if len(set(map(tuple, states))) == 1:
 **Root Cause**: Observation missing velocity, derivatives, or temporal info
 
 **Code Example**:
+
 ```python
 # WRONG: Only position, no velocity
 state = np.array([position])  # Can't infer velocity from position alone
@@ -678,6 +683,7 @@ observation = np.stack(frames, axis=-1)  # Shape: (84, 84, 4)
 **Fix**: Add missing information to observation
 
 **Detection**:
+
 ```python
 # If agent converges to bad performance despite long training
 # Check: Can you compute optimal action from observation?
@@ -693,6 +699,7 @@ observation = np.stack(frames, axis=-1)  # Shape: (84, 84, 4)
 **Root Cause**: Reward is constant or nearly constant
 
 **Code Example**:
+
 ```python
 # WRONG: Constant reward
 reward = 1.0  # Every step gets +1, no differentiation
@@ -707,6 +714,7 @@ else:
 **Fix**: Ensure reward differentiates outcomes
 
 **Detection**:
+
 ```python
 rewards = [collect random policy rewards]
 if rewards.std() < 0.01:
@@ -722,6 +730,7 @@ if rewards.std() < 0.01:
 **Root Cause**: Gradient updates too large, overshooting optimum
 
 **Code Example**:
+
 ```python
 # WRONG: Learning rate 1e-2 (too high)
 optimizer = Adam(model.parameters(), lr=1e-2)
@@ -733,6 +742,7 @@ optimizer = Adam(model.parameters(), lr=3e-4)
 **Fix**: Reduce learning rate by 2-5×
 
 **Detection**:
+
 ```python
 # Watch loss first 100 steps
 # If loss increases first step: LR too high
@@ -748,6 +758,7 @@ optimizer = Adam(model.parameters(), lr=3e-4)
 **Root Cause**: Gradient updates too small, learning crawls
 
 **Code Example**:
+
 ```python
 # WRONG: Learning rate 1e-6 (too low)
 optimizer = Adam(model.parameters(), lr=1e-6)
@@ -759,6 +770,7 @@ optimizer = Adam(model.parameters(), lr=3e-4)
 **Fix**: Increase learning rate by 2-5×
 
 **Detection**:
+
 ```python
 # Training curve increases very slowly
 # If training 1M steps and reward barely improved: LR too low
@@ -773,6 +785,7 @@ optimizer = Adam(model.parameters(), lr=3e-4)
 **Root Cause**: Exploration (epsilon or entropy) not decaying
 
 **Code Example**:
+
 ```python
 # WRONG: Constant epsilon
 epsilon = 0.3  # Forever
@@ -785,6 +798,7 @@ epsilon = epsilon_linear(step, total_steps=1_000_000,
 **Fix**: Add exploration decay schedule
 
 **Detection**:
+
 ```python
 # Plot entropy or epsilon over training
 # Should show clear decay from high to low
@@ -800,6 +814,7 @@ epsilon = epsilon_linear(step, total_steps=1_000_000,
 **Root Cause**: Exploration stops before finding good policy
 
 **Code Example**:
+
 ```python
 # WRONG: Decays to zero in 10k steps (for 1M step training)
 epsilon = 0.99 ** (step / 100)  # Reaches 0 too fast
@@ -812,6 +827,7 @@ epsilon = epsilon_linear(step, total_steps=1_000_000,
 **Fix**: Use longer decay schedule
 
 **Detection**:
+
 ```python
 # Plot epsilon over training
 # Should reach final value at 50-80% through training
@@ -827,6 +843,7 @@ epsilon = epsilon_linear(step, total_steps=1_000_000,
 **Root Cause**: Agent found way to game reward not aligned with intent
 
 **Code Example**:
+
 ```python
 # WRONG: Reward for just staying alive
 reward = 1.0  # Every timestep
@@ -844,6 +861,7 @@ reward = progress - 0.01  # Progress bonus, living cost
 **Fix**: Reshape reward to align with intent
 
 **Detection**:
+
 ```python
 # Visualize agent behavior
 # If behavior weird but reward high: hacking
@@ -859,6 +877,7 @@ reward = progress - 0.01  # Progress bonus, living cost
 **Root Cause**: Using stochastic policy at test time
 
 **Code Example**:
+
 ```python
 # WRONG: Test with epsilon > 0
 for test_episode in range(100):
@@ -873,6 +892,7 @@ for test_episode in range(100):
 **Fix**: Use greedy/deterministic policy at test time
 
 **Detection**:
+
 ```python
 # Test reward variance high?
 # Test reward < train reward?
@@ -920,16 +940,19 @@ class RLLogger:
 #### Metric 1: Episode Reward
 
 **What to look for**:
+
 - Should trend upward over time
 - Should have decreasing variance (less oscillation)
 - Slight noise is normal
 
 **Red flags**:
+
 - Flat line: Not learning
 - Downward trend: Getting worse
 - Wild oscillations: Instability or unlucky randomness
 
 **Code**:
+
 ```python
 rewards = agent.get_episode_rewards()
 reward_smoothed = np.convolve(rewards, np.ones(100)/100, mode='valid')
@@ -939,15 +962,18 @@ plt.plot(reward_smoothed)  # Smooth to see trend
 #### Metric 2: Policy Loss
 
 **What to look for**:
+
 - Should decrease over training
 - Decrease should smooth out (not oscillating)
 
 **Red flags**:
+
 - Loss increasing: Learning rate too high
 - Loss oscillating: Learning rate too high or reward scale wrong
 - Loss = 0: Policy not updating
 
 **Code**:
+
 ```python
 if policy_loss > policy_loss_prev:
     print("⚠️ Policy loss increased, LR might be too high")
@@ -956,14 +982,17 @@ if policy_loss > policy_loss_prev:
 #### Metric 3: Value Loss (for critic-based methods)
 
 **What to look for**:
+
 - Should decrease initially, then plateau
 - Should not oscillate heavily
 
 **Red flags**:
+
 - Loss exploding: LR too high
 - Loss not changing: Not updating
 
 **Code**:
+
 ```python
 value_loss_smoothed = np.convolve(value_losses, np.ones(100)/100)
 if value_loss_smoothed[-1] > value_loss_smoothed[-100]:
@@ -973,16 +1002,19 @@ if value_loss_smoothed[-1] > value_loss_smoothed[-100]:
 #### Metric 4: Entropy (Policy Randomness)
 
 **What to look for**:
+
 - Should start high (exploring)
 - Should decay to low (exploiting)
 - Clear downward trend
 
 **Red flags**:
+
 - Entropy always high: Too much exploration
 - Entropy drops to zero: Over-exploiting
 - No decay: Entropy not decreasing
 
 **Code**:
+
 ```python
 if entropy[-1] > entropy[-100]:
     print("⚠️ Entropy increasing, exploration not decaying")
@@ -991,15 +1023,18 @@ if entropy[-1] > entropy[-100]:
 #### Metric 5: Gradient Norms
 
 **What to look for**:
+
 - Should stay roughly constant over training
 - Typical range: 0.1 to 10
 
 **Red flags**:
+
 - Gradient norms > 100: Exploding gradients
 - Gradient norms < 0.001: Vanishing gradients
 - Sudden spikes: Outlier data or numerical issue
 
 **Code**:
+
 ```python
 total_norm = 0
 for p in model.parameters():
@@ -1081,6 +1116,7 @@ def plot_rl_training(rewards, policy_losses, value_losses, entropies):
 **Red Flag**: Network has > 10M parameters for simple task
 
 **Fix**:
+
 ```python
 # Too big
 model = nn.Sequential(
@@ -1110,6 +1146,7 @@ model = nn.Sequential(
 **Red Flag**: Reward varies by 50%+ across 5 seeds
 
 **Fix**:
+
 ```python
 # Test across multiple seeds
 rewards_by_seed = []
@@ -1135,6 +1172,7 @@ if np.std(rewards_by_seed) > 0.5 * np.mean(rewards_by_seed):
 **Red Flag**: State values > 100 or < -100
 
 **Fix**:
+
 ```python
 # Normalize images
 observation = observation.astype(np.float32) / 255.0
@@ -1155,11 +1193,13 @@ normalized_obs = (obs - running_mean) / (running_std + 1e-8)
 **Right**: Curve shape tells you what's wrong
 
 **Red Flag**: Curve shapes indicate:
+
 - Flat then sudden jump: Long exploration, then found policy
 - Oscillating: Unstable learning
 - Decreasing after peak: Catastrophic forgetting
 
 **Fix**:
+
 ```python
 # Look at curve shape
 if reward_curve is flat:
@@ -1181,6 +1221,7 @@ elif reward_curve peaks then drops:
 **Red Flag**: Agent barely beats random (within 5% of baseline)
 
 **Fix**:
+
 ```python
 # Compute random baseline
 random_rewards = []
@@ -1215,6 +1256,7 @@ print(f"Agent improvement: {improvement*100}%")
 **Red Flag**: Code has "TUNING" comments with 10 simultaneous changes
 
 **Fix**:
+
 ```python
 # Scientific method for debugging
 def debug_lr():
@@ -1241,6 +1283,7 @@ def debug_batch_size():
 **Red Flag**: Training reward high, test reward low (overfitting)
 
 **Fix**:
+
 ```python
 # Evaluate with greedy policy (no exploration)
 def evaluate(agent, num_episodes=10):
@@ -1372,4 +1415,3 @@ MINOR RED FLAGS (Watch for patterns):
 8. **One seed is not enough**: Run 5+ seeds, look at variance, not just mean.
 
 This skill is about **systematic debugging**, not random tweaking. Apply the framework, follow diagnosis trees, and you'll find the bug.
-

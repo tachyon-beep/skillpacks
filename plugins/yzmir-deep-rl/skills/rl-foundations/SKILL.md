@@ -1,7 +1,6 @@
 ---
 name: rl-foundations
 description: Master RL theory - MDPs, value functions, Bellman equations, value/policy iteration, TD
-disable-model-invocation: true
 ---
 
 # RL Foundations
@@ -20,6 +19,7 @@ Invoke this skill when you encounter:
 **This skill provides the theoretical foundation for ALL other deep-rl skills.**
 
 Do NOT use this skill for:
+
 - Algorithm implementation (use value-based-methods, policy-gradient-methods, actor-critic-methods)
 - Debugging code (use rl-debugging)
 - Environment setup (use rl-environments)
@@ -29,6 +29,7 @@ Do NOT use this skill for:
 **Understanding the theory enables everything else.**
 
 Reinforcement learning is built on a rigorous mathematical foundation:
+
 1. **MDP** (Markov Decision Process) - the framework
 2. **Value Functions** - quantify expected return
 3. **Bellman Equations** - recursive decomposition
@@ -54,6 +55,7 @@ An MDP is the mathematical framework for sequential decision-making under uncert
 - **γ**: Discount factor (0 ≤ γ ≤ 1) - controls importance of future rewards
 
 **Key Property**: **Markov Property**
+
 ```
 P(s_{t+1} | s_t, a_t, s_{t-1}, a_{t-1}, ..., s_0, a_0) = P(s_{t+1} | s_t, a_t)
 ```
@@ -77,6 +79,7 @@ P: Deterministic (up always moves up if not wall)
 ```
 
 **Visualization**:
+
 ```
 S  .  .  .
 .  .  .  .
@@ -85,6 +88,7 @@ S  .  .  .
 ```
 
 **Transition Example**:
+
 - State s = (1,1), Action a = RIGHT
 - Deterministic: P(s'=(1,2) | s=(1,1), a=RIGHT) = 1.0
 - Reward: R(s,a,s') = -1
@@ -151,12 +155,14 @@ Markov Violated: True position requires integrating multiple frames
 ### Episodic vs Continuing Tasks
 
 **Episodic**: Task terminates (games, reaching goal)
+
 ```
 Episode: s₀ → s₁ → ... → s_T (terminal state)
 Return: G_t = r_t + γr_{t+1} + ... + γ^{T-t}r_T
 ```
 
 **Continuing**: Task never ends (stock trading, robot operation)
+
 ```
 Return: G_t = r_t + γr_{t+1} + γ²r_{t+2} + ... (infinite)
 ```
@@ -168,12 +174,14 @@ Return: G_t = r_t + γr_{t+1} + γ²r_{t+2} + ... (infinite)
 ### MDP Pitfall #1: Using Wrong State Representation
 
 **Bad**: State = current frame only (when velocity matters)
+
 ```python
 # Pong: Ball position alone doesn't tell velocity
 state = current_frame  # WRONG - not Markovian
 ```
 
 **Good**: State = last 4 frames (velocity from difference)
+
 ```python
 # Frame stacking preserves Markov property
 state = np.concatenate([frame_t, frame_{t-1}, frame_{t-2}, frame_{t-3}])
@@ -188,21 +196,27 @@ state = np.concatenate([frame_t, frame_{t-1}, frame_{t-2}, frame_{t-3}])
 **Example**: Robot navigating to goal
 
 **Bad Reward**:
+
 ```python
 reward = +1 if at_goal else 0  # Sparse
 ```
+
 **Problem**: No signal until goal reached, hard to learn.
 
 **Better Reward**:
+
 ```python
 reward = -distance_to_goal  # Dense
 ```
+
 **Problem**: Agent learns to get closer but may not reach goal (local optimum).
 
 **Best Reward** (Potential-Based Shaping):
+
 ```python
 reward = (distance_prev - distance_curr) + large_bonus_at_goal
 ```
+
 **Why**: Encourages progress + explicit goal reward.
 
 **Takeaway**: Reward function engineering is CRITICAL. Route to reward-shaping skill for details.
@@ -231,6 +245,7 @@ Before implementing any RL algorithm, answer:
 A value function quantifies "how good" a state (or state-action pair) is.
 
 **State-Value Function V^π(s)**:
+
 ```
 V^π(s) = E_π[G_t | s_t = s]
        = E_π[r_t + γr_{t+1} + γ²r_{t+2} + ... | s_t = s]
@@ -239,6 +254,7 @@ V^π(s) = E_π[G_t | s_t = s]
 **Meaning**: Expected cumulative discounted reward starting from state s and following policy π.
 
 **Action-Value Function Q^π(s,a)**:
+
 ```
 Q^π(s,a) = E_π[G_t | s_t = s, a_t = a]
          = E_π[r_t + γr_{t+1} + γ²r_{t+2} + ... | s_t = s, a_t = a]
@@ -247,6 +263,7 @@ Q^π(s,a) = E_π[G_t | s_t = s, a_t = a]
 **Meaning**: Expected cumulative discounted reward starting from state s, taking action a, then following policy π.
 
 **Relationship**:
+
 ```
 V^π(s) = Σ_a π(a|s) Q^π(s,a)
 ```
@@ -262,6 +279,7 @@ V^π(s) = Σ_a π(a|s) Q^π(s,a)
 **Value V(s)**: Long-term, cumulative expected reward.
 
 **Example: GridWorld**
+
 ```
 Reward: r = -1 every step, r = +10 at goal
 Value at state 2 steps from goal:
@@ -283,6 +301,7 @@ Value at state 2 steps from goal:
 **Policy π**: Always move right or down (deterministic).
 
 **Manual Calculation**:
+
 ```
 V^π((2,2)) = 0  (goal, no future rewards)
 
@@ -306,6 +325,7 @@ V^π((0,0)) = r + γ V^π((0,1))
 ### Optimal Value Functions
 
 **Optimal State-Value Function V*(s)**:
+
 ```
 V*(s) = max_π V^π(s)
 ```
@@ -313,6 +333,7 @@ V*(s) = max_π V^π(s)
 **Meaning**: Maximum value achievable from state s under ANY policy.
 
 **Optimal Action-Value Function Q*(s,a)**:
+
 ```
 Q*(s,a) = max_π Q^π(s,a)
 ```
@@ -320,6 +341,7 @@ Q*(s,a) = max_π Q^π(s,a)
 **Meaning**: Maximum value achievable from state s, taking action a, then acting optimally.
 
 **Optimal Policy π***:
+
 ```
 π*(s) = argmax_a Q*(s,a)
 ```
@@ -333,14 +355,17 @@ Q*(s,a) = max_π Q^π(s,a)
 ### Value Function Pitfall #1: Confusing V and Q
 
 **Wrong Understanding**:
+
 - V(s) = value of state s
 - Q(s,a) = value of action a (WRONG - ignores state)
 
 **Correct Understanding**:
+
 - V(s) = value of state s (average over actions under policy)
 - Q(s,a) = value of taking action a IN STATE s
 
 **Example**: GridWorld
+
 ```
 State s = (1,1)
 V(s) might be 5.0 (average value under policy)
@@ -387,11 +412,13 @@ V[s] = np.mean(returns)  # Expectation via Monte Carlo
 **Scenario**: User computes V without discounting.
 
 **Wrong**:
+
 ```python
 V[s] = r_0 + r_1 + r_2 + ...  # No discount
 ```
 
 **Correct**:
+
 ```python
 V[s] = r_0 + gamma*r_1 + gamma**2*r_2 + ...
 ```
@@ -399,6 +426,7 @@ V[s] = r_0 + gamma*r_1 + gamma**2*r_2 + ...
 **Why It Matters**: Without discount, values blow up in continuing tasks.
 
 **Example**: Continuing task with r=1 every step
+
 ```
 Without discount: V = 1 + 1 + 1 + ... = ∞
 With γ=0.9:      V = 1 + 0.9 + 0.81 + ... = 1/(1-0.9) = 10
@@ -415,11 +443,13 @@ With γ=0.9:      V = 1 + 0.9 + 0.81 + ... = 1/(1-0.9) = 10
 A policy π is a mapping from states to actions (or action probabilities).
 
 **Deterministic Policy**: π: S → A
+
 ```
 π(s) = a  (always take action a in state s)
 ```
 
 **Stochastic Policy**: π: S × A → [0,1]
+
 ```
 π(a|s) = probability of taking action a in state s
 Σ_a π(a|s) = 1  (probabilities sum to 1)
@@ -430,6 +460,7 @@ A policy π is a mapping from states to actions (or action probabilities).
 ### Example: Policies in GridWorld
 
 **Deterministic Policy**:
+
 ```python
 def policy(state):
     if state[0] < 2:
@@ -439,6 +470,7 @@ def policy(state):
 ```
 
 **Stochastic Policy**:
+
 ```python
 def policy(state):
     # 70% right, 20% down, 10% up
@@ -447,6 +479,7 @@ def policy(state):
 ```
 
 **Uniform Random Policy**:
+
 ```python
 def policy(state):
     return np.random.choice(["UP", "DOWN", "LEFT", "RIGHT"])
@@ -459,6 +492,7 @@ def policy(state):
 **Problem**: Given policy π, compute V^π(s) for all states.
 
 **Approach 1: Monte Carlo** (sample trajectories)
+
 ```python
 # Run many episodes, average returns
 V = defaultdict(float)
@@ -477,6 +511,7 @@ for s in V:
 ```
 
 **Approach 2: Bellman Expectation** (iterative)
+
 ```python
 # Initialize V arbitrarily
 V = {s: 0 for s in states}
@@ -512,15 +547,17 @@ while not converged:
 
 ### Optimal Policy π*
 
-**Theorem**: There exists an optimal policy π* that achieves V*(s) at all states.
+**Theorem**: There exists an optimal policy π*that achieves V*(s) at all states.
 
 **How to find π* from Q***:
+
 ```python
 def optimal_policy(state):
     return argmax(Q_star[state, :])  # Greedy w.r.t. Q*
 ```
 
 **How to find π* from V***:
+
 ```python
 def optimal_policy(state):
     # One-step lookahead
@@ -529,7 +566,7 @@ def optimal_policy(state):
                    for a in actions])
 ```
 
-**Key**: Optimal policy is deterministic (greedy w.r.t. Q* or V*).
+**Key**: Optimal policy is deterministic (greedy w.r.t. Q*or V*).
 
 **Exception**: In stochastic games with multiple optimal actions, any distribution over optimal actions is fine.
 
@@ -540,6 +577,7 @@ def optimal_policy(state):
 **Problem**: Always taking argmax(Q) means never trying new actions.
 
 **Example**:
+
 ```python
 # Pure greedy policy (WRONG for learning)
 def policy(state):
@@ -549,6 +587,7 @@ def policy(state):
 **Why It Fails**: If Q is initialized wrong, agent never explores better actions.
 
 **Solution**: ε-greedy policy
+
 ```python
 def epsilon_greedy_policy(state, epsilon=0.1):
     if random.random() < epsilon:
@@ -570,6 +609,7 @@ def epsilon_greedy_policy(state, epsilon=0.1):
 **Example**: GridWorld optimal policy always moves toward goal (deterministic).
 
 **When Stochastic is Needed**:
+
 1. **During Learning**: Exploration (ε-greedy, Boltzmann)
 2. **Partially Observable**: Stochasticity can help in POMDPs
 3. **Multi-Agent**: Randomness prevents exploitation by opponents
@@ -583,6 +623,7 @@ def epsilon_greedy_policy(state, epsilon=0.1):
 ### Bellman Expectation Equation
 
 **For V^π**:
+
 ```
 V^π(s) = Σ_a π(a|s) Σ_{s'} P(s'|s,a) [R(s,a,s') + γ V^π(s')]
 ```
@@ -590,6 +631,7 @@ V^π(s) = Σ_a π(a|s) Σ_{s'} P(s'|s,a) [R(s,a,s') + γ V^π(s')]
 **Intuition**: Value of state s = expected immediate reward + discounted value of next state.
 
 **For Q^π**:
+
 ```
 Q^π(s,a) = Σ_{s'} P(s'|s,a) [R(s,a,s') + γ Σ_{a'} π(a'|s') Q^π(s',a')]
 ```
@@ -597,6 +639,7 @@ Q^π(s,a) = Σ_{s'} P(s'|s,a) [R(s,a,s') + γ Σ_{a'} π(a'|s') Q^π(s',a')]
 **Intuition**: Value of (s,a) = expected immediate reward + discounted value of next (s',a').
 
 **Relationship**:
+
 ```
 V^π(s) = Σ_a π(a|s) Q^π(s,a)
 Q^π(s,a) = Σ_{s'} P(s'|s,a) [R(s,a,s') + γ V^π(s')]
@@ -607,6 +650,7 @@ Q^π(s,a) = Σ_{s'} P(s'|s,a) [R(s,a,s') + γ V^π(s')]
 ### Bellman Optimality Equation
 
 **For V***:
+
 ```
 V*(s) = max_a Σ_{s'} P(s'|s,a) [R(s,a,s') + γ V*(s')]
 ```
@@ -614,6 +658,7 @@ V*(s) = max_a Σ_{s'} P(s'|s,a) [R(s,a,s') + γ V*(s')]
 **Intuition**: Optimal value = max over actions of (immediate reward + discounted optimal future value).
 
 **For Q***:
+
 ```
 Q*(s,a) = Σ_{s'} P(s'|s,a) [R(s,a,s') + γ max_{a'} Q*(s',a')]
 ```
@@ -621,6 +666,7 @@ Q*(s,a) = Σ_{s'} P(s'|s,a) [R(s,a,s') + γ max_{a'} Q*(s',a')]
 **Intuition**: Optimal Q-value = expected immediate reward + discounted optimal Q-value of next state.
 
 **Relationship**:
+
 ```
 V*(s) = max_a Q*(s,a)
 Q*(s,a) = Σ_{s'} P(s'|s,a) [R(s,a,s') + γ V*(s')]
@@ -631,23 +677,27 @@ Q*(s,a) = Σ_{s'} P(s'|s,a) [R(s,a,s') + γ V*(s')]
 ### Deriving the Bellman Equation
 
 **Start with definition of V^π**:
+
 ```
 V^π(s) = E_π[G_t | s_t = s]
        = E_π[r_t + γr_{t+1} + γ²r_{t+2} + ... | s_t = s]
 ```
 
 **Factor out first reward**:
+
 ```
 V^π(s) = E_π[r_t + γ(r_{t+1} + γr_{t+2} + ...) | s_t = s]
        = E_π[r_t | s_t = s] + γ E_π[r_{t+1} + γr_{t+2} + ... | s_t = s]
 ```
 
 **Second term is V^π(s_{t+1})**:
+
 ```
 V^π(s) = E_π[r_t | s_t = s] + γ E_π[V^π(s_{t+1}) | s_t = s]
 ```
 
 **Expand expectations**:
+
 ```
 V^π(s) = Σ_a π(a|s) Σ_{s'} P(s'|s,a) [R(s,a,s') + γ V^π(s')]
 ```
@@ -661,6 +711,7 @@ V^π(s) = Σ_a π(a|s) Σ_{s'} P(s'|s,a) [R(s,a,s') + γ V^π(s')]
 ### Why Bellman Equations Matter
 
 **1. Iterative Algorithms**: Use Bellman equation as update rule
+
 ```python
 # Value Iteration
 V_new[s] = max_a Σ_{s'} P(s'|s,a) [R(s,a,s') + γ V[s']]
@@ -680,16 +731,19 @@ Q[s,a] += alpha * (r + gamma * max_a' Q[s',a'] - Q[s,a])
 ### Bellman Pitfall #1: Forgetting Max vs Expectation
 
 **Bellman Expectation** (for policy π):
+
 ```
 V^π(s) = Σ_a π(a|s) ...  # Expectation over policy
 ```
 
 **Bellman Optimality** (for optimal policy):
+
 ```
 V*(s) = max_a ...  # Maximize over actions
 ```
 
 **Consequence**:
+
 - Policy evaluation uses Bellman expectation
 - Value iteration uses Bellman optimality
 
@@ -700,16 +754,19 @@ V*(s) = max_a ...  # Maximize over actions
 ### Bellman Pitfall #2: Ignoring Transition Probabilities
 
 **Deterministic Transition**:
+
 ```
 V^π(s) = R(s,a) + γ V^π(s')  # Direct, s' is deterministic
 ```
 
 **Stochastic Transition**:
+
 ```
 V^π(s) = Σ_{s'} P(s'|s,a) [R(s,a,s') + γ V^π(s')]  # Weighted sum
 ```
 
 **Example**: Stochastic GridWorld
+
 ```
 # Action RIGHT from (1,1)
 V((1,1)) = 0.8 * [r + γ V((1,2))]    # 80% intended
@@ -728,21 +785,25 @@ V((1,1)) = 0.8 * [r + γ V((1,2))]    # 80% intended
 **Discount factor γ ∈ [0, 1]** controls how much the agent cares about future rewards.
 
 **γ = 0**: Only immediate reward matters
+
 ```
 V(s) = E[r_t]  (myopic)
 ```
 
 **γ = 1**: All future rewards matter equally
+
 ```
 V(s) = E[r_t + r_{t+1} + r_{t+2} + ...]  (far-sighted)
 ```
 
 **γ = 0.9**: Future discounted exponentially
+
 ```
 V(s) = E[r_t + 0.9*r_{t+1} + 0.81*r_{t+2} + ...]
 ```
 
 **Reward 10 steps away**:
+
 - γ=0.9: worth 0.9^10 = 0.35 of immediate reward
 - γ=0.99: worth 0.99^10 = 0.90 of immediate reward
 
@@ -755,6 +816,7 @@ V(s) = E[r_t + 0.9*r_{t+1} + 0.81*r_{t+2} + ...]
 **Approximation**: Horizon ≈ 1/(1-γ)
 
 **Examples**:
+
 - γ=0.9 → Horizon ≈ 10 steps
 - γ=0.99 → Horizon ≈ 100 steps
 - γ=0.5 → Horizon ≈ 2 steps
@@ -769,22 +831,26 @@ V(s) = E[r_t + 0.9*r_{t+1} + 0.81*r_{t+2} + ...]
 ### Choosing γ
 
 **Rule of Thumb**:
+
 - **Task horizon known**: γ such that 1/(1-γ) ≈ task_length
 - **Short episodes** (< 100 steps): γ = 0.9 to 0.95
 - **Long episodes** (100-1000 steps): γ = 0.99
 - **Very long** (> 1000 steps): γ = 0.999
 
 **Example: Pong** (episode ~ 1000 steps)
+
 ```
 γ = 0.99  # Horizon ≈ 100, sees ~10% of episode
 ```
 
 **Example: Cartpole** (episode ~ 200 steps)
+
 ```
 γ = 0.99  # Horizon ≈ 100, sees half of episode
 ```
 
 **Example: Chess** (game ~ 40 moves = 80 steps)
+
 ```
 γ = 0.95  # Horizon ≈ 20, sees quarter of game
 ```
@@ -794,16 +860,19 @@ V(s) = E[r_t + 0.9*r_{t+1} + 0.81*r_{t+2} + ...]
 ### γ = 1 Special Case
 
 **When γ = 1**:
+
 - Only valid for **episodic tasks** (guaranteed termination)
 - Continuing tasks: V = ∞ (unbounded)
 
 **Example: GridWorld** (terminates at goal)
+
 ```
 γ = 1.0  # OK, episode ends
 V(s) = -steps_to_goal + 10  (finite)
 ```
 
 **Example: Stock trading** (never terminates)
+
 ```
 γ = 1.0  # WRONG, V = ∞
 γ = 0.99  # Correct
@@ -818,6 +887,7 @@ V(s) = -steps_to_goal + 10  (finite)
 **Scenario**: Task requires 50 steps to reach goal, γ=0.9.
 
 **Problem**:
+
 ```
 Reward at step 50 discounted by 0.9^50 = 0.0052
 ```
@@ -835,6 +905,7 @@ Reward at step 50 discounted by 0.9^50 = 0.0052
 **Scenario**: Continuing task (never terminates), γ=1.
 
 **Problem**:
+
 ```
 V(s) = r + r + r + ... = ∞  (unbounded)
 ```
@@ -854,6 +925,7 @@ V(s) = r + r + r + ... = ∞  (unbounded)
 **Correct Mindset**: "Task requires planning X steps ahead, so γ = 1 - 1/X."
 
 **Example**: Goal 100 steps away
+
 ```
 Required horizon = 100
 γ = 1 - 1/100 = 0.99
@@ -868,21 +940,25 @@ Required horizon = 100
 ### Three Paradigms
 
 **1. Dynamic Programming (DP)**:
+
 - Requires full MDP model (P, R known)
 - Exact algorithms (no sampling)
 - Examples: Value Iteration, Policy Iteration
 
 **2. Monte Carlo (MC)**:
+
 - Model-free (learn from experience)
 - Learns from complete episodes
 - Examples: First-visit MC, Every-visit MC
 
 **3. Temporal Difference (TD)**:
+
 - Model-free (learn from experience)
 - Learns from incomplete episodes
 - Examples: TD(0), Q-learning, SARSA
 
 **Key Differences**:
+
 - DP: Needs model, no sampling
 - MC: No model, full episodes
 - TD: No model, partial episodes (most flexible)
@@ -963,6 +1039,7 @@ while not converged:
 **When to Use**: When policy converges faster than values (common).
 
 **Key Difference from Value Iteration**:
+
 - Value iteration: no explicit policy until end
 - Policy iteration: maintain and improve policy each iteration
 
@@ -995,11 +1072,13 @@ for episode in range(num_episodes):
 ```
 
 **Advantages**:
+
 - No model needed (model-free)
 - Can handle stochastic environments
 - Unbiased estimates
 
 **Disadvantages**:
+
 - Requires complete episodes (can't learn mid-episode)
 - High variance (one trajectory is noisy)
 - Slow convergence
@@ -1013,6 +1092,7 @@ for episode in range(num_episodes):
 **Idea**: Update V after each step using bootstrapping.
 
 **TD(0) Update**:
+
 ```python
 V[s] += alpha * (r + gamma * V[s_next] - V[s])
 #                \_____________________/
@@ -1022,6 +1102,7 @@ V[s] += alpha * (r + gamma * V[s_next] - V[s])
 **Bootstrapping**: Use current estimate V[s_next] instead of true return.
 
 **Full Algorithm**:
+
 ```python
 V = {s: 0 for s in states}
 
@@ -1039,11 +1120,13 @@ for episode in range(num_episodes):
 ```
 
 **Advantages**:
+
 - No model needed (model-free)
 - Can learn from incomplete episodes (online)
 - Lower variance than MC
 
 **Disadvantages**:
+
 - Biased estimates (bootstrap uses estimate)
 - Requires tuning α (learning rate)
 
@@ -1060,6 +1143,7 @@ Q[s,a] += alpha * (r + gamma * max_a' Q[s_next, a'] - Q[s,a])
 ```
 
 **Full Algorithm**:
+
 ```python
 Q = defaultdict(lambda: defaultdict(float))
 
@@ -1098,6 +1182,7 @@ Q[s,a] += alpha * (r + gamma * Q[s_next, a_next] - Q[s,a])
 ```
 
 **Full Algorithm**:
+
 ```python
 Q = defaultdict(lambda: defaultdict(float))
 
@@ -1116,6 +1201,7 @@ for episode in range(num_episodes):
 ```
 
 **Difference from Q-learning**:
+
 - Q-learning: learns optimal policy (off-policy)
 - SARSA: learns policy being followed (on-policy)
 
@@ -1167,10 +1253,12 @@ for episode in range(num_episodes):
 **Scenario**: User uses Q-learning but expects on-policy behavior.
 
 **Example**: Cliff walking with epsilon-greedy
+
 - Q-learning: Learns optimal (risky) path along cliff
 - SARSA: Learns safe path away from cliff (accounts for exploration)
 
 **Takeaway**:
+
 - Q-learning: Learns optimal policy (off-policy)
 - SARSA: Learns policy being followed (on-policy)
 
@@ -1189,6 +1277,7 @@ for episode in range(num_episodes):
 **Dilemma**: Must explore to find optimal policy, but exploration sacrifices short-term reward.
 
 **Example**: Restaurant choice
+
 - Exploitation: Go to your favorite restaurant (known good)
 - Exploration: Try a new restaurant (might be better, might be worse)
 
@@ -1199,6 +1288,7 @@ for episode in range(num_episodes):
 **Scenario**: GridWorld, Q-values initialized to 0.
 
 **Without Exploration**:
+
 ```python
 # Greedy policy
 policy(s) = argmax(Q[s, :])  # Always 0 initially, picks arbitrary action
@@ -1209,6 +1299,7 @@ policy(s) = argmax(Q[s, :])  # Always 0 initially, picks arbitrary action
 **Result**: Agent stuck in suboptimal policy (local optimum).
 
 **With Exploration**:
+
 ```python
 # ε-greedy
 if random.random() < epsilon:
@@ -1224,6 +1315,7 @@ else:
 ### ε-Greedy Exploration
 
 **Algorithm**:
+
 ```python
 def epsilon_greedy(state, Q, epsilon=0.1):
     if random.random() < epsilon:
@@ -1233,11 +1325,13 @@ def epsilon_greedy(state, Q, epsilon=0.1):
 ```
 
 **Tuning ε**:
+
 - **ε = 0**: No exploration (greedy, can get stuck)
 - **ε = 1**: Random policy (no exploitation, never converges)
 - **ε = 0.1**: Common choice (10% exploration)
 
 **Decay Schedule**:
+
 ```python
 epsilon = max(epsilon_min, epsilon * decay_rate)
 # Start high (ε=1.0), decay to low (ε=0.01)
@@ -1252,6 +1346,7 @@ epsilon = max(epsilon_min, epsilon * decay_rate)
 **Idea**: Choose action that balances value and uncertainty.
 
 **UCB Formula**:
+
 ```python
 action = argmax(Q[s,a] + c * sqrt(log(N[s]) / N[s,a]))
 #                ^^^^^^     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1259,6 +1354,7 @@ action = argmax(Q[s,a] + c * sqrt(log(N[s]) / N[s,a]))
 ```
 
 **Where**:
+
 - N[s] = number of times state s visited
 - N[s,a] = number of times action a taken in state s
 - c = exploration constant
@@ -1280,6 +1376,7 @@ Q = defaultdict(lambda: defaultdict(lambda: 10.0))  # Optimistic
 **Effect**: All actions initially seem good, encourages exploration.
 
 **How it works**:
+
 1. All Q-values start high (optimistic)
 2. Agent tries action, gets real reward (likely lower)
 3. Q-value decreases, agent tries other actions
@@ -1305,6 +1402,7 @@ action = np.random.choice(actions, p=probs)
 ```
 
 **Temperature**:
+
 - High temperature (τ→∞): Uniform random (more exploration)
 - Low temperature (τ→0): Greedy (more exploitation)
 
@@ -1325,6 +1423,7 @@ action = argmax(Q[state, :])  # No randomness
 **Problem**: Agent never explores, gets stuck in local optimum.
 
 **Example**: Q-values initialized to 0, first action is UP (arbitrary).
+
 - Agent always chooses UP (Q still 0 for others)
 - Never discovers RIGHT is optimal
 - Stuck forever
@@ -1374,12 +1473,14 @@ action = argmax(Q[state, :])  # Greedy, no exploration
 ### Theory vs Implementation
 
 **When Understanding Theory is Enough**:
+
 1. **Debugging**: Understanding Bellman equation explains why Q-values aren't converging
 2. **Hyperparameter Tuning**: Understanding γ explains why agent is myopic
 3. **Algorithm Selection**: Understanding model-free vs model-based explains why value iteration fails
 4. **Conceptual Design**: Understanding exploration explains why agent gets stuck
 
 **When You Need Implementation**:
+
 1. **Real Problems**: Toy examples don't teach debugging real environments
 2. **Scaling**: Neural networks, replay buffers, parallel environments
 3. **Engineering**: Practical details (learning rate schedules, reward clipping)
@@ -1403,6 +1504,7 @@ action = argmax(Q[state, :])  # Greedy, no exploration
 **5. Policies**: Deterministic vs stochastic, optimal policy π*.
 
 **6. Algorithms**:
+
 - DP: Value iteration, policy iteration (model-based)
 - MC: Monte Carlo (episodic, model-free)
 - TD: Q-learning, SARSA (online, model-free)
@@ -1418,18 +1520,23 @@ action = argmax(Q[state, :])  # Greedy, no exploration
 After mastering foundations, route to:
 
 **For Discrete Actions**:
+
 - **value-based-methods**: DQN, Double DQN, Dueling DQN (Q-learning + neural networks)
 
 **For Continuous Actions**:
+
 - **actor-critic-methods**: SAC, TD3, A2C (policy + value function)
 
 **For Any Action Space**:
+
 - **policy-gradient-methods**: REINFORCE, PPO (direct policy optimization)
 
 **For Debugging**:
+
 - **rl-debugging**: Why agent not learning, reward issues, convergence problems
 
 **For Environment Setup**:
+
 - **rl-environments**: Gym, custom environments, wrappers
 
 ---
@@ -1443,6 +1550,7 @@ After mastering foundations, route to:
 **Consequence**: Algorithm fails, user doesn't know why.
 
 **Solution**: Always answer:
+
 - What are states? (Markovian?)
 - What are actions? (Discrete/continuous?)
 - What is reward function? (Sparse/dense?)
@@ -1692,6 +1800,7 @@ for x in range(grid_size):
 ```
 
 **Output**:
+
 ```
 Converged in 23 iterations
 Value Function:
@@ -1708,6 +1817,7 @@ Optimal Policy:
 ```
 
 **Key Observations**:
+
 - Values increase as you get closer to goal
 - Policy points toward goal (shortest path)
 - Walls (value=0) are avoided
@@ -1792,6 +1902,7 @@ for x in range(grid_size):
 ```
 
 **Output** (similar to value iteration):
+
 ```
 → → → ↓
 ↓ G → ↓
@@ -1800,6 +1911,7 @@ for x in range(grid_size):
 ```
 
 **Key Differences from Value Iteration**:
+
 - Q-learning is model-free (doesn't need P, R)
 - Learns from experience (episodes)
 - Uses ε-greedy exploration
@@ -1890,6 +2002,7 @@ print({s: round(V_true[s], 2) for s in [0, 1, 2]})
 ```
 
 **Output**:
+
 ```
 Monte Carlo V:
 {0: 4.39, 1: 6.1, 2: 8.0}
@@ -1902,6 +2015,7 @@ True V:
 ```
 
 **Observations**:
+
 - Both MC and TD converge to true values
 - TD uses bootstrapping (updates before episode ends)
 - MC waits for complete episode
@@ -1942,6 +2056,7 @@ for gamma in [0.5, 0.9, 0.99, 1.0]:
 ```
 
 **Output**:
+
 ```
 γ=0.5:
   V(s_0) = 0.0010
@@ -1969,6 +2084,7 @@ for gamma in [0.5, 0.9, 0.99, 1.0]:
 ```
 
 **Key Insights**:
+
 - γ=0.5: Value at s_0 is tiny (can't "see" reward 10 steps away)
 - γ=0.9: Moderate values (horizon ≈ 10, matches task length)
 - γ=0.99: High values (can plan far ahead)
@@ -2075,6 +2191,7 @@ print(f"\nOptimal: {max(true_Q):.2f}")
 ```
 
 **Output**:
+
 ```
 Greedy:     1.05 ± 0.52
 ε-greedy:   4.62 ± 0.21
@@ -2084,6 +2201,7 @@ Optimal: 5.00
 ```
 
 **Insights**:
+
 - Greedy: Gets stuck on first action (often suboptimal)
 - ε-greedy: Explores, finds near-optimal
 - UCB: Slightly better, focuses exploration on uncertain actions
@@ -2097,17 +2215,21 @@ Optimal: 5.00
 This skill covers **theory and foundations**. Route to other skills for:
 
 **Implementation**:
+
 - **value-based-methods**: DQN, Double DQN, Dueling DQN (Q-learning + neural networks)
 - **policy-gradient-methods**: REINFORCE, PPO, TRPO (policy optimization)
 - **actor-critic-methods**: A2C, SAC, TD3 (policy + value)
 
 **Debugging**:
+
 - **rl-debugging**: Agent not learning, reward issues, convergence problems
 
 **Infrastructure**:
+
 - **rl-environments**: Gym API, custom environments, wrappers
 
 **Special Topics**:
+
 - **exploration-strategies**: Curiosity, RND, intrinsic motivation
 - **reward-shaping**: Potential-based shaping, inverse RL
 - **multi-agent-rl**: QMIX, MADDPG, cooperative/competitive
@@ -2115,6 +2237,7 @@ This skill covers **theory and foundations**. Route to other skills for:
 - **model-based-rl**: MBPO, Dreamer, world models
 
 **Evaluation**:
+
 - **rl-evaluation**: Proper evaluation methodology, metrics
 
 ---
@@ -2133,6 +2256,7 @@ This skill covers **theory and foundations**. Route to other skills for:
 8. **Theory-Practice**: When understanding suffices vs when to implement
 
 **Key Takeaways**:
+
 - **MDP formulation comes first** (define S, A, P, R, γ before implementing)
 - **Value ≠ Reward** (V is cumulative, r is immediate)
 - **γ is not arbitrary** (choose based on task horizon)

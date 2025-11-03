@@ -1,7 +1,6 @@
 ---
 name: offline-rl
 description: Master CQL, IQL, BCQ - offline RL from fixed datasets without environment interaction
-disable-model-invocation: true
 ---
 
 # Offline Reinforcement Learning
@@ -24,6 +23,7 @@ Invoke this skill when you encounter:
 **This skill teaches learning from fixed datasets without environment interaction.**
 
 Do NOT use this skill for:
+
 - Online RL with environment interaction (use policy-gradient-methods, actor-critic-methods)
 - Pure supervised learning on (s,a) pairs (that's behavior cloning, use supervised learning)
 - Online model-free learning (use value-based-methods)
@@ -63,12 +63,14 @@ Offline RL Problem:
 ### Offline RL Fundamentals
 
 **Offline RL Setting**:
+
 - You have fixed dataset D = {(s_i, a_i, r_i, s'_i, d_i)} collected by unknown behavior policy
 - No access to environment (can't interact)
 - Goal: Learn policy π that maximizes expected return
 - Constraint: Policy must work on real environment, not just in data
 
 **Key Difference from Supervised Learning**:
+
 ```
 Supervised Learning (behavior cloning):
   π = argmin_π E_{(s,a)~D}[||π(a|s) - β(a|s)||²]
@@ -174,6 +176,7 @@ Why?
 ### Value Overestimation: The Central Problem
 
 Standard Q-learning uses:
+
 ```
 Q(s,a) ← Q(s,a) + α(r + γ max_{a'} Q(s',a') - Q(s,a))
                             └─ Greedy max
@@ -193,6 +196,7 @@ With limited data:
 **Why Does This Happen Offline?**
 
 Online RL:
+
 ```
 Iteration 1:
   Q(s,a) = 10 (overestimate)
@@ -992,6 +996,7 @@ NO → Online RL fine
 ### When Offline RL is Essential
 
 **1. Real-World Robotics**
+
 ```
 Problem: Collect trajectory = robot experiment
 Cost: $$$, time, expertise
@@ -1009,6 +1014,7 @@ Why offline RL helps:
 ```
 
 **2. Medical Treatment Policies**
+
 ```
 Problem: Can't experiment on patients
 Data: Historical patient records
@@ -1026,6 +1032,7 @@ Why offline RL helps:
 ```
 
 **3. Recommendation Systems**
+
 ```
 Problem: Users leave if recommendations bad
 Data: Historical user interactions
@@ -1045,6 +1052,7 @@ Why offline RL helps:
 ### When Online RL is Better
 
 **1. Simulation Available**
+
 ```
 Example: Atari games
 - Infinite free samples
@@ -1059,6 +1067,7 @@ Why offline RL unnecessary:
 ```
 
 **2. Self-Play Systems**
+
 ```
 Example: Chess, Go
 - Generate own data
@@ -1073,6 +1082,7 @@ Why offline RL adds complexity:
 ```
 
 **3. Simulator Fidelity is High**
+
 ```
 Example: Training in simulation, deploy in reality
 - Simulator accurate enough
@@ -1096,6 +1106,7 @@ Why offline RL unnecessary:
 **Reality**: Will overestimate values, learn poor policy.
 
 **Example**:
+
 ```
 Dataset: suboptimal human demonstrations
 DQN trained on D: max Q estimated for unseen actions
@@ -1115,6 +1126,7 @@ Correct approach:
 **Reality**: Even diverse data has gaps. Policy will find them.
 
 **Example**:
+
 ```
 Dataset: collected over 6 months, diverse actions
 Your policy: learns to combine actions in novel ways
@@ -1134,6 +1146,7 @@ Correct approach:
 **Reality**: That's not offline RL anymore! Defeats the purpose.
 
 **Example**:
+
 ```
 Offline RL goal: learn without environment interaction
 Wrong evaluation: run π in environment 1000 times
@@ -1152,6 +1165,7 @@ Correct approach:
 **Reality**: Offline RL performance depends critically on data quality.
 
 **Example**:
+
 ```
 Good data: expert demonstrations, well-explored actions
 CQL: performs well, conservative works fine
@@ -1174,6 +1188,7 @@ Solution: Analyze data quality first
 **Reality**: Too much pessimism prevents learning anything.
 
 **Example**:
+
 ```
 Hyperparameter: CQL weight α = 1000 (extreme)
 Result: Q(s,a) always negative (super pessimistic)
@@ -1194,6 +1209,7 @@ Correct approach:
 **Reality**: CQL addresses overestimation, not policy divergence.
 
 **Example**:
+
 ```
 CQL alone:
 Q-values conservative (good)
@@ -1220,6 +1236,7 @@ Solution: Combine approaches
 **Reality**: Q-values can be hallucinated!
 
 **Example**:
+
 ```
 High Q-values don't mean high returns
 - If Q overestimates: high Q, low actual return
@@ -1239,6 +1256,7 @@ Correct metrics:
 **Reality**: Sample diversity matters more than quantity.
 
 **Example**:
+
 ```
 Dataset composition:
 - 900K samples: random actions
@@ -1262,6 +1280,7 @@ Solution:
 **Reality**: Without online validation, you can't detect environment shifts.
 
 **Example**:
+
 ```
 Training period: robot arm dynamics stable
 Deployment period: arm friction increased
@@ -1283,6 +1302,7 @@ Solution:
 **Reality**: Sparse/noisy rewards create uncertainty in Q-estimates.
 
 **Example**:
+
 ```
 Sparse reward environment:
 - Most transitions have r = 0
@@ -1393,6 +1413,7 @@ Results:
 ### Topic 1: Conservative Q-Learning Variants
 
 **CQL with Importance Weighting**:
+
 ```
 Instead of treating all actions equally in CQL penalty,
 weight by behavioral policy probability:
@@ -1405,6 +1426,7 @@ Result: More efficient use of data, can improve more than standard CQL
 ```
 
 **Weighted CQL for Reward Maximization**:
+
 ```
 Modify target to emphasize high-reward trajectories:
 
@@ -1460,6 +1482,7 @@ Example: Robotics
 ### Diagnostic Question 1: Are Q-Values Reasonable?
 
 **How to Check**:
+
 ```python
 # Sample random trajectory from dataset
 state = dataset.sample_state()
@@ -1474,6 +1497,7 @@ for action in range(num_actions):
 ```
 
 **Red Flags**:
+
 - Q-values > 1000: overestimation (increase CQL weight)
 - Q-values all negative: pessimism too high (decrease CQL weight)
 - Q-values constant: network not learning (check training loss)
@@ -1481,6 +1505,7 @@ for action in range(num_actions):
 ### Diagnostic Question 2: Is Policy Diverging from Behavior?
 
 **How to Check**:
+
 ```python
 # Compute KL divergence between learned π and behavior β
 kl_div = 0
@@ -1496,6 +1521,7 @@ for state in test_states:
 ```
 
 **Fixes**:
+
 - Too much divergence: increase KL constraint weight
 - Too little divergence: decrease constraint (not learning)
 
@@ -1531,6 +1557,7 @@ gap = online_return_actual - offline_return_estimate
 6. Diagnose training failures (overestimation, divergence, etc.)
 
 **Next Steps**:
+
 - Implement CQL from scratch on GridWorld
 - Compare CQL vs IQL vs BCQ on offline benchmark
 - Design offline evaluation strategy for your domain
@@ -1541,16 +1568,19 @@ gap = online_return_actual - offline_return_estimate
 ## References & Further Learning
 
 **Key Papers**:
+
 - CQL: "Conservative Q-Learning for Offline Reinforcement Learning" (Kumar et al., 2020)
 - IQL: "Offline Reinforcement Learning with Implicit Q-Learning" (Kostrikov et al., 2021)
 - BCQ: "Batch-Constrained Deep Q-Learning" (Fujimoto et al., 2018)
 
 **Offline RL Benchmarks**:
+
 - D4RL: Offline RL benchmark suite
 - Atari 5M: Limited sample offline Atari
 - Locomotion: MuJoCo continuous control
 
 **Related Skills**:
+
 - rl-foundations: TD learning, Bellman equations
 - value-based-methods: Q-learning fundamentals
 - policy-gradient-methods: Policy improvement

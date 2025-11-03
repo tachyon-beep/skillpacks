@@ -1,7 +1,6 @@
 ---
 name: policy-gradient-methods
 description: Master REINFORCE, PPO, TRPO - direct policy optimization with trust regions
-disable-model-invocation: true
 ---
 
 # Policy Gradient Methods
@@ -25,6 +24,7 @@ Invoke this skill when you encounter:
 **This skill provides practical implementation guidance for direct policy optimization.**
 
 Do NOT use this skill for:
+
 - Value-based methods like DQN (route to value-based-methods)
 - Model-based RL (route to model-based-rl)
 - Offline RL (route to offline-rl-methods)
@@ -45,12 +45,14 @@ Key insight: Unlike value-based methods that learn Q(s,a) then act greedily, pol
 - But suffering from high variance (need variance reduction techniques)
 
 **Use policy gradients for**:
+
 - Continuous control (robot arms, autonomous vehicles, physics simulation)
 - Stochastic policies required (exploration strategies, risk-aware policies)
 - Large/continuous action spaces
 - When value function is harder to learn than policy
 
 **Do not use for** (use value-based methods instead):
+
 - Discrete action spaces where you can enumerate all actions (use DQN)
 - When off-policy efficiency is critical and state space huge (use DQN)
 - Tabular/small discrete problems (Q-learning faster to converge)
@@ -68,6 +70,7 @@ This is the mathematical foundation. The theorem states:
 ```
 
 Where:
+
 - J(θ) = expected return (objective to maximize)
 - π(a|s,θ) = policy parameterized by θ
 - Q^π(s,a) = action value function under policy π
@@ -153,6 +156,7 @@ for episode in 1 to num_episodes:
 ### REINFORCE Implementation Details
 
 **Discrete Actions** (softmax policy):
+
 ```python
 import torch
 import torch.nn as nn
@@ -202,6 +206,7 @@ class REINFORCEAgent:
 ```
 
 **Continuous Actions** (Gaussian policy):
+
 ```python
 class REINFORCEContinuous:
     def __init__(self, state_dim, action_dim, hidden=128, lr=0.01):
@@ -242,6 +247,7 @@ class REINFORCEContinuous:
 **Scenario**: User implements REINFORCE and sees training curve: extremely noisy, takes millions of samples to learn simple task.
 
 **Problem**:
+
 ```
 REINFORCE uses raw returns G_t = R_t + γR_{t+1} + ...
 These have huge variance because:
@@ -302,6 +308,7 @@ advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
 ```
 
 **Why normalize?**
+
 ```
 Without: advantages might be [-1000, 1000] → huge gradient updates
 With: advantages might be [-2, 2] → stable gradient updates
@@ -369,6 +376,7 @@ class PolicyGradientWithBaseline:
 **Scenario**: User computes advantages but doesn't normalize, gets training instability.
 
 **Problem**:
+
 ```
 Without normalization:
 - Advantages might be [−500, 0, 500] (varies widely)
@@ -570,6 +578,7 @@ class PPOContinuous:
 **Scenario**: User sets clip_ratio=0.5 (too large) and agent learns very slowly.
 
 **Problem**:
+
 ```
 Clip ratio controls trust region size:
 - Too small (0.05): policy restricted too much, underfits trajectories
@@ -610,6 +619,7 @@ Implementation: natural gradient + conjugate gradient optimization
 | **When to use** | Research/specialized | Production/practical |
 
 **Rule of thumb**: Use PPO in 99% of cases. TRPO useful when:
+
 - Researching trust regions
 - Very high-dimensional problems where KL constraint matters
 - Academic/theoretical work
@@ -632,6 +642,7 @@ Result: PPO achieves ~95% of TRPO's benefits with ~10% of complexity
 ### Decision Framework
 
 **Use Policy Gradients if**:
+
 1. **Continuous action space** (position, velocity, torque)
    - Value methods need discretization (curse of dimensionality)
    - Policy gradients handle continuous naturally
@@ -645,6 +656,7 @@ Result: PPO achieves ~95% of TRPO's benefits with ~10% of complexity
    - Especially in high-dimensional state/action spaces
 
 **Use Value Methods (DQN) if**:
+
 1. **Discrete action space** where you enumerate all actions
    - Sample-efficient with offline capability
    - No need for baseline variance reduction
@@ -685,6 +697,7 @@ Problem: Atari with continuous control modification
 **Scenario**: User trains policy gradient on custom environment, rewards in range [0, 1000], training doesn't work.
 
 **Problem**:
+
 ```
 Large reward scale affects learning:
 - Reward 500 with baseline 400 → advantage 100 → huge gradient
@@ -698,6 +711,7 @@ Options:
 ```
 
 **Solution**:
+
 ```python
 # Running normalization
 class RewardNormalizer:
@@ -720,6 +734,7 @@ class RewardNormalizer:
 **Scenario**: Policy converges to deterministic (low variance), gradients become near-zero, learning plateaus.
 
 **Problem**:
+
 ```
 In Gaussian policy: std = exp(log_std)
 If log_std → -∞, then std → 0, policy deterministic
@@ -743,6 +758,7 @@ log_std = torch.clamp(log_std, min=-20)  # Prevent std→0
 **Scenario**: Multi-step MDP with long trajectories, policy learns late-step actions but not early steps.
 
 **Problem**:
+
 ```
 Return G_t = r_t + γr_{t+1} + γ²r_{t+2} + ... + γ^T r_T
 
@@ -755,6 +771,7 @@ Solution: n-step advantages + GAE (Generalized Advantage Estimation)
 ```
 
 **GAE Solution**:
+
 ```python
 def gae(rewards, values, gamma=0.99, lambda_=0.95):
     """Generalized Advantage Estimation"""
@@ -780,6 +797,7 @@ def gae(rewards, values, gamma=0.99, lambda_=0.95):
 **Scenario**: User trains on tiny batches (batch_size=4), gets highly unstable gradient estimates.
 
 **Problem**:
+
 ```
 Advantages have huge variance on small batches:
 - Batch of 4 experiences: advantages might be [-500, -300, 200, 1500]
@@ -791,6 +809,7 @@ Solution: Larger batches (256-4096 depending on problem)
 ```
 
 **Rule of thumb**:
+
 ```
 - Simple problems: batch_size=256
 - Complex continuous control: batch_size=2048-4096
@@ -802,6 +821,7 @@ Solution: Larger batches (256-4096 depending on problem)
 **Scenario**: Policy gradient loss oscillates wildly, returns sometimes improve then collapse.
 
 **Problem**:
+
 ```
 Policy gradient updates are on probability distribution:
 - Large learning rate → policy changes drastically per step
@@ -812,6 +832,7 @@ PPO's clipping helps but doesn't eliminate problem
 ```
 
 **Solution**: Conservative learning rates:
+
 ```
 - Discrete (softmax): lr=0.001-0.0003
 - Continuous (Gaussian): lr=0.0003-0.0001
@@ -855,6 +876,7 @@ log_prob = dist.log_prob(action)
 ```
 
 **Key points**:
+
 - Output dimensionality = number of discrete actions
 - Softmax ensures valid probability distribution
 - Log-probability: `log(π(a|s))`
@@ -881,6 +903,7 @@ log_prob = dist.log_prob(action).sum(dim=-1)  # sum across dimensions
 ```
 
 **Key points**:
+
 - Output dimensionality = action dimensionality
 - Parameterize as log_std (ensures std > 0)
 - Log-probability sums across action dimensions
@@ -976,38 +999,45 @@ class ContinuousPolicy(nn.Module):
 ## Summary: What You Need to Know
 
 **Policy Gradient Foundation**:
+
 - Policy gradients directly optimize π(a|s,θ) via ∇_θ J(θ)
 - Score function ∇_θ log π (gradient of log-probability) crucial for differentiability
 - High variance is the key challenge (solved by baselines)
 
 **REINFORCE**:
+
 - Simplest policy gradient algorithm
 - Without baseline: high variance, slow learning
 - Useful for understanding, not for production
 
 **Baselines & Advantages**:
+
 - Baseline b(s) reduces variance without changing policy
 - Advantage A(s,a) = Q(s,a) - V(s) captures relative action quality
 - Advantage normalization critical for training stability
 
 **PPO**:
+
 - Most practical policy gradient method (simple + effective)
 - Clipping enforces trust region (prevents destructive updates)
 - Works for discrete and continuous actions
 - Use: clip_ratio=0.2, entropy_coeff=0.01, value_loss_coeff=0.5
 
 **TRPO**:
+
 - Natural gradient + KL constraint (trust region)
 - More sophisticated but rarely necessary
 - PPO achieves ~95% effectiveness with 10% complexity
 
 **Algorithm Selection**:
+
 - Continuous actions → Policy gradients (PPO, SAC)
 - Discrete actions → Value methods (DQN) or policy gradients
 - Stochastic policy needed → Policy gradients
 - Maximum sample efficiency → DQN (if discrete)
 
 **Key Implementation Details**:
+
 - Advantage normalization: `(A - mean) / (std + ε)`
 - Learning rates: 0.001-0.0003 (discrete), 0.0003-0.0001 (continuous)
 - Batch size: 256-4096 (larger = more stable but slower)
@@ -1016,6 +1046,7 @@ class ContinuousPolicy(nn.Module):
 - Gradient clipping: `clip_grad_norm_(params, 0.5)` prevents explosion
 
 **Red Flags**:
+
 - Training noisy/slow → Missing baseline
 - Loss spikes/instability → Unnormalized advantages, high LR, or clip_ratio wrong
 - Deterministic policy → Insufficient entropy
@@ -1031,6 +1062,7 @@ class ContinuousPolicy(nn.Module):
 Policy network capacity affects convergence speed and final performance:
 
 **Under-parameterized** (network too small):
+
 ```
 Problem: Network can't represent optimal policy
 - Limited expressivity → stuck with poor solutions
@@ -1042,6 +1074,7 @@ Tradeoff: Slower training but better capacity
 ```
 
 **Over-parameterized** (network too large):
+
 ```
 Problem: Network overfits to finite trajectory samples
 - Example: 4096-hidden network for simple CartPole
@@ -1053,6 +1086,7 @@ Rule: Match capacity to task complexity
 ```
 
 **Shared vs Separate Networks**:
+
 ```python
 # Option 1: Separate policy and value networks
 class SeparateNetworks:
@@ -1076,6 +1110,7 @@ class SharedTrunk:
 Choice of activation function affects gradient flow:
 
 **ReLU** (most common):
+
 ```
 Advantages:
 - Fast computation
@@ -1088,6 +1123,7 @@ Disadvantages:
 ```
 
 **Tanh/Sigmoid** (older, less common):
+
 ```
 Advantages:
 - Smooth gradient everywhere
@@ -1099,6 +1135,7 @@ Disadvantages:
 ```
 
 **LeakyReLU** (middle ground):
+
 ```
 Advantages:
 - Fixes dead ReLU (small gradient when inactive)
@@ -1142,6 +1179,7 @@ nn.init.uniform_(policy_output.bias, -3e-3, 3e-3)
 Instead of random guessing, systematic approach:
 
 **Step 1: Start with defaults**
+
 ```python
 config = {
     'learning_rate': 0.0003,      # Standard
@@ -1154,6 +1192,7 @@ config = {
 ```
 
 **Step 2: Test on simple environment**
+
 ```
 - Run on CartPole or simple continuous task
 - If works: move to harder task
@@ -1161,6 +1200,7 @@ config = {
 ```
 
 **Step 3: Tune based on observed problem**
+
 ```
 If training is noisy:
   ↓ increase batch_size (256, 512)
@@ -1182,6 +1222,7 @@ If value loss not decreasing:
 ```
 
 **Step 4: Grid or random search on subset**
+
 ```python
 # Don't search all combinations, search subset
 hyperparams = {
@@ -1208,6 +1249,7 @@ for config in configs:
 Different environments benefit from different settings:
 
 **Simple Discrete** (CartPole, MountainCar):
+
 ```
 batch_size: 64-256
 learning_rate: 0.001
@@ -1216,6 +1258,7 @@ clip_ratio: 0.2
 ```
 
 **Complex Discrete** (Atari):
+
 ```
 batch_size: 2048-4096
 learning_rate: 0.0001-0.0003
@@ -1224,6 +1267,7 @@ clip_ratio: 0.1-0.2
 ```
 
 **Continuous Control** (MuJoCo):
+
 ```
 batch_size: 2048-4096
 learning_rate: 0.0003
@@ -1233,6 +1277,7 @@ num_epochs: 10-20
 ```
 
 **Custom Environments**:
+
 ```
 1. Start with continuous defaults
 2. Monitor advantage statistics
@@ -1247,6 +1292,7 @@ num_epochs: 10-20
 ### Key Metrics to Monitor
 
 **Policy Loss Metrics**:
+
 ```python
 # 1. Expected return (should increase)
 expected_return = sum(episode_rewards) / num_episodes
@@ -1268,6 +1314,7 @@ ratio = new_policy / old_policy
 ```
 
 **Value Function Metrics**:
+
 ```python
 # 1. Value function loss (should decrease)
 value_loss = (returns - value_estimates).pow(2).mean()
@@ -1287,6 +1334,7 @@ value_std = value_estimates.std()
 ```
 
 **Gradient Metrics**:
+
 ```python
 # 1. Gradient magnitude (should be stable)
 for name, param in model.named_parameters():
@@ -1436,6 +1484,7 @@ for epoch in range(num_epochs):
 ### Computation Optimization
 
 **Batch Processing**:
+
 ```python
 # SLOW: processing one example at a time
 for state in states:
@@ -1448,6 +1497,7 @@ actions = sample_actions(states)  # Vectorized
 ```
 
 **In-place Operations**:
+
 ```python
 # Standard (creates new tensor)
 advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
@@ -1459,6 +1509,7 @@ advantages.sub_(advantages.mean()).div_(advantages.std() + 1e-8)
 ```
 
 **Mixed Precision Training**:
+
 ```python
 # Use float32 for stability, computation optional
 # PyTorch automatic mixed precision:
@@ -1472,6 +1523,7 @@ with autocast():
 ### Memory Optimization
 
 **Trajectory Batching**:
+
 ```python
 # Collect multiple trajectories before update
 trajectories = []
@@ -1485,6 +1537,7 @@ states = torch.cat([t['states'] for t in trajectories])  # All at once
 ```
 
 **Value Function Caching**:
+
 ```python
 # For long trajectories, compute value once
 values = value_network(states)  # Compute all at once
@@ -1498,6 +1551,7 @@ values = value_network(states)  # Compute all at once
 ### Problems Not Suited for Policy Gradients
 
 **Sample Inefficiency Critical**:
+
 ```
 Example: Robot learning from limited real-world rollouts
 - Policy gradients: on-policy, need lots of data
@@ -1506,6 +1560,7 @@ Example: Robot learning from limited real-world rollouts
 ```
 
 **Discrete Action Space + Limited Data**:
+
 ```
 Example: 4-action game with 1M sample budget
 - Policy gradients: require many trajectories
@@ -1514,6 +1569,7 @@ Example: 4-action game with 1M sample budget
 ```
 
 **Exploration Bonus Needed**:
+
 ```
 Example: Sparse reward environment
 - Policy gradients: entropy bonus minimal help
@@ -1522,6 +1578,7 @@ Example: Sparse reward environment
 ```
 
 **Simulation Constraints**:
+
 ```
 Example: Model-based planning where you have world model
 - Policy gradients: ignore model information

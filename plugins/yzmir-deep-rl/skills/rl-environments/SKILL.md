@@ -1,7 +1,6 @@
 ---
 name: rl-environments
 description: Gym/gymnasium API - custom environments, spaces, wrappers, vectorization, debugging
-disable-model-invocation: true
 ---
 
 # RL Environments: Building and Debugging Custom Environments
@@ -88,6 +87,7 @@ class CustomEnv(gym.Env):
 ### Key API Points
 
 **1. Reset Format (Gymnasium API)**
+
 ```python
 # CORRECT: Reset returns (observation, info)
 observation, info = env.reset()
@@ -97,6 +97,7 @@ observation = env.reset()  # This is Gym, not Gymnasium
 ```
 
 **2. Step Format (Gymnasium API)**
+
 ```python
 # CORRECT: Step returns (obs, reward, terminated, truncated, info)
 obs, reward, terminated, truncated, info = env.step(action)
@@ -116,6 +117,7 @@ obs, reward, done, info = env.step(action)  # 'done' is single boolean
 | Support | Deprecated | Current standard |
 
 **Decision**: Use `gymnasium` for new code. If stuck with older code:
+
 ```python
 # Compatibility wrapper
 try:
@@ -131,6 +133,7 @@ except ImportError:
 ### Space Types
 
 **Discrete Space** (for discrete actions or observations)
+
 ```python
 # 4 possible actions: 0, 1, 2, 3
 action_space = gym.spaces.Discrete(4)
@@ -143,6 +146,7 @@ action_space = gym.spaces.Discrete(4, start=1)  # 1, 2, 3, 4
 ```
 
 **Box Space** (for continuous or image data)
+
 ```python
 # Continuous control: 3D position, each in [-1, 1]
 action_space = gym.spaces.Box(
@@ -169,6 +173,7 @@ observation_space = gym.spaces.Box(
 ```
 
 **Dict Space** (for structured observations with multiple components)
+
 ```python
 # Multi-component observation: image + state vector
 observation_space = gym.spaces.Dict({
@@ -184,6 +189,7 @@ obs = {
 ```
 
 **Tuple Space** (for ordered multiple components)
+
 ```python
 observation_space = gym.spaces.Tuple((
     gym.spaces.Box(-1, 1, (2,), dtype=np.float32),  # Position
@@ -195,6 +201,7 @@ obs = (np.array([0.5, -0.3], dtype=np.float32), 2)
 ```
 
 **MultiDiscrete** (for multiple discrete action dimensions)
+
 ```python
 # Game with 4 actions per agent, 3 agents
 action_space = gym.spaces.MultiDiscrete([4, 4, 4])
@@ -239,6 +246,7 @@ def step(self, action):
 ### Common Space Mistakes
 
 **Mistake 1: dtype mismatch (uint8 vs float32)**
+
 ```python
 # WRONG: Space says uint8 but observation is float32
 observation_space = gym.spaces.Box(0, 255, (84, 84, 3), dtype=np.uint8)
@@ -252,6 +260,7 @@ assert self.observation_space.contains(obs)  # PASSES
 ```
 
 **Mistake 2: Range mismatch**
+
 ```python
 # WRONG: Observation outside declared range
 observation_space = gym.spaces.Box(0, 1, (4,), dtype=np.float32)
@@ -263,6 +272,7 @@ obs = np.clip(obs, 0, 1)
 ```
 
 **Mistake 3: Shape mismatch**
+
 ```python
 # WRONG: Wrong shape
 observation_space = gym.spaces.Box(0, 255, (84, 84, 3), dtype=np.uint8)
@@ -522,6 +532,7 @@ class BaseWrapper(gym.Wrapper):
 ### Common Built-in Wrappers
 
 **TimeLimit: Add episode time limit**
+
 ```python
 env = gym.make("CartPole-v1")
 env = gym.wrappers.TimeLimit(env, max_episode_steps=500)
@@ -529,12 +540,14 @@ env = gym.wrappers.TimeLimit(env, max_episode_steps=500)
 ```
 
 **NormalizeObservation: Normalize observations to [-1, 1]**
+
 ```python
 env = gym.wrappers.NormalizeObservation(env)
 # Observations normalized using running mean/std
 ```
 
 **RecordVideo: Save episode videos**
+
 ```python
 env = gym.wrappers.RecordVideo(
     env,
@@ -544,6 +557,7 @@ env = gym.wrappers.RecordVideo(
 ```
 
 **ClipAction: Clip actions to action space bounds**
+
 ```python
 env = gym.wrappers.ClipAction(env)
 # Actions automatically clipped to [-1, 1] or similar
@@ -623,6 +637,7 @@ env = gym.wrappers.NormalizeObservation(env)
 ### Types of Vectorized Environments
 
 **DummyVectorEnv: Serial execution (simple, slowest)**
+
 ```python
 from gymnasium.vector import DummyVectorEnv
 
@@ -639,6 +654,7 @@ obs, rewards, terminateds, truncateds, info = envs.step(actions)
 ```
 
 **SyncVectorEnv: Synchronized parallel (fast, moderate complexity)**
+
 ```python
 from gymnasium.vector import SyncVectorEnv
 
@@ -654,6 +670,7 @@ obs, rewards, terminateds, truncateds, info = envs.step(actions)
 ```
 
 **AsyncVectorEnv: Asynchronous parallel (fastest, most complex)**
+
 ```python
 from gymnasium.vector import AsyncVectorEnv
 
@@ -702,6 +719,7 @@ else:
 ### Common Vectorized Environment Bugs
 
 **Bug 1: Forgetting to close AsyncVectorEnv**
+
 ```python
 # WRONG: Processes leak
 envs = AsyncVectorEnv([...] for _ in range(16))
@@ -728,6 +746,7 @@ def make_async_envs(num_envs):
 ```
 
 **Bug 2: Non-parallel-safe environment**
+
 ```python
 # WRONG: Environment uses shared state, breaks with AsyncVectorEnv
 class NonParallelEnv(gym.Env):
@@ -748,6 +767,7 @@ class ParallelSafeEnv(gym.Env):
 ```
 
 **Bug 3: Handling auto-reset in vectorized envs**
+
 ```python
 # When an episode terminates in vectorized env, it auto-resets
 obs, rewards, terminateds, truncateds, info = envs.step(actions)
@@ -1133,6 +1153,7 @@ while True:
 ## Part 8: Red Flags and Anti-Patterns
 
 ### Red Flag 1: Reward Scale Issue
+
 ```python
 # RED FLAG: Rewards in [0, 1000000]
 reward = distance_to_goal * 1000000  # HUGE!
@@ -1143,6 +1164,7 @@ assert -1 <= reward <= 1
 ```
 
 ### Red Flag 2: Observation Type Mismatch
+
 ```python
 # RED FLAG: Observation dtype doesn't match space
 observation_space = Box(0, 255, (84, 84, 3), dtype=np.uint8)
@@ -1153,6 +1175,7 @@ obs = (obs * 255).astype(np.uint8)
 ```
 
 ### Red Flag 3: Missing Done Flag
+
 ```python
 # RED FLAG: Episodes never end
 def step(self, action):
@@ -1163,6 +1186,7 @@ terminated = self.check_goal_reached() or self.check_failure()
 ```
 
 ### Red Flag 4: Action Bounds Not Enforced
+
 ```python
 # RED FLAG: Network outputs unconstrained
 def step(self, action):  # action could be [1000, -1000]
@@ -1175,6 +1199,7 @@ action = np.clip(action,
 ```
 
 ### Red Flag 5: Vectorized Environment Auto-Reset Confusion
+
 ```python
 # RED FLAG: Treating auto-reset obs as terminal obs
 obs, rewards, terminateds, truncateds, info = envs.step(actions)
@@ -1185,6 +1210,7 @@ final_obs = info['final_observation']
 ```
 
 ### Red Flag 6: Non-Parallel-Safe Shared State
+
 ```python
 # RED FLAG: Shared state breaks AsyncVectorEnv
 class Env(gym.Env):
@@ -1199,6 +1225,7 @@ def __init__(self):
 ```
 
 ### Red Flag 7: Info Dict with Unpicklable Objects
+
 ```python
 # RED FLAG: Can't serialize for replay buffer
 info = {
@@ -1214,6 +1241,7 @@ info = {
 ```
 
 ### Red Flag 8: Forgetting to Close AsyncVectorEnv
+
 ```python
 # RED FLAG: Process leak
 envs = AsyncVectorEnv([...])
@@ -1230,34 +1258,42 @@ envs.close()  # or use try/finally
 **Common Wrong Beliefs About Environments:**
 
 **Claim 1**: "My custom environment should just work without testing"
+
 - **Reality**: 80% of RL failures are environment bugs. Test before training.
 - **Evidence**: Standard validation checklist catches bugs 95% of the time
 
 **Claim 2**: "Reward scaling doesn't matter, only matters for learning rate"
+
 - **Reality**: Reward scale affects gradient magnitudes directly. Too large = instability.
 - **Evidence**: Scaling reward by 100x often breaks training even with correct learning rate
 
 **Claim 3**: "Wrappers are optional complexity I don't need"
+
 - **Reality**: Wrappers enforce separation of concerns. Without them, environments become unmaintainable.
 - **Evidence**: Real RL code uses 3-5 wrappers (TimeLimit, Normalize, ClipAction, etc)
 
 **Claim 4**: "Vectorized environments are always faster"
+
 - **Reality**: Parallelization overhead for small envs can make them slower.
 - **Evidence**: For < 4 envs, DummyVectorEnv is faster than AsyncVectorEnv
 
 **Claim 5**: "My environment is correct if the agent learns something"
+
 - **Reality**: Agent can learn to game a broken reward signal.
 - **Evidence**: Agent learning ≠ environment correctness. Run tests.
 
 **Claim 6**: "AsyncVectorEnv doesn't need explicit close()"
+
 - **Reality**: Processes leak if not closed, draining system resources.
 - **Evidence**: Unmanaged AsyncVectorEnv with 16+ processes brings systems to halt
 
 **Claim 7**: "Observation normalization breaks training"
+
 - **Reality**: Unnormalized large observations (like [0, 255]) break training.
 - **Evidence**: Normalizing [0, 255] images to [0, 1] is standard practice
 
 **Claim 8**: "I don't need to validate action space enforcement"
+
 - **Reality**: Network outputs can violate bounds, causing physics errors.
 - **Evidence**: Unclipped continuous actions often cause simulation failures
 
@@ -1266,6 +1302,7 @@ envs.close()  # or use try/finally
 ## Part 10: Pressure Test Scenarios
 
 ### Scenario 1: Custom Environment Debugging
+
 ```python
 # Subagent challenge WITHOUT skill:
 # "I built a custom CartPole variant. Training fails silently
@@ -1283,6 +1320,7 @@ envs.close()  # or use try/finally
 ```
 
 ### Scenario 2: Wrapper Composition
+
 ```python
 # Challenge: Build a correct wrapper stack
 # env = gym.make("CartPole-v1")
@@ -1295,6 +1333,7 @@ envs.close()  # or use try/finally
 ```
 
 ### Scenario 3: Vectorization Decision
+
 ```python
 # Challenge: "I need to train on 32 parallel CartPoles.
 # Which vectorized environment type is best?"
@@ -1307,6 +1346,7 @@ envs.close()  # or use try/finally
 ```
 
 ### Scenario 4: Space Mismatch Detection
+
 ```python
 # Challenge: Environment crashes during training with cryptic error.
 # Observation is (84, 84, 3) uint8 but CNN expects float32 in [0, 1]
@@ -1497,6 +1537,7 @@ class TrainingLoop:
 ### Common Integration Mistakes
 
 **Mistake 1: Not closing AsyncVectorEnv**
+
 ```python
 # WRONG: Process leak
 envs = AsyncVectorEnv([...] for _ in range(16))
@@ -1516,6 +1557,7 @@ finally:
 ```
 
 **Mistake 2: Using wrong observation after auto-reset**
+
 ```python
 # WRONG: Mixing terminal and reset observations
 obs, reward, terminated, truncated, info = envs.step(actions)
@@ -1531,6 +1573,7 @@ else:
 ```
 
 **Mistake 3: Not validating agent actions**
+
 ```python
 # WRONG: Trust agent always outputs valid action
 action = policy(obs)

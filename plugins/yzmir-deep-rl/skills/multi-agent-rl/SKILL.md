@@ -1,7 +1,6 @@
 ---
 name: multi-agent-rl
 description: Master QMIX, MADDPG, CTDE - multi-agent learning with coordination and credit assignment
-disable-model-invocation: true
 ---
 
 # Multi-Agent Reinforcement Learning
@@ -26,6 +25,7 @@ Invoke this skill when you encounter:
 **This skill teaches learning from multiple simultaneous agents with coordination challenges.**
 
 Do NOT use this skill for:
+
 - Single-agent RL (use rl-foundations, value-based-methods, policy-gradient-methods)
 - Supervised multi-task learning (that's supervised learning)
 - Simple parallel independent tasks (use single-agent RL in parallel)
@@ -64,12 +64,14 @@ Without addressing non-stationarity, multi-agent learning is unstable.
 ### Why Multi-Agent RL Differs From Single-Agent
 
 **Standard RL Assumption (Single-Agent)**:
+
 - You have one agent
 - Environment dynamics and reward function are fixed
 - Agent's actions don't change environment structure
 - Goal: Learn policy that maximizes expected return
 
 **Multi-Agent RL Reality**:
+
 - Multiple agents act in shared environment
 - Each agent learns simultaneously
 - When Agent 1 improves, Agent 2 sees changed environment
@@ -80,6 +82,7 @@ Without addressing non-stationarity, multi-agent learning is unstable.
 ### Problem Types: Cooperative, Competitive, Mixed
 
 **Cooperative Multi-Agent Problem**:
+
 ```
 Definition: All agents share same objective
 Reward: R_team(a_1, a_2, ..., a_n) = same for all agents
@@ -103,6 +106,7 @@ Key Insight:
 ```
 
 **Competitive Multi-Agent Problem**:
+
 ```
 Definition: Agents have opposite objectives (zero-sum)
 Reward: R_i(a_1, ..., a_n) = -R_j(a_1, ..., a_n) for i≠j
@@ -127,6 +131,7 @@ Key Insight:
 ```
 
 **Mixed Multi-Agent Problem**:
+
 ```
 Definition: Some cooperation, some competition
 Reward: R_i(a_1, ..., a_n) contains both shared and individual terms
@@ -562,12 +567,14 @@ class QMIXAgent:
 4. **Centralized Training**: Trainer sees all Q-values and state
 
 **When QMIX Works Well**:
+
 - Fully observable or partially observable cooperative teams
 - Sparse communication needs
 - Fixed team membership
 - Shared reward structure
 
 **QMIX Limitations**:
+
 - Assumes monotonicity (not all cooperative games satisfy this)
 - Doesn't handle explicit communication
 - Doesn't learn agent roles dynamically
@@ -762,6 +769,7 @@ class MADDPGAgent:
 5. **Continuous Actions**: Works well with continuous action spaces
 
 **When MADDPG Works Well**:
+
 - Competitive and mixed-motive scenarios
 - Continuous action spaces
 - Partial observability (agents don't see each other)

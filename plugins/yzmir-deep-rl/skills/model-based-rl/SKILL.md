@@ -1,7 +1,6 @@
 ---
 name: model-based-rl
 description: Master Dyna-Q, MBPO, Dreamer - model-based RL with world models and planning
-disable-model-invocation: true
 ---
 
 # Model-Based Reinforcement Learning
@@ -23,6 +22,7 @@ Invoke this skill when you encounter:
 **This skill bridges model learning and policy improvement.**
 
 Do NOT use this skill for:
+
 - Pure dynamics learning (use supervised learning, not RL)
 - Perfect simulators (those are Dreamers, not world models)
 - Model-free policy optimization (use policy-gradient-methods, actor-critic-methods)
@@ -33,6 +33,7 @@ Do NOT use this skill for:
 **Model-based RL trades sample complexity for model error.**
 
 The fundamental tradeoff:
+
 - **Sample Complexity**: Learning from real world requires few samples (model helps)
 - **Model Error**: Learned models diverge from reality, planning on wrong models hurts
 - **Solution**: Keep rollouts short (k=5-10), bootstrap with value function, handle distribution shift
@@ -53,6 +54,7 @@ Stochastic:    p(s_{t+1} | s_t, a_t)  = N(μ_θ(s_t, a_t), σ_θ(s_t, a_t))
 ```
 
 **Key Components**:
+
 1. **State Representation**: What info captures current situation? (pixels, features, latent)
 2. **Dynamics Function**: Neural network mapping (s, a) → s'
 3. **Loss Function**: How to train? (MSE, cross-entropy, contrastive)
@@ -61,6 +63,7 @@ Stochastic:    p(s_{t+1} | s_t, a_t)  = N(μ_θ(s_t, a_t), σ_θ(s_t, a_t))
 ### Example 1: Pixel-Based Dynamics
 
 **Environment**: Cart-pole
+
 ```
 Input: Current image (84×84×4 pixels)
 Output: Next image (84×84×4 pixels)
@@ -70,6 +73,7 @@ Loss = MSE(predicted_frame, true_frame) + regularization
 ```
 
 **Architecture**:
+
 ```python
 class PixelDynamicsModel(nn.Module):
     def __init__(self):
@@ -90,6 +94,7 @@ class PixelDynamicsModel(nn.Module):
 ```
 
 **Training**:
+
 ```
 For each real transition (s, a, s_next):
     pred_s_next = model(s, a)
@@ -106,6 +111,7 @@ For each real transition (s, a, s_next):
 **Better for high-dim observations** (learn representation + dynamics separately).
 
 **Architecture**:
+
 ```
 1. Encoder: s → z (256-dim latent)
 2. Dynamics: z_t, a_t → z_{t+1}
@@ -114,6 +120,7 @@ For each real transition (s, a, s_next):
 ```
 
 **Training**:
+
 ```
 Reconstruction loss: ||s - decode(encode(s))||²
 Dynamics loss: ||z_{t+1} - f(z_t, a_t)||²
@@ -141,6 +148,7 @@ class StochasticDynamicsModel(nn.Module):
 ```
 
 **Training**:
+
 ```
 NLL loss = -log p(s_{t+1} | s_t, a_t)
          = ||s_{t+1} - μ||² / (2σ²) + log σ
@@ -157,6 +165,7 @@ NLL loss = -log p(s_{t+1} | s_t, a_t)
 **Reality**: Error compounds worse.
 
 **Mechanics**:
+
 ```
 Step 1: s1_pred = s1_true + ε1
 Step 2: s2_pred = f(s1_pred, a1) = f(s1_true + ε1, a1) = f(s1_true, a1) + ∇f ε1 + ε2
@@ -165,6 +174,7 @@ Step 3: Error keeps magnifying (if ||∇f|| > 1)
 ```
 
 **Example**: Cart-pole position error 0.1 pixel
+
 ```
 After 1 step: 0.10
 After 5 steps: ~0.15 (small growth)
@@ -181,6 +191,7 @@ After 50 steps: ~2.0 (completely wrong)
 **Scenario**: Train model on policy π_0 data, policy improves to π_1.
 
 **What Happens**:
+
 ```
 π_0 data distribution: {s1, s2, s3, ...}
 Model trained on: P_0(s)
@@ -193,6 +204,7 @@ Planning uses wrong model → Policy learns model errors
 ```
 
 **Example**: Cartpole
+
 - Initial: pole barely moving
 - After learning: pole swinging wildly
 - Model trained on small-angle dynamics
@@ -200,6 +212,7 @@ Planning uses wrong model → Policy learns model errors
 - Model breaks
 
 **Solution**:
+
 1. Retrain model frequently (as policy improves)
 2. Use ensemble (detect epistemic uncertainty in new states)
 3. Keep policy close to training distribution (regularization)
@@ -213,6 +226,7 @@ Planning uses wrong model → Policy learns model errors
 Planning = using model to simulate trajectories and find good actions.
 
 **General Form**:
+
 ```
 Given:
 - Current state s_t
@@ -225,6 +239,7 @@ Find action a_t that maximizes:
 ```
 
 **Two Approaches**:
+
 1. **Model Predictive Control (MPC)**: Solve optimization at each step
 2. **Shooting Methods**: Sample trajectories, pick best
 
@@ -233,6 +248,7 @@ Find action a_t that maximizes:
 ### Model Predictive Control (MPC)
 
 **Algorithm**:
+
 ```
 1. At each step:
    - Initialize candidate actions a₀, a₁, ..., a_{k-1}
@@ -252,10 +268,12 @@ Find action a_t that maximizes:
 ```
 
 **Optimization Methods**:
+
 - **Cross-Entropy Method (CEM)**: Sample actions, keep best, resample
 - **Shooting**: Random shooting, iLQR, etc.
 
 **Example**: Cart-pole with learned model
+
 ```python
 def mpc_planning(s_current, model, reward_fn, value_fn, k=5, horizon=100):
     best_action = None
@@ -287,6 +305,7 @@ def mpc_planning(s_current, model, reward_fn, value_fn, k=5, horizon=100):
 ```
 
 **Key Points**:
+
 - Replan at every step (expensive, but avoids compounding errors)
 - Use short horizons (k=5-10)
 - Bootstrap with value function
@@ -296,6 +315,7 @@ def mpc_planning(s_current, model, reward_fn, value_fn, k=5, horizon=100):
 ### Shooting Methods
 
 **Random Shooting** (simplest):
+
 ```python
 def random_shooting(s, model, reward_fn, value_fn, k=5, num_samples=1000):
     best_action = None
@@ -325,6 +345,7 @@ def random_shooting(s, model, reward_fn, value_fn, k=5, num_samples=1000):
 ```
 
 **Trade-offs**:
+
 - Pros: Simple, parallelizable, no gradient computation
 - Cons: Slow (needs many samples), doesn't refine actions
 
@@ -337,6 +358,7 @@ def random_shooting(s, model, reward_fn, value_fn, k=5, num_samples=1000):
 **User Belief**: "k=50 is better than k=5 (more planning)."
 
 **Reality**:
+
 ```
 k=5: Q = r₀ + γr₁ + ... + γ⁴r₄ + γ⁵V(s₅)
      Errors from 5 steps of model error
@@ -359,10 +381,12 @@ k=50: Q = r₀ + γr₁ + ... + γ⁴⁹r₄₉ + γ⁵⁰V(s₅₀)
 **Dyna = Dynamics + Q-Learning**
 
 Combine:
+
 1. **Real Transitions**: Learn Q from real environment data (model-free)
 2. **Imagined Transitions**: Learn Q from model-generated data (model-based)
 
 **Why?** Leverage both:
+
 - Real data: Updates are correct, but expensive
 - Imagined data: Updates are cheap, but noisy
 
@@ -467,6 +491,7 @@ class DynaQ:
 ```
 
 **Benefits**:
+
 - Real transitions: Accurate but expensive
 - Imagined transitions: Cheap, accelerates learning
 
@@ -481,6 +506,7 @@ class DynaQ:
 **Example**: Model memorizes transitions, imagined transitions all identical.
 
 **Solution**:
+
 1. Use ensemble (multiple models, average predictions)
 2. Track model uncertainty
 3. Weight imagined updates by confidence
@@ -497,6 +523,7 @@ class DynaQ:
 Key Insight: Don't use model for full-episode rollouts. Use model for short rollouts (k=5), bootstrap with learned value function.
 
 **Architecture**:
+
 ```
 1. Train ensemble of dynamics models (4-7 models)
 2. For each real transition (s, a) → (r, s_next):
@@ -550,6 +577,7 @@ Repeat for N environment steps:
 ### Key MBPO Design Choices
 
 **1. Rollout Length k**:
+
 ```
 k=5-10 recommended (not k=50)
 
@@ -560,6 +588,7 @@ Why short?
 ```
 
 **2. Ensemble Disagreement**:
+
 ```
 High disagreement = model uncertainty in new state region
 
@@ -572,6 +601,7 @@ disagreement = max_i ||M_i(s, a) - M_j(s, a)||
 ```
 
 **3. Model Retraining Schedule**:
+
 ```
 Too frequent: Overfitting to latest data
 Too infrequent: Model becomes stale
@@ -581,6 +611,7 @@ MBPO: Retrain every N environment steps
 ```
 
 **4. Real vs Imagined Ratio**:
+
 ```
 High real ratio: Few imagined transitions, limited speedup
 High imagined ratio: Many imagined transitions, faster, higher model error
@@ -681,24 +712,28 @@ class MBPO:
 ### MBPO Pitfalls
 
 **Pitfall 1: k too large**
+
 ```
 k=50 → Model errors compound, policy learns errors
 k=5 → Manageable error, good bootstrap
 ```
 
 **Pitfall 2: No ensemble**
+
 ```
 Single model → Overconfident, plans in wrong regions
 Ensemble → Uncertainty estimated, early stopping works
 ```
 
 **Pitfall 3: Model never retrained**
+
 ```
 Policy improves → States change → Model becomes stale
 Solution: Retrain every N steps (or when performance plateaus)
 ```
 
 **Pitfall 4: High imagined ratio early**
+
 ```
 Model untrained, 90% imagined data → Learning garbage
 Solution: Start low (5% imagined), gradually increase
@@ -716,6 +751,7 @@ Problem: Pixel-space world models hard to train (blurry reconstructions, high-di
 Solution: Learn latent representation, do imagination there.
 
 **Architecture**:
+
 ```
 1. Encoder: Image → Latent (z)
 2. VAE: Latent space with KL regularization
@@ -727,6 +763,7 @@ Solution: Learn latent representation, do imagination there.
 ```
 
 **Key Difference from MBPO**:
+
 - MBPO: Short rollouts in state space, then Q-learning
 - Dreamer: Imagine trajectories in latent space, then train policy + value in imagination
 
@@ -763,6 +800,7 @@ Phase 2: Imagination (online, during learning)
 ### Dreamer Details
 
 **1. Latent Dynamics Learning**:
+
 ```
 In pixel space: Errors accumulate visibly (blurry)
 In latent space: Errors more abstract, easier to learn dynamics
@@ -774,6 +812,7 @@ Loss: NLL(z_{t+1} | z_t, a_t)
 ```
 
 **2. Policy Learning via Imagination**:
+
 ```
 Standard RL in imagined trajectories (not real)
 
@@ -784,6 +823,7 @@ Standard RL in imagined trajectories (not real)
 ```
 
 **3. Value Learning via Imagination**:
+
 ```
 V(z_t) learns to estimate imagined returns
 
@@ -897,18 +937,21 @@ class Dreamer:
 ### Dreamer Pitfalls
 
 **Pitfall 1: Too-long imagination**
+
 ```
 h=50: Latent dynamics errors compound
 h=15: Better (manageable error)
 ```
 
 **Pitfall 2: No KL regularization**
+
 ```
 VAE collapses → z same for all states → dynamics useless
 Solution: KL term forces diverse latent space
 ```
 
 **Pitfall 3: Policy overfits to value estimates**
+
 ```
 Early imagination: V(z_t) estimates wrong
 Policy follows wrong value
@@ -930,6 +973,7 @@ Solution:
 **Reality**: Depends on compute budget.
 
 **Example**: Cartpole
+
 ```
 Model-free (DQN): 100k samples, instant policy
 Model-based (MBPO):
@@ -941,6 +985,7 @@ Model-free wins on compute
 ```
 
 **When Model-Based Helps**:
+
 1. **Real samples expensive**: Robotics (100s per hour)
 2. **Sim available**: Use for pre-training, transfer to real
 3. **Multi-task**: Reuse model for multiple tasks
@@ -951,16 +996,19 @@ Model-free wins on compute
 ### Sim-to-Real Transfer
 
 **Setup**:
+
 1. Train model + policy in simulator (cheap samples)
 2. Test on real robot (expensive, dangerous)
 3. Reality gap: Simulator ≠ Real world
 
 **Approaches**:
+
 1. **Domain Randomization**: Vary simulator dynamics, color, physics
 2. **System Identification**: Fit simulator to real robot
 3. **Robust Policy**: Train policy robust to model errors
 
 **MBPO in Sim-to-Real**:
+
 ```
 1. Train in simulator (unlimited samples)
 2. Collect real data (expensive)
@@ -975,6 +1023,7 @@ Model-free wins on compute
 **Setup**: Train model once, use for multiple tasks.
 
 **Example**:
+
 ```
 Model learns: p(s_{t+1} | s_t, a_t)  [task-independent]
 Task 1 reward: r₁(s, a)
@@ -993,6 +1042,7 @@ Plan with model + reward₂
 ### Error Sources
 
 **1. Aleatoric (Environment Noise)**:
+
 ```
 Same (s, a) can lead to multiple s'
 Example: Pushing object, slight randomness in friction
@@ -1001,6 +1051,7 @@ Solution: Stochastic model p(s' | s, a)
 ```
 
 **2. Epistemic (Model Uncertainty)**:
+
 ```
 Limited training data, model hasn't seen this state
 Example: Policy explores new region, model untrained
@@ -1009,6 +1060,7 @@ Solution: Ensemble, Bayesian network, uncertainty quantification
 ```
 
 **3. Distribution Shift**:
+
 ```
 Policy improves, visits new states
 Model trained on old policy data
@@ -1022,6 +1074,7 @@ Solution: Retraining, regularization, uncertainty detection
 ### Handling Uncertainty
 
 **Approach 1: Ensemble**:
+
 ```python
 # Train multiple models on same data
 models = [DynamicsModel() for _ in range(7)]
@@ -1039,6 +1092,7 @@ if std_pred.mean() > threshold:
 ```
 
 **Approach 2: Uncertainty Weighting**:
+
 ```
 High uncertainty → Less trust → Lower imagined data weight
 
@@ -1046,6 +1100,7 @@ Weight for imagined transition = 1 / (1 + ensemble_disagreement)
 ```
 
 **Approach 3: Conservative Planning**:
+
 ```
 Roll out only when ensemble agrees
 
@@ -1130,6 +1185,7 @@ def mpc_plan(s_current, model, reward_fn, value_fn, k=5, num_samples=100):
 ## Part 9: Common Pitfalls Summary
 
 ### Pitfall 1: Long Rollouts
+
 ```
 k=50 → Model errors compound
 k=5 → Manageable error, good bootstrap
@@ -1137,54 +1193,63 @@ FIX: Keep k small, use value function
 ```
 
 ### Pitfall 2: Distribution Shift
+
 ```
 Policy changes → New states outside training distribution → Model wrong
 FIX: Retrain model frequently, use ensemble for uncertainty
 ```
 
 ### Pitfall 3: Model Overfitting
+
 ```
 Few transitions → Model memorizes
 FIX: Ensemble, regularization, hold-out validation set
 ```
 
 ### Pitfall 4: No Value Bootstrapping
+
 ```
 Pure imagined returns → All error in rollout
 FIX: Bootstrap with learned value at horizon k
 ```
 
 ### Pitfall 5: Using Model-Based When Model-Free Better
+
 ```
 Simple task, perfect simulator → Model-based wastes compute
 FIX: Use model-free (DQN, PPO) unless samples expensive
 ```
 
 ### Pitfall 6: Model Never Updated
+
 ```
 Policy improves, model stays frozen → Model stale
 FIX: Retrain every N steps or monitor validation performance
 ```
 
 ### Pitfall 7: High Imagined Data Ratio Early
+
 ```
 Untrained model, 90% imagined → Learning garbage
 FIX: Start with low imagined ratio, gradually increase
 ```
 
 ### Pitfall 8: No Ensemble
+
 ```
 Single model → Overconfident in uncertain regions
 FIX: Use 4-7 models, aggregate predictions
 ```
 
 ### Pitfall 9: Ignoring Reward Function
+
 ```
 Use true reward with imperfect state model
 FIX: Also learn reward model (or use true rewards if available)
 ```
 
 ### Pitfall 10: Planning Too Long
+
 ```
 Expensive planning, model errors → Not worth compute
 FIX: Short horizons (k=5), real-time constraints
@@ -1236,6 +1301,7 @@ FIX: Short horizons (k=5), real-time constraints
 8. **Pitfalls**: Long rollouts, no bootstrapping, overconfidence, staleness
 
 **Key Insights**:
+
 - **Error compounding**: Keep k small (5-10), trust value function beyond
 - **Distribution shift**: Retrain model as policy improves, use ensemble
 - **Value bootstrapping**: Horizon k, then V(s_k), not pure imagined return
@@ -1255,6 +1321,7 @@ FIX: Short horizons (k=5), real-time constraints
 **Why Latent?** State/pixel space models struggle with high-dimensional data.
 
 **Architecture**:
+
 ```
 Encoder: s (pixels) → z (latent, 256-dim)
 Ensemble models: z_t, a_t → z_{t+1}
@@ -1264,12 +1331,14 @@ Decoder: z → s (reconstruction)
 ```
 
 **Benefits**:
+
 1. **Smaller models**: Latent 256-dim vs pixel 84×84×3
 2. **Better dynamics**: Learned in abstract space
 3. **Faster training**: 10x faster than pixel models
 4. **Better planning**: Latent trajectories more stable
 
 **Implementation Pattern**:
+
 ```python
 class LatentEnsembleDynamics:
     def __init__(self):
@@ -1298,12 +1367,14 @@ class LatentEnsembleDynamics:
 **When needed**: Visual RL (don't have privileged reward)
 
 **Structure**:
+
 ```
 Reward predictor: (s or z, a) → r
 Trained via supervised learning on real transitions
 ```
 
 **Training**:
+
 ```python
 class RewardModel(nn.Module):
     def __init__(self, latent_dim, action_dim):
@@ -1325,6 +1396,7 @@ class RewardModel(nn.Module):
 **Key**: Train on ground truth rewards from environment.
 
 **Integration with MBPO**:
+
 - Use learned reward when true reward unavailable
 - Use true reward when available (more accurate)
 
@@ -1355,6 +1427,7 @@ class ModelScheduler:
 ```
 
 **Use Cases**:
+
 - Deterministic: Fast training, baseline
 - Stochastic: Uncertainty quantification
 - Ensemble: Planning with disagreement detection
@@ -1377,6 +1450,7 @@ class ModelScheduler:
 ```
 
 **Implementation**:
+
 ```python
 def cem_plan(s, model, reward_fn, value_fn, k=5, num_samples=100, num_iters=5):
     """Cross-Entropy Method for planning"""
@@ -1420,6 +1494,7 @@ def cem_plan(s, model, reward_fn, value_fn, k=5, num_samples=100, num_iters=5):
 ```
 
 **Comparison to Random Shooting**:
+
 - Random: Simple, parallelizable, needs many samples
 - CEM: Iterative refinement, fewer samples, more compute per sample
 
@@ -1435,6 +1510,7 @@ Uses: Dynamics Jacobian, Reward Hessian
 ```
 
 **Simplified Version** (iterative refinement):
+
 ```python
 def ilqr_like_plan(s, model, reward_fn, value_fn, k=5):
     """Iterative refinement of action sequence"""
@@ -1466,6 +1542,7 @@ def ilqr_like_plan(s, model, reward_fn, value_fn, k=5):
 ```
 
 **When to Use**:
+
 - Continuous action space (not discrete)
 - Differentiable model (neural network)
 - Need fast planning (compute-constrained)
@@ -1477,6 +1554,7 @@ def ilqr_like_plan(s, model, reward_fn, value_fn, k=5):
 ### Red Flags for Model-Based (Use Model-Free Instead)
 
 **Flag 1: Perfect Simulator Available**
+
 ```
 Example: Mujoco, Unity, Atari emulator
 Benefit: Unlimited free samples
@@ -1485,6 +1563,7 @@ Model-free benefit: Just train policy (simpler)
 ```
 
 **Flag 2: Task Very Simple**
+
 ```
 Cartpole, MountainCar (horizon < 50)
 Benefit of planning: Minimal (too short)
@@ -1493,6 +1572,7 @@ Model-free wins
 ```
 
 **Flag 3: Compute Limited, Samples Abundant**
+
 ```
 Example: Atari (free samples from emulator)
 Model-based: 30 hours train + plan
@@ -1501,6 +1581,7 @@ Model-free wins on compute
 ```
 
 **Flag 4: Stochastic Environment (High Noise)**
+
 ```
 Example: Dice rolling, random collisions
 Model must predict distribution (hard)
@@ -1508,6 +1589,7 @@ Model-free: Just stores Q-values (simpler)
 ```
 
 **Flag 5: Evaluation Metric is Compute Time**
+
 ```
 Model-based sample efficient but compute-expensive
 Model-free faster on wall-clock time
@@ -1523,6 +1605,7 @@ Choose based on metric
 **Idea**: Use model-based for data augmentation, model-free for policy.
 
 **Architecture**:
+
 ```
 Phase 1: Collect real data (model-free exploration)
 Phase 2: Train model
@@ -1531,6 +1614,7 @@ Phase 4: Train policy on mixed data (model-free algorithm)
 ```
 
 **MBPO Example**:
+
 - Model-free: SAC (learns Q and policy)
 - Model-based: Short rollouts for data augmentation
 - Hybrid: Best of both
@@ -1538,18 +1622,21 @@ Phase 4: Train policy on mixed data (model-free algorithm)
 **Other Hybrids**:
 
 1. **Model for Initialization**:
+
    ```
    Train model-based policy → Initialize model-free policy
    Fine-tune with model-free (if needed)
    ```
 
 2. **Model for Curriculum**:
+
    ```
    Model predicts difficulty → Curriculum learning
    Easy → Hard task progression
    ```
 
 3. **Model for Exploration Bonus**:
+
    ```
    Model uncertainty → Exploration bonus
    Curious about uncertain states
@@ -1563,6 +1650,7 @@ Phase 4: Train policy on mixed data (model-free algorithm)
 ### Q1: Should I train one model or ensemble?
 
 **A**: Ensemble (4-7 models) provides uncertainty estimates.
+
 - Single model: Fast training, overconfident
 - Ensemble: Disagreement detects out-of-distribution states
 
@@ -1573,6 +1661,7 @@ For production: Ensemble recommended.
 ### Q2: How long should rollouts be?
 
 **A**: k=5-10 for most tasks.
+
 - Shorter (k=1-3): Very safe, but minimal planning
 - Medium (k=5-10): MBPO default, good tradeoff
 - Longer (k=20+): Error compounds, avoid
@@ -1584,6 +1673,7 @@ Rule of thumb: k = task_horizon / 10
 ### Q3: When should I retrain the model?
 
 **A**: Every N environment steps or when validation loss increases.
+
 - MBPO: Every 1000 steps
 - Dreamer: Every episode
 - Dyna-Q: Every 10-100 steps
@@ -1595,6 +1685,7 @@ Monitor validation performance.
 ### Q4: Model-based or model-free for my problem?
 
 **A**: Decision tree:
+
 1. Are real samples expensive? → Model-based
 2. Do I have perfect simulator? → Model-free
 3. Is task very complex (high-dim)? → Model-based (Dreamer)
@@ -1606,6 +1697,7 @@ Monitor validation performance.
 ### Q5: How do I know if model is good?
 
 **A**: Metrics:
+
 1. **Validation MSE**: Low on hold-out test set
 2. **Rollout Accuracy**: Predict 10-step trajectory, compare to real
 3. **Policy Performance**: Does planning with model improve policy?
@@ -1618,28 +1710,33 @@ Monitor validation performance.
 ### Summary of Key Concepts
 
 **1. World Models**:
+
 - Learn p(s_{t+1} | s_t, a_t) from data
 - Pixel vs latent space (latent better for high-dim)
 - Deterministic vs stochastic
 
 **2. Planning**:
+
 - MPC: Optimize actions at each step
 - Shooting: Sample trajectories
 - CEM: Iterative refinement
 - Short rollouts (k=5-10) + value bootstrap
 
 **3. Algorithms**:
+
 - **Dyna-Q**: Real + imagined transitions
 - **MBPO**: Short rollouts + policy optimization
 - **Dreamer**: Latent imagination + policy learning
 
 **4. Error Handling**:
+
 - Ensemble for uncertainty
 - Early stopping on disagreement
 - Distribution shift via retraining
 - Value bootstrapping for tail uncertainty
 
 **5. When to Use**:
+
 - Real samples expensive → Model-based
 - Compute cheap → Model-free
 - Multi-task → Model-based (reuse)
@@ -1667,6 +1764,7 @@ After this skill:
 **Congratulations!** You now understand model-based RL from foundations through implementation.
 
 You can:
+
 - Implement Dyna-Q for discrete control
 - Implement MBPO for continuous control
 - Handle model errors appropriately

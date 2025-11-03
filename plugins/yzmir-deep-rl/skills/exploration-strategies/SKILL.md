@@ -1,7 +1,6 @@
 ---
 name: exploration-strategies
 description: Master ε-greedy, UCB, curiosity-driven, RND, intrinsic motivation exploration
-disable-model-invocation: true
 ---
 
 # Exploration Strategies in Deep RL
@@ -31,6 +30,7 @@ Invoke this skill when you encounter:
 ### The Fundamental Tension
 
 In reinforcement learning, every action selection is a decision:
+
 - **Exploit**: Take the action with highest estimated value (maximize immediate reward)
 - **Explore**: Try a different action to learn about its value (find better actions)
 
@@ -57,11 +57,13 @@ Optimal Balance:
 **Scenario 1: Sparse Reward Environment**
 
 Imagine an agent in Montezuma's Revenge (classic exploration benchmark):
+
 - Most states give reward = 0
 - First coin gives +1 (at step 500+)
 - Without exploring systematically, random actions won't find that coin in millions of steps
 
 Without exploration strategy:
+
 ```
 Steps 0-1,000: Random actions, no reward signal
 Steps 1,000-10,000: Learned to get to the coin, finally seeing reward
@@ -76,6 +78,7 @@ Result: Reward found in 10% of steps
 **Scenario 2: Local Optimum Trap**
 
 Agent finds a small reward (+1) from a simple policy:
+
 ```
 Without decay:
 - Agent learns exploit_policy achieves +1
@@ -92,6 +95,7 @@ With decay:
 ### Core Rule
 
 **Exploration is an investment with declining returns.**
+
 - Early training: Exploration critical (don't know anything yet)
 - Mid training: Balanced (learning but not confident)
 - Late training: Exploitation dominant (confident in good actions)
@@ -176,11 +180,13 @@ def epsilon_linear(step, total_steps, epsilon_start=1.0, epsilon_end=0.1):
 ```
 
 **Properties:**
+
 - Simple, predictable, easy to tune
 - Equal exploration reduction per step
 - Good for most tasks
 
 **Guidance:**
+
 - Use if no special knowledge about task
 - `epsilon_start = 1.0` (explore fully initially)
 - `epsilon_end = 0.01` to `0.1` (small residual exploration)
@@ -199,11 +205,13 @@ def epsilon_exponential(step, decay_rate=0.9995):
 ```
 
 **Properties:**
+
 - Fast initial decay, slow tail
 - Aggressive early exploration cutoff
 - Exploration drops exponentially
 
 **Guidance:**
+
 - Use if task rewards are found quickly
 - `decay_rate = 0.9995` is gentle (1% per 100 steps)
 - `decay_rate = 0.999` is aggressive (1% per step)
@@ -227,11 +235,13 @@ def epsilon_polynomial(step, total_steps, epsilon_start=1.0,
 ```
 
 **Properties:**
+
 - Smooth, tunable decay curve
 - Power > 1: Fast early decay, slow tail
 - Power < 1: Slow early decay, fast tail
 
 **Guidance:**
+
 - `power = 2.0`: Quadratic (balanced, common)
 - `power = 3.0`: Cubic (aggressive early decay)
 - `power = 0.5`: Slower (gentle early decay)
@@ -439,6 +449,7 @@ def ucb_action(q_values, action_counts, total_visits, c=1.0):
 ### Why UCB Works
 
 UCB balances exploitation and exploration via **optimism under uncertainty**:
+
 - If Q(a) is high → exploit it
 - If Q(a) is uncertain (rarely visited) → exploration bonus makes UCB high
 
@@ -509,6 +520,7 @@ def deep_ucb_approximation(mean_q, uncertainty, c=1.0):
 ```
 
 **Modern Approach:** Instead of counting visits, learn uncertainty through:
+
 - **Ensemble Methods**: Train multiple Q-networks, use disagreement
 - **Bayesian Methods**: Learn posterior over Q-values
 - **Bootstrap DQN**: Separate Q-networks give uncertainty estimates
@@ -638,6 +650,7 @@ Together: Forward + Inverse
 ```
 
 **Key Distinction:**
+
 - ICM: Learns to predict environment (breaks if environment has noise/randomness)
 - RND: Uses frozen random network (robust to environment randomness)
 
@@ -1038,10 +1051,12 @@ epsilon_linear(step, total_training_steps,
 ```
 
 **Diagnosis:**
+
 - Plot epsilon over training: does it reach 0 too early?
 - Check if performance improves after epsilon reaches low values
 
 **Fix:**
+
 - Use longer decay (more steps)
 - Use higher epsilon_end (never go to pure exploitation)
 
@@ -1062,10 +1077,12 @@ r_total = r_task + 0.01 * r_intrinsic
 ```
 
 **Diagnosis:**
+
 - Agent explores everywhere but doesn't collect task rewards
 - Intrinsic reward signal going to seemingly useless states
 
 **Fix:**
+
 - Reduce intrinsic_reward_scale (try 0.01, 0.001)
 - Verify agent eventually starts collecting task rewards
 
@@ -1091,10 +1108,12 @@ noisy_action = np.clip(noisy_action, -1, 1)
 ```
 
 **Diagnosis:**
+
 - Continuous action space and using ε-greedy
 - Agent not learning effectively
 
 **Fix:**
+
 - Use Gaussian noise: action + N(0, σ)
 - Decay exploration_std over time (like epsilon decay)
 
@@ -1113,10 +1132,12 @@ epsilon = epsilon_linear(step, total_steps)
 ```
 
 **Diagnosis:**
+
 - No epsilon decay schedule mentioned in code
 - Agent behaves randomly even after many training steps
 
 **Fix:**
+
 - Add decay schedule (linear, exponential, polynomial)
 
 ### Pitfall 5: Using Exploration at Test Time
@@ -1137,10 +1158,12 @@ for test_episode in test_episodes:
 ```
 
 **Diagnosis:**
+
 - Test performance has high variance
 - Test performance < training performance (exploration hurts)
 
 **Fix:**
+
 - At test time, use greedy/deterministic policy
 - No ε-greedy, no Boltzmann, no exploration noise
 
@@ -1164,11 +1187,13 @@ rnd_optimizer = Adam(rnd.predictor.parameters(), lr=0.0001)
 ```
 
 **Diagnosis:**
+
 - RND training loss is low (close to 0)
 - But intrinsic rewards still high for most states
 - Suggests predictor fitted to training states but not generalizing
 
 **Fix:**
+
 - Reduce RND learning rate
 - Add weight decay (L2 regularization)
 - Use batch normalization in predictor
@@ -1194,10 +1219,12 @@ rnd = RandomNetworkDistillation(state_dim)
 ```
 
 **Diagnosis:**
+
 - Using count-based exploration with images/continuous observations
 - Exploration not working effectively
 
 **Fix:**
+
 - Switch to RND or curiosity-driven methods
 - Count-based only for small discrete state spaces
 
@@ -1223,6 +1250,7 @@ rnd = RandomNetworkDistillation(state_dim)
 **User Query:** "I trained my agent and it found a solution giving +10 reward. But I know the optimal solution is +100. Agent is stuck at +10. How do I fix it?"
 
 **What Skill Must Provide:**
+
 1. Diagnosis: Likely exploration problem (local optimum)
 2. Solution: Increase exploration (slower decay, or intrinsic motivation)
 3. Prevention: Design exploration strategy before training
@@ -1232,16 +1260,19 @@ rnd = RandomNetworkDistillation(state_dim)
 "Your agent found a local optimum (+10) and exploitation is too strong. This is a classic exploration-exploitation problem.
 
 **Quick Fixes:**
+
 1. Check epsilon decay: Is epsilon decaying too fast? Use slower decay schedule.
 2. Check epsilon_end: Is epsilon_end = 0? Change to 0.01-0.05.
 3. Add intrinsic motivation: Your environment might need curiosity-driven exploration.
 
 **Systematic Approach:**
+
 - If rewards are dense (frequent signals): ε-greedy with slow decay
 - If rewards are sparse (rare signals): Add RND or curiosity
 - If state space huge: Definitely use RND
 
 **Example Fix:**
+
 ```
 # Instead of epsilon decaying to 0.01 in 100k steps
 # Decay over 1M steps with epsilon_end=0.05
@@ -1297,6 +1328,7 @@ for step in training_steps:
 **Alternative:** Curiosity-driven (ICM) also works if environment deterministic.
 
 **What to tune:**
+
 - lambda_intrinsic: Start 0.01, increase if agent doesn't explore enough
 - RND learning rate: Usually 1e-4 (much smaller than main agent)"
 
@@ -1305,6 +1337,7 @@ for step in training_steps:
 **User Query:** "I'm using ε-greedy but not sure about the decay schedule. I have 100k training steps. Should I decay epsilon linearly? Over how many steps? To what final value?"
 
 **What Skill Must Provide:**
+
 1. Formula: Linear, exponential, polynomial decay
 2. Guidance: Typical values for different problem types
 3. Tuning: How to adjust based on task
@@ -1312,6 +1345,7 @@ for step in training_steps:
 **Skill Response:**
 
 "**Quick Answer:**
+
 ```python
 total_steps = 100_000
 epsilon = epsilon_linear(step, total_steps,
@@ -1319,6 +1353,7 @@ epsilon = epsilon_linear(step, total_steps,
 ```
 
 **Reasoning:**
+
 - `epsilon_start=1.0`: Explore fully initially (know nothing)
 - `epsilon_end=0.05`: Keep 5% exploration always (helps with stochasticity)
 - Linear decay: Simple, works well for most tasks
@@ -1340,6 +1375,7 @@ epsilon = epsilon_linear(step, total_steps,
    - Polynomial with power=2: Balanced
 
 **Example Tuning:**
+
 ```python
 # Sparse rewards: More exploration needed
 epsilon = epsilon_linear(step, total_steps=100_000,
@@ -1518,6 +1554,7 @@ START: Need exploration strategy?
 ### Typical Configurations
 
 **Dense Rewards, Small Action Space (e.g., simple game)**
+
 ```python
 epsilon = epsilon_linear(step, total_steps=100_000,
                         epsilon_start=1.0, epsilon_end=0.01)
@@ -1525,6 +1562,7 @@ epsilon = epsilon_linear(step, total_steps=100_000,
 ```
 
 **Sparse Rewards, Discrete Actions (e.g., Atari)**
+
 ```python
 rnd = RandomNetworkDistillation(...)
 epsilon = epsilon_linear(step, total_steps=1_000_000,
@@ -1534,6 +1572,7 @@ r_total = r_task + 0.01 * r_intrinsic
 ```
 
 **Continuous Control, Sparse (e.g., Robotics)**
+
 ```python
 rnd = RandomNetworkDistillation(...)
 action = policy(state) + gaussian_noise(std=exploration_std)

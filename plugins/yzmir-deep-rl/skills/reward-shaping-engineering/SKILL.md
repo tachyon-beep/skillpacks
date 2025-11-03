@@ -1,7 +1,6 @@
 ---
 name: reward-shaping-engineering
 description: Master reward function design - potential-based shaping, hacking patterns, validation
-disable-model-invocation: true
 ---
 
 # Reward-Shaping Engineering
@@ -26,6 +25,7 @@ Invoke this skill when you encounter:
 **This skill provides systematic frameworks and concrete patterns for reward engineering.**
 
 Do NOT use for:
+
 - Algorithm selection (route to rl-foundations or specific algorithm skill)
 - General RL debugging (route to rl-debugging-methodology)
 - Exploration strategies (route to exploration-strategies)
@@ -36,6 +36,7 @@ Do NOT use for:
 ## Core Principle
 
 **Reward design is often the hardest part of RL.** The reward function defines the entire objective the agent optimizes. A poorly designed reward either:
+
 1. Learns something unintended (reward hacking)
 2. Learns slowly due to sparse/noisy signal (credit assignment crisis)
 3. Learns correctly but unstably due to scale/normalization issues
@@ -56,11 +57,13 @@ The key insight: **You're solving an inverse problem.** You want an agent that a
 **The Problem**: You want agent to do X, but reward incentivizes Y.
 
 **Example (CartPole)**:
+
 - Task: Balance pole in center for as long as possible
 - Bad reward: +1 per step (true) → Agent learns to oscillate side-to-side (unintended but gets +1 every step)
 - Better reward: +1 per step centered + penalty for deviation
 
 **Example (Robotics)**:
+
 - Task: Grasp object efficiently
 - Bad reward: Just +1 when grasped → Agent grasps sloppily, jerky movements
 - Better reward: +1 for grasp + small penalty per action (reward efficiency)
@@ -82,11 +85,13 @@ good_reward = (1.0 if grasp_success else 0.0) + (-0.01 * np.sum(action**2))
 **The Problem**: Sparse rewards mean agent can't learn which actions led to success.
 
 **Example (Goal Navigation)**:
+
 - Sparse: Only +1 when reaching goal (1 in 1000 episodes maybe)
 - Agent can't tell: Did action 10 steps ago help or action 5 steps ago?
 - Solution: Add shaping reward based on progress
 
 **Credit Assignment Window**:
+
 ```
 Short window (< 10 steps):    Need dense rewards every 1-2 steps
 Medium window (10-100 steps): Reward every 5-10 steps OK
@@ -94,9 +99,9 @@ Long window (> 100 steps):    Sparse rewards very hard, need shaping
 ```
 
 **When to Add Shaping**:
+
 - Episode length > 50 steps AND sparse rewards
 - Agent can't achieve >10% success after exploring
-
 
 ### Principle 3: Reward Should Prevent Hacking
 
@@ -117,6 +122,7 @@ Long window (> 100 steps):    Sparse rewards very hard, need shaping
    - Solution: Use clipped/normalized rewards
 
 **Prevention Framework**:
+
 ```python
 def design_robust_reward(s, a, s_next):
     # Core task reward
@@ -134,6 +140,7 @@ def design_robust_reward(s, a, s_next):
 **The Problem**: Reward magnitude affects gradient flow.
 
 **Example**:
+
 ```
 Task A rewards:  0 to 1000
 Task B rewards:  0 to 1
@@ -145,6 +152,7 @@ Solution: Normalize both to [-1, 1]
 ```
 
 **Standard Normalization Pipeline**:
+
 ```python
 def normalize_reward(r):
     # 1. Clip to reasonable range (prevents scale explosions)
@@ -166,16 +174,20 @@ def normalize_reward(r):
 ### The Fundamental Problem
 
 You want to:
+
 - Help agent learn faster (add shaping rewards)
 - Preserve the optimal policy (so shaping doesn't change what's best)
 
 **The Solution: Potential-Based Shaping**
 
 The theorem states: If you add shaping reward of form
+
 ```
 F(s, a, s') = γ * Φ(s') - Φ(s)
 ```
+
 where Φ(s) is ANY function of state, then:
+
 1. Optimal policy remains unchanged
 2. Optimal value function shifts by Φ
 3. Learning accelerates due to better signal
@@ -187,6 +199,7 @@ where Φ(s) is ANY function of state, then:
 Original MDP has Q-function: `Q^π(s,a) = E[R(s,a,s') + γV^π(s')]`
 
 With potential-based shaping:
+
 ```
 Q'^π(s,a) = Q^π(s,a) + [γΦ(s') - Φ(s)]
           = E[R(s,a,s') + γΦ(s') - Φ(s) + γV^π(s')]
@@ -196,6 +209,7 @@ Q'^π(s,a) = Q^π(s,a) + [γΦ(s') - Φ(s)]
 The key insight: When computing optimal policy, Φ(s) acts like state-value function offset. Different actions get different Φ values, but relative ordering (which action is best) unchanged.
 
 **Proof Sketch**:
+
 - Policy compares Q(s,a₁) vs Q(s,a₂) to pick action
 - Both differ by same [γΦ(s') - Φ(s)] at state s
 - Relative ordering preserved → same optimal action
@@ -244,6 +258,7 @@ def compute_potential(s):
 ### Critical Error: NOT Using Potential-Based Shaping
 
 **Common Mistake**:
+
 ```python
 # WRONG: This changes the optimal policy!
 shaping_reward = -0.1 * distance_to_goal
@@ -257,6 +272,7 @@ shaping_reward = -0.1 * distance_to_goal
 ```
 
 **Right Way**:
+
 ```python
 # CORRECT: Potential-based shaping
 def shaping(s, a, s_next):
@@ -312,18 +328,21 @@ def compute_total_reward(s, a, s_next, env_reward, gamma=0.99):
 ### Decision Framework
 
 **Use SPARSE when**:
+
 - Task naturally has sparse rewards (goal-reaching, game win/loss)
 - Episode short (< 20 steps)
 - You want solution robust to reward hacking
 - Final performance matters more than learning speed
 
 **Use DENSE when**:
+
 - Episode long (> 50 steps) and no natural sub-goals
 - Learning speed critical (limited training budget)
 - You can design safe auxiliary rewards
 - You'll validate extensively against hacking
 
 **Use HYBRID when**:
+
 - Combine sparse task reward with dense shaping
 - Example: +1 for reaching goal (sparse) + negative distance shaping (dense)
 - This is the most practical approach for long-horizon tasks
@@ -396,11 +415,13 @@ def validate_reward_choice(sparse_reward_fn, dense_reward_fn, env, n_trials=10):
 Agent finds unintended path to success.
 
 **Example (Quadruped)**:
+
 - Task: Walk forward 10 meters
 - Intended: Gait pattern that moves forward
 - Hack: Agent learns to flip upside down (center of mass moves forward during flip!)
 
 **Detection**:
+
 ```python
 # Test on distribution shift
 if test_on_different_terrain(agent) << train_performance:
@@ -409,6 +430,7 @@ if test_on_different_terrain(agent) << train_performance:
 ```
 
 **Prevention**:
+
 ```python
 def robust_reward(s, a, s_next):
     # Forward progress
@@ -428,11 +450,13 @@ def robust_reward(s, a, s_next):
 Agent exploits direct reward signal rather than task.
 
 **Example (Oscillation)**:
+
 - Task: Balance pole in center
 - Intended: Keep pole balanced
 - Hack: Agent oscillates rapidly (each oscillation = +1 reward per step)
 
 **Detection**:
+
 ```python
 def detect_oscillation(trajectory):
     positions = [s['pole_angle'] for s in trajectory]
@@ -445,6 +469,7 @@ def detect_oscillation(trajectory):
 ```
 
 **Prevention**:
+
 ```python
 def non_hackable_reward(s, a, s_next):
     # Task: Balanced pole
@@ -462,10 +487,12 @@ def non_hackable_reward(s, a, s_next):
 Agent maximizes dimension without bound.
 
 **Example (Camera Hack)**:
+
 - Task: Detect object (reward for correct detection)
 - Hack: Agent learns to point camera lens at bright light source (always triggers detection)
 
 **Detection**:
+
 ```python
 def detect_unbounded_exploitation(training_history):
     rewards = training_history['episode_returns']
@@ -477,6 +504,7 @@ def detect_unbounded_exploitation(training_history):
 ```
 
 **Prevention**:
+
 ```python
 # Use reward clipping
 def clipped_reward(r):
@@ -609,12 +637,14 @@ def safety_reward(s):
 ### When to Add Auxiliary Rewards
 
 **Add auxiliary reward if**:
+
 - It's potential-based (safe)
 - Task reward already roughly works (agent > 10% success)
 - Auxiliary targets clear sub-goals
 - You validate with/without
 
 **Don't add if**:
+
 - Task reward doesn't work at all (fix that first)
 - Creates new exploitation opportunities
 - Makes reward engineering too complex
@@ -628,6 +658,7 @@ def safety_reward(s):
 You have expert demonstrations but no explicit reward function. How to learn?
 
 **Options**:
+
 1. Behavioral cloning: Copy actions directly (doesn't learn why)
 2. Reward learning (inverse RL): Infer reward structure from demonstrations
 3. Imitation learning: Match expert behavior distribution (GAIL style)
@@ -697,12 +728,14 @@ class InverseRLLearner:
 ### When to Use Inverse RL
 
 **Use when**:
+
 - Reward is hard to specify but easy to demonstrate
 - You have expert demonstrations (human, reference controller)
 - Task complex enough that behavior != objective
 - Training budget allows for two-stage process
 
 **Don't use when**:
+
 - Reward is easy to specify (just specify it!)
 - No expert demonstrations available
 - Demonstration quality varies
@@ -840,51 +873,61 @@ def validate_reward_function(reward_fn, env, agent_class, n_trials=5):
 ## Part 9: Common Pitfalls and Rationalizations
 
 ### Pitfall 1: "Let me just add distance reward"
+
 **Rationalization**: "I'll add reward for getting closer to goal, it can't hurt"
 **Problem**: Without potential-based formula, changes optimal policy
 **Reality Check**: Measure policy difference with/without shaping
 
 ### Pitfall 2: "Sparse rewards are always better"
+
 **Rationalization**: "Sparse rewards prevent hacking"
 **Problem**: Agent can't learn in long-horizon tasks (credit assignment crisis)
 **Reality Check**: 10+ steps without reward → need shaping or fail training
 
 ### Pitfall 3: "Normalize everything"
+
 **Rationalization**: "I'll normalize all rewards to [-1, 1]"
 **Problem**: Over-normalization loses task structure (goal vs near-goal now equal)
 **Reality Check**: Validate that normalized reward still trains well
 
 ### Pitfall 4: "Inverse RL is the answer"
+
 **Rationalization**: "I don't know how to specify rewards, I'll learn from demos"
 **Problem**: Inverse RL is slow and requires good demonstrations
 **Reality Check**: If you can specify reward clearly, just do it
 
 ### Pitfall 5: "More auxiliary rewards = faster learning"
+
 **Rationalization**: "I'll add smoothness, energy, safety rewards"
 **Problem**: Each auxiliary reward is another hacking target
 **Reality Check**: Validate each auxiliary independently
 
 ### Pitfall 6: "This should work, why doesn't it?"
+
 **Rationalization**: "The reward looks right, must be algorithm issue"
 **Problem**: Reward design is usually the bottleneck, not algorithm
 **Reality Check**: Systematically validate reward using test framework
 
 ### Pitfall 7: "Agent learned the task, my reward was right"
+
 **Rationalization**: "Agent succeeded, so reward design was good"
 **Problem**: Agent might succeed on hacked solution, not true task
 **Reality Check**: Test on distribution shift / different environment variants
 
 ### Pitfall 8: "Dense rewards cause overfitting"
+
 **Rationalization**: "Sparse rewards generalize better"
 **Problem**: Sparse rewards just fail to learn in long episodes
 **Reality Check**: Compare learning curves and final policy generalization
 
 ### Pitfall 9: "Clipping breaks the signal"
+
 **Rationalization**: "If I clip rewards, I lose information"
 **Problem**: Unbounded rewards cause training instability
 **Reality Check**: Relative ordering preserved after clipping, information retained
 
 ### Pitfall 10: "Potential-based shaping doesn't matter"
+
 **Rationalization**: "A reward penalty is a reward penalty"
 **Problem**: Non-potential-based shaping CAN change optimal policy
 **Reality Check**: Prove mathematically that Φ(s') - Φ(s) structure used

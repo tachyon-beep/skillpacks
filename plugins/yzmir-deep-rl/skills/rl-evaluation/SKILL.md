@@ -1,15 +1,13 @@
 ---
 name: rl-evaluation
 description: Rigorous RL evaluation - statistical protocols, train/test discipline, metrics, generalization
-disable-model-invocation: true
-pack: deep-rl
-faction: yzmir
 ---
 
 # RL Evaluation: Rigorous Methodology for Agent Assessment
 
 <CRITICAL_CONTEXT>
 RL evaluation is uniquely challenging due to high variance, temporal instability, environment overfitting, and sample efficiency considerations. Without rigorous methodology, you will:
+
 - Draw conclusions from statistical noise
 - Report results that don't generalize
 - Deploy agents that fail in production
@@ -21,6 +19,7 @@ This skill provides systematic evaluation protocols that ensure statistical vali
 ## When to Use This Skill
 
 Use this skill when:
+
 - ✅ Evaluating RL agent performance
 - ✅ Comparing multiple RL algorithms
 - ✅ Reporting results for publication or deployment
@@ -29,6 +28,7 @@ Use this skill when:
 - ✅ Debugging training (need accurate performance estimates)
 
 DO NOT use for:
+
 - ❌ Quick sanity checks during development (use informal evaluation)
 - ❌ Monitoring training progress (use running averages)
 - ❌ Initial hyperparameter sweeps (use coarse evaluation)
@@ -40,45 +40,55 @@ DO NOT use for:
 ## Core Principles
 
 ### Principle 1: Statistical Rigor is Non-Negotiable
+
 **Reality:** RL has inherently high variance. Single runs are meaningless.
 
 **Enforcement:**
+
 - Minimum 5-10 random seeds for any performance claim
 - Report mean ± std or 95% confidence intervals
 - Statistical significance testing when comparing algorithms
 - Never report single-seed results as representative
 
 ### Principle 2: Train/Test Discipline Prevents Overfitting
+
 **Reality:** Agents exploit environment quirks. Training performance ≠ generalization.
 
 **Enforcement:**
+
 - Separate train/test environment instances
 - Different random seeds for train/eval
 - Test on distribution shifts (new instances, physics, appearances)
 - Report both training and generalization performance
 
 ### Principle 3: Sample Efficiency Matters
+
 **Reality:** Final performance ignores cost. Samples are often expensive.
 
 **Enforcement:**
+
 - Report sample efficiency curves (reward vs steps)
 - Include "reward at X steps" for multiple budgets
 - Consider deployment constraints
 - Compare at SAME sample budget, not just asymptotic
 
 ### Principle 4: Evaluation Mode Must Match Deployment
+
 **Reality:** Stochastic vs deterministic evaluation changes results by 10-30%.
 
 **Enforcement:**
+
 - Specify evaluation mode (stochastic/deterministic)
 - Match evaluation to deployment scenario
 - Report both if ambiguous
 - Explain choice in methodology
 
 ### Principle 5: Offline RL Requires Special Care
+
 **Reality:** Cannot accurately evaluate offline RL without online rollouts.
 
 **Enforcement:**
+
 - Acknowledge evaluation limitations
 - Use conservative metrics (in-distribution performance)
 - Quantify uncertainty
@@ -91,11 +101,13 @@ DO NOT use for:
 ### Multi-Seed Evaluation (MANDATORY)
 
 **Minimum Requirements:**
+
 - **Exploration/research**: 5-10 seeds minimum
 - **Publication**: 10-20 seeds
 - **Production deployment**: 20-50 seeds (depending on variance)
 
 **Protocol:**
+
 ```python
 import numpy as np
 from scipy import stats
@@ -169,6 +181,7 @@ print(f"Range: [{results['min']:.1f}, {results['max']:.1f}]")
 ```
 
 **Reporting Template:**
+
 ```
 Algorithm: PPO
 Environment: HalfCheetah-v3
@@ -248,6 +261,7 @@ print(f"95% CI for difference: [{comparison['ci_difference'][0]:.1f}, "
 ```
 
 **Interpreting Effect Size (Cohen's d):**
+
 - d < 0.2: Negligible difference
 - 0.2 ≤ d < 0.5: Small effect
 - 0.5 ≤ d < 0.8: Medium effect
@@ -300,6 +314,7 @@ print(f"Need {n_tight} seeds for ±5% precision")  # ~47 seeds
 ```
 
 **Practical Guidelines:**
+
 - Quick comparison: 5 seeds (±20% precision)
 - Standard evaluation: 10 seeds (±10% precision)
 - Publication: 20 seeds (±7% precision)
@@ -516,6 +531,7 @@ for algo in algorithms:
 ```
 
 **Sample Output:**
+
 ```
 PPO at 100k steps: 1,234 ± 156
 PPO at 500k steps: 3,456 ± 289
@@ -531,6 +547,7 @@ TD3 at 1M steps: 4,678 ± 276
 ```
 
 **Analysis:**
+
 - PPO is most sample-efficient early (1,234 at 100k)
 - SAC has best final performance (4,912 at 1M)
 - If sample budget is 100k → PPO is best choice
@@ -833,6 +850,7 @@ print(f"Difference: {eval_results['difference']:.1f}")
 ```
 
 **Interpretation:**
+
 - If difference < 5% of mean: Evaluation mode doesn't matter much
 - If difference > 15% of mean: Evaluation mode significantly affects results
   - Must clearly specify which mode used
@@ -893,6 +911,7 @@ final_eval = evaluate(agent, env, episodes=n_episodes)
 ```
 
 **Rule of Thumb:**
+
 - Quick check: 10 episodes
 - Standard evaluation: 50-100 episodes
 - Publication/deployment: 100-200 episodes
@@ -962,6 +981,7 @@ for step in range(1_000_000):
 ```
 
 **Guidelines:**
+
 - Evaluation is expensive (10-100 episodes × episode length)
 - Early training: Evaluate frequently to detect divergence
 - Late training: Evaluate less frequently (policy stabilizes)
@@ -977,6 +997,7 @@ for step in range(1_000_000):
 **CRITICAL:** You cannot accurately evaluate offline RL policies without online rollouts.
 
 **Why:**
+
 - Learned Q-values are only accurate for data distribution
 - Policy wants to visit out-of-distribution states
 - Q-values for OOD states are extrapolated (unreliable)
@@ -1180,11 +1201,13 @@ def staged_offline_to_online_deployment(offline_policy, env):
 ## Common Pitfalls
 
 ### Pitfall 1: Single Seed Reporting
+
 **Symptom:** Reporting one training run as "the result"
 
 **Why it's wrong:** RL has high variance. Single seed is noise.
 
 **Detection:**
+
 - Paper shows single training curve
 - No variance/error bars
 - No mention of multiple seeds
@@ -1194,11 +1217,13 @@ def staged_offline_to_online_deployment(offline_policy, env):
 ---
 
 ### Pitfall 2: Cherry-Picking Results
+
 **Symptom:** Running many experiments, reporting best
 
 **Why it's wrong:** Creates false positives (p-hacking)
 
 **Detection:**
+
 - Results seem too good
 - No mention of failed runs
 - "We tried many seeds and picked a representative one"
@@ -1208,11 +1233,13 @@ def staged_offline_to_online_deployment(offline_policy, env):
 ---
 
 ### Pitfall 3: Evaluating on Training Set
+
 **Symptom:** Agent evaluated on same environment instances used for training
 
 **Why it's wrong:** Measures memorization, not generalization
 
 **Detection:**
+
 - No mention of train/test split
 - Same random seed for training and evaluation
 - Perfect performance on specific instances
@@ -1222,11 +1249,13 @@ def staged_offline_to_online_deployment(offline_policy, env):
 ---
 
 ### Pitfall 4: Ignoring Sample Efficiency
+
 **Symptom:** Comparing algorithms only on final performance
 
 **Why it's wrong:** Final performance ignores cost to achieve it
 
 **Detection:**
+
 - No sample efficiency curves
 - No "reward at X steps" metrics
 - Only asymptotic performance reported
@@ -1236,11 +1265,13 @@ def staged_offline_to_online_deployment(offline_policy, env):
 ---
 
 ### Pitfall 5: Conflating Train and Eval Performance
+
 **Symptom:** Using training episode returns as evaluation
 
 **Why it's wrong:** Training uses exploration, evaluation should not
 
 **Detection:**
+
 - "Training reward" used for algorithm comparison
 - No separate evaluation protocol
 - Same environment instance for both
@@ -1250,11 +1281,13 @@ def staged_offline_to_online_deployment(offline_policy, env):
 ---
 
 ### Pitfall 6: Insufficient Evaluation Episodes
+
 **Symptom:** Evaluating with 5-10 episodes
 
 **Why it's wrong:** High variance → unreliable estimates
 
 **Detection:**
+
 - Large error bars
 - Inconsistent results across runs
 - SEM > 10% of mean
@@ -1264,11 +1297,13 @@ def staged_offline_to_online_deployment(offline_policy, env):
 ---
 
 ### Pitfall 7: Reporting Peak Instead of Final
+
 **Symptom:** Selecting best checkpoint during training
 
 **Why it's wrong:** Peak is overfitting to evaluation variance
 
 **Detection:**
+
 - "Best performance during training" reported
 - Early stopping based on eval performance
 - No mention of final performance
@@ -1278,11 +1313,13 @@ def staged_offline_to_online_deployment(offline_policy, env):
 ---
 
 ### Pitfall 8: No Generalization Testing
+
 **Symptom:** Only evaluating on single environment configuration
 
 **Why it's wrong:** Doesn't measure robustness to distribution shift
 
 **Detection:**
+
 - No mention of distribution shifts
 - Only one environment configuration tested
 - No transfer/zero-shot evaluation
@@ -1292,11 +1329,13 @@ def staged_offline_to_online_deployment(offline_policy, env):
 ---
 
 ### Pitfall 9: Inconsistent Evaluation Mode
+
 **Symptom:** Comparing stochastic and deterministic evaluations
 
 **Why it's wrong:** Evaluation mode affects results by 10-30%
 
 **Detection:**
+
 - No mention of evaluation mode
 - Comparing algorithms with different modes
 - Unclear if sampling or mean action used
@@ -1306,11 +1345,13 @@ def staged_offline_to_online_deployment(offline_policy, env):
 ---
 
 ### Pitfall 10: Offline RL Without Online Validation
+
 **Symptom:** Deploying offline RL policy based on Q-values alone
 
 **Why it's wrong:** Q-values extrapolate OOD, unreliable
 
 **Detection:**
+
 - No online rollouts before deployment
 - Claiming performance based on learned values
 - Ignoring distribution shift
@@ -1524,16 +1565,19 @@ Offline RL (if applicable):
 RL evaluation and debugging are closely related:
 
 **Use rl-debugging when:**
+
 - Evaluation reveals poor performance
 - Need to diagnose WHY agent fails
 - Debugging training issues
 
 **Use rl-evaluation when:**
+
 - Agent seems to work, need to measure HOW WELL
 - Comparing multiple algorithms
 - Preparing for deployment
 
 **Combined workflow:**
+
 1. Train agent
 2. Evaluate (rl-evaluation skill)
 3. If performance poor → Debug (rl-debugging skill)
@@ -1555,12 +1599,14 @@ RL evaluation is NOT just "run the agent and see what happens." It requires:
 5. **Offline RL awareness**: Conservative estimates, staged deployment
 
 Without rigorous evaluation:
+
 - You will draw wrong conclusions from noise
 - You will deploy agents that fail in production
 - You will waste resources on false improvements
 - You will make scientifically invalid claims
 
 With rigorous evaluation:
+
 - Reliable performance estimates
 - Valid algorithm comparisons
 - Deployment-ready agents
