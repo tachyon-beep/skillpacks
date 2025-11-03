@@ -1,6 +1,7 @@
 ---
 name: using-systems-as-experience
 description: Router for systems-as-experience - emergence, sandbox, optimization, discovery, narrative, modding
+mode: true
 pack: bravos/systems-as-experience
 faction: bravos
 skill_type: meta_router

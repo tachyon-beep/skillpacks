@@ -24,6 +24,14 @@ Invoke this skill when you encounter:
 
 **Core Problem**: RL debugging often becomes random hyperparameter tweaking. Agents are complex systems with many failure modes. Systematic diagnosis finds root causes; random tweaking wastes time and leads to contradictory findings.
 
+## Do NOT Use This Skill For
+
+- **Learning RL theory** (route to rl-foundations for MDPs, Bellman equations, policy gradients)
+- **Implementing new algorithms** (route to algorithm-specific skills like value-based-methods, policy-gradient-methods, actor-critic-methods)
+- **Environment API questions** (route to rl-environments for Gym/Gymnasium API, custom environments, wrappers)
+- **Evaluation methodology** (route to rl-evaluation for rigorous statistical testing, generalization assessment)
+- **Initial algorithm selection** (route to using-deep-rl router or rl-foundations for choosing the right algorithm family)
+
 ---
 
 ## Core Principle: The 80/20 Rule

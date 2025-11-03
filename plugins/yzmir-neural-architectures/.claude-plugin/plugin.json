@@ -1,6 +1,6 @@
 {
   "name": "yzmir-neural-architectures",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Neural architectures - CNNs, Transformers, RNNs, selection guidance - 9 skills",
   "author": {
     "name": "tachyon-beep",

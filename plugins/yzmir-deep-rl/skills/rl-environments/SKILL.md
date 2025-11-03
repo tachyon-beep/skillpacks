@@ -22,6 +22,14 @@ Invoke this skill when you need to:
 
 **Core Problem**: Environments are the foundation of RL training. Broken environments cause 80% of RL failures, but environment bugs are often missed because they don't error—they silently break training. This skill systematically teaches correct environment design and provides a debugging methodology.
 
+## Do NOT Use This Skill For
+
+- **Algorithm implementation** (route to specific algorithm skills like value-based-methods, policy-gradient-methods, actor-critic-methods)
+- **Reward design and shaping** (route to reward-shaping-engineering for reward function engineering and potential-based shaping)
+- **RL theory and foundations** (route to rl-foundations for MDPs, Bellman equations, value functions)
+- **Training debugging beyond environment issues** (route to rl-debugging for systematic diagnosis of training failures)
+- **Exploration strategy selection** (route to exploration-strategies for ε-greedy, curiosity-driven, RND methods)
+
 ---
 
 ## Part 1: Understanding the Gym/Gymnasium API

@@ -22,6 +22,16 @@ Load this skill when:
 
 **Use BEFORE implementation** - threats found after deployment are 10x more expensive to fix.
 
+## Don't Use For
+
+- **Implementing specific security controls** (use security-controls-design)
+- **Code-level security patterns** (use secure-by-design-patterns)
+- **Reviewing existing designs for completeness** (use security-architecture-review)
+- **Compliance mapping** (use compliance-awareness-and-mapping)
+- **Documenting threats after they're identified** (use documenting-threats-and-controls)
+
+This skill is for IDENTIFYING threats systematically. Once threats are identified, route to appropriate skills for designing controls, implementing patterns, or documenting decisions.
+
 ## The STRIDE Framework
 
 **STRIDE** is a systematic threat enumeration framework. Apply to EVERY component, interface, and data flow.

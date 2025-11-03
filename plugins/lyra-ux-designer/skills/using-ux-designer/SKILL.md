@@ -1,6 +1,7 @@
 ---
 name: using-ux-designer
 description: Route to the right UX skill based on your task and platform context
+mode: true
 ---
 
 # Using UX Designer

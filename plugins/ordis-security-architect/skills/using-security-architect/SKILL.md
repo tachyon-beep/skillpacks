@@ -1,6 +1,7 @@
 ---
 name: using-security-architect
 description: Routes to security architecture skills - threat modeling, controls, compliance, authorization
+mode: true
 ---
 
 # Using Security Architect

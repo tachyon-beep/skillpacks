@@ -1,6 +1,7 @@
 ---
 name: using-llm-specialist
 description: LLM specialist router to prompt engineering, fine-tuning, RAG, evaluation, and safety skills.
+mode: true
 ---
 
 # Using LLM Specialist

@@ -23,6 +23,14 @@ Invoke this skill when you encounter:
 
 **Core Problem:** Many RL agents get stuck exploiting a local optimum, never finding sparse rewards or exploring high-dimensional state spaces effectively. Choosing the right exploration strategy is fundamental to success.
 
+## Do NOT Use This Skill For
+
+- **Algorithm selection** (route to rl-foundations or specific algorithm skills like value-based-methods, policy-gradient-methods)
+- **Reward design issues** (route to reward-shaping-engineering)
+- **Environment bugs causing poor exploration** (route to rl-debugging first to verify environment works correctly)
+- **Basic RL concepts** (route to rl-foundations for MDPs, value functions, Bellman equations)
+- **Training instability unrelated to exploration** (route to appropriate algorithm skill or rl-debugging)
+
 ---
 
 ## Core Principle: The Exploration-Exploitation Tradeoff

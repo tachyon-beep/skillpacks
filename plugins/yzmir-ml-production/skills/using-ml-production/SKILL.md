@@ -1,6 +1,7 @@
 ---
 name: using-ml-production
 description: Router skill directing to deployment, optimization, MLOps, and monitoring guides.
+mode: true
 ---
 
 # Using ML Production
