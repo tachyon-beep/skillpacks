@@ -28,23 +28,35 @@ Load this skill when:
 
 ### Type Errors and Type Hints
 
-**Symptoms**:
-- "mypy error"
-- "pyright error"
-- "Type hint issues"
-- "Generic types not working"
-- "How to annotate this?"
+**Symptoms - Learning Type Syntax**:
+- "How to use type hints?"
+- "Python 3.12 type syntax"
+- "Generic types"
 - "Protocol vs ABC"
-- "TypeVar issues"
+- "TypeVar usage"
+- "Configure mypy/pyright"
 
 **Route to**: `modern-syntax-and-types`
 
-**Why**: Type system requires deep knowledge of typing module, generics, protocols, and static analysis tools.
+**Why**: Learning type hint syntax, patterns, and configuration.
+
+**Symptoms - Fixing Type Errors**:
+- "mypy error: Incompatible types"
+- "mypy error: Argument has incompatible type"
+- "How to fix mypy errors?"
+- "100+ mypy errors, where to start?"
+- "When to use type: ignore?"
+- "Add types to legacy code"
+- "Understanding mypy error messages"
+
+**Route to**: `resolving-mypy-errors`
+
+**Why**: Resolving type errors requires systematic methodology, understanding error messages, and knowing when to fix vs ignore.
 
 **Example queries**:
-- "Getting mypy error about incompatible types"
-- "How to use Python 3.12 type parameter syntax?"
-- "Type hints for this complex generic?"
+- "Getting mypy error about incompatible types" → `resolving-mypy-errors`
+- "How to use Python 3.12 type parameter syntax?" → `modern-syntax-and-types`
+- "Fix 150 mypy errors systematically" → `resolving-mypy-errors`
 
 ---
 
@@ -263,6 +275,8 @@ When symptom unclear, ASK ONE clarifying question:
 | "Pandas slow" | debugging only | debugging THEN scientific-computing | Profile then vectorize |
 | "Add type hints" | modern-syntax only | project-structure THEN modern-syntax | Setup mypy first |
 | "Fix 1000 lint warnings" | project-structure | systematic-delinting | Process for fixing, not setup |
+| "Fix mypy errors" | modern-syntax-and-types | resolving-mypy-errors | Syntax vs resolution process |
+| "100 mypy errors" | modern-syntax-and-types | resolving-mypy-errors | Need systematic approach |
 
 **Key principle**: Diagnosis before solutions, setup before optimization, profile before performance fixes.
 
@@ -334,13 +348,14 @@ Before giving ANY Python advice, ask yourself:
 **Complete Python engineering toolkit**:
 
 1. **modern-syntax-and-types** - Type hints, mypy/pyright, Python 3.10-3.12 features, generics, protocols
-2. **project-structure-and-tooling** - pyproject.toml, ruff, pre-commit, dependency management, packaging
-3. **systematic-delinting** - Process for fixing lint warnings without disabling or over-refactoring
-4. **testing-and-quality** - pytest patterns, fixtures, mocking, coverage, property-based testing
-5. **async-patterns-and-concurrency** - async/await, asyncio, TaskGroup, structured concurrency, threading
-6. **scientific-computing-foundations** - NumPy/pandas, vectorization, memory efficiency, large datasets
-7. **ml-engineering-workflows** - MLflow, experiment tracking, reproducibility, monitoring, model lifecycle
-8. **debugging-and-profiling** - pdb/debugpy, cProfile, memory_profiler, optimization strategies
+2. **resolving-mypy-errors** - Systematic mypy error resolution, type: ignore best practices, typing legacy code
+3. **project-structure-and-tooling** - pyproject.toml, ruff, pre-commit, dependency management, packaging
+4. **systematic-delinting** - Process for fixing lint warnings without disabling or over-refactoring
+5. **testing-and-quality** - pytest patterns, fixtures, mocking, coverage, property-based testing
+6. **async-patterns-and-concurrency** - async/await, asyncio, TaskGroup, structured concurrency, threading
+7. **scientific-computing-foundations** - NumPy/pandas, vectorization, memory efficiency, large datasets
+8. **ml-engineering-workflows** - MLflow, experiment tracking, reproducibility, monitoring, model lifecycle
+9. **debugging-and-profiling** - pdb/debugpy, cProfile, memory_profiler, optimization strategies
 
 **Route based on symptoms, not guesses.**
 
