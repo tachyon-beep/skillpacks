@@ -627,7 +627,7 @@ def process(value: int | str | None) -> str:
 **Custom Type Guards (Python 3.10+)**
 
 ```python
-from typing import TypeGuard
+from typing import TypeGuard  # Python 3.10+
 
 def is_string_list(val: list[object]) -> TypeGuard[list[str]]:
     """Type guard to check if all elements are strings."""
@@ -994,6 +994,61 @@ mypy . --disable-error-code=assignment
 
 # Check specific error code only
 mypy . --enable-error-code=unused-awaitable
+```
+
+### Mypy Plugins for Frameworks
+
+Popular frameworks have mypy plugins for better type checking:
+
+```bash
+# SQLAlchemy
+pip install sqlalchemy[mypy]
+
+# Django
+pip install django-stubs[compatible-mypy]
+
+# Pydantic (built-in support)
+pip install pydantic
+```
+
+**Configure in pyproject.toml:**
+```toml
+[tool.mypy]
+plugins = [
+    "sqlalchemy.ext.mypy.plugin",
+    "mypy_django_plugin.main",
+]
+```
+
+**Why use plugins:**
+- SQLAlchemy plugin understands ORM models and relationships
+- Django plugin knows about models, querysets, and settings
+- Pydantic provides automatic type inference for models
+
+### Performance Tips for Large Codebases
+
+```bash
+# Use cache directory (enabled by default)
+mypy --cache-dir=.mypy_cache .
+
+# Run mypy daemon for faster repeated checks
+dmypy run -- .
+
+# Incremental mode (enabled by default)
+mypy --incremental .
+
+# Parallel checking (experimental)
+mypy --fast-module-lookup .
+```
+
+**For CI/CD:**
+```yaml
+# Cache .mypy_cache directory between runs
+- name: Cache mypy
+  uses: actions/cache@v3
+  with:
+    path: .mypy_cache
+    key: mypy-${{ hashFiles('**/*.py') }}
 ```
 
 ### Common Error Codes
