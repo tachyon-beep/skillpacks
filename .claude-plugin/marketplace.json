@@ -13,8 +13,8 @@
     {
       "name": "axiom-python-engineering",
       "source": "./plugins/axiom-python-engineering",
-      "description": "Modern Python 3.12+ engineering: types, testing, async, scientific computing, ML workflows - 9 skills",
-      "version": "1.0.0",
+      "description": "Modern Python 3.12+ engineering: types, testing, async, scientific computing, ML workflows - 10 skills",
+      "version": "1.1.0",
       "keywords": [
         "axiom",
         "python",
@@ -26,7 +26,7 @@
       "name": "bravos-simulation-tactics",
       "source": "./plugins/bravos-simulation-tactics",
       "description": "Game simulation implementation patterns and tactics - 11 skills",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "bravos",
         "simulation",
@@ -38,7 +38,7 @@
       "name": "bravos-systems-as-experience",
       "source": "./plugins/bravos-systems-as-experience",
       "description": "Emergent gameplay and systemic game design - 9 skills",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "bravos",
         "systems",
@@ -50,7 +50,7 @@
       "name": "lyra-ux-designer",
       "source": "./plugins/lyra-ux-designer",
       "description": "UX design fundamentals - visual design, accessibility, interaction patterns - 11 skills",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "lyra",
         "designer"
@@ -61,7 +61,7 @@
       "name": "muna-technical-writer",
       "source": "./plugins/muna-technical-writer",
       "description": "Documentation structure, clarity, security-aware docs - 9 technical writing skills",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "muna",
         "technical",
@@ -73,7 +73,7 @@
       "name": "ordis-security-architect",
       "source": "./plugins/ordis-security-architect",
       "description": "Threat modeling, security controls, compliance, ATO - 9 comprehensive security skills",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "ordis",
         "security",
@@ -85,7 +85,7 @@
       "name": "yzmir-ai-engineering-expert",
       "source": "./plugins/yzmir-ai-engineering-expert",
       "description": "Primary router for all AI/ML engineering skillpacks - directs to specialized packs",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "yzmir",
         "engineering",
@@ -97,7 +97,7 @@
       "name": "yzmir-deep-rl",
       "source": "./plugins/yzmir-deep-rl",
       "description": "Reinforcement learning - DQN, PPO, SAC, reward shaping, exploration - 13 skills",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "keywords": [
         "yzmir",
         "deep"
@@ -108,7 +108,7 @@
       "name": "yzmir-llm-specialist",
       "source": "./plugins/yzmir-llm-specialist",
       "description": "LLM techniques - fine-tuning, RLHF, inference optimization - 8 skills",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "yzmir",
         "llm",
@@ -120,7 +120,7 @@
       "name": "yzmir-ml-production",
       "source": "./plugins/yzmir-ml-production",
       "description": "Production ML - quantization, serving, MLOps, monitoring, debugging - 11 skills",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "yzmir",
         "production"
@@ -131,7 +131,7 @@
       "name": "yzmir-neural-architectures",
       "source": "./plugins/yzmir-neural-architectures",
       "description": "Neural architectures - CNNs, Transformers, RNNs, selection guidance - 9 skills",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "yzmir",
         "neural",
@@ -143,7 +143,7 @@
       "name": "yzmir-pytorch-engineering",
       "source": "./plugins/yzmir-pytorch-engineering",
       "description": "PyTorch mastery - tensors, modules, distributed training, profiling - 9 skills",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "yzmir",
         "pytorch",
@@ -155,7 +155,7 @@
       "name": "yzmir-simulation-foundations",
       "source": "./plugins/yzmir-simulation-foundations",
       "description": "Game simulation mathematics - ODEs, stability, control theory - 9 skills",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "yzmir",
         "simulation",
@@ -167,7 +167,7 @@
       "name": "yzmir-training-optimization",
       "source": "./plugins/yzmir-training-optimization",
       "description": "Training stability - optimizers, learning rates, convergence, debugging - 11 skills",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "yzmir",
         "training",
