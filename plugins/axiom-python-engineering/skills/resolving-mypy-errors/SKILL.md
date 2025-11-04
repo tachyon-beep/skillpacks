@@ -1012,6 +1012,7 @@ pip install pydantic
 ```
 
 **Configure in pyproject.toml:**
+
 ```toml
 [tool.mypy]
 plugins = [
@@ -1021,6 +1022,7 @@ plugins = [
 ```
 
 **Why use plugins:**
+
 - SQLAlchemy plugin understands ORM models and relationships
 - Django plugin knows about models, querysets, and settings
 - Pydantic provides automatic type inference for models
@@ -1042,6 +1044,7 @@ mypy --fast-module-lookup .
 ```
 
 **For CI/CD:**
+
 ```yaml
 # Cache .mypy_cache directory between runs
 - name: Cache mypy
@@ -1084,6 +1087,7 @@ x = func()  # type: ignore[arg-type]  # Warns if no longer needed
 ### Resolution Checklist
 
 **For each mypy error:**
+
 - [ ] Read error message carefully
 - [ ] Identify error code
 - [ ] Understand what mypy thinks vs what code does
@@ -1094,6 +1098,7 @@ x = func()  # type: ignore[arg-type]  # Warns if no longer needed
 - [ ] Verify runtime: Run tests
 
 **For large batch of errors:**
+
 - [ ] Run mypy with error codes
 - [ ] Count errors by category
 - [ ] Prioritize: high-impact → high-frequency
@@ -1106,18 +1111,21 @@ x = func()  # type: ignore[arg-type]  # Warns if no longer needed
 ## Why This Matters: Real-World Impact
 
 **Type checking catches bugs before production:**
+
 - ❌ None handling: Catch `AttributeError` before deploy
 - ❌ Wrong argument types: Catch `TypeError` before runtime
 - ❌ Missing return: Catch incomplete refactors
 - ❌ Union type issues: Catch invalid state handling
 
 **Type errors indicate:**
+
 1. **Actual bugs** - Code will fail at runtime
 2. **Incomplete refactors** - Changed signature but not all callers
 3. **Unclear contracts** - Function doesn't match its documentation
 4. **Design issues** - Complex types → simplify design
 
 **Time investment:**
+
 - Initial typing: 20-40% time overhead
 - Maintenance: 5-10% time overhead
 - Bugs prevented: 15-40% reduction in runtime errors
