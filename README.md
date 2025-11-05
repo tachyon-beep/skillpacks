@@ -144,7 +144,7 @@ I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO for continuous 
 /plugin install bravos-systems-as-experience
 ```
 
-``````plaintext
+```plaintext
 I'm using bravos/systems-as-experience/emergent-gameplay-design to create systemic interactions in my RPG
 ```
 
