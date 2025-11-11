@@ -1,0 +1,6 @@
+{
+  "name": "axiom-system-archaeologist",
+  "version": "1.0.0",
+  "description": "Deep architectural analysis of existing codebases through autonomous subagent-driven exploration - produces comprehensive documentation, C4 diagrams, and subsystem catalogs",
+  "category": "development-tools"
+}
