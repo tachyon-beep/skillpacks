@@ -1,2 +1,7 @@
 # Worktree directories
 .worktrees/
+
+# TDD test artifacts
+docs/arch-analysis-*/
+ARCHITECTURE*.md
+temp/
