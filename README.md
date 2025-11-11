@@ -2,7 +2,7 @@
 
 ## Professional AI/ML, game development, security, documentation, and UX skills for Claude Code**
 
-14 complete skillpacks • 129 skills • Install what you need
+15 complete skillpacks • 135 skills • Install what you need
 
 ---
 
@@ -53,14 +53,22 @@ cd skillpacks
 - Security-aware docs, incident response, ITIL/governance
 - `/plugin install muna-technical-writer`
 
-### 🔬 Python Engineering (Axiom)
+### 🔬 Python Engineering (Axiom) - 2 Packs
 
-**axiom-python-engineering** - 9 skills
+**axiom-python-engineering** - 10 skills
 
 - Modern Python 3.12+: types, syntax, project structure, delinting
 - Testing, async, debugging, profiling
 - Scientific computing (NumPy/pandas), ML workflows
 - `/plugin install axiom-python-engineering`
+
+**axiom-system-archaeologist** - 5 skills
+
+- Deep codebase architecture analysis through subagent coordination
+- C4 diagrams (Context, Container, Component levels)
+- Subsystem catalog generation with validation gates
+- Stakeholder-ready architecture documentation
+- `/plugin install axiom-system-archaeologist`
 
 ### 🤖 AI/ML Engineering (Yzmir) - 7 Packs
 
@@ -168,12 +176,22 @@ I'm using ordis/security-architect/threat-modeling to analyze this authenticatio
 I'm using lyra/ux-designer/accessibility-and-inclusive-design to ensure WCAG 2.1 AA compliance
 ```
 
+### Architecture Analysis
+
+```bash
+/plugin install axiom-system-archaeologist
+```
+
+```plaintext
+I'm using axiom/system-archaeologist/using-system-archaeologist to reverse-engineer this codebase into C4 architecture documentation
+```
+
 ---
 
 ## What's Inside
 
-- **120+ Skills**: Production-ready guidance across 5 domains
-- **13 Packs**: Install only what you need
+- **135 Skills**: Production-ready guidance across 5 domains
+- **15 Packs**: Install only what you need
 - **Per-Pack Plugins**: Independent versioning, clean dependencies
 - **Complete Coverage**: Design → Foundation → Training → Production
 
@@ -185,7 +203,9 @@ I'm using lyra/ux-designer/accessibility-and-inclusive-design to ensure WCAG 2.1
 skillpacks/
 ├── .claude-plugin/
 │   └── marketplace.json       # Marketplace catalog
-├── plugins/                   # All 13 skillpacks
+├── plugins/                   # All 15 skillpacks
+│   ├── axiom-python-engineering/
+│   ├── axiom-system-archaeologist/
 │   ├── ordis-security-architect/
 │   ├── muna-technical-writer/
 │   ├── yzmir-deep-rl/

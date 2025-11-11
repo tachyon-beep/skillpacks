@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is the **Skillpacks Marketplace** - a modular collection of 13 professional skillpacks providing 120+ production-ready skills for Claude Code across AI/ML, game development, security, documentation, and UX design.
+This is the **Skillpacks Marketplace** - a modular collection of 15 professional skillpacks providing 135 production-ready skills for Claude Code across AI/ML, Python engineering, game development, security, documentation, and UX design.
 
-**Status**: v1.0.0 - Production ready, MIT licensed, publicly available
+**Status**: v1.2.0 - Production ready, CC BY-SA 4.0 licensed, publicly available
 
 ## Architecture
 
@@ -15,8 +15,8 @@ This is the **Skillpacks Marketplace** - a modular collection of 13 professional
 ```plaintext
 skillpacks/
 ├── .claude-plugin/
-│   └── marketplace.json          # Marketplace catalog defining all 13 plugins
-├── plugins/                       # 13 independent plugin directories
+│   └── marketplace.json          # Marketplace catalog defining all 15 plugins
+├── plugins/                       # 15 independent plugin directories
 │   ├── [plugin-name]/
 │   │   ├── .claude-plugin/
 │   │   │   └── plugin.json       # Plugin metadata (name, version, description)
@@ -29,7 +29,11 @@ skillpacks/
 
 ### Plugin Categories
 
-1. **AI/ML (Yzmir faction)** - 8 plugins, 70 skills
+1. **Python Engineering (Axiom faction)** - 2 plugins, 15 skills
+   - `axiom-python-engineering` (10 skills)
+   - `axiom-system-archaeologist` (5 skills - router + specialists)
+
+2. **AI/ML (Yzmir faction)** - 8 plugins, 70 skills
    - `yzmir-ai-engineering-expert` (router)
    - `yzmir-pytorch-engineering`
    - `yzmir-training-optimization`
@@ -39,17 +43,17 @@ skillpacks/
    - `yzmir-ml-production`
    - `yzmir-simulation-foundations`
 
-2. **Game Development (Bravos faction)** - 2 plugins, 20 skills
+3. **Game Development (Bravos faction)** - 2 plugins, 20 skills
    - `bravos-simulation-tactics`
    - `bravos-systems-as-experience`
 
-3. **UX Design (Lyra faction)** - 1 plugin, 11 skills
+4. **UX Design (Lyra faction)** - 1 plugin, 11 skills
    - `lyra-ux-designer`
 
-4. **Security (Ordis faction)** - 1 plugin, 9 skills
+5. **Security (Ordis faction)** - 1 plugin, 9 skills
    - `ordis-security-architect`
 
-5. **Documentation (Muna faction)** - 1 plugin, 9 skills
+6. **Documentation (Muna faction)** - 1 plugin, 9 skills
    - `muna-technical-writer`
 
 ### Skill File Format
@@ -64,6 +68,7 @@ Each `SKILL.md` follows this structure:
 
 Several plugins use "using-X" router skills that direct users to appropriate specialized skills:
 
+- `axiom-system-archaeologist/using-system-archaeologist/SKILL.md` - Routes to architecture analysis specialists (catalog, diagrams, documentation, validation)
 - `yzmir-ai-engineering-expert/using-ai-engineering/SKILL.md` - Routes to all AI/ML packs
 - `yzmir-deep-rl/using-deep-rl/SKILL.md` - Routes to 12 RL algorithm skills
 - Similar routers exist for other major skillpacks
@@ -182,13 +187,13 @@ This repository uses a unique testing methodology:
 
 ## File Manifest
 
-**Total**: 186 production files
+**Total**: 201+ production files
 
-- 120 skill files (SKILL.md)
-- 13 plugin metadata files (plugin.json)
+- 135 skill files (SKILL.md)
+- 15 plugin metadata files (plugin.json)
 - 1 marketplace catalog (marketplace.json)
-- Core documentation (README, LICENSE via source/, this file)
-- 7 future planning docs (docs/)
+- Core documentation (README, LICENSE, CLAUDE.md, FACTIONS.md, CONTRIBUTING.md, LICENSE_ADDENDUM.md)
+- TDD artifacts (test scenarios, baseline results, methodology documentation)
 
 ## Git Workflow
 
@@ -251,13 +256,15 @@ for dir in plugins/*/; do
 done
 
 # Count total skills
-find plugins -name "SKILL.md" | wc -l  # Should be 120
+find plugins -name "SKILL.md" | wc -l  # Should be 135
 ```
 
 ## Important Notes
 
 ### Repository History
 
+- v1.2.0 (2025-11-12): Added axiom-system-archaeologist plugin (5 skills for architecture analysis)
+- v1.1.0 (2025-11-10): Added axiom-python-engineering plugin (10 skills)
 - v1.0.0 (2025-10-31): Public release with 513 internal files removed
 - All removed files preserved in git history
 - Original source structure backed up in commits
