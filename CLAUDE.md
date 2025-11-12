@@ -56,6 +56,27 @@ skillpacks/
 6. **Documentation (Muna faction)** - 1 plugin, 9 skills
    - `muna-technical-writer`
 
+### Slash Commands (Router Skills)
+
+**IMPORTANT**: All router skills (`using-X` skills) are available as slash commands in `.claude/commands/` due to skill context limits.
+
+To use a router skill, invoke it as a slash command:
+
+```
+/ai-engineering      # Routes to AI/ML skills
+/system-archaeologist # Routes to architecture analysis
+/deep-rl            # Routes to RL algorithms
+/python-engineering  # Routes to Python skills
+```
+
+**Why slash commands?** Router skills exceeded the context budget for skill discovery. Slash commands provide:
+- No context limits
+- Explicit user invocation
+- Faster loading
+- Better control flow
+
+See [.claude/SLASH_COMMANDS.md](.claude/SLASH_COMMANDS.md) for complete list of all 15 router commands.
+
 ### Skill File Format
 
 Each `SKILL.md` follows this structure:
@@ -66,12 +87,12 @@ Each `SKILL.md` follows this structure:
 
 ### Router Patterns
 
-Several plugins use "using-X" router skills that direct users to appropriate specialized skills:
+Several plugins use "using-X" router skills that direct users to appropriate specialized skills. **These are now available as slash commands** (see Slash Commands section above):
 
-- `axiom-system-archaeologist/using-system-archaeologist/SKILL.md` - Routes to architecture analysis specialists (catalog, diagrams, documentation, validation)
-- `yzmir-ai-engineering-expert/using-ai-engineering/SKILL.md` - Routes to all AI/ML packs
-- `yzmir-deep-rl/using-deep-rl/SKILL.md` - Routes to 12 RL algorithm skills
-- Similar routers exist for other major skillpacks
+- `axiom-system-archaeologist/using-system-archaeologist/SKILL.md` → `/system-archaeologist` - Routes to architecture analysis specialists
+- `yzmir-ai-engineering-expert/using-ai-engineering/SKILL.md` → `/ai-engineering` - Routes to all AI/ML packs
+- `yzmir-deep-rl/using-deep-rl/SKILL.md` → `/deep-rl` - Routes to 12 RL algorithm skills
+- Similar routers exist for all 15 plugins (see `.claude/SLASH_COMMANDS.md` for complete list)
 
 ## Installation & Testing
 

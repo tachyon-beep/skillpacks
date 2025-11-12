@@ -140,8 +140,10 @@ cd skillpacks
 
 ```bash
 /plugin install yzmir-deep-rl
+/deep-rl  # Use slash command to load router skill
 ```
 
+Claude will guide you to the right specialized skill:
 ```plaintext
 I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO for continuous character control
 ```
@@ -150,6 +152,7 @@ I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO for continuous 
 
 ```bash
 /plugin install bravos-systems-as-experience
+/systems-as-experience  # Use slash command to load router
 ```
 
 ```plaintext
@@ -160,6 +163,7 @@ I'm using bravos/systems-as-experience/emergent-gameplay-design to create system
 
 ```bash
 /plugin install ordis-security-architect
+/security-architect  # Use slash command to load router
 ```
 
 ```
@@ -170,6 +174,7 @@ I'm using ordis/security-architect/threat-modeling to analyze this authenticatio
 
 ```bash
 /plugin install lyra-ux-designer
+/ux-designer  # Use slash command to load router
 ```
 
 ```
@@ -180,11 +185,47 @@ I'm using lyra/ux-designer/accessibility-and-inclusive-design to ensure WCAG 2.1
 
 ```bash
 /plugin install axiom-system-archaeologist
+/system-archaeologist  # Use slash command to load router
 ```
 
 ```plaintext
-I'm using axiom/system-archaeologist/using-system-archaeologist to reverse-engineer this codebase into C4 architecture documentation
+Then Claude routes you to specialized analysis skills for C4 diagrams, subsystem catalogs, etc.
 ```
+
+---
+
+## Using Router Skills: Slash Commands vs Direct Invocation
+
+### Slash Commands (Recommended)
+
+All 15 router skills (`using-X` skills) are available as **slash commands** to avoid skill context limits:
+
+```bash
+/ai-engineering          # Route to AI/ML specialized packs
+/deep-rl                # Route to RL algorithm skills
+/system-archaeologist   # Route to architecture analysis
+/python-engineering     # Route to Python skills
+/ux-designer           # Route to UX design skills
+# ... and 10 more
+```
+
+**Why slash commands?** Router skills are comprehensive guides that exceeded the context budget for automatic skill discovery. Slash commands provide explicit, user-controlled invocation without context limits.
+
+See [`.claude/SLASH_COMMANDS.md`](.claude/SLASH_COMMANDS.md) for the complete list of all 15 router commands.
+
+### Direct Skill Invocation
+
+If you have **only a few plugins installed**, direct skill invocation still works:
+
+```plaintext
+I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO
+```
+
+**Caveat**: With many plugins installed (5+), you may hit skill discovery context limits. In this case, use slash commands for routers and direct invocation for specialized skills.
+
+**Best Practice**:
+- Use **slash commands** for router skills (`/ai-engineering`, `/deep-rl`, etc.)
+- Use **direct invocation** for specialized skills after the router guides you
 
 ---
 

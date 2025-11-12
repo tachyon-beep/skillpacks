@@ -1,6 +1,6 @@
 {
   "name": "axiom-system-archaeologist",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Deep architectural analysis of existing codebases through autonomous subagent-driven exploration - produces comprehensive documentation, C4 diagrams, and subsystem catalogs",
   "author": {
     "name": "tachyon-beep",

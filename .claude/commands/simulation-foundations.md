@@ -1,21 +1,3 @@
----
-name: using-simulation-foundations
-description: Router for simulation math - ODEs, state-space, stability, control, numerics, chaos, stochastic
-mode: true
-pack: yzmir/simulation-foundations
-faction: yzmir
-skill_type: meta_router
-dependencies:
-  - yzmir/simulation-foundations/differential-equations-for-games
-  - yzmir/simulation-foundations/state-space-modeling
-  - yzmir/simulation-foundations/stability-analysis
-  - yzmir/simulation-foundations/feedback-control-theory
-  - yzmir/simulation-foundations/numerical-methods
-  - yzmir/simulation-foundations/continuous-vs-discrete
-  - yzmir/simulation-foundations/chaos-and-sensitivity
-  - yzmir/simulation-foundations/stochastic-simulation
-estimated_time_hours: 0.5
----
 
 # Using Simulation-Foundations (Meta-Skill Router)
 
@@ -31,7 +13,6 @@ This is a **meta-skill** that:
 
 **You should use this skill:** When building any simulation system that needs mathematical rigor.
 
----
 
 ## Core Philosophy: Theory Enables Design
 
@@ -64,7 +45,6 @@ This is a **meta-skill** that:
 - Empirical tuning sufficient (static balance tables)
 - Math overhead not justified (tiny indie game)
 
----
 
 ## Pack Overview: 8 Core Skills
 
@@ -130,7 +110,6 @@ This is a **meta-skill** that:
 **Time:** 2-3 hours
 **Key insight:** Naive randomness creates exploits
 
----
 
 ## Routing Logic: Which Skills Do I Need?
 
@@ -177,7 +156,6 @@ START: What are you building?
    └─ Long-term balance → stability-analysis
 ```
 
----
 
 ## 15+ Scenarios: Which Skills Apply?
 
@@ -271,7 +249,6 @@ START: What are you building?
 **Optional:** chaos-and-sensitivity (sensitivity to initial state)
 **Time:** 3-5 hours
 
----
 
 ## Multi-Skill Workflows
 
@@ -324,7 +301,6 @@ START: What are you building?
 **Total time:** 9-12.5 hours
 **Result:** Zero desyncs in multiplayer
 
----
 
 ## Integration with Other Skillpacks
 
@@ -350,7 +326,6 @@ Cross-references:
 - state-space-modeling → strategic-depth-from-systems (build space mathematics)
 - stochastic-simulation → player-driven-narratives (procedural event probabilities)
 
----
 
 ## Quick Start Guides
 
@@ -386,7 +361,6 @@ Cross-references:
 
 **Result:** Loot system with guaranteed legendary every 90 pulls
 
----
 
 ## Common Pitfalls
 
@@ -425,7 +399,6 @@ Cross-references:
 
 **Fix:** Read continuous-vs-discrete, use difference equations
 
----
 
 ## Success Criteria
 
@@ -451,7 +424,6 @@ Cross-references:
 - [ ] Behavior understood mathematically
 - [ ] Debugging systematic (not trial-and-error)
 
----
 
 ## Conclusion
 
@@ -478,7 +450,6 @@ You should be able to:
 4. **Validate mathematically** (stability analysis, testing)
 5. **Integrate with simulation-tactics** (implementation patterns)
 
----
 
 ## Pack Structure Reference
 
@@ -497,6 +468,5 @@ yzmir/simulation-foundations/
 
 **Total pack time:** 19-26 hours for comprehensive application
 
----
 
 **Go build simulations with mathematical rigor.**

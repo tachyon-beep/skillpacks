@@ -1,8 +1,3 @@
----
-name: using-python-engineering
-description: Routes to appropriate Python specialist skill based on symptoms and problem type
-mode: true
----
 
 # Using Python Engineering
 
@@ -23,7 +18,6 @@ Load this skill when:
 
 **Don't use for**: Non-Python languages, algorithm theory (not Python-specific), deployment infrastructure (not Python-specific)
 
----
 
 ## Routing by Symptom
 
@@ -59,7 +53,6 @@ Load this skill when:
 - "How to use Python 3.12 type parameter syntax?" → `modern-syntax-and-types`
 - "Fix 150 mypy errors systematically" → `resolving-mypy-errors`
 
----
 
 ### Project Setup and Tooling
 
@@ -81,7 +74,6 @@ Load this skill when:
 - "Configure ruff for my team"
 - "Should I use poetry or pip-tools?"
 
----
 
 ### Lint Warnings and Delinting
 
@@ -104,7 +96,6 @@ Load this skill when:
 
 **Note**: If setting UP linting (not fixing), route to `project-structure-and-tooling` first.
 
----
 
 ### Testing Issues
 
@@ -126,7 +117,6 @@ Load this skill when:
 - "How to use pytest fixtures properly?"
 - "Improve test coverage"
 
----
 
 ### Async/Await Issues
 
@@ -148,7 +138,6 @@ Load this skill when:
 - "How to use Python 3.11 TaskGroup?"
 - "Async code is slow"
 
----
 
 ### Performance and Profiling
 
@@ -175,7 +164,6 @@ Load this skill when:
 - "Find bottleneck in my code"
 - "Memory usage too high"
 
----
 
 ### Array and DataFrame Operations
 
@@ -197,7 +185,6 @@ Load this skill when:
 - "Pandas operation too slow"
 - "DataFrame memory usage high"
 
----
 
 ### ML Experiment Tracking and Workflows
 
@@ -219,7 +206,6 @@ Load this skill when:
 - "Make ML training reproducible"
 - "Monitor model in production"
 
----
 
 ## Cross-Cutting Scenarios
 
@@ -245,7 +231,6 @@ Some scenarios require multiple specialized skills in sequence:
 
 **Load in order of execution**: Setup before optimization, diagnosis before fixes, structure before specialization.
 
----
 
 ## Ambiguous Queries - Ask First
 
@@ -265,7 +250,6 @@ When symptom unclear, ASK ONE clarifying question:
 
 **Never guess when ambiguous. Ask once, route accurately.**
 
----
 
 ## Common Routing Mistakes
 
@@ -281,7 +265,6 @@ When symptom unclear, ASK ONE clarifying question:
 
 **Key principle**: Diagnosis before solutions, setup before optimization, profile before performance fixes.
 
----
 
 ## Red Flags - Stop and Route
 
@@ -294,7 +277,6 @@ If you catch yourself about to:
 
 **All of these mean: You're about to give incomplete advice. Route to the specialist instead.**
 
----
 
 ## Common Rationalizations (Don't Do These)
 
@@ -309,7 +291,6 @@ If you catch yourself about to:
 
 **If you catch yourself thinking ANY of these, STOP and route to the specialist.**
 
----
 
 ## Red Flags Checklist - Self-Check Before Answering
 
@@ -342,7 +323,6 @@ Before giving ANY Python advice, ask yourself:
 
 **If you failed ANY check above, do NOT give direct advice. Route to specialist or ask clarifying question.**
 
----
 
 ## Skill Catalog
 
@@ -360,7 +340,6 @@ Before giving ANY Python advice, ask yourself:
 
 **Route based on symptoms, not guesses.**
 
----
 
 ## When NOT to Use Python Skills
 
@@ -372,7 +351,6 @@ Before giving ANY Python advice, ask yourself:
 
 **Python pack is for**: Python-specific implementation, tooling, patterns, debugging, and optimization.
 
----
 
 ## Diagnosis-First Principle
 
@@ -387,7 +365,6 @@ Before giving ANY Python advice, ask yourself:
 
 **If unclear what's wrong, route to diagnostic skill first.**
 
----
 
 ## Integration Notes
 
