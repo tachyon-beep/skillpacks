@@ -1,0 +1,17 @@
+{
+  "name": "axiom-system-architect",
+  "version": "0.1.0",
+  "description": "Critical architectural assessment with actionable recommendations - assesses codebase architecture, identifies technical debt, recommends refactoring strategies, and prioritizes improvements",
+  "category": "engineering",
+  "author": "tachyon-beep",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "architecture",
+    "assessment",
+    "technical-debt",
+    "refactoring",
+    "legacy-code",
+    "code-quality",
+    "system-design"
+  ]
+}

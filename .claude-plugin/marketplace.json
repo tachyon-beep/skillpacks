@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, game development, security, documentation, and UX skills for Claude Code - 15 complete skillpacks with 135 skills",
-    "version": "1.4.0",
+    "description": "Professional AI/ML, game development, security, documentation, and UX skills for Claude Code - 16 complete skillpacks with 138 skills",
+    "version": "1.5.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -31,6 +31,19 @@
         "axiom",
         "architecture",
         "analysis"
+      ],
+      "category": "development"
+    },
+    {
+      "name": "axiom-system-architect",
+      "source": "./plugins/axiom-system-architect",
+      "description": "Critical architectural assessment with actionable recommendations - assesses codebase architecture quality and identifies technical debt - 3 skills",
+      "version": "0.1.0",
+      "keywords": [
+        "axiom",
+        "architecture",
+        "assessment",
+        "technical-debt"
       ],
       "category": "development"
     },
