@@ -1,7 +1,7 @@
 {
   "name": "axiom-system-architect",
-  "version": "0.1.0",
-  "description": "Critical architectural assessment with actionable recommendations - assesses codebase architecture, identifies technical debt, recommends refactoring strategies, and prioritizes improvements",
+  "version": "0.2.0",
+  "description": "Critical architectural assessment with actionable recommendations - assesses codebase architecture quality, identifies technical debt, and prioritizes risk-based improvements - 4 skills",
   "category": "engineering",
   "author": "tachyon-beep",
   "license": "CC-BY-SA-4.0",

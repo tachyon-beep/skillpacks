@@ -84,23 +84,36 @@ Archaeologist → Architect → (Future: Project Manager)
 
 ---
 
+### 3. prioritizing-improvements
+
+**Use when:**
+- Creating improvement roadmap from technical debt catalog
+- Stakeholders disagree with your technical prioritization
+- CEO says "security is fine, we've never been breached"
+- You're tempted to "bundle" work to satisfy stakeholders
+- Time pressure influences prioritization decisions
+
+**Addresses:**
+- Compromising on security-first prioritization
+- Validating "we've never been breached" flawed reasoning
+- Bundling as rationalization for deprioritizing security
+- Accepting stakeholder preferences over risk-based priorities
+
+**Output:** Risk-based improvement roadmap with security as Phase 1
+
+---
+
 ### Future Skills (Not Yet Implemented)
 
-**3. analyzing-architectural-patterns**
+**4. analyzing-architectural-patterns**
 - Pattern identification (intentional vs accidental)
 - Anti-pattern detection
 - Pattern consistency analysis
 
-**4. recommending-refactoring-strategies**
+**5. recommending-refactoring-strategies**
 - Strangler fig vs big-bang rewrite
 - Dependency breaking strategies
 - Incremental improvement paths
-
-**5. prioritizing-improvements**
-- Risk-based prioritization
-- Business value vs effort analysis
-- Dependency ordering
-- Resource-constrained roadmaps
 
 **6. documenting-architecture-decisions**
 - ADR (Architecture Decision Records)
@@ -332,16 +345,16 @@ What do you need?
 
 ## Status
 
-**Current Status:** 2 of 8 skills implemented (v0.1.0)
+**Current Status:** 3 of 8 skills implemented (v0.2.0)
 
 **Production-ready skills:**
 - ✅ assessing-architecture-quality
 - ✅ identifying-technical-debt
+- ✅ prioritizing-improvements
 
 **Future skills (see docs/future-axiom-improvement-pipeline-intent.md):**
 - ⏳ analyzing-architectural-patterns
 - ⏳ recommending-refactoring-strategies
-- ⏳ prioritizing-improvements
 - ⏳ documenting-architecture-decisions
 - ⏳ estimating-refactoring-effort
 - ⏳ generating-improvement-metrics
