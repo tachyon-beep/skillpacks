@@ -1,18 +1,5 @@
 {
   "name": "axiom-system-architect",
   "version": "1.0.0",
-  "description": "TDD-validated architectural assessment enforcing professional discipline - prevents diplomatic softening, analysis paralysis, and security priority compromise - 3 specialist skills + router",
-  "category": "development",
-  "author": "tachyon-beep",
-  "license": "CC-BY-SA-4.0",
-  "keywords": [
-    "architecture",
-    "assessment",
-    "technical-debt",
-    "refactoring",
-    "legacy-code",
-    "code-quality",
-    "system-design",
-    "tdd-validated"
-  ]
+  "description": "TDD-validated architectural assessment enforcing professional discipline - prevents diplomatic softening, analysis paralysis, and security priority compromise - 3 specialist skills + router"
 }
