@@ -103,33 +103,6 @@ Archaeologist → Architect → (Future: Project Manager)
 
 ---
 
-### Future Skills (Not Yet Implemented)
-
-**4. analyzing-architectural-patterns**
-- Pattern identification (intentional vs accidental)
-- Anti-pattern detection
-- Pattern consistency analysis
-
-**5. recommending-refactoring-strategies**
-- Strangler fig vs big-bang rewrite
-- Dependency breaking strategies
-- Incremental improvement paths
-
-**6. documenting-architecture-decisions**
-- ADR (Architecture Decision Records)
-- Historical context reconstruction
-- Trade-off documentation
-
-**7. estimating-refactoring-effort**
-- T-shirt sizing
-- Realistic timeline estimation
-- Risk-adjusted effort calculation
-
-**8. generating-improvement-metrics**
-- Baseline metrics
-- Target metrics
-- Progress tracking strategy
-
 ## Routing Guide
 
 ### Scenario: "Assess this codebase"
@@ -175,17 +148,13 @@ Read assessment
 
 ### Scenario: "What should I fix first?"
 
-**Current skills:**
+**Complete workflow:**
 ```
 1. Archaeologist: document architecture
 2. Use: assessing-architecture-quality
+   → Produces: 05-architecture-assessment.md
 3. Use: identifying-technical-debt
-4. Manually prioritize based on severity ratings in outputs
-```
-
-**Future (when prioritizing-improvements skill exists):**
-```
-1-3. Same as above
+   → Produces: 06-technical-debt-catalog.md
 4. Use: prioritizing-improvements
    → Produces: 09-improvement-roadmap.md
 ```
@@ -336,28 +305,31 @@ What do you need?
 |------|----------------|
 | Quality assessment | assessing-architecture-quality |
 | Technical debt catalog | identifying-technical-debt |
-| Pattern analysis | (Future) analyzing-architectural-patterns |
-| Refactoring strategy | (Future) recommending-refactoring-strategies |
-| Priority roadmap | (Future) prioritizing-improvements |
-| Effort estimates | (Future) estimating-refactoring-effort |
-| ADRs | (Future) documenting-architecture-decisions |
-| Metrics | (Future) generating-improvement-metrics |
+| Priority roadmap | prioritizing-improvements |
 
 ## Status
 
-**Current Status:** 3 of 8 skills implemented (v0.2.0)
+**Current Status:** Complete (v1.0.0) - 3 specialist skills + router
 
 **Production-ready skills:**
-- ✅ assessing-architecture-quality
-- ✅ identifying-technical-debt
-- ✅ prioritizing-improvements
+- ✅ assessing-architecture-quality (TDD validated)
+- ✅ identifying-technical-debt (TDD validated)
+- ✅ prioritizing-improvements (TDD validated)
+- ✅ using-system-architect (router)
 
-**Future skills (see docs/future-axiom-improvement-pipeline-intent.md):**
-- ⏳ analyzing-architectural-patterns
-- ⏳ recommending-refactoring-strategies
-- ⏳ documenting-architecture-decisions
-- ⏳ estimating-refactoring-effort
-- ⏳ generating-improvement-metrics
+**Why only 3 skills?**
+
+TDD testing (RED-GREEN-REFACTOR methodology) revealed that agents:
+- **Need discipline enforcement** for form/process (Skills 1-3 address this)
+- **Already have professional integrity** for content/truth (additional skills redundant)
+
+Comprehensive baseline testing showed agents naturally:
+- Analyze patterns rigorously without pressure to validate bad decisions
+- Write honest ADRs even under $200K contract pressure
+- Recommend strangler fig over rewrite using industry data
+- Maintain realistic estimates despite authority pressure
+
+**The 3 skills address actual failure modes discovered through testing.** Additional skills would be redundant with capabilities agents already possess.
 
 ## Related Documentation
 

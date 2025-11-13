@@ -1,7 +1,7 @@
 {
   "name": "axiom-system-architect",
-  "version": "0.2.0",
-  "description": "Critical architectural assessment with actionable recommendations - assesses codebase architecture quality, identifies technical debt, and prioritizes risk-based improvements - 4 skills",
+  "version": "1.0.0",
+  "description": "TDD-validated architectural assessment enforcing professional discipline - prevents diplomatic softening, analysis paralysis, and security priority compromise - 3 specialist skills + router",
   "category": "engineering",
   "author": "tachyon-beep",
   "license": "CC-BY-SA-4.0",
@@ -12,6 +12,7 @@
     "refactoring",
     "legacy-code",
     "code-quality",
-    "system-design"
+    "system-design",
+    "tdd-validated"
   ]
 }
