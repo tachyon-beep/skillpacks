@@ -1,0 +1,6 @@
+{
+  "name": "meta-skill-maintenance",
+  "version": "1.0.0",
+  "description": "Systematic skill auditing using TDD methodology to verify skills remain fit-for-purpose - 1 skill",
+  "category": "meta"
+}
