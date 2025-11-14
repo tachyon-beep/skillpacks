@@ -28,11 +28,11 @@ Load this skill when:
 
 **Symptoms**: "Document why we chose X", "Record this architectural decision", "Explain technology choice"
 
-**Route to**: `muna/technical-writer/documentation-structure`
+**Route to**: [documentation-structure.md](documentation-structure.md)
 
 **Key Pattern**: ADRs document Context → Decision → Consequences
 
-**Example**: "Document why we chose PostgreSQL over MongoDB" → Load documentation-structure
+**Example**: "Document why we chose PostgreSQL over MongoDB" → Load [documentation-structure.md](documentation-structure.md)
 
 ---
 
@@ -41,8 +41,8 @@ Load this skill when:
 **Symptoms**: "Document this API", "Create API reference", "Explain endpoints"
 
 **Route to**:
-1. `muna/technical-writer/documentation-structure` (API reference pattern)
-2. `muna/technical-writer/clarity-and-style` (examples, precision)
+1. [documentation-structure.md](documentation-structure.md) (API reference pattern)
+2. [clarity-and-style.md](clarity-and-style.md) (examples, precision)
 
 **Example**: "Document REST API for user management" → Load both skills
 
@@ -53,8 +53,8 @@ Load this skill when:
 **Symptoms**: "Write deployment procedure", "Create incident runbook", "Document how to..."
 
 **Route to**:
-1. `muna/technical-writer/documentation-structure` (runbook pattern)
-2. `muna/technical-writer/clarity-and-style` (step-by-step clarity)
+1. [documentation-structure.md](documentation-structure.md) (runbook pattern)
+2. [clarity-and-style.md](clarity-and-style.md) (step-by-step clarity)
 
 **Example**: "Create deployment runbook" → Load both skills
 
@@ -65,7 +65,7 @@ Load this skill when:
 **Symptoms**: "Add a README", "Quick start guide", "Installation instructions"
 
 **For Complex Projects**:
-Route to: `muna/technical-writer/documentation-structure` (README pattern)
+Route to: [documentation-structure.md](documentation-structure.md) (README pattern)
 
 **For Simple Utilities**:
 Route to: **NONE** - basic technical writing sufficient
@@ -80,8 +80,8 @@ Route to: **NONE** - basic technical writing sufficient
 
 **Route to (Cross-Faction)**:
 1. `ordis/security-architect/documenting-threats-and-controls` (security content)
-2. `muna/technical-writer/documentation-structure` (ADR format, organization)
-3. `muna/technical-writer/clarity-and-style` (explain to non-experts)
+2. [documentation-structure.md](documentation-structure.md) (ADR format, organization)
+3. [clarity-and-style.md](clarity-and-style.md) (explain to non-experts)
 
 **Key Insight**: Security docs need BOTH content expertise (Ordis) AND writing skills (Muna)
 
@@ -96,9 +96,9 @@ Route to: **NONE** - basic technical writing sufficient
 **What They Need**: Architecture diagrams, code examples, API references, technical depth
 
 **Route to**:
-- `muna/technical-writer/documentation-structure` (architecture docs, API patterns)
-- `muna/technical-writer/diagram-conventions` (system diagrams, data flows)
-- `muna/technical-writer/clarity-and-style` (concrete examples, precision)
+- [documentation-structure.md](documentation-structure.md) (architecture docs, API patterns)
+- [diagram-conventions.md](diagram-conventions.md) (system diagrams, data flows)
+- [clarity-and-style.md](clarity-and-style.md) (concrete examples, precision)
 
 **Example**: "Write docs for internal developers" → Load all three
 
@@ -109,8 +109,8 @@ Route to: **NONE** - basic technical writing sufficient
 **What They Need**: Runbooks, troubleshooting, deployment procedures, configuration guides
 
 **Route to**:
-- `muna/technical-writer/documentation-structure` (runbook pattern)
-- `muna/technical-writer/clarity-and-style` (step-by-step, scannable)
+- [documentation-structure.md](documentation-structure.md) (runbook pattern)
+- [clarity-and-style.md](clarity-and-style.md) (step-by-step, scannable)
 
 **Example**: "Create SRE runbook" → Load both skills
 
@@ -121,9 +121,9 @@ Route to: **NONE** - basic technical writing sufficient
 **What They Need**: High-level summaries, business impact, risks, costs (minimal technical detail)
 
 **Route to**:
-- `muna/technical-writer/clarity-and-style` (progressive disclosure, audience adaptation)
+- [clarity-and-style.md](clarity-and-style.md) (progressive disclosure, audience adaptation)
 
-**Example**: "Executive summary of migration plan" → Load clarity-and-style only
+**Example**: "Executive summary of migration plan" → Load [clarity-and-style.md](clarity-and-style.md) only
 
 ---
 
@@ -132,9 +132,9 @@ Route to: **NONE** - basic technical writing sufficient
 **What They Need**: Progressive disclosure (quick start → advanced topics), multiple entry points
 
 **Route to**:
-- `muna/technical-writer/documentation-structure` (README pattern, API docs)
-- `muna/technical-writer/clarity-and-style` (progressive disclosure, audience adaptation)
-- `muna/technical-writer/diagram-conventions` (high-level overviews)
+- [documentation-structure.md](documentation-structure.md) (README pattern, API docs)
+- [clarity-and-style.md](clarity-and-style.md) (progressive disclosure, audience adaptation)
+- [diagram-conventions.md](diagram-conventions.md) (high-level overviews)
 
 **Example**: "Public documentation for open-source project" → Load all three
 
@@ -149,8 +149,8 @@ Route to: **NONE** - basic technical writing sufficient
 **Route to**:
 - `ordis/security-architect/documenting-threats-and-controls`
 - `ordis/security-architect/threat-modeling` (for threat content)
-- `muna/technical-writer/documentation-structure` (for organization)
-- `muna/technical-writer/security-aware-documentation` (if handling sensitive info)
+- [documentation-structure.md](documentation-structure.md) (for organization)
+- [security-aware-documentation.md](security-aware-documentation.md) (if handling sensitive info)
 
 **Example**: "Document MLS security architecture" → Load all four skills
 
@@ -162,8 +162,8 @@ Route to: **NONE** - basic technical writing sufficient
 
 **Route to**:
 - `ordis/security-architect/compliance-awareness-and-mapping` (compliance content)
-- `muna/technical-writer/operational-acceptance-documentation` (SSP/SAR structure)
-- `muna/technical-writer/documentation-structure` (organization)
+- [operational-acceptance-documentation.md](operational-acceptance-documentation.md) (SSP/SAR structure)
+- [documentation-structure.md](documentation-structure.md) (organization)
 
 **Example**: "Create SOC2 compliance documentation" → Load all three skills
 
@@ -174,9 +174,9 @@ Route to: **NONE** - basic technical writing sufficient
 **When**: Post-mortem reports, incident runbooks, response procedures
 
 **Route to**:
-- `muna/technical-writer/incident-response-documentation` (incident-specific patterns)
-- `muna/technical-writer/documentation-structure` (runbook pattern)
-- `muna/technical-writer/clarity-and-style` (clarity under pressure)
+- [incident-response-documentation.md](incident-response-documentation.md) (incident-specific patterns)
+- [documentation-structure.md](documentation-structure.md) (runbook pattern)
+- [clarity-and-style.md](clarity-and-style.md) (clarity under pressure)
 
 **Example**: "Write post-mortem for outage" → Load all three skills
 
@@ -225,18 +225,18 @@ Route to: **NONE** - basic technical writing sufficient
 ### Core Skills (Universal - Any Project)
 
 Use for **any** project:
-- `documentation-structure` - ADRs, APIs, runbooks, READMEs, architecture docs
-- `clarity-and-style` - Active voice, concrete examples, audience adaptation
-- `diagram-conventions` - System diagrams, data flows, architecture visuals
-- `documentation-testing` - Verify docs are accurate, complete, findable
+- [documentation-structure.md](documentation-structure.md) - ADRs, APIs, runbooks, READMEs, architecture docs
+- [clarity-and-style.md](clarity-and-style.md) - Active voice, concrete examples, audience adaptation
+- [diagram-conventions.md](diagram-conventions.md) - System diagrams, data flows, architecture visuals
+- [documentation-testing.md](documentation-testing.md) - Verify docs are accurate, complete, findable
 
 ### Extension Skills (Specialized Contexts)
 
 Use **only** when context requires:
-- `security-aware-documentation` - Sanitizing examples with sensitive data, classification marking
-- `incident-response-documentation` - Post-mortems, incident runbooks, RCA templates
-- `itil-and-governance-documentation` - ITIL processes, change management, governance frameworks
-- `operational-acceptance-documentation` - SSP, SAR, POA&M for government authorization
+- [security-aware-documentation.md](security-aware-documentation.md) - Sanitizing examples with sensitive data, classification marking
+- [incident-response-documentation.md](incident-response-documentation.md) - Post-mortems, incident runbooks, RCA templates
+- [itil-and-governance-documentation.md](itil-and-governance-documentation.md) - ITIL processes, change management, governance frameworks
+- [operational-acceptance-documentation.md](operational-acceptance-documentation.md) - SSP, SAR, POA&M for government authorization
 
 **Decision**: If unsure whether context is "specialized", start with core skills. Specialized needs will be explicit.
 
@@ -248,14 +248,14 @@ Use **only** when context requires:
 
 ```
 User: "We chose to use REST instead of GraphQL. Document this."
-You: Loading muna/technical-writer/documentation-structure (ADR pattern)
+You: Loading [documentation-structure.md](documentation-structure.md) (ADR pattern)
 ```
 
 ### Pattern 2: API Documentation
 
 ```
 User: "Document our user management API."
-You: Loading muna/technical-writer/documentation-structure + clarity-and-style
+You: Loading [documentation-structure.md](documentation-structure.md) + [clarity-and-style.md](clarity-and-style.md)
 ```
 
 ### Pattern 3: Security Documentation (Cross-Faction)
@@ -263,8 +263,8 @@ You: Loading muna/technical-writer/documentation-structure + clarity-and-style
 ```
 User: "Document the threat model for authentication."
 You: Loading ordis/security-architect/documenting-threats-and-controls +
-     muna/technical-writer/documentation-structure +
-     muna/technical-writer/clarity-and-style
+     [documentation-structure.md](documentation-structure.md) +
+     [clarity-and-style.md](clarity-and-style.md)
 ```
 
 ### Pattern 4: Simple README
@@ -274,15 +274,15 @@ User: "Add README to this backup script."
 You: [Check script complexity]
      Simple utility → No skills needed
      OR
-     Complex tool → Loading documentation-structure
+     Complex tool → Loading [documentation-structure.md](documentation-structure.md)
 ```
 
 ### Pattern 5: Operator Runbook
 
 ```
 User: "Create runbook for database failover."
-You: Loading muna/technical-writer/documentation-structure (runbook) +
-     clarity-and-style (step-by-step clarity)
+You: Loading [documentation-structure.md](documentation-structure.md) (runbook) +
+     [clarity-and-style.md](clarity-and-style.md) (step-by-step clarity)
 ```
 
 ---
@@ -360,7 +360,7 @@ User: "We decided on PostgreSQL. Document why."
 
 Your routing:
 1. Recognize: Architecture decision → ADR format
-2. Load: muna/technical-writer/documentation-structure
+2. Load: [documentation-structure.md](documentation-structure.md)
 3. Create: ADR with Context, Decision, Consequences
 ```
 
@@ -372,8 +372,8 @@ User: "Document the threat model for our API gateway."
 Your routing:
 1. Recognize: Security content (need Ordis) + Documentation (need Muna)
 2. Load: ordis/security-architect/documenting-threats-and-controls (threats content)
-3. Load: muna/technical-writer/documentation-structure (ADR for security decisions)
-4. Load: muna/technical-writer/clarity-and-style (explain to non-security team)
+3. Load: [documentation-structure.md](documentation-structure.md) (ADR for security decisions)
+4. Load: [clarity-and-style.md](clarity-and-style.md) (explain to non-security team)
 5. Create: Threat model doc with STRIDE analysis + mitigations + clear explanations
 ```
 
@@ -420,4 +420,24 @@ Your routing:
 5. Cross-reference Ordis for security/compliance content
 6. Don't load skills when not needed (simple docs)
 
-**Meta-rule**: When in doubt about document type, start with `documentation-structure` - it covers most common patterns (ADR, API, runbook, README).
+**Meta-rule**: When in doubt about document type, start with [documentation-structure.md](documentation-structure.md) - it covers most common patterns (ADR, API, runbook, README).
+
+---
+
+## Technical Writer Specialist Skills Catalog
+
+After routing, load the appropriate specialist skill for detailed guidance:
+
+### Core Skills (Universal)
+
+1. [documentation-structure.md](documentation-structure.md) - ADR format, API reference patterns, runbook templates, README structure, architecture documentation
+2. [clarity-and-style.md](clarity-and-style.md) - Active voice, concrete examples, progressive disclosure, audience adaptation, step-by-step clarity
+3. [diagram-conventions.md](diagram-conventions.md) - System diagrams, data flow visuals, architecture overviews, C4 model, consistent notation
+4. [documentation-testing.md](documentation-testing.md) - Verify accuracy, completeness, findability, test examples, validate links
+
+### Extension Skills (Specialized Contexts)
+
+5. [security-aware-documentation.md](security-aware-documentation.md) - Sanitizing sensitive data, classification marking, redacting examples, security-conscious writing
+6. [incident-response-documentation.md](incident-response-documentation.md) - Post-mortem templates, incident runbooks, RCA structure, timeline documentation
+7. [itil-and-governance-documentation.md](itil-and-governance-documentation.md) - ITIL processes, change management, governance frameworks, policy documentation
+8. [operational-acceptance-documentation.md](operational-acceptance-documentation.md) - SSP/SAR structure, POA&M templates, government authorization, compliance artifacts

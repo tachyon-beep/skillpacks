@@ -347,3 +347,13 @@ Archaeologist is neutral observer.
 Architect is critical assessor.
 
 Together they form the analysis → strategy pipeline.
+
+---
+
+## System Architect Specialist Skills Catalog
+
+After routing, load the appropriate specialist skill for detailed guidance:
+
+1. [assessing-architecture-quality.md](assessing-architecture-quality.md) - Direct evidence-based assessment, resist diplomatic softening, avoid sandwich structure, handle authority pressure
+2. [identifying-technical-debt.md](identifying-technical-debt.md) - Structured debt catalog, complete or partial with limitations, avoid analysis paralysis, deliver on commitments
+3. [prioritizing-improvements.md](prioritizing-improvements.md) - Risk-based roadmap, security-first prioritization, resist stakeholder pressure, validate breach-based reasoning

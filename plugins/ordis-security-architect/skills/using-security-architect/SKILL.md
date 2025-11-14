@@ -29,9 +29,9 @@ Load this skill when:
 **Symptoms**: "Design a new...", "We're building...", "Greenfield project"
 
 **Route to**:
-1. **First**: `ordis/security-architect/threat-modeling` - Identify threats before implementation
-2. **Then**: `ordis/security-architect/secure-by-design-patterns` - Design with security built-in
-3. **Then**: `ordis/security-architect/security-controls-design` - Select appropriate controls
+1. **First**: [threat-modeling.md](threat-modeling.md) - Identify threats before implementation
+2. **Then**: [secure-by-design-patterns.md](secure-by-design-patterns.md) - Design with security built-in
+3. **Then**: [security-controls-design.md](security-controls-design.md) - Select appropriate controls
 
 **Example**: "Design authentication system" → Load all three in order
 
@@ -41,13 +41,13 @@ Load this skill when:
 
 **Symptoms**: "Review this design", "Security audit", "Does this look secure?"
 
-**Route to**: `ordis/security-architect/architecture-security-review`
+**Route to**: [security-architecture-review.md](security-architecture-review.md)
 
 **When to add**:
-- Add `ordis/security-architect/threat-modeling` if design lacks threat analysis
-- Add `ordis/security-architect/secure-by-design-patterns` if architecture has gaps
+- Add [threat-modeling.md](threat-modeling.md) if design lacks threat analysis
+- Add [secure-by-design-patterns.md](secure-by-design-patterns.md) if architecture has gaps
 
-**Example**: "Review this plugin system" → Load architecture-security-review
+**Example**: "Review this plugin system" → Load [security-architecture-review.md](security-architecture-review.md)
 
 ---
 
@@ -55,19 +55,19 @@ Load this skill when:
 
 #### Authentication/Authorization Design
 **Route to**:
-- `ordis/security-architect/threat-modeling` (identify auth threats)
-- `ordis/security-architect/secure-by-design-patterns` (defense-in-depth, fail-secure)
-- Consider: `ordis/security-architect/security-authorization-and-accreditation` (if government/ATO needed)
+- [threat-modeling.md](threat-modeling.md) (identify auth threats)
+- [secure-by-design-patterns.md](secure-by-design-patterns.md) (defense-in-depth, fail-secure)
+- Consider: [security-authorization-and-accreditation.md](security-authorization-and-accreditation.md) (if government/ATO needed)
 
 #### Configuration & Secrets
 **Route to**:
-- `ordis/security-architect/threat-modeling` (config tampering threats)
-- `ordis/security-architect/security-controls-design` (separation of config vs code)
+- [threat-modeling.md](threat-modeling.md) (config tampering threats)
+- [security-controls-design.md](security-controls-design.md) (separation of config vs code)
 
 #### API Security
 **Route to**:
-- `ordis/security-architect/threat-modeling` (STRIDE on API endpoints)
-- `ordis/security-architect/architecture-security-review` (review access controls)
+- [threat-modeling.md](threat-modeling.md) (STRIDE on API endpoints)
+- [security-architecture-review.md](security-architecture-review.md) (review access controls)
 
 ---
 
@@ -78,10 +78,10 @@ Load this skill when:
 **Symptoms**: "TOP SECRET", "classified data", "security clearances", "multi-level security", "Bell-LaPadula"
 
 **Route to**:
-1. `ordis/security-architect/classified-systems-security` (REQUIRED for classified contexts)
-2. Plus core skills: `threat-modeling`, `secure-by-design-patterns`
+1. [classified-systems-security.md](classified-systems-security.md) (REQUIRED for classified contexts)
+2. Plus core skills: [threat-modeling.md](threat-modeling.md), [secure-by-design-patterns.md](secure-by-design-patterns.md)
 
-**Example**: "Design system handling SECRET and UNCLASSIFIED" → Load classified-systems-security first
+**Example**: "Design system handling SECRET and UNCLASSIFIED" → Load [classified-systems-security.md](classified-systems-security.md) first
 
 ---
 
@@ -89,13 +89,13 @@ Load this skill when:
 
 **Symptoms**: "HIPAA", "PCI-DSS", "SOC2", "GDPR", "compliance audit", "regulatory requirements"
 
-**Route to**: `ordis/security-architect/compliance-awareness-and-mapping`
+**Route to**: [compliance-awareness-and-mapping.md](compliance-awareness-and-mapping.md)
 
 **When to add**:
-- Add `ordis/security-architect/security-authorization-and-accreditation` if ATO/AIS needed
+- Add [security-authorization-and-accreditation.md](security-authorization-and-accreditation.md) if ATO/AIS needed
 - Add core skills for implementing compliant controls
 
-**Example**: "Build HIPAA-compliant system" → Load compliance-awareness-and-mapping + threat-modeling
+**Example**: "Build HIPAA-compliant system" → Load [compliance-awareness-and-mapping.md](compliance-awareness-and-mapping.md) + [threat-modeling.md](threat-modeling.md)
 
 ---
 
@@ -103,7 +103,7 @@ Load this skill when:
 
 **Symptoms**: "ATO", "AIS", "authority to operate", "SSP", "SAR", "POA&M", "FedRAMP", "FISMA"
 
-**Route to**: `ordis/security-architect/security-authorization-and-accreditation`
+**Route to**: [security-authorization-and-accreditation.md](security-authorization-and-accreditation.md)
 
 **Cross-reference**: Load `muna/technical-writer/operational-acceptance-documentation` for SSP/SAR writing
 
@@ -113,11 +113,11 @@ Load this skill when:
 
 **Symptoms**: "Document security decisions", "Write security docs", "Explain threat model"
 
-**Route to**: `ordis/security-architect/documenting-threats-and-controls`
+**Route to**: [documenting-threats-and-controls.md](documenting-threats-and-controls.md)
 
 **Cross-faction reference**: Load `muna/technical-writer/documentation-structure` for ADR format, clarity guidelines
 
-**Example**: "Document why we chose MLS" → Load documenting-threats + documentation-structure
+**Example**: "Document why we chose MLS" → Load [documenting-threats-and-controls.md](documenting-threats-and-controls.md) + documentation-structure
 
 ---
 
@@ -127,19 +127,19 @@ Load this skill when:
 
 Load these for **any** project with security needs:
 
-- `threat-modeling` - Identify threats (STRIDE, attack trees)
-- `security-controls-design` - Design controls (defense-in-depth, fail-secure)
-- `architecture-security-review` - Review designs for security gaps
-- `secure-by-design-patterns` - Apply secure design patterns
-- `documenting-threats-and-controls` - Document security decisions
+- [threat-modeling.md](threat-modeling.md) - Identify threats (STRIDE, attack trees)
+- [security-controls-design.md](security-controls-design.md) - Design controls (defense-in-depth, fail-secure)
+- [security-architecture-review.md](security-architecture-review.md) - Review designs for security gaps
+- [secure-by-design-patterns.md](secure-by-design-patterns.md) - Apply secure design patterns
+- [documenting-threats-and-controls.md](documenting-threats-and-controls.md) - Document security decisions
 
 ### Extension Skills (Specialized - Use for Specific Contexts)
 
 Load these **only** when context requires:
 
-- `classified-systems-security` - Handling classified/sensitive data with clearances
-- `compliance-awareness-and-mapping` - Regulatory compliance (HIPAA, PCI-DSS, GDPR, etc.)
-- `security-authorization-and-accreditation` - Government ATO/AIS processes
+- [classified-systems-security.md](classified-systems-security.md) - Handling classified/sensitive data with clearances
+- [compliance-awareness-and-mapping.md](compliance-awareness-and-mapping.md) - Regulatory compliance (HIPAA, PCI-DSS, GDPR, etc.)
+- [security-authorization-and-accreditation.md](security-authorization-and-accreditation.md) - Government ATO/AIS processes
 
 **Decision**: If you're unsure whether context is "specialized", start with core skills. Specialized contexts will be explicit in requirements.
 
@@ -330,4 +330,24 @@ Your routing:
 5. Cross-reference Muna for documentation needs
 6. Don't load security skills when not needed
 
-**Meta-rule**: When in doubt, start with `threat-modeling`. Threats drive everything else.
+**Meta-rule**: When in doubt, start with [threat-modeling.md](threat-modeling.md). Threats drive everything else.
+
+---
+
+## Security Architect Specialist Skills Catalog
+
+After routing, load the appropriate specialist skill for detailed guidance:
+
+### Core Skills (Universal)
+
+1. [threat-modeling.md](threat-modeling.md) - STRIDE analysis, attack trees, threat identification, security-critical systems analysis
+2. [secure-by-design-patterns.md](secure-by-design-patterns.md) - Defense-in-depth, fail-secure design, least privilege, separation of concerns
+3. [security-controls-design.md](security-controls-design.md) - Control selection, defense layering, encryption, secrets management
+4. [security-architecture-review.md](security-architecture-review.md) - Design review process, security gap analysis, architecture evaluation
+5. [documenting-threats-and-controls.md](documenting-threats-and-controls.md) - Security documentation, threat model writing, control documentation
+
+### Extension Skills (Specialized Contexts)
+
+6. [classified-systems-security.md](classified-systems-security.md) - Multi-level security (MLS), Bell-LaPadula, classified data handling, security clearances
+7. [compliance-awareness-and-mapping.md](compliance-awareness-and-mapping.md) - HIPAA, PCI-DSS, SOC2, GDPR, regulatory mapping, compliance frameworks
+8. [security-authorization-and-accreditation.md](security-authorization-and-accreditation.md) - ATO/AIS processes, SSP/SAR, POA&M, FedRAMP, FISMA, government authorization
