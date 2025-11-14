@@ -263,6 +263,18 @@ See [CONTRIBUTING.md](source/CONTRIBUTING.md) for guidelines on adding skills or
 
 ---
 
+## Acknowledgments
+
+### Writing-Skills Methodology
+
+This marketplace includes an adapted implementation of the TDD (Test-Driven Development) methodology for documentation from [obra's writing-skills](https://github.com/obra/superpowers-developing-for-claude-code). The core RED-GREEN-REFACTOR approach, pressure testing techniques, and rationalization table concepts are foundational to our skill creation and auditing processes.
+
+**Important Note for Skill Creators**: Our adaptation (`meta-skill-maintenance/skill-creation`) has been customized as marketplace infrastructure and includes specific patterns for this repository's plugin structure, faction conventions, and cross-reference integration. **If you are creating skills for general use, we strongly recommend using [obra's original writing-skills](https://github.com/obra/superpowers-developing-for-claude-code)** as your foundation rather than our marketplace-specific variant.
+
+Full credit and appreciation to [@obra](https://github.com/obra) for the pioneering work on systematic skill development methodology.
+
+---
+
 ## License
 
 CC BY-SA 4.0 (Creative Commons Attribution-ShareAlike 4.0 International) - See [LICENSE](LICENSE) for details.
