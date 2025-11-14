@@ -75,12 +75,63 @@ Checking if files exist is NOT an audit.
 - Must include authority pressure ("user trusts your judgment")
 - Must be realistic to skill's domain
 
-### Phase 3: Scope Drift Check
+### Phase 3: Scope Drift & Appropriateness Check
 
+**Part A: Scope Drift**
 - [ ] Does current content match original purpose? (±20% is normal)
 - [ ] Has scope expanded without updating description?
 - [ ] Are there sections unrelated to core purpose?
 - [ ] If drifted: Is new scope better, or should it revert?
+
+**Part B: Scope Appropriateness**
+
+**CRITICAL: Check if the skill is scoped correctly. Too broad = gaps and inconsistent depth. Too narrow = fragmentation and duplication.**
+
+- [ ] Check skill size: `wc -l SKILL.md`
+  - < 300 lines: May be too focused (could merge with related skill?)
+  - 300-1000 lines: Well-scoped for single topic
+  - 1000-2000 lines: Large but manageable if coherent
+  - > 2000 lines: Likely covering multiple concepts (consider splitting)
+
+- [ ] Analyze topic coherence:
+  - Does skill cover ONE core concept or MULTIPLE concepts?
+  - Are all sections necessary for understanding the core concept?
+  - Could sections be standalone skills?
+
+- [ ] Check depth consistency:
+  - Is some content superficial while other parts are deep?
+  - Do some topics get 50 lines while others get 500?
+  - Depth inconsistency = scope mismatch
+
+- [ ] Identify split indicators:
+  - Skill has "Part 1, Part 2, Part 3..." structure covering different algorithms/approaches
+  - Description lists 4+ distinct topics
+  - Testing reveals one section needs major expansion (would unbalance skill)
+  - Skill is > 1500 lines with multiple independent topics
+
+- [ ] Identify merge indicators:
+  - Skill is < 300 lines and very specific
+  - Multiple sibling skills with overlapping content
+  - Skill constantly refers to other skills for context
+  - Users need 3+ skills loaded together for typical task
+
+**Scope Recommendations:**
+
+| Size | Topics | Depth | Recommendation |
+|------|--------|-------|----------------|
+| > 1500 lines | Multiple (4+) | Inconsistent | **SPLIT**: Create focused sub-skills |
+| > 1000 lines | Multiple (2-3) | Consistent | **ACCEPTABLE**: Monitor for growth |
+| 300-1000 lines | Single | Consistent | **OPTIMAL**: Well-scoped |
+| < 300 lines | Single | Superficial | **MERGE**: Combine with related skills |
+| < 300 lines | Single | Deep | **ACCEPTABLE**: Specialized topic |
+
+**Report to operator:**
+- Current size and line count
+- Number of distinct topics/algorithms covered
+- Depth consistency assessment
+- Split recommendation: "Consider splitting into [skill-A] + [skill-B]"
+- Merge recommendation: "Consider merging with [related-skill]"
+- Reasoning: Why current scope creates issues or works well
 
 ### Phase 4: Cross-Reference Awareness Check
 
@@ -146,6 +197,8 @@ Sort findings into three categories:
 - Major sections need rewriting
 - Testing reveals consistent rationalization loopholes
 - Missing critical cross-references (e.g., backend skill ignoring security)
+- Scope too broad (>1500 lines, multiple topics, consider splitting)
+- Scope too narrow (<300 lines, superficial, consider merging)
 - Uncertain if skill still needed
 
 **🔴 MAJOR (escalate immediately):**
@@ -227,6 +280,7 @@ Examples: API docs, command syntax, library guides
 | **Batch approvals** | "All 10 look good!" without testing | Test each individually |
 | **Fixing before testing** | Making changes then testing proves nothing | Test CURRENT state first |
 | **Ignoring ecosystem** | Skills exist in context with other skills | Check cross-references |
+| **Ignoring scope issues** | Accepting 2000-line skill or 5 fragmented skills | Check if split/merge needed |
 
 ## Rationalization Red Flags
 
@@ -312,6 +366,10 @@ Examples: API docs, command syntax, library guides
 - ✅ Works as intended: [List what works]
 - ⚠️  Issues found: [List issues with severity]
 - 📊 Scope drift: [None / Minor / Major]
+- 📏 Scope appropriateness: [Optimal / Too broad (split?) / Too narrow (merge?)]
+  - Size: [X lines]
+  - Topics covered: [List distinct topics]
+  - Depth consistency: [Consistent / Inconsistent - describe]
 - 🔄 Compatibility: [Current / Needs updates / Broken]
 - 🔗 Cross-references: [Appropriate / Missing / Conflicting]
 
