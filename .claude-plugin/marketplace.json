@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, game development, security, documentation, and UX skills for Claude Code - 18 complete skillpacks with 145 TDD-validated skills",
-    "version": "1.8.0",
+    "description": "Professional AI/ML, game development, security, documentation, and UX skills for Claude Code - 18 complete skillpacks with 146 TDD-validated skills",
+    "version": "1.9.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -217,12 +217,13 @@
     {
       "name": "meta-skill-maintenance",
       "source": "./plugins/meta-skill-maintenance",
-      "description": "Systematic skill auditing using TDD methodology to verify skills remain fit-for-purpose - 1 skill",
-      "version": "1.0.0",
+      "description": "Systematic skill auditing and creation using TDD methodology - skill-audit for validation, skill-creation for marketplace integration - 2 skills",
+      "version": "1.1.0",
       "keywords": [
         "meta",
         "maintenance",
         "audit",
+        "creation",
         "tdd",
         "quality"
       ],

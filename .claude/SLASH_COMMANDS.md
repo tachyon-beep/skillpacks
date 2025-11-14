@@ -41,6 +41,7 @@ All router skills from the 15 plugins are now available as slash commands:
 
 ### Meta Skills (Maintenance)
 - **`/skill-audit`** - Systematic TDD-based skill auditing to verify skills remain fit-for-purpose
+- **`/skill-creation`** - Create new skills using TDD methodology with marketplace integration (adapted from obra's writing-skills)
 
 ## Usage
 
@@ -72,6 +73,7 @@ The router will then guide you to the appropriate specialized skill for your tas
 | yzmir-simulation-foundations | using-simulation-foundations | /simulation-foundations |
 | yzmir-training-optimization | using-training-optimization | /training-optimization |
 | meta-skill-maintenance | skill-audit | /skill-audit |
+| meta-skill-maintenance | skill-creation | /skill-creation |
 
 ## Implementation Details
 

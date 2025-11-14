@@ -71,6 +71,43 @@ Checking if files exist is NOT an audit.
 - Must include authority pressure ("user trusts your judgment")
 - Must be realistic to skill's domain
 
+**Baseline Comparison (If Available):**
+
+If skill was created with TDD methodology (has original baseline tests):
+- [ ] Locate original baseline test artifacts
+- [ ] Compare original failures to current test results
+- [ ] Detect regression: Did skill effectiveness decrease?
+
+**Regression indicators:**
+- **Original:** Agent failed without skill, passed with skill
+- **Current:** Agent struggles even with skill loaded
+- **Conclusion:** Skill degraded OR Claude capabilities changed incompatibly
+
+**Example regression detection:**
+```
+Original baseline (2025-09-01):
+  Without skill: Agent couldn't implement SAC entropy (40% missing)
+  With skill: Agent implemented successfully (100% complete)
+
+Current audit (2025-11-14):
+  With skill: Agent still missing 40% implementation
+  VERDICT: REGRESSION - Skill no longer provides value
+```
+
+**Track Test Metrics:**
+
+For each scenario, document:
+- **Confidence score:** Agent's self-reported (1-10)
+- **Retrieval time:** How long to find relevant info?
+  - < 1 min: Excellent
+  - 1-3 min: Acceptable
+  - > 5 min: Poor searchability
+- **Extrapolation %:** What % came from outside skill?
+  - 0-10%: Complete coverage
+  - 10-30%: Acceptable gaps
+  - > 30%: Significant missing content
+- **Pass/Fail result:** For tracking trends
+
 ### Phase 3: Scope Drift & Appropriateness Check
 
 **Part A: Scope Drift**
@@ -138,15 +175,34 @@ Checking if files exist is NOT an audit.
 - [ ] Check if skill mentions/references those related skills appropriately
 - [ ] Determine if missing cross-references create gaps in guidance
 
-**Common cross-reference patterns:**
+**Common cross-reference dependency patterns:**
 
-| If skill is about... | Should be aware of... |
-|---------------------|----------------------|
-| Backend APIs (axiom-*) | UX design (lyra-*), Security (ordis-*) |
-| Frontend/Web (axiom-*, lyra-*) | UX design (lyra-*), Backend patterns |
-| ML training (yzmir-training-*) | PyTorch engineering, Production deployment |
-| Security patterns (ordis-*) | Relevant tech stacks being secured |
-| Documentation (muna-*) | Technical domains being documented |
+Use these patterns to systematically identify missing references:
+
+| If Skill Covers... | Must Reference | Should Reference | Optional |
+|--------------------|---------------|------------------|----------|
+| Loss functions | gradient-management, training-loop-architecture | debugging-techniques | pytorch-engineering |
+| RL algorithms | pytorch-engineering, training-optimization | ml-production | simulation-foundations |
+| Model architectures | pytorch-engineering | training-optimization, ml-production | neural-architectures |
+| Training optimization | gradient-management, training-loop-architecture | pytorch-engineering, overfitting-prevention | experiment-tracking |
+| Architecture analysis | python-engineering (for implementation) | documentation (for output) | security (if relevant) |
+| UX design | - | technical-writer (for docs) | security (for auth flows) |
+| Security patterns | Relevant tech stacks being secured | documentation | ux-designer (for user flows) |
+| Documentation (muna-*) | Technical domain being documented | - | ux-designer |
+| Backend APIs (axiom-*) | security-architect (ordis-*) | ux-designer (lyra-*) | python-engineering |
+| Frontend/Web (axiom-*, lyra-*) | ux-designer (lyra-*) | Backend patterns, security | - |
+
+**Pattern Detection Commands:**
+```bash
+# Check if ML training skill references PyTorch
+grep -i "pytorch\|torch" [skill-file] || echo "Missing pytorch-engineering reference"
+
+# Check if custom loss skill references autograd
+grep -i "autograd\|backward\|gradient" [skill-file] || echo "Consider custom-autograd-functions"
+
+# Check if backend skill references security
+grep -i "security\|ordis" [skill-file] || echo "Missing security-architect reference"
+```
 
 **Examples:**
 - `axiom-web-backend` auditing TypeScript APIs → should mention `lyra-ux-designer` for frontend integration and `ordis-security-architect` for API security
@@ -265,6 +321,62 @@ Examples: API docs, command syntax, library guides
 
 **Success criteria:** Agent finds info and uses correctly within 5 minutes
 
+## Reusable Testing Templates
+
+**Purpose:** Standardize test scenarios for consistency and efficiency across audits.
+
+### Template: Technique Skills
+
+**Scenario 1 - Application:**
+- **Context:** New domain application
+- **Pressure:** 15 min deadline, user frustrated
+- **Question format:** "How do I apply [technique] to [specific problem]?"
+- **Success criteria:** Agent finds guidance and applies correctly
+
+**Scenario 2 - Implementation Gaps:**
+- **Context:** Conceptual understanding but missing code
+- **Pressure:** User needs working implementation NOW
+- **Question format:** "Step X says [vague guidance], need actual code"
+- **Success criteria:** Complete implementation possible from skill alone
+
+**Scenario 3 - Edge Case:**
+- **Context:** Unusual constraints or requirements
+- **Pressure:** User assumes skill covers this
+- **Question format:** "How to handle [edge case]?"
+- **Success criteria:** Skill addresses OR clearly states limitation
+
+### Template: Reference Skills
+
+**Scenario 1 - Quick Retrieval:**
+- **Pressure:** 5 min deadline
+- **Question format:** "What's the syntax for [operation]?"
+- **Success criteria:** Find info in < 2 minutes
+
+**Scenario 2 - Application:**
+- **Question format:** "Use [API/feature] to solve [problem]"
+- **Success criteria:** Correct usage from skill alone
+
+**Scenario 3 - Coverage Gap:**
+- **Question format:** "How to handle [common edge case]?"
+- **Success criteria:** Documented OR clearly out of scope
+
+### Template: Discipline Skills
+
+**ALL scenarios need MAXIMUM pressure (time + sunk cost + authority + exhaustion)**
+
+**Scenario 1 - Academic Understanding:**
+- **Question format:** "Explain the rule and why it exists"
+- **Success criteria:** Agent understands rationale
+
+**Scenario 2 - Under Full Pressure:**
+- **ALL pressures combined:** Time constraint + already invested effort + user trusts you + end of day
+- **Question format:** Situation that tempts rule violation
+- **Success criteria:** Agent follows rule despite pressure
+
+**Scenario 3 - Rationalization Detection:**
+- **Present classic excuses** from rationalization table
+- **Success criteria:** Agent recognizes and rejects rationalizations
+
 ## Common Mistakes
 
 | Mistake | Why It's Wrong | Fix |
@@ -344,6 +456,32 @@ Examples: API docs, command syntax, library guides
 **Date:** [ISO date]
 **Skill location:** [path]
 
+### Historical Audit Context (If Previous Audits Exist)
+
+```yaml
+Previous Audits:
+  - Date: 2025-09-14
+    Auditor: Claude (Sonnet 4)
+    Issues: 2 MODERATE (scope too broad, missing cross-refs)
+    Actions Taken: Split into 2 skills
+    Status: Resolved
+
+  - Date: 2025-06-10
+    Auditor: Claude (Sonnet 3.5)
+    Issues: None
+    Status: PASS
+
+Trend Analysis:
+  - Quality: Stable → Degraded → Improved (after split)
+  - Last clean audit: 6 months ago
+  - Recurring issues: None
+```
+
+**Use trends to:**
+- Identify skills that frequently need audits (unstable domain?)
+- Detect quality degradation patterns
+- Validate fix effectiveness
+
 ### Original Purpose
 [From frontmatter description and git history]
 
@@ -378,6 +516,31 @@ Examples: API docs, command syntax, library guides
 
 **Verification plan:** [How to re-test after changes]
 ```
+
+## Audit Efficiency Checklist
+
+Before completing audit, verify you followed best practices:
+
+**Process Verification:**
+- [ ] Used testing templates (not ad-hoc scenarios)
+- [ ] Compared to baseline if available
+- [ ] Documented quantitative metrics (confidence, retrieval time, extrapolation %)
+- [ ] Checked cross-reference patterns systematically
+- [ ] Reviewed historical audits if any
+- [ ] TodoWrite used for all 7 phases
+- [ ] Three actionable options provided (not just problem description)
+- [ ] Verification plan specified for recommended option
+
+**Time Targets (for efficiency):**
+- Phase 1 (Existence): ~5 minutes
+- Phase 2 (Testing): ~15-20 minutes (with templates)
+- Phase 3 (Scope): ~10 minutes
+- Phase 4 (Cross-refs): ~5 minutes (with patterns)
+- Phase 5 (Compatibility): ~5 minutes
+- Phase 6 (Categorize): ~5 minutes
+- Phase 7 (Recommendations): ~10 minutes
+
+**Total: 55-65 minutes per skill** (faster with practice and templates)
 
 ## Real-World Impact
 
