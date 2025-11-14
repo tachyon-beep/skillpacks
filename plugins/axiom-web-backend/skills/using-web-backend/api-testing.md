@@ -1,7 +1,3 @@
----
-name: api-testing
-description: Use when testing REST/GraphQL APIs, setting up test suites, writing integration tests, performance testing, security testing, or organizing test code - covers pytest patterns, test doubles, CI/CD integration, coverage analysis, and production testing strategies
----
 
 # API Testing
 

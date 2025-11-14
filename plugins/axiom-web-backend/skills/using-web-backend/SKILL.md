@@ -25,18 +25,17 @@ Use this router when encountering:
 
 | User Question Contains | Route To | Why |
 |------------------------|----------|-----|
-| FastAPI, Pydantic, async Python APIs | `fastapi-development` | FastAPI-specific patterns, dependency injection, async |
-| Django, ORM, views, middleware | `django-development` | Django conventions, ORM optimization, settings |
-| Express, Node.js backend, middleware | `express-development` | Express patterns, error handling, async flow |
-| REST API, endpoints, versioning, pagination | `rest-api-design` | REST principles, resource design, hypermedia |
-| GraphQL, schema, resolvers, N+1 | `graphql-api-design` | Schema design, query optimization, federation |
-| Microservices, service mesh, boundaries | `microservices-architecture` | Service design, communication, consistency |
-| Message queues, RabbitMQ, Kafka, events | `message-queues` | Queue patterns, reliability, event-driven |
-| JWT, OAuth2, API keys, auth | `api-authentication` | Auth patterns, token management, security |
-| Database connections, ORM, migrations | `database-integration` | Connection pooling, query optimization, migrations |
-| API testing, integration tests, mocking | `api-testing` | Testing strategies, contract testing, mocking |
-| OpenAPI, Swagger, API docs | `api-documentation` | API docs (also see: muna-technical-writer) |
-| Docker, deployment, health checks | `backend-deployment` | Containerization, config, monitoring |
+| FastAPI, Pydantic, async Python APIs | [fastapi-development.md](fastapi-development.md) | FastAPI-specific patterns, dependency injection, async |
+| Django, ORM, views, middleware | [django-development.md](django-development.md) | Django conventions, ORM optimization, settings |
+| Express, Node.js backend, middleware | [express-development.md](express-development.md) | Express patterns, error handling, async flow |
+| REST API, endpoints, versioning, pagination | [rest-api-design.md](rest-api-design.md) | REST principles, resource design, hypermedia |
+| GraphQL, schema, resolvers, N+1 | [graphql-api-design.md](graphql-api-design.md) | Schema design, query optimization, federation |
+| Microservices, service mesh, boundaries | [microservices-architecture.md](microservices-architecture.md) | Service design, communication, consistency |
+| Message queues, RabbitMQ, Kafka, events | [message-queues.md](message-queues.md) | Queue patterns, reliability, event-driven |
+| JWT, OAuth2, API keys, auth | [api-authentication.md](api-authentication.md) | Auth patterns, token management, security |
+| Database connections, ORM, migrations | [database-integration.md](database-integration.md) | Connection pooling, query optimization, migrations |
+| API testing, integration tests, mocking | [api-testing.md](api-testing.md) | Testing strategies, contract testing, mocking |
+| OpenAPI, Swagger, API docs | [api-documentation.md](api-documentation.md) | API docs (also see: muna-technical-writer) |
 
 ## Cross-References to Other Packs
 
@@ -84,7 +83,7 @@ If you catch yourself doing any of these, STOP and route to a specialist:
 **User**: "I need to build a REST API with FastAPI. How should I structure my dependency injection?"
 
 **Your response**:
-"I'll use the `fastapi-development` skill to help you structure dependency injection properly. This specialist skill covers FastAPI patterns in depth."
+"I'll use the [fastapi-development.md](fastapi-development.md) skill to help you structure dependency injection properly. This specialist skill covers FastAPI patterns in depth."
 
 [Then apply fastapi-development skill]
 
@@ -92,8 +91,8 @@ If you catch yourself doing any of these, STOP and route to a specialist:
 
 **Your response**:
 "You have two distinct specialist areas:
-1. GraphQL optimization → I'll use `graphql-api-design`
-2. Microservices architecture → I'll use `microservices-architecture`
+1. GraphQL optimization → I'll use [graphql-api-design.md](graphql-api-design.md)
+2. Microservices architecture → I'll use [microservices-architecture.md](microservices-architecture.md)
 
 Let me address the GraphQL N+1 problem first with the graphql-api-design skill..."
 
@@ -105,3 +104,32 @@ Let me address the GraphQL N+1 problem first with the graphql-api-design skill..
 **With routing**: Deep expertise addressing edge cases, production patterns, and domain-specific best practices
 
 Specialist skills = better results.
+
+---
+
+## Web Backend Specialist Skills Catalog
+
+After routing, load the appropriate specialist skill for detailed guidance:
+
+### Framework-Specific Skills
+
+1. [fastapi-development.md](fastapi-development.md) - FastAPI patterns, dependency injection, async/await, Pydantic validation, background tasks
+2. [django-development.md](django-development.md) - Django conventions, ORM optimization, middleware, settings, management commands
+3. [express-development.md](express-development.md) - Express patterns, middleware chains, error handling, async flow control
+
+### API Design Skills
+
+4. [rest-api-design.md](rest-api-design.md) - REST principles, resource design, versioning, pagination, HATEOAS, HTTP semantics
+5. [graphql-api-design.md](graphql-api-design.md) - GraphQL schema design, resolver patterns, N+1 query optimization, federation
+
+### Architecture & Infrastructure
+
+6. [microservices-architecture.md](microservices-architecture.md) - Service boundaries, communication patterns, distributed consistency, service mesh
+7. [message-queues.md](message-queues.md) - Queue patterns, reliability guarantees, event-driven architecture, RabbitMQ/Kafka
+
+### Cross-Cutting Concerns
+
+8. [api-authentication.md](api-authentication.md) - JWT, OAuth2, API keys, token management, auth patterns
+9. [database-integration.md](database-integration.md) - Connection pooling, query optimization, migrations, ORM patterns
+10. [api-testing.md](api-testing.md) - Testing strategies, contract testing, integration tests, mocking
+11. [api-documentation.md](api-documentation.md) - OpenAPI/Swagger, API documentation patterns, schema generation

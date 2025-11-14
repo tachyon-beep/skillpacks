@@ -1,7 +1,3 @@
----
-name: microservices-architecture
-description: Use when designing microservices, splitting monoliths, handling distributed data consistency, choosing communication patterns, or implementing service boundaries - covers domain-driven design, saga patterns, API gateways, service mesh
----
 
 # Microservices Architecture
 

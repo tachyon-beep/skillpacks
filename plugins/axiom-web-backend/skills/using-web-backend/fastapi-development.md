@@ -1,7 +1,3 @@
----
-name: fastapi-development
-description: Use when building FastAPI applications, encountering async/sync issues, dependency injection questions, testing strategies, or production deployment patterns - covers FastAPI-specific patterns, anti-patterns, and production best practices
----
 
 # FastAPI Development
 

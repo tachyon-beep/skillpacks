@@ -1,7 +1,3 @@
----
-name: graphql-api-design
-description: Use when designing GraphQL schemas, solving N+1 query problems, implementing pagination/subscriptions, or choosing between REST and GraphQL - covers DataLoader, schema patterns, federation, performance optimization, and security
----
 
 # GraphQL API Design
 

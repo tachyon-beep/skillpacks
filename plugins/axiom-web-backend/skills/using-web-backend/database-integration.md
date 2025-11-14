@@ -1,7 +1,3 @@
----
-name: database-integration
-description: Use when working with SQLAlchemy, database connection pooling, N+1 queries, migrations, transactions, or ORM vs raw SQL decisions - covers production patterns for connection management, query optimization, zero-downtime migrations, and testing strategies
----
 
 # Database Integration
 

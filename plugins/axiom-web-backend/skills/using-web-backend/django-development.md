@@ -1,7 +1,3 @@
----
-name: django-development
-description: Use when building Django REST APIs, optimizing Django ORM queries, structuring DRF serializers, managing migrations, implementing caching, or deploying Django apps - covers production patterns for Django + DRF beyond basic tutorials
----
 
 # Django Development
 

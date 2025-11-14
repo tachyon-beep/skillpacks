@@ -1,7 +1,3 @@
----
-name: rest-api-design
-description: Use when designing REST APIs, choosing HTTP methods/status codes, implementing versioning/pagination/filtering, or applying REST constraints - covers resource modeling, HATEOAS, API evolution patterns
----
 
 # REST API Design
 

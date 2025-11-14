@@ -1,7 +1,3 @@
----
-name: express-development
-description: Use when building Express.js APIs with TypeScript, organizing middleware, handling async errors, validating requests, managing database connections, or deploying Node.js apps - covers production patterns for Express beyond basic tutorials
----
 
 # Express Development
 

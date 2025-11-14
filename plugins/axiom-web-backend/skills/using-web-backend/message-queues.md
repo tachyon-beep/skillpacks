@@ -1,7 +1,3 @@
----
-name: message-queues
-description: Use when implementing message queues, choosing between RabbitMQ/Kafka/SQS, ensuring reliable delivery, handling ordering/DLQ/scaling, or building event-driven architectures - covers reliability patterns, schema evolution, monitoring, and production best practices
----
 
 # Message Queues
 

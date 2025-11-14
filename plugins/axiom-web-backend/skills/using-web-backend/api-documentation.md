@@ -1,7 +1,3 @@
----
-name: api-documentation
-description: Use when documenting REST/GraphQL APIs, maintaining OpenAPI specs, versioning docs, testing documentation accuracy, or preventing documentation debt - covers documentation-as-code, interactive docs, SDK generation, and production documentation strategies
----
 
 # API Documentation
 

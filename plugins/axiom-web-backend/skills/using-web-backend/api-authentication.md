@@ -1,7 +1,3 @@
----
-name: api-authentication
-description: Use when implementing API authentication, choosing JWT/OAuth2/sessions, securing tokens, handling refresh/revocation, or implementing service-to-service auth - covers security patterns, compliance, monitoring, multi-tenancy, and production best practices
----
 
 # API Authentication
 
@@ -820,7 +816,6 @@ spec:
   - client auth  # Client authentication
   - server auth  # Server authentication
 
----
 # Service configuration
 apiVersion: v1
 kind: Service
@@ -834,7 +829,6 @@ spec:
     protocol: TCP
     targetPort: 8443
 
----
 # Pod configuration
 apiVersion: apps/v1
 kind: Deployment
@@ -900,7 +894,6 @@ spec:
   mtls:
     mode: STRICT  # Require mTLS
 
----
 # Authorization policy
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
@@ -926,7 +919,6 @@ spec:
         methods: ["GET"]
         paths: ["/api/orders/*/status"]
 
----
 # Request authentication (JWT validation)
 apiVersion: security.istio.io/v1beta1
 kind: RequestAuthentication
