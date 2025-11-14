@@ -2,7 +2,6 @@
 .worktrees/
 
 # Router skills (phased out - use slash commands in .claude/commands/)
-**/using-*/
 convert-routers-to-commands.sh
 
 # TDD test artifacts and planning docs
