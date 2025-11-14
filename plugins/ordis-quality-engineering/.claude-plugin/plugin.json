@@ -1,0 +1,6 @@
+{
+  "name": "ordis-quality-engineering",
+  "version": "1.0.0",
+  "description": "Quality engineering as bulwark against production chaos - E2E testing, performance testing, chaos engineering, production observability, and reliability patterns",
+  "category": "testing"
+}

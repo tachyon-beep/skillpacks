@@ -8,7 +8,7 @@ Router skills were converted to slash commands due to context limit issues. Skil
 
 ## Available Slash Commands
 
-All router skills from the 18 plugins are now available as slash commands:
+All router skills from the 19 plugins are now available as slash commands:
 
 ### Python Engineering (Axiom)
 - **`/python-engineering`** - Routes to Python expertise (testing, packaging, async, performance, etc.)
@@ -30,8 +30,9 @@ All router skills from the 18 plugins are now available as slash commands:
 ### Documentation (Muna)
 - **`/technical-writer`** - Routes to technical documentation and API docs
 
-### Security (Ordis)
+### Security & Quality (Ordis)
 - **`/security-architect`** - Routes to security architecture and threat modeling
+- **`/quality-engineering`** - Routes to quality engineering, testing, and reliability (E2E, performance, chaos, SRE)
 
 ### AI/ML Engineering (Yzmir)
 - **`/ai-engineering`** - Master router for all AI/ML engineering tasks

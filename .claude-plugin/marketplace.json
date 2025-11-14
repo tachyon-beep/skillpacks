@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, Python engineering, web backend, game development, security, documentation, and UX skills for Claude Code - 18 complete skillpacks with 147+ TDD-validated skills",
-    "version": "1.8.0",
+    "description": "Professional AI/ML, Python engineering, web backend, game development, security, testing, documentation, and UX skills for Claude Code - 19 complete skillpacks with 158+ TDD-validated skills",
+    "version": "1.9.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -123,6 +123,23 @@
         "architect"
       ],
       "category": "security"
+    },
+    {
+      "name": "ordis-quality-engineering",
+      "source": "./plugins/ordis-quality-engineering",
+      "description": "Quality engineering as bulwark against production chaos - E2E testing, performance testing, chaos engineering, production observability, and reliability patterns - 11 skills",
+      "version": "1.0.0",
+      "keywords": [
+        "ordis",
+        "quality",
+        "testing",
+        "e2e",
+        "performance",
+        "chaos",
+        "observability",
+        "sre"
+      ],
+      "category": "testing"
     },
     {
       "name": "yzmir-ai-engineering-expert",
