@@ -8,13 +8,17 @@ Router skills were converted to slash commands due to context limit issues. Skil
 
 ## Available Slash Commands
 
-All router skills from the 15 plugins are now available as slash commands:
+All router skills from the 18 plugins are now available as slash commands:
 
 ### Python Engineering (Axiom)
 - **`/python-engineering`** - Routes to Python expertise (testing, packaging, async, performance, etc.)
 
 ### Architecture Analysis (Axiom)
 - **`/system-archaeologist`** - Routes to codebase architecture analysis and documentation
+- **`/system-architect`** - Routes to architectural assessment and technical debt analysis
+
+### Web Backend Development (Axiom)
+- **`/web-backend`** - Routes to web backend development (FastAPI, Django, Express, APIs, microservices)
 
 ### Game Development (Bravos)
 - **`/simulation-tactics`** - Routes to simulation and game development tactics
@@ -38,6 +42,7 @@ All router skills from the 15 plugins are now available as slash commands:
 - **`/neural-architectures`** - Routes to neural architecture selection
 - **`/ml-production`** - Routes to ML deployment and production
 - **`/simulation-foundations`** - Routes to simulation fundamentals
+- **`/systems-thinking`** - Routes to systems thinking methodology and modeling
 
 ## Usage
 
@@ -55,6 +60,8 @@ The router will then guide you to the appropriate specialized skill for your tas
 |--------|----------------|---------------|
 | axiom-python-engineering | using-python-engineering | /python-engineering |
 | axiom-system-archaeologist | using-system-archaeologist | /system-archaeologist |
+| axiom-system-architect | using-system-architect | /system-architect |
+| axiom-web-backend | using-web-backend | /web-backend |
 | bravos-simulation-tactics | using-simulation-tactics | /simulation-tactics |
 | bravos-systems-as-experience | using-systems-as-experience | /systems-as-experience |
 | lyra-ux-designer | using-ux-designer | /ux-designer |
@@ -67,6 +74,7 @@ The router will then guide you to the appropriate specialized skill for your tas
 | yzmir-neural-architectures | using-neural-architectures | /neural-architectures |
 | yzmir-pytorch-engineering | using-pytorch-engineering | /pytorch-engineering |
 | yzmir-simulation-foundations | using-simulation-foundations | /simulation-foundations |
+| yzmir-systems-thinking | using-systems-thinking | /systems-thinking |
 | yzmir-training-optimization | using-training-optimization | /training-optimization |
 
 ## Implementation Details
