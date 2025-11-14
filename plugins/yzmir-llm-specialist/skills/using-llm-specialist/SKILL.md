@@ -23,7 +23,7 @@ Use this skill when the user needs help with:
 
 ### Step 1: Identify the task category
 
-**Prompt Engineering** → Use `prompt-engineering-patterns`
+**Prompt Engineering** → See [prompt-engineering-patterns.md](prompt-engineering-patterns.md)
 - Writing effective prompts
 - Few-shot learning
 - Chain-of-thought prompting
@@ -31,7 +31,7 @@ Use this skill when the user needs help with:
 - Output formatting
 - Prompt optimization
 
-**Fine-tuning** → Use `llm-finetuning-strategies`
+**Fine-tuning** → See [llm-finetuning-strategies.md](llm-finetuning-strategies.md)
 - When to fine-tune vs prompt engineering
 - Full fine-tuning vs LoRA vs QLoRA
 - Dataset preparation
@@ -39,7 +39,7 @@ Use this skill when the user needs help with:
 - Evaluation and validation
 - Catastrophic forgetting prevention
 
-**RAG (Retrieval-Augmented Generation)** → Use `rag-architecture-patterns`
+**RAG (Retrieval-Augmented Generation)** → See [rag-architecture-patterns.md](rag-architecture-patterns.md)
 - RAG system architecture
 - Retrieval strategies (dense, sparse, hybrid)
 - Chunking strategies
@@ -47,7 +47,7 @@ Use this skill when the user needs help with:
 - Context injection
 - RAG evaluation
 
-**Evaluation** → Use `llm-evaluation-metrics`
+**Evaluation** → See [llm-evaluation-metrics.md](llm-evaluation-metrics.md)
 - Task-specific metrics (classification, generation, summarization)
 - Human evaluation
 - LLM-as-judge
@@ -55,7 +55,7 @@ Use this skill when the user needs help with:
 - A/B testing
 - Quality assurance
 
-**Context Management** → Use `context-window-management`
+**Context Management** → See [context-window-management.md](context-window-management.md)
 - Context window limits (4k, 8k, 32k, 128k tokens)
 - Summarization strategies
 - Sliding window
@@ -63,7 +63,7 @@ Use this skill when the user needs help with:
 - Token counting
 - Context pruning
 
-**Inference Optimization** → Use `llm-inference-optimization`
+**Inference Optimization** → See [llm-inference-optimization.md](llm-inference-optimization.md)
 - Reducing latency
 - Increasing throughput
 - Batching strategies
@@ -71,7 +71,7 @@ Use this skill when the user needs help with:
 - Quantization (INT8, INT4)
 - Speculative decoding
 
-**Safety & Alignment** → Use `llm-safety-alignment`
+**Safety & Alignment** → See [llm-safety-alignment.md](llm-safety-alignment.md)
 - Prompt injection prevention
 - Jailbreak detection
 - Content filtering
@@ -84,13 +84,13 @@ Use this skill when the user needs help with:
 ### Example 1: User asks about prompts
 **User:** "My LLM isn't following instructions consistently. How can I improve my prompts?"
 
-**Route to:** `prompt-engineering-patterns`
+**Route to:** [prompt-engineering-patterns.md](prompt-engineering-patterns.md)
 - Covers instruction clarity, few-shot examples, format specification
 
 ### Example 2: User asks about fine-tuning
 **User:** "I have 10,000 examples of customer support conversations. Should I fine-tune a model or use prompts?"
 
-**Route to:** `llm-finetuning-strategies`
+**Route to:** [llm-finetuning-strategies.md](llm-finetuning-strategies.md)
 - Covers when to fine-tune vs prompt engineering
 - Dataset preparation
 - LoRA vs full fine-tuning
@@ -98,7 +98,7 @@ Use this skill when the user needs help with:
 ### Example 3: User asks about RAG
 **User:** "I want to build a Q&A system over my company's documentation. How do I give the LLM access to this information?"
 
-**Route to:** `rag-architecture-patterns`
+**Route to:** [rag-architecture-patterns.md](rag-architecture-patterns.md)
 - Covers RAG architecture
 - Chunking strategies
 - Retrieval methods
@@ -106,7 +106,7 @@ Use this skill when the user needs help with:
 ### Example 4: User asks about evaluation
 **User:** "How do I measure if my LLM's summaries are good quality?"
 
-**Route to:** `llm-evaluation-metrics`
+**Route to:** [llm-evaluation-metrics.md](llm-evaluation-metrics.md)
 - Covers summarization metrics (ROUGE, BERTScore)
 - Human evaluation
 - LLM-as-judge
@@ -114,19 +114,19 @@ Use this skill when the user needs help with:
 ### Example 5: User asks about context limits
 **User:** "My documents are 50,000 tokens but my model only supports 8k context. What do I do?"
 
-**Route to:** `context-window-management`
+**Route to:** [context-window-management.md](context-window-management.md)
 - Covers summarization, chunking, hierarchical context
 
 ### Example 6: User asks about speed
 **User:** "My LLM inference is too slow (500ms per request). How can I make it faster?"
 
-**Route to:** `llm-inference-optimization`
+**Route to:** [llm-inference-optimization.md](llm-inference-optimization.md)
 - Covers quantization, batching, KV cache, speculative decoding
 
 ### Example 7: User asks about safety
 **User:** "Users are trying to jailbreak my LLM to bypass content filters. How do I prevent this?"
 
-**Route to:** `llm-safety-alignment`
+**Route to:** [llm-safety-alignment.md](llm-safety-alignment.md)
 - Covers prompt injection prevention, jailbreak detection, guardrails
 
 ## Multiple Skills May Apply
@@ -134,58 +134,58 @@ Use this skill when the user needs help with:
 Sometimes multiple skills are relevant:
 
 **Example:** "I'm building a RAG system and need to evaluate retrieval quality."
-- Primary: `rag-architecture-patterns` (RAG architecture)
-- Secondary: `llm-evaluation-metrics` (retrieval metrics: MRR, NDCG)
+- Primary: [rag-architecture-patterns.md](rag-architecture-patterns.md) (RAG architecture)
+- Secondary: [llm-evaluation-metrics.md](llm-evaluation-metrics.md) (retrieval metrics: MRR, NDCG)
 
 **Example:** "I'm fine-tuning an LLM but context exceeds 4k tokens."
-- Primary: `llm-finetuning-strategies` (fine-tuning process)
-- Secondary: `context-window-management` (handling long contexts)
+- Primary: [llm-finetuning-strategies.md](llm-finetuning-strategies.md) (fine-tuning process)
+- Secondary: [context-window-management.md](context-window-management.md) (handling long contexts)
 
 **Example:** "My RAG system is slow and I need better prompts for the generation step."
-- Primary: `rag-architecture-patterns` (RAG architecture)
-- Secondary: `llm-inference-optimization` (speed optimization)
-- Tertiary: `prompt-engineering-patterns` (generation prompts)
+- Primary: [rag-architecture-patterns.md](rag-architecture-patterns.md) (RAG architecture)
+- Secondary: [llm-inference-optimization.md](llm-inference-optimization.md) (speed optimization)
+- Tertiary: [prompt-engineering-patterns.md](prompt-engineering-patterns.md) (generation prompts)
 
 **Approach:** Start with the primary skill, then reference secondary skills as needed.
 
 ## Common Task Patterns
 
 ### Pattern 1: Building an LLM application
-1. Start with **prompt-engineering-patterns** (get prompt right first)
-2. If prompts insufficient → **llm-finetuning-strategies** (customize model)
-3. If need external knowledge → **rag-architecture-patterns** (add retrieval)
-4. Validate quality → **llm-evaluation-metrics** (measure performance)
-5. Optimize speed → **llm-inference-optimization** (reduce latency)
-6. Add safety → **llm-safety-alignment** (guardrails)
+1. Start with [prompt-engineering-patterns.md](prompt-engineering-patterns.md) (get prompt right first)
+2. If prompts insufficient → [llm-finetuning-strategies.md](llm-finetuning-strategies.md) (customize model)
+3. If need external knowledge → [rag-architecture-patterns.md](rag-architecture-patterns.md) (add retrieval)
+4. Validate quality → [llm-evaluation-metrics.md](llm-evaluation-metrics.md) (measure performance)
+5. Optimize speed → [llm-inference-optimization.md](llm-inference-optimization.md) (reduce latency)
+6. Add safety → [llm-safety-alignment.md](llm-safety-alignment.md) (guardrails)
 
 ### Pattern 2: Improving existing LLM system
 1. Identify bottleneck:
-   - Quality issue → **prompt-engineering-patterns** or **llm-finetuning-strategies**
-   - Knowledge gap → **rag-architecture-patterns**
-   - Context overflow → **context-window-management**
-   - Slow inference → **llm-inference-optimization**
-   - Safety concern → **llm-safety-alignment**
+   - Quality issue → [prompt-engineering-patterns.md](prompt-engineering-patterns.md) or [llm-finetuning-strategies.md](llm-finetuning-strategies.md)
+   - Knowledge gap → [rag-architecture-patterns.md](rag-architecture-patterns.md)
+   - Context overflow → [context-window-management.md](context-window-management.md)
+   - Slow inference → [llm-inference-optimization.md](llm-inference-optimization.md)
+   - Safety concern → [llm-safety-alignment.md](llm-safety-alignment.md)
 2. Apply specialized skill
-3. Measure improvement → **llm-evaluation-metrics**
+3. Measure improvement → [llm-evaluation-metrics.md](llm-evaluation-metrics.md)
 
 ### Pattern 3: LLM research/experimentation
-1. Design evaluation → **llm-evaluation-metrics** (metrics first!)
-2. Baseline: prompt engineering → **prompt-engineering-patterns**
-3. If insufficient: fine-tuning → **llm-finetuning-strategies**
+1. Design evaluation → [llm-evaluation-metrics.md](llm-evaluation-metrics.md) (metrics first!)
+2. Baseline: prompt engineering → [prompt-engineering-patterns.md](prompt-engineering-patterns.md)
+3. If insufficient: fine-tuning → [llm-finetuning-strategies.md](llm-finetuning-strategies.md)
 4. Compare: RAG vs fine-tuning → Both skills
-5. Optimize best approach → **llm-inference-optimization**
+5. Optimize best approach → [llm-inference-optimization.md](llm-inference-optimization.md)
 
 ## Quick Reference
 
 | Task | Primary Skill | Common Secondary Skills |
 |------|---------------|------------------------|
-| Better outputs | prompt-engineering-patterns | llm-evaluation-metrics |
-| Customize behavior | llm-finetuning-strategies | prompt-engineering-patterns |
-| External knowledge | rag-architecture-patterns | context-window-management |
-| Quality measurement | llm-evaluation-metrics | - |
-| Long documents | context-window-management | rag-architecture-patterns |
-| Faster inference | llm-inference-optimization | - |
-| Safety/security | llm-safety-alignment | prompt-engineering-patterns |
+| Better outputs | [prompt-engineering-patterns.md](prompt-engineering-patterns.md) | [llm-evaluation-metrics.md](llm-evaluation-metrics.md) |
+| Customize behavior | [llm-finetuning-strategies.md](llm-finetuning-strategies.md) | [prompt-engineering-patterns.md](prompt-engineering-patterns.md) |
+| External knowledge | [rag-architecture-patterns.md](rag-architecture-patterns.md) | [context-window-management.md](context-window-management.md) |
+| Quality measurement | [llm-evaluation-metrics.md](llm-evaluation-metrics.md) | - |
+| Long documents | [context-window-management.md](context-window-management.md) | [rag-architecture-patterns.md](rag-architecture-patterns.md) |
+| Faster inference | [llm-inference-optimization.md](llm-inference-optimization.md) | - |
+| Safety/security | [llm-safety-alignment.md](llm-safety-alignment.md) | [prompt-engineering-patterns.md](prompt-engineering-patterns.md) |
 
 ## Default Routing Logic
 
@@ -200,14 +200,17 @@ Then route to the most relevant skill.
 
 **This is a meta-skill that routes to specialized LLM engineering skills.**
 
-**The 7 specialized skills:**
-1. **prompt-engineering-patterns**: Effective prompting techniques
-2. **llm-finetuning-strategies**: When and how to fine-tune
-3. **rag-architecture-patterns**: Building retrieval-augmented systems
-4. **llm-evaluation-metrics**: Measuring LLM quality
-5. **context-window-management**: Handling long contexts
-6. **llm-inference-optimization**: Speed and efficiency
-7. **llm-safety-alignment**: Safety, security, alignment
+## LLM Specialist Skills Catalog
+
+After routing, load the appropriate specialist skill for detailed guidance:
+
+1. [prompt-engineering-patterns.md](prompt-engineering-patterns.md) - Instruction clarity, few-shot learning, chain-of-thought, system messages, output formatting, prompt optimization
+2. [llm-finetuning-strategies.md](llm-finetuning-strategies.md) - Full fine-tuning vs LoRA vs QLoRA, dataset preparation, hyperparameter selection, catastrophic forgetting prevention
+3. [rag-architecture-patterns.md](rag-architecture-patterns.md) - RAG system architecture, retrieval strategies (dense/sparse/hybrid), chunking, re-ranking, context injection
+4. [llm-evaluation-metrics.md](llm-evaluation-metrics.md) - Task-specific metrics, human evaluation, LLM-as-judge, benchmarks, A/B testing, quality assurance
+5. [context-window-management.md](context-window-management.md) - Context limits (4k-128k tokens), summarization strategies, sliding window, hierarchical context, token counting
+6. [llm-inference-optimization.md](llm-inference-optimization.md) - Latency reduction, throughput optimization, batching, KV cache, quantization (INT8/INT4), speculative decoding
+7. [llm-safety-alignment.md](llm-safety-alignment.md) - Prompt injection prevention, jailbreak detection, content filtering, bias mitigation, hallucination reduction, guardrails
 
 **When multiple skills apply:** Start with the primary skill, reference others as needed.
 

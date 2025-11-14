@@ -499,4 +499,19 @@ yzmir/simulation-foundations/
 
 ---
 
+## Simulation Foundations Specialist Skills Catalog
+
+After routing, load the appropriate specialist skill for detailed guidance:
+
+1. [differential-equations-for-games.md](differential-equations-for-games.md) - ODEs for continuous dynamics, Lotka-Volterra ecosystems, spring-damper systems, resource flows, Newton's laws
+2. [state-space-modeling.md](state-space-modeling.md) - State representation, reachability analysis, fighting game frame data, RTS tech trees, puzzle solvability
+3. [stability-analysis.md](stability-analysis.md) - Equilibrium points, eigenvalue analysis, Lyapunov functions, preventing extinction/explosion/inflation
+4. [feedback-control-theory.md](feedback-control-theory.md) - PID controllers, camera smoothing, AI pursuit, dynamic difficulty, disturbance rejection
+5. [numerical-methods.md](numerical-methods.md) - Euler, Runge-Kutta, symplectic integrators, fixed-point arithmetic, integration stability
+6. [continuous-vs-discrete.md](continuous-vs-discrete.md) - Choosing model type, continuous ODEs vs discrete events, turn-based vs real-time
+7. [chaos-and-sensitivity.md](chaos-and-sensitivity.md) - Butterfly effect, Lyapunov exponents, deterministic chaos, multiplayer desyncs, floating-point sensitivity
+8. [stochastic-simulation.md](stochastic-simulation.md) - Probability distributions, Monte Carlo, stochastic differential equations, loot systems, randomness patterns
+
+---
+
 **Go build simulations with mathematical rigor.**

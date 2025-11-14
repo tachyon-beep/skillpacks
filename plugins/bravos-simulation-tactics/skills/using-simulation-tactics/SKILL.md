@@ -954,4 +954,21 @@ Master this meta-skill to navigate the simulation-tactics skillpack efficiently.
 
 **Remember the golden rule**: ALWAYS start with simulation-vs-faking, even when you "know" you need simulation. The 5 minutes spent validating your assumptions prevents the hours spent over-engineering systems that could have been faked.
 
+---
+
+## Simulation Tactics Specialist Skills Catalog
+
+After routing, load the appropriate specialist skill for detailed guidance:
+
+1. [simulation-vs-faking.md](simulation-vs-faking.md) - FOUNDATIONAL: Trade-off between full simulation and approximation/faking, when to simulate vs fake, hybrid approaches
+2. [physics-simulation-patterns.md](physics-simulation-patterns.md) - Rigid bodies, vehicles, cloth, fluids, integration methods, real-time physics simulation
+3. [ai-and-agent-simulation.md](ai-and-agent-simulation.md) - FSM, behavior trees, utility AI, GOAP, agent behaviors, autonomous decision-making
+4. [traffic-and-pathfinding.md](traffic-and-pathfinding.md) - A*, navmesh, flow fields, traffic simulation, congestion, navigation
+5. [economic-simulation-patterns.md](economic-simulation-patterns.md) - Supply/demand, markets, trade networks, price discovery, resource economies
+6. [ecosystem-simulation.md](ecosystem-simulation.md) - Predator-prey dynamics, food chains, population control, wildlife ecosystems
+7. [crowd-simulation.md](crowd-simulation.md) - Boids, formations, social forces, LOD for crowds, coordinated group movement
+8. [weather-and-time.md](weather-and-time.md) - Day/night cycles, weather systems, seasonal effects, atmospheric simulation
+9. [performance-optimization-for-sims.md](performance-optimization-for-sims.md) - Profiling, spatial partitioning, LOD, time-slicing, caching, performance tuning
+10. [debugging-simulation-chaos.md](debugging-simulation-chaos.md) - Systematic debugging, desync detection, determinism, chaos prevention
+
 Now route confidently to the specific skills you need!

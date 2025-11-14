@@ -45,12 +45,12 @@ DO NOT use for:
 
 | Data Type | Route To | Why |
 |-----------|----------|-----|
-| Images (photos, medical scans, etc.) | cnn-families-and-selection | CNNs excel at spatial hierarchies |
-| Sequences (time series, text, audio) | sequence-models-comparison | Temporal dependencies need sequential models |
-| Graphs (social networks, molecules) | graph-neural-networks-basics | Graph structure requires GNNs |
-| Generation task (create images, text) | generative-model-families | Generative models are specialized |
-| Multiple modalities (text + images) | architecture-design-principles | Need custom design |
-| Unclear / Generic | architecture-design-principles | Start with fundamentals |
+| Images (photos, medical scans, etc.) | [cnn-families-and-selection.md](cnn-families-and-selection.md) | CNNs excel at spatial hierarchies |
+| Sequences (time series, text, audio) | [sequence-models-comparison.md](sequence-models-comparison.md) | Temporal dependencies need sequential models |
+| Graphs (social networks, molecules) | [graph-neural-networks-basics.md](graph-neural-networks-basics.md) | Graph structure requires GNNs |
+| Generation task (create images, text) | [generative-model-families.md](generative-model-families.md) | Generative models are specialized |
+| Multiple modalities (text + images) | [architecture-design-principles.md](architecture-design-principles.md) | Need custom design |
+| Unclear / Generic | [architecture-design-principles.md](architecture-design-principles.md) | Start with fundamentals |
 
 ### Step 2: Check for Special Requirements
 
@@ -58,10 +58,10 @@ DO NOT use for:
 
 | Requirement | Route To | Priority |
 |-------------|----------|----------|
-| Deep network (> 20 layers) unstable | normalization-techniques | CRITICAL - fix before continuing |
-| Need attention mechanisms | attention-mechanisms-catalog | Specialized component |
-| Custom architecture design | architecture-design-principles | Foundation before specifics |
-| Transformer-specific question | transformer-architecture-deepdive | Specialized architecture |
+| Deep network (> 20 layers) unstable | [normalization-techniques.md](normalization-techniques.md) | CRITICAL - fix before continuing |
+| Need attention mechanisms | [attention-mechanisms-catalog.md](attention-mechanisms-catalog.md) | Specialized component |
+| Custom architecture design | [architecture-design-principles.md](architecture-design-principles.md) | Foundation before specifics |
+| Transformer-specific question | [transformer-architecture-deepdive.md](transformer-architecture-deepdive.md) | Specialized architecture |
 
 ### Step 3: Consider Problem Characteristics
 
@@ -88,7 +88,7 @@ These answers determine architecture appropriateness.
 - "medical imaging"
 - "computer vision"
 
-**Route to:** `cnn-families-and-selection`
+**Route to:** See [cnn-families-and-selection.md](cnn-families-and-selection.md) for CNN architecture selection and comparison.
 
 **When to route here:**
 - ANY vision task (CNNs are default for spatial data)
@@ -111,7 +111,7 @@ These answers determine architecture appropriateness.
 - "temporal patterns"
 - "RNN vs LSTM vs Transformer"
 
-**Route to:** `sequence-models-comparison`
+**Route to:** See [sequence-models-comparison.md](sequence-models-comparison.md) for sequential model selection (RNN, LSTM, Transformer, TCN).
 
 **When to route here:**
 - ANY sequential data
@@ -138,7 +138,7 @@ These answers determine architecture appropriateness.
 - "link prediction"
 - "graph embeddings"
 
-**Route to:** `graph-neural-networks-basics`
+**Route to:** See [graph-neural-networks-basics.md](graph-neural-networks-basics.md) for GNN architectures and graph learning.
 
 **When to route here:**
 - Data has explicit graph structure (nodes + edges)
@@ -159,7 +159,7 @@ These answers determine architecture appropriateness.
 - "style transfer"
 - "generative modeling"
 
-**Route to:** `generative-model-families`
+**Route to:** See [generative-model-families.md](generative-model-families.md) for GANs, VAEs, and Diffusion models.
 
 **When to route here:**
 - Goal is to CREATE data, not classify/predict
@@ -186,14 +186,14 @@ These answers determine architecture appropriateness.
 - "attention bottleneck"
 - "multi-head attention"
 
-**Route to:** `attention-mechanisms-catalog`
+**Route to:** See [attention-mechanisms-catalog.md](attention-mechanisms-catalog.md) for attention mechanism selection and design.
 
 **When to route here:**
 - Designing custom architecture that might benefit from attention
 - Understanding where attention helps vs hinders
 - Comparing attention variants
 
-**NOT for:** General Transformer questions → `transformer-architecture-deepdive` instead
+**NOT for:** General Transformer questions → [transformer-architecture-deepdive.md](transformer-architecture-deepdive.md) instead
 
 ---
 
@@ -207,7 +207,7 @@ These answers determine architecture appropriateness.
 - "transformer blocks"
 - "scaling transformers"
 
-**Route to:** `transformer-architecture-deepdive`
+**Route to:** See [transformer-architecture-deepdive.md](transformer-architecture-deepdive.md) for Transformer internals and implementation.
 
 **When to route here:**
 - Implementing/customizing transformers
@@ -215,7 +215,7 @@ These answers determine architecture appropriateness.
 - Debugging transformer-specific issues
 
 **Cross-reference:**
-- For sequence models generally → `sequence-models-comparison` (includes transformers in context)
+- For sequence models generally → [sequence-models-comparison.md](sequence-models-comparison.md) (includes transformers in context)
 - For LLMs specifically → `yzmir/llm-specialist/transformer-for-llms` (LLM-specific transformers)
 
 ---
@@ -229,7 +229,7 @@ These answers determine architecture appropriateness.
 - "normalization layers"
 - "50+ layer network won't train"
 
-**Route to:** `normalization-techniques`
+**Route to:** See [normalization-techniques.md](normalization-techniques.md) for deep network stability and normalization methods.
 
 **When to route here:**
 - Deep networks (> 20 layers) with training instability
@@ -250,7 +250,7 @@ These answers determine architecture appropriateness.
 - "custom architecture for [novel task]"
 - Unclear problem modality
 
-**Route to:** `architecture-design-principles`
+**Route to:** See [architecture-design-principles.md](architecture-design-principles.md) for custom architecture design fundamentals.
 
 **When to route here:**
 - Designing custom architectures
@@ -269,9 +269,9 @@ These answers determine architecture appropriateness.
 **Example:** "Text + image classification" (multimodal)
 
 **Route to BOTH:**
-1. `sequence-models-comparison` (for text)
-2. `cnn-families-and-selection` (for images)
-3. `architecture-design-principles` (for fusion strategy)
+1. [sequence-models-comparison.md](sequence-models-comparison.md) (for text)
+2. [cnn-families-and-selection.md](cnn-families-and-selection.md) (for images)
+3. [architecture-design-principles.md](architecture-design-principles.md) (for fusion strategy)
 
 **Order matters:** Understand individual modalities BEFORE fusion.
 
@@ -299,12 +299,12 @@ These answers determine architecture appropriateness.
 
 | Symptom | Wrong Route | Correct Route | Why |
 |---------|-------------|---------------|-----|
-| "My transformer won't train" | transformer-architecture-deepdive | training-optimization | Training issue, not architecture understanding |
-| "Deploy image classifier" | cnn-families-and-selection | ml-production | Deployment, not selection |
-| "ViT vs ResNet for medical imaging" | transformer-architecture-deepdive | cnn-families-and-selection | Comparative selection, not single architecture detail |
-| "Implement BatchNorm in PyTorch" | normalization-techniques | pytorch-engineering | Implementation, not architecture concept |
-| "GAN won't converge" | generative-model-families | training-optimization | Training stability, not architecture selection |
-| "Which optimizer for CNN" | cnn-families-and-selection | training-optimization | Optimization, not architecture |
+| "My transformer won't train" | [transformer-architecture-deepdive.md](transformer-architecture-deepdive.md) | training-optimization | Training issue, not architecture understanding |
+| "Deploy image classifier" | [cnn-families-and-selection.md](cnn-families-and-selection.md) | ml-production | Deployment, not selection |
+| "ViT vs ResNet for medical imaging" | [transformer-architecture-deepdive.md](transformer-architecture-deepdive.md) | [cnn-families-and-selection.md](cnn-families-and-selection.md) | Comparative selection, not single architecture detail |
+| "Implement BatchNorm in PyTorch" | [normalization-techniques.md](normalization-techniques.md) | pytorch-engineering | Implementation, not architecture concept |
+| "GAN won't converge" | [generative-model-families.md](generative-model-families.md) | training-optimization | Training stability, not architecture selection |
+| "Which optimizer for CNN" | [cnn-families-and-selection.md](cnn-families-and-selection.md) | training-optimization | Optimization, not architecture |
 
 **Rule:** Architecture pack is for CHOOSING and DESIGNING architectures. Training/deployment/implementation are other packs.
 
@@ -349,30 +349,30 @@ Start here: What's your primary goal?
 
 ┌─ SELECT architecture for task
 │  ├─ Data modality?
-│  │  ├─ Images → cnn-families-and-selection
-│  │  ├─ Sequences → sequence-models-comparison
-│  │  ├─ Graphs → graph-neural-networks-basics
-│  │  ├─ Generation → generative-model-families
-│  │  └─ Unknown/Multiple → architecture-design-principles
+│  │  ├─ Images → [cnn-families-and-selection.md](cnn-families-and-selection.md)
+│  │  ├─ Sequences → [sequence-models-comparison.md](sequence-models-comparison.md)
+│  │  ├─ Graphs → [graph-neural-networks-basics.md](graph-neural-networks-basics.md)
+│  │  ├─ Generation → [generative-model-families.md](generative-model-families.md)
+│  │  └─ Unknown/Multiple → [architecture-design-principles.md](architecture-design-principles.md)
 │  └─ Special requirements?
-│     ├─ Deep network (>20 layers) unstable → normalization-techniques (CRITICAL)
-│     ├─ Need attention mechanism → attention-mechanisms-catalog
+│     ├─ Deep network (>20 layers) unstable → [normalization-techniques.md](normalization-techniques.md) (CRITICAL)
+│     ├─ Need attention mechanism → [attention-mechanisms-catalog.md](attention-mechanisms-catalog.md)
 │     └─ None → Proceed with modality-based route
 │
 ├─ UNDERSTAND specific architecture
-│  ├─ Transformers → transformer-architecture-deepdive
-│  ├─ Attention → attention-mechanisms-catalog
-│  ├─ Normalization → normalization-techniques
-│  └─ General principles → architecture-design-principles
+│  ├─ Transformers → [transformer-architecture-deepdive.md](transformer-architecture-deepdive.md)
+│  ├─ Attention → [attention-mechanisms-catalog.md](attention-mechanisms-catalog.md)
+│  ├─ Normalization → [normalization-techniques.md](normalization-techniques.md)
+│  └─ General principles → [architecture-design-principles.md](architecture-design-principles.md)
 │
 ├─ DESIGN custom architecture
-│  └─ architecture-design-principles (start here always)
+│  └─ [architecture-design-principles.md](architecture-design-principles.md) (start here always)
 │
 └─ COMPARE architectures
-   ├─ CNNs (ResNet vs EfficientNet) → cnn-families-and-selection
-   ├─ Sequence models (RNN vs Transformer) → sequence-models-comparison
-   ├─ Generative (GAN vs Diffusion) → generative-model-families
-   └─ General comparison → architecture-design-principles
+   ├─ CNNs (ResNet vs EfficientNet) → [cnn-families-and-selection.md](cnn-families-and-selection.md)
+   ├─ Sequence models (RNN vs Transformer) → [sequence-models-comparison.md](sequence-models-comparison.md)
+   ├─ Generative (GAN vs Diffusion) → [generative-model-families.md](generative-model-families.md)
+   └─ General comparison → [architecture-design-principles.md](architecture-design-principles.md)
 ```
 
 ---
@@ -391,15 +391,15 @@ Start here: What's your primary goal?
    ☐ Interpretability needs?
 
 2. Route Based on Modality
-   ☐ Images → cnn-families-and-selection
-   ☐ Sequences → sequence-models-comparison
-   ☐ Graphs → graph-neural-networks-basics
-   ☐ Generation → generative-model-families
-   ☐ Custom/Unclear → architecture-design-principles
+   ☐ Images → [cnn-families-and-selection.md](cnn-families-and-selection.md)
+   ☐ Sequences → [sequence-models-comparison.md](sequence-models-comparison.md)
+   ☐ Graphs → [graph-neural-networks-basics.md](graph-neural-networks-basics.md)
+   ☐ Generation → [generative-model-families.md](generative-model-families.md)
+   ☐ Custom/Unclear → [architecture-design-principles.md](architecture-design-principles.md)
 
 3. Check for Critical Issues
-   ☐ Deep network unstable? → normalization-techniques FIRST
-   ☐ Need specialized component? → attention-mechanisms-catalog or transformer-architecture-deepdive
+   ☐ Deep network unstable? → [normalization-techniques.md](normalization-techniques.md) FIRST
+   ☐ Need specialized component? → [attention-mechanisms-catalog.md](attention-mechanisms-catalog.md) or [transformer-architecture-deepdive.md](transformer-architecture-deepdive.md)
 
 4. Apply Architecture Skill
    ☐ Follow guidance from routed skill
@@ -476,15 +476,18 @@ If problem involves:
 - ✅ Resist recency bias (latest ≠ best)
 - ✅ Recognize when architecture is the problem (vs training/implementation)
 
-**The 8 architecture skills:**
-1. `cnn-families-and-selection` - Vision tasks
-2. `sequence-models-comparison` - Sequential data
-3. `transformer-architecture-deepdive` - Transformer internals
-4. `attention-mechanisms-catalog` - Attention components
-5. `generative-model-families` - Generation tasks
-6. `graph-neural-networks-basics` - Graph-structured data
-7. `normalization-techniques` - Deep network stability
-8. `architecture-design-principles` - Custom design & fundamentals
+## Neural Architecture Specialist Skills
+
+After routing, load the appropriate specialist skill for detailed guidance:
+
+1. [architecture-design-principles.md](architecture-design-principles.md) - Custom design, architectural best practices, skip connections, network depth fundamentals
+2. [attention-mechanisms-catalog.md](attention-mechanisms-catalog.md) - Self-attention, cross-attention, multi-head attention, attention in CNNs, attention variants comparison
+3. [cnn-families-and-selection.md](cnn-families-and-selection.md) - ResNet, EfficientNet, MobileNet, YOLO, computer vision architecture selection
+4. [generative-model-families.md](generative-model-families.md) - GANs, VAEs, Diffusion models, image generation, style transfer, generative modeling trade-offs
+5. [graph-neural-networks-basics.md](graph-neural-networks-basics.md) - GCN, GAT, node classification, link prediction, graph embeddings, molecular structures
+6. [normalization-techniques.md](normalization-techniques.md) - BatchNorm, LayerNorm, GroupNorm, training stability for deep networks (>20 layers)
+7. [sequence-models-comparison.md](sequence-models-comparison.md) - RNN, LSTM, Transformer, TCN comparison, time series, NLP, sequential data
+8. [transformer-architecture-deepdive.md](transformer-architecture-deepdive.md) - Transformer internals, ViT, BERT, positional encoding, scaling transformers
 
 **Critical principle:** Architecture comes BEFORE training. Get this right first.
 

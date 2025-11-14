@@ -36,9 +36,9 @@ Load this skill when:
 - Cost optimization through model efficiency
 
 **Routes to**:
-- **quantization-for-inference** - Reduce precision (INT8/INT4), speed up inference
-- **model-compression-techniques** - Pruning, distillation, architecture optimization
-- **hardware-optimization-strategies** - GPU/CPU/edge tuning, batch sizing
+- [quantization-for-inference.md](quantization-for-inference.md) - Reduce precision (INT8/INT4), speed up inference
+- [model-compression-techniques.md](model-compression-techniques.md) - Pruning, distillation, architecture optimization
+- [hardware-optimization-strategies.md](hardware-optimization-strategies.md) - GPU/CPU/edge tuning, batch sizing
 
 **Key question to ask**: "Is the MODEL the bottleneck, or is it infrastructure/serving?"
 
@@ -55,9 +55,9 @@ Load this skill when:
 - Scaling concerns (traffic, replicas, autoscaling)
 
 **Routes to**:
-- **model-serving-patterns** - FastAPI, TorchServe, gRPC, ONNX, batching, containerization
-- **deployment-strategies** - A/B testing, canary, shadow mode, rollback procedures
-- **scaling-and-load-balancing** - Horizontal scaling, autoscaling, load balancing, cost optimization
+- [model-serving-patterns.md](model-serving-patterns.md) - FastAPI, TorchServe, gRPC, ONNX, batching, containerization
+- [deployment-strategies.md](deployment-strategies.md) - A/B testing, canary, shadow mode, rollback procedures
+- [scaling-and-load-balancing.md](scaling-and-load-balancing.md) - Horizontal scaling, autoscaling, load balancing, cost optimization
 
 **Key distinction**:
 - Serving patterns = HOW to expose model (API, container, batching)
@@ -77,8 +77,8 @@ Load this skill when:
 - Team collaboration and reproducibility concerns
 
 **Routes to**:
-- **experiment-tracking-and-versioning** - MLflow, Weights & Biases, model registries, reproducibility, lineage
-- **mlops-pipeline-automation** - CI/CD for ML, feature stores, data validation, automated retraining, orchestration
+- [experiment-tracking-and-versioning.md](experiment-tracking-and-versioning.md) - MLflow, Weights & Biases, model registries, reproducibility, lineage
+- [mlops-pipeline-automation.md](mlops-pipeline-automation.md) - CI/CD for ML, feature stores, data validation, automated retraining, orchestration
 
 **Key distinction**:
 - Experiment tracking = Research/development phase (track runs, version models)
@@ -99,8 +99,8 @@ Load this skill when:
 - Root cause analysis for production failures
 
 **Routes to**:
-- **production-monitoring-and-alerting** - Metrics, drift detection, dashboards, alerts, SLAs
-- **production-debugging-techniques** - Error analysis, profiling, rollback procedures, post-mortems
+- [production-monitoring-and-alerting.md](production-monitoring-and-alerting.md) - Metrics, drift detection, dashboards, alerts, SLAs
+- [production-debugging-techniques.md](production-debugging-techniques.md) - Error analysis, profiling, rollback procedures, post-mortems
 
 **Key distinction**:
 - Monitoring = Proactive (set up metrics, alerts, detect issues early)
@@ -285,13 +285,13 @@ If you catch yourself thinking ANY of these, STOP and clarify:
 **Routing**:
 1. Ask: "What's your deployment target and are there performance concerns?"
 2. If "cloud deployment, model is fast enough":
-   - serving-patterns (expose as API)
-   - deployment-strategies (if gradual rollout needed)
-   - production-monitoring-and-alerting (set up observability)
+   - [model-serving-patterns.md](model-serving-patterns.md) (expose as API)
+   - [deployment-strategies.md](deployment-strategies.md) (if gradual rollout needed)
+   - [production-monitoring-and-alerting.md](production-monitoring-and-alerting.md) (set up observability)
 3. If "edge device, model too large":
-   - quantization-for-inference (reduce size first)
-   - model-serving-patterns (edge deployment pattern)
-   - production-monitoring-and-alerting (if possible on edge)
+   - [quantization-for-inference.md](quantization-for-inference.md) (reduce size first)
+   - [model-serving-patterns.md](model-serving-patterns.md) (edge deployment pattern)
+   - [production-monitoring-and-alerting.md](production-monitoring-and-alerting.md) (if possible on edge)
 
 ### Example 2: Optimization Decision
 
@@ -300,14 +300,14 @@ If you catch yourself thinking ANY of these, STOP and clarify:
 **Routing**:
 1. Ask: "Have you profiled to find the bottleneck - is it the model or serving infrastructure?"
 2. If "not profiled yet":
-   - production-debugging-techniques (profile first to diagnose)
+   - [production-debugging-techniques.md](production-debugging-techniques.md) (profile first to diagnose)
    - Then route based on findings
 3. If "model is bottleneck":
-   - hardware-optimization-strategies (check if hardware tuning helps)
-   - If not enough → quantization-for-inference or model-compression-techniques
+   - [hardware-optimization-strategies.md](hardware-optimization-strategies.md) (check if hardware tuning helps)
+   - If not enough → [quantization-for-inference.md](quantization-for-inference.md) or [model-compression-techniques.md](model-compression-techniques.md)
 4. If "infrastructure/batching is bottleneck":
-   - model-serving-patterns (batching strategies)
-   - scaling-and-load-balancing (if traffic-related)
+   - [model-serving-patterns.md](model-serving-patterns.md) (batching strategies)
+   - [scaling-and-load-balancing.md](scaling-and-load-balancing.md) (if traffic-related)
 
 ### Example 3: MLOps Maturity
 
@@ -316,12 +316,12 @@ If you catch yourself thinking ANY of these, STOP and clarify:
 **Routing**:
 1. Ask: "What's the current pain point - can't reproduce experiments, manual deployment, or both?"
 2. If "can't reproduce, need to track experiments":
-   - experiment-tracking-and-versioning
+   - [experiment-tracking-and-versioning.md](experiment-tracking-and-versioning.md)
 3. If "manual deployment is slow":
-   - mlops-pipeline-automation
+   - [mlops-pipeline-automation.md](mlops-pipeline-automation.md)
 4. If "both reproducibility and automation":
-   - experiment-tracking-and-versioning (establish tracking first)
-   - mlops-pipeline-automation (then automate workflow)
+   - [experiment-tracking-and-versioning.md](experiment-tracking-and-versioning.md) (establish tracking first)
+   - [mlops-pipeline-automation.md](mlops-pipeline-automation.md) (then automate workflow)
 
 ---
 
@@ -345,6 +345,23 @@ You've routed correctly when:
 - ✅ Routed to appropriate skill(s) in logical order
 - ✅ Didn't let tool choices (Kubernetes, TorchServe) dictate routing
 - ✅ Recognized multi-concern scenarios and routed to multiple skills
+
+---
+
+## ML Production Specialist Skills Catalog
+
+After routing, load the appropriate specialist skill for detailed guidance:
+
+1. [quantization-for-inference.md](quantization-for-inference.md) - INT8/INT4 quantization, post-training quantization, quantization-aware training, precision reduction for inference speed
+2. [model-compression-techniques.md](model-compression-techniques.md) - Pruning (structured/unstructured), knowledge distillation, architecture optimization, model size reduction
+3. [hardware-optimization-strategies.md](hardware-optimization-strategies.md) - GPU/CPU/edge tuning, batch sizing, memory optimization, hardware-specific acceleration (TensorRT, ONNX Runtime)
+4. [model-serving-patterns.md](model-serving-patterns.md) - FastAPI, TorchServe, gRPC, ONNX, batching strategies, containerization (Docker), REST/gRPC APIs
+5. [deployment-strategies.md](deployment-strategies.md) - A/B testing, canary deployment, shadow mode, gradual rollout, rollback procedures, blue-green deployment
+6. [scaling-and-load-balancing.md](scaling-and-load-balancing.md) - Horizontal scaling, autoscaling, load balancing, traffic management, cost optimization, replica management
+7. [experiment-tracking-and-versioning.md](experiment-tracking-and-versioning.md) - MLflow, Weights & Biases, model registries, experiment reproducibility, model lineage, versioning
+8. [mlops-pipeline-automation.md](mlops-pipeline-automation.md) - CI/CD for ML, feature stores, data validation, automated retraining, orchestration (Airflow, Kubeflow)
+9. [production-monitoring-and-alerting.md](production-monitoring-and-alerting.md) - Metrics tracking, drift detection, dashboards, alerting, SLAs, proactive monitoring
+10. [production-debugging-techniques.md](production-debugging-techniques.md) - Error analysis, production profiling, rollback procedures, post-mortems, root cause analysis
 
 ---
 
