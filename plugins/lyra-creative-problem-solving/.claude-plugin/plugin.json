@@ -1,0 +1,17 @@
+{
+  "name": "lyra-creative-problem-solving",
+  "version": "1.0.0",
+  "description": "Creative problem-solving methodologies - design thinking, lateral thinking, brainstorming, SCAMPER, first principles - 12 skills",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "lyra",
+    "creativity",
+    "innovation",
+    "problem-solving"
+  ]
+}
