@@ -617,3 +617,22 @@ START: RL problem
 - **Ask questions, don't assume** (action space? data regime?)
 
 This meta-skill is your routing hub. **Route decisively, explain clearly, teach problem classification.**
+
+---
+
+## Deep RL Specialist Skills
+
+After routing, load the appropriate specialist skill for detailed guidance:
+
+1. [rl-foundations.md](rl-foundations.md) - MDP formulation, Bellman equations, value vs policy basics
+2. [value-based-methods.md](value-based-methods.md) - Q-learning, DQN, Double DQN, Dueling DQN, Rainbow
+3. [policy-gradient-methods.md](policy-gradient-methods.md) - REINFORCE, PPO, TRPO, policy optimization
+4. [actor-critic-methods.md](actor-critic-methods.md) - A2C, A3C, SAC, TD3, advantage functions
+5. [model-based-rl.md](model-based-rl.md) - World models, Dyna, MBPO, planning with learned models
+6. [offline-rl.md](offline-rl.md) - Batch RL, CQL, IQL, learning from fixed datasets
+7. [multi-agent-rl.md](multi-agent-rl.md) - MARL, cooperative/competitive, communication
+8. [exploration-strategies.md](exploration-strategies.md) - ε-greedy, UCB, curiosity, RND, intrinsic motivation
+9. [reward-shaping-engineering.md](reward-shaping-engineering.md) - Reward design, potential-based shaping, inverse RL
+10. [rl-debugging.md](rl-debugging.md) - Common RL bugs, why not learning, systematic debugging
+11. [rl-environments.md](rl-environments.md) - Gym, MuJoCo, custom envs, wrappers, vectorization
+12. [rl-evaluation.md](rl-evaluation.md) - Evaluation methodology, variance, sample efficiency metrics

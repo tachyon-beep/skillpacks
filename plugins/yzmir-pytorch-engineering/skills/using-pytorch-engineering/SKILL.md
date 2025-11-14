@@ -37,7 +37,7 @@ Load this skill when:
 - "tensor memory leak"
 - "memory consumption increasing"
 
-**Route to**: `tensor-operations-and-memory`
+**Route to**: See [tensor-operations-and-memory.md](tensor-operations-and-memory.md) for memory management and optimization.
 
 **Why**: Memory management is foundational. Must understand tensor lifecycles, efficient operations, and profiling before other optimizations.
 
@@ -58,7 +58,7 @@ Load this skill when:
 - "Model architecture implementation"
 - "Parameter initialization"
 
-**Route to**: `module-design-patterns`
+**Route to**: See [module-design-patterns.md](module-design-patterns.md) for model architecture and nn.Module patterns.
 
 **Why**: Proper module design prevents bugs and enables features like checkpointing, distributed training, and serialization.
 
@@ -80,7 +80,7 @@ Load this skill when:
 - "torch.distributed"
 - "NCCL"
 
-**Route to**: `distributed-training-strategies`
+**Route to**: See [distributed-training-strategies.md](distributed-training-strategies.md) for DDP setup and multi-GPU training.
 
 **Why**: Distributed training has unique setup requirements, synchronization patterns, and pitfalls. Generic advice breaks in distributed settings.
 
@@ -101,14 +101,14 @@ Load this skill when:
 - "Performance optimization"
 - "Speed up training"
 
-**Route to**: `performance-profiling` FIRST
+**Route to**: See [performance-profiling.md](performance-profiling.md) FIRST for systematic bottleneck identification.
 
 **Why**: MUST profile before optimizing. Many "performance" problems are actually data loading or other non-compute bottlenecks. Profile to identify the real bottleneck.
 
 **After profiling**, may route to:
-- `mixed-precision-and-optimization` if compute-bound
-- `tensor-operations-and-memory` if memory-bound
-- `distributed-training-strategies` if need to scale
+- [mixed-precision-and-optimization.md](mixed-precision-and-optimization.md) if compute-bound
+- [tensor-operations-and-memory.md](tensor-operations-and-memory.md) if memory-bound
+- [distributed-training-strategies.md](distributed-training-strategies.md) if need to scale
 
 **Example queries**:
 - "Training is slow, how to speed up?"
@@ -127,7 +127,7 @@ Load this skill when:
 - "AMP"
 - "TF32"
 
-**Route to**: `mixed-precision-and-optimization`
+**Route to**: See [mixed-precision-and-optimization.md](mixed-precision-and-optimization.md) for AMP and numerical stability.
 
 **Why**: Mixed precision requires careful handling of numerical stability, gradient scaling, and operation compatibility.
 
@@ -148,7 +148,7 @@ Load this skill when:
 - "Gradients are NaN"
 - "Model diverging"
 
-**Route to**: `debugging-techniques`
+**Route to**: See [debugging-techniques.md](debugging-techniques.md) for systematic NaN/Inf debugging.
 
 **Why**: NaN/Inf issues require systematic debugging—checking gradients layer by layer, identifying numerical instability sources, and targeted fixes.
 
@@ -169,7 +169,7 @@ Load this skill when:
 - "Save optimizer state"
 - "Load pretrained weights"
 
-**Route to**: `checkpointing-and-reproducibility`
+**Route to**: See [checkpointing-and-reproducibility.md](checkpointing-and-reproducibility.md) for complete state management.
 
 **Why**: Proper checkpointing requires saving ALL state (model, optimizer, scheduler, RNG states). Reproducibility requires deterministic operations and careful seed management.
 
@@ -190,7 +190,7 @@ Load this skill when:
 - "Non-differentiable operation"
 - "Custom CUDA kernel"
 
-**Route to**: `custom-autograd-functions`
+**Route to**: See [custom-autograd-functions.md](custom-autograd-functions.md) for custom backward passes.
 
 **Why**: Custom autograd functions require understanding the autograd engine, proper gradient computation, and numerical stability.
 
@@ -208,23 +208,23 @@ Load this skill when:
 Some scenarios require multiple specialized skills in sequence:
 
 **Distributed training with memory constraints**:
-1. Route to `distributed-training-strategies` (setup)
-2. THEN `tensor-operations-and-memory` (optimize per-GPU memory)
+1. Route to [distributed-training-strategies.md](distributed-training-strategies.md) (setup)
+2. THEN [tensor-operations-and-memory.md](tensor-operations-and-memory.md) (optimize per-GPU memory)
 
 **Performance optimization**:
-1. Route to `performance-profiling` (identify bottleneck)
+1. Route to [performance-profiling.md](performance-profiling.md) (identify bottleneck)
 2. THEN appropriate skill based on bottleneck:
-   - Compute → `mixed-precision-and-optimization`
-   - Memory → `tensor-operations-and-memory`
-   - Scale → `distributed-training-strategies`
+   - Compute → [mixed-precision-and-optimization.md](mixed-precision-and-optimization.md)
+   - Memory → [tensor-operations-and-memory.md](tensor-operations-and-memory.md)
+   - Scale → [distributed-training-strategies.md](distributed-training-strategies.md)
 
 **Custom module with proper patterns**:
-1. Route to `module-design-patterns` (structure)
-2. THEN `custom-autograd-functions` if custom backward needed
+1. Route to [module-design-patterns.md](module-design-patterns.md) (structure)
+2. THEN [custom-autograd-functions.md](custom-autograd-functions.md) if custom backward needed
 
 **Training instability with mixed precision**:
-1. Route to `debugging-techniques` (diagnose root cause)
-2. May need `mixed-precision-and-optimization` for gradient scaling
+1. Route to [debugging-techniques.md](debugging-techniques.md) (diagnose root cause)
+2. May need [mixed-precision-and-optimization.md](mixed-precision-and-optimization.md) for gradient scaling
 
 **Load in order of execution**: Setup before optimization, diagnosis before fixes, structure before customization.
 
@@ -267,11 +267,11 @@ When symptom unclear, ASK ONE clarifying question:
 ## Red Flags - Stop and Route
 
 If you catch yourself about to:
-- Suggest reducing batch size → Route to `tensor-operations-and-memory` for systematic approach
-- Show basic DDP code → Route to `distributed-training-strategies` for complete setup
-- Guess at optimizations → Route to `performance-profiling` to measure first
-- List possible NaN fixes → Route to `debugging-techniques` for diagnostic methodology
-- Show torch.save example → Route to `checkpointing-and-reproducibility` for complete solution
+- Suggest reducing batch size → Route to [tensor-operations-and-memory.md](tensor-operations-and-memory.md) for systematic approach
+- Show basic DDP code → Route to [distributed-training-strategies.md](distributed-training-strategies.md) for complete setup
+- Guess at optimizations → Route to [performance-profiling.md](performance-profiling.md) to measure first
+- List possible NaN fixes → Route to [debugging-techniques.md](debugging-techniques.md) for diagnostic methodology
+- Show torch.save example → Route to [checkpointing-and-reproducibility.md](checkpointing-and-reproducibility.md) for complete solution
 
 **All of these mean: You're about to give incomplete advice. Route to the specialist instead.**
 
@@ -356,20 +356,18 @@ Before giving ANY PyTorch advice, ask yourself:
 
 ---
 
-## Skill Catalog
+## PyTorch Engineering Specialist Skills
 
-**Complete PyTorch engineering toolkit**:
+After routing, load the appropriate specialist skill for detailed guidance:
 
-1. **tensor-operations-and-memory** - Memory management, efficient operations, profiling
-2. **module-design-patterns** - Model structure, nn.Module best practices, initialization
-3. **distributed-training-strategies** - DDP setup, multi-node, synchronization patterns
-4. **mixed-precision-and-optimization** - AMP, FP16/BF16, gradient scaling, numerical stability
-5. **performance-profiling** - PyTorch profiler, bottleneck identification, optimization strategies
-6. **debugging-techniques** - NaN/Inf debugging, gradient checking, systematic troubleshooting
-7. **checkpointing-and-reproducibility** - Complete checkpointing, RNG state, determinism
-8. **custom-autograd-functions** - torch.autograd.Function, custom gradients, efficient backward
-
-**Route based on symptoms, not guesses.**
+1. [tensor-operations-and-memory.md](tensor-operations-and-memory.md) - Memory management, efficient operations, profiling
+2. [module-design-patterns.md](module-design-patterns.md) - Model structure, nn.Module best practices, initialization
+3. [distributed-training-strategies.md](distributed-training-strategies.md) - DDP setup, multi-node, synchronization patterns
+4. [mixed-precision-and-optimization.md](mixed-precision-and-optimization.md) - AMP, FP16/BF16, gradient scaling, numerical stability
+5. [performance-profiling.md](performance-profiling.md) - PyTorch profiler, bottleneck identification, optimization strategies
+6. [debugging-techniques.md](debugging-techniques.md) - NaN/Inf debugging, gradient checking, systematic troubleshooting
+7. [checkpointing-and-reproducibility.md](checkpointing-and-reproducibility.md) - Complete checkpointing, RNG state, determinism
+8. [custom-autograd-functions.md](custom-autograd-functions.md) - torch.autograd.Function, custom gradients, efficient backward
 
 ---
 
