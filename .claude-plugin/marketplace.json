@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, game development, security, documentation, and UX skills for Claude Code - 17 complete skillpacks with 144 TDD-validated skills",
-    "version": "1.7.0",
+    "description": "Professional AI/ML, game development, security, documentation, and UX skills for Claude Code - 17 complete skillpacks with 145 TDD-validated skills",
+    "version": "1.7.1",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -86,8 +86,8 @@
     {
       "name": "muna-technical-writer",
       "source": "./plugins/muna-technical-writer",
-      "description": "Documentation structure, clarity, security-aware docs - 9 technical writing skills",
-      "version": "1.0.1",
+      "description": "Documentation structure, clarity, security-aware docs, skill creation - 10 technical writing skills",
+      "version": "1.1.0",
       "keywords": [
         "muna",
         "technical",
