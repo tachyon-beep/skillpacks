@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, game development, security, documentation, and UX skills for Claude Code - 16 complete skillpacks with 138 TDD-validated skills",
-    "version": "1.6.1",
+    "description": "Professional AI/ML, game development, security, documentation, and UX skills for Claude Code - 17 complete skillpacks with 144 TDD-validated skills",
+    "version": "1.7.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -186,6 +186,19 @@
         "yzmir",
         "simulation",
         "foundations"
+      ],
+      "category": "ai-ml"
+    },
+    {
+      "name": "yzmir-systems-thinking",
+      "source": "./plugins/yzmir-systems-thinking",
+      "description": "Systems thinking methodology - patterns, leverage points, archetypes, modeling, visualization - 6 TDD-validated skills",
+      "version": "1.0.0",
+      "keywords": [
+        "yzmir",
+        "systems-thinking",
+        "systems",
+        "modeling"
       ],
       "category": "ai-ml"
     },
