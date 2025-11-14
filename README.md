@@ -2,7 +2,7 @@
 
 ## Professional AI/ML, game development, security, documentation, and UX skills for Claude Code**
 
-15 complete skillpacks • 135 skills • Install what you need
+18 complete skillpacks • 147 skills • Install what you need
 
 ---
 
@@ -53,7 +53,7 @@ cd skillpacks
 - Security-aware docs, incident response, ITIL/governance
 - `/plugin install muna-technical-writer`
 
-### 🔬 Python Engineering (Axiom) - 2 Packs
+### 🔬 Python Engineering (Axiom) - 4 Packs
 
 **axiom-python-engineering** - 10 skills
 
@@ -69,6 +69,21 @@ cd skillpacks
 - Subsystem catalog generation with validation gates
 - Stakeholder-ready architecture documentation
 - `/plugin install axiom-system-archaeologist`
+
+**axiom-system-architect** - 4 skills
+
+- TDD-validated architectural assessment with professional discipline
+- Prevents diplomatic softening, analysis paralysis, security compromise
+- Router + 3 specialist skills for technical debt and architecture review
+- `/plugin install axiom-system-architect`
+
+**axiom-web-backend** - 12 skills
+
+- FastAPI, Django, Express.js development patterns
+- REST/GraphQL API design, microservices architecture
+- Authentication, database integration, message queues
+- API testing, documentation, production deployment
+- `/plugin install axiom-web-backend`
 
 ### 🤖 AI/ML Engineering (Yzmir) - 7 Packs
 
@@ -148,6 +163,17 @@ Claude will guide you to the right specialized skill:
 I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO for continuous character control
 ```
 
+### Web Backend Development
+
+```bash
+/plugin install axiom-web-backend
+/web-backend  # Use slash command to load router
+```
+
+```plaintext
+I'm using axiom/web-backend/fastapi-development to build production-ready async APIs with dependency injection
+```
+
 ### Game Development
 
 ```bash
@@ -198,20 +224,21 @@ Then Claude routes you to specialized analysis skills for C4 diagrams, subsystem
 
 ### Slash Commands (Recommended)
 
-All 15 router skills (`using-X` skills) are available as **slash commands** to avoid skill context limits:
+All 18 router skills (`using-X` skills) are available as **slash commands** to avoid skill context limits:
 
 ```bash
 /ai-engineering          # Route to AI/ML specialized packs
 /deep-rl                # Route to RL algorithm skills
 /system-archaeologist   # Route to architecture analysis
 /python-engineering     # Route to Python skills
+/web-backend           # Route to web backend skills
 /ux-designer           # Route to UX design skills
-# ... and 10 more
+# ... and 12 more
 ```
 
 **Why slash commands?** Router skills are comprehensive guides that exceeded the context budget for automatic skill discovery. Slash commands provide explicit, user-controlled invocation without context limits.
 
-See [`.claude/SLASH_COMMANDS.md`](.claude/SLASH_COMMANDS.md) for the complete list of all 15 router commands.
+See [`.claude/SLASH_COMMANDS.md`](.claude/SLASH_COMMANDS.md) for the complete list of all 18 router commands.
 
 ### Direct Skill Invocation
 
@@ -231,8 +258,8 @@ I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO
 
 ## What's Inside
 
-- **135 Skills**: Production-ready guidance across 5 domains
-- **15 Packs**: Install only what you need
+- **147 Skills**: Production-ready guidance across 6 domains
+- **18 Packs**: Install only what you need
 - **Per-Pack Plugins**: Independent versioning, clean dependencies
 - **Complete Coverage**: Design → Foundation → Training → Production
 
@@ -244,14 +271,16 @@ I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO
 skillpacks/
 ├── .claude-plugin/
 │   └── marketplace.json       # Marketplace catalog
-├── plugins/                   # All 15 skillpacks
+├── plugins/                   # All 18 skillpacks
 │   ├── axiom-python-engineering/
 │   ├── axiom-system-archaeologist/
+│   ├── axiom-system-architect/
+│   ├── axiom-web-backend/
 │   ├── ordis-security-architect/
 │   ├── muna-technical-writer/
 │   ├── yzmir-deep-rl/
 │   ├── lyra-ux-designer/
-│   └── ... (9 more)
+│   └── ... (10 more)
 └── source/                    # Original structure (archived)
 ```
 
