@@ -39,6 +39,9 @@ All router skills from the 15 plugins are now available as slash commands:
 - **`/ml-production`** - Routes to ML deployment and production
 - **`/simulation-foundations`** - Routes to simulation fundamentals
 
+### Meta Skills (Maintenance)
+- **`/skill-audit`** - Systematic TDD-based skill auditing to verify skills remain fit-for-purpose
+
 ## Usage
 
 Simply type the slash command in Claude Code to load the router skill:
@@ -68,6 +71,7 @@ The router will then guide you to the appropriate specialized skill for your tas
 | yzmir-pytorch-engineering | using-pytorch-engineering | /pytorch-engineering |
 | yzmir-simulation-foundations | using-simulation-foundations | /simulation-foundations |
 | yzmir-training-optimization | using-training-optimization | /training-optimization |
+| meta-skill-maintenance | skill-audit | /skill-audit |
 
 ## Implementation Details
 
