@@ -11,6 +11,8 @@ description: Use when implementing feature flags, canary deployments, shadow tra
 
 **Rule:** Testing in production is safe when you control exposure and can roll back instantly.
 
+**Regulated industries (healthcare, finance, government):** Production testing is still possible but requires additional controls - compliance review before experiments, audit trails for flag changes, avoiding PHI/PII in logs, Business Associate Agreements for third-party tools, and restricted techniques (shadow traffic may create prohibited data copies). Consult compliance team before first production test.
+
 ## Technique Selection Decision Tree
 
 | Your Goal | Risk Tolerance | Infrastructure Needed | Use |
