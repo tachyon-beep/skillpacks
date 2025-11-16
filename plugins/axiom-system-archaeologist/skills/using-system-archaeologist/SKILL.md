@@ -321,11 +321,11 @@ If you catch yourself thinking ANY of these, STOP:
 ## Documentation Contracts
 
 See individual skill files for detailed contracts:
-- `01-discovery-findings.md` contract → `analyzing-unknown-codebases` skill
-- `02-subsystem-catalog.md` contract → `analyzing-unknown-codebases` skill
-- `03-diagrams.md` contract → `generating-architecture-diagrams` skill
-- `04-final-report.md` contract → `documenting-system-architecture` skill
-- Validation protocol → `validating-architecture-analysis` skill
+- `01-discovery-findings.md` contract → [analyzing-unknown-codebases.md](analyzing-unknown-codebases.md)
+- `02-subsystem-catalog.md` contract → [analyzing-unknown-codebases.md](analyzing-unknown-codebases.md)
+- `03-diagrams.md` contract → [generating-architecture-diagrams.md](generating-architecture-diagrams.md)
+- `04-final-report.md` contract → [documenting-system-architecture.md](documenting-system-architecture.md)
+- Validation protocol → [validating-architecture-analysis.md](validating-architecture-analysis.md)
 
 ## Workflow Summary
 
@@ -382,3 +382,14 @@ See individual skill files for detailed contracts:
 
 **❌ Complete refusal under pressure**
 "I can't do this properly in 3 hours, so I won't do it" (Should: Provide scoped alternative)
+
+---
+
+## System Archaeologist Specialist Skills
+
+After routing, load the appropriate specialist skill for detailed guidance:
+
+1. [analyzing-unknown-codebases.md](analyzing-unknown-codebases.md) - Systematic codebase exploration, subsystem identification, confidence-based analysis
+2. [generating-architecture-diagrams.md](generating-architecture-diagrams.md) - C4 diagrams, abstraction strategies, notation conventions
+3. [documenting-system-architecture.md](documenting-system-architecture.md) - Synthesis of catalogs and diagrams into comprehensive reports
+4. [validating-architecture-analysis.md](validating-architecture-analysis.md) - Contract validation, consistency checks, quality gates

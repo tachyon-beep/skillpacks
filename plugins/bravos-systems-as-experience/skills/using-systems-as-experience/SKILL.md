@@ -608,4 +608,19 @@ bravos/systems-as-experience/
 
 ---
 
+## Systems as Experience Specialist Skills Catalog
+
+After routing, load the appropriate specialist skill for detailed guidance:
+
+1. [emergent-gameplay-design.md](emergent-gameplay-design.md) - FOUNDATIONAL ⭐: Orthogonal systems, emergence, simulation over scripting, player creativity
+2. [sandbox-design-patterns.md](sandbox-design-patterns.md) - Open worlds, physics sandboxes, creative tools, player agency, freedom within constraints
+3. [strategic-depth-from-systems.md](strategic-depth-from-systems.md) - Build space analysis, possibility space, strategic decision-making, mastery through systems
+4. [optimization-as-play.md](optimization-as-play.md) - Factorio-style optimization loops, efficiency challenges, min-maxing as gameplay
+5. [discovery-through-experimentation.md](discovery-through-experimentation.md) - Hidden mechanics, experimental learning, eureka moments, knowledge as progression
+6. [player-driven-narratives.md](player-driven-narratives.md) - Emergent stories, systemic consequences, player agency in narrative, environmental storytelling
+7. [modding-and-extensibility.md](modding-and-extensibility.md) - Mod support, extensible systems, community content, longevity through modding
+8. [community-meta-gaming.md](community-meta-gaming.md) - Community-driven gameplay, wikis, theorycrafting, shared knowledge ecosystems
+
+---
+
 **Go build systems that surprise you.**

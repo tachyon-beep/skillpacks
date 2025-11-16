@@ -31,12 +31,12 @@ Load this skill when:
 
 **Symptoms**: "What is...", "Explain...", "Teach me about...", "How does X work in UX?"
 
-**Route to**: `lyra/ux-designer/ux-fundamentals`
+**Route to**: [ux-fundamentals.md](ux-fundamentals.md)
 
 **Examples**:
-- "What is information architecture?" → ux-fundamentals
-- "Explain visual hierarchy" → ux-fundamentals
-- "How do I think about accessibility?" → ux-fundamentals
+- "What is information architecture?" → [ux-fundamentals.md](ux-fundamentals.md)
+- "Explain visual hierarchy" → [ux-fundamentals.md](ux-fundamentals.md)
+- "How do I think about accessibility?" → [ux-fundamentals.md](ux-fundamentals.md)
 
 ---
 
@@ -47,21 +47,21 @@ Load this skill when:
 **Route to**: Relevant competency skills based on critique focus
 
 **General Review** (no specific focus):
-- `lyra/ux-designer/visual-design-foundations` (visual hierarchy, color, typography)
-- `lyra/ux-designer/information-architecture` (content organization, navigation)
-- `lyra/ux-designer/accessibility-and-inclusive-design` (WCAG, inclusive design)
+- [visual-design-foundations.md](visual-design-foundations.md) (visual hierarchy, color, typography)
+- [information-architecture.md](information-architecture.md) (content organization, navigation)
+- [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md) (WCAG, inclusive design)
 
 **Specific Focus**:
-- Visual issues (color, contrast, hierarchy) → `visual-design-foundations`
-- Navigation/findability issues → `information-architecture`
-- Interaction feedback, touch targets → `interaction-design-patterns`
-- Accessibility concerns → `accessibility-and-inclusive-design`
+- Visual issues (color, contrast, hierarchy) → [visual-design-foundations.md](visual-design-foundations.md)
+- Navigation/findability issues → [information-architecture.md](information-architecture.md)
+- Interaction feedback, touch targets → [interaction-design-patterns.md](interaction-design-patterns.md)
+- Accessibility concerns → [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md)
 
 **Add platform extension** if design is platform-specific:
-- Mobile app → Add `mobile-design-patterns`
-- Web dashboard → Add `web-application-design`
-- Desktop software → Add `desktop-software-design`
-- Game interface → Add `game-ui-design`
+- Mobile app → Add [mobile-design-patterns.md](mobile-design-patterns.md)
+- Web dashboard → Add [web-application-design.md](web-application-design.md)
+- Desktop software → Add [desktop-software-design.md](desktop-software-design.md)
+- Game interface → Add [game-ui-design.md](game-ui-design.md)
 
 ---
 
@@ -72,19 +72,19 @@ Load this skill when:
 **Route to**: Competency skills + platform extension
 
 **Standard Web/Mobile Feature**:
-1. `lyra/ux-designer/visual-design-foundations` (layout, hierarchy, color)
-2. `lyra/ux-designer/interaction-design-patterns` (buttons, feedback, states)
+1. [visual-design-foundations.md](visual-design-foundations.md) (layout, hierarchy, color)
+2. [interaction-design-patterns.md](interaction-design-patterns.md) (buttons, feedback, states)
 3. Platform-specific:
-   - Mobile → `mobile-design-patterns`
-   - Web app → `web-application-design`
+   - Mobile → [mobile-design-patterns.md](mobile-design-patterns.md)
+   - Web app → [web-application-design.md](web-application-design.md)
 
 **Complex Navigation/IA**:
-1. `lyra/ux-designer/information-architecture` (content structure, nav systems)
-2. `lyra/ux-designer/visual-design-foundations` (visual hierarchy)
+1. [information-architecture.md](information-architecture.md) (content structure, nav systems)
+2. [visual-design-foundations.md](visual-design-foundations.md) (visual hierarchy)
 3. Platform extension as needed
 
 **Research Phase** (early discovery):
-1. `lyra/ux-designer/user-research-and-validation` (understand users first)
+1. [user-research-and-validation.md](user-research-and-validation.md) (understand users first)
 2. Then return to design skills once research complete
 
 ---
@@ -95,9 +95,9 @@ Load this skill when:
 
 **Symptoms**: "Colors don't work", "Typography feels off", "Hierarchy unclear", "Layout cramped"
 
-**Route to**: `lyra/ux-designer/visual-design-foundations`
+**Route to**: [visual-design-foundations.md](visual-design-foundations.md)
 
-**Add**: `accessibility-and-inclusive-design` if contrast/readability concerns
+**Add**: [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md) if contrast/readability concerns
 
 ---
 
@@ -105,7 +105,7 @@ Load this skill when:
 
 **Symptoms**: "Users can't find features", "Navigation confusing", "Menu structure", "Content organization"
 
-**Route to**: `lyra/ux-designer/information-architecture`
+**Route to**: [information-architecture.md](information-architecture.md)
 
 **Add**: Platform extension for platform-specific nav patterns
 
@@ -115,7 +115,7 @@ Load this skill when:
 
 **Symptoms**: "Button states unclear", "No loading feedback", "Micro-interactions", "Touch targets too small"
 
-**Route to**: `lyra/ux-designer/interaction-design-patterns`
+**Route to**: [interaction-design-patterns.md](interaction-design-patterns.md)
 
 **Add**: Platform extension for platform-specific interaction conventions
 
@@ -125,7 +125,7 @@ Load this skill when:
 
 **Symptoms**: "WCAG compliance", "Accessibility audit", "Colorblind-safe", "Keyboard navigation", "Screen reader"
 
-**Route to**: `lyra/ux-designer/accessibility-and-inclusive-design`
+**Route to**: [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md)
 
 **Note**: This skill should be referenced by all other design decisions (accessibility is universal)
 
@@ -135,7 +135,7 @@ Load this skill when:
 
 **Symptoms**: "Understand users", "User interviews", "Usability testing", "Mental models", "Journey mapping"
 
-**Route to**: `lyra/ux-designer/user-research-and-validation`
+**Route to**: [user-research-and-validation.md](user-research-and-validation.md)
 
 **Add**: Other skills once research informs design direction
 
@@ -149,7 +149,7 @@ Load this skill when:
 
 **Route to**:
 - Core competency skills (visual, IA, interaction) as needed
-- **Always add**: `lyra/ux-designer/mobile-design-patterns`
+- **Always add**: [mobile-design-patterns.md](mobile-design-patterns.md)
 
 **Mobile-Specific Concerns**:
 - Touch targets (44x44pt iOS, 48x48dp Android)
@@ -165,7 +165,7 @@ Load this skill when:
 
 **Route to**:
 - Core competency skills as needed
-- **Always add**: `lyra/ux-designer/web-application-design`
+- **Always add**: [web-application-design.md](web-application-design.md)
 
 **Web-Specific Concerns**:
 - Responsive breakpoints
@@ -181,7 +181,7 @@ Load this skill when:
 
 **Route to**:
 - Core competency skills as needed
-- **Always add**: `lyra/ux-designer/desktop-software-design`
+- **Always add**: [desktop-software-design.md](desktop-software-design.md)
 
 **Desktop-Specific Concerns**:
 - Window management (multi-window, panels)
@@ -197,7 +197,7 @@ Load this skill when:
 
 **Route to**:
 - Core competency skills as needed
-- **Always add**: `lyra/ux-designer/game-ui-design`
+- **Always add**: [game-ui-design.md](game-ui-design.md)
 
 **Game-Specific Concerns**:
 - Visibility vs immersion (diegetic UI)
@@ -212,29 +212,29 @@ Load this skill when:
 ### Complete Feature Design (Mobile Login)
 
 **Load in order**:
-1. `visual-design-foundations` (layout, button hierarchy)
-2. `interaction-design-patterns` (form feedback, button states)
-3. `accessibility-and-inclusive-design` (form labels, contrast)
-4. `mobile-design-patterns` (touch targets, platform conventions)
+1. [visual-design-foundations.md](visual-design-foundations.md) (layout, button hierarchy)
+2. [interaction-design-patterns.md](interaction-design-patterns.md) (form feedback, button states)
+3. [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md) (form labels, contrast)
+4. [mobile-design-patterns.md](mobile-design-patterns.md) (touch targets, platform conventions)
 
 ---
 
 ### Dashboard Redesign (Web)
 
 **Load in order**:
-1. `information-architecture` (organize data, navigation)
-2. `visual-design-foundations` (hierarchy, chart design)
-3. `web-application-design` (responsive, data display patterns)
-4. `accessibility-and-inclusive-design` (data table accessibility)
+1. [information-architecture.md](information-architecture.md) (organize data, navigation)
+2. [visual-design-foundations.md](visual-design-foundations.md) (hierarchy, chart design)
+3. [web-application-design.md](web-application-design.md) (responsive, data display patterns)
+4. [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md) (data table accessibility)
 
 ---
 
 ### Game HUD Evaluation
 
 **Load in order**:
-1. `visual-design-foundations` (readability, contrast)
-2. `game-ui-design` (immersion, performance, input method)
-3. `accessibility-and-inclusive-design` (colorblind-safe indicators)
+1. [visual-design-foundations.md](visual-design-foundations.md) (readability, contrast)
+2. [game-ui-design.md](game-ui-design.md) (immersion, performance, input method)
+3. [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md) (colorblind-safe indicators)
 
 ---
 
@@ -293,7 +293,7 @@ User Request
 ## Common Patterns
 
 ### Pattern 1: "I need general UX advice"
-**Load**: `ux-fundamentals` (teaches principles)
+**Load**: [ux-fundamentals.md](ux-fundamentals.md) (teaches principles)
 
 ### Pattern 2: "Critique my [platform] design"
 **Load**: visual-design + IA + accessibility + [platform-extension]
@@ -302,11 +302,11 @@ User Request
 **Load**: Relevant competencies + [platform-extension]
 
 ### Pattern 4: "Is this accessible?"
-**Load**: `accessibility-and-inclusive-design` (primary)
+**Load**: [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md) (primary)
 **Reference**: visual-design (contrast), interaction-design (keyboard nav)
 
 ### Pattern 5: "How do users navigate this?"
-**Load**: `information-architecture` (primary)
+**Load**: [information-architecture.md](information-architecture.md) (primary)
 **Add**: user-research-and-validation (if testing/validation needed)
 
 ---
@@ -321,19 +321,20 @@ User Request
 
 ---
 
-## Related Skills
+## UX Designer Specialist Skills Catalog
 
-**All Lyra UX Designer skills**:
-- `lyra/ux-designer/ux-fundamentals` - Teaching and principles
-- `lyra/ux-designer/visual-design-foundations` - Color, typography, hierarchy
-- `lyra/ux-designer/information-architecture` - Navigation, content organization
-- `lyra/ux-designer/interaction-design-patterns` - Feedback, micro-interactions
-- `lyra/ux-designer/accessibility-and-inclusive-design` - Inclusive design, WCAG
-- `lyra/ux-designer/user-research-and-validation` - Research methods, testing
-- `lyra/ux-designer/mobile-design-patterns` - iOS/Android patterns
-- `lyra/ux-designer/web-application-design` - Web app patterns
-- `lyra/ux-designer/desktop-software-design` - Desktop app patterns
-- `lyra/ux-designer/game-ui-design` - Game interface patterns
+After routing, load the appropriate specialist skill for detailed guidance:
+
+1. [ux-fundamentals.md](ux-fundamentals.md) - Core UX principles, teaching foundational concepts, design thinking
+2. [visual-design-foundations.md](visual-design-foundations.md) - Color theory, typography, visual hierarchy, layout, contrast
+3. [information-architecture.md](information-architecture.md) - Navigation systems, content organization, findability, menu structure
+4. [interaction-design-patterns.md](interaction-design-patterns.md) - Button states, feedback patterns, micro-interactions, touch targets
+5. [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md) - WCAG compliance, inclusive design, colorblind-safe, screen readers, keyboard navigation
+6. [user-research-and-validation.md](user-research-and-validation.md) - User interviews, usability testing, mental models, journey mapping, research methods
+7. [mobile-design-patterns.md](mobile-design-patterns.md) - iOS/Android patterns, touch gestures, platform conventions, thumb zones
+8. [web-application-design.md](web-application-design.md) - Responsive design, dashboards, data visualization, SaaS patterns, keyboard shortcuts
+9. [desktop-software-design.md](desktop-software-design.md) - Multi-window management, keyboard-first workflows, power-user features, workspace customization
+10. [game-ui-design.md](game-ui-design.md) - HUD design, diegetic UI, controller navigation, immersion vs visibility
 
 **Cross-faction**:
 - `muna/technical-writer/*` - Documentation UX and microcopy

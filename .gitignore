@@ -1,7 +1,38 @@
 # Worktree directories
 .worktrees/
 
-# TDD test artifacts
-docs/arch-analysis-*/
+# Router skills (phased out - use slash commands in .claude/commands/)
+convert-routers-to-commands.sh
+
+# TDD test artifacts and planning docs
+docs/
 ARCHITECTURE*.md
 temp/
+**/test-scenarios.md
+**/baseline-results.md
+**/green-results.md
+**/refactor-results.md
+**/*-results.md
+**/approach-summary.md
+**/02-subsystem-catalog.md
+TDD-METHODOLOGY.md
+PLUGIN-SUMMARY.md
+plugins/.claude/settings.local.json
+
+# Python cache and build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.mypy_cache/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store

@@ -64,7 +64,7 @@ Before routing, if query contains ANY of these ambiguous patterns, ASK ONE clari
 
 **Symptoms**: "PyTorch memory error", "distributed training", "GPU utilization", "tensor operations", "CUDA out of memory", "DataLoader", "torch.*"
 
-**Route to**: `yzmir/pytorch-engineering/using-pytorch-engineering`
+**Route to**: Load the `yzmir-pytorch-engineering` plugin's router skill
 
 **Why**: Foundation issues need foundational solutions. Don't jump to algorithms when infrastructure broken.
 
@@ -76,7 +76,7 @@ Before routing, if query contains ANY of these ambiguous patterns, ASK ONE clari
 
 **Symptoms**: "NaN losses", "won't converge", "training unstable", "need to tune hyperparameters", "loss not decreasing", "gradients", "learning rate"
 
-**Route to**: `yzmir/training-optimization/using-training-optimization`
+**Route to**: Load the `yzmir-training-optimization` plugin's router skill
 
 **Why**: Training problems are universal across all model types. Debug training before assuming algorithm issue.
 
@@ -88,7 +88,7 @@ Before routing, if query contains ANY of these ambiguous patterns, ASK ONE clari
 
 **Symptoms**: "RL agent", "policy", "reward", "environment", "Atari", "robotics control", "MDP", "Q-learning", "play game", "sequential decisions", "exploration"
 
-**Route to**: `yzmir/deep-rl/using-deep-rl`
+**Route to**: Load the `yzmir-deep-rl` plugin's router skill
 
 **Why**: RL is distinct domain with specialized techniques.
 
@@ -100,7 +100,7 @@ Before routing, if query contains ANY of these ambiguous patterns, ASK ONE clari
 
 **Symptoms**: "LLM", "language model", "transformer for text", "fine-tune", "RLHF", "LoRA", "prompt engineering", "GPT", "BERT", "instruction tuning", "chatbot fine-tuning"
 
-**Route to**: `yzmir/llm-specialist/using-llm-specialist`
+**Route to**: Load the `yzmir-llm-specialist` plugin's router skill
 
 **Why**: Modern LLM techniques are specialized (LoRA, RLHF, quantization, etc.).
 
@@ -112,7 +112,7 @@ Before routing, if query contains ANY of these ambiguous patterns, ASK ONE clari
 
 **Symptoms**: "which architecture", "CNN vs transformer", "what model to use", "architecture for X task", "model selection", "attention vs convolution"
 
-**Route to**: `yzmir/neural-architectures/using-neural-architectures`
+**Route to**: Load the `yzmir-neural-architectures` plugin's router skill
 
 **Why**: Architecture decisions come before training decisions.
 
@@ -124,7 +124,7 @@ Before routing, if query contains ANY of these ambiguous patterns, ASK ONE clari
 
 **Symptoms**: "deploy model", "serving", "quantization", "production", "inference optimization", "MLOps", "latency", "throughput", "edge device", "mobile deployment"
 
-**Route to**: `yzmir/ml-production/using-ml-production`
+**Route to**: Load the `yzmir-ml-production` plugin's router skill
 
 **Why**: Production has unique constraints (latency, throughput, hardware).
 
@@ -623,3 +623,18 @@ When testing, verify:
 ---
 
 **Remember: This skill's job is routing, not solving. Route correctly under all pressures, let domain skills do their job.**
+
+---
+
+## AI Engineering Plugin Router Catalog
+
+This meta-router directs you to the appropriate Yzmir AI/ML plugin based on problem type:
+
+1. **yzmir-pytorch-engineering** - PyTorch framework issues: CUDA, memory, distributed training, tensor operations, GPU utilization
+2. **yzmir-training-optimization** - Training problems: NaN losses, convergence, instability, hyperparameters, gradient issues, learning rate
+3. **yzmir-deep-rl** - Reinforcement learning: Agents, policies, rewards, environments, game playing, sequential decisions, MDP
+4. **yzmir-llm-specialist** - Large language models: Fine-tuning, RLHF, LoRA, prompt engineering, instruction tuning, transformer text models
+5. **yzmir-neural-architectures** - Architecture selection: CNN vs transformer, model selection, architecture design for specific tasks
+6. **yzmir-ml-production** - Production deployment: Serving, quantization, inference optimization, MLOps, latency, edge/mobile deployment
+
+**Note**: Load the appropriate plugin's router skill, which will then route to specific specialist skills within that domain.

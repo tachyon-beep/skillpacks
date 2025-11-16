@@ -430,22 +430,20 @@ Before giving ANY training advice or routing, ask yourself:
 
 ---
 
-## Skill Catalog
+## Training Optimization Specialist Skills
 
-**Complete training-optimization toolkit:**
+After routing, load the appropriate specialist skill for detailed guidance:
 
-1. **optimization-algorithms** - Optimizer selection (SGD, Adam, AdamW, momentum), hyperparameter tuning, optimizer comparison
-2. **learning-rate-scheduling** - LR schedulers (step, cosine, exponential), warmup strategies, cyclical learning rates
-3. **loss-functions-and-objectives** - Custom losses, multi-task learning, weighted objectives, numerical stability
-4. **gradient-management** - Gradient clipping, accumulation, scaling, vanishing/exploding gradient diagnosis
-5. **batch-size-and-memory-tradeoffs** - Batch size effects on convergence, gradient accumulation, memory optimization
-6. **data-augmentation-strategies** - Augmentation techniques (geometric, color, mixing), policy design, AutoAugment
-7. **overfitting-prevention** - Regularization (L1/L2, dropout, weight decay), early stopping, generalization techniques
-8. **training-loop-architecture** - Training loop design, monitoring, logging, checkpointing integration, callbacks
-9. **hyperparameter-tuning** - Search strategies (grid, random, Bayesian), AutoML, Optuna, Ray Tune
-10. **experiment-tracking** - MLflow, Weights & Biases, TensorBoard, Neptune, run comparison
-
-**Route based on symptoms and diagnostic questions, not guesses.**
+1. [optimization-algorithms.md](optimization-algorithms.md) - Optimizer selection (SGD, Adam, AdamW, momentum), hyperparameter tuning, optimizer comparison
+2. [learning-rate-scheduling.md](learning-rate-scheduling.md) - LR schedulers (step, cosine, exponential), warmup strategies, cyclical learning rates
+3. [loss-functions-and-objectives.md](loss-functions-and-objectives.md) - Custom losses, multi-task learning, weighted objectives, numerical stability
+4. [gradient-management.md](gradient-management.md) - Gradient clipping, accumulation, scaling, vanishing/exploding gradient diagnosis
+5. [batch-size-and-memory-tradeoffs.md](batch-size-and-memory-tradeoffs.md) - Batch size effects on convergence, gradient accumulation, memory optimization
+6. [data-augmentation-strategies.md](data-augmentation-strategies.md) - Augmentation techniques (geometric, color, mixing), policy design, AutoAugment
+7. [overfitting-prevention.md](overfitting-prevention.md) - Regularization (L1/L2, dropout, weight decay), early stopping, generalization techniques
+8. [training-loop-architecture.md](training-loop-architecture.md) - Training loop design, monitoring, logging, checkpointing integration, callbacks
+9. [hyperparameter-tuning.md](hyperparameter-tuning.md) - Search strategies (grid, random, Bayesian), AutoML, Optuna, Ray Tune
+10. [experiment-tracking.md](experiment-tracking.md) - MLflow, Weights & Biases, TensorBoard, Neptune, run comparison
 
 ---
 

@@ -468,3 +468,16 @@ recognizing-system-patterns → systems-archetypes-reference → causal-loop-dia
 **Time for complete analysis:** 2.5-4 hours (depending on complexity)
 
 **Key principle:** Start with patterns, match to archetypes, map structure, quantify dynamics, find leverage, visualize scenarios.
+
+---
+
+## Systems Thinking Specialist Skills Catalog
+
+After routing, load the appropriate specialist skill for detailed guidance:
+
+1. [recognizing-system-patterns.md](recognizing-system-patterns.md) - Foundation: S-curves, feedback loops, delays, stock-flow thinking, pattern recognition
+2. [systems-archetypes-reference.md](systems-archetypes-reference.md) - 10 classic archetypes: Fixes that Fail, Shifting the Burden, Escalation, recurring patterns
+3. [leverage-points-mastery.md](leverage-points-mastery.md) - Donella Meadows' 12 leverage points, intervention design, prioritization
+4. [stocks-and-flows-modeling.md](stocks-and-flows-modeling.md) - Quantitative modeling: equilibrium analysis, time constants, accumulation dynamics
+5. [causal-loop-diagramming.md](causal-loop-diagramming.md) - Structure mapping: 6-step construction, polarity testing, loop identification
+6. [behavior-over-time-graphs.md](behavior-over-time-graphs.md) - Trajectory visualization: 7-step construction, scenario comparison, communication

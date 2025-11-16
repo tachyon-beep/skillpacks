@@ -37,7 +37,7 @@ Load this skill when:
 - "TypeVar usage"
 - "Configure mypy/pyright"
 
-**Route to**: `modern-syntax-and-types`
+**Route to**: See [modern-syntax-and-types.md](modern-syntax-and-types.md) for comprehensive type system guidance.
 
 **Why**: Learning type hint syntax, patterns, and configuration.
 
@@ -50,14 +50,14 @@ Load this skill when:
 - "Add types to legacy code"
 - "Understanding mypy error messages"
 
-**Route to**: `resolving-mypy-errors`
+**Route to**: See [resolving-mypy-errors.md](resolving-mypy-errors.md) for systematic mypy error resolution.
 
 **Why**: Resolving type errors requires systematic methodology, understanding error messages, and knowing when to fix vs ignore.
 
 **Example queries**:
-- "Getting mypy error about incompatible types" → `resolving-mypy-errors`
-- "How to use Python 3.12 type parameter syntax?" → `modern-syntax-and-types`
-- "Fix 150 mypy errors systematically" → `resolving-mypy-errors`
+- "Getting mypy error about incompatible types" → [resolving-mypy-errors.md](resolving-mypy-errors.md)
+- "How to use Python 3.12 type parameter syntax?" → [modern-syntax-and-types.md](modern-syntax-and-types.md)
+- "Fix 150 mypy errors systematically" → [resolving-mypy-errors.md](resolving-mypy-errors.md)
 
 ---
 
@@ -72,7 +72,7 @@ Load this skill when:
 - "Package my project"
 - "src layout vs flat layout"
 
-**Route to**: `project-structure-and-tooling`
+**Route to**: [project-structure-and-tooling.md](project-structure-and-tooling.md)
 
 **Why**: Project setup involves multiple tools (ruff, mypy, pre-commit) and architectural decisions (src vs flat layout). Need comprehensive setup guide.
 
@@ -93,7 +93,7 @@ Load this skill when:
 - "Don't want to disable warnings"
 - "Clean up codebase lint"
 
-**Route to**: `systematic-delinting`
+**Route to**: [systematic-delinting.md](systematic-delinting.md)
 
 **Why**: Delinting requires systematic methodology to fix warnings without disabling them or over-refactoring. Process-driven approach needed.
 
@@ -102,7 +102,7 @@ Load this skill when:
 - "Fix lint warnings systematically"
 - "Legacy code has no linting"
 
-**Note**: If setting UP linting (not fixing), route to `project-structure-and-tooling` first.
+**Note**: If setting UP linting (not fixing), route to [project-structure-and-tooling.md](project-structure-and-tooling.md) first.
 
 ---
 
@@ -117,7 +117,7 @@ Load this skill when:
 - "Test coverage"
 - "Property-based testing"
 
-**Route to**: `testing-and-quality`
+**Route to**: [testing-and-quality.md](testing-and-quality.md)
 
 **Why**: Testing requires understanding pytest architecture, fixture scopes, mocking patterns, and test organization strategies.
 
@@ -139,7 +139,7 @@ Load this skill when:
 - "Async context managers"
 - "When to use async?"
 
-**Route to**: `async-patterns-and-concurrency`
+**Route to**: [async-patterns-and-concurrency.md](async-patterns-and-concurrency.md)
 
 **Why**: Async programming has unique patterns, pitfalls (blocking event loop), and requires understanding structured concurrency.
 
@@ -161,13 +161,13 @@ Load this skill when:
 - "CPU profiling"
 - "Memory profiling"
 
-**Route to**: `debugging-and-profiling` FIRST
+**Route to**: [debugging-and-profiling.md](debugging-and-profiling.md) FIRST
 
 **Why**: MUST profile before optimizing. Many "performance" problems are actually I/O or algorithm issues. Profile to identify the real bottleneck.
 
 **After profiling**, may route to:
-- `async-patterns-and-concurrency` if I/O-bound
-- `scientific-computing-foundations` if array operations slow
+- [async-patterns-and-concurrency.md](async-patterns-and-concurrency.md) if I/O-bound
+- [scientific-computing-foundations.md](scientific-computing-foundations.md) if array operations slow
 - Same skill for optimization strategies
 
 **Example queries**:
@@ -188,7 +188,7 @@ Load this skill when:
 - "DataFrame best practices"
 - "Large dataset processing"
 
-**Route to**: `scientific-computing-foundations`
+**Route to**: [scientific-computing-foundations.md](scientific-computing-foundations.md)
 
 **Why**: NumPy/pandas have specific patterns for vectorization, memory efficiency, and avoiding anti-patterns (iterrows).
 
@@ -210,7 +210,7 @@ Load this skill when:
 - "ML monitoring"
 - "Data versioning"
 
-**Route to**: `ml-engineering-workflows`
+**Route to**: [ml-engineering-workflows.md](ml-engineering-workflows.md)
 
 **Why**: ML workflows require experiment tracking, reproducibility patterns, configuration management, and monitoring strategies.
 
@@ -228,19 +228,19 @@ Load this skill when:
 Some scenarios require multiple specialized skills in sequence:
 
 **New Python project setup with ML**:
-1. Route to `project-structure-and-tooling` (setup)
-2. THEN `ml-engineering-workflows` (ML specifics)
+1. Route to [project-structure-and-tooling.md](project-structure-and-tooling.md) (setup)
+2. THEN [ml-engineering-workflows.md](ml-engineering-workflows.md) (ML specifics)
 
 **Legacy code cleanup**:
-1. Route to `project-structure-and-tooling` (setup linting)
-2. THEN `systematic-delinting` (fix warnings)
+1. Route to [project-structure-and-tooling.md](project-structure-and-tooling.md) (setup linting)
+2. THEN [systematic-delinting.md](systematic-delinting.md) (fix warnings)
 
 **Slow pandas code**:
-1. Route to `debugging-and-profiling` (profile)
-2. THEN `scientific-computing-foundations` (optimize)
+1. Route to [debugging-and-profiling.md](debugging-and-profiling.md) (profile)
+2. THEN [scientific-computing-foundations.md](scientific-computing-foundations.md) (optimize)
 
 **Type hints for existing code**:
-1. Route to `project-structure-and-tooling` (setup mypy)
+1. Route to [project-structure-and-tooling.md](project-structure-and-tooling.md) (setup mypy)
 2. THEN `modern-syntax-and-types` (add types)
 
 **Load in order of execution**: Setup before optimization, diagnosis before fixes, structure before specialization.
@@ -286,11 +286,11 @@ When symptom unclear, ASK ONE clarifying question:
 ## Red Flags - Stop and Route
 
 If you catch yourself about to:
-- Suggest "use async" for slow code → Route to `debugging-and-profiling` to profile first
-- Show pytest example → Route to `testing-and-quality` for complete patterns
-- Suggest "just fix the lint warnings" → Route to `systematic-delinting` for methodology
+- Suggest "use async" for slow code → Route to [debugging-and-profiling.md](debugging-and-profiling.md) to profile first
+- Show pytest example → Route to [testing-and-quality.md](testing-and-quality.md) for complete patterns
+- Suggest "just fix the lint warnings" → Route to [systematic-delinting.md](systematic-delinting.md) for methodology
 - Show type hint syntax → Route to `modern-syntax-and-types` for comprehensive guide
-- Suggest "use numpy instead" → Route to `scientific-computing-foundations` for vectorization patterns
+- Suggest "use numpy instead" → Route to [scientific-computing-foundations.md](scientific-computing-foundations.md) for vectorization patterns
 
 **All of these mean: You're about to give incomplete advice. Route to the specialist instead.**
 
@@ -344,21 +344,19 @@ Before giving ANY Python advice, ask yourself:
 
 ---
 
-## Skill Catalog
+## Python Engineering Specialist Skills
 
-**Complete Python engineering toolkit**:
+After routing, load the appropriate specialist skill for detailed guidance:
 
-1. **modern-syntax-and-types** - Type hints, mypy/pyright, Python 3.10-3.12 features, generics, protocols
-2. **resolving-mypy-errors** - Systematic mypy error resolution, type: ignore best practices, typing legacy code
-3. **project-structure-and-tooling** - pyproject.toml, ruff, pre-commit, dependency management, packaging
-4. **systematic-delinting** - Process for fixing lint warnings without disabling or over-refactoring
-5. **testing-and-quality** - pytest patterns, fixtures, mocking, coverage, property-based testing
-6. **async-patterns-and-concurrency** - async/await, asyncio, TaskGroup, structured concurrency, threading
-7. **scientific-computing-foundations** - NumPy/pandas, vectorization, memory efficiency, large datasets
-8. **ml-engineering-workflows** - MLflow, experiment tracking, reproducibility, monitoring, model lifecycle
-9. **debugging-and-profiling** - pdb/debugpy, cProfile, memory_profiler, optimization strategies
-
-**Route based on symptoms, not guesses.**
+1. [modern-syntax-and-types.md](modern-syntax-and-types.md) - Type hints, mypy/pyright, Python 3.10-3.12 features, generics, protocols
+2. [resolving-mypy-errors.md](resolving-mypy-errors.md) - Systematic mypy error resolution, type: ignore best practices, typing legacy code
+3. [project-structure-and-tooling.md](project-structure-and-tooling.md) - pyproject.toml, ruff, pre-commit, dependency management, packaging
+4. [systematic-delinting.md](systematic-delinting.md) - Process for fixing lint warnings without disabling or over-refactoring
+5. [testing-and-quality.md](testing-and-quality.md) - pytest patterns, fixtures, mocking, coverage, property-based testing
+6. [async-patterns-and-concurrency.md](async-patterns-and-concurrency.md) - async/await, asyncio, TaskGroup, structured concurrency, threading
+7. [scientific-computing-foundations.md](scientific-computing-foundations.md) - NumPy/pandas, vectorization, memory efficiency, large datasets
+8. [ml-engineering-workflows.md](ml-engineering-workflows.md) - MLflow, experiment tracking, reproducibility, monitoring, model lifecycle
+9. [debugging-and-profiling.md](debugging-and-profiling.md) - pdb/debugpy, cProfile, memory_profiler, optimization strategies
 
 ---
 

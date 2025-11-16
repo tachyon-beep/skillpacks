@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, game development, security, documentation, and UX skills for Claude Code - 18 complete skillpacks with 146 TDD-validated skills",
-    "version": "1.9.0",
+    "description": "Professional AI/ML, Python engineering, web backend, game development, security, documentation, and UX skills for Claude Code - 18 complete skillpacks with 150+ TDD-validated skills",
+    "version": "2.0.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -45,6 +45,23 @@
         "assessment",
         "technical-debt",
         "tdd-validated"
+      ],
+      "category": "development"
+    },
+    {
+      "name": "axiom-web-backend",
+      "source": "./plugins/axiom-web-backend",
+      "description": "Web backend development expertise across FastAPI, Django, Express, REST/GraphQL APIs, microservices, and production deployment patterns - router + specialist skills for modern web APIs",
+      "version": "1.0.0",
+      "keywords": [
+        "axiom",
+        "web",
+        "backend",
+        "fastapi",
+        "django",
+        "rest",
+        "graphql",
+        "microservices"
       ],
       "category": "development"
     },
@@ -94,6 +111,19 @@
         "writer"
       ],
       "category": "documentation"
+    },
+    {
+      "name": "ordis-quality-engineering",
+      "source": "./plugins/ordis-quality-engineering",
+      "description": "E2E testing, performance testing, chaos engineering, test automation - 11 quality engineering skills",
+      "version": "1.0.0",
+      "keywords": [
+        "ordis",
+        "quality",
+        "testing",
+        "chaos-engineering"
+      ],
+      "category": "testing"
     },
     {
       "name": "ordis-security-architect",
