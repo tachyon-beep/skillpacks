@@ -1,0 +1,17 @@
+{
+  "name": "ordis-quality-engineering",
+  "version": "1.0.0",
+  "description": "E2E testing, performance testing, chaos engineering, test automation - 11 quality engineering skills",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "ordis",
+    "quality",
+    "testing",
+    "chaos-engineering"
+  ]
+}

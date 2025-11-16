@@ -113,6 +113,19 @@
       "category": "documentation"
     },
     {
+      "name": "ordis-quality-engineering",
+      "source": "./plugins/ordis-quality-engineering",
+      "description": "E2E testing, performance testing, chaos engineering, test automation - 11 quality engineering skills",
+      "version": "1.0.0",
+      "keywords": [
+        "ordis",
+        "quality",
+        "testing",
+        "chaos-engineering"
+      ],
+      "category": "testing"
+    },
+    {
       "name": "ordis-security-architect",
       "source": "./plugins/ordis-security-architect",
       "description": "Threat modeling, security controls, compliance, ATO - 9 comprehensive security skills",
