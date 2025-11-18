@@ -36,3 +36,5 @@ build/
 *.swo
 *~
 .DS_Store
+
+tests/
