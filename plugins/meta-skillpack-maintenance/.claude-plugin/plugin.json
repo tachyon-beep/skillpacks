@@ -2,5 +2,16 @@
   "name": "meta-skillpack-maintenance",
   "version": "1.0.0",
   "description": "Systematic maintenance and enhancement of skill packs through investigative domain analysis, RED-GREEN-REFACTOR testing, and automated quality improvements",
-  "category": "meta"
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "meta",
+    "maintenance",
+    "testing",
+    "quality"
+  ]
 }
