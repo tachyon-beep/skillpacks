@@ -582,7 +582,6 @@ Priority order:
 - **gRPC** → Check if gRPC skill exists
 - **Security** → `ordis-security-architect` (service-to-service auth, zero trust)
 - **Database** → `database-integration` (per-service databases, migrations)
-- **Deployment** → `backend-deployment` (Docker, Kubernetes, CI/CD)
 - **Testing** → `api-testing` (contract testing, integration testing)
 
 ## Further Reading

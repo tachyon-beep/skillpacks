@@ -19,7 +19,6 @@ Use the `using-web-backend` skill from the `axiom-web-backend` plugin to route w
 - **database-integration** - ORMs, migrations, query optimization
 - **api-testing** - Integration tests, contract testing, mocking
 - **api-documentation** - OpenAPI/Swagger, API docs
-- **backend-deployment** - Docker, environment config, monitoring
 
 **Cross-references to other packs:**
 - Security → `ordis-security-architect`

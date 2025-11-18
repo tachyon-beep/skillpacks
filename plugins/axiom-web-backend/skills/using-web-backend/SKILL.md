@@ -1,6 +1,6 @@
 ---
 name: using-web-backend
-description: Use when building web APIs, backend services, or encountering FastAPI/Django/Express/GraphQL questions, microservices architecture, authentication, or message queues - routes to 12 specialist skills rather than giving surface-level generic advice
+description: Use when building web APIs, backend services, or encountering FastAPI/Django/Express/GraphQL questions, microservices architecture, authentication, or message queues - routes to 11 specialist skills rather than giving surface-level generic advice
 ---
 
 # Using Web Backend Skills
@@ -73,7 +73,7 @@ If you catch yourself doing any of these, STOP and route to a specialist:
 | Excuse | Reality |
 |--------|---------|
 | "I can handle this backend question myself" | Specialists provide deeper expertise than generic knowledge |
-| "These are all backend topics" | Backend spans 12+ distinct specialist domains |
+| "These are all backend topics" | Backend spans 11 distinct specialist domains |
 | "I'll just give a quick answer" | Quick answers miss edge cases and production patterns |
 | "The user didn't ask for specialized help" | Better results come from routing to specialists proactively |
 | "Specialist skill not available, I'll answer instead" | State which skill would help, explain routing, guide user to install if needed |
