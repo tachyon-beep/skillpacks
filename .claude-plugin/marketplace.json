@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Professional AI/ML, Python engineering, web backend, game development, security, documentation, and UX skills for Claude Code - 19 complete skillpacks with 150+ TDD-validated skills",
-    "version": "2.1.0",
+    "version": "2.1.1",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -52,7 +52,7 @@
       "name": "axiom-web-backend",
       "source": "./plugins/axiom-web-backend",
       "description": "Web backend development expertise across FastAPI, Django, Express, REST/GraphQL APIs, microservices, and production deployment patterns - router + specialist skills for modern web APIs",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "axiom",
         "web",
@@ -104,7 +104,7 @@
       "name": "meta-skillpack-maintenance",
       "source": "./plugins/meta-skillpack-maintenance",
       "description": "Systematic maintenance and enhancement of skill packs through investigative domain analysis, RED-GREEN-REFACTOR testing, and automated quality improvements",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "meta",
         "maintenance",

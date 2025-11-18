@@ -1,6 +1,6 @@
 {
   "name": "meta-skillpack-maintenance",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Systematic maintenance and enhancement of skill packs through investigative domain analysis, RED-GREEN-REFACTOR testing, and automated quality improvements",
   "author": {
     "name": "tachyon-beep",
