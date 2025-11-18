@@ -1,6 +1,5 @@
 {
   "name": "axiom-web-backend",
   "version": "1.0.1",
-  "description": "Web backend development expertise across FastAPI, Django, Express, REST/GraphQL APIs, microservices, and production deployment patterns",
-  "category": "development"
+  "description": "Web backend development expertise across FastAPI, Django, Express, REST/GraphQL APIs, microservices, and production deployment patterns"
 }
