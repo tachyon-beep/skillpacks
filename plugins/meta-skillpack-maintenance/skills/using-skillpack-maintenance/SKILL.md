@@ -43,15 +43,16 @@ Syntactic validation (does it parse?) ≠ Behavioral testing (does it work?)
 
 ## Workflow Overview
 
-**Review → Discuss → Execute**
+**Review → Discuss → [Create New Skills if Needed] → Execute**
 
 1. **Investigation & Scorecard** → Load `analyzing-pack-domain.md`
 2. **Structure Review (Pass 1)** → Load `reviewing-pack-structure.md`
 3. **Content Testing (Pass 2)** → Load `testing-skill-quality.md`
 4. **Coherence Check (Pass 3)** → Validate cross-skill consistency
 5. **Discussion** → Present findings, get approval
-6. **Execution** → Load `implementing-fixes.md`, apply changes
-7. **Commit** → Single commit with version bump
+6. **[CONDITIONAL] Create New Skills** → If gaps identified, use `superpowers:writing-skills` for EACH gap (RED-GREEN-REFACTOR)
+7. **Execution** → Load `implementing-fixes.md`, enhance existing skills only
+8. **Commit** → Single commit with version bump
 
 ## Stage 1: Investigation & Scorecard
 
@@ -137,7 +138,7 @@ Syntactic validation (does it parse?) ≠ Behavioral testing (does it work?)
 **Present findings conversationally:**
 
 **Structural category:**
-- Gaps to add (new skills needed)
+- **Gaps requiring superpowers:writing-skills** (new skills needed - each requires RED-GREEN-REFACTOR)
 - Duplicates to remove/merge
 - Organization issues
 
@@ -153,14 +154,26 @@ Syntactic validation (does it parse?) ≠ Behavioral testing (does it work?)
 
 **Get user approval for scope of work**
 
+**CRITICAL DECISION POINT:** If gaps (new skills) were identified:
+- User approves → **IMMEDIATELY use superpowers:writing-skills for EACH gap**
+- Do NOT proceed to Stage 4 until ALL new skills are created and tested
+- Each gap = separate RED-GREEN-REFACTOR cycle
+- Return to Stage 4 only after ALL gaps are filled
+
 ## Stage 4: Autonomous Execution
 
 **Load briefing:** `implementing-fixes.md`
 
+**PREREQUISITE CHECK:**
+- ✓ Zero gaps identified, OR
+- ✓ All gaps already filled using superpowers:writing-skills (each skill individually tested)
+
+**If gaps exist and you haven't used writing-skills:** STOP. Return to Stage 3.
+
 **Execute approved changes:**
 
-1. **Structural fixes** - Add/remove/merge skills, update router
-2. **Content enhancements** - Fix gauntlet failures, add missing guidance
+1. **Structural fixes** - Remove/merge duplicate skills, update router
+2. **Content enhancements** - Fix gauntlet failures, add missing guidance to existing skills
 3. **Coherence improvements** - Cross-references, terminology alignment, faction voice
 4. **Version management** - Apply impact-based bump (patch/minor/major)
 5. **Git commit** - Single commit with all changes
@@ -211,13 +224,19 @@ All briefing files are in this skill directory:
 
 ## Red Flags - STOP and Switch Tools
 
-If you catch yourself:
-- Creating new skills from scratch → Use superpowers:writing-skills
+If you catch yourself thinking ANY of these:
+- "I'll write the new skills during execution" → NO. Use superpowers:writing-skills for EACH gap
+- "implementing-fixes.md says to create skills" → NO. That section was REMOVED. Exit and use writing-skills
+- "Token efficiency - I can just write good skills" → NO. Untested skills = broken skills
+- "I see the pattern, I can replicate it" → NO. Pattern-matching ≠ behavioral testing
+- "User wants this done quickly" → NO. Fast + untested = waste of time fixing later
+- "I'm competent, testing is overkill" → NO. Competence = following the process
+- "Gaps were approved, so I should fill them" → YES, but using writing-skills, not here
 - Validating syntax instead of behavior → Load testing-skill-quality.md
 - Skipping gauntlet testing → You're violating the Iron Law
 - Making changes without user approval → Follow Review→Discuss→Execute
 
-**Stop and use the correct workflow.**
+**All of these mean: STOP. Exit workflow. Use superpowers:writing-skills.**
 
 ## The Bottom Line
 

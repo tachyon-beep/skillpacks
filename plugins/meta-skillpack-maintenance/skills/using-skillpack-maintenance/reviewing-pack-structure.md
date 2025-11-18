@@ -213,8 +213,10 @@ Rationale: [Specific reasons]
 
 ## Recommended Actions
 
-Structure fixes:
-- Add: [count] new skills
+**Gaps requiring superpowers:writing-skills:**
+- [count] new skills needed (RED-GREEN-REFACTOR for each, outside this workflow)
+
+**Structure fixes (for later execution phase):**
 - Remove: [count] duplicate skills
 - Merge: [count] partial duplicates
 - Update router: [Yes/No]

@@ -16,18 +16,34 @@ You should have completed and gotten approval for:
 
 ### 1. Structural Fixes (from Pass 1)
 
-**Add missing skills:**
+**CRITICAL CHECKPOINT - New Skills:**
 
-For each identified gap:
-1. Create skill directory: `plugins/[pack-name]/skills/[skill-name]/`
-2. Create SKILL.md with:
-   - YAML front matter (name, description following CSO guidelines)
-   - Overview section
-   - Core content based on gap analysis
-   - Examples appropriate to domain
-   - Common mistakes section
-3. Ensure skill follows faction voice/philosophy
-4. Add cross-references to related skills
+**STOP:** Did you identify gaps (new skills needed) in Pass 1?
+
+**If YES → You MUST exit this workflow NOW:**
+
+1. **DO NOT proceed to execution**
+2. **For EACH gap identified:**
+   - Use `superpowers:writing-skills` skill
+   - RED: Test scenario WITHOUT the skill
+   - GREEN: Write skill addressing gaps
+   - REFACTOR: Close loopholes
+   - **Commit that ONE skill**
+3. **Repeat for ALL gaps** (each skill = separate RED-GREEN-REFACTOR cycle)
+4. **AFTER all new skills are tested and committed:**
+   - Return to meta-skillpack-maintenance
+   - Load this briefing again
+   - Continue with other structural fixes below
+
+**Proceeding past this checkpoint assumes:**
+- ✓ Zero new skills needed, OR
+- ✓ All new skills already created via superpowers:writing-skills
+- ✓ You are ONLY enhancing existing skills, removing duplicates, updating router/metadata
+
+**If you identified ANY gaps and haven't used superpowers:writing-skills for each:**
+**STOP. Exit now. You're violating the Iron Law: NO SKILL WITHOUT BEHAVIORAL TESTING.**
+
+---
 
 **Remove duplicate skills:**
 
