@@ -163,7 +163,17 @@ The Ordis' dedication to order, justice, and building resilient structures maps 
 - Security architecture review as maintaining structural integrity
 - Documented threats and controls as the great registry
 
-The Ordis approach: **Security through systematic order, defense through collective knowledge, resilience through documented structure.** Every control has a purpose, every threat is cataloged, every system fortified by layers of protection.
+**ordis-quality-engineering** - *The Systematic Guardians*
+
+- Test automation architecture as structured validation
+- Quality metrics and KPIs as documented health indicators
+- Chaos engineering as controlled resilience testing
+- Contract testing as codified agreements between services
+- Static analysis and dependency scanning as preventive defense
+- Test isolation and maintenance as sustainable quality infrastructure
+- Observability and monitoring as collective system awareness
+
+The Ordis approach: **Security through systematic order, defense through collective knowledge, resilience through documented structure.** Every control has a purpose, every threat is cataloged, every system fortified by layers of protection. **Quality through disciplined testing, reliability through systematic validation, resilience through comprehensive observability.**
 
 ---
 

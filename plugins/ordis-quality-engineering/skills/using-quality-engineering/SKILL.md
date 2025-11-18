@@ -17,15 +17,35 @@ When the user asks about quality engineering topics, route to the appropriate sp
 
 | User's Question Topic | Route To Skill |
 |----------------------|----------------|
+| **Test Fundamentals & Isolation** | |
+| Test independence, idempotence, order-independence, isolation | `test-isolation-fundamentals` |
+| **API & Integration Testing** | |
+| REST/GraphQL API testing, request validation, API mocking | `api-testing-strategies` |
+| Component integration, database testing, test containers | `integration-testing-patterns` |
+| **End-to-End & UI Testing** | |
 | End-to-end test design, E2E anti-patterns, browser automation | `e2e-testing-strategies` |
+| Screenshot comparison, visual bugs, responsive testing | `visual-regression-testing` |
+| **Performance & Load Testing** | |
 | Load testing, benchmarking, performance regression | `performance-testing-fundamentals` |
+| Stress testing, spike testing, soak testing, capacity planning | `load-testing-patterns` |
+| **Test Quality & Maintenance** | |
+| Test coverage, quality dashboards, CI/CD quality gates | `quality-metrics-and-kpis` |
+| Test refactoring, page objects, reducing test debt | `test-maintenance-patterns` |
+| Mutation testing, test effectiveness, mutation score | `mutation-testing` |
+| **Static Analysis & Security** | |
+| SAST tools, ESLint, Pylint, code quality gates | `static-analysis-integration` |
+| Dependency scanning, Snyk, Dependabot, vulnerability management | `dependency-scanning` |
+| Fuzzing, random inputs, security vulnerabilities | `fuzz-testing` |
+| **Advanced Testing Techniques** | |
+| Property-based testing, Hypothesis, fast-check, invariants | `property-based-testing` |
+| **Production Testing & Monitoring** | |
+| Feature flags, canary testing, dark launches, prod monitoring | `testing-in-production` |
+| Metrics, tracing, alerting, quality signals | `observability-and-monitoring` |
 | Fault injection, resilience testing, failure scenarios | `chaos-engineering-principles` |
+| **Test Infrastructure** | |
 | Test pyramid, CI/CD integration, test organization | `test-automation-architecture` |
 | Fixtures, factories, seeding, test isolation, data pollution | `test-data-management` |
 | Flaky tests, race conditions, timing issues, non-determinism | `flaky-test-prevention` |
-| Feature flags, canary testing, dark launches, prod monitoring | `testing-in-production` |
-| Metrics, tracing, alerting, quality signals | `observability-and-monitoring` |
-| Stress testing, spike testing, soak testing, capacity planning | `load-testing-patterns` |
 | API contracts, schema validation, consumer-driven contracts | `contract-testing` |
 
 ## When NOT to Route

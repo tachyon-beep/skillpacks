@@ -1,7 +1,7 @@
 {
   "name": "ordis-quality-engineering",
-  "version": "1.0.0",
-  "description": "E2E testing, performance testing, chaos engineering, test automation - 11 quality engineering skills",
+  "version": "1.1.0",
+  "description": "Comprehensive quality engineering for full-stack engineers: E2E, API, integration, performance, chaos, contracts, automation, observability, flaky tests, testing-in-production, load testing, test data, visual regression, mutation testing, static analysis (SAST), dependency scanning, fuzz testing, property-based testing, test maintenance, quality metrics - 21 production-ready skills covering traditional QA + modern quality engineering",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"
@@ -12,6 +12,9 @@
     "ordis",
     "quality",
     "testing",
-    "chaos-engineering"
+    "chaos-engineering",
+    "sast",
+    "security",
+    "automation"
   ]
 }
