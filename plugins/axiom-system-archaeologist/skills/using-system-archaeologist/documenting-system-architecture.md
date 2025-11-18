@@ -129,24 +129,197 @@ Catalog entries:
 
 ### Recommendation Prioritization
 
-Group recommendations by timeline:
+**Priority recommendations using severity scoring + impact assessment + timeline buckets:**
+
+#### Severity Scoring (for each concern/recommendation)
+
+**Critical:**
+- Blocks deployment or core functionality
+- Security vulnerability (data exposure, injection, auth bypass)
+- Data corruption or loss risk
+- Service outage potential
+- Examples: SQL injection, hardcoded credentials, unhandled critical exceptions
+
+**High:**
+- Significant maintainability impact
+- High effort to modify or extend
+- Frequent source of bugs
+- Performance degradation under load
+- Examples: God objects, extreme duplication, shotgun surgery, N+1 queries
+
+**Medium:**
+- Moderate maintainability concern
+- Refactoring beneficial but not urgent
+- Technical debt accumulation
+- Examples: Long functions, missing documentation, inconsistent error handling
+
+**Low:**
+- Minor quality improvement
+- Cosmetic or style issues
+- Nice-to-have enhancements
+- Examples: Magic numbers, verbose naming, minor duplication
+
+#### Impact Assessment Matrix
+
+Use 2-dimensional scoring: **Severity × Frequency**
+
+| Severity | High Frequency | Medium Frequency | Low Frequency |
+|----------|----------------|------------------|---------------|
+| **Critical** | **P1** - Fix immediately | **P1** - Fix immediately | **P2** - Fix ASAP |
+| **High** | **P2** - Fix ASAP | **P2** - Fix ASAP | **P3** - Plan for sprint |
+| **Medium** | **P3** - Plan for sprint | **P4** - Backlog | **P4** - Backlog |
+| **Low** | **P4** - Backlog | **P4** - Backlog | **P5** - Optional |
+
+**Frequency assessment:**
+- **High:** Affects core user workflows, used constantly, blocking development
+- **Medium:** Affects some workflows, occasional impact, periodic friction
+- **Low:** Edge case, rarely encountered, minimal operational impact
+
+#### Timeline Buckets
+
+**Immediate (This Week / Next Sprint):**
+- P1 priorities (Critical issues regardless of frequency)
+- Security vulnerabilities
+- Blocking deployment or development
+- Quick wins (high impact, low effort)
+
+**Short-Term (1-3 Months / Next Quarter):**
+- P2 priorities (High severity or critical+low frequency)
+- Significant maintainability improvements
+- Performance optimizations
+- Breaking circular dependencies
+
+**Medium-Term (3-6 Months):**
+- P3 priorities (Medium severity+high frequency or high+low)
+- Architectural refactoring
+- Technical debt paydown
+- System-wide improvements
+
+**Long-Term (6-12+ Months):**
+- P4-P5 priorities (Low severity, backlog items)
+- Nice-to-have improvements
+- Experimental optimizations
+- Deferred enhancements
+
+#### Prioritized Recommendation Format
 
 ```markdown
 ## Recommendations
 
-### Immediate (Next Sprint)
-1. **Document rate limiter limitation** in operations runbook
-2. **Add monitoring** for database connection pool exhaustion
-3. **Configure alerting** on Data Service query execution times > 5s
+### Immediate (This Week / Next Sprint) - P1
 
-### Short-Term (Next Quarter)
-4. **Migrate rate limiter** to Redis-backed distributed implementation
-5. **Externalize database pool configuration** to environment variables
-6. **Implement query throttling** in Data Service analytics engine
+**1. Fix Rate Limiter Scalability Vulnerability**
+- **Severity:** Critical (blocks horizontal scaling)
+- **Frequency:** High (affects all gateway scaling attempts)
+- **Priority:** P1
+- **Impact:** Cannot scale API gateway, potential rate limit bypass
+- **Effort:** Medium (2-3 days migration to Redis)
+- **Action:**
+  1. Document current limitation in ops runbook (Day 1)
+  2. Add monitoring for rate limit violations (Day 1)
+  3. Migrate to Redis-backed rate limiter (Days 2-3)
+  4. Validate with load testing (Day 3)
 
-### Long-Term (6 Months)
-7. **Architecture review** for caching strategy optimization
-8. **Evaluate** circuit breaker effectiveness under load testing
+**2. Remove Hardcoded Database Credentials**
+- **Severity:** Critical (security vulnerability)
+- **Frequency:** Low (only affects DB config rotation)
+- **Priority:** P1
+- **Impact:** Credentials exposed in source control, rotation requires code deployment
+- **Effort:** Low (< 1 day)
+- **Action:**
+  1. Move credentials to environment variables
+  2. Update deployment configs
+  3. Rotate compromised credentials
+
+### Short-Term (1-3 Months / Next Quarter) - P2
+
+**3. Extract Common Validation Framework**
+- **Severity:** High (high duplication, shotgun surgery for validation changes)
+- **Frequency:** High (every new API endpoint)
+- **Priority:** P2
+- **Impact:** 3 duplicate validation implementations, 15% code duplication
+- **Effort:** Medium (1 week to extract + migrate)
+- **Action:**
+  1. Design validation framework API (2 days)
+  2. Implement core framework (2 days)
+  3. Migrate existing validators (2 days)
+  4. Document validation patterns (1 day)
+
+**4. Externalize Database Pool Configuration**
+- **Severity:** High (hardcoded limits cause connection exhaustion)
+- **Frequency:** Medium (impacts under load spikes)
+- **Priority:** P2
+- **Impact:** Connection pool exhaustion during traffic spikes
+- **Effort:** Low (2 days)
+- **Action:**
+  1. Move pool config to environment variables
+  2. Add runtime pool size adjustment
+  3. Document tuning guidelines
+
+### Medium-Term (3-6 Months) - P3
+
+**5. Break User ↔ Notification Circular Dependency**
+- **Severity:** Medium (architectural coupling)
+- **Frequency:** Medium (affects both subsystem modifications)
+- **Priority:** P3
+- **Impact:** Difficult to modify either service independently
+- **Effort:** High (2-3 weeks, requires event bus introduction)
+- **Action:**
+  1. Design event bus architecture (1 week)
+  2. Implement notification via events (1 week)
+  3. Migrate user service to publish events (3 days)
+  4. Remove direct dependency (2 days)
+
+**6. Add Docstrings to Public API (27% → 90% coverage)**
+- **Severity:** Medium (maintainability concern)
+- **Frequency:** Medium (affects onboarding, API understanding)
+- **Priority:** P3
+- **Impact:** Poor API discoverability, onboarding friction
+- **Effort:** Medium (2-3 weeks distributed work)
+- **Action:**
+  1. Establish docstring standard (1 day)
+  2. Document public APIs in batches (2 weeks)
+  3. Add pre-commit hook to enforce (1 day)
+
+### Long-Term (6-12+ Months) - P4-P5
+
+**7. Evaluate Circuit Breaker Effectiveness**
+- **Severity:** Low (optimization opportunity)
+- **Frequency:** Low (affects only failure scenarios)
+- **Priority:** P4
+- **Impact:** Potential false positives, could improve resilience
+- **Effort:** Medium (1 week testing + analysis)
+- **Action:** Load testing + monitoring analysis when capacity allows
+
+**8. Extract Magic Numbers to Configuration**
+- **Severity:** Low (code quality improvement)
+- **Frequency:** Low (rarely needs changing)
+- **Priority:** P5
+- **Impact:** Minor maintainability improvement
+- **Effort:** Low (2-3 days)
+- **Action:** Backlog item, tackle during related refactoring
+```
+
+#### Priority Summary Table
+
+Include summary table for quick scanning:
+
+```markdown
+## Priority Summary
+
+| Priority | Count | Severity Distribution | Total Effort |
+|----------|-------|----------------------|--------------|
+| **P1** (Immediate) | 2 | Critical: 2 | 4 days |
+| **P2** (Short-term) | 2 | High: 2 | 2.5 weeks |
+| **P3** (Medium-term) | 2 | Medium: 2 | 5-6 weeks |
+| **P4-P5** (Long-term) | 2 | Low: 2 | 2 weeks |
+| **Total** | 8 | - | ~10 weeks |
+
+**Recommended sprint allocation:**
+- Sprint 1: P1 items (4 days) + start P2.3 validation framework
+- Sprint 2: Complete P2.3 + P2.4 database pool config
+- Quarter 2: P3 items (architectural improvements)
+- Backlog: P4-P5 items (opportunistic improvements)
 ```
 
 ## Cross-Referencing Strategy

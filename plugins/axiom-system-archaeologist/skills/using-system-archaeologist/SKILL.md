@@ -40,9 +40,68 @@ mkdir -p docs/arch-analysis-$(date +%Y-%m-%d-%H%M)/temp
 
 **Reality:** 10 seconds to create workspace saves hours of file hunting and context loss.
 
+### Step 1.5: Offer Deliverable Menu (MANDATORY)
+
+**After workspace creation, offer user choice of deliverables:**
+
+**Why this is mandatory:**
+- Users may need subset of analysis (quick overview vs. comprehensive)
+- Time-constrained scenarios require focused scope
+- Different stakeholder needs (exec summary vs. full technical docs)
+- Architect-ready outputs have different requirements than documentation-only
+
+Present menu using **AskUserQuestion tool:**
+
+**Question:** "What deliverables do you need from this architecture analysis?"
+
+**Options:**
+
+**A) Full Analysis (Comprehensive)** - Recommended for complete understanding
+- All standard documents (discovery, catalog, diagrams, report)
+- Optional: Code quality assessment
+- Optional: Architect handover report
+- Timeline: 2-6 hours depending on codebase size
+- Best for: New codebases, major refactoring planning, complete documentation needs
+
+**B) Quick Overview (Essential)** - Fast turnaround for stakeholder presentations
+- Discovery findings + high-level diagrams only (Context + Container)
+- Executive summary with key findings
+- Documented limitations (partial analysis)
+- Timeline: 30 minutes - 2 hours
+- Best for: Initial assessment, stakeholder presentations, time-constrained reviews
+
+**C) Architect-Ready (Analysis + Improvement Planning)** - Complete analysis with improvement focus
+- Full analysis (discovery, catalog, diagrams, report)
+- Code quality assessment (mandatory for architect)
+- Architect handover report with improvement recommendations
+- Optional: Integrated architect consultation
+- Timeline: 3-8 hours depending on codebase size
+- Best for: Planning refactoring, technical debt assessment, improvement roadmaps
+
+**D) Custom Selection** - Choose specific documents
+- User selects from: Discovery, Catalog, Diagrams (which levels?), Report, Quality, Handover
+- Timeline: Varies by selection
+- Best for: Updating existing documentation, focused analysis
+
+**Document user's choice in coordination plan:**
+
+```markdown
+## Deliverables Selected: [Option A/B/C/D]
+
+[If Option D, list specific selections]
+
+**Rationale:** [Why user chose this option]
+**Timeline target:** [If time-constrained]
+**Stakeholder needs:** [If presentation-driven]
+```
+
+**Common rationalization:** "User didn't specify, so I'll default to full analysis"
+
+**Reality:** Always offer choice explicitly. Different needs require different outputs. Assuming full analysis wastes time if user needs quick overview.
+
 ### Step 2: Write Coordination Plan
 
-**Immediately after workspace creation, write `00-coordination.md`:**
+**After documenting deliverable choice, write `00-coordination.md`:**
 
 ```markdown
 ## Analysis Plan
@@ -325,25 +384,34 @@ See individual skill files for detailed contracts:
 - `02-subsystem-catalog.md` contract → [analyzing-unknown-codebases.md](analyzing-unknown-codebases.md)
 - `03-diagrams.md` contract → [generating-architecture-diagrams.md](generating-architecture-diagrams.md)
 - `04-final-report.md` contract → [documenting-system-architecture.md](documenting-system-architecture.md)
+- `05-quality-assessment.md` contract → [assessing-code-quality.md](assessing-code-quality.md)
+- `06-architect-handover.md` contract → [creating-architect-handover.md](creating-architect-handover.md)
 - Validation protocol → [validating-architecture-analysis.md](validating-architecture-analysis.md)
 
 ## Workflow Summary
 
 ```
 1. Create workspace (docs/arch-analysis-YYYY-MM-DD-HHMM/)
-2. Write coordination plan (00-coordination.md)
+1.5. Offer deliverable menu (A/B/C/D) - user chooses scope
+2. Write coordination plan (00-coordination.md) with deliverable choice
 3. Holistic assessment → 01-discovery-findings.md
 4. Decide: Sequential or Parallel? (document reasoning)
 5. Spawn subagents for analysis → 02-subsystem-catalog.md
 6. VALIDATE subsystem catalog (mandatory gate)
+6.5. (Optional) Code quality assessment → 05-quality-assessment.md
 7. Spawn diagram generation → 03-diagrams.md
 8. VALIDATE diagrams (mandatory gate)
 9. Synthesize final report → 04-final-report.md
 10. VALIDATE final report (mandatory gate)
-11. Provide cleanup recommendations for temp/
+11. (Optional) Generate architect handover → 06-architect-handover.md
+12. Provide cleanup recommendations for temp/
 ```
 
-**Every step is mandatory. No exceptions for time pressure, complexity, or stakeholder demands.**
+**Every step is mandatory except optional steps (6.5, 11). No exceptions for time pressure, complexity, or stakeholder demands.**
+
+**Optional steps triggered by deliverable choice:**
+- Step 6.5: Required for "Architect-Ready" (Option C), Optional for "Full Analysis" (Option A)
+- Step 11: Required for "Architect-Ready" (Option C), Not included in "Quick Overview" (Option B)
 
 ## Success Criteria
 
@@ -393,3 +461,5 @@ After routing, load the appropriate specialist skill for detailed guidance:
 2. [generating-architecture-diagrams.md](generating-architecture-diagrams.md) - C4 diagrams, abstraction strategies, notation conventions
 3. [documenting-system-architecture.md](documenting-system-architecture.md) - Synthesis of catalogs and diagrams into comprehensive reports
 4. [validating-architecture-analysis.md](validating-architecture-analysis.md) - Contract validation, consistency checks, quality gates
+5. [assessing-code-quality.md](assessing-code-quality.md) - Code quality analysis beyond architecture - complexity, duplication, smells, technical debt assessment
+6. [creating-architect-handover.md](creating-architect-handover.md) - Handover reports for axiom-system-architect - enables transition from analysis to improvement planning
