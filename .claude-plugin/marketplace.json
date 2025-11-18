@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, Python engineering, web backend, game development, security, documentation, and UX skills for Claude Code - 18 complete skillpacks with 150+ TDD-validated skills",
-    "version": "2.0.0",
+    "description": "Professional AI/ML, Python engineering, web backend, game development, security, documentation, and UX skills for Claude Code - 19 complete skillpacks with 150+ TDD-validated skills",
+    "version": "2.1.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -99,6 +99,19 @@
         "designer"
       ],
       "category": "user-experience"
+    },
+    {
+      "name": "meta-skillpack-maintenance",
+      "source": "./plugins/meta-skillpack-maintenance",
+      "description": "Systematic maintenance and enhancement of skill packs through investigative domain analysis, RED-GREEN-REFACTOR testing, and automated quality improvements",
+      "version": "1.0.0",
+      "keywords": [
+        "meta",
+        "maintenance",
+        "testing",
+        "quality"
+      ],
+      "category": "meta"
     },
     {
       "name": "muna-technical-writer",
