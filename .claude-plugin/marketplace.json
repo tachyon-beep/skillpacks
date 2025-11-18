@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, Python engineering, web backend, game development, security, documentation, and UX skills for Claude Code - 19 complete skillpacks with 150+ TDD-validated skills",
-    "version": "2.1.2",
+    "description": "Professional AI/ML, Python engineering, web backend, DevOps, game development, security, documentation, and UX skills for Claude Code - 20 complete skillpacks with 150+ TDD-validated skills",
+    "version": "2.2.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -62,6 +62,21 @@
         "rest",
         "graphql",
         "microservices"
+      ],
+      "category": "development"
+    },
+    {
+      "name": "axiom-devops-engineering",
+      "source": "./plugins/axiom-devops-engineering",
+      "description": "DevOps and deployment automation expertise - CI/CD pipeline architecture, deployment strategies, zero-downtime deployments, and infrastructure reliability patterns - TDD-validated with RED-GREEN-REFACTOR testing",
+      "version": "1.0.0",
+      "keywords": [
+        "axiom",
+        "devops",
+        "cicd",
+        "deployment",
+        "infrastructure",
+        "tdd-validated"
       ],
       "category": "development"
     },

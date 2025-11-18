@@ -1,0 +1,18 @@
+{
+  "name": "axiom-devops-engineering",
+  "version": "1.0.0",
+  "description": "DevOps and deployment automation expertise - CI/CD pipeline architecture, deployment strategies, zero-downtime deployments, and infrastructure reliability patterns",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "axiom",
+    "devops",
+    "cicd",
+    "deployment",
+    "infrastructure"
+  ]
+}
