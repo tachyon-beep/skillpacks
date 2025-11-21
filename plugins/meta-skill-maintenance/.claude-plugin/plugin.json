@@ -1,0 +1,6 @@
+{
+  "name": "meta-skill-maintenance",
+  "version": "1.1.0",
+  "description": "Systematic skill auditing and creation using TDD methodology - skill-audit for validation, skill-creation for marketplace integration - 2 skills",
+  "category": "meta"
+}

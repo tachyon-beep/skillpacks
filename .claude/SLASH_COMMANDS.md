@@ -44,6 +44,10 @@ All router skills from the 18 plugins are now available as slash commands:
 - **`/simulation-foundations`** - Routes to simulation fundamentals
 - **`/systems-thinking`** - Routes to systems thinking methodology and modeling
 
+### Meta Skills (Maintenance)
+- **`/skill-audit`** - Systematic TDD-based skill auditing to verify skills remain fit-for-purpose
+- **`/skill-creation`** - Create new skills using TDD methodology with marketplace integration (adapted from obra's writing-skills)
+
 ## Usage
 
 Simply type the slash command in Claude Code to load the router skill:
@@ -76,6 +80,8 @@ The router will then guide you to the appropriate specialized skill for your tas
 | yzmir-simulation-foundations | using-simulation-foundations | /simulation-foundations |
 | yzmir-systems-thinking | using-systems-thinking | /systems-thinking |
 | yzmir-training-optimization | using-training-optimization | /training-optimization |
+| meta-skill-maintenance | skill-audit | /skill-audit |
+| meta-skill-maintenance | skill-creation | /skill-creation |
 
 ## Implementation Details
 
