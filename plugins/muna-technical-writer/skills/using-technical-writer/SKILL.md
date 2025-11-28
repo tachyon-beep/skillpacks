@@ -1,7 +1,6 @@
 ---
 name: using-technical-writer
 description: Router for documentation tasks - routes to ADRs, APIs, runbooks, security docs, or governance docs
-mode: true
 ---
 
 # Using Technical Writer

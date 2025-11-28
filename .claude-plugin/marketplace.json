@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Professional AI/ML, Python engineering, web backend, DevOps, game development, security, documentation, and UX skills for Claude Code - 20 complete skillpacks with 150+ TDD-validated skills",
-    "version": "2.3.0",
+    "version": "2.4.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -14,7 +14,7 @@
       "name": "axiom-python-engineering",
       "source": "./plugins/axiom-python-engineering",
       "description": "Modern Python 3.12+ engineering: types, testing, async, scientific computing, ML workflows - 10 skills",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "keywords": [
         "axiom",
         "python",
@@ -26,7 +26,7 @@
       "name": "axiom-system-archaeologist",
       "source": "./plugins/axiom-system-archaeologist",
       "description": "Deep codebase architecture analysis through subagent-driven exploration with C4 diagrams and validation gates - 5 skills",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "keywords": [
         "axiom",
         "architecture",
@@ -84,7 +84,7 @@
       "name": "bravos-simulation-tactics",
       "source": "./plugins/bravos-simulation-tactics",
       "description": "Game simulation implementation patterns and tactics - 11 skills",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "keywords": [
         "bravos",
         "simulation",
@@ -96,7 +96,7 @@
       "name": "bravos-systems-as-experience",
       "source": "./plugins/bravos-systems-as-experience",
       "description": "Emergent gameplay and systemic game design - 9 skills",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "keywords": [
         "bravos",
         "systems",
@@ -108,7 +108,7 @@
       "name": "lyra-ux-designer",
       "source": "./plugins/lyra-ux-designer",
       "description": "UX design fundamentals - visual design, accessibility, interaction patterns - 11 skills",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "keywords": [
         "lyra",
         "designer"
@@ -132,7 +132,7 @@
       "name": "muna-technical-writer",
       "source": "./plugins/muna-technical-writer",
       "description": "Documentation structure, clarity, security-aware docs - 9 technical writing skills",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "keywords": [
         "muna",
         "technical",
@@ -157,7 +157,7 @@
       "name": "ordis-security-architect",
       "source": "./plugins/ordis-security-architect",
       "description": "Threat modeling, security controls, compliance, ATO - 9 comprehensive security skills",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "keywords": [
         "ordis",
         "security",
@@ -169,7 +169,7 @@
       "name": "yzmir-ai-engineering-expert",
       "source": "./plugins/yzmir-ai-engineering-expert",
       "description": "Primary router for all AI/ML engineering skillpacks - directs to specialized packs",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "keywords": [
         "yzmir",
         "engineering",
@@ -181,7 +181,7 @@
       "name": "yzmir-deep-rl",
       "source": "./plugins/yzmir-deep-rl",
       "description": "Reinforcement learning - DQN, PPO, SAC, reward shaping, exploration - 13 skills",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "keywords": [
         "yzmir",
         "deep"
@@ -192,7 +192,7 @@
       "name": "yzmir-llm-specialist",
       "source": "./plugins/yzmir-llm-specialist",
       "description": "LLM techniques - fine-tuning, RLHF, inference optimization - 8 skills",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "keywords": [
         "yzmir",
         "llm",
@@ -204,7 +204,7 @@
       "name": "yzmir-ml-production",
       "source": "./plugins/yzmir-ml-production",
       "description": "Production ML - quantization, serving, MLOps, monitoring, debugging - 11 skills",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "keywords": [
         "yzmir",
         "production"
@@ -215,7 +215,7 @@
       "name": "yzmir-neural-architectures",
       "source": "./plugins/yzmir-neural-architectures",
       "description": "Neural architectures - CNNs, Transformers, RNNs, selection guidance - 9 skills",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "keywords": [
         "yzmir",
         "neural",
@@ -227,7 +227,7 @@
       "name": "yzmir-pytorch-engineering",
       "source": "./plugins/yzmir-pytorch-engineering",
       "description": "PyTorch mastery - tensors, modules, distributed training, profiling - 9 skills",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "keywords": [
         "yzmir",
         "pytorch",
@@ -239,7 +239,7 @@
       "name": "yzmir-simulation-foundations",
       "source": "./plugins/yzmir-simulation-foundations",
       "description": "Game simulation mathematics - ODEs, stability, control theory - 9 skills",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "keywords": [
         "yzmir",
         "simulation",
@@ -251,7 +251,7 @@
       "name": "yzmir-systems-thinking",
       "source": "./plugins/yzmir-systems-thinking",
       "description": "Systems thinking methodology - patterns, leverage points, archetypes, modeling, visualization - 6 TDD-validated skills",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "keywords": [
         "yzmir",
         "systems-thinking",
@@ -264,7 +264,7 @@
       "name": "yzmir-training-optimization",
       "source": "./plugins/yzmir-training-optimization",
       "description": "Training stability - optimizers, learning rates, convergence, debugging - 11 skills",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "keywords": [
         "yzmir",
         "training",

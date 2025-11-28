@@ -1,7 +1,6 @@
 ---
 name: using-pytorch-engineering
 description: Routes to appropriate PyTorch specialist skill based on symptoms and problem type
-mode: true
 ---
 
 # Using PyTorch Engineering

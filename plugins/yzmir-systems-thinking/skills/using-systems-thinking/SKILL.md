@@ -1,18 +1,6 @@
 ---
 name: using-systems-thinking
 description: Router for systems thinking methodology - patterns, leverage points, archetypes, stocks-flows, causal loops, BOT graphs
-mode: true
-pack: yzmir/systems-thinking
-faction: yzmir
-skill_type: meta_router
-dependencies:
-  - yzmir/systems-thinking/recognizing-system-patterns
-  - yzmir/systems-thinking/leverage-points-mastery
-  - yzmir/systems-thinking/systems-archetypes-reference
-  - yzmir/systems-thinking/stocks-and-flows-modeling
-  - yzmir/systems-thinking/causal-loop-diagramming
-  - yzmir/systems-thinking/behavior-over-time-graphs
-estimated_time_hours: 0.5
 ---
 
 # Using Systems-Thinking (Meta-Skill Router)

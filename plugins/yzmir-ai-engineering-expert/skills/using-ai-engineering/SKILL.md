@@ -1,7 +1,6 @@
 ---
 name: using-ai-engineering
 description: Route AI/ML tasks to correct Yzmir pack - frameworks, training, RL, LLMs, architectures, production
-mode: true
 ---
 
 # Using AI Engineering

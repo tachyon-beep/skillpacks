@@ -1,9 +1,6 @@
 ---
 name: using-neural-architectures
 description: Architecture selection router: CNNs, Transformers, RNNs, GANs, GNNs by data modality and constraints
-mode: true
-pack: neural-architectures
-faction: yzmir
 ---
 
 # Using Neural Architectures: Architecture Selection Router

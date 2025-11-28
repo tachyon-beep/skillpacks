@@ -1,7 +1,6 @@
 ---
 name: using-training-optimization
 description: Router to training optimization skills based on symptoms and training problems
-mode: true
 ---
 
 # Using Training Optimization

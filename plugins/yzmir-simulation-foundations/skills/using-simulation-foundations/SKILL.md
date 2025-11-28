@@ -1,20 +1,6 @@
 ---
 name: using-simulation-foundations
 description: Router for simulation math - ODEs, state-space, stability, control, numerics, chaos, stochastic
-mode: true
-pack: yzmir/simulation-foundations
-faction: yzmir
-skill_type: meta_router
-dependencies:
-  - yzmir/simulation-foundations/differential-equations-for-games
-  - yzmir/simulation-foundations/state-space-modeling
-  - yzmir/simulation-foundations/stability-analysis
-  - yzmir/simulation-foundations/feedback-control-theory
-  - yzmir/simulation-foundations/numerical-methods
-  - yzmir/simulation-foundations/continuous-vs-discrete
-  - yzmir/simulation-foundations/chaos-and-sensitivity
-  - yzmir/simulation-foundations/stochastic-simulation
-estimated_time_hours: 0.5
 ---
 
 # Using Simulation-Foundations (Meta-Skill Router)

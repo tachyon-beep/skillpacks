@@ -1,7 +1,6 @@
 ---
 name: using-python-engineering
 description: Routes to appropriate Python specialist skill based on symptoms and problem type
-mode: true
 ---
 
 # Using Python Engineering

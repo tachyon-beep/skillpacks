@@ -1,20 +1,6 @@
 ---
 name: using-systems-as-experience
 description: Router for systems-as-experience - emergence, sandbox, optimization, discovery, narrative, modding
-mode: true
-pack: bravos/systems-as-experience
-faction: bravos
-skill_type: meta_router
-dependencies:
-  - bravos/systems-as-experience/emergent-gameplay-design
-  - bravos/systems-as-experience/sandbox-design-patterns
-  - bravos/systems-as-experience/strategic-depth-from-systems
-  - bravos/systems-as-experience/optimization-as-play
-  - bravos/systems-as-experience/discovery-through-experimentation
-  - bravos/systems-as-experience/player-driven-narratives
-  - bravos/systems-as-experience/modding-and-extensibility
-  - bravos/systems-as-experience/community-meta-gaming
-estimated_time_hours: 0.5
 ---
 
 # Using Systems-as-Experience (Meta-Skill Router)
