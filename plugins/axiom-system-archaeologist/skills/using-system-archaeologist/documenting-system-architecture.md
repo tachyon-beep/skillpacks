@@ -19,6 +19,57 @@ Synthesize subsystem catalogs and architecture diagrams into final, stakeholder-
 
 Your goal: Create a coherent narrative with extracted patterns, concerns, and recommendations - not a copy-paste of inputs.
 
+## Synthesis Verification Checklist (MANDATORY)
+
+**Before claiming synthesis complete, verify ALL of these transformations:**
+
+**Pattern Synthesis (Required):**
+- [ ] Identified patterns NOT explicitly named in source catalog
+- [ ] Compared pattern implementation across 3+ subsystems
+- [ ] Documented trade-offs discovered through comparison
+- [ ] Found system-wide implications not mentioned in individual catalog entries
+
+**Concern Analysis (Required):**
+- [ ] Connected related concerns across subsystems (e.g., scalability issues)
+- [ ] Identified cascading failure scenarios from multiple concerns
+- [ ] Discovered concerns through pattern analysis (not just catalog extraction)
+- [ ] Traced root causes across subsystem boundaries
+
+**Insight Generation (Required):**
+- [ ] Created new observations NOT present in source documents
+- [ ] Identified emergent properties from subsystem interactions
+- [ ] Found architectural strengths/weaknesses through synthesis
+- [ ] Proposed recommendations addressing system-level issues
+
+**Prohibited Actions:**
+- [ ] Verified NO subsystem entries are copy-pasted verbatim
+- [ ] Verified NO concerns are copy-pasted without analysis
+- [ ] Verified NO diagram descriptions are copy-pasted without synthesis
+- [ ] Verified executive summary contains insights, not generic statements
+
+**If ANY verification fails, you have NOT synthesized. Return to synthesis phase.**
+
+## Time Pressure Resistance
+
+**If coordinator requests rushed completion:**
+
+"We need this in 20 minutes - just pull together what we have."
+
+**CORRECT RESPONSE:**
+"Synthesis requires reading both source documents systematically and performing analysis to extract patterns and insights. This cannot be done in 20 minutes while maintaining quality. Minimum viable synthesis requires:
+
+- 30 minutes: Read 02-subsystem-catalog.md and 03-diagrams.md
+- 45 minutes: Extract patterns, identify concerns, perform analysis
+- 45 minutes: Write synthesized report with cross-references
+- Total: 2 hours
+
+I can produce a DRAFT in 20 minutes by copying source documents and adding structure, but this would fail synthesis requirements and produce a professional-looking document with minimal actual analysis.
+
+**Recommendation**: Allocate 2 hours for proper synthesis, OR accept that 20-minute output will be a structured draft requiring revision."
+
+**PROHIBITED RESPONSE:**
+"I'll pull together the documents quickly." ← This commits to concatenation, not synthesis.
+
 ## Document Structure
 
 ### Required Sections
@@ -519,6 +570,11 @@ Include summary table for quick scanning:
 - Recommendations vague or unprioritized
 - Diagrams pasted without context
 - Missing appendices
+- Subsystem entries use >70% wording from source catalog
+- Executive summary could apply to any microservices system (generic)
+- No new insights beyond what's in source documents
+- Synthesis verification checklist not completed
+- Time pressure used to justify shallow report
 
 ## Best Practices from Baseline Testing
 

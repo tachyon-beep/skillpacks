@@ -27,6 +27,26 @@ Generate handover reports for axiom-system-architect plugin - enables transition
 
 **Your role:** Bridge neutral analysis to critical assessment, don't do the assessment yourself.
 
+## MANDATORY: Stop Before Answering Prioritization
+
+**When user asks:** "What should we fix first?" / "What's most critical?" / "Where should we start?"
+
+**STOP. DO NOT ANSWER. YOU MUST:**
+
+1. **Recognize:** This is a prioritization question (architect domain)
+2. **Create handover:** Write 06-architect-handover.md FIRST
+3. **Offer consultation:** Present Pattern A/B/C ONLY
+4. **Wait for user choice:** Do NOT provide your own priority assessment
+
+**NEVER:**
+- Answer the question directly ("Fix X first")
+- List issues in priority order as your recommendation
+- Explain why something is critical/important
+- Create roadmaps or sprint plans
+- Say "obviously X is more important than Y"
+
+**If you catch yourself about to answer:** STOP. You're violating role boundaries. Create handover instead.
+
 ## The Role Confusion Trap (from baseline testing)
 
 **User asks:** "What should we fix first?"
@@ -201,14 +221,19 @@ IMPORTANT: Follow architect discipline - no diplomatic softening, security-first
 
 ## Common Rationalizations (STOP SIGNALS)
 
-| Excuse | Reality |
-|--------|---------|
-| "I know the codebase, I can prioritize" | Knowledge ≠ Critical assessment. Architect has framework. |
-| "Just helping them prioritize for tomorrow" | Helping by overstepping = inconsistent rigor. Offer architect. |
-| "Architect would say same thing" | Then let architect say it with their framework. |
-| "User wants MY recommendation" | User wants CORRECT recommendation. That requires architect. |
-| "It's obvious payment errors are critical" | Obvious to you ≠ risk-based security-first framework. |
-| "I'll save time by combining roles" | Blending roles loses discipline. Handover takes 5 min. |
+| Excuse | Why This Fails | What To Do Instead |
+|--------|----------------|-------------------|
+| "I know the codebase, I can prioritize" | Knowing ≠ Risk framework. You analyzed neutrally, architect assesses critically. | Create handover, spawn architect |
+| "Just helping them prioritize for tomorrow" | Helping by guessing priorities = wrong priorities. | Provide correct answer via architect |
+| "Architect would say same thing" | Prove it by asking architect. Don't assume. | Handover + consultation takes 5min |
+| "User wants MY recommendation" | User wants CORRECT recommendation from right role. | Architect is right role for priority |
+| "It's obvious payment errors are critical" | Obvious ≠ risk-based security-first assessment. | Let architect apply framework |
+| "I'll save time by combining roles" | Saves 5min, loses discipline forever. | Time saved ≠ correctness maintained |
+| "User chose 'handover only' option" | Handover only = no immediate consult. Still need architect eventually. | Create handover, explain architect needed |
+| "I'm just summarizing findings" | Listing top 5 issues = implicit priority. | List ALL issues, let architect prioritize |
+| "I can infer priority from severity" | Severity ≠ priority. Security-first ordering requires architect. | Document findings, spawn architect |
+
+**ENFORCEMENT:** If you recognize these thoughts, you are about to violate boundaries. STOP. Create handover.
 
 **From baseline testing:** Agents will try to "help" by doing architect's job. Skill must enforce boundary.
 
@@ -227,6 +252,11 @@ IMPORTANT: Follow architect discipline - no diplomatic softening, security-first
 - Created sprint roadmaps yourself
 - Skipped handover, worked from raw files
 - Blended archaeologist and architect roles
+- Answered "what should we fix first" directly
+- Listed issues in priority order without architect
+- Said "obviously X is more important"
+- Provided timeline recommendations yourself
+- Used time pressure to justify skipping architect
 
 ## Integration with Workflow
 

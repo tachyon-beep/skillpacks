@@ -28,6 +28,29 @@ Analyze code quality indicators beyond architecture with EVIDENCE-BASED findings
 
 **Your goal:** Document WHAT YOU OBSERVED, not what you guess might be true.
 
+## Implementation Review Requirement (MANDATORY)
+
+**YOU MUST READ IMPLEMENTATION CODE to assess code quality.**
+
+**Banned shortcuts:**
+- ❌ Producing findings based solely on `wc -l` (file/function size)
+- ❌ Using `grep -c` to count patterns without reading context
+- ❌ Citing cyclomatic complexity tools without reviewing actual code
+- ❌ Inferring quality from file structure or import statements
+- ❌ Using "minimal viable quality assessment" as justification
+
+**If you haven't opened and read the actual source files:**
+- DO NOT produce quality findings
+- DO write: "Implementation not reviewed - cannot assess code quality"
+- DO recommend: "Quality assessment requires implementation review"
+
+**Verification check:**
+- Can you quote specific code snippets from the files in your findings?
+- Can you cite line numbers where you observed issues?
+- If NO to either: You haven't done quality assessment, you've done structural analysis.
+
+**From pressure testing:** Agents will use grep/wc/file-structure to fake quality analysis. This is BANNED.
+
 ## The Speculation Trap (from baseline testing)
 
 **Common rationalization:** "I don't have full context, so I'll make educated guesses to provide value."
@@ -149,26 +172,35 @@ Testing likely exists but coverage unclear. May have integration tests. Probably
 
 **From baseline testing:** Agents filled every section with speculation. Skill must make "not analyzed" acceptable.
 
-## Minimal Viable Quality Assessment
+## When You Haven't Read Implementation Code
 
-**If time/sample constraints prevent comprehensive analysis:**
+**If coordinator requests quality assessment but you've only reviewed structure:**
 
-1. **Acknowledge scope explicitly**
-   - "Reviewed 5 files from 8 subsystems"
-   - "Implementation details not examined (imports/structure only)"
+**DO:**
+1. State clearly: "Cannot assess code quality - implementation not reviewed"
+2. Explain: "Quality assessment requires reading source code, not just file structure"
+3. Offer alternative: "Can provide architectural analysis or recommend quality review scope"
 
-2. **Document what you CAN observe**
-   - File sizes, function counts (from grep/wc)
-   - Imports (coupling indicators)
-   - Structure (directory organization)
+**DO NOT:**
+1. Produce "findings" based on file sizes, function counts, or import analysis
+2. Call structural metrics "quality observations"
+3. Use time pressure as justification for structural-only "assessment"
 
-3. **List gaps explicitly**
-   - "Not analyzed: Test coverage, runtime behavior, security patterns"
+**Example response:**
+```
+I've reviewed the subsystem catalog (file structure and imports only). Code quality assessment requires reading implementation code - I haven't done this yet.
 
-4. **Mark confidence appropriately**
-   - "Low confidence: Small sample, structural review only"
+**Options:**
+1. I can read implementation files now and provide quality assessment (estimate: 2 hours)
+2. Coordinator can assign this to a specialist subagent
+3. We can defer quality assessment to post-delivery phase
 
-**Better to be honest about limitations than to guess.**
+**Not viable:** Producing quality findings without reading code.
+```
+
+**Structural metrics (line counts, function counts) are NOT quality findings.**
+
+**From pressure testing:** "Minimal viable" became "structural metrics masquerading as quality analysis." This is banned.
 
 ## Output Contract
 

@@ -12,7 +12,21 @@ Systematically analyze unfamiliar code to identify subsystems, components, depen
 - You need to analyze code you haven't seen before
 - Output must integrate with downstream tooling (validation, diagram generation)
 
-## Critical Principle: Contract Compliance
+## Critical Principles
+
+### Principle 1: You MUST Read Implementation Code
+
+**Analysis requires reading actual source files, not just structure.**
+
+You CANNOT produce valid analysis by only:
+- Running `wc -l` or `grep -c` to count lines/functions
+- Reading file names and directory structure
+- Looking at imports without reading implementations
+- Using metadata files (package.json, plugin.json) alone
+
+**If you haven't opened and read source files, you haven't analyzed anything.**
+
+### Principle 2: Contract Compliance
 
 **Your analysis quality doesn't matter if you violate the output contract.**
 
@@ -101,6 +115,46 @@ Here's what a correctly formatted entry looks like:
 
 **This is EXACTLY what your output should look like.** No more, no less.
 
+## Minimum Analysis Standards (NON-NEGOTIABLE)
+
+**These standards apply to ALL analysis tasks, regardless of codebase size.**
+
+**For EVERY subsystem analyzed, you MUST:**
+
+1. **Read 100% of metadata files** (plugin.json, package.json, setup.py, etc.)
+2. **Read 100% of router/index files** (entry points, skill routers, __init__.py)
+3. **For main code files:**
+   - Files ≤500 lines: Read 100%
+   - Files >500 lines: Read entry points + sample 3+ representative functions
+4. **Cross-validate all dependency claims** - Check imports match stated dependencies
+5. **Document evidence trail** - Every claim in output must cite file/line you read
+
+**STOP SIGNALS for rationalization:**
+
+❌ "It's simple, so I don't need to read everything"
+→ Simple codebases still have patterns worth documenting. Read the code.
+
+❌ "The structure is obvious from names"
+→ Names ≠ implementation. Obvious structure may hide non-obvious details. Read the code.
+
+❌ "I can infer behavior without reading code"
+→ Inference ≠ analysis. If you haven't read it, you don't know it. Read the code.
+
+❌ "There are only 3 files, I'll just list them"
+→ 3 files still need implementation analysis. Read each one. Document what you found.
+
+**Example of INSUFFICIENT analysis:**
+```markdown
+**Key Components:**
+- `main.py` - Main code
+```
+
+**Example of COMPLIANT analysis:**
+```markdown
+**Key Components:**
+- `main.py` - Plugin entry point with 3 command handlers (lines 45-180), configuration loader (lines 20-43), and error handling wrapper (lines 181-200)
+```
+
 ## Systematic Analysis Approach
 
 ### Step 1: Read Task Specification
@@ -130,23 +184,38 @@ Use this proven approach from baseline testing:
 - Sampling verifies patterns
 - Quantitative data supports claims
 
-### Step 3: Mark Confidence Explicitly
+### Step 3: Mark Confidence Explicitly WITH EVIDENCE
 
-**Every output MUST include confidence level with reasoning.**
+**Every output MUST include confidence level with SPECIFIC EVIDENCE.**
 
-**High confidence** - Router skill provided catalog + verified with sampling
+**High confidence** - Read all critical files, verified behavior, cross-checked dependencies
 ```markdown
-**Confidence:** High - Router skill listed all 10 components, sampling 4 confirmed patterns
+**Confidence:** High - Read plugin.json + all 3 router skills + sampled 5/12 implementation files. Cross-verified dependencies by checking imports against package.json. Documented patterns from lines 45-120 in auth_handler.py.
 ```
 
-**Medium confidence** - No router, but clear structure + sampling
+**Medium confidence** - Read representative sample, clear structure, some gaps
 ```markdown
-**Confidence:** Medium - No router catalog, inferred from directory structure + 5 file samples
+**Confidence:** Medium - Read plugin.json + 4/8 skills + directory structure. Dependencies inferred from imports (not verified against manifest). Implementation details sampled from 3 files.
 ```
 
-**Low confidence** - Incomplete, placeholders, or unclear organization
+**Low confidence** - Incomplete information, unclear organization, significant gaps
 ```markdown
-**Confidence:** Low - Several SKILL.md files missing, test artifacts suggest work-in-progress
+**Confidence:** Low - Several SKILL.md files missing, test artifacts suggest work-in-progress, no clear entry point identified, dependencies uncertain.
+```
+
+**MANDATORY EVIDENCE REQUIREMENTS:**
+- Cite specific files read (e.g., "Read plugin.json + auth_handler.py + token_manager.py")
+- Cite specific lines for claims (e.g., "lines 45-180 implement handlers")
+- Cite verification steps (e.g., "verified imports match package.json dependencies")
+
+**INSUFFICIENT confidence marking:**
+```markdown
+**Confidence:** High - Small codebase, easy to understand
+```
+
+**COMPLIANT confidence marking:**
+```markdown
+**Confidence:** High - Read all 3 files (plugin.json, README.md, main.py 200 lines). Verified dependencies by checking imports (lines 1-15) against plugin.json. Patterns documented from implementation review.
 ```
 
 ### Step 4: Distinguish States Clearly
@@ -211,6 +280,36 @@ When analyzing codebases with mixed completion:
 [ ] Sections in correct order
 [ ] Entry in file: 02-subsystem-catalog.md (not separate file)
 ```
+
+## Mandatory Concern-Finding Checklist
+
+**Before writing "None observed" in Concerns, verify you checked for:**
+
+**Code Quality:**
+- [ ] Error handling present for failure cases?
+- [ ] Input validation for user-facing functions?
+- [ ] Resource cleanup (file handles, connections, etc.)?
+- [ ] Logging/observability for debugging?
+
+**Architecture:**
+- [ ] Clear separation of concerns?
+- [ ] Dependencies properly abstracted?
+- [ ] Configuration externalized vs hardcoded?
+- [ ] Entry points clearly documented?
+
+**Completeness:**
+- [ ] TODOs, FIXMEs, or placeholder comments?
+- [ ] Missing test coverage indicators?
+- [ ] Incomplete implementations (stubs, NotImplementedError)?
+- [ ] Documentation gaps?
+
+**If you checked all items and found nothing, THEN write:**
+```markdown
+**Concerns:**
+- None observed (verified: error handling, validation, architecture, completeness)
+```
+
+**If you skipped this checklist, your analysis is INCOMPLETE.**
 
 ## Handling Uncertainty
 
@@ -311,6 +410,21 @@ Your output will be validated against:
 
 ❌ **Work without reading task spec**
 "I know what to do" → Read `temp/task-*.md` first
+
+❌ **Shallow analysis of "simple" code**
+"It's only 3 files, so I'll just list them" → Must analyze implementation details, patterns, dependencies regardless of size
+
+❌ **Skip concern-finding process**
+"Everything looks fine" → Must verify using concern-finding checklist before claiming "None observed"
+
+❌ **Confidence without evidence**
+"High confidence because it's simple" → Must cite specific files read, lines checked, verification steps performed
+
+❌ **Pattern documentation without verification**
+"Uses standard pattern" → Must cite specific code locations demonstrating the pattern
+
+❌ **Structural metrics as analysis**
+"File has 200 lines, 5 functions" → Line counts from `wc` are not analysis. Read the actual code.
 
 ## Integration with Workflow
 

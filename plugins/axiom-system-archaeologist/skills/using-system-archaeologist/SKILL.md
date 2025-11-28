@@ -214,51 +214,91 @@ Follow contract in documentation-contracts.md:
 - Systematic check against contract requirements
 - Cross-document consistency verification
 - Quality gate before proceeding to next phase
-- NOT just "read it again" - use a checklist
+- NOT just "read it again" - spawn a validator
 
-**Two validation approaches:**
+#### Validation Approach: SPAWN VALIDATION SUBAGENT
 
-**A) Separate Validation Subagent (PREFERRED)**
-- Spawn dedicated validation subagent
+**MANDATORY for multi-subsystem work (≥3 subsystems):**
+- Spawn dedicated validation subagent using Task tool
 - Agent reads document + contract, produces validation report
-- Provides "fresh eyes" review
-- Use when: Time allows (5-10 min overhead), complex analysis, multiple subsystems
+- Provides "fresh eyes" review - catches errors you're blind to
+- Write validation report to `temp/validation-[document].md`
 
-**B) Systematic Self-Validation (ACCEPTABLE)**
-- You validate against contract checklist systematically
-- Document your validation in coordination log
-- Use when: Tight time constraints (< 1 hour), simple analysis, solo work already
-- **MUST still be systematic** (not "looks good")
+**Self-validation ONLY permitted when ALL conditions met:**
+1. Single-subsystem analysis (1-2 subsystems only)
+2. Total analysis time < 30 minutes
+3. YOU personally did ALL the work (no subagents involved)
+4. AND you document validation EVIDENCE (not just checkmarks)
 
-**Validation checklist (either approach):**
+**If ANY condition is not met → SPAWN VALIDATION SUBAGENT. No exceptions.**
+
+#### STOP: Validation Rationalization Blockers
+
+**If you're about to skip spawning a validation subagent, STOP and check:**
+
+❌ "We have 45 minutes, no time for validation"
+→ Validation takes 5-10 minutes. You have time. Spawn validator.
+
+❌ "I already reviewed it while writing"
+→ Self-review ≠ validation. Fresh eyes catch errors. Spawn validator.
+
+❌ "I'll do systematic self-validation"
+→ You completed multiple subsystems. This requires independent validator. Spawn validator.
+
+❌ "Most work is already done, just need to finish"
+→ Prior work must be validated before proceeding. Spawn validator.
+
+❌ "Time pressure - I'll document limitations instead"
+→ Documented limitations don't excuse skipping validation. Spawn validator.
+
+❌ "It's a simple codebase"
+→ Simple ≠ correct. Validation catches format errors regardless of complexity. Spawn validator.
+
+**Reality check:** If your analysis involved ≥3 subsystems or multiple hours of work, you MUST spawn validation subagent. Period.
+
+#### Validation Checklist (for validator subagent)
+
+Validator checks:
 - [ ] Contract compliance (all required sections present)
 - [ ] Cross-document consistency (subsystems in catalog match diagrams)
-- [ ] Confidence levels marked
+- [ ] Confidence levels marked with reasoning
 - [ ] No placeholder text ("[TODO]", "[Fill in]")
 - [ ] Dependencies bidirectional (A→B means B shows A as inbound)
+- [ ] Evidence present (file paths, line numbers cited)
 
-**When using self-validation, document in coordination log:**
+#### When Self-Validation IS Permitted (Rare)
+
+**Only for trivial single-subsystem work, document EVIDENCE:**
 
 ```markdown
 ## Validation Decision - [timestamp]
-- Approach: Self-validation (time constraint: 1 hour deadline)
+- Approach: Self-validation (ONLY because: 1-2 subsystems, <30 min work, solo)
 - Documents validated: 02-subsystem-catalog.md
-- Checklist: Contract ✓, Consistency ✓, Confidence ✓, No placeholders ✓
-- Result: APPROVED for diagram generation
+
+**Evidence (REQUIRED):**
+- Contract sections verified: Location ✓ (line 5), Responsibility ✓ (line 7)...
+- Consistency checks: Subsystem X matches diagram node X ✓
+- Specific issues found and resolved: [list any, or "None"]
+- Validation took: [X minutes]
+
+- Result: APPROVED with evidence above
 ```
 
-**Validation status meanings:**
+**Self-validation WITHOUT evidence is not validation - it's rationalization.**
+
+#### Validation Status Meanings
+
 - **APPROVED** → Proceed to next phase
 - **NEEDS_REVISION** (warnings) → Fix non-critical issues, document as tech debt, proceed
 - **NEEDS_REVISION** (critical) → BLOCK. Fix issues, re-validate. Max 2 retries, then escalate to user.
 
 **Common rationalization:** "Validation slows me down"
 
-**Reality:** Validation catches errors before they cascade. 2 minutes validating saves 20 minutes debugging diagrams generated from bad data.
+**Reality:** Validation catches errors before they cascade. 5-10 minutes validating saves hours debugging diagrams generated from bad data.
 
 **Common rationalization:** "I already checked it, validation is redundant"
 
-**Reality:** "Checked it" ≠ "validated systematically against contract". Use the checklist.
+**Reality:** "Checked it" ≠ "validated by independent subagent". Your own review misses your own blind spots.
 
 ### Step 7: Handle Validation Failures
 
@@ -427,6 +467,9 @@ See individual skill files for detailed contracts:
 - Files scattered outside workspace
 - No coordination log showing decisions
 - Validation skipped "to save time"
+- Self-validated multi-subsystem work instead of spawning validator
+- Used time pressure to justify skipping independent validation
+- Documented validation checkmarks without evidence
 - Worked solo despite clear parallelization opportunity
 - Produced rushed outputs without limitation documentation
 - Rationalized shortcuts as "appropriate trade-offs"
@@ -442,8 +485,11 @@ See individual skill files for detailed contracts:
 **❌ Work solo despite scale**
 "Orchestration overhead isn't worth it"
 
-**❌ Skip validation**
-"I already reviewed it myself"
+**❌ Skip validation subagent**
+"I already reviewed it myself" / "I'll do systematic self-validation"
+
+**❌ Self-validate multi-subsystem work**
+"Time constraints mean self-validation is acceptable" (NO - spawn validator)
 
 **❌ Bypass BLOCK status**
 "The validation is too strict, I'll proceed anyway"

@@ -12,11 +12,69 @@ Generate C4 architecture diagrams (Context, Container, Component levels) from su
 - Need to visualize system architecture at multiple abstraction levels
 - Output integrates with validation and final reporting phases
 
-## Core Principle: Abstraction Over Completeness
+## Core Principles
+
+### Principle 1: Data Quality Over Speed
+
+**Diagrams carry authority. Only generate diagrams from reliable data.**
+
+If catalog data quality is insufficient (see Data Quality Gate below), refuse diagram generation. Stakeholder deadlines do not override data quality requirements.
+
+### Principle 2: Abstraction Over Completeness
 
 **Readable diagrams communicate architecture. Overwhelming diagrams obscure it.**
 
-Your goal: Help readers understand the system, not document every detail.
+Your goal: Help readers understand the system accurately, using appropriate abstraction levels. Accuracy comes first; readability makes accuracy useful.
+
+## Data Quality Gate (MANDATORY)
+
+**STOP: Before generating any diagrams, verify catalog meets minimum standards.**
+
+### Mandatory Requirements
+
+**You MUST refuse diagram generation if:**
+1. **>30% subsystems have Confidence: Low**
+2. **Any critical-path subsystem has Confidence: Low** (core routers, entry points, security components)
+3. **>50% dependencies marked as "Unknown" or "Inferred"**
+
+### What To Do Instead
+
+**If requirements not met:**
+1. Report to coordinator: "Catalog data quality insufficient for diagram generation"
+2. Specify exactly which subsystems need investigation
+3. Suggest running targeted analysis
+4. **DO NOT** generate partial diagrams "to help visualize"
+
+**Valid response:**
+```
+I cannot generate reliable architecture diagrams from this catalog. The following subsystems have Confidence: Low and represent >30% of the system: [list]. Please complete analysis of these subsystems before requesting diagrams.
+```
+
+### Why This Matters
+
+**Diagrams carry authority.** Once stakeholders see a diagram, they assume it reflects reality. A diagram with hidden gaps creates false confidence and can lead to:
+- Incorrect architectural decisions
+- Missed dependencies during migrations
+- Security blind spots
+- Wasted implementation effort
+
+**If you're not confident in the data, don't produce the diagram.**
+
+### Confidence-Based Inclusion Rules
+
+**High Confidence subsystems:**
+- Include in all diagrams
+- Full detail at Component level if selected
+
+**Medium Confidence subsystems:**
+- Include in Container diagram with visual notation: `[Medium Conf]` in label
+- Avoid selecting for Component diagrams
+- Document specific gaps in Limitations
+
+**Low Confidence subsystems:**
+- **DO NOT INCLUDE** in generated diagrams
+- List in "Excluded Subsystems" section
+- Explain why excluded (insufficient data)
 
 ## Output Contract
 
@@ -260,6 +318,11 @@ Rel(user, platform, "Uses")
 - Invalid syntax
 - Missing documentation sections
 - Invented relationships without noting as inferred
+- Generated diagrams when >30% subsystems had Low Confidence
+- Included Low Confidence subsystems without explicit coordinator approval
+- Used "document limitations" as excuse to proceed with bad data
+- Created authoritative-looking diagrams from uncertain catalog
+- Skipped Data Quality Gate check
 
 ## Best Practices from Baseline Testing
 
