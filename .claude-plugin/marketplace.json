@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Professional AI/ML, Python engineering, web backend, DevOps, game development, security, documentation, and UX skills for Claude Code - 20 complete skillpacks with 150+ TDD-validated skills",
-    "version": "2.2.0",
+    "version": "2.3.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -26,7 +26,7 @@
       "name": "axiom-system-archaeologist",
       "source": "./plugins/axiom-system-archaeologist",
       "description": "Deep codebase architecture analysis through subagent-driven exploration with C4 diagrams and validation gates - 5 skills",
-      "version": "1.0.2",
+      "version": "1.2.0",
       "keywords": [
         "axiom",
         "architecture",
@@ -38,7 +38,7 @@
       "name": "axiom-system-architect",
       "source": "./plugins/axiom-system-architect",
       "description": "TDD-validated architectural assessment enforcing professional discipline - prevents diplomatic softening, analysis paralysis, and security priority compromise - 3 specialist skills + router",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "axiom",
         "architecture",
@@ -143,8 +143,8 @@
     {
       "name": "ordis-quality-engineering",
       "source": "./plugins/ordis-quality-engineering",
-      "description": "E2E testing, performance testing, chaos engineering, test automation - 11 quality engineering skills",
-      "version": "1.0.0",
+      "description": "E2E testing, performance testing, chaos engineering, test automation - 21 quality engineering skills",
+      "version": "1.1.0",
       "keywords": [
         "ordis",
         "quality",
@@ -251,7 +251,7 @@
       "name": "yzmir-systems-thinking",
       "source": "./plugins/yzmir-systems-thinking",
       "description": "Systems thinking methodology - patterns, leverage points, archetypes, modeling, visualization - 6 TDD-validated skills",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "keywords": [
         "yzmir",
         "systems-thinking",
