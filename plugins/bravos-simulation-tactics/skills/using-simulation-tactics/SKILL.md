@@ -26,6 +26,23 @@ Use this meta-skill when:
 - Debugging simulation issues and unclear where to start
 - Planning architecture for simulation-heavy games
 
+## How to Access Reference Sheets
+
+**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+
+When this skill is loaded from:
+  `skills/using-simulation-tactics/SKILL.md`
+
+Reference sheets like `physics-simulation-patterns.md` are at:
+  `skills/using-simulation-tactics/physics-simulation-patterns.md`
+
+NOT at:
+  `skills/physics-simulation-patterns.md` ← WRONG PATH
+
+When you see a link like `[physics-simulation-patterns.md](physics-simulation-patterns.md)`, read the file from the same directory as this SKILL.md.
+
+---
+
 ## The 10 Core Skills
 
 Before routing, understand what each skill provides:

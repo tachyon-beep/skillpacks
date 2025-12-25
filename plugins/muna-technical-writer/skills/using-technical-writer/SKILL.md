@@ -21,6 +21,25 @@ Load this skill when:
 
 **Don't use for**: Non-technical writing (marketing copy, blog posts, creative content)
 
+---
+
+## How to Access Reference Sheets
+
+**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+
+When this skill is loaded from:
+  `skills/using-technical-writer/SKILL.md`
+
+Reference sheets like `documentation-structure.md` are at:
+  `skills/using-technical-writer/documentation-structure.md`
+
+NOT at:
+  `skills/documentation-structure.md` ← WRONG PATH
+
+When you see a link like `[documentation-structure.md](documentation-structure.md)`, read the file from the same directory as this SKILL.md.
+
+---
+
 ## Routing by Document Type
 
 ### Architecture Decisions (ADRs)

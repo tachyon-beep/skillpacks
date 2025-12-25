@@ -22,6 +22,23 @@ Invoke this meta-skill when you encounter:
 
 This is the **entry point** for the deep-rl pack. It routes to 12 specialized skills based on problem characteristics.
 
+## How to Access Reference Sheets
+
+**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+
+When this skill is loaded from:
+  `skills/using-deep-rl/SKILL.md`
+
+Reference sheets like `rl-foundations.md` are at:
+  `skills/using-deep-rl/rl-foundations.md`
+
+NOT at:
+  `skills/rl-foundations.md` ← WRONG PATH
+
+When you see a link like `[rl-foundations.md](rl-foundations.md)`, read the file from the same directory as this SKILL.md.
+
+---
+
 ## Core Principle
 
 **Problem type determines algorithm family.**

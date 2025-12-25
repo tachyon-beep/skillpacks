@@ -19,6 +19,23 @@ This is a **meta-skill** that:
 
 ---
 
+## How to Access Reference Sheets
+
+**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+
+When this skill is loaded from:
+  `skills/using-simulation-foundations/SKILL.md`
+
+Reference sheets like `differential-equations-for-games.md` are at:
+  `skills/using-simulation-foundations/differential-equations-for-games.md`
+
+NOT at:
+  `skills/differential-equations-for-games.md` ← WRONG PATH
+
+When you see a link like `[differential-equations-for-games.md](differential-equations-for-games.md)`, read the file from the same directory as this SKILL.md.
+
+---
+
 ## Core Philosophy: Theory Enables Design
 
 ### The Central Idea

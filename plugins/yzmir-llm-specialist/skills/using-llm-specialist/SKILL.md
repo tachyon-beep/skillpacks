@@ -18,6 +18,23 @@ Use this skill when the user needs help with:
 - Optimizing LLM inference
 - LLM safety and alignment
 
+## How to Access Reference Sheets
+
+**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+
+When this skill is loaded from:
+  `skills/using-llm-specialist/SKILL.md`
+
+Reference sheets like `prompt-engineering-patterns.md` are at:
+  `skills/using-llm-specialist/prompt-engineering-patterns.md`
+
+NOT at:
+  `skills/prompt-engineering-patterns.md` ← WRONG PATH
+
+When you see a link like `[prompt-engineering-patterns.md](prompt-engineering-patterns.md)`, read the file from the same directory as this SKILL.md.
+
+---
+
 ## Routing Decision Tree
 
 ### Step 1: Identify the task category

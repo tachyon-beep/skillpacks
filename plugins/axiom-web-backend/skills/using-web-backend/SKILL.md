@@ -21,6 +21,23 @@ Use this router when encountering:
 - **Backend infrastructure**: Authentication, database integration, deployment
 - **Testing & documentation**: API testing strategies, documentation approaches
 
+## How to Access Reference Sheets
+
+**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+
+When this skill is loaded from:
+  `skills/using-web-backend/SKILL.md`
+
+Reference sheets like `fastapi-development.md` are at:
+  `skills/using-web-backend/fastapi-development.md`
+
+NOT at:
+  `skills/fastapi-development.md` ← WRONG PATH
+
+When you see a link like `[fastapi-development.md](fastapi-development.md)`, read the file from the same directory as this SKILL.md.
+
+---
+
 ## Quick Reference - Routing Table
 
 | User Question Contains | Route To | Why |

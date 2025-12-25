@@ -27,6 +27,23 @@ Load this skill when:
 
 ---
 
+## How to Access Reference Sheets
+
+**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+
+When this skill is loaded from:
+  `skills/using-training-optimization/SKILL.md`
+
+Reference sheets like `optimization-algorithms.md` are at:
+  `skills/using-training-optimization/optimization-algorithms.md`
+
+NOT at:
+  `skills/optimization-algorithms.md` ← WRONG PATH
+
+When you see a link like `[optimization-algorithms.md](optimization-algorithms.md)`, read the file from the same directory as this SKILL.md.
+
+---
+
 ## Routing by Primary Symptom
 
 ### Symptom: "Model Not Learning" / "Loss Not Decreasing"

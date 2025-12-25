@@ -19,6 +19,25 @@ Analyze existing codebases through coordinated subagent exploration to produce c
 - Analyzing codebases of any size (small to large)
 - User mentions: "analyze codebase", "architecture documentation", "system design", "generate diagrams"
 
+---
+
+## How to Access Reference Sheets
+
+**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+
+When this skill is loaded from:
+  `skills/using-system-archaeologist/SKILL.md`
+
+Reference sheets like `subsystem-discovery.md` are at:
+  `skills/using-system-archaeologist/subsystem-discovery.md`
+
+NOT at:
+  `skills/subsystem-discovery.md` ← WRONG PATH
+
+When you see a link like `[subsystem-discovery.md](subsystem-discovery.md)`, read the file from the same directory as this SKILL.md.
+
+---
+
 ## Mandatory Workflow
 
 ### Step 1: Create Workspace (NON-NEGOTIABLE)

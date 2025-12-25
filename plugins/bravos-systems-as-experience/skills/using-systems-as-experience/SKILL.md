@@ -53,6 +53,23 @@ Systems-as-experience: **Systems ARE the content**
 
 ---
 
+## How to Access Reference Sheets
+
+**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+
+When this skill is loaded from:
+  `skills/using-systems-as-experience/SKILL.md`
+
+Reference sheets like `emergent-gameplay-design.md` are at:
+  `skills/using-systems-as-experience/emergent-gameplay-design.md`
+
+NOT at:
+  `skills/emergent-gameplay-design.md` ← WRONG PATH
+
+When you see a link like `[emergent-gameplay-design.md](emergent-gameplay-design.md)`, read the file from the same directory as this SKILL.md.
+
+---
+
 ## Pack Overview: 8 Core Skills
 
 ### Wave 1: Foundation (Core Concepts)

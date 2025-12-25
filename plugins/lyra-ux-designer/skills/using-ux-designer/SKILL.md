@@ -24,6 +24,23 @@ Load this skill when:
 
 ---
 
+## How to Access Reference Sheets
+
+**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+
+When this skill is loaded from:
+  `skills/using-ux-designer/SKILL.md`
+
+Reference sheets like `ux-fundamentals.md` are at:
+  `skills/using-ux-designer/ux-fundamentals.md`
+
+NOT at:
+  `skills/ux-fundamentals.md` ← WRONG PATH
+
+When you see a link like `[ux-fundamentals.md](ux-fundamentals.md)`, read the file from the same directory as this SKILL.md.
+
+---
+
 ## Routing by Situation
 
 ### Learning & Explanation

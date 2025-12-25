@@ -52,6 +52,23 @@ This is a **meta-skill** that:
 
 ---
 
+## How to Access Reference Sheets
+
+**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+
+When this skill is loaded from:
+  `skills/using-quality-engineering/SKILL.md`
+
+Reference sheets like `flaky-test-prevention.md` are at:
+  `skills/using-quality-engineering/flaky-test-prevention.md`
+
+NOT at:
+  `skills/flaky-test-prevention.md` ← WRONG PATH
+
+When you see a link like `[flaky-test-prevention.md](flaky-test-prevention.md)`, read the file from the same directory as this SKILL.md.
+
+---
+
 ## Routing Guide
 
 When the user asks about quality engineering topics, load the appropriate reference sheet:

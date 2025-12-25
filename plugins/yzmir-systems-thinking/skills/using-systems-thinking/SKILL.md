@@ -19,6 +19,23 @@ This is a **meta-skill** that:
 
 ---
 
+## How to Access Reference Sheets
+
+**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+
+When this skill is loaded from:
+  `skills/using-systems-thinking/SKILL.md`
+
+Reference sheets like `causal-loop-diagramming.md` are at:
+  `skills/using-systems-thinking/causal-loop-diagramming.md`
+
+NOT at:
+  `skills/causal-loop-diagramming.md` ← WRONG PATH
+
+When you see a link like `[causal-loop-diagramming.md](causal-loop-diagramming.md)`, read the file from the same directory as this SKILL.md.
+
+---
+
 ## Core Philosophy: Think in Systems
 
 ### The Central Idea

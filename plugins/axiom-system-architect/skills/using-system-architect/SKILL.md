@@ -21,6 +21,25 @@ Use system-architect skills when:
 - Need to prioritize improvements with limited resources
 - User asks: "What should I fix first?" or "Is this architecture good?"
 
+---
+
+## How to Access Reference Sheets
+
+**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+
+When this skill is loaded from:
+  `skills/using-system-architect/SKILL.md`
+
+Reference sheets like `assessing-architecture-quality.md` are at:
+  `skills/using-system-architect/assessing-architecture-quality.md`
+
+NOT at:
+  `skills/assessing-architecture-quality.md` ← WRONG PATH
+
+When you see a link like `[assessing-architecture-quality.md](assessing-architecture-quality.md)`, read the file from the same directory as this SKILL.md.
+
+---
+
 ## The Pipeline
 
 ```

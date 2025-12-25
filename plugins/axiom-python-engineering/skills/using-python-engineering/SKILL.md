@@ -24,6 +24,23 @@ Load this skill when:
 
 ---
 
+## How to Access Reference Sheets
+
+**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+
+When this skill is loaded from:
+  `skills/using-python-engineering/SKILL.md`
+
+Reference sheets like `systematic-delinting.md` are at:
+  `skills/using-python-engineering/systematic-delinting.md`
+
+NOT at:
+  `skills/systematic-delinting.md` ← WRONG PATH
+
+When you see a link like `[systematic-delinting.md](systematic-delinting.md)`, read the file from the same directory as this SKILL.md.
+
+---
+
 ## Routing by Symptom
 
 ### Type Errors and Type Hints

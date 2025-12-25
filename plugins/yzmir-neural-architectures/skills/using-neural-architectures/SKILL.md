@@ -34,6 +34,23 @@ DO NOT use for:
 
 ---
 
+## How to Access Reference Sheets
+
+**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+
+When this skill is loaded from:
+  `skills/using-neural-architectures/SKILL.md`
+
+Reference sheets like `cnn-families-and-selection.md` are at:
+  `skills/using-neural-architectures/cnn-families-and-selection.md`
+
+NOT at:
+  `skills/cnn-families-and-selection.md` ← WRONG PATH
+
+When you see a link like `[cnn-families-and-selection.md](cnn-families-and-selection.md)`, read the file from the same directory as this SKILL.md.
+
+---
+
 ## Core Routing Logic
 
 ### Step 1: Identify Data Modality

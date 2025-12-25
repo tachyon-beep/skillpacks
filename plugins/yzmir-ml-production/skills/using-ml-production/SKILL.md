@@ -22,6 +22,25 @@ Load this skill when:
 
 **Don't use for**: Training optimization (use `training-optimization`), model architecture selection (use `neural-architectures`), PyTorch infrastructure (use `pytorch-engineering`)
 
+---
+
+## How to Access Reference Sheets
+
+**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+
+When this skill is loaded from:
+  `skills/using-ml-production/SKILL.md`
+
+Reference sheets like `quantization-for-inference.md` are at:
+  `skills/using-ml-production/quantization-for-inference.md`
+
+NOT at:
+  `skills/quantization-for-inference.md` ← WRONG PATH
+
+When you see a link like `[quantization-for-inference.md](quantization-for-inference.md)`, read the file from the same directory as this SKILL.md.
+
+---
+
 ## Routing by Concern
 
 ### Category 1: Model Optimization

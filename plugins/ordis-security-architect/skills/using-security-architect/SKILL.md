@@ -21,6 +21,25 @@ Load this skill when:
 
 **Don't use for**: Simple features with no security implications (e.g., UI styling, basic CRUD with existing auth)
 
+---
+
+## How to Access Reference Sheets
+
+**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+
+When this skill is loaded from:
+  `skills/using-security-architect/SKILL.md`
+
+Reference sheets like `threat-modeling.md` are at:
+  `skills/using-security-architect/threat-modeling.md`
+
+NOT at:
+  `skills/threat-modeling.md` ← WRONG PATH
+
+When you see a link like `[threat-modeling.md](threat-modeling.md)`, read the file from the same directory as this SKILL.md.
+
+---
+
 ## Routing by Situation
 
 ### New System Design

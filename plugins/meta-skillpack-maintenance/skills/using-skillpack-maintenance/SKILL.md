@@ -23,6 +23,25 @@ Use when:
 - Creating new skills from scratch (use superpowers:writing-skills)
 - Creating new packs from scratch (design first, then use creation workflow)
 
+---
+
+## How to Access Reference Sheets
+
+**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+
+When this skill is loaded from:
+  `skills/using-skillpack-maintenance/SKILL.md`
+
+Reference sheets like `analyzing-pack-domain.md` are at:
+  `skills/using-skillpack-maintenance/analyzing-pack-domain.md`
+
+NOT at:
+  `skills/analyzing-pack-domain.md` ← WRONG PATH
+
+When you see a link like `[analyzing-pack-domain.md](analyzing-pack-domain.md)`, read the file from the same directory as this SKILL.md.
+
+---
+
 ## The Iron Law
 
 **NO SKILL CHANGES WITHOUT BEHAVIORAL TESTING**

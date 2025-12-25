@@ -24,6 +24,23 @@ Load this skill when:
 
 ---
 
+## How to Access Reference Sheets
+
+**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+
+When this skill is loaded from:
+  `skills/using-pytorch-engineering/SKILL.md`
+
+Reference sheets like `tensor-operations-and-memory.md` are at:
+  `skills/using-pytorch-engineering/tensor-operations-and-memory.md`
+
+NOT at:
+  `skills/tensor-operations-and-memory.md` ← WRONG PATH
+
+When you see a link like `[tensor-operations-and-memory.md](tensor-operations-and-memory.md)`, read the file from the same directory as this SKILL.md.
+
+---
+
 ## Routing by Symptom
 
 ### Memory Issues
