@@ -1,6 +1,6 @@
 {
   "name": "yzmir-pytorch-engineering",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "PyTorch mastery - tensors, modules, distributed training, profiling - 9 skills",
   "author": {
     "name": "tachyon-beep",

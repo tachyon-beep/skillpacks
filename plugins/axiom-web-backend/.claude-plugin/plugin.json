@@ -1,5 +1,5 @@
 {
   "name": "axiom-web-backend",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Web backend development expertise across FastAPI, Django, Express, REST/GraphQL APIs, microservices, and production deployment patterns"
 }

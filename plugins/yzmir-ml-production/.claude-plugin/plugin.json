@@ -1,6 +1,6 @@
 {
   "name": "yzmir-ml-production",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Production ML - quantization, serving, MLOps, monitoring, debugging - 11 skills",
   "author": {
     "name": "tachyon-beep",

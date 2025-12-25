@@ -1,6 +1,6 @@
 {
   "name": "yzmir-llm-specialist",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "LLM techniques - fine-tuning, RLHF, inference optimization - 8 skills",
   "author": {
     "name": "tachyon-beep",

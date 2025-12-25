@@ -1,6 +1,6 @@
 {
   "name": "ordis-quality-engineering",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Quality engineering router with 21 reference sheets: E2E, API, integration, performance, chaos, contracts, automation, observability, flaky tests, testing-in-production, load testing, test data, visual regression, mutation testing, static analysis (SAST), dependency scanning, fuzz testing, property-based testing, test maintenance, quality metrics",
   "author": {
     "name": "tachyon-beep",
