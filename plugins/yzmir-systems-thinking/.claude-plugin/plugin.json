@@ -1,7 +1,7 @@
 {
   "name": "yzmir-systems-thinking",
-  "version": "1.0.3",
-  "description": "Systems thinking methodology - patterns, leverage points, archetypes, modeling, visualization - 6 skills",
+  "version": "1.1.0",
+  "description": "Systems thinking methodology - patterns, leverage points, archetypes, modeling, visualization - 6 skills, 3 commands, 2 agents",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

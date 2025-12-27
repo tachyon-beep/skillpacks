@@ -1,7 +1,7 @@
 {
   "name": "yzmir-simulation-foundations",
-  "version": "1.0.4",
-  "description": "Game simulation mathematics - ODEs, stability, control theory - 9 skills",
+  "version": "1.1.0",
+  "description": "Game simulation mathematics - ODEs, stability, control theory - 9 skills, 3 commands, 2 agents",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

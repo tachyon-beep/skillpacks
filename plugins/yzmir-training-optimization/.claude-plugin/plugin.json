@@ -1,7 +1,7 @@
 {
   "name": "yzmir-training-optimization",
-  "version": "1.0.3",
-  "description": "Training stability - optimizers, learning rates, convergence, debugging - 11 skills",
+  "version": "1.1.0",
+  "description": "Training stability - optimizers, learning rates, convergence, debugging. 11 skills + 3 commands (diagnose, check-gradients, setup) + 2 agents (diagnostician, config-reviewer)",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"
