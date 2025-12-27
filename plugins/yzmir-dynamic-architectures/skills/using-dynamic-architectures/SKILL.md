@@ -17,7 +17,7 @@ Invoke this meta-skill when you encounter:
 - **Lifecycle Management**: State machines controlling when to grow, train, integrate, prune
 - **Progressive Training**: Staged capability expansion with warmup and cooldown
 
-This is the **entry point** for dynamic/morphogenetic neural network patterns. It routes to 6 specialized reference sheets.
+This is the **entry point** for dynamic/morphogenetic neural network patterns. It routes to 7 specialized reference sheets.
 
 ## How to Access Reference Sheets
 
@@ -45,14 +45,15 @@ Key tensions:
 - **Isolation vs. Integration**: Train new modules separately, then merge carefully
 - **Exploration vs. Exploitation**: When to add capacity vs. when to stabilize
 
-## The 6 Dynamic Architecture Skills
+## The 7 Dynamic Architecture Skills
 
 1. **continual-learning-foundations** - EWC, PackNet, rehearsal strategies, catastrophic forgetting theory
 2. **gradient-isolation-techniques** - Freezing, gradient masking, stop_grad patterns, alpha blending
-3. **dynamic-architecture-patterns** - Grow/prune patterns, slot-based expansion, capacity scheduling
-4. **modular-neural-composition** - MoE, gating, grafting semantics, interface contracts
-5. **ml-lifecycle-orchestration** - State machines, quality gates, transition triggers, controllers
-6. **progressive-training-strategies** - Staged expansion, warmup/cooldown, knowledge transfer
+3. **peft-adapter-techniques** - LoRA, QLoRA, DoRA, adapter placement, merging strategies
+4. **dynamic-architecture-patterns** - Grow/prune patterns, slot-based expansion, capacity scheduling
+5. **modular-neural-composition** - MoE, gating, grafting semantics, interface contracts
+6. **ml-lifecycle-orchestration** - State machines, quality gates, transition triggers, controllers
+7. **progressive-training-strategies** - Staged expansion, warmup/cooldown, knowledge transfer
 
 ## Routing Decision Framework
 
@@ -71,6 +72,7 @@ Key tensions:
 |---------|---------------|
 | "Model forgets old tasks when I train new ones" | continual-learning-foundations |
 | "New module destabilizes existing weights" | gradient-isolation-techniques |
+| "Fine-tune LLM efficiently without full training" | peft-adapter-techniques |
 | "When should I add more capacity?" | dynamic-architecture-patterns |
 | "How do module outputs combine?" | modular-neural-composition |
 | "How do I manage the grow/train/integrate cycle?" | ml-lifecycle-orchestration |
@@ -126,7 +128,32 @@ Key tensions:
 
 ---
 
-### Step 4: Dynamic Architecture Patterns
+### Step 4: PEFT Adapters (LoRA, QLoRA)
+
+**Symptoms:**
+
+- Want to fine-tune large pretrained models efficiently
+- Memory constraints prevent full fine-tuning
+- Need task-specific adaptation without modifying base weights
+
+**Route to:** [peft-adapter-techniques.md](peft-adapter-techniques.md)
+
+**Covers:**
+- LoRA (low-rank adaptation) fundamentals
+- QLoRA (quantized base + LoRA adapters)
+- DoRA (weight-decomposed adaptation)
+- Adapter placement strategies
+- Merging adapters into base model
+- Multiple adapter management
+
+**When to Use:**
+- Fine-tuning LLMs on limited compute
+- Creating task-specific model variants
+- Memory-efficient adaptation of large models
+
+---
+
+### Step 5: Dynamic Architecture Patterns
 
 **Symptoms:**
 
@@ -149,7 +176,7 @@ Key tensions:
 
 ---
 
-### Step 5: Modular Composition
+### Step 6: Modular Composition
 
 **Symptoms:**
 
@@ -173,7 +200,7 @@ Key tensions:
 
 ---
 
-### Step 6: Lifecycle Orchestration
+### Step 7: Lifecycle Orchestration
 
 **Symptoms:**
 
@@ -197,7 +224,7 @@ Key tensions:
 
 ---
 
-### Step 7: Progressive Training
+### Step 8: Progressive Training
 
 **Symptoms:**
 
@@ -338,6 +365,9 @@ START: Dynamic architecture problem
 ├─ New module destabilizes existing?
 │  └─ → gradient-isolation-techniques
 
+├─ Fine-tuning LLM efficiently?
+│  └─ → peft-adapter-techniques
+
 ├─ When/where to add capacity?
 │  └─ → dynamic-architecture-patterns
 
@@ -364,7 +394,8 @@ After routing, load the appropriate reference sheet:
 
 1. [continual-learning-foundations.md](continual-learning-foundations.md) - EWC, PackNet, rehearsal, forgetting theory
 2. [gradient-isolation-techniques.md](gradient-isolation-techniques.md) - Freezing, detach, alpha blending, hook surgery
-3. [dynamic-architecture-patterns.md](dynamic-architecture-patterns.md) - Grow/prune patterns, triggers, scheduling
-4. [modular-neural-composition.md](modular-neural-composition.md) - MoE, gating, grafting, interface contracts
-5. [ml-lifecycle-orchestration.md](ml-lifecycle-orchestration.md) - State machines, gates, controllers
-6. [progressive-training-strategies.md](progressive-training-strategies.md) - Staged expansion, warmup/cooldown
+3. [peft-adapter-techniques.md](peft-adapter-techniques.md) - LoRA, QLoRA, DoRA, adapter merging
+4. [dynamic-architecture-patterns.md](dynamic-architecture-patterns.md) - Grow/prune patterns, triggers, scheduling
+5. [modular-neural-composition.md](modular-neural-composition.md) - MoE, gating, grafting, interface contracts
+6. [ml-lifecycle-orchestration.md](ml-lifecycle-orchestration.md) - State machines, gates, controllers
+7. [progressive-training-strategies.md](progressive-training-strategies.md) - Staged expansion, warmup/cooldown
