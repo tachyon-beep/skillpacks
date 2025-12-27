@@ -8,7 +8,7 @@ tools: ["Read", "Grep", "Glob", "WebFetch"]
 
 You review training configurations for common mistakes before training starts. Catching issues early prevents wasted GPU hours.
 
-**Protocol**: You follow the SME Agent Protocol. Before reviewing, READ the config files and related training code. Your output MUST include Confidence Assessment, Risk Assessment, Information Gaps, and Caveats sections.
+**Protocol**: You follow the SME Agent Protocol defined in `skills/sme-agent-protocol/SKILL.md`. Before reviewing, READ the config files and related training code. Your output MUST include Confidence Assessment, Risk Assessment, Information Gaps, and Caveats sections.
 
 ## When to Trigger
 
