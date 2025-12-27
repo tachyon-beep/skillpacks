@@ -385,17 +385,25 @@ class ParallelPaths(nn.Module):
 
 ## Alpha Blending for Gradual Integration
 
-### Basic Alpha Blending
+**Critical distinction:** There are two blending semantics with very different behaviors.
 
-Control contribution of new module with scalar alpha.
+### Residual Blending (Correction/Enhancement)
+
+Use when seed provides a *correction* or *enhancement* to host output:
 
 ```python
-class AlphaBlendedModule(nn.Module):
+class ResidualBlendedModule(nn.Module):
+    """
+    Residual blending: combined = host + alpha * seed
+    - alpha=0: pure host output
+    - alpha=1: host + full seed correction
+    - Seed learns to AUGMENT host, not replace it
+    """
     def __init__(self, host, seed, initial_alpha=0.0):
         super().__init__()
         self.host = host
         self.seed = seed
-        self.alpha = initial_alpha  # 0 = host only, 1 = seed only
+        self.alpha = initial_alpha
 
     def forward(self, x):
         host_out = self.host(x)
@@ -404,12 +412,50 @@ class AlphaBlendedModule(nn.Module):
         seed_input = host_out.detach() if self.training else host_out
         seed_out = self.seed(seed_input)
 
-        # Blended output
-        return (1 - self.alpha) * host_out + self.alpha * seed_out
+        # Residual: host + scaled correction
+        return host_out + self.alpha * seed_out
 
     def set_alpha(self, alpha):
         self.alpha = max(0.0, min(1.0, alpha))
 ```
+
+### Interpolative Blending (Selection/Routing)
+
+Use when choosing *between* host and seed (MoE-style routing):
+
+```python
+class InterpolativeBlendedModule(nn.Module):
+    """
+    Interpolative blending: combined = (1-alpha)*host + alpha*seed
+    - alpha=0: pure host output
+    - alpha=1: pure seed output (host contribution REMOVED)
+    - For routing between alternatives, NOT corrections
+
+    WARNING: At alpha=0.5, host contribution is halved!
+    Only use this if you want to REPLACE host with seed.
+    """
+    def __init__(self, host, seed, initial_alpha=0.0):
+        super().__init__()
+        self.host = host
+        self.seed = seed
+        self.alpha = initial_alpha
+
+    def forward(self, x):
+        host_out = self.host(x)
+        seed_input = host_out.detach() if self.training else host_out
+        seed_out = self.seed(seed_input)
+
+        # Interpolation: blend between two alternatives
+        return (1 - self.alpha) * host_out + self.alpha * seed_out
+```
+
+**When to use which:**
+| Scenario | Pattern | Reasoning |
+|----------|---------|-----------|
+| Seed learns corrections | Residual | Want host + improvement |
+| Seed is alternative expert | Interpolative | Routing between options |
+| Progressive neural networks | Residual | Lateral connections add |
+| MoE with hard gating | Interpolative | Select one expert |
 
 ### Gradient Flow Through Blending
 
@@ -509,13 +555,29 @@ class LearnedAlphaBlending(nn.Module):
 
 ```python
 class IsolationContext:
-    """Context manager for temporary gradient isolation"""
-    def __init__(self, module, freeze=True):
+    """
+    Context manager for temporary gradient isolation.
+
+    Args:
+        module: Module to isolate
+        freeze: If True, set requires_grad=False on all parameters
+        eval_mode: If True, also switch module to eval() mode
+                   (prevents BatchNorm/Dropout from updating)
+    """
+    def __init__(self, module, freeze=True, eval_mode=True):
         self.module = module
         self.freeze = freeze
+        self.eval_mode = eval_mode
         self.prev_requires_grad = {}
+        self.prev_training = None
 
     def __enter__(self):
+        # Save and set training mode
+        if self.eval_mode:
+            self.prev_training = self.module.training
+            self.module.eval()
+
+        # Freeze parameters
         if self.freeze:
             for name, param in self.module.named_parameters():
                 self.prev_requires_grad[name] = param.requires_grad
@@ -523,15 +585,20 @@ class IsolationContext:
         return self
 
     def __exit__(self, *args):
+        # Restore parameters
         if self.freeze:
             for name, param in self.module.named_parameters():
-                param.requires_grad = self.prev_requires_grad[name]
+                param.requires_grad = self.prev_requires_grad.get(name, True)
+
+        # Restore training mode
+        if self.eval_mode and self.prev_training is not None:
+            self.module.train(self.prev_training)
 
 # Usage
-with IsolationContext(host_module, freeze=True):
+with IsolationContext(host_module, freeze=True, eval_mode=True):
     host_out = host_module(x)
-    # host_module is frozen within this block
-# host_module is unfrozen after block
+    # host_module is frozen AND in eval mode (BN stats protected)
+# host_module restored to previous state
 ```
 
 ### Hook-Based Gradient Surgery
@@ -599,11 +666,11 @@ optimizer = optim.Adam(model.seed.parameters())
 #### Pitfall 2: Batch Norm Running Stats
 
 ```python
-# WRONG: Frozen BN still updates running stats
-model.eval()  # This affects BN behavior
-freeze_host(model.host)  # But running stats still update!
+# WRONG: Frozen BN still updates running stats in train mode
+freeze_host(model.host)  # requires_grad=False, but...
+model.train()  # BN running_mean/running_var STILL update!
 
-# RIGHT: Also freeze BN running stats
+# RIGHT: Also set BN to eval mode
 def freeze_bn(module):
     for m in module.modules():
         if isinstance(m, nn.BatchNorm2d):
@@ -614,7 +681,36 @@ def freeze_bn(module):
 freeze_bn(model.host)
 ```
 
-#### Pitfall 3: Detach in Wrong Place
+#### Pitfall 3: Dropout in Frozen Modules
+
+```python
+# WRONG: Frozen module with dropout still drops randomly
+freeze_host(model.host)
+model.host.train()  # Dropout layers still active!
+# Each forward pass gives different outputs - hard to evaluate seed
+
+# RIGHT: Set frozen modules to eval mode
+freeze_host(model.host)
+model.host.eval()  # Dropout disabled, deterministic output
+```
+
+#### Pitfall 4: Buffers vs Parameters
+
+```python
+# Buffers (registered with register_buffer) are NOT parameters
+# They don't have requires_grad, but they CAN be modified
+
+# WRONG: Assuming freeze_host protects all state
+freeze_host(model.host)
+# If host has custom buffers that update in forward(), they still change!
+
+# RIGHT: Audit what state your module maintains
+for name, buf in model.host.named_buffers():
+    print(f"Buffer: {name}, requires_grad: N/A (buffers don't have grads)")
+# BatchNorm running_mean/var are buffers, not parameters
+```
+
+#### Pitfall 5: Detach in Wrong Place
 
 ```python
 # WRONG: Detach after operations you want gradients for
@@ -641,25 +737,83 @@ When implementing gradient isolation:
 - [ ] Confirm optimizer only contains intended parameters
 - [ ] Test BatchNorm behavior (running stats frozen if intended)
 - [ ] Verify `detach()` placement matches intended gradient flow
-- [ ] Check alpha blending gives expected interpolation
+- [ ] Check alpha blending uses correct pattern (residual vs interpolative)
 - [ ] Test that frozen parameters actually don't change after training step
 
 ```python
 # Quick verification
-def verify_isolation(model, frozen_module_name):
-    """Check that specified module doesn't change"""
+def verify_isolation(model, frozen_module_name, x, target, optimizer, atol=1e-7):
+    """Check that specified module doesn't change after training step"""
     before = {n: p.clone() for n, p in model.named_parameters()
               if frozen_module_name in n}
 
     # Run training step
     optimizer.zero_grad()
     loss = model(x, target)
+    if not isinstance(loss, torch.Tensor):
+        loss = loss[0]  # Handle (output, aux_loss) returns
     loss.backward()
     optimizer.step()
 
-    # Compare
+    # Compare with tolerance (torch.equal is too strict for floats)
     for n, p in model.named_parameters():
         if frozen_module_name in n:
-            assert torch.equal(before[n], p), f"{n} changed!"
+            if not torch.allclose(before[n], p, atol=atol, rtol=0):
+                diff = (before[n] - p).abs().max().item()
+                raise AssertionError(f"{n} changed! Max diff: {diff}")
+            # Also verify no gradients accumulated
+            if p.grad is not None and p.grad.abs().sum() > 0:
+                print(f"Warning: {n} has non-zero grad despite being frozen")
     print("Isolation verified!")
+```
+
+---
+
+## Platform Considerations
+
+### Distributed Training (DDP/FSDP)
+
+```python
+# ISSUE: DDP expects all params to participate in backward
+# Freezing params mid-training can cause hangs or errors
+
+# Option 1: Set find_unused_parameters=True
+model = DistributedDataParallel(model, find_unused_parameters=True)
+
+# Option 2: Exclude frozen params from DDP wrapper
+trainable = nn.ModuleList([model.seed])  # Only wrap trainable parts
+trainable = DistributedDataParallel(trainable)
+
+# Option 3: Freeze BEFORE wrapping in DDP
+freeze_host(model.host)
+model = DistributedDataParallel(model)  # DDP sees frozen state
+```
+
+### torch.compile Compatibility
+
+```python
+# Hooks and dynamic requires_grad changes can break compilation
+# Symptoms: graph breaks, recompilations, errors
+
+# Prefer static patterns when using torch.compile:
+# - Freeze before compile, not during training
+# - Use detach() at fixed locations, not conditionally
+# - Avoid per-step requires_grad toggling
+
+# If you must use hooks with compile:
+model = torch.compile(model, dynamic=True)  # More tolerant of dynamism
+```
+
+### Mixed Precision (AMP)
+
+```python
+# Gradient masks and hooks must match dtype under autocast
+
+with torch.autocast('cuda'):
+    output = model(x)
+    # Gradients may be float16 - ensure masks are compatible
+
+# For gradient surgery, cast masks to match grad dtype:
+def safe_mask_hook(grad, mask=mask):
+    return grad * mask.to(grad.dtype)
 ```
