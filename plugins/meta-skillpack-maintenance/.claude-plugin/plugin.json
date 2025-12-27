@@ -1,7 +1,7 @@
 {
   "name": "meta-skillpack-maintenance",
-  "version": "1.0.2",
-  "description": "Systematic maintenance and enhancement of skill packs through investigative domain analysis, RED-GREEN-REFACTOR testing, and automated quality improvements",
+  "version": "2.0.0",
+  "description": "Systematic maintenance of Claude Code plugins - skills, commands, agents, hooks - through domain analysis, behavioral testing, and quality improvements",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

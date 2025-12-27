@@ -1,340 +1,259 @@
-# Testing Skill Quality
+# Testing Component Quality
 
-**Purpose:** Pass 2 - Run gauntlet tests on each skill using subagents to identify issues requiring fixes.
+**Purpose:** Behavioral testing of all plugin components to identify issues requiring fixes.
 
 ## Core Principle
 
 **Behavioral testing, NOT syntactic validation.**
 
-Skills are process documentation. Test if they guide agents correctly, not if they parse correctly.
+Components are process documentation. Test if they guide Claude correctly, not if they parse correctly.
+
+---
 
 ## What We're Testing
 
-**Effectiveness questions:**
-- Does the skill actually guide agents correctly?
-- Do agents follow the skill under pressure?
-- Does the skill handle edge cases?
-- Are there gaps in guidance that leave agents stranded?
+| We Test | We Don't Test |
+|---------|---------------|
+| Does the component guide correctly? | Does it parse? (syntactic) |
+| Does it hold under pressure? | Does it look complete? (coverage) |
+| Does it handle edge cases? | How does it compare to others? (benchmarking) |
 
-**What we're NOT testing:**
-- Syntax (markdown parsing, code syntax) - syntactic, not behavioral
-- Coverage (already done in Pass 1) - structural, not behavioral
-- Quality benchmarking (comparing to other skills) - comparative, not behavioral
+---
 
-## Gauntlet Design
+## Gauntlet Categories
 
-**Priority: A → C → B**
+### A. Pressure Scenarios (Catch Shortcuts)
 
-### A. Pressure Scenarios (Catch Rationalizations)
-
-**Purpose:** Test if skill holds up when agents want to skip it.
+**Test if component holds when the model wants to skip it.**
 
 **Pressure types:**
-
-**1. Time pressure:**
-- "This is urgent, we need it done quickly"
-- "Just get it working, we can improve it later"
-- "The deadline is in an hour"
-
-**2. Simplicity temptation:**
-- "This seems too simple to need [skill pattern]"
-- "The example is straightforward, no need to overthink"
-- "This is a trivial case"
-
-**3. Overkill perception:**
-- "The skill is designed for complex cases, this is basic"
-- "We don't need the full process for this small change"
-- "That's way more than necessary"
-
-**4. Sunk cost:**
-- "I already wrote most of the code"
-- "We've invested time in this approach"
-- "Just need to finish this last part"
+- **Time pressure:** "This is urgent, just do it quickly"
+- **Simplicity temptation:** "This is too simple for the full process"
+- **Overkill perception:** "That's way more than necessary for this"
+- **Sunk cost:** "I already wrote most of it, just finish"
 
 **Design approach:**
 - Combine 2-3 pressures for maximum effect
-- Example: Time pressure + simplicity + sunk cost
-- Watch for rationalizations (verbatim documentation critical)
+- Watch for rationalized shortcuts
+- Document exact phrasing of rationalizations
 
 ### C. Adversarial Edge Cases (Test Robustness)
 
-**Purpose:** Test if skill provides guidance for corner cases.
+**Test if component provides guidance for corner cases.**
 
 **Edge case types:**
-
-**1. Principle conflicts:**
-- When skill's guidelines conflict with each other
-- Example: "DRY vs. explicit" or "test-first vs. prototyping"
-- Does skill help resolve conflict?
-
-**2. Naive application failures:**
-- Cases where following skill literally doesn't work
-- Example: TDD for exploratory research code
-- Does skill explain when/how to adapt?
-
-**3. Missing information:**
-- Scenarios requiring knowledge skill doesn't provide
-- Does skill reference other resources?
-- Does it leave agent completely stuck?
-
-**4. Tool limitations:**
-- When environment doesn't support skill's approach
-- Example: No test framework available
-- Does skill have fallback guidance?
-
-**Design approach:**
-- Identify skill's core principles
-- Find situations where they conflict or fail
-- Test if skill handles gracefully
+- **Principle conflicts:** When guidelines contradict each other
+- **Naive application failures:** When literal application doesn't work
+- **Missing information:** When component doesn't cover needed knowledge
+- **Tool limitations:** When environment doesn't support the approach
 
 ### B. Real-World Complexity (Validate Utility)
 
-**Purpose:** Test if skill guides toward best practices in realistic scenarios.
+**Test if component works in realistic scenarios.**
 
 **Complexity types:**
+- **Messy requirements:** Unclear specs, conflicting needs
+- **Multiple valid approaches:** Several solutions, trade-offs unclear
+- **Integration constraints:** Existing patterns, team conventions
+- **Incomplete information:** Missing context, unknown dependencies
 
-**1. Messy requirements:**
-- Unclear specifications
-- Conflicting stakeholder needs
-- Evolving requirements mid-task
+---
 
-**2. Multiple valid approaches:**
-- Several solutions, all reasonable
-- Trade-offs between options
-- Does skill help choose?
+## Testing by Component Type
 
-**3. Integration constraints:**
-- Existing codebase patterns
-- Team conventions
-- Technical debt
+### Testing Skills
 
-**4. Incomplete information:**
-- Missing context
-- Unknown dependencies
-- Undocumented behavior
+**Priority scenarios:**
 
-**Design approach:**
-- Use realistic scenarios from the domain
-- Include ambiguity and messiness
-- Test if skill provides actionable guidance
+For **discipline-enforcing skills** (TDD, verification):
+- Focus on pressure (A) - test rationalization resistance
 
-## Testing Process (Per Skill)
+For **technique skills** (patterns, algorithms):
+- Focus on edge cases (C) and real-world (B)
 
-**D - Iterative Hardening:**
+For **reference skills** (API docs, guides):
+- Focus on real-world (B) - can users find and apply info?
 
-### 1. Design Challenging Scenario
+**Test execution:**
+1. Design challenging scenario from gauntlet categories
+2. Provide scenario to a test agent WITH the skill
+3. Observe: Does it follow? Where does it rationalize?
+4. Document failure modes with exact quotes
 
-Pick from gauntlet categories (prioritize A → C → B):
+### Testing Commands
 
-**For discipline-enforcing skills** (TDD, verification-before-completion):
-- Focus on **A (pressure)** scenarios
-- Combine multiple pressures
-- Test rationalization resistance
+**Key questions:**
+- Does the command provide clear entry point?
+- Are tool restrictions appropriate for the task?
+- Does argument-hint guide correct usage?
+- Does the command overlap with a skill inappropriately?
 
-**For technique skills** (condition-based-waiting, root-cause-tracing):
-- Focus on **C (edge cases)** and **B (real-world)**
-- Test application correctness
-- Test gap identification
+**Test execution:**
+1. Invoke command with realistic arguments
+2. Check if guidance is actionable
+3. Test edge cases (missing args, wrong format)
+4. Verify tool restrictions don't block legitimate use
 
-**For pattern skills** (reducing-complexity, information-hiding):
-- Focus on **C (edge cases)** and **B (real-world)**
-- Test recognition and application
-- Test when NOT to apply
+### Testing Agents
 
-**For reference skills** (API docs, command references):
-- Focus on **B (real-world)**
-- Test information retrieval
-- Test application of retrieved info
+**Key questions:**
+- Does agent stay within scope boundaries?
+- Are activation examples accurate?
+- Does model selection match task complexity?
+- Does agent hand off correctly when out of scope?
 
-### 2. Run Subagent with Current Skill
+**Test execution:**
+1. Present task matching agent's domain
+2. Observe: Does it activate appropriately?
+3. Present task OUTSIDE domain - does it correctly decline?
+4. Test handoff to other agents
 
-**Critical:** Use the Task tool to dispatch subagent.
+### Testing Hooks
 
-**Provide to subagent:**
-- The scenario (task description)
-- Access to the skill being tested
-- Any necessary context (codebase, tools)
+**Key questions:**
+- Does hook fire on correct events?
+- Does matcher pattern catch intended cases?
+- Does script execute without errors?
+- Are there unintended side effects?
 
-**What NOT to provide:**
-- Meta-testing instructions (don't tell them they're being tested)
-- Expected behavior (let them apply skill naturally)
-- Hints about what you're looking for
+**Test execution:**
+1. Trigger the event the hook should respond to
+2. Verify hook fires and script executes
+3. Trigger similar but non-matching events
+4. Verify hook doesn't fire incorrectly
 
-### 3. Observe and Document
+---
 
-**Watch for:**
+## Testing Process
 
-**Compliance:**
-- Did agent follow the skill?
-- Did they reference it explicitly?
-- Did they apply patterns correctly?
+### Per-Component Workflow
 
-**Rationalizations (verbatim):**
-- Exact words used to skip steps
-- Justifications for shortcuts
-- "Spirit vs. letter" arguments
+1. **Select scenario** from gauntlet (prioritize A → C → B)
+2. **Execute test** - run component with challenging input
+3. **Observe behavior** - compliance, rationalizations, failures
+4. **Assess result:**
+   - **Pass** - Followed correctly, handled edge cases
+   - **Fix needed** - Rationalized, got stuck, failed edge case
+5. **Document issues** if fix needed
 
-**Failure modes:**
-- Where did skill guidance fail?
-- Where was agent left without guidance?
-- Where did naive application break?
+### Documenting Issues
 
-**Edge case handling:**
-- Did skill provide guidance for corner cases?
-- Did agent get stuck?
-- Did they improvise (potentially incorrectly)?
+For each issue:
 
-### 4. Assess Result
+```
+**Issue:** [Description]
+**Category:** [Pressure/Edge case/Real-world gap/Missing anti-pattern]
+**Priority:** [Critical/Major/Minor]
+**Evidence:** "[Exact quote or behavior observed]"
+**Fix needed:** [Specific action]
+```
 
-**Pass criteria:**
-- Agent followed skill correctly
-- Skill provided sufficient guidance
-- No significant rationalizations
-- Edge cases handled appropriately
-
-**Fix needed criteria:**
-- Agent skipped skill steps (with rationalization)
-- Skill had gaps leaving agent stuck
-- Edge cases not covered
-- Naive application failed
-
-### 5. Document Issues
-
-**If fix needed, document specifically:**
-
-**Issue category:**
-- Rationalization vulnerability (A)
-- Edge case gap (C)
-- Real-world guidance gap (B)
-- Missing anti-pattern warning
-- Unclear instructions
-- Missing cross-reference
-
-**Priority:**
-- **Critical** - Skill fails basic use cases, agents skip it consistently
-- **Major** - Edge cases fail, significant gaps in guidance
-- **Minor** - Clarity improvements, additional examples needed
-
-**Specific fixes needed:**
-- "Add explicit counter for rationalization: [quote]"
-- "Add guidance for edge case: [description]"
-- "Add example for scenario: [description]"
-- "Clarify instruction: [which section]"
-
-## Testing Multiple Skills
-
-**Strategy:**
+### Batch Testing
 
 **Priority order:**
-1. Router skills first (affects all specialist discovery)
-2. Foundational skills (prerequisites for others)
-3. Core technique skills (most frequently used)
-4. Advanced skills (expert-level)
-
-**Batch approach:**
-- Test 3-5 skills at a time
-- Document results before moving to next batch
-- Allows pattern recognition across skills
+1. Router skills (affects all discovery)
+2. Foundational components
+3. Core technique components
+4. Advanced components
 
 **Efficiency:**
-- Skills that passed in previous maintenance cycles: Spot-check only
-- New skills or significantly changed: Full gauntlet
-- Minor edits: Targeted testing of changed sections
+- Previously tested components: spot-check only
+- New/changed components: full gauntlet
+- Minor edits: targeted testing of changed sections
+
+---
 
 ## Output Format
 
-Generate per-skill report:
-
-```
-# Quality Testing Results: [pack-name]
+```markdown
+# Quality Testing Results: [plugin-name]
 
 ## Summary
 
-- Total skills tested: [count]
+- Components tested: [count]
 - Passed: [count]
 - Fix needed: [count]
   - Critical: [count]
   - Major: [count]
   - Minor: [count]
 
-## Detailed Results
+## Results by Component Type
 
-### [Skill 1 Name]
+### Skills
 
-**Result:** [Pass / Fix needed]
+| Skill | Result | Issues |
+|-------|--------|--------|
+| [name] | Pass/Fix | [summary] |
 
-[If Fix needed]
+### Commands
 
-**Priority:** [Critical / Major / Minor]
+| Command | Result | Issues |
+|---------|--------|--------|
+| /[name] | Pass/Fix | [summary] |
 
-**Test scenario used:** [Brief description]
+### Agents
 
-**Issues identified:**
+| Agent | Result | Issues |
+|-------|--------|--------|
+| [name] | Pass/Fix | [summary] |
 
-1. **Issue:** [Description]
-   - **Category:** [Rationalization / Edge case / Real-world gap / etc.]
-   - **Evidence:** "[Verbatim quote from subagent if applicable]"
-   - **Fix needed:** [Specific action]
+### Hooks
 
-2. **Issue:** [Description]
-   [Same format]
+| Hook | Result | Issues |
+|------|--------|--------|
+| [event:matcher] | Pass/Fix | [summary] |
 
-**Test transcript:** [Link or summary of subagent behavior]
+## Detailed Issues
 
----
+### [Component Name]
 
-### [Skill 2 Name]
+**Result:** Fix needed
+**Priority:** [Critical/Major/Minor]
+**Test scenario:** [Brief description]
 
-**Result:** Pass
+**Issue 1:**
+- Category: [Pressure/Edge case/etc.]
+- Evidence: "[Exact behavior/quote]"
+- Fix: [Specific action]
 
-**Test scenario used:** [Brief description]
-
-**Notes:** Skill performed well, no issues identified.
-
----
-
-[Repeat for all skills]
+**Issue 2:**
+[Same format]
 ```
 
-## Common Rationalizations (Meta-Testing)
+---
 
-When YOU are doing the testing, watch for these rationalizations:
+## Red Flags - Rationalizations During Testing
 
-| Excuse | Reality |
-|--------|---------|
-| "Skill looks good, no need to test" | Looking ≠ testing. Run gauntlet. |
-| "I'll just check the syntax" | Syntactic validation ≠ behavioral. Use subagents. |
-| "Testing is overkill for small changes" | Small changes can break guidance. Test anyway. |
+**When YOU are testing, watch for these thoughts:**
+
+| Thought | Reality |
+|---------|---------|
+| "Component looks good, skip testing" | Looking ≠ testing. Run gauntlet. |
+| "I'll just check the frontmatter" | Syntactic ≠ behavioral. Test with scenarios. |
+| "Small component, testing overkill" | Small components fail in edge cases too. |
 | "I'm confident this works" | Confidence ≠ validation. Test behavior. |
-| "Quality benchmarking is enough" | Comparison ≠ effectiveness. Test with scenarios. |
+| "No time for full testing" | Untested = broken in production. Make time. |
+| "Testing is for the skill author" | You ARE testing. Don't delegate to hypothetical future. |
 
-**If you catch yourself thinking these → STOP. Run gauntlet with subagents.**
+**If you catch yourself thinking these → STOP. Run the gauntlet.**
+
+---
 
 ## Philosophy
 
-**D as gauntlet + B for fixes:**
+**Gauntlet identifies issues. Targeted fixes address them.**
 
-- **D (iterative hardening):** Run challenging scenarios to identify issues
-- **B (targeted fixes):** Fix specific identified problems
+If component passes gauntlet → No changes needed.
+If component fails → Document specific issues for Stage 4.
 
-If skill passes gauntlet → No changes needed.
+The model is both author and judge of component fitness. Trust the testing process, not intuition.
 
-The LLM is both author and judge of skill fitness. Trust the testing process.
+---
 
-## Proceeding to Next Stage
+## Proceeding
 
-After testing all skills:
-- Compile complete test report
-- Proceed to Pass 3 (coherence validation)
-- Test results will inform implementation fixes in Stage 4
-
-## Anti-Patterns
-
-| Anti-Pattern | Why Bad | Instead |
-|--------------|---------|---------|
-| Syntactic validation only | Doesn't test if skill actually works | Run behavioral tests with subagents |
-| Self-assessment | You can't objectively test your own work | Dispatch subagents for testing |
-| "Looks good" review | Visual inspection ≠ behavioral testing | Run gauntlet scenarios |
-| Skipping pressure tests | Miss rationalization vulnerabilities | Use A-priority pressure scenarios |
-| Generic test scenarios | Don't reveal real issues | Use domain-specific, realistic scenarios |
-| Testing without documenting | Can't track patterns or close loops | Document verbatim rationalizations |
+After testing all components:
+1. Compile test report
+2. Proceed to Discussion (Stage 4)
+3. Present findings for user approval
+4. Test results inform implementation fixes

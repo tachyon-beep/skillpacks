@@ -1,252 +1,247 @@
-# Reviewing Pack Structure
+# Reviewing Plugin Structure
 
-**Purpose:** Pass 1 - Analyze pack organization, identify structural issues, generate fitness scorecard.
+**Purpose:** Analyze plugin organization across all component types and generate fitness scorecard.
 
 ## Inputs
 
 From `analyzing-pack-domain.md`:
-- Domain coverage map (what should exist)
-- Current skill inventory (what does exist)
-- Gap analysis (missing/duplicate/obsolete)
+- Domain coverage map
+- Component inventory (skills, commands, agents, hooks)
+- Gap analysis
 - Research currency flag
 
-## Analysis Tasks
+---
 
-### 1. Fitness Scorecard
+## Fitness Scorecard
 
-Generate scorecard with risk-driven prioritization:
+### Critical Issues (Plugin Unusable)
 
-**Critical Issues** - Pack unusable or fundamentally broken:
-- Missing core foundational concepts (users can't understand basics)
-- Major gaps in essential coverage (50%+ of core techniques missing)
-- Router completely inaccurate or missing when needed
-- Multiple skills broken or contradictory
+- Missing core foundational concepts (>50% of coverage map gaps)
+- Multiple components broken or contradictory
+- Router completely inaccurate
+- Component types misaligned (commands that should be skills, etc.)
 
-**Decision:** Critical issues → Recommend "Rebuild from scratch" vs. "Enhance existing"
+**Decision:** Critical → Recommend "Rebuild" vs. "Enhance"
 
 Rebuild if:
-- More skills missing than exist
-- Fundamental philosophy is wrong
-- Faction mismatch is severe
+- More components missing than exist
+- Fundamental philosophy wrong
+- Severe faction mismatch
 
-Enhance if:
-- Core structure is sound, just needs additions/fixes
-- Most existing skills are salvageable
+### Major Issues (Significant Effectiveness Reduction)
 
-**Major Issues** - Significant effectiveness reduction:
-- Important gaps in core coverage (20-50% of core techniques missing)
-- Multiple duplicate skills causing confusion
-- Obsolete skills teaching deprecated patterns
-- Faction drift across multiple skills
-- Metadata significantly out of sync
+- Important gaps in coverage (20-50% missing)
+- Multiple duplicate components
+- Obsolete components teaching deprecated patterns
+- Commands/agents/skills with wrong scope boundaries
+- Hooks with incorrect event types
 
-**Minor Issues** - Polish and improvements:
+### Minor Issues (Polish)
+
 - Small gaps in advanced topics
 - Minor organizational inconsistencies
-- Router descriptions slightly outdated
-- Small metadata corrections needed
+- Metadata slightly outdated
+- Cross-references missing
 
-**Pass** - Structurally sound:
-- Comprehensive coverage of foundational and core areas
+### Pass (Structurally Sound)
+
+- Comprehensive coverage
 - No major gaps or duplicates
-- Router (if exists) is accurate
-- Faction alignment is good
-- Metadata is current
+- Components appropriately typed
+- Metadata current
 
-**Output:** Scorecard with category and specific issues listed
+---
 
-### 2. Gap Identification
+## Analysis by Component Type
 
-From coverage map, identify missing skills:
+### Skills Analysis
 
-**Prioritize by importance:**
+**Check for:**
+- Description triggers correct activation?
+- Gaps in domain coverage?
+- Router skill (if exists) references all specialists?
+- Reference sheets comprehensive?
 
-**High priority (foundational/core):**
-- Foundational concepts users must understand
-- Core techniques used frequently
-- Common patterns missing from basics
+**Duplicates:**
+| Type | Action |
+|------|--------|
+| Complete duplicate | Remove one, merge unique value |
+| Partial overlap | Merge or clarify boundaries |
+| Specialization | Keep both, add cross-references |
+| Complementary | Keep both, strengthen links |
 
-**Medium priority (advanced):**
-- Advanced topics for expert users
-- Specialized techniques
-- Edge case handling
+### Commands Analysis
 
-**Low priority (nice-to-have):**
-- Rare patterns
-- Future-looking topics
-- Experimental techniques
+**Check for:**
+- Clear user-invocable actions?
+- Appropriate tool restrictions?
+- argument-hint helpful?
+- Overlaps with skills? (commands should be explicit actions, not auto-invoked guidance)
 
-**For each gap:**
-- Draft skill name (following naming conventions)
-- Write description (following CSO guidelines)
-- Estimate scope (small/medium/large skill)
-- Note dependencies (what skills should be read first)
+**Common issues:**
+| Issue | Fix |
+|-------|-----|
+| Command duplicates skill | Remove command OR convert skill to reference sheet |
+| Missing argument-hint | Add for commands with arguments |
+| Too permissive tools | Restrict to minimum needed |
 
-**Output:** Prioritized list of gaps with draft names/descriptions
+### Agents Analysis
 
-### 3. Duplicate Detection
+**Check for:**
+- Clear scope boundaries (does/doesn't do)?
+- Appropriate model selection?
+- Activation examples (positive AND negative)?
+- Overlaps with other agents?
 
-Find skills with overlapping coverage:
+**Model selection guide:**
+| Complexity | Model |
+|------------|-------|
+| Quick, focused tasks | haiku |
+| Most agent work | sonnet |
+| Complex reasoning | opus |
 
-**Analysis process:**
-1. Read all skill descriptions
-2. Identify content overlap (skills covering same concepts)
-3. Read overlapping skills to assess actual content
-4. Determine relationship
+### Hooks Analysis
 
-**Duplicate types:**
+**Check for:**
+- Correct event type for use case?
+- Matcher patterns accurate?
+- Scripts executable?
+- Conflicts between hooks?
 
-**Complete duplicates** - Same content, different names:
-- **Action:** Remove one, preserve unique value from both
+**Event selection:**
+| Goal | Event |
+|------|-------|
+| Validate before action | PreToolUse |
+| React after action | PostToolUse |
+| Inject context at prompt | UserPromptSubmit |
+| Load context at session | SessionStart |
+| Cleanup | SessionEnd |
 
-**Partial overlap** - Significant shared content:
-- **Action:** Merge into single comprehensive skill
+---
 
-**Specialization** - One general, one specific:
-- **Action:** Keep both, clarify relationship via cross-references
-- Example: "async-patterns" (general) + "asyncio-taskgroup" (specific)
+## Gap Identification
 
-**Complementary** - Different angles on same topic:
-- **Action:** Keep both, strengthen cross-references
-- Example: "testing-async-code" + "async-patterns-and-concurrency"
+For each gap from coverage map:
 
-**False positive** - Similar names, different content:
-- **Action:** No change, maybe clarify descriptions
+1. **Determine component type:**
+   - Model auto-invokes? → Skill
+   - User explicitly triggers? → Command
+   - Autonomous specialist? → Agent
+   - Automated on events? → Hook
 
-**For each duplicate pair:**
-- Classification (complete/partial/specialization/complementary/false)
-- Recommendation (remove/merge/keep with cross-refs)
-- Preserve unique value from each
+2. **Draft specification:**
+   ```
+   Gap: [description]
+   Recommended: [skill/command/agent/hook]
+   Name: [proposed-name]
+   Description: [draft frontmatter description]
+   Scope: [small/medium/large]
+   Dependencies: [prerequisites]
+   ```
 
-**Output:** Duplicate analysis with recommendations
+3. **Prioritize:**
+   - **High** - Foundational/core, blocks users
+   - **Medium** - Advanced, nice to have
+   - **Low** - Edge cases, rare patterns
 
-### 4. Organization Validation
+---
 
-Check pack-level organization:
+## Output Format
 
-**Router skill validation (if exists):**
-- Does router list all current specialist skills?
-- Are descriptions in router accurate?
-- Does routing logic make sense?
-- Are there skills NOT mentioned in router?
-- Are there router entries for NON-EXISTENT skills?
-
-**Faction alignment:**
-- Read FACTIONS.md for this pack's faction principles
-- Check 3-5 representative skills for voice/philosophy
-- Identify drift patterns
-- Severity: Minor (style drift) / Major (wrong philosophy)
-
-**Metadata validation:**
-- plugin.json description matches actual content?
-- Skill count is accurate?
-- Category is appropriate?
-- Version reflects current state?
-
-**Navigation experience:**
-- Can users find appropriate skills easily?
-- Are skill names descriptive?
-- Are descriptions helpful for discovery?
-
-**Output:** Organization issues with severity
-
-## Generate Complete Report
-
-Combine all analyses:
-
-```
-# Structural Review: [pack-name]
+```markdown
+# Structural Review: [plugin-name]
 
 ## Scorecard: [Critical / Major / Minor / Pass]
 
 [If Critical]
-Recommendation: [Rebuild from scratch / Enhance existing]
-Rationale: [Specific reasons]
+**Recommendation:** [Rebuild / Enhance]
+**Rationale:** [Specific reasons]
 
 ## Issues by Priority
 
-### Critical Issues ([count])
-- [Issue 1] - [Description]
-- [Issue 2] - [Description]
+### Critical ([count])
+- [Issue] - [Description]
 
-### Major Issues ([count])
-- [Issue 1] - [Description]
-- [Issue 2] - [Description]
+### Major ([count])
+- [Issue] - [Description]
 
-### Minor Issues ([count])
-- [Issue 1] - [Description]
-- [Issue 2] - [Description]
+### Minor ([count])
+- [Issue] - [Description]
 
-## Gap Analysis
+## Component Analysis
 
-### High Priority Gaps ([count])
-- [Gap 1]
-  - Skill name: [proposed-name]
-  - Description: [draft description]
-  - Scope: [small/medium/large]
-  - Dependencies: [prerequisites]
+### Skills ([count] existing, [count] gaps)
+| Status | Skill | Issue |
+|--------|-------|-------|
+| ✓ | [name] | OK |
+| ⚠ | [name] | [Issue] |
+| ✗ | [gap] | Missing - [recommendation] |
 
-### Medium Priority Gaps ([count])
-[Same format]
+### Commands ([count] existing, [count] gaps)
+| Status | Command | Issue |
+|--------|---------|-------|
+| ✓ | /[name] | OK |
+| ⚠ | /[name] | [Issue] |
+| ✗ | /[gap] | Missing - [recommendation] |
 
-### Low Priority Gaps ([count])
-[Same format]
+### Agents ([count] existing, [count] gaps)
+| Status | Agent | Issue |
+|--------|-------|-------|
+| ✓ | [name] | OK |
+| ⚠ | [name] | [Issue] |
+| ✗ | [gap] | Missing - [recommendation] |
 
-## Duplicate Analysis
+### Hooks
+| Status | Event | Matcher | Issue |
+|--------|-------|---------|-------|
+| ✓ | [event] | [pattern] | OK |
+| ⚠ | [event] | [pattern] | [Issue] |
 
-- [Skill A] + [Skill B]
-  - Type: [complete/partial/specialization/complementary]
-  - Recommendation: [remove/merge/keep with cross-refs]
-  - Rationale: [why]
+## Duplicates/Overlaps
 
-## Organization Issues
+- [Component A] + [Component B]
+  - Type: [complete/partial/specialization]
+  - Action: [remove/merge/keep with cross-refs]
 
-### Router ([issues count])
-- [Issue description]
+## Recommended Actions Summary
 
-### Faction Alignment ([severity])
-- [Drift pattern]
-- Affected skills: [list]
-
-### Metadata ([issues count])
-- [Issue description]
-
-## Recommended Actions
-
-**Gaps requiring superpowers:writing-skills:**
-- [count] new skills needed (RED-GREEN-REFACTOR for each, outside this workflow)
-
-**Structure fixes (for later execution phase):**
-- Remove: [count] duplicate skills
-- Merge: [count] partial duplicates
-- Update router: [Yes/No]
+**New skills needed:** [count] (each requires superpowers:writing-skills)
+**New commands needed:** [count]
+**New agents needed:** [count]
+**Hook changes needed:** [count]
+**Components to remove:** [count]
+**Components to enhance:** [count]
 ```
+
+---
+
+## Red Flags - Common Rationalizations
+
+| Excuse | Reality |
+|--------|---------|
+| "The gaps are minor" | If coverage map says important, it's not minor |
+| "We can add commands later" | Incomplete plugin = frustrated users now |
+| "The skills are good enough" | Good enough ≠ behavioral testing passed |
+| "This duplicate is fine" | Duplicates confuse users and waste context |
+| "The metadata doesn't matter" | Inaccurate metadata breaks discovery |
+| "I know this domain, no audit needed" | Expertise ≠ systematic review |
+
+**All of these mean: Follow the process. Don't skip steps.**
+
+---
 
 ## Decision Gate
 
-Present scorecard and report to user:
+Present scorecard to user:
 
 **If Critical:**
 - Explain rebuild vs. enhance trade-offs
-- Get user decision before proceeding
+- Get explicit user decision
 
 **If Major/Minor/Pass:**
 - Present findings
-- Confirm user wants to proceed with Pass 2 (content testing)
+- Confirm proceeding to behavioral testing (Pass 2)
 
-## Proceeding to Next Stage
+## Proceeding
 
-After scorecard approval:
-- If proceeding → Move to `testing-skill-quality.md` (Pass 2)
-- If rebuilding → Stop maintenance workflow, switch to creation workflow
-- If canceling → Stop workflow
-
-## Common Mistakes
-
-| Mistake | Fix |
-|---------|-----|
-| Scorecard too lenient | Be honest: missing 50% of core = Critical |
-| Vague gap descriptions | Draft actual skill names and descriptions |
-| Keeping all duplicates | Duplicates confuse users - merge or remove |
-| Ignoring faction drift | Faction identity matters - flag misalignment |
-| Skipping metadata check | Inaccurate metadata breaks discovery |
+After scorecard approval → Load `testing-skill-quality.md`

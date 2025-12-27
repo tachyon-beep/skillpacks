@@ -1,334 +1,313 @@
 # Implementing Fixes
 
-**Purpose:** Autonomous execution of approved changes with version management and git commit.
+**Purpose:** Execute approved changes across all component types with version management and git commit.
 
 ## Prerequisites
 
 You should have completed and gotten approval for:
-- Pass 1: Structure review (gaps, duplicates, organization)
-- Pass 2: Content testing (gauntlet results, fix priorities)
-- Pass 3: Coherence validation (cross-skill consistency, faction alignment)
+- Domain analysis and component inventory
+- Structure review and scorecard
+- Behavioral testing results
 - User discussion and approval of scope
 
 **Do NOT proceed without user approval of the scope of work.**
 
-## Execution Workflow
+---
 
-### 1. Structural Fixes (from Pass 1)
+## Critical Checkpoint: New Skills
 
-**CRITICAL CHECKPOINT - New Skills:**
+**STOP:** Did you identify gaps requiring new skills?
 
-**STOP:** Did you identify gaps (new skills needed) in Pass 1?
+**If YES → Exit this workflow NOW:**
 
-**If YES → You MUST exit this workflow NOW:**
-
-1. **DO NOT proceed to execution**
-2. **For EACH gap identified:**
-   - Use `superpowers:writing-skills` skill
+1. For EACH skill gap:
+   - Use `superpowers:writing-skills`
    - RED: Test scenario WITHOUT the skill
    - GREEN: Write skill addressing gaps
    - REFACTOR: Close loopholes
-   - **Commit that ONE skill**
-3. **Repeat for ALL gaps** (each skill = separate RED-GREEN-REFACTOR cycle)
-4. **AFTER all new skills are tested and committed:**
-   - Return to meta-skillpack-maintenance
-   - Load this briefing again
-   - Continue with other structural fixes below
+   - Commit that ONE skill
+2. Repeat for ALL skill gaps
+3. Return here AFTER all new skills are tested and committed
+
+**New commands and agents CAN be created here.** Only new SKILLS require the separate workflow.
 
 **Proceeding past this checkpoint assumes:**
 - ✓ Zero new skills needed, OR
 - ✓ All new skills already created via superpowers:writing-skills
-- ✓ You are ONLY enhancing existing skills, removing duplicates, updating router/metadata
-
-**If you identified ANY gaps and haven't used superpowers:writing-skills for each:**
-**STOP. Exit now. You're violating the Iron Law: NO SKILL WITHOUT BEHAVIORAL TESTING.**
 
 ---
 
-**Remove duplicate skills:**
+## Execution by Component Type
 
-For skills marked for removal:
-1. Identify unique value in skill being removed
-2. Merge unique value into kept skill (if any)
-3. Delete duplicate SKILL.md and directory
-4. Remove references from router (if exists)
-5. Update cross-references in other skills
+### 1. Skills
 
-**Merge overlapping skills:**
+**Structural fixes:**
+- Remove duplicate skills (preserve unique value)
+- Update router to reflect current specialists
+- Fix broken cross-references
 
-For partial duplicates:
-1. Identify all unique content from both skills
-2. Create merged skill with comprehensive coverage
-3. Reorganize structure if needed
-4. Delete original skills
-5. Update router and cross-references
-6. Update skill name/description if needed
+**Content enhancements:**
+- Address gauntlet failures
+- Add missing anti-patterns
+- Strengthen pressure-resistance language
+- Improve examples
 
-**Update router skill:**
+**Reference sheets:**
+- Update to reflect current state
+- Add missing guidance
+- Fix inaccuracies
 
-If pack has using-X router:
-1. Update specialist list to reflect adds/removes
-2. Update descriptions to match current skills
-3. Verify routing logic makes sense
-4. Add cross-references as needed
+### 2. Commands
 
-### 2. Content Enhancements (from Pass 2)
+**Create new commands:**
+```yaml
+---
+description: [What this command does]
+allowed-tools: [Tool, List]
+argument-hint: "[args]"
+---
 
-**For each skill marked "Fix needed" in gauntlet testing:**
+# Command Name
 
-**Fix rationalizations (A-type issues):**
-1. Add explicit counter for each identified rationalization
-2. Update "Common Rationalizations" table
-3. Add to "Red Flags" list if applicable
-4. Strengthen "No exceptions" language
+[Command content]
+```
 
-**Fill edge case gaps (C-type issues):**
-1. Add guidance for identified corner cases
-2. Document when/how to adapt core principles
-3. Add examples for edge case handling
-4. Cross-reference related skills if needed
+**Fix existing commands:**
+- Update descriptions for clarity
+- Adjust tool restrictions
+- Fix argument-hint accuracy
+- Remove overlap with skills
 
-**Enhance real-world guidance (B-type issues):**
-1. Add examples from realistic scenarios
-2. Clarify ambiguous instructions
-3. Add decision frameworks where needed
-4. Update "When to Use" section if unclear
+**Remove obsolete commands:**
+- Delete file
+- Update any references
 
-**Add anti-patterns:**
-1. Document observed failure modes from testing
-2. Add ❌ WRONG / ✅ CORRECT examples
-3. Update "Common Mistakes" section
-4. Add warnings for subtle pitfalls
+### 3. Agents
 
-**Improve examples:**
-1. Replace weak examples with tested scenarios
-2. Ensure examples are complete and runnable
-3. Add comments explaining WHY, not just WHAT
-4. Use realistic domain context
+**Create new agents:**
+```yaml
+---
+description: [What this agent specializes in]
+model: sonnet
+tools: [Read, Grep, Glob, Bash, Write]
+---
 
-### 3. Coherence Improvements (from Pass 3)
+# Agent Name
 
-**Cross-reference updates:**
+[Agent system prompt]
 
-**CRITICAL:** This is post-update hygiene - ensure skills reference new/enhanced skills.
+## When to Activate
 
-For each skill in pack:
-1. Identify related skills (related concepts, prerequisites, follow-ups)
-2. Add cross-references where helpful:
-   - "See [skill-name] for [related concept]"
-   - "**REQUIRED BACKGROUND:** [skill-name]"
-   - "After mastering this, see [skill-name]"
-3. Update router cross-references
-4. Ensure bidirectional links (if A references B, should B reference A?)
+<example>
+User: "[matching task]"
+Action: Activate - [reason]
+</example>
 
-**Terminology alignment:**
+<example>
+User: "[non-matching task]"
+Action: Do NOT activate - [reason, handoff]
+</example>
 
-1. Identify terminology inconsistencies across skills
-2. Choose canonical terms (most clear/standard)
-3. Update all skills to use canonical terms
-4. Add glossary to router if needed
+## Scope Boundaries
 
-**Faction voice adjustment:**
+**I do:** [list]
+**I do NOT:** [list, with handoffs]
+```
 
-For skills flagged with faction drift:
-1. Read FACTIONS.md for faction principles
-2. Adjust language/tone to match faction
-3. Realign examples with faction philosophy
-4. If severe drift: Flag for potential rehoming
+**Fix existing agents:**
+- Clarify scope boundaries
+- Adjust model selection
+- Update activation examples
+- Fix tool permissions
 
-**If rehoming recommended:**
-- Document which faction skill should move to
-- Note in commit message for manual handling
-- Don't move skills automatically (requires marketplace changes)
+### 4. Hooks
 
-**Metadata synchronization:**
-
-Update `plugin.json`:
-1. Description - ensure it matches enhanced pack content
-2. Count skills if tool supports it
-3. Verify category is appropriate
-
-### 4. Version Management (Impact-Based)
-
-**Assess impact of all changes:**
-
-**Patch bump (x.y.Z) - Low impact:**
-- Typos fixed
-- Formatting improvements
-- Minor clarifications (< 50 words added)
-- Small example corrections
-- No new skills, no skills removed
-
-**Minor bump (x.Y.0) - Medium impact (DEFAULT):**
-- Enhanced guidance (added sections, better examples)
-- New skills added
-- Improved existing skills significantly
-- Better anti-pattern coverage
-- Fixed gauntlet failures
-- Updated for current best practices
-
-**Major bump (X.0.0) - High impact (RARE, use sparingly):**
-- Skills removed entirely
-- Structural reorganization
-- Philosophy shifts
-- Breaking changes to how skills work
-- Deprecated major patterns
-
-**Decision logic:**
-1. Any new skills added? → Minor minimum
-2. Any skills removed? → Consider major
-3. Only fixes/clarifications? → Patch
-4. Enhanced multiple skills significantly? → Minor
-5. Changed pack philosophy? → Major
-
-**Default for maintenance reviews: Minor bump**
-
-**Update version in plugin.json:**
+**Create new hooks:**
 ```json
 {
-  "version": "[new-version]"
+  "hooks": {
+    "EventType": [{
+      "matcher": "Pattern",
+      "hooks": [{
+        "type": "command",
+        "command": "${CLAUDE_PLUGIN_ROOT}/scripts/script.sh"
+      }]
+    }]
+  }
 }
 ```
 
-### 5. Git Commit
+**Fix existing hooks:**
+- Correct event types
+- Fix matcher patterns
+- Update scripts
+
+**Test hooks after changes:**
+- Verify they fire correctly
+- Verify they don't fire incorrectly
+
+### 5. Metadata
+
+**Update plugin.json:**
+- Description matches current content
+- Version reflects changes
+- Component counts accurate
+
+---
+
+## Coherence Updates
+
+After component changes, ensure coherence:
+
+**Cross-references:**
+- Skills reference related skills/commands/agents
+- Commands reference related guidance
+- Agents reference handoff targets
+
+**Terminology:**
+- Consistent terms across all components
+- Canonical names for concepts
+
+**Navigation:**
+- Router skill (if exists) lists all specialists
+- Clear paths to find components
+
+---
+
+## Version Management
+
+**Assess total impact:**
+
+| Bump | When | Examples |
+|------|------|----------|
+| Patch (x.y.Z) | Low impact | Typos, formatting, minor clarifications |
+| Minor (x.Y.0) | Medium impact | Enhanced guidance, new components, better examples |
+| Major (X.0.0) | High impact | Components removed, structural changes, philosophy shifts |
+
+**Decision logic:**
+- New components added? → Minor minimum
+- Components removed? → Consider Major
+- Only fixes/clarifications? → Patch
+- Multiple significant enhancements? → Minor
+- Changed plugin philosophy? → Major
+
+**Default for maintenance: Minor bump**
+
+---
+
+## Git Commit
 
 **Single commit with all changes:**
 
-**Commit message format:**
-
-```
-feat(meta): enhance [pack-name] - [one-line summary]
-
-Structure changes:
-- Added [count] new skills: [skill-1], [skill-2], ...
-- Removed [count] duplicate skills: [skill-1], [skill-2], ...
-- Merged [skill-a] + [skill-b] into [skill-merged]
-- Updated router to reflect new structure
-
-Content improvements:
-- Enhanced [skill-1]: [specific improvements]
-- Enhanced [skill-2]: [specific improvements]
-- Fixed gauntlet failures in [skill-3]: [issues addressed]
-- Added anti-patterns to [skill-4]
-
-Coherence updates:
-- Added cross-references between [count] skills
-- Aligned terminology across pack
-- Adjusted faction voice in [skill-name]
-- Updated plugin.json metadata
-
-Version: [old-version] → [new-version] ([patch/minor/major])
-Rationale: [reason for version bump type]
-```
-
-**Commit command:**
-
 ```bash
-git add plugins/[pack-name]/
+git add plugins/[plugin-name]/
 git commit -m "$(cat <<'EOF'
-feat(meta): enhance [pack-name] - [summary]
+feat(plugin-name): enhance [summary]
 
-[Full message body as above]
+Structure:
+- Added [count] commands: [names]
+- Added [count] agents: [names]
+- Removed [count] duplicate skills: [names]
+- Updated router
+
+Content:
+- Enhanced [skill]: [changes]
+- Fixed [command]: [changes]
+- Improved [agent]: [changes]
+
+Coherence:
+- Updated cross-references
+- Aligned terminology
+- Updated metadata
+
+Version: [old] → [new] ([patch/minor/major])
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
 ```
 
 **Do NOT push** - let user decide when to push.
 
-## Execution Principles
+---
 
-**Autonomous within approved scope:**
-- Execute all approved changes without asking again
-- Follow user's approved plan exactly
-- Make editorial decisions within scope
-- Ask only if something unexpected blocks progress
+## Red Flags - Execution Phase
 
-**Quality standards:**
-- All new skills follow CSO guidelines (name/description format)
-- All code examples are complete and appropriate to domain
-- All cross-references are accurate
-- Faction voice is maintained
+| Thought | Reality |
+|---------|---------|
+| "I'll just write this skill inline" | NO. Skills require superpowers:writing-skills |
+| "This command is simple, skip testing" | Simple commands fail edge cases. Test anyway. |
+| "I'll add extra improvements while I'm here" | Scope creep. Stick to approved changes. |
+| "I'll skip the cross-reference updates" | Broken navigation. Update references. |
+| "Version bump doesn't matter" | Version communicates impact. Get it right. |
+| "I'll commit each change separately" | Single commit. Track as atomic change. |
 
-**Verification before commit:**
-- Verify YAML front matter syntax in all modified skills
-- Check that all cross-references point to existing skills
-- Ensure router (if exists) references all current skills
-- Verify plugin.json has valid JSON syntax
+**All of these mean: Follow the process. Execute approved scope only.**
 
-## Output After Completion
+---
 
-Provide comprehensive summary:
+## Output Summary
 
-```
-# Pack Enhancement Complete: [pack-name]
+```markdown
+# Plugin Enhancement Complete: [plugin-name]
 
 ## Version: [old] → [new] ([type])
 
-## Summary Statistics
+## Summary
 
-- Skills added: [count]
-- Skills removed: [count]
-- Skills enhanced: [count]
-- Skills tested and passed: [count]
+| Component | Added | Modified | Removed |
+|-----------|-------|----------|---------|
+| Skills | [n] | [n] | [n] |
+| Commands | [n] | [n] | [n] |
+| Agents | [n] | [n] | [n] |
+| Hooks | [n] | [n] | [n] |
 
-## Changes by Category
+## Changes
 
-### Structure
-[List of structural changes]
+### Skills
+- [Change 1]
+- [Change 2]
 
-### Content
-[List of content improvements]
+### Commands
+- [Change 1]
+
+### Agents
+- [Change 1]
+
+### Hooks
+- [Change 1]
 
 ### Coherence
-[List of coherence updates]
+- [Update 1]
 
 ## Git Commit
 
-Created commit: [commit-hash if available]
-Message: [first line of commit]
-
-Ready to push: [Yes]
+Created commit: [hash]
+Ready to push: Yes
 ```
 
-## Common Mistakes
-
-| Mistake | Fix |
-|---------|-----|
-| Proceeding without approval | Always get user approval before executing |
-| Batch changes across passes | Complete one pass fully before next |
-| Inconsistent faction voice | Read FACTIONS.md, maintain voice throughout |
-| Broken cross-references | Verify all referenced skills exist |
-| Invalid YAML | Check syntax before committing |
-| Pushing automatically | Let user decide when to push |
-| Vague commit messages | Be specific about what changed and why |
-| Wrong version bump | Follow impact-based rules, default to minor |
+---
 
 ## Anti-Patterns
 
-**❌ Changing scope during execution:**
-- Don't add extra improvements not discussed
-- Don't skip approved changes because "not needed"
-- Stick to approved scope exactly
+| Anti-Pattern | Why Bad | Instead |
+|--------------|---------|---------|
+| Creating skills without testing | Untested = broken | Use superpowers:writing-skills |
+| Scope creep during execution | Unapproved changes | Stick to approved scope |
+| Multiple commits | Hard to track | Single atomic commit |
+| Skipping verification | Broken components | Test after changes |
+| Pushing without user approval | Premature | Let user decide |
 
-**❌ Sub-optimal quality:**
-- Don't write quick/dirty skills to fill gaps
-- Don't copy-paste without adapting to faction
-- Don't skip cross-references to save time
-
-**❌ Incomplete commits:**
-- Don't commit partial work
-- Don't split into multiple commits
-- Single commit with all changes
-
-**❌ No verification:**
-- Don't assume syntax is correct
-- Don't skip cross-reference checking
-- Verify before committing
+---
 
 ## The Bottom Line
 
-**Execute approved changes autonomously with high quality standards.**
+**Execute approved changes autonomously with high quality.**
 
-One commit. Proper versioning. Complete summary.
+- One commit
+- Proper versioning
+- Complete summary
 
 No shortcuts. No scope creep. Professional execution.

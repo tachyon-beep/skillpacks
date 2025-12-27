@@ -1,268 +1,219 @@
 ---
 name: using-skillpack-maintenance
-description: Use when maintaining or enhancing existing skill packs in the skillpacks repository - systematic pack refresh through domain analysis, structure review, RED-GREEN-REFACTOR gauntlet testing, and automated quality improvements
+description: Use when maintaining, enhancing, or modifying existing Claude Code plugins - handles skills, commands, agents, hooks, and reference sheets through systematic domain analysis, structure review, behavioral testing, and quality improvements
 ---
 
-# Skillpack Maintenance
+# Plugin Maintenance
 
-## Overview
+Systematic maintenance of Claude Code plugins including skills, commands, agents, hooks, and reference sheets.
 
-Systematic maintenance and enhancement of existing skill packs using investigative domain analysis, RED-GREEN-REFACTOR testing, and automated improvements.
+## Core Principle
 
-**Core principle:** Maintenance uses behavioral testing (gauntlet with subagents), not syntactic validation. Skills are process documentation - test if they guide agents correctly, not if they parse correctly.
+**Maintenance = behavioral validation, not syntactic checking.** Test if components guide Claude correctly, not if they parse correctly.
+
+## Scope: What This Skill Maintains
+
+| Component | Location | Frontmatter |
+|-----------|----------|-------------|
+| **Skills** | `skills/*/SKILL.md` | `name`, `description`, `allowed-tools` |
+| **Reference sheets** | `skills/using-*/*.md` | (none - content files) |
+| **Commands** | `commands/*.md` | `description`, `allowed-tools`, `argument-hint` |
+| **Agents** | `agents/*.md` | `description`, `model`, `tools` |
+| **Hooks** | `hooks/hooks.json` | JSON with event matchers |
 
 ## When to Use
 
-Use when:
-- Enhancing an existing skill pack (e.g., "refresh yzmir-deep-rl")
-- Improving existing SKILL.md files
-- Identifying gaps in pack coverage
-- Validating skill quality through testing
+**Use for:**
+- Enhancing existing plugins (e.g., "refresh yzmir-deep-rl")
+- Adding/removing/modifying components
+- Identifying coverage gaps
+- Validating component quality
 
 **Do NOT use for:**
-- Creating new skills from scratch (use superpowers:writing-skills)
-- Creating new packs from scratch (design first, then use creation workflow)
+- Creating new plugins from scratch (design first)
+- Creating brand new skills (use `superpowers:writing-skills`)
 
 ---
 
-## How to Access Reference Sheets
+## Reference Sheet Location
 
-**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
+All reference sheets are in this skill's directory:
+- `analyzing-pack-domain.md` - Domain investigation
+- `reviewing-pack-structure.md` - Structure review, scorecard
+- `testing-skill-quality.md` - Behavioral testing methodology
+- `implementing-fixes.md` - Execution and versioning
 
-When this skill is loaded from:
-  `skills/using-skillpack-maintenance/SKILL.md`
-
-Reference sheets like `analyzing-pack-domain.md` are at:
+When reading `analyzing-pack-domain.md`, find it at:
   `skills/using-skillpack-maintenance/analyzing-pack-domain.md`
 
-NOT at:
-  `skills/analyzing-pack-domain.md` ← WRONG PATH
-
-When you see a link like `[analyzing-pack-domain.md](analyzing-pack-domain.md)`, read the file from the same directory as this SKILL.md.
-
 ---
 
-## The Iron Law
+## Workflow: Review → Discuss → Execute
 
-**NO SKILL CHANGES WITHOUT BEHAVIORAL TESTING**
+### Stage 1: Investigation
 
-Syntactic validation (does it parse?) ≠ Behavioral testing (does it work?)
+**Load:** `analyzing-pack-domain.md`
 
-## Common Rationalizations (from baseline testing)
+1. **User scope** - Ask about intent, boundaries, target audience
+2. **Domain mapping** - What should this plugin cover?
+3. **Inventory audit** - What exists? Skills, commands, agents, hooks?
+4. **Gap analysis** - What's missing vs. coverage map?
 
-| Excuse | Reality |
-|--------|---------|
-| "Syntactic validation is sufficient" | Parsing ≠ effectiveness. Test with subagents. |
-| "Quality benchmarking = effectiveness" | Comparing structure ≠ testing behavior. Run gauntlet. |
-| "Comprehensive coverage = working skill" | Coverage ≠ guidance quality. Test if agents follow it. |
-| "Following patterns = success" | Pattern-matching ≠ validation. Behavioral testing required. |
-| "I'll test if issues emerge" | Issues = broken skills in production. Test BEFORE deploying. |
+**Output:** Coverage map, component inventory, gaps identified
 
-**All of these mean: Run behavioral tests with subagents. No exceptions.**
+### Stage 2: Structure Review
 
-## Workflow Overview
+**Load:** `reviewing-pack-structure.md`
 
-**Review → Discuss → [Create New Skills if Needed] → Execute**
-
-1. **Investigation & Scorecard** → Load `analyzing-pack-domain.md`
-2. **Structure Review (Pass 1)** → Load `reviewing-pack-structure.md`
-3. **Content Testing (Pass 2)** → Load `testing-skill-quality.md`
-4. **Coherence Check (Pass 3)** → Validate cross-skill consistency
-5. **Discussion** → Present findings, get approval
-6. **[CONDITIONAL] Create New Skills** → If gaps identified, use `superpowers:writing-skills` for EACH gap (RED-GREEN-REFACTOR)
-7. **Execution** → Load `implementing-fixes.md`, enhance existing skills only
-8. **Commit** → Single commit with version bump
-
-## Stage 1: Investigation & Scorecard
-
-**Load briefing:** `analyzing-pack-domain.md`
-
-**Purpose:** Establish "what this pack should cover" from first principles.
-
-**Adaptive investigation (D→B→C→A):**
-1. **User-guided scope (D)** - Ask user about pack intent and boundaries
-2. **LLM knowledge analysis (B)** - Map domain comprehensively, flag if research needed
-3. **Existing pack audit (C)** - Compare current state vs. coverage map
-4. **Research if needed (A)** - Conditional: only if domain is rapidly evolving
-
-**Output:** Domain coverage map, gap analysis, research currency flag
-
-**Then: Load `reviewing-pack-structure.md` for scorecard**
-
-**Scorecard levels:**
-- **Critical** - Pack unusable, recommend rebuild vs. enhance
-- **Major** - Significant gaps or duplicates
-- **Minor** - Organizational improvements
+Generate fitness scorecard:
+- **Critical** - Plugin unusable, consider rebuild
+- **Major** - Significant gaps or structural issues
+- **Minor** - Polish and improvements
 - **Pass** - Structurally sound
 
 **Decision gate:** Present scorecard → User decides: Proceed / Rebuild / Cancel
 
-## Stage 2: Comprehensive Review
+### Stage 3: Behavioral Testing
 
-### Pass 1: Structure (from reviewing-pack-structure.md)
+**Load:** `testing-skill-quality.md`
 
-**Analyze:**
-- Gaps (missing skills based on coverage map)
-- Duplicates (overlapping coverage - merge/specialize/remove)
-- Organization (router accuracy, faction alignment, metadata sync)
+Test each component with challenging scenarios:
+- **Pressure tests** - Does it hold under "just do it quickly" pressure?
+- **Edge cases** - Does it handle corner cases?
+- **Real-world complexity** - Does it guide correctly in messy situations?
 
-**Output:** Structural issues with priorities (critical/major/minor)
+**Output:** Per-component test results (Pass / Fix needed)
 
-### Pass 2: Content Quality (from testing-skill-quality.md)
+### Stage 4: Discussion
 
-**CRITICAL:** This is behavioral testing with subagents, not syntactic validation.
+Present findings by category:
 
-**Gauntlet design (A→C→B priority):**
+**Gaps requiring new components:**
+- Skills needing `superpowers:writing-skills` (each = separate RED-GREEN-REFACTOR)
+- Commands to create
+- Agents to create
 
-**A. Pressure scenarios** - Catch rationalizations:
-- Time pressure: "This is urgent, just do it quickly"
-- Simplicity temptation: "Too simple to need the skill"
-- Overkill perception: "Skill is for complex cases, this is straightforward"
+**Existing components needing fixes:**
+- Skills/commands/agents with behavioral failures
+- Hooks with issues
 
-**C. Adversarial edge cases** - Test robustness:
-- Corner cases where skill principles conflict
-- Situations where naive application fails
+**Get user approval before execution.**
 
-**B. Real-world complexity** - Validate utility:
-- Messy requirements, unclear constraints
-- Multiple valid approaches
+### Stage 5: Execution
 
-**Testing process per skill:**
-1. Design challenging scenario from gauntlet categories
-2. **Run subagent WITH current skill** (behavioral test)
-3. Observe: Does it follow? Where does it rationalize/fail?
-4. Document failure modes
-5. Result: Pass OR Fix needed (with specific issues listed)
+**Load:** `implementing-fixes.md`
 
-**Philosophy:** D as gauntlet to identify issues, B for targeted fixes. If skill passes gauntlet, no changes needed.
+**CRITICAL CHECKPOINT:**
+If gaps were identified → Use `superpowers:writing-skills` for EACH new skill first.
+Do NOT create new skills inline. They require behavioral testing.
 
-**Output:** Per-skill test results (Pass / Fix needed + priorities)
+Execute approved changes:
+1. Structural fixes (remove duplicates, update router)
+2. Content enhancements (fix behavioral failures)
+3. Component creation (commands, agents - NOT skills)
+4. Version bump and commit
 
-### Pass 3: Coherence
+---
 
-**After structure/content analysis, validate pack-level coherence:**
+## Component-Specific Guidance
 
-1. **Cross-skill consistency** - Terminology, examples, cross-references
-2. **Router accuracy** - Does using-X router reflect current specialists?
-3. **Faction alignment** - Check FACTIONS.md, flag drift, suggest rehoming if needed
-4. **Metadata sync** - plugin.json description, skill count
-5. **Navigation** - Can users find skills easily?
+### Skills (SKILL.md)
 
-**CRITICAL:** Update skills to reference new/enhanced skills (post-update hygiene)
-
-**Output:** Coherence issues, faction drift flags
-
-## Stage 3: Interactive Discussion
-
-**Present findings conversationally:**
-
-**Structural category:**
-- **Gaps requiring superpowers:writing-skills** (new skills needed - each requires RED-GREEN-REFACTOR)
-- Duplicates to remove/merge
-- Organization issues
-
-**Content category:**
-- Skills needing enhancement (from gauntlet failures)
-- Severity levels (critical/major/minor)
-- Specific failure modes identified
-
-**Coherence category:**
-- Cross-reference updates needed
-- Faction alignment issues
-- Metadata corrections
-
-**Get user approval for scope of work**
-
-**CRITICAL DECISION POINT:** If gaps (new skills) were identified:
-- User approves → **IMMEDIATELY use superpowers:writing-skills for EACH gap**
-- Do NOT proceed to Stage 4 until ALL new skills are created and tested
-- Each gap = separate RED-GREEN-REFACTOR cycle
-- Return to Stage 4 only after ALL gaps are filled
-
-## Stage 4: Autonomous Execution
-
-**Load briefing:** `implementing-fixes.md`
-
-**PREREQUISITE CHECK:**
-- ✓ Zero gaps identified, OR
-- ✓ All gaps already filled using superpowers:writing-skills (each skill individually tested)
-
-**If gaps exist and you haven't used writing-skills:** STOP. Return to Stage 3.
-
-**Execute approved changes:**
-
-1. **Structural fixes** - Remove/merge duplicate skills, update router
-2. **Content enhancements** - Fix gauntlet failures, add missing guidance to existing skills
-3. **Coherence improvements** - Cross-references, terminology alignment, faction voice
-4. **Version management** - Apply impact-based bump (patch/minor/major)
-5. **Git commit** - Single commit with all changes
-
-**Version bump rules (impact-based):**
-- **Patch (x.y.Z)** - Low-impact: typos, formatting, minor clarifications
-- **Minor (x.Y.0)** - Medium-impact: enhanced guidance, new skills, better examples (DEFAULT)
-- **Major (X.0.0)** - High-impact: skills removed, structural changes, philosophy shifts (RARE)
-
-**Commit format:**
-```
-feat(meta): enhance [pack-name] - [summary]
-
-[Detailed list of changes by category]
-- Structure: [changes]
-- Content: [changes]
-- Coherence: [changes]
-
-Version bump: [reason for patch/minor/major]
+```yaml
+---
+name: skill-name
+description: When to use this skill and what it does
+allowed-tools: [Read, Grep, Glob]  # optional
+---
 ```
 
-**Output:** Enhanced pack, commit created, summary report
+**Key questions:**
+- Does description trigger correct activation?
+- Is guidance actionable under pressure?
+- Are there missing anti-patterns?
 
-## Briefing Files Reference
+### Commands (commands/*.md)
 
-All briefing files are in this skill directory:
+```yaml
+---
+description: What this command does
+allowed-tools: [Read, Bash, Glob, Grep]
+argument-hint: "[optional_arg]"
+---
+```
 
-- `analyzing-pack-domain.md` - Investigative domain analysis (D→B→C→A)
-- `reviewing-pack-structure.md` - Structure review, scorecard, gap/duplicate analysis
-- `testing-skill-quality.md` - Gauntlet testing methodology with subagents
-- `implementing-fixes.md` - Autonomous execution, version management, git commit
+**Key questions:**
+- Is the command user-invocable (vs skill which is model-invoked)?
+- Does it have clear entry point?
+- Are tool restrictions appropriate?
 
-**Load appropriate briefing at each stage.**
+### Agents (agents/*.md)
 
-## Critical Distinctions
+```yaml
+---
+description: What this agent specializes in
+model: sonnet  # or opus, haiku
+tools: [Read, Grep, Glob, Bash, Write]
+---
+```
 
-**Behavioral vs. Syntactic Testing:**
-- ❌ **Syntactic:** "Does Python code parse?" → ast.parse()
-- ✅ **Behavioral:** "Does skill guide agents correctly?" → Subagent gauntlet
+**Key questions:**
+- Clear scope boundaries (what it does / doesn't do)?
+- Appropriate model selection for complexity?
+- Activation examples (positive and negative)?
 
-**This workflow requires BEHAVIORAL testing.**
+### Hooks (hooks/hooks.json)
 
-**Maintenance vs. Creation:**
-- **Maintenance** (this skill): Enhancing existing SKILL.md files
-- **Creation** (superpowers:writing-skills): Writing new skills from scratch
+```json
+{
+  "hooks": {
+    "PostToolUse": [{
+      "matcher": "Write|Edit",
+      "hooks": [{"type": "command", "command": "script.sh"}]
+    }]
+  }
+}
+```
 
-**Use the right tool for the task.**
+**Events:** PreToolUse, PostToolUse, UserPromptSubmit, Notification, Stop, SubagentStop, SessionStart, SessionEnd, PreCompact
 
-## Red Flags - STOP and Switch Tools
+**Key questions:**
+- Correct event type for the use case?
+- Matcher pattern accurate?
+- Script executable and tested?
 
-If you catch yourself thinking ANY of these:
-- "I'll write the new skills during execution" → NO. Use superpowers:writing-skills for EACH gap
-- "implementing-fixes.md says to create skills" → NO. That section was REMOVED. Exit and use writing-skills
-- "Token efficiency - I can just write good skills" → NO. Untested skills = broken skills
-- "I see the pattern, I can replicate it" → NO. Pattern-matching ≠ behavioral testing
-- "User wants this done quickly" → NO. Fast + untested = waste of time fixing later
-- "I'm competent, testing is overkill" → NO. Competence = following the process
-- "Gaps were approved, so I should fill them" → YES, but using writing-skills, not here
-- Validating syntax instead of behavior → Load testing-skill-quality.md
-- Skipping gauntlet testing → You're violating the Iron Law
-- Making changes without user approval → Follow Review→Discuss→Execute
+---
 
-**All of these mean: STOP. Exit workflow. Use superpowers:writing-skills.**
+## Version Bump Rules
 
-## The Bottom Line
+| Impact | Bump | Examples |
+|--------|------|----------|
+| **Low** | Patch (x.y.Z) | Typos, formatting, minor clarifications |
+| **Medium** | Minor (x.Y.0) | Enhanced guidance, new components, better examples |
+| **High** | Major (X.0.0) | Components removed, structural changes, philosophy shifts |
 
-**Maintaining skills requires behavioral testing, not syntactic validation.**
+**Default for maintenance: Minor bump**
 
-Same principle as code: you test behavior, not syntax.
+---
 
-Load briefings at each stage. Test with subagents. Get approval. Execute.
+## Red Flags - Stop and Reconsider
 
-No shortcuts. No rationalizations.
+| Thought | Reality |
+|---------|---------|
+| "I'll write new skills during execution" | NO. Use `superpowers:writing-skills` for each gap |
+| "Syntax looks correct, no need to test" | Parsing ≠ effectiveness. Test behavior. |
+| "This is a quick fix, skip the process" | Quick untested = broken later |
+| "The command/agent is simple enough" | Simple things fail in edge cases. Test anyway. |
+
+---
+
+## Quick Reference
+
+```
+Investigation → Scorecard → Testing → Discussion → Execution
+     ↓              ↓           ↓           ↓            ↓
+  Domain map    Fitness    Behavioral   Present      Apply
+  + inventory   rating     validation   + approve    changes
+```
+
+**Load briefings at each stage. Test with scenarios. Get approval. Execute.**

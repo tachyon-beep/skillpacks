@@ -1,168 +1,205 @@
-# Analyzing Pack Domain
+# Analyzing Plugin Domain
 
-**Purpose:** Investigative process to establish "what this pack should cover" from first principles.
+**Purpose:** Establish "what this plugin should cover" and inventory all existing components.
 
-## Adaptive Investigation Workflow
-
-**Sequence: D → B → C → A (conditional)**
+## Workflow: D → B → C → A
 
 ### Phase D: User-Guided Scope
 
-**Ask user:**
-- "What is the intended scope and purpose of [pack-name]?"
-- "What boundaries should this pack respect?"
-- "Who is the target audience? (beginners / practitioners / experts)"
-- "What depth of coverage is expected? (overview / comprehensive / exhaustive)"
+**Ask:**
+- What is the intended scope of this plugin?
+- What boundaries should it respect?
+- Target audience: beginners / practitioners / experts?
+- Depth: overview / comprehensive / exhaustive?
 
 **Document:**
 - User's vision as baseline
-- Explicit boundaries (what's IN scope, what's OUT of scope)
-- Success criteria (what makes this pack "complete"?)
+- Explicit boundaries (IN scope vs. OUT of scope)
+- Success criteria
 
-### Phase B: LLM Knowledge-Based Analysis
+### Phase B: Domain Mapping
 
-**Leverage model knowledge to map the domain:**
+**Generate coverage map from model knowledge:**
 
-1. **Generate comprehensive coverage map:**
-   - What are the major concepts/algorithms/techniques in this domain?
-   - What are the core patterns practitioners need to know?
-   - What are common implementation challenges?
+1. **Core concepts** - What must this plugin cover?
+2. **Key techniques** - Common patterns practitioners need
+3. **Advanced topics** - Expert-level material
+4. **Cross-cutting** - Testing, debugging, optimization
 
-2. **Identify structure:**
-   - Foundational concepts (must understand first)
-   - Core techniques (bread-and-butter patterns)
-   - Advanced topics (expert-level material)
-   - Cross-cutting concerns (testing, debugging, optimization)
+**Structure:**
+```
+Foundational:
+- [Concept] - Status: Exists / Missing / Needs enhancement
 
-3. **Flag research currency:**
-   - Is this domain stable or rapidly evolving?
-   - Stable examples: Design patterns, basic algorithms, established protocols
-   - Evolving examples: AI/ML, security, modern web frameworks
-   - If evolving → Flag for Phase A research
+Core:
+- [Technique] - Status: ...
 
-**Output:** Coverage map with categorization (foundational/core/advanced)
+Advanced:
+- [Topic] - Status: ...
+```
 
-### Phase C: Existing Pack Audit
+**Flag research currency:**
+- Stable domains (patterns, algorithms): No research needed
+- Evolving domains (AI/ML, security, frameworks): Flag for Phase A
 
-**Read all current skills in the pack:**
+### Phase C: Component Inventory
 
-1. **Inventory:**
-   - List all SKILL.md files
-   - Note skill names and descriptions
-   - Check router skill (if exists) for specialist list
+**Inventory ALL plugin components:**
 
-2. **Compare against coverage map:**
-   - What's covered? (existing skills matching coverage areas)
-   - What's missing? (gaps in foundational/core/advanced areas)
-   - What overlaps? (multiple skills covering same concept)
-   - What's obsolete? (outdated approaches, deprecated patterns)
+#### Skills
+```bash
+find plugins/[name]/skills -name "SKILL.md" -type f
+```
 
-3. **Quality check:**
-   - Are descriptions accurate?
-   - Do skills match their descriptions?
-   - Are there broken cross-references?
+For each skill:
+- Name and description
+- Reference sheets (if router skill)
+- Domain area covered
 
-**Output:** Gap list, duplicate list, obsolescence flags
+#### Commands
+```bash
+ls plugins/[name]/commands/*.md 2>/dev/null
+```
+
+For each command:
+- Description from frontmatter
+- argument-hint
+- What it enables users to do
+
+#### Agents
+```bash
+ls plugins/[name]/agents/*.md 2>/dev/null
+```
+
+For each agent:
+- Description from frontmatter
+- Model and tools
+- Specialization area
+
+#### Hooks
+```bash
+cat plugins/[name]/hooks/hooks.json 2>/dev/null
+```
+
+For each hook:
+- Event type (PreToolUse, PostToolUse, etc.)
+- Matcher pattern
+- Purpose
+
+#### Plugin Metadata
+```bash
+cat plugins/[name]/.claude-plugin/plugin.json
+```
+
+Note: version, description accuracy, skill count
 
 ### Phase A: Research (Conditional)
 
-**ONLY if Phase B flagged domain as rapidly evolving.**
+**Only if Phase B flagged domain as evolving.**
 
-**Research authoritative sources:**
+**AI/ML domains:** Survey papers, library docs, benchmarks
+**Security domains:** OWASP, NIST, recent CVEs
+**Framework domains:** Official docs, migration guides
 
-1. **For AI/ML domains:**
-   - Latest survey papers (search: "[domain] survey 2024/2025")
-   - Current textbooks (check publication dates)
-   - Official library documentation (PyTorch, TensorFlow, etc.)
-   - Research benchmarks (Papers with Code, etc.)
+Update coverage map with:
+- New techniques/patterns
+- Deprecated approaches
+- Version-specific considerations
 
-2. **For security domains:**
-   - OWASP guidelines
-   - NIST standards
-   - Recent CVE patterns
-   - Current threat landscape
+---
 
-3. **For framework domains:**
-   - Official documentation (latest version)
-   - Migration guides (breaking changes)
-   - Best practices (official recommendations)
+## Output Format
 
-**Update coverage map:**
-- Add new techniques/patterns
-- Flag deprecated approaches in existing skills
-- Note version-specific considerations
+```markdown
+# Domain Analysis: [plugin-name]
 
-**Decision criteria for Phase A:**
-- **Skip research** for: Math, algorithms, design patterns, established protocols
-- **Run research** for: AI/ML, security, modern frameworks, evolving standards
+## User-Defined Scope
+- Intent: [description]
+- Boundaries: [in/out scope]
+- Audience: [level]
 
-## Outputs
+## Coverage Map
 
-Generate comprehensive report:
+### Foundational
+- [Concept 1] - [Exists/Missing/Needs work]
+- [Concept 2] - [Status]
 
-### 1. Domain Coverage Map
+### Core Techniques
+- [Technique 1] - [Status]
 
-```
-Foundational:
-- [Concept 1] - [Status: Exists / Missing / Needs enhancement]
-- [Concept 2] - [Status: Exists / Missing / Needs enhancement]
+### Advanced
+- [Topic 1] - [Status]
 
-Core Techniques:
-- [Technique 1] - [Status: ...]
-- [Technique 2] - [Status: ...]
+## Component Inventory
 
-Advanced Topics:
-- [Topic 1] - [Status: ...]
-- [Topic 2] - [Status: ...]
+### Skills ([count])
+| Skill | Description | Status |
+|-------|-------------|--------|
+| [name] | [desc] | [OK/Issue] |
 
-Cross-Cutting:
-- [Concern 1] - [Status: ...]
-```
+### Reference Sheets ([count])
+| Sheet | Parent Skill | Status |
+|-------|--------------|--------|
+| [name] | [skill] | [OK/Issue] |
 
-### 2. Current State Assessment
+### Commands ([count])
+| Command | Description | Status |
+|---------|-------------|--------|
+| /[name] | [desc] | [OK/Issue] |
 
-```
-Existing skills: [count]
-- [Skill 1 name] - covers [domain area]
-- [Skill 2 name] - covers [domain area]
-...
-```
+### Agents ([count])
+| Agent | Description | Status |
+|-------|-------------|--------|
+| [name] | [desc] | [OK/Issue] |
 
-### 3. Gap Analysis
+### Hooks
+| Event | Matcher | Purpose | Status |
+|-------|---------|---------|--------|
+| [event] | [pattern] | [why] | [OK/Issue] |
 
-```
-Missing (High Priority):
-- [Gap 1] - foundational concept not covered
-- [Gap 2] - core technique missing
+## Gap Analysis
 
-Missing (Medium Priority):
-- [Gap 3] - advanced topic not covered
+### Missing Components (High Priority)
+- [Gap] - Foundational concept not covered
+  - Recommended: [skill/command/agent]
+  - Scope: [small/medium/large]
 
-Duplicates:
-- [Skill A] and [Skill B] overlap on [topic]
+### Missing Components (Medium Priority)
+- [Gap] - Advanced topic not covered
 
-Obsolete:
-- [Skill C] uses deprecated approach [old pattern]
-```
+### Duplicates/Overlaps
+- [Component A] and [Component B] overlap on [topic]
 
-### 4. Research Currency Flag
+### Obsolete
+- [Component] uses deprecated approach
 
-```
-Domain stability: [Stable / Evolving]
-Research conducted: [Yes / No / Not needed]
-Currency concerns: [None / List specific areas needing updates]
+## Research Currency
+- Domain stability: [Stable/Evolving]
+- Research needed: [Yes/No]
+- Currency concerns: [List]
 ```
 
-## Proceeding to Next Stage
+---
+
+## Component Type Selection
+
+**When is a gap a skill vs command vs agent?**
+
+| Use Case | Component |
+|----------|-----------|
+| Model should auto-invoke based on context | Skill |
+| User explicitly triggers with `/name` | Command |
+| Autonomous specialist for complex subtasks | Agent |
+| Automated response to tool events | Hook |
+
+**Examples:**
+- "Help with debugging" → Skill (auto-invoked)
+- "Deploy this model" → Command (explicit action)
+- "Review this code for security" → Agent (autonomous specialist)
+- "Format on save" → Hook (automated)
+
+---
+
+## Proceeding
 
 After completing investigation, hand off to `reviewing-pack-structure.md` for scorecard generation.
-
-## Common Mistakes
-
-| Mistake | Fix |
-|---------|-----|
-| Skipping user input (Phase D) | Always start with user vision - they define scope |
-| Over-relying on LLM knowledge | For evolving domains, run research (Phase A) |
-| Skipping gap analysis | Compare coverage map vs. existing skills systematically |
-| Treating all domains as stable | Flag AI/ML/security/frameworks for research |
-| Vague gap descriptions | Be specific: "Missing TaskGroup patterns" not "async needs work" |
