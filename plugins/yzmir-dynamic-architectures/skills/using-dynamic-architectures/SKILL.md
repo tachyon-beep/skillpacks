@@ -321,12 +321,15 @@ Watch for these signs of incorrect approach:
 | Request | Primary Pack | Why |
 |---------|--------------|-----|
 | "Implement PPO for architecture decisions" | yzmir-deep-rl | RL algorithm implementation |
+| "Evaluate architecture changes without mutation" | yzmir-deep-rl/counterfactual-reasoning | Counterfactual simulation |
 | "Debug PyTorch gradient flow" | yzmir-pytorch-engineering | Low-level PyTorch debugging |
 | "Optimize training loop performance" | yzmir-training-optimization | General training optimization |
 | "Design transformer architecture" | yzmir-neural-architectures | Static architecture design |
 | "Deploy morphogenetic model" | yzmir-ml-production | Production deployment |
 
 **Intersection with deep-rl:** If using RL to control architecture decisions (when to grow/prune), combine this pack's lifecycle orchestration with deep-rl's policy gradient or actor-critic methods.
+
+**Counterfactual evaluation:** Before committing to a live mutation (grow/prune), use deep-rl's `counterfactual-reasoning.md` to simulate the change and evaluate outcomes without risk. This is critical for production morphogenetic systems.
 
 ---
 

@@ -729,3 +729,11 @@ When implementing lifecycle orchestration:
 - [ ] Add logging for all state transitions
 - [ ] Track time-in-state for debugging
 - [ ] Test recovery paths (what happens on failure?)
+
+---
+
+## See Also
+
+- **yzmir-deep-rl/counterfactual-reasoning.md**: Evaluate architectural decisions via counterfactual simulation before committing to live mutations
+- **gradient-isolation-techniques.md**: Gradient control for safe module training
+- **progressive-training-strategies.md**: Warmup/cooldown patterns for state transitions

@@ -20,7 +20,7 @@ Invoke this meta-skill when you encounter:
 - **Environment Setup**: Creating custom RL environments, wrappers
 - **RL Evaluation**: Evaluating agent performance, sample efficiency, generalization
 
-This is the **entry point** for the deep-rl pack. It routes to 12 specialized skills based on problem characteristics.
+This is the **entry point** for the deep-rl pack. It routes to 13 specialized skills based on problem characteristics.
 
 ## How to Access Reference Sheets
 
@@ -52,7 +52,7 @@ Reinforcement learning is not one algorithm. The correct approach depends on:
 
 **Always clarify the problem BEFORE suggesting algorithms.**
 
-## The 12 Deep RL Skills
+## The 13 Deep RL Skills
 
 1. **rl-foundations** - MDP formulation, Bellman equations, value vs policy basics
 2. **value-based-methods** - Q-learning, DQN, Double DQN, Dueling DQN, Rainbow
@@ -63,9 +63,10 @@ Reinforcement learning is not one algorithm. The correct approach depends on:
 7. **multi-agent-rl** - MARL, cooperative/competitive, communication
 8. **exploration-strategies** - ε-greedy, UCB, curiosity, RND, intrinsic motivation
 9. **reward-shaping** - Reward design, potential-based shaping, inverse RL
-10. **rl-debugging** - Common RL bugs, why not learning, systematic debugging
-11. **rl-environments** - Gym, MuJoCo, custom envs, wrappers, vectorization
-12. **rl-evaluation** - Evaluation methodology, variance, sample efficiency metrics
+10. **counterfactual-reasoning** - Causal inference, HER, off-policy evaluation, twin networks
+11. **rl-debugging** - Common RL bugs, why not learning, systematic debugging
+12. **rl-environments** - Gym, MuJoCo, custom envs, wrappers, vectorization
+13. **rl-evaluation** - Evaluation methodology, variance, sample efficiency metrics
 
 ## Routing Decision Framework
 
@@ -345,6 +346,36 @@ IF reward design questions OR sparse rewards:
   → exploration-strategies (for sparse rewards)
 ```
 
+#### Counterfactual Reasoning & Causal Inference
+
+**Symptoms:**
+
+- Need data efficiency (learn from things that didn't happen)
+- Credit assignment problems (which action caused the outcome?)
+- Off-policy evaluation (evaluate new policy without deploying)
+- Goal-conditioned learning (turn failures into successes)
+- Architecture evaluation (test changes without mutating live network)
+
+**Routing:**
+
+```
+IF need to learn from alternative histories:
+  → counterfactual-reasoning
+
+  Covers:
+  - Structural Causal Models (SCM)
+  - Twin Network architecture (reality vs counterfactual branches)
+  - Hindsight Experience Replay (HER) for goal-conditioned RL
+  - Off-Policy Evaluation (importance sampling, doubly robust)
+  - Gumbel-Max trick for discrete counterfactuals
+  - Counterfactual credit assignment
+
+  Often combined with:
+  → model-based-rl (world models enable counterfactual simulation)
+  → reward-shaping (counterfactual credit informs reward design)
+  → yzmir-dynamic-architectures (architecture evaluation without mutation)
+```
+
 #### Environment Setup
 
 **Symptoms:**
@@ -618,6 +649,14 @@ START: RL problem
 ├─ Sample efficiency EXTREME?
 │  └─ → model-based-rl (MBPO, Dreamer)
 │
+├─ COUNTERFACTUAL reasoning?
+│  ├─ Credit assignment / causal inference
+│  │  └─ → counterfactual-reasoning
+│  ├─ Goal-conditioned / HER
+│  │  └─ → counterfactual-reasoning
+│  └─ Off-policy evaluation
+│     └─ → counterfactual-reasoning
+│
 ├─ DEBUGGING issues?
 │  ├─ Not learning, reward not increasing
 │  │  └─ → rl-debugging
@@ -662,6 +701,7 @@ After routing, load the appropriate specialist skill for detailed guidance:
 7. [multi-agent-rl.md](multi-agent-rl.md) - MARL, cooperative/competitive, communication
 8. [exploration-strategies.md](exploration-strategies.md) - ε-greedy, UCB, curiosity, RND, intrinsic motivation
 9. [reward-shaping-engineering.md](reward-shaping-engineering.md) - Reward design, potential-based shaping, inverse RL
-10. [rl-debugging.md](rl-debugging.md) - Common RL bugs, why not learning, systematic debugging
-11. [rl-environments.md](rl-environments.md) - Gym, MuJoCo, custom envs, wrappers, vectorization
-12. [rl-evaluation.md](rl-evaluation.md) - Evaluation methodology, variance, sample efficiency metrics
+10. [counterfactual-reasoning.md](counterfactual-reasoning.md) - Causal inference, HER, off-policy evaluation, twin networks
+11. [rl-debugging.md](rl-debugging.md) - Common RL bugs, why not learning, systematic debugging
+12. [rl-environments.md](rl-environments.md) - Gym, MuJoCo, custom envs, wrappers, vectorization
+13. [rl-evaluation.md](rl-evaluation.md) - Evaluation methodology, variance, sample efficiency metrics
