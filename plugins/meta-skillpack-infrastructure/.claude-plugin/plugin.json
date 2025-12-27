@@ -1,0 +1,19 @@
+{
+  "name": "meta-skillpack-infrastructure",
+  "version": "1.0.0",
+  "description": "Cross-cutting infrastructure for skillpack agents. Defines protocols, contracts, and shared behaviors that apply across all skillpacks (SME agent protocol, output contracts, fact-finding requirements).",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "meta",
+    "infrastructure",
+    "sme-protocol",
+    "agent-contracts",
+    "fact-finding",
+    "confidence-assessment"
+  ]
+}
