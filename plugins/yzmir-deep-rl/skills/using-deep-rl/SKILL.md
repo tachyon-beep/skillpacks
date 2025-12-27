@@ -451,6 +451,19 @@ IF evaluation questions:
 3. **rl-debugging** - Verify exploration hyperparameters
 4. Primary algorithm: **actor-critic-methods** or **policy-gradient-methods**
 
+### Scenario: RL-Controlled Neural Architecture
+
+**Need:** RL agent deciding when to grow/prune/integrate neural modules (morphogenetic systems)
+
+**Routing sequence:**
+
+1. **policy-gradient-methods** (PPO) - Common choice for discrete architecture actions
+2. **actor-critic-methods** - If continuous action space (blending alphas)
+3. `yzmir/dynamic-architectures/using-dynamic-architectures` - Lifecycle orchestration, gradient isolation
+4. **reward-shaping** - Reward for successful module integration, penalty for regression
+
+**Note:** This combines RL algorithms with dynamic architecture patterns. The RL agent acts as a "controller" for the module lifecycle.
+
 ---
 
 ## Rationalization Resistance Table

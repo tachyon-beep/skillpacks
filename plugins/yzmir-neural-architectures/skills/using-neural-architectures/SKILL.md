@@ -463,6 +463,12 @@ Once architecture is chosen, route to:
 - Quantization
 - Inference optimization
 
+**Dynamic/growing architectures:**
+→ `yzmir/dynamic-architectures/using-dynamic-architectures`
+- Networks that grow, prune, or adapt during training
+- Continual learning and catastrophic forgetting prevention
+- Module lifecycle management and progressive training
+
 ### Before Architecture Selection
 
 If problem involves:

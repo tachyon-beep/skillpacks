@@ -1,0 +1,21 @@
+{
+  "name": "yzmir-dynamic-architectures",
+  "version": "1.0.0",
+  "description": "Dynamic/morphogenetic neural networks - grow, prune, adapt topology during training. Covers continual learning, gradient isolation, modular composition, lifecycle orchestration. 6 reference sheets, 2 commands, 1 SME agent.",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "yzmir",
+    "dynamic-architectures",
+    "morphogenetic",
+    "continual-learning",
+    "gradient-isolation",
+    "neural-architecture-search",
+    "modular-networks",
+    "progressive-training"
+  ]
+}
