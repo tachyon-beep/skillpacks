@@ -1,6 +1,6 @@
 ---
 description: Assess architecture quality without diplomatic softening - delivers accurate professional critique with evidence. Follows SME Agent Protocol with confidence/risk assessment.
-model: sonnet
+model: opus
 tools: ["Read", "Grep", "Glob", "Bash", "Write", "WebFetch"]
 ---
 

@@ -1,6 +1,6 @@
 ---
 description: Design layered security controls with defense-in-depth at trust boundaries. Follows SME Agent Protocol with confidence/risk assessment.
-model: sonnet
+model: opus
 tools: ["Read", "Grep", "Glob", "Bash", "Write", "WebFetch"]
 ---
 
