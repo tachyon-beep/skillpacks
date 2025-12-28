@@ -11,6 +11,83 @@ Analyze existing codebases through coordinated subagent exploration to produce c
 
 **Core principle:** Systematic archaeological process with quality gates prevents rushed, incomplete analysis.
 
+---
+
+## Context Conservation (CRITICAL)
+
+**You are a COORDINATOR, not an analyst.** Your primary context is precious - preserve it for orchestration decisions, not detailed code reading.
+
+### The Delegation Imperative
+
+| Task Type | Your Role | Subagent Role |
+|-----------|-----------|---------------|
+| Subsystem analysis | Spawn `codebase-explorer` | Read files, produce catalog entries |
+| Validation | Spawn `analysis-validator` | Check contracts, produce reports |
+| Diagram generation | Spawn diagram subagent | Generate Mermaid/PlantUML |
+| Quality assessment | Spawn quality subagent | Analyze patterns, produce assessment |
+| Security surface | Spawn security subagent | Map boundaries, flag concerns |
+
+### What You DO (Coordinator):
+- Create workspace and coordination plan
+- Make orchestration decisions (parallel vs sequential)
+- Spawn subagents with clear task specifications
+- Read subagent outputs (summaries, not raw files)
+- Make proceed/revise decisions based on validation
+- Synthesize final deliverables from subagent work
+
+### What You DO NOT Do (Delegate Instead):
+- Read implementation files directly (subagent reads, you get summary)
+- Perform detailed pattern analysis (spawn specialist)
+- Write catalog entries yourself (spawn codebase-explorer)
+- Validate your own work (spawn analysis-validator)
+- Generate diagrams from scratch (spawn diagram agent)
+
+### Context Budget Guidance
+
+**Your context should contain:**
+- Coordination plan and decision log
+- Subagent task specifications (brief)
+- Subagent output summaries
+- Validation status reports
+- User requirements and constraints
+
+**Your context should NOT contain:**
+- Raw source code from analyzed files
+- Full file contents (let subagents read)
+- Detailed grep/glob output (subagents process)
+- Complete catalog entries during drafting
+
+### Spawning Pattern
+
+**Always spawn for detailed work:**
+
+```markdown
+Task: Analyze [subsystem]
+Subagent: codebase-explorer
+Input: Read 02-subsystem-catalog.md for context, analyze [path]
+Output: Append catalog entry to 02-subsystem-catalog.md
+```
+
+**Read subagent outputs, don't duplicate their work:**
+
+```markdown
+# After subagent completes
+Read: 02-subsystem-catalog.md (final section only)
+Decision: Proceed to validation / Request revision
+```
+
+### Rationalization Blockers
+
+| Thought | Reality |
+|---------|---------|
+| "I'll just quickly read this file" | Spawn subagent. Your context is for coordination. |
+| "It's faster if I do it myself" | Subagents preserve your context for later decisions. |
+| "Only a few files to check" | "Few" files become many. Delegate from the start. |
+| "I need to understand the code" | You need to understand the STRUCTURE. Subagents report findings. |
+| "Spawning overhead isn't worth it" | Context exhaustion is worse. Always delegate detailed work. |
+
+---
+
 ## When to Use
 
 - User requests architecture documentation for existing codebase

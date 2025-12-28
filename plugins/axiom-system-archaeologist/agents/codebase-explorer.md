@@ -241,3 +241,28 @@ if not architect_pack:
 - Recommend improvements (use architect)
 - Generate diagrams (use /generate-diagrams)
 - Validate analysis (use /validate-analysis)
+
+## Context Management for Large Subsystems
+
+**For subsystems with 20+ files or 5000+ lines:**
+
+Consider spawning focused sub-explorations rather than reading everything yourself:
+
+```markdown
+Task: Analyze [large-subsystem]/api/ subdirectory
+Focus: Entry points and public interfaces only
+Output: Summary of API surface for parent catalog entry
+```
+
+**When to subdivide:**
+- Subsystem has multiple distinct concerns (api/, core/, utils/)
+- File count exceeds comfortable reading (>20 files)
+- You're running low on context budget
+
+**How to subdivide:**
+1. Identify logical groupings within subsystem
+2. Spawn focused Task for each grouping
+3. Synthesize sub-findings into single catalog entry
+4. Cite sub-analysis in confidence section
+
+**Your catalog entry should reflect synthesized understanding, not exhaustive file listing.**
