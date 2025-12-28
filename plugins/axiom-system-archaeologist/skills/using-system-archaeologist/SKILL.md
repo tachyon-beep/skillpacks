@@ -78,14 +78,14 @@ Present menu using **AskUserQuestion tool:**
 - All standard documents (discovery, catalog, diagrams, report)
 - Optional: Code quality assessment
 - Optional: Architect handover report
-- Timeline: 2-6 hours depending on codebase size
+- Complexity: Medium-High (scales with codebase size)
 - Best for: New codebases, major refactoring planning, complete documentation needs
 
 **B) Quick Overview (Essential)** - Fast turnaround for stakeholder presentations
 - Discovery findings + high-level diagrams only (Context + Container)
 - Executive summary with key findings
 - Documented limitations (partial analysis)
-- Timeline: 30 minutes - 2 hours
+- Complexity: Low-Medium
 - Best for: Initial assessment, stakeholder presentations, time-constrained reviews
 
 **C) Architect-Ready (Analysis + Improvement Planning)** - Complete analysis with improvement focus
@@ -93,19 +93,19 @@ Present menu using **AskUserQuestion tool:**
 - Code quality assessment (mandatory for architect)
 - Architect handover report with improvement recommendations
 - Optional: Integrated architect consultation
-- Timeline: 3-8 hours depending on codebase size
+- Complexity: High (includes assessment + recommendations)
 - Best for: Planning refactoring, technical debt assessment, improvement roadmaps
 
 **D) Custom Selection** - Choose specific documents
 - User selects from: Discovery, Catalog, Diagrams (which levels?), Report, Quality, Handover
-- Timeline: Varies by selection
+- Complexity: Varies by selection
 - Best for: Updating existing documentation, focused analysis
 
 **E) Full + Security** - Complete analysis with security surface mapping
 - Full analysis (discovery, catalog, diagrams, report)
 - Security surface mapping with trust boundaries and red flags
 - Handoff package for ordis-security-architect
-- Timeline: 3-7 hours depending on codebase size
+- Complexity: High (requires security-focused review pass)
 - Best for: Security-sensitive systems, pre-security-review preparation
 
 **F) Full + Quality** - Complete analysis with test infrastructure and dependencies
@@ -113,7 +113,7 @@ Present menu using **AskUserQuestion tool:**
 - Test infrastructure analysis (pyramid, coverage gaps, flakiness)
 - Dependency analysis (circular deps, layer violations, coupling metrics)
 - Handoff package for ordis-quality-engineering
-- Timeline: 3-7 hours depending on codebase size
+- Complexity: High (requires quality-focused review pass)
 - Best for: Quality improvement initiatives, test strategy planning
 
 **G) Comprehensive** - Everything (Full + Security + Quality + Dependencies)
@@ -123,7 +123,7 @@ Present menu using **AskUserQuestion tool:**
 - Test infrastructure analysis
 - Dependency analysis
 - Architect handover with all findings
-- Timeline: 5-10 hours depending on codebase size
+- Complexity: Very High (full archaeological dig)
 - Best for: Major refactoring, system handover, complete documentation
 
 **Document user's choice in coordination plan:**
@@ -472,7 +472,7 @@ See individual skill files for detailed contracts:
 - `07-security-surface.md` contract → [mapping-security-surface.md](mapping-security-surface.md)
 - `08-incremental-report.md` contract → [incremental-analysis.md](incremental-analysis.md)
 - `09-test-infrastructure.md` contract → [analyzing-test-infrastructure.md](analyzing-test-infrastructure.md)
-- `10-dependency-analysis.md` contract → `/analyze-dependencies` command
+- `10-dependency-analysis.md` contract → [analyzing-dependencies.md](analyzing-dependencies.md)
 - Validation protocol → [validating-architecture-analysis.md](validating-architecture-analysis.md)
 - Language/framework patterns → [language-framework-patterns.md](language-framework-patterns.md)
 
@@ -499,6 +499,140 @@ See individual skill files for detailed contracts:
 ```
 
 **Every step is mandatory except optional steps (6.5-6.8, 11). No exceptions for time pressure, complexity, or stakeholder demands.**
+
+---
+
+## Specialist Subagent Integration
+
+For complex codebases, leverage specialist subagents from other skillpacks to improve analysis quality. This section documents when and how to invoke cross-pack specialists.
+
+### When to Invoke Specialists
+
+**During Step 3 (Holistic Assessment):**
+
+| Codebase Type | Specialist to Consider | Benefit |
+|---------------|----------------------|---------|
+| Python-heavy | `axiom-python-engineering:python-code-reviewer` | Python-specific patterns, anti-patterns |
+| PyTorch/ML | `yzmir-pytorch-engineering:pytorch-code-reviewer` | ML architecture patterns, memory issues |
+| Deep RL | `yzmir-deep-rl:rl-training-diagnostician` | RL-specific architecture concerns |
+| Web API | `axiom-web-backend:api-reviewer` | REST/GraphQL patterns, security |
+
+**During Step 6.5 (Code Quality):**
+
+| Quality Concern | Specialist | What They Add |
+|----------------|------------|---------------|
+| Test architecture | `ordis-quality-engineering:test-suite-reviewer` | Test anti-patterns, pyramid issues |
+| Flaky tests | `ordis-quality-engineering:flaky-test-diagnostician` | Root cause identification |
+| Coverage gaps | `ordis-quality-engineering:coverage-gap-analyst` | Risk-based prioritization |
+
+**During Step 6.6 (Security Surface):**
+
+| Security Area | Specialist | Handoff Package |
+|--------------|------------|-----------------|
+| Threat modeling | `ordis-security-architect:threat-analyst` | STRIDE analysis on critical subsystems |
+| Security controls | `ordis-security-architect:controls-designer` | Control recommendations |
+
+### Spawning Specialist Pattern
+
+When invoking a cross-pack specialist:
+
+```markdown
+## Specialist Invocation - [timestamp]
+
+**Specialist:** [agent name]
+**Scope:** [What to analyze]
+**Input:** [Files/artifacts to read]
+**Expected output:** [What findings to produce]
+**Integration:** [How findings feed into archaeological analysis]
+```
+
+**Example invocation for Python codebase:**
+
+```markdown
+## Specialist Invocation - 2024-01-15 14:30
+
+**Specialist:** axiom-python-engineering:python-code-reviewer
+**Scope:** Review auth/ and api/ subsystems for Python anti-patterns
+**Input:**
+- Read 02-subsystem-catalog.md for context
+- Focus on files listed in Auth and API Gateway entries
+**Expected output:**
+- Python-specific concerns to add to Concerns sections
+- Pattern observations to add to Patterns Observed
+**Integration:** Merge findings into 05-quality-assessment.md
+```
+
+### Specialist Output Integration
+
+When specialist returns findings:
+
+1. **Validate findings** - Ensure they cite specific files/lines
+2. **Map to subsystems** - Associate findings with catalog entries
+3. **Merge appropriately:**
+   - Architecture concerns → 02-subsystem-catalog.md (Concerns section)
+   - Quality issues → 05-quality-assessment.md
+   - Security flags → 07-security-surface.md
+   - Test issues → 09-test-infrastructure.md
+
+4. **Document integration:**
+
+```markdown
+## Specialist Integration Log - [timestamp]
+
+- Invoked: [specialist name]
+- Findings received: [count]
+- Integrated into: [documents]
+- Discarded: [count with reasoning if any]
+```
+
+### Cross-Pack Handoff Points
+
+After archaeological analysis, these specialists can continue the work:
+
+| Analysis Output | Handoff To | When to Handoff |
+|----------------|------------|-----------------|
+| Architecture issues | `axiom-system-architect:architecture-critic` | Option C, G selected |
+| Technical debt | `axiom-system-architect:debt-cataloger` | Significant debt identified |
+| Security surface | `ordis-security-architect:threat-analyst` | Option E, G selected |
+| Test gaps | `ordis-quality-engineering:coverage-gap-analyst` | Option F, G selected |
+| API concerns | `axiom-web-backend:api-reviewer` | Web API subsystems identified |
+
+### Validation of Technical Accuracy
+
+**Structural validation** (analysis-validator agent) checks contract compliance.
+**Technical accuracy validation** requires domain expertise.
+
+**When to escalate for technical accuracy review:**
+
+1. **Confidence: Low** on any critical-path subsystem
+2. **Patterns Observed** that you're uncertain about
+3. **Technology-specific findings** outside your expertise
+4. **Conflicting information** between subsystems
+
+**Escalation options:**
+
+| Uncertainty Type | Escalation Path |
+|-----------------|-----------------|
+| Python patterns | Spawn `axiom-python-engineering:python-code-reviewer` |
+| ML architecture | Spawn `yzmir-neural-architectures:architecture-reviewer` |
+| Security claims | Spawn `ordis-security-architect:threat-analyst` |
+| API design | Spawn `axiom-web-backend:api-architect` |
+| General architecture | Spawn `axiom-system-architect:architecture-critic` |
+| Unclear after specialist | **Escalate to user** with specific questions |
+
+**Document all escalations:**
+
+```markdown
+## Technical Accuracy Escalation - [timestamp]
+
+**Concern:** [What you're uncertain about]
+**Subsystem:** [Which entry]
+**Specialist invoked:** [agent name]
+**Resolution:** [What was determined]
+**Catalog updated:** [Yes/No with details]
+```
+
+**NEVER mark confidence as High if technical accuracy wasn't verified by domain-appropriate means.**
 
 **Optional steps triggered by deliverable choice:**
 - Step 6.5: Required for "Architect-Ready" (C), "Comprehensive" (G); Optional for "Full Analysis" (A)
