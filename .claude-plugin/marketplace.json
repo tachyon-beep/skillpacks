@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Professional AI/ML, Python engineering, web backend, DevOps, game development, security, documentation, and UX skills for Claude Code - 22 complete skillpacks with 160+ TDD-validated skills",
-    "version": "2.6.0",
+    "version": "2.7.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -25,8 +25,8 @@
     {
       "name": "axiom-system-archaeologist",
       "source": "./plugins/axiom-system-archaeologist",
-      "description": "Deep codebase architecture analysis through subagent-driven exploration with C4 diagrams and validation gates - 5 skills",
-      "version": "1.2.2",
+      "description": "Deep codebase architecture analysis (4 commands, 2 agents) - C4 diagrams, subsystem catalogs, security surface mapping, test infrastructure analysis, dependency visualization, incremental delta analysis",
+      "version": "1.4.0",
       "keywords": [
         "axiom",
         "architecture",
