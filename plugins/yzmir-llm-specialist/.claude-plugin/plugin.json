@@ -1,6 +1,6 @@
 {
   "name": "yzmir-llm-specialist",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "LLM techniques - fine-tuning, RAG, inference optimization, safety - 8 skills, 3 commands, 2 agents",
   "author": {
     "name": "tachyon-beep",

@@ -1,6 +1,6 @@
 {
   "name": "axiom-python-engineering",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Modern Python 3.12+ engineering: types, testing, async, scientific computing, ML workflows. Includes 9 reference sheets, 4 commands (delint, profile, typecheck, new-project), 2 agents (python-code-reviewer, delinting-specialist).",
   "author": {
     "name": "tachyon-beep",

@@ -1,6 +1,6 @@
 {
   "name": "axiom-system-archaeologist",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Deep architectural analysis of existing codebases (4 commands, 2 agents) - produces comprehensive documentation, C4 diagrams, subsystem catalogs, code quality assessments, security surface mapping, test infrastructure analysis, dependency visualization, and incremental delta analysis through subagent-driven exploration with mandatory validation gates and cross-pack specialist integration",
   "author": {
     "name": "tachyon-beep",

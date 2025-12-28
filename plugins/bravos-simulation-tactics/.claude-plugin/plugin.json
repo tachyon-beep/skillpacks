@@ -1,6 +1,6 @@
 {
   "name": "bravos-simulation-tactics",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Game simulation implementation patterns and tactics - 11 skills, 3 commands, 2 agents",
   "author": {
     "name": "tachyon-beep",
