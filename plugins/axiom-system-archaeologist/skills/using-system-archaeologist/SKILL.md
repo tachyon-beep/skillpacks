@@ -101,10 +101,35 @@ Present menu using **AskUserQuestion tool:**
 - Timeline: Varies by selection
 - Best for: Updating existing documentation, focused analysis
 
+**E) Full + Security** - Complete analysis with security surface mapping
+- Full analysis (discovery, catalog, diagrams, report)
+- Security surface mapping with trust boundaries and red flags
+- Handoff package for ordis-security-architect
+- Timeline: 3-7 hours depending on codebase size
+- Best for: Security-sensitive systems, pre-security-review preparation
+
+**F) Full + Quality** - Complete analysis with test infrastructure and dependencies
+- Full analysis (discovery, catalog, diagrams, report)
+- Test infrastructure analysis (pyramid, coverage gaps, flakiness)
+- Dependency analysis (circular deps, layer violations, coupling metrics)
+- Handoff package for ordis-quality-engineering
+- Timeline: 3-7 hours depending on codebase size
+- Best for: Quality improvement initiatives, test strategy planning
+
+**G) Comprehensive** - Everything (Full + Security + Quality + Dependencies)
+- Full analysis (discovery, catalog, diagrams, report)
+- Code quality assessment
+- Security surface mapping
+- Test infrastructure analysis
+- Dependency analysis
+- Architect handover with all findings
+- Timeline: 5-10 hours depending on codebase size
+- Best for: Major refactoring, system handover, complete documentation
+
 **Document user's choice in coordination plan:**
 
 ```markdown
-## Deliverables Selected: [Option A/B/C/D]
+## Deliverables Selected: [Option A/B/C/D/E/F/G]
 
 [If Option D, list specific selections]
 
@@ -444,19 +469,27 @@ See individual skill files for detailed contracts:
 - `04-final-report.md` contract → [documenting-system-architecture.md](documenting-system-architecture.md)
 - `05-quality-assessment.md` contract → [assessing-code-quality.md](assessing-code-quality.md)
 - `06-architect-handover.md` contract → [creating-architect-handover.md](creating-architect-handover.md)
+- `07-security-surface.md` contract → [mapping-security-surface.md](mapping-security-surface.md)
+- `08-incremental-report.md` contract → [incremental-analysis.md](incremental-analysis.md)
+- `09-test-infrastructure.md` contract → [analyzing-test-infrastructure.md](analyzing-test-infrastructure.md)
+- `10-dependency-analysis.md` contract → `/analyze-dependencies` command
 - Validation protocol → [validating-architecture-analysis.md](validating-architecture-analysis.md)
+- Language/framework patterns → [language-framework-patterns.md](language-framework-patterns.md)
 
 ## Workflow Summary
 
 ```
 1. Create workspace (docs/arch-analysis-YYYY-MM-DD-HHMM/)
-1.5. Offer deliverable menu (A/B/C/D) - user chooses scope
+1.5. Offer deliverable menu (A/B/C/D/E/F/G) - user chooses scope
 2. Write coordination plan (00-coordination.md) with deliverable choice
 3. Holistic assessment → 01-discovery-findings.md
 4. Decide: Sequential or Parallel? (document reasoning)
 5. Spawn subagents for analysis → 02-subsystem-catalog.md
 6. VALIDATE subsystem catalog (mandatory gate)
 6.5. (Optional) Code quality assessment → 05-quality-assessment.md
+6.6. (Optional) Security surface mapping → 07-security-surface.md
+6.7. (Optional) Test infrastructure analysis → 09-test-infrastructure.md
+6.8. (Optional) Dependency analysis → 10-dependency-analysis.md
 7. Spawn diagram generation → 03-diagrams.md
 8. VALIDATE diagrams (mandatory gate)
 9. Synthesize final report → 04-final-report.md
@@ -465,11 +498,14 @@ See individual skill files for detailed contracts:
 12. Provide cleanup recommendations for temp/
 ```
 
-**Every step is mandatory except optional steps (6.5, 11). No exceptions for time pressure, complexity, or stakeholder demands.**
+**Every step is mandatory except optional steps (6.5-6.8, 11). No exceptions for time pressure, complexity, or stakeholder demands.**
 
 **Optional steps triggered by deliverable choice:**
-- Step 6.5: Required for "Architect-Ready" (Option C), Optional for "Full Analysis" (Option A)
-- Step 11: Required for "Architect-Ready" (Option C), Not included in "Quick Overview" (Option B)
+- Step 6.5: Required for "Architect-Ready" (C), "Comprehensive" (G); Optional for "Full Analysis" (A)
+- Step 6.6: Required for "Full + Security" (E), "Comprehensive" (G)
+- Step 6.7: Required for "Full + Quality" (F), "Comprehensive" (G)
+- Step 6.8: Required for "Full + Quality" (F), "Comprehensive" (G)
+- Step 11: Required for "Architect-Ready" (C), "Comprehensive" (G); Not included in "Quick Overview" (B)
 
 ## Success Criteria
 
@@ -527,3 +563,7 @@ After routing, load the appropriate specialist skill for detailed guidance:
 4. [validating-architecture-analysis.md](validating-architecture-analysis.md) - Contract validation, consistency checks, quality gates
 5. [assessing-code-quality.md](assessing-code-quality.md) - Code quality analysis beyond architecture - complexity, duplication, smells, technical debt assessment
 6. [creating-architect-handover.md](creating-architect-handover.md) - Handover reports for axiom-system-architect - enables transition from analysis to improvement planning
+7. [mapping-security-surface.md](mapping-security-surface.md) - Security surface mapping for ordis-security-architect handoff - trust boundaries, security properties, red flag detection
+8. [incremental-analysis.md](incremental-analysis.md) - Git-aware delta analysis for repeat users - change classification, high-churn detection, dependency impact
+9. [analyzing-test-infrastructure.md](analyzing-test-infrastructure.md) - Test infrastructure assessment for ordis-quality-engineering handoff - pyramid health, coverage gaps, flakiness indicators
+10. [language-framework-patterns.md](language-framework-patterns.md) - Technology-specific patterns (Python/Django/FastAPI/Flask, JavaScript/Express/React/Node, Rust) for framework-aware analysis
