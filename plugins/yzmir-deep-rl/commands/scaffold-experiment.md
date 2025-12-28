@@ -4,7 +4,7 @@ allowed-tools: ["Read", "Write", "Bash", "Skill"]
 argument-hint: "<experiment-name> [--algorithm=ppo|sac|dqn] [--env=CartPole-v1]"
 ---
 
-# New Experiment Command
+# Scaffold Experiment Command
 
 Create a new RL experiment with proper structure for reproducibility and debugging.
 

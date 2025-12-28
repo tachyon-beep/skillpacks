@@ -1,6 +1,6 @@
 ---
 description: Expert advisor for dynamic neural architectures - growth timing, pruning decisions, lifecycle design, gradient isolation, and modular composition patterns. Follows SME Agent Protocol with confidence/risk assessment.
-model: sonnet
+model: opus
 tools: ["Read", "Glob", "Grep", "Bash", "WebSearch", "WebFetch", "LSP"]
 ---
 

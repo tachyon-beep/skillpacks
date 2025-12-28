@@ -1,6 +1,6 @@
 ---
 description: Design emergent gameplay through orthogonal mechanics and rich interaction matrices. Follows SME Agent Protocol with confidence/risk assessment.
-model: sonnet
+model: opus
 tools: ["Read", "Grep", "Glob", "Bash", "Write", "WebFetch"]
 ---
 

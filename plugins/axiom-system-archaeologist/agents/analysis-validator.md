@@ -1,6 +1,6 @@
 ---
 description: Validate architecture analysis documents against output contracts with evidence-based verification. Follows SME Agent Protocol with confidence/risk assessment.
-model: sonnet
+model: opus
 tools: ["Read", "Grep", "Glob", "Bash", "Write", "WebFetch"]
 ---
 

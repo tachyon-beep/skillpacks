@@ -1,6 +1,6 @@
 ---
 description: Analyze dynamical system stability through linearization, eigenvalue analysis, and phase portrait interpretation. Follows SME Agent Protocol with confidence/risk assessment.
-model: sonnet
+model: opus
 tools: ["Read", "Grep", "Glob", "Bash", "Task", "TodoWrite", "WebFetch"]
 ---
 

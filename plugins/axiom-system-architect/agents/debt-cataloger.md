@@ -1,6 +1,6 @@
 ---
 description: Catalog technical debt with execution discipline - delivers documents, not explanations. Follows SME Agent Protocol with confidence/risk assessment.
-model: sonnet
+model: opus
 tools: ["Read", "Grep", "Glob", "Bash", "Write", "WebFetch"]
 ---
 
