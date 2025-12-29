@@ -91,7 +91,7 @@ Then read: project-structure-and-tooling.md
 ## Example Session
 
 ```
-User: /python-engineering:new-project my-api
+User: /python-engineering:create-project-scaffold my-api
 
 Claude:
 1. Creating project structure for my-api...
