@@ -463,15 +463,7 @@ Cross-references:
 
 ### When You're Done with This Pack
 
-You should be able to:
-- ✅ Formulate game systems as differential equations
-- ✅ Analyze stability before shipping
-- ✅ Choose correct numerical integration method
-- ✅ Design PID controllers for smooth behavior
-- ✅ Understand deterministic chaos implications
-- ✅ Apply proper probability distributions
-- ✅ Prevent catastrophic simulation failures
-- ✅ Debug simulations systematically
+You should be able to: formulate systems as differential equations, analyze stability before shipping, choose correct numerical integrators, design PID controllers, understand deterministic chaos, apply proper probability distributions, prevent catastrophic failures, and debug simulations systematically.
 
 ### Next Steps
 
@@ -480,25 +472,6 @@ You should be able to:
 3. **Apply skills in sequence** (use workflows above)
 4. **Validate mathematically** (stability analysis, testing)
 5. **Integrate with simulation-tactics** (implementation patterns)
-
----
-
-## Pack Structure Reference
-
-```
-yzmir/simulation-foundations/
-├── using-simulation-foundations/           (THIS SKILL - router)
-├── differential-equations-for-games/      (Wave 1 - Foundation)
-├── state-space-modeling/                  (Wave 1 - Foundation)
-├── stability-analysis/                    (Wave 1 - Foundation)
-├── feedback-control-theory/               (Wave 2 - Control)
-├── numerical-methods/                     (Wave 2 - Integration)
-├── continuous-vs-discrete/                (Wave 2 - Modeling Choice)
-├── chaos-and-sensitivity/                 (Wave 3 - Advanced)
-└── stochastic-simulation/                 (Wave 3 - Advanced)
-```
-
-**Total pack time:** 19-26 hours for comprehensive application
 
 ---
 

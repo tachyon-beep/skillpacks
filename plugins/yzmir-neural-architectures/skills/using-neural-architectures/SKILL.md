@@ -393,36 +393,11 @@ Start here: What's your primary goal?
 
 ## Workflow
 
-**Standard Architecture Selection Workflow:**
-
-```
-1. Clarify Problem
-   ☐ What data modality? (images, sequences, graphs, etc.)
-   ☐ What's the task? (classification, generation, regression, etc.)
-   ☐ Dataset size?
-   ☐ Computational constraints?
-   ☐ Latency requirements?
-   ☐ Interpretability needs?
-
-2. Route Based on Modality
-   ☐ Images → [cnn-families-and-selection.md](cnn-families-and-selection.md)
-   ☐ Sequences → [sequence-models-comparison.md](sequence-models-comparison.md)
-   ☐ Graphs → [graph-neural-networks-basics.md](graph-neural-networks-basics.md)
-   ☐ Generation → [generative-model-families.md](generative-model-families.md)
-   ☐ Custom/Unclear → [architecture-design-principles.md](architecture-design-principles.md)
-
-3. Check for Critical Issues
-   ☐ Deep network unstable? → [normalization-techniques.md](normalization-techniques.md) FIRST
-   ☐ Need specialized component? → [attention-mechanisms-catalog.md](attention-mechanisms-catalog.md) or [transformer-architecture-deepdive.md](transformer-architecture-deepdive.md)
-
-4. Apply Architecture Skill
-   ☐ Follow guidance from routed skill
-   ☐ Consider trade-offs (accuracy vs speed vs data requirements)
-
-5. Cross-Pack if Needed
-   ☐ Architecture chosen → training-optimization (for training)
-   ☐ Architecture chosen → ml-production (for deployment)
-```
+1. **Clarify** → Data modality, task type, dataset size, compute/latency constraints
+2. **Route by modality** → Images/Sequences/Graphs/Generation → appropriate skill
+3. **Check critical issues** → Deep network unstable? Fix normalization FIRST
+4. **Apply architecture skill** → Follow routed skill, consider trade-offs
+5. **Cross-pack** → training-optimization (training) or ml-production (deployment)
 
 ---
 
@@ -510,7 +485,3 @@ After routing, load the appropriate specialist skill for detailed guidance:
 8. [transformer-architecture-deepdive.md](transformer-architecture-deepdive.md) - Transformer internals, ViT, BERT, positional encoding, scaling transformers
 
 **Critical principle:** Architecture comes BEFORE training. Get this right first.
-
----
-
-**END OF SKILL**

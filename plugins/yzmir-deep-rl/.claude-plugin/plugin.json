@@ -1,6 +1,6 @@
 {
   "name": "yzmir-deep-rl",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Reinforcement learning - DQN, PPO, SAC, reward shaping, exploration, counterfactual reasoning, Shapley credit assignment. Includes 13 reference sheets, 3 commands (diagnose, scaffold-experiment, select-algorithm), 2 agents (rl-training-diagnostician, reward-function-reviewer).",
   "author": {
     "name": "tachyon-beep",

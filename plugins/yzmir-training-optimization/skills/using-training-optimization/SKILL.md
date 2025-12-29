@@ -482,28 +482,10 @@ After routing, load the appropriate specialist skill for detailed guidance:
 
 ## Integration Notes
 
-**Phase 1 - Standalone**: Training-optimization skills are self-contained and framework-agnostic.
-
-**Cross-references with other packs:**
-- **pytorch-engineering**: Infrastructure, implementation, profiling, distributed training
-- **neural-architectures**: Architecture selection (precedes training optimization)
-- **deep-rl**: RL-specific training algorithms (policy gradients, Q-learning)
-- **llm-specialist**: LLM-specific techniques (RLHF, LoRA)
-- **ml-production**: Production/inference optimization (post-training)
-
-**Current focus**: Route within training-optimization for framework-agnostic training concerns. Other packs handle implementation, architecture, and domain-specific issues.
+**Cross-pack boundaries:** pytorch-engineering (infrastructure), neural-architectures (architecture selection), deep-rl (RL-specific), llm-specialist (LLM-specific), ml-production (deployment).
 
 ---
 
 ## Summary
 
-**This meta-skill's job**:
-1. Identify symptoms through diagnostic questions
-2. Map symptoms to appropriate specialist skills
-3. Route to one or multiple skills based on diagnosis
-4. Resist pressure to give direct advice
-5. Maintain clear boundaries with other packs
-
-**Remember**: Diagnose before routing. Training issues often have multiple causes. Clarify symptoms, ask diagnostic questions, then route to specialist skills. Wrong routing wastes more time than asking one clarifying question.
-
-**Route based on symptoms, not guesses. Let specialists do their job.**
+**This meta-skill:** Diagnose symptoms → Route to specialists → Resist pressure to give direct advice. Training issues often have multiple causes. Clarify symptoms, route to specialists. Wrong routing wastes more time than asking one clarifying question. **Route based on symptoms, not guesses.**

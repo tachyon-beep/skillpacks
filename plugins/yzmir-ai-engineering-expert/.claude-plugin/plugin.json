@@ -1,6 +1,6 @@
 {
   "name": "yzmir-ai-engineering-expert",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Primary router for all AI/ML engineering skillpacks - directs to specialized packs",
   "author": {
     "name": "tachyon-beep",
