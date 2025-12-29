@@ -15,10 +15,11 @@ This meta-skill routes you to the right Python specialist based on symptoms. Pyt
 
 Load this skill when:
 - Working with Python and encountering problems
-- User mentions: "Python", "type hints", "mypy", "pytest", "async", "pandas", "numpy"
+- User mentions: "Python", "type hints", "mypy", "pytest", "async", "pandas", "numpy", "Textual", "TUI"
 - Need to implement Python projects or optimize performance
 - Setting up Python tooling or fixing lint warnings
 - Debugging Python code or profiling performance
+- Building terminal user interfaces with Textual
 
 **Don't use for**: Non-Python languages, algorithm theory (not Python-specific), deployment infrastructure (not Python-specific)
 
@@ -163,6 +164,33 @@ When you see a link like `[systematic-delinting.md](systematic-delinting.md)`, r
 - "Getting 'coroutine never awaited' error"
 - "How to use Python 3.11 TaskGroup?"
 - "Async code is slow"
+
+---
+
+### Terminal UI Development (Textual)
+
+**Symptoms**:
+- "Building TUI with Textual"
+- "Textual app not rendering"
+- "compose() not showing widgets"
+- "reactive not updating"
+- "Textual CSS not working"
+- "Widget events not firing"
+- "NoMatches when querying"
+- "How to test Textual apps"
+- "run_test() pilot issues"
+
+**Route to**: [textual-tui-development.md](textual-tui-development.md)
+
+**Why**: Textual has unique patterns for composition, reactivity, CSS styling, and testing that differ from standard Python. The async architecture and reactive data binding require specific approaches.
+
+**Example queries**:
+- "Widgets not appearing after compose"
+- "UI not updating when data changes"
+- "How to use reactive attributes?"
+- "Test Textual app with Pilot"
+
+**Note**: For general async issues (event loop, TaskGroup), route to [async-patterns-and-concurrency.md](async-patterns-and-concurrency.md) first. Textual skill is for Textual-specific patterns.
 
 ---
 
@@ -373,6 +401,7 @@ After routing, load the appropriate specialist skill for detailed guidance:
 7. [scientific-computing-foundations.md](scientific-computing-foundations.md) - NumPy/pandas, vectorization, memory efficiency, large datasets
 8. [ml-engineering-workflows.md](ml-engineering-workflows.md) - MLflow, experiment tracking, reproducibility, monitoring, model lifecycle
 9. [debugging-and-profiling.md](debugging-and-profiling.md) - pdb/debugpy, cProfile, memory_profiler, optimization strategies
+10. [textual-tui-development.md](textual-tui-development.md) - Textual TUI framework, compose(), reactive attributes, Textual CSS, Pilot testing
 
 ---
 
