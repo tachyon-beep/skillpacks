@@ -1,6 +1,6 @@
 # Claude Code Skill Packs Marketplace
 
-## Professional AI/ML, game development, security, documentation, and UX skills for Claude Code**
+## Professional AI/ML, game development, security, documentation, and UX skills for Claude Code
 
 18 complete skillpacks • 147 skills • Install what you need
 
@@ -159,6 +159,7 @@ cd skillpacks
 ```
 
 Claude will guide you to the right specialized skill:
+
 ```plaintext
 I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO for continuous character control
 ```
@@ -251,6 +252,7 @@ I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO
 **Caveat**: With many plugins installed (5+), you may hit skill discovery context limits. In this case, use slash commands for routers and direct invocation for specialized skills.
 
 **Best Practice**:
+
 - Use **slash commands** for router skills (`/ai-engineering`, `/deep-rl`, etc.)
 - Use **direct invocation** for specialized skills after the router guides you
 
