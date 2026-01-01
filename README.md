@@ -2,7 +2,7 @@
 
 ## Professional AI/ML, game development, security, documentation, and UX skills for Claude Code
 
-18 complete skillpacks • 147 skills • Install what you need
+23 complete skillpacks • 160+ skills • Install what you need
 
 ---
 
@@ -53,7 +53,7 @@ cd skillpacks
 - Security-aware docs, incident response, ITIL/governance
 - `/plugin install muna-technical-writer`
 
-### 🔬 Python Engineering (Axiom) - 4 Packs
+### 🔬 Development (Axiom) - 5 Packs
 
 **axiom-python-engineering** - 10 skills
 
@@ -85,7 +85,13 @@ cd skillpacks
 - API testing, documentation, production deployment
 - `/plugin install axiom-web-backend`
 
-### 🤖 AI/ML Engineering (Yzmir) - 7 Packs
+**axiom-devops-engineering** - 1 skill
+
+- CI/CD pipeline architecture, deployment strategies
+- Zero-downtime deployments, infrastructure reliability
+- `/plugin install axiom-devops-engineering`
+
+### 🤖 AI/ML Engineering (Yzmir) - 10 Packs
 
 **yzmir-ai-engineering-expert** - 1 router skill
 
@@ -127,6 +133,18 @@ cd skillpacks
 - Differential equations, stability analysis, control theory (game math)
 - `/plugin install yzmir-simulation-foundations`
 
+**yzmir-systems-thinking** - 6 skills
+
+- Systems thinking methodology, patterns, leverage points
+- Archetypes, modeling, visualization
+- `/plugin install yzmir-systems-thinking`
+
+**yzmir-dynamic-architectures** - 7 skills
+
+- Dynamic/morphogenetic neural networks
+- Continual learning, gradient isolation, PEFT/LoRA
+- `/plugin install yzmir-dynamic-architectures`
+
 ### 🎮 Game Development (Bravos) - 2 Packs
 
 **bravos-simulation-tactics** - 11 skills
@@ -146,6 +164,29 @@ cd skillpacks
 - Visual design, accessibility (WCAG), interaction patterns
 - Mobile/web/desktop/game UI design
 - `/plugin install lyra-ux-designer`
+
+### ✅ Quality Engineering (Ordis)
+
+**ordis-quality-engineering** - 21 skills
+
+- E2E testing, API testing, integration testing, performance testing
+- Chaos engineering, flaky test diagnosis, mutation testing
+- Observability, test automation architecture, coverage gap analysis
+- `/plugin install ordis-quality-engineering`
+
+### 🛠️ Meta Packs
+
+**meta-sme-protocol** - 1 skill
+
+- SME (Subject Matter Expert) Agent Protocol
+- Mandatory protocol for all specialist agents: fact-finding, confidence/risk assessment
+- `/plugin install meta-sme-protocol`
+
+**meta-skillpack-maintenance** - 1 skill
+
+- Systematic maintenance and enhancement of skill packs
+- RED-GREEN-REFACTOR testing methodology
+- `/plugin install meta-skillpack-maintenance`
 
 ---
 
@@ -225,7 +266,7 @@ Then Claude routes you to specialized analysis skills for C4 diagrams, subsystem
 
 ### Slash Commands (Recommended)
 
-All 18 router skills (`using-X` skills) are available as **slash commands** to avoid skill context limits:
+All router skills (`using-X` skills) are available as **slash commands** to avoid skill context limits:
 
 ```bash
 /ai-engineering          # Route to AI/ML specialized packs
@@ -239,7 +280,7 @@ All 18 router skills (`using-X` skills) are available as **slash commands** to a
 
 **Why slash commands?** Router skills are comprehensive guides that exceeded the context budget for automatic skill discovery. Slash commands provide explicit, user-controlled invocation without context limits.
 
-See [`.claude/SLASH_COMMANDS.md`](.claude/SLASH_COMMANDS.md) for the complete list of all 18 router commands.
+See [`.claude/SLASH_COMMANDS.md`](.claude/SLASH_COMMANDS.md) for the complete list of all router commands.
 
 ### Direct Skill Invocation
 
@@ -260,8 +301,8 @@ I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO
 
 ## What's Inside
 
-- **147 Skills**: Production-ready guidance across 6 domains
-- **18 Packs**: Install only what you need
+- **160+ Skills**: Production-ready guidance across 6 domains
+- **23 Packs**: Install only what you need
 - **Per-Pack Plugins**: Independent versioning, clean dependencies
 - **Complete Coverage**: Design → Foundation → Training → Production
 
@@ -273,17 +314,15 @@ I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO
 skillpacks/
 ├── .claude-plugin/
 │   └── marketplace.json       # Marketplace catalog
-├── plugins/                   # All 18 skillpacks
-│   ├── axiom-python-engineering/
-│   ├── axiom-system-archaeologist/
-│   ├── axiom-system-architect/
-│   ├── axiom-web-backend/
-│   ├── ordis-security-architect/
-│   ├── muna-technical-writer/
-│   ├── yzmir-deep-rl/
-│   ├── lyra-ux-designer/
-│   └── ... (10 more)
-└── source/                    # Original structure (archived)
+├── plugins/                   # All 23 skillpacks
+│   ├── axiom-*/               # Development (5 packs)
+│   ├── bravos-*/              # Game development (2 packs)
+│   ├── lyra-*/                # UX design (1 pack)
+│   ├── meta-*/                # Meta utilities (2 packs)
+│   ├── muna-*/                # Documentation (1 pack)
+│   ├── ordis-*/               # Quality & security (2 packs)
+│   └── yzmir-*/               # AI/ML (10 packs)
+└── docs/                      # Planning documents
 ```
 
 ---

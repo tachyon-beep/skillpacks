@@ -1,6 +1,6 @@
 {
   "name": "axiom-devops-engineering",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "DevOps and deployment automation - CI/CD pipelines, zero-downtime deployments - 1 skill, 2 commands, 2 agents",
   "author": {
     "name": "tachyon-beep",

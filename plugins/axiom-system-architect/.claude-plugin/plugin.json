@@ -1,6 +1,6 @@
 {
   "name": "axiom-system-architect",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "TDD-validated architectural assessment (3 commands, 2 agents) - enforces professional discipline, prevents diplomatic softening, analysis paralysis, and security priority compromise",
   "author": {
     "name": "tachyon-beep",

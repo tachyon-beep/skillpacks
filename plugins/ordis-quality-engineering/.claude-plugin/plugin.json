@@ -1,6 +1,6 @@
 {
   "name": "ordis-quality-engineering",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "Quality engineering: E2E, API, integration, performance, chaos, flaky tests, observability, mutation testing, coverage gap analysis. 21 reference sheets, 5 commands, 3 agents.",
   "author": {
     "name": "tachyon-beep",
