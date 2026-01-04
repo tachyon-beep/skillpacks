@@ -1,6 +1,6 @@
 ---
 name: using-neural-architectures
-description: Architecture selection router: CNNs, Transformers, RNNs, GANs, GNNs by data modality and constraints
+description: The architecture selection router for CNNs, Transformers, RNNs, GANs, GNNs by data modality and constraints
 ---
 
 # Using Neural Architectures: Architecture Selection Router
@@ -9,6 +9,7 @@ description: Architecture selection router: CNNs, Transformers, RNNs, GANs, GNNs
 Architecture selection comes BEFORE training optimization. Wrong architecture = no amount of training will fix it.
 
 This meta-skill routes you to the right architecture guidance based on:
+
 - Data modality (images, sequences, graphs, etc.)
 - Problem type (classification, generation, regression)
 - Constraints (data size, compute, latency, interpretability)
@@ -19,6 +20,7 @@ Load this skill when architecture decisions are needed.
 ## When to Use This Skill
 
 Use this skill when:
+
 - ✅ Selecting an architecture for a new problem
 - ✅ Comparing architecture families (CNN vs Transformer, RNN vs Transformer, etc.)
 - ✅ Designing custom network topology
@@ -26,6 +28,7 @@ Use this skill when:
 - ✅ Understanding when to use specialized architectures (GNNs, generative models)
 
 DO NOT use for:
+
 - ❌ Training/optimization issues (use training-optimization pack)
 - ❌ PyTorch implementation details (use pytorch-engineering pack)
 - ❌ Production deployment (use ml-production pack)
@@ -82,6 +85,7 @@ When you see a link like `[cnn-families-and-selection.md](cnn-families-and-selec
 **Clarify BEFORE routing:**
 
 Ask:
+
 - "How large is your dataset?" (Small < 10k, Medium 10k-1M, Large > 1M)
 - "What are your computational constraints?" (Edge device, cloud, GPU availability)
 - "What are your latency requirements?" (Real-time, batch, offline)
@@ -96,6 +100,7 @@ These answers determine architecture appropriateness.
 ### Images → CNN Families
 
 **Symptoms triggering this route:**
+
 - "classify images"
 - "object detection"
 - "semantic segmentation"
@@ -105,10 +110,12 @@ These answers determine architecture appropriateness.
 **Route to:** See [cnn-families-and-selection.md](cnn-families-and-selection.md) for CNN architecture selection and comparison.
 
 **When to route here:**
+
 - ANY vision task (CNNs are default for spatial data)
 - Even if considering Transformers, check CNN families first (often better with less data)
 
 **Clarifying questions:**
+
 - "Dataset size?" (< 10k → Start with proven CNNs, > 100k → Consider ViT)
 - "Deployment target?" (Edge → EfficientNet, Cloud → Anything)
 - "Task type?" (Classification → ResNet/EfficientNet, Detection → YOLO/Faster-RCNN)
@@ -118,6 +125,7 @@ These answers determine architecture appropriateness.
 ### Sequences → Sequence Models Comparison
 
 **Symptoms triggering this route:**
+
 - "time series"
 - "forecasting"
 - "natural language" (NLP)
@@ -128,11 +136,13 @@ These answers determine architecture appropriateness.
 **Route to:** See [sequence-models-comparison.md](sequence-models-comparison.md) for sequential model selection (RNN, LSTM, Transformer, TCN).
 
 **When to route here:**
+
 - ANY sequential data
 - When user asks "RNN vs LSTM" (skill will present modern alternatives)
 - Time-dependent patterns
 
 **Clarifying questions:**
+
 - "Sequence length?" (< 100 → RNN/LSTM/TCN, 100-1000 → Transformer, > 1000 → Sparse Transformers)
 - "Latency requirements?" (Real-time → TCN/LSTM, Offline → Transformer)
 - "Data volume?" (Small → Simpler models, Large → Transformers)
@@ -144,6 +154,7 @@ These answers determine architecture appropriateness.
 ### Graphs → Graph Neural Networks
 
 **Symptoms triggering this route:**
+
 - "social network"
 - "molecular structure"
 - "knowledge graph"
@@ -155,6 +166,7 @@ These answers determine architecture appropriateness.
 **Route to:** See [graph-neural-networks-basics.md](graph-neural-networks-basics.md) for GNN architectures and graph learning.
 
 **When to route here:**
+
 - Data has explicit graph structure (nodes + edges)
 - Relational information is important
 - Network topology matters
@@ -166,6 +178,7 @@ These answers determine architecture appropriateness.
 ### Generation → Generative Model Families
 
 **Symptoms triggering this route:**
+
 - "generate images"
 - "synthesize data"
 - "GAN vs VAE vs Diffusion"
@@ -176,11 +189,13 @@ These answers determine architecture appropriateness.
 **Route to:** See [generative-model-families.md](generative-model-families.md) for GANs, VAEs, and Diffusion models.
 
 **When to route here:**
+
 - Goal is to CREATE data, not classify/predict
 - Need to sample from distribution
 - Data augmentation through generation
 
 **Clarifying questions:**
+
 - "Use case?" (Real-time game → GAN, Art/research → Diffusion, Fast training → VAE)
 - "Quality vs speed?" (Quality → Diffusion, Speed → GAN)
 - "Controllability?" (Fine control → StyleGAN/Conditional models)
@@ -194,6 +209,7 @@ These answers determine architecture appropriateness.
 ### Attention Mechanisms
 
 **Symptoms triggering this route:**
+
 - "when to use attention"
 - "self-attention vs cross-attention"
 - "attention in CNNs"
@@ -203,6 +219,7 @@ These answers determine architecture appropriateness.
 **Route to:** See [attention-mechanisms-catalog.md](attention-mechanisms-catalog.md) for attention mechanism selection and design.
 
 **When to route here:**
+
 - Designing custom architecture that might benefit from attention
 - Understanding where attention helps vs hinders
 - Comparing attention variants
@@ -214,6 +231,7 @@ These answers determine architecture appropriateness.
 ### Transformer Deep Dive
 
 **Symptoms triggering this route:**
+
 - "how do transformers work"
 - "Vision Transformer (ViT)"
 - "BERT architecture"
@@ -224,11 +242,13 @@ These answers determine architecture appropriateness.
 **Route to:** See [transformer-architecture-deepdive.md](transformer-architecture-deepdive.md) for Transformer internals and implementation.
 
 **When to route here:**
+
 - Implementing/customizing transformers
 - Understanding transformer internals
 - Debugging transformer-specific issues
 
 **Cross-reference:**
+
 - For sequence models generally → [sequence-models-comparison.md](sequence-models-comparison.md) (includes transformers in context)
 - For LLMs specifically → `yzmir/llm-specialist/transformer-for-llms` (LLM-specific transformers)
 
@@ -237,6 +257,7 @@ These answers determine architecture appropriateness.
 ### Normalization Techniques
 
 **Symptoms triggering this route:**
+
 - "gradient explosion"
 - "training instability in deep network"
 - "BatchNorm vs LayerNorm"
@@ -246,6 +267,7 @@ These answers determine architecture appropriateness.
 **Route to:** See [normalization-techniques.md](normalization-techniques.md) for deep network stability and normalization methods.
 
 **When to route here:**
+
 - Deep networks (> 20 layers) with training instability
 - Choosing between normalization methods
 - Architectural stability issues
@@ -257,6 +279,7 @@ These answers determine architecture appropriateness.
 ### Architecture Design Principles
 
 **Symptoms triggering this route:**
+
 - "how to design architecture"
 - "architecture best practices"
 - "when to use skip connections"
@@ -267,6 +290,7 @@ These answers determine architecture appropriateness.
 **Route to:** See [architecture-design-principles.md](architecture-design-principles.md) for custom architecture design fundamentals.
 
 **When to route here:**
+
 - Designing custom architectures
 - Novel problems without established architecture
 - Understanding WHY architectures work
@@ -283,6 +307,7 @@ These answers determine architecture appropriateness.
 **Example:** "Text + image classification" (multimodal)
 
 **Route to BOTH:**
+
 1. [sequence-models-comparison.md](sequence-models-comparison.md) (for text)
 2. [cnn-families-and-selection.md](cnn-families-and-selection.md) (for images)
 3. [architecture-design-principles.md](architecture-design-principles.md) (for fusion strategy)
@@ -294,6 +319,7 @@ These answers determine architecture appropriateness.
 **Example:** "Select architecture AND optimize training"
 
 **Route order:**
+
 1. Architecture skill FIRST (this pack)
 2. Training-optimization SECOND (after architecture chosen)
 
@@ -302,6 +328,7 @@ These answers determine architecture appropriateness.
 **Example:** "Select architecture AND deploy efficiently"
 
 **Route order:**
+
 1. Architecture skill FIRST
 2. ML-production SECOND (quantization, serving)
 
@@ -422,24 +449,28 @@ Once architecture is chosen, route to:
 
 **Training the architecture:**
 → `yzmir/training-optimization/using-training-optimization`
+
 - Optimizer selection
 - Learning rate schedules
 - Debugging training issues
 
 **Implementing in PyTorch:**
 → `yzmir/pytorch-engineering/using-pytorch-engineering`
+
 - Module design patterns
 - Performance optimization
 - Custom components
 
 **Deploying to production:**
 → `yzmir/ml-production/using-ml-production`
+
 - Model serving
 - Quantization
 - Inference optimization
 
 **Dynamic/growing architectures:**
 → `yzmir/dynamic-architectures/using-dynamic-architectures`
+
 - Networks that grow, prune, or adapt during training
 - Continual learning and catastrophic forgetting prevention
 - Module lifecycle management and progressive training
@@ -450,11 +481,13 @@ If problem involves:
 
 **Reinforcement learning:**
 → `yzmir/deep-rl/using-deep-rl` FIRST
+
 - RL algorithms dictate architecture requirements
 - Value networks vs policy networks have different needs
 
 **Large language models:**
 → `yzmir/llm-specialist/using-llm-specialist` FIRST
+
 - LLM architectures are specialized transformers
 - Different considerations than general sequence models
 
@@ -465,6 +498,7 @@ If problem involves:
 ## Summary
 
 **Use this meta-skill to:**
+
 - ✅ Route architecture queries to appropriate specialized skill
 - ✅ Identify data modality and problem type
 - ✅ Clarify constraints before recommending
