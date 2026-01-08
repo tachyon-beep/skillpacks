@@ -1,7 +1,6 @@
 ---
 description: Reviews training configurations for common mistakes - wrong LR for optimizer, missing warmup, problematic batch sizes. Follows SME Agent Protocol with confidence/risk assessment.
 model: haiku
-tools: ["Read", "Grep", "Glob", "WebFetch"]
 ---
 
 # Training Config Reviewer

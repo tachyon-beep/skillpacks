@@ -1,7 +1,6 @@
 ---
 description: Designs API architecture - REST/GraphQL structure, microservices boundaries, and integration patterns. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "Write", "WebFetch"]
 ---
 
 # API Architect Agent

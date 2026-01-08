@@ -1,7 +1,6 @@
 ---
 description: Recognize system patterns and match to known archetypes with proven intervention strategies. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "Write", "WebFetch"]
 ---
 
 # Pattern Recognizer Agent

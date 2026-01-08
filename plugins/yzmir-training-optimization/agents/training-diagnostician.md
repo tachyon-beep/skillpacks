@@ -1,7 +1,6 @@
 ---
 description: Diagnoses training issues systematically using symptom tables - identifies root cause before suggesting hyperparameter changes. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "WebFetch"]
 ---
 
 # Training Diagnostician

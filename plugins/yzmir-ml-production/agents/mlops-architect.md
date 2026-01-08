@@ -1,7 +1,6 @@
 ---
 description: Designs MLOps pipelines - experiment tracking, model versioning, CI/CD for ML, and automated retraining. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "Write", "WebFetch"]
 ---
 
 # MLOps Architect Agent

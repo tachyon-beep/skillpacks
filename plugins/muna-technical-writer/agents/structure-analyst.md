@@ -1,7 +1,6 @@
 ---
 description: Analyze documentation structure and organization, recommend improvements for findability. Follows SME Agent Protocol with confidence/risk assessment.
 model: haiku
-tools: ["Read", "Grep", "Glob", "Bash", "Write", "WebFetch"]
 ---
 
 # Structure Analyst Agent

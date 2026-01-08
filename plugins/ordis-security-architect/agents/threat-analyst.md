@@ -1,7 +1,6 @@
 ---
 description: Identify security threats using STRIDE methodology and attack tree analysis. Follows SME Agent Protocol with confidence/risk assessment.
 model: opus
-tools: ["Read", "Grep", "Glob", "Bash", "Write", "WebFetch"]
 ---
 
 # Threat Analyst Agent

@@ -1,7 +1,6 @@
 ---
 description: Design simulation architecture using scrutiny-based LOD, hybrid approaches, and performance budgeting. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "Task", "TodoWrite", "AskUserQuestion", "WebFetch"]
 ---
 
 # Simulation Architect Agent

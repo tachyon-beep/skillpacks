@@ -1,7 +1,6 @@
 ---
 description: Debugs production ML issues - slow inference, accuracy degradation, drift detection, and serving errors. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "WebFetch"]
 ---
 
 # Inference Debugger Agent

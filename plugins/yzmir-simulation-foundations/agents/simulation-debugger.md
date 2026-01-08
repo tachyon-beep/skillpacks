@@ -1,7 +1,6 @@
 ---
 description: Debug simulation issues including energy drift, numerical instability, chaos, and integration errors. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "Task", "TodoWrite", "AskUserQuestion", "WebFetch"]
 ---
 
 # Simulation Debugger Agent

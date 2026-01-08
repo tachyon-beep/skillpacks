@@ -1,7 +1,6 @@
 ---
 description: Review CI/CD pipelines for missing stages, anti-patterns, and production safety gaps. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "Write", "WebFetch"]
 ---
 
 # Pipeline Reviewer Agent

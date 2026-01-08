@@ -1,7 +1,6 @@
 ---
 description: Maps codebase to tests to find untested critical code - risk-based gap prioritization and test strategy recommendations. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "WebFetch"]
 ---
 
 # Coverage Gap Analyst Agent

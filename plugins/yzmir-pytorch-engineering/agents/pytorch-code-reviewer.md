@@ -1,7 +1,6 @@
 ---
 description: Review PyTorch code for correctness, performance, and memory issues. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "Task", "TodoWrite", "WebFetch"]
 ---
 
 # PyTorch Code Reviewer Agent

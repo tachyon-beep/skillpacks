@@ -1,7 +1,6 @@
 ---
 description: Design zero-downtime deployment strategies with rollback capability and verification gates. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "Write", "WebFetch"]
 ---
 
 # Deployment Strategist Agent

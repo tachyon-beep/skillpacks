@@ -1,7 +1,6 @@
 ---
 description: Review neural network architecture code for design anti-patterns. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "Task", "TodoWrite", "WebFetch"]
 ---
 
 # Architecture Reviewer Agent

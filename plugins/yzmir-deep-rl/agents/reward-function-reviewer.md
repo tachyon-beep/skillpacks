@@ -1,7 +1,6 @@
 ---
 description: Reviews reward functions for potential issues - reward hacking, misalignment, scale problems, sparsity. Follows SME Agent Protocol with confidence/risk assessment.
 model: opus
-tools: ["Read", "Grep", "Glob", "WebFetch"]
 ---
 
 # Reward Function Reviewer

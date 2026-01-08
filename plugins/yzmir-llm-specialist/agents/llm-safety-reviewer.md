@@ -1,7 +1,6 @@
 ---
 description: Review LLM applications for safety issues - jailbreaks, PII exposure, bias. Follows SME Agent Protocol with confidence/risk assessment.
 model: opus
-tools: ["Read", "Grep", "Glob", "Bash", "Task", "TodoWrite", "WebFetch"]
 ---
 
 # LLM Safety Reviewer Agent

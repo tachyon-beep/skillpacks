@@ -1,7 +1,6 @@
 ---
 description: Design sandbox systems with meaningful constraints and progressive revelation. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "Write", "WebFetch"]
 ---
 
 # Sandbox Architect Agent

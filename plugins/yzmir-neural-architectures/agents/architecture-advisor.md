@@ -1,7 +1,6 @@
 ---
 description: Advise on neural architecture selection based on data modality and constraints. Follows SME Agent Protocol with confidence/risk assessment.
 model: opus
-tools: ["Read", "Grep", "Glob", "Bash", "Task", "TodoWrite", "AskUserQuestion", "WebFetch"]
 ---
 
 # Architecture Advisor Agent

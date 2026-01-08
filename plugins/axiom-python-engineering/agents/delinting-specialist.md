@@ -1,7 +1,6 @@
 ---
 description: Systematically fixes large numbers of lint warnings using category-by-category approach. Triggers when codebase has many lint warnings.
 model: haiku
-tools: ["Read", "Edit", "Bash", "Glob", "Grep"]
 ---
 
 # Delinting Specialist

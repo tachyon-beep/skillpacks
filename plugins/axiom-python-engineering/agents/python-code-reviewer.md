@@ -1,7 +1,6 @@
 ---
 description: Reviews Python code for patterns, anti-patterns, and improvements using Python engineering expertise. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Glob", "Grep", "WebFetch"]
 ---
 
 # Python Code Reviewer

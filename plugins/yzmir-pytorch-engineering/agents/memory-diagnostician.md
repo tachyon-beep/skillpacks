@@ -1,7 +1,6 @@
 ---
 description: Diagnose PyTorch memory issues - OOM errors, memory leaks, fragmentation. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "Task", "TodoWrite", "WebFetch"]
 ---
 
 # PyTorch Memory Diagnostician Agent

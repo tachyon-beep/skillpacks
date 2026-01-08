@@ -1,7 +1,6 @@
 ---
 description: Review documentation for clarity, structure, and completeness with specific improvement recommendations. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "Write", "WebFetch"]
 ---
 
 # Documentation Critic Agent

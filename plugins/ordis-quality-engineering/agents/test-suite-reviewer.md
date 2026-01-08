@@ -1,7 +1,6 @@
 ---
 description: Reviews test code for anti-patterns - sleepy assertions, test interdependence, inverted pyramid, missing isolation. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "WebFetch"]
 ---
 
 # Test Suite Reviewer

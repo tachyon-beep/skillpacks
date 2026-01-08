@@ -1,7 +1,6 @@
 ---
 description: Investigate and diagnose simulation desyncs, non-determinism, and reproducibility failures in multiplayer games. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "Task", "TodoWrite", "WebFetch"]
 ---
 
 # Desync Detective Agent

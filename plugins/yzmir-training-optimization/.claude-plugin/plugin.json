@@ -1,6 +1,6 @@
 {
   "name": "yzmir-training-optimization",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "Training stability - optimizers, learning rates, convergence, debugging. 11 skills + 3 commands (diagnose, check-gradients, setup) + 2 agents (diagnostician, config-reviewer)",
   "author": {
     "name": "tachyon-beep",

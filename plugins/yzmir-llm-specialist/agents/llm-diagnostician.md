@@ -1,7 +1,6 @@
 ---
 description: Diagnose LLM quality issues - hallucinations, inconsistency, wrong outputs. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "Task", "TodoWrite", "WebFetch"]
 ---
 
 # LLM Diagnostician Agent

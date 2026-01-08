@@ -1,7 +1,6 @@
 ---
 description: Review designs with multi-competency assessment across visual, IA, interaction, and accessibility. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "Write", "WebFetch"]
 ---
 
 # UX Critic Agent

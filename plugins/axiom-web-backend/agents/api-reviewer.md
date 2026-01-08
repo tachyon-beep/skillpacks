@@ -1,7 +1,6 @@
 ---
 description: Reviews API implementations for REST/GraphQL best practices, security, and production readiness. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "WebFetch"]
 ---
 
 # API Reviewer Agent

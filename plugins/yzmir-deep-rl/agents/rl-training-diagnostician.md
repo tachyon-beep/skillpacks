@@ -1,7 +1,6 @@
 ---
 description: Diagnoses RL training issues using the 80/20 rule - checks environment and reward before suggesting algorithm changes. Follows SME Agent Protocol with confidence/risk assessment.
 model: opus
-tools: ["Read", "Grep", "Glob", "Bash", "WebFetch"]
 ---
 
 # RL Training Diagnostician

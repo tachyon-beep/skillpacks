@@ -1,7 +1,6 @@
 ---
 description: Diagnoses intermittent test failures systematically using decision tree - identifies root cause before suggesting fixes. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: ["Read", "Grep", "Glob", "Bash", "WebFetch"]
 ---
 
 # Flaky Test Diagnostician

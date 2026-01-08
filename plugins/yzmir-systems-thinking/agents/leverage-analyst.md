@@ -1,7 +1,6 @@
 ---
 description: Identify high-leverage intervention points using Meadows' 12-level hierarchy. Follows SME Agent Protocol with confidence/risk assessment.
 model: opus
-tools: ["Read", "Grep", "Glob", "Bash", "Write", "WebFetch"]
 ---
 
 # Leverage Analyst Agent
