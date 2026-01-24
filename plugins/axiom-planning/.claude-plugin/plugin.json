@@ -1,0 +1,8 @@
+{
+  "name": "axiom-planning",
+  "version": "1.0.0",
+  "description": "TDD-validated implementation planning skill with comprehensive anti-rationalization defenses",
+  "category": "development",
+  "author": "Axiom Faction",
+  "license": "CC BY-SA 4.0"
+}
