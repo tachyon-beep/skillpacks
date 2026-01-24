@@ -2,7 +2,7 @@
 
 ## Professional AI/ML, game development, security, documentation, and UX skills for Claude Code
 
-23 complete skillpacks • 160+ skills • Install what you need
+26 complete skillpacks • 173+ skills • Install what you need
 
 ---
 
@@ -53,7 +53,7 @@ cd skillpacks
 - Security-aware docs, incident response, ITIL/governance
 - `/plugin install muna-technical-writer`
 
-### 🔬 Development (Axiom) - 5 Packs
+### 🔬 Development (Axiom) - 7 Packs
 
 **axiom-python-engineering** - 10 skills
 
@@ -90,6 +90,20 @@ cd skillpacks
 - CI/CD pipeline architecture, deployment strategies
 - Zero-downtime deployments, infrastructure reliability
 - `/plugin install axiom-devops-engineering`
+
+**axiom-sdlc-engineering** - 8 skills + 4 agents
+
+- CMMI-based SDLC framework (Levels 2-4) with GitHub/Azure DevOps integration
+- Requirements lifecycle, design/build, quality assurance, governance & risk
+- Platform integration, quantitative management, lifecycle adoption
+- Specialist agents for architecture decisions, bug triage, QA, and process routing
+- `/plugin install axiom-sdlc-engineering`
+
+**axiom-planning** - 1 skill
+
+- TDD-validated implementation planning with anti-rationalization defenses
+- Atomic task breakdown, complete code examples, exact file paths
+- `/plugin install axiom-planning`
 
 ### 🤖 AI/ML Engineering (Yzmir) - 10 Packs
 

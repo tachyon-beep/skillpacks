@@ -1,6 +1,6 @@
 {
   "name": "axiom-sdlc-engineering",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "CMMI-based SDLC framework (Levels 2-4) with GitHub/Azure DevOps integration (8 skills, 4 agents) - comprehensive process guidance for high-quality software development with specialist support for architecture decisions, quality assurance, bug triage, and process routing",
   "category": "development",
   "keywords": [

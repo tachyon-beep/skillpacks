@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, Python engineering, web backend, DevOps, game development, security, documentation, and UX skills for Claude Code - 25 complete skillpacks with 165+ TDD-validated skills",
-    "version": "3.2.0",
+    "description": "Professional AI/ML, Python engineering, web backend, DevOps, SDLC process management, game development, security, documentation, and UX skills for Claude Code - 26 complete skillpacks with 173+ TDD-validated skills",
+    "version": "3.3.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -88,6 +88,23 @@
         "technical-debt",
         "engineering",
         "methodology"
+      ],
+      "category": "development"
+    },
+    {
+      "name": "axiom-sdlc-engineering",
+      "source": "./plugins/axiom-sdlc-engineering",
+      "description": "CMMI-based SDLC framework (Levels 2-4) with GitHub/Azure DevOps integration (8 skills, 4 agents) - comprehensive process guidance for high-quality software development with specialist support for architecture decisions, quality assurance, bug triage, and process routing",
+      "keywords": [
+        "axiom",
+        "sdlc",
+        "cmmi",
+        "process",
+        "governance",
+        "requirements",
+        "quality",
+        "github",
+        "azure-devops"
       ],
       "category": "development"
     },
