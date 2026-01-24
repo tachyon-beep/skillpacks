@@ -1,177 +1,145 @@
-# quantitative-management - Test Scenarios
+# Test Scenarios for quantitative-management Skill
 
-## Purpose
-
-Test that quantitative-management skill correctly:
-1. Guides measurement planning with GQM framework
-2. Distinguishes Level 2/3/4 metrics sophistication
-3. Implements DORA metrics
-4. Prevents measurement theater and vanity metrics
-5. Enables statistical process control (Level 4)
-
-## Scenario 1: Measurement Theater - Track Everything
-
-### Context
-- New to metrics
-- **Overwhelm**: Wants to track 50+ metrics
-- **Confusion**: Doesn't know what's useful
-- Level 3 project
-
-### User Request
-"What metrics should we track? Should we track everything to be safe?"
-
-### Expected Behavior
-- Measurement planning reference sheet
-- GQM framework (Goal → Question → Metric)
-- Start with 5-7 key metrics, not 50
-- Actionable metrics only (can you change behavior based on it?)
-- Level 3: trends and baselines, not full SPC
-- Counters "more metrics = better" misconception
-
-### Baseline Behavior (RED)
-[To be filled]
-
-### With Skill (GREEN)
-[To be filled]
-
-### Loopholes Found (REFACTOR)
-[To be filled]
+**Skill Type**: Reference (documentation/guidance)
+**Test Approach**: Retrieval, Application, Coverage
+**Date**: 2026-01-25
 
 ---
 
-## Scenario 2: No Baseline Data - Starting from Zero
+## Scenario 1: Establishing DORA Metrics for a Team
 
-### Context
-- Want to establish baselines for Level 3
-- No historical data collected
-- **Chicken-egg problem**: Need baselines but need data first
-- Level 3 project
+**Context**: Development team wants to implement DORA metrics (Deployment Frequency, Lead Time for Changes, Change Failure Rate, MTTR) to track DevOps performance.
 
-### User Request
-"We need organizational baselines for Level 3, but we have no historical data. How do we start?"
+**Question**: "How do I set up DORA metrics for my development team? We use GitHub Actions for CI/CD and want to track our progress over time."
 
-### Expected Behavior
-- Process baselines reference sheet
-- Start collecting NOW (can't retroactively create)
-- Use industry benchmarks temporarily
-- Establish baselines after 2-3 months of data
-- Automated collection (tools, APIs)
-- Addresses chicken-egg problem directly
+**Success Criteria**:
+- Agent references DORA metrics reference sheet
+- Provides concrete measurement definitions
+- Explains how to collect each metric
+- Shows visualization/tracking approach
+- Addresses automation for collection
+- Provides baseline establishment guidance
 
-### Baseline Behavior (RED)
-[To be filled]
-
-### With Skill (GREEN)
-[To be filled]
-
-### Loopholes Found (REFACTOR)
-[To be filled]
+**Expected Information to Retrieve**:
+- Definition of each DORA metric
+- How to measure each in GitHub Actions
+- Scripts/automation for collection
+- Visualization approaches
+- Baseline establishment process
 
 ---
 
-## Scenario 3: DORA Metrics Implementation
+## Scenario 2: Statistical Process Control for Defect Rates
 
-### Context
-- Level 3 project
-- Wants to track deployment performance
-- Using GitHub Actions for CI/CD
-- Don't know how to collect DORA metrics
+**Context**: Team notices defect escape rate is variable. Want to implement statistical process control to detect when process is out of control.
 
-### User Request
-"How do I implement DORA metrics for our deployment pipeline?"
+**Question**: "Our defect escape rate varies between 5-20% per sprint. How do I use statistical process control to know when this is a real problem vs normal variation?"
 
-### Expected Behavior
-- DORA metrics reference sheet
-- 4 metrics: deployment frequency, lead time, MTTR, change failure rate
-- Collection methods (GitHub API, CI/CD logs)
-- Visualization (dashboards)
-- Level 3: track trends, Level 4: statistical control
-- References platform-integration for GitHub specifics
+**Success Criteria**:
+- Agent references statistical analysis reference sheet
+- Explains control charts (specifically p-chart for proportions)
+- Shows how to calculate control limits
+- Explains interpretation (normal variation vs special cause)
+- Provides Level 3/4 guidance on sophistication
+- Includes action threshold recommendations
 
-### Baseline Behavior (RED)
-[To be filled]
-
-### With Skill (GREEN)
-[To be filled]
-
-### Loopholes Found (REFACTOR)
-[To be filled]
+**Expected Information to Retrieve**:
+- Control chart types for defect rates
+- Control limit calculation formulas
+- Interpretation rules
+- When to investigate vs accept variation
+- Level 3→4 statistical rigor differences
 
 ---
 
-## Scenario 4: Vanity Metrics - Impressive but Useless
+## Scenario 3: Measurement Planning with GQM
 
-### Context
-- Team tracking lines of code, commits per developer
-- **Vanity**: Looks impressive, no insights
-- Manager asks "Are these useful?"
-- Level 3 project
+**Context**: Organization wants to establish formal measurement program but unsure what to measure and why.
 
-### User Request
-"We're tracking LOC and commits. Are these the right metrics?"
+**Question**: "We want to measure our development process effectiveness. How do I determine what metrics are actually useful vs measurement theater?"
 
-### Expected Behavior
-- Key metrics by domain reference sheet
-- LOC/commits are vanity metrics (not actionable)
-- Better metrics: defect density, cycle time, test coverage
-- GQM: what decision would this metric inform?
-- Level 3 requires actionable metrics
-- Counters "activity = productivity" misconception
+**Success Criteria**:
+- Agent references measurement planning reference sheet
+- Explains GQM (Goal-Question-Metric) methodology
+- Provides concrete GQM examples
+- Addresses measurement cost vs value
+- Warns against vanity metrics
+- Shows Level 2→3→4 progression
 
-### Baseline Behavior (RED)
-[To be filled]
-
-### With Skill (GREEN)
-[To be filled]
-
-### Loopholes Found (REFACTOR)
-[To be filled]
+**Expected Information to Retrieve**:
+- GQM methodology steps
+- Example GQM decomposition
+- Measurement cost considerations
+- Anti-pattern: measurement theater
+- Level scaling for measurement sophistication
 
 ---
 
-## Scenario 5: Level 4 Statistical Process Control
+## Scenario 4: Process Baselines for Estimation
 
-### Context
-- Medical device software (FDA requires Level 4)
-- Need statistical baselines and control limits
-- **Complexity**: Team unfamiliar with SPC
-- Level 4 project
+**Context**: Team wants to use historical data to improve estimation accuracy for sprint planning.
 
-### User Request
-"FDA requires statistical process control. How do we implement this for CMMI Level 4?"
+**Question**: "How do I establish process baselines from our historical velocity data to improve our sprint planning estimates?"
 
-### Expected Behavior
-- Statistical analysis reference sheet
-- Control charts (X-bar, R, p-charts)
-- Process capability indices
-- Out-of-control signals
-- Level 4 only (not needed for 2/3)
-- May require statistical expertise (consultant)
+**Success Criteria**:
+- Agent references process baselines reference sheet
+- Explains baseline establishment from historical data
+- Shows statistical analysis approach (mean, std dev, confidence intervals)
+- Addresses minimum sample size
+- Explains baseline usage for estimation
+- Covers baseline maintenance/updates
 
-### Baseline Behavior (RED)
-[To be filled]
-
-### With Skill (GREEN)
-[To be filled]
-
-### Loopholes Found (REFACTOR)
-[To be filled]
+**Expected Information to Retrieve**:
+- Baseline establishment methodology
+- Statistical analysis for baselines
+- Sample size requirements
+- Using baselines for estimation
+- Baseline update frequency
 
 ---
 
-## Success Criteria
+## Scenario 5: Level 3 to Level 4 Transition
 
-quantitative-management skill is ready when:
+**Context**: Organization currently at CMMI Level 3 with organizational baselines. Want to transition to Level 4 with quantitative management.
 
-- [ ] All 5+ scenarios provide actionable guidance
-- [ ] GQM framework clearly explained
-- [ ] DORA metrics implementation guidance
-- [ ] Level 2/3/4 scaling (basic → trends → SPC)
-- [ ] Anti-patterns: Vanity Metrics, Measurement Theater, Dashboard Overload
-- [ ] Reference sheets complete (7 sheets)
+**Question**: "We have organizational baselines and trend analysis (Level 3). What's required to move to Level 4 quantitative management?"
+
+**Success Criteria**:
+- Agent references Level 2→3→4 scaling reference sheet
+- Clearly distinguishes Level 3 vs Level 4 requirements
+- Explains statistical process control addition
+- Addresses prediction models
+- Shows process performance objectives
+- Provides concrete examples of Level 4 practices
+
+**Expected Information to Retrieve**:
+- Level 3 vs Level 4 differences
+- Statistical process control requirements
+- Prediction model approaches
+- Process performance objectives
+- Level 4 implementation examples
 
 ---
 
-## Note
+## Expected Baseline Results (No Skill)
 
-This skill may be deferred to v1.1 if timeline pressure. Level 2 and Level 3 projects can function with basic metrics from other skills.
+**Hypothesis**: Without the skill, agents will:
+1. Provide generic "track metrics" advice without concrete implementation
+2. Miss GQM methodology for measurement planning
+3. Provide incorrect or incomplete DORA metric definitions
+4. Not distinguish between control chart types
+5. Skip baseline establishment methodology
+6. Not address Level 2→3→4 scaling differences
+7. Provide vanity metrics without business value linkage
+8. Miss automation guidance for metric collection
+9. Not explain statistical significance vs noise
+10. Lack production-ready scripts/examples
+
+---
+
+**Test Execution Plan**:
+1. Run Scenario 1 in detail with subagent WITHOUT skill (baseline)
+2. Document exact gaps and missing information
+3. Run Scenarios 2-5 summarized to identify additional patterns
+4. Write skill addressing all identified gaps
+5. Re-run Scenario 1 WITH skill to verify coverage
