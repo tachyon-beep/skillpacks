@@ -1,10 +1,11 @@
 # axiom-sdlc-engineering Implementation Progress
 
-## Status: Phase 2 Complete ✅
+## Status: Week 2 In Progress 🚧
 
 **Date**: 2026-01-24
-**Current Phase**: Phase 2 - Skillpack Scaffolding (Complete)
-**Next Phase**: Phase 3 - Core Content Skills
+**Current Phase**: Week 2 - Design & Implementation Skills
+**Current Skill**: design-and-build (COMPLETE ✅)
+**Next Skill**: quality-assurance
 
 ---
 
@@ -125,6 +126,78 @@ plugins/axiom-sdlc-engineering/
 - All 12 router test scenarios addressed in skill design
 - Routing table covers: requirements, design, quality, governance, metrics, platform, adoption
 - Cross-skillpack boundaries clearly defined (process vs. implementation)
+
+---
+
+### Phase 3: Core Content Skills (In Progress)
+
+**Approach**: RED-GREEN-REFACTOR TDD methodology for each skill
+
+#### Skill 3: design-and-build (Complete ✅)
+
+**Deliverable**: `skills/design-and-build/` - 2,962 lines total
+
+**Completed**:
+- ✅ Main skill: `SKILL.md` (344 lines)
+  - Level-Based Governance (L2/3/4 ADR requirements)
+  - Emergency Exception Protocol (HOTFIX pattern)
+  - Enforcement & Escalation mechanisms
+  - Anti-Patterns catalog (resume-driven design, git chaos, debt spiral)
+  - Quick Reference table
+  - What counts as "architectural decision"
+- ✅ Reference sheet: `architecture-and-design.md` (532 lines)
+  - ADR templates (standard + HOTFIX retrospective)
+  - Technology selection framework
+  - Objective microservices criteria (measurable thresholds)
+  - C4 model for documentation
+  - Anti-patterns with solutions
+- ✅ Reference sheet: `configuration-management.md` (614 lines)
+  - Branching strategy decision framework (GitFlow/GitHub Flow/Trunk-based)
+  - Git chaos diagnosis methodology
+  - 4-week migration roadmap (chaos → structure)
+  - Branch protection enforcement
+- ✅ Reference sheet: `technical-debt-management.md` (311 lines)
+  - CODE RED detection (>60% bug time)
+  - Debt classification (architectural/code quality/unpayable)
+  - 8-week recovery plan for crisis
+  - Debt metrics framework
+- ✅ Reference sheet: `build-and-integration.md` (238 lines)
+  - Requirements gathering framework (BEFORE platform choice)
+  - Platform selection matrix
+  - Build optimization (hours → minutes)
+  - Deployment strategies (blue/green, canary, rolling)
+- ✅ Reference sheet: `implementation-standards.md` (235 lines)
+  - Coding standards & enforcement
+  - Code review checklist (Level 3)
+  - Automated CI integration
+- ✅ Reference sheet: `level-scaling.md` (332 lines)
+  - Level 2/3/4 definitions
+  - Escalation/de-escalation criteria with objective thresholds
+  - MVP exception with exit criteria (6 months OR first customer)
+
+**TDD Results**:
+- RED: 5 scenarios tested without skill, 8 systematic gaps identified
+- GREEN: All 5 scenarios pass with skill, 45+ critical elements added
+- REFACTOR: 19 loopholes discovered through adversarial testing, 9 critical/high closed
+
+**Loopholes Closed**:
+1. ✅ Enforcement mechanisms (violation escalation path)
+2. ✅ MVP exit criteria (6-month limit, objective triggers)
+3. ✅ Objective microservices criteria (no self-assessment)
+4. ✅ Architectural decision definition (clear boundary vs implementation)
+5. ✅ HOTFIX frequency limit (>5/month = systemic problem)
+
+**Quality Validation**: ✅ Passed all writing-skills checklist items
+
+**Test Artifacts** (all in `.test-scenarios/`):
+- `design-and-build-scenarios.md` - 5 test scenarios
+- `design-and-build-RED-baseline.md` - Baseline failures (650 lines)
+- `design-and-build-RED-patterns.md` - Rationalization patterns
+- `design-and-build-GREEN-results.md` - Responses with skill
+- `design-and-build-RED-GREEN-comparison.md` - Improvement analysis
+- `design-and-build-REFACTOR-adversarial.md` - Adversarial testing (500+ lines)
+- `design-and-build-REFACTOR-summary.md` - Loopholes closed
+- `design-and-build-quality-checklist.md` - Quality validation
 
 ---
 
