@@ -183,24 +183,13 @@ For comprehensive requests, provide sequenced guidance:
 
 ## Routing Workflow
 
-```
-Step 1: Detect CMMI Level
-  ↓
-Step 2: Analyze Request Intent
-  ↓
-Step 3: Check Routing Table
-  ↓
-Step 4: Determine Single Skill OR Multi-Skill Sequence
-  ↓
-Step 5: Announce Routing Decision
-  "I'm routing you to the [skill-name] skill for [reason].
-   CMMI Level detected: [X]"
-  ↓
-Step 6: Invoke Appropriate Skill
-  Use Skill tool to load the skill
-  ↓
-Step 7: Follow Loaded Skill Exactly
-```
+1. **Detect CMMI Level**: Check CLAUDE.md → user message → default to Level 3
+2. **Analyze Request Intent**: Match against routing table for keywords/symptoms
+3. **Check Routing Table**: Find the skill(s) that best match the user's needs
+4. **Determine Single Skill OR Multi-Skill Sequence**: Single concern vs. multi-skill roadmap
+5. **Announce Routing Decision**: "I'm routing you to [skill-name] for [reason]. CMMI Level detected: [X]"
+6. **Invoke Appropriate Skill**: Use Skill tool to load the skill
+7. **Follow Loaded Skill Exactly**: Defer to the specialist skill's guidance
 
 ## Quick Reference
 

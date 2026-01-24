@@ -33,9 +33,7 @@ Provides systematic methodology for identifying, assessing, mitigating, and moni
 
 **Schedule Risks**:
 - Optimistic estimates
-- Dep
-
-endencies (blocked by other teams)
+- Dependencies (blocked by other teams)
 - Resource availability (PTO, hiring delays)
 - Scope creep
 

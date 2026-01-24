@@ -390,10 +390,10 @@ The following reference sheets provide detailed methodologies for specific gover
 
 | When You're Doing | Also Use | For |
 |-------------------|----------|-----|
-| Creating ADRs | `design-and-build/architecture-patterns` | Technical decision criteria |
-| Risk identification for security | `ordis-security-architect/threat-modeling` | Security-specific risk techniques |
-| Decision analysis with data | `quantitative-management/metrics-analysis` | Quantitative decision criteria |
-| Requirements with risks | `requirements-lifecycle/requirements-specification` | Risk-driven requirements prioritization |
+| Creating ADRs | `design-and-build` | Technical decision criteria |
+| Risk identification for security | `ordis-security-architect` | Security-specific risk techniques |
+| Decision analysis with data | `quantitative-management` | Quantitative decision criteria |
+| Requirements with risks | `requirements-lifecycle` | Risk-driven requirements prioritization |
 
 ---
 

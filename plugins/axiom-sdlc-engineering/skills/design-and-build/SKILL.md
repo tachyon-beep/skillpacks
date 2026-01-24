@@ -108,32 +108,13 @@ Check for project level in:
 
 ## Enforcement and Escalation
 
-### Level 3 Enforcement Mechanisms
+**Level 3 Requirements**:
+- Platform enforcement: Branch protection, CI gates, ADR linking
+- Process enforcement: ADR review before implementation, HOTFIX tracking
+- Metrics: % architectural changes with ADRs (target: 100%)
+- Violations escalate: Team lead → Engineering manager → Governance committee
 
-**Platform Enforcement** (automated gates):
-- [ ] Branch protection: Main/master requires 2+ approvals
-- [ ] CI gates: Build + tests must pass before merge
-- [ ] ADR linking: PRs for architectural changes must reference ADR number (format: "Implements ADR-YYYY-MM-DD-NNN")
-
-**Process Enforcement** (review gates):
-- [ ] ADR review required before implementation begins
-- [ ] HOTFIX retrospective ADR tracked in ticket system
-- [ ] Automated reminder 24h after HOTFIX label applied (e.g., GitHub Action)
-
-**Metrics Tracking Compliance**:
-- % architectural changes with ADRs (target: 100%)
-- HOTFIX retrospective ADR compliance (target: 100% within 48h)
-- Average ADR review time (target: <24 hours)
-
-**Violation Escalation Path**:
-1. **First violation**: Team lead notified, retrospective scheduled within 7 days
-2. **Second violation (within 30 days)**: Engineering manager notified, process audit required
-3. **Systemic violations (>3 in 90 days)**: Escalate to governance committee, audit non-conformance report
-
-**Consequences for Non-Compliance** (Level 3):
-- ADR violations visible in team metrics dashboard
-- Repeated violations block promotion/performance reviews
-- Audit findings can fail SOC 2, ISO compliance
+**For detailed enforcement mechanisms, escalation paths, and compliance metrics**, see `level-scaling.md`.
 
 ---
 
@@ -197,90 +178,16 @@ Check for project level in:
 
 ## Reference Sheets
 
-The following reference sheets provide detailed guidance for specific domains. Load them on-demand when needed.
+Load these on-demand for detailed guidance:
 
-### 1. Architecture & Design
-
-**When to use**: Making technology choices, selecting patterns, designing system structure
-
-→ See [architecture-and-design.md](./architecture-and-design.md)
-
-**Covers**:
-- Architecture Decision Records (ADR) template and process
-- Decision frameworks for technology selection
-- Design patterns by use case
-- C4 model for architecture documentation
-- Design review checklists
-- Anti-patterns: Resume-driven design, Architecture Astronaut, Big Design Up Front
-
-### 2. Implementation Standards
-
-**When to use**: Establishing coding standards, code review process, documentation requirements
-
-→ See [implementation-standards.md](./implementation-standards.md)
-
-**Covers**:
-- Coding standards enforcement
-- Code review checklists and best practices
-- Naming conventions
-- Documentation standards (inline comments, module docs, API docs)
-- Level 2/3/4 rigor scaling
-
-### 3. Configuration Management
-
-**When to use**: Git chaos, branching strategy decisions, release management
-
-→ See [configuration-management.md](./configuration-management.md)
-
-**Covers**:
-- Branching strategy decision framework (GitFlow vs GitHub Flow vs Trunk-based)
-- Branch protection policies
-- Merge strategies (squash, merge commit, rebase)
-- Release management (tagging, changelogs, versioning)
-- Migration from chaos to structure
-- Level 2/3/4 control scaling
-
-### 4. Build & Integration
-
-**When to use**: Setting up CI/CD, build optimization, deployment pipelines
-
-→ See [build-and-integration.md](./build-and-integration.md)
-
-**Covers**:
-- Requirements gathering for CI/CD
-- Platform selection (GitHub Actions, Azure Pipelines, GitLab CI)
-- Pipeline stages (build → test → integration → deploy)
-- Build optimization (caching, parallelization)
-- Deployment strategies (blue/green, canary, rolling)
-- Rollback procedures
-
-### 5. Technical Debt Management
-
-**When to use**: Team spending >40% time on bugs, debt accumulating, velocity declining
-
-→ See [technical-debt-management.md](./technical-debt-management.md)
-
-**Covers**:
-- Debt classification (architectural, tactical, unpayable)
-- Crisis detection thresholds (>60% bug time = CODE RED)
-- Debt tracking systems
-- Paydown strategies (20% rule, debt sprints, feature freeze)
-- Debt metrics (ratio, trend, hotspots)
-- Recovery roadmaps for crisis situations
-
-### 6. Level 2→3→4 Scaling
-
-**When to use**: Understanding what rigor is appropriate for your project tier
-
-→ See [level-scaling.md](./level-scaling.md)
-
-**Covers**:
-- Level 2 baseline practices
-- Level 3 organizational standards
-- Level 4 statistical control
-- Escalation criteria (when to move up levels)
-- De-escalation criteria (when level is overkill)
-- ADR requirements by level
+| Reference Sheet | When to Use | Link |
+|-----------------|-------------|------|
+| **Architecture & Design** | Making technology choices, selecting patterns, designing system structure | [architecture-and-design.md](./architecture-and-design.md) |
+| **Implementation Standards** | Establishing coding standards, code review process, documentation requirements | [implementation-standards.md](./implementation-standards.md) |
+| **Configuration Management** | Git chaos, branching strategy decisions, release management | [configuration-management.md](./configuration-management.md) |
+| **Build & Integration** | Setting up CI/CD, build optimization, deployment pipelines | [build-and-integration.md](./build-and-integration.md) |
+| **Technical Debt Management** | Team spending >40% time on bugs, debt accumulating, velocity declining | [technical-debt-management.md](./technical-debt-management.md) |
+| **Level 2→3→4 Scaling** | Understanding what rigor is appropriate for your project tier | [level-scaling.md](./level-scaling.md) |
 
 ---
 
@@ -302,10 +209,10 @@ The following reference sheets provide detailed guidance for specific domains. L
 
 | When You're Doing | Also Use | For |
 |-------------------|----------|-----|
-| Designing Python architecture | `axiom-python-engineering/modern-python-patterns` | Python-specific patterns and idioms |
-| Designing web API | `axiom-web-backend/api-design` | REST/GraphQL best practices |
-| Making architecture decision | `governance-and-risk/decision-analysis` | Formal DAR process for critical choices |
-| Setting up testing | `quality-assurance/verification-planning` | Test strategy and coverage |
+| Designing Python architecture | `axiom-python-engineering` | Python-specific patterns and idioms |
+| Designing web API | `axiom-web-backend` | REST/GraphQL best practices |
+| Making architecture decision | `governance-and-risk` | Formal DAR process for critical choices |
+| Setting up testing | `quality-assurance` | Test strategy and coverage |
 | Choosing platforms | `platform-integration` | GitHub vs Azure DevOps specifics |
 
 ---

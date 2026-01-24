@@ -1,6 +1,6 @@
 ---
 name: quality-assurance
-description: Use when deciding test strategy, struggling with code reviews, shipping without tests, or conflating verification with validation - enforces VER/VAL distinction and prevents test-last anti-patterns
+description: Use when deciding test strategy, struggling with code reviews, shipping without tests, or conflating verification with validation
 ---
 
 # Quality Assurance
@@ -423,11 +423,11 @@ The following reference sheets provide detailed guidance for specific QA domains
 
 | When You're Doing | Also Use | For |
 |-------------------|----------|-----|
-| Writing tests for Python code | `axiom-python-engineering/testing-patterns` | pytest-specific patterns and idioms |
-| E2E/performance/chaos testing | `ordis-quality-engineering/test-types` | Specialized test strategies |
-| Implementing code review process | `design-and-build/implementation-standards` | Code review checklist, CI integration |
-| Designing acceptance criteria | `requirements-lifecycle/requirements-specification` | INVEST criteria, user story format |
-| Setting up CI for testing | `design-and-build/build-and-integration` | CI/CD pipeline configuration |
+| Writing tests for Python code | `axiom-python-engineering` | pytest-specific patterns and idioms |
+| E2E/performance/chaos testing | `ordis-quality-engineering` | Specialized test strategies |
+| Implementing code review process | `design-and-build` | Code review checklist, CI integration |
+| Designing acceptance criteria | `requirements-lifecycle` | INVEST criteria, user story format |
+| Setting up CI for testing | `design-and-build` | CI/CD pipeline configuration |
 
 ---
 

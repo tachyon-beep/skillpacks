@@ -18,6 +18,12 @@ temp/
 TDD-METHODOLOGY.md
 PLUGIN-SUMMARY.md
 plugins/.claude/settings.local.json
+!docs/sdlc-prescription-cmmi-levels-2-4.md
+
+# Plugin development artifacts (reports, summaries, verification docs)
+plugins/**/.*.md
+plugins/**/*-report.md
+plugins/**/*-summary.md
 
 # Python cache and build artifacts
 __pycache__/

@@ -1,6 +1,6 @@
 ---
 name: requirements-lifecycle
-description: Requirements elicitation, analysis, specification, traceability, and change management across CMMI Levels 2-4
+description: Use when defining requirements, tracking traceability, managing requirement changes, or establishing RTM - covers elicitation, analysis, specification across CMMI Levels 2-4
 ---
 
 # Requirements Lifecycle
@@ -34,6 +34,11 @@ Use this skill when:
 - **Documentation overhead concerns** - "How much is enough?" for Level 2 vs. Level 3
 - **Creating new features** - Starting requirements gathering for major work
 - **Audit preparation** - Need to establish requirements baseline and traceability
+
+**When NOT to use this skill**:
+- **Single-page prototypes or spikes** - Throwaway experiments don't need formal requirements
+- **Solo developer projects** - Traceability overhead not justified for 1-person teams
+- **Bug fixes within existing architecture** - Use issue tracking, not full requirements lifecycle
 
 ---
 
@@ -172,6 +177,17 @@ See `level-scaling.md` for complete escalation criteria and de-escalation guidan
 
 ### Quick Start by Scenario
 
+**Which scenario applies to you?**
+
+```
+What's your primary need?
+├─ Starting a new feature from scratch → Scenario 1
+├─ Requirements changing constantly → Scenario 2
+├─ Stakeholders in conflict → Scenario 3
+├─ Preparing for audit, need RTM → Scenario 4
+└─ Unsure how much documentation needed → Scenario 5
+```
+
 **Scenario 1: New Feature, Starting from Scratch**
 
 1. Load `requirements-elicitation.md` - Run stakeholder workshop
@@ -215,8 +231,6 @@ See `level-scaling.md` for complete escalation criteria and de-escalation guidan
 2. Level 2 answer: User stories + acceptance criteria (2-4 pages per sprint)
 3. Overhead: 3-5% project time
 4. Common fear: "We'll spend all our time writing specs" → Reality: 1-2 hours per sprint
-
----
 
 ---
 

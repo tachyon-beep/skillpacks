@@ -1,6 +1,6 @@
 ---
 name: quantitative-management
-description: Use when establishing measurement programs, analyzing metrics with statistical process control, setting baselines, or implementing CMMI Level 4 quantitative management - covers GQM methodology, DORA metrics, control charts, and prediction models
+description: Use when establishing measurement programs, analyzing metrics with statistical process control, setting baselines, or implementing CMMI Level 4 quantitative management - prevents vanity metrics and measurement theater
 ---
 
 # Quantitative Management
@@ -223,7 +223,7 @@ A: **MA** (Level 2+): Measurement & Analysis - defining, collecting, analyzing m
 A: Yes. Level 4 requires organizational baselines (Level 3). Can't do statistical process control without knowing what "normal" looks like.
 
 **Q: Leading vs lagging indicators - what's the difference?**
-A: **Lagging**: Measure results after the fact (defects found, deployment time). **Lagging**: Predict future outcomes (code review coverage, test coverage). You need both. See `./key-metrics-by-domain.md` for examples.
+A: **Lagging**: Measure results after the fact (defects found, deployment time). **Leading**: Predict future outcomes (code review coverage, test coverage). You need both. See `./key-metrics-by-domain.md` for examples.
 
 **Q: How do I avoid measurement theater?**
 A: Use GQM methodology (see `./measurement-planning.md`). Every metric must answer a question that drives a decision. If you can't explain the decision, don't track the metric.

@@ -1,6 +1,6 @@
 ---
 name: platform-integration
-description: Use when implementing CMMI processes in GitHub or Azure DevOps - maps process areas to platform features with production-ready configurations, traceability setup, CI/CD pipelines, and compliance integration
+description: Use when implementing CMMI processes in GitHub or Azure DevOps, migrating between platforms, or establishing traceability/compliance on GitHub/Azure - platform-specific process guidance
 ---
 
 # Platform Integration
@@ -322,7 +322,7 @@ The following reference sheets provide detailed, production-ready implementation
 | Platform setup for CI/CD | `design-and-build` | TS/PI process definitions |
 | Platform setup for testing | `quality-assurance` | VER/VAL process definitions |
 | Platform setup for metrics | `quantitative-management` | MA/QPM metrics definitions |
-| Platform selection decision | `governance-and-risk/dar-methodology` | Decision analysis for platform choice |
+| Platform selection decision | `governance-and-risk` | Decision analysis for platform choice |
 | Initial platform adoption | `lifecycle-adoption` | Incremental rollout strategy |
 
 ---

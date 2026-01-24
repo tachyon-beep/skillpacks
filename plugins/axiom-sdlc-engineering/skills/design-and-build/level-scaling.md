@@ -365,5 +365,136 @@ Must document:
 
 ---
 
-**Last Updated**: 2026-01-24
+## Level 3: Detailed Enforcement Mechanisms
+
+### Platform Enforcement (Automated Gates)
+
+**Branch Protection**:
+- Main/master requires 2+ approvals (minimum)
+- Dismiss stale approvals on new commits
+- Require status checks to pass before merging
+- Restrict who can push to protected branches
+- Example GitHub settings:
+  ```json
+  {
+    "required_pull_request_reviews": {
+      "required_approving_review_count": 2,
+      "dismiss_stale_reviews": true
+    },
+    "required_status_checks": {
+      "strict": true,
+      "contexts": ["build", "test", "lint"]
+    }
+  }
+  ```
+
+**CI Gates**:
+- Build must pass (compilation/build errors block merge)
+- Tests must pass (unit, integration, coverage threshold)
+- Lint/static analysis must pass (code quality gates)
+- Security scanning must pass (no high/critical vulnerabilities)
+- ADR linking check: PRs modifying architecture must reference ADR number
+
+**ADR Linking Format**:
+- PR title or description must include: `Implements ADR-YYYY-MM-DD-NNN`
+- Automated check via GitHub Action or Azure Pipeline
+- Example check: Regex match on PR body for `ADR-\d{4}-\d{2}-\d{2}-\d{3}`
+
+### Process Enforcement (Review Gates)
+
+**ADR Review Process**:
+1. ADR created in `docs/adr/` directory
+2. ADR reviewed by architect + 2 senior developers
+3. ADR approved before implementation begins
+4. Implementation PR links back to ADR number
+
+**HOTFIX Retrospective Tracking**:
+- Issue created with "HOTFIX" label immediately
+- Automated reminder 24 hours after HOTFIX label applied
+- Escalation notification 48 hours if no retrospective ADR
+- Example GitHub Action:
+  ```yaml
+  name: HOTFIX Reminder
+  on:
+    issues:
+      types: [labeled]
+  jobs:
+    reminder:
+      if: github.event.label.name == 'HOTFIX'
+      runs-on: ubuntu-latest
+      steps:
+        - name: Schedule reminder
+          # GitHub Action to post comment after 24h, escalate after 48h
+  ```
+
+### Metrics Tracking Compliance
+
+**ADR Coverage Metric**:
+- **Formula**: (Architectural PRs with ADR link / Total architectural PRs) × 100%
+- **Target**: 100%
+- **Measurement**: Weekly dashboard review
+- **Detection**: Flag PRs modifying >3 files or in critical paths without ADR link
+
+**HOTFIX Retrospective Compliance**:
+- **Formula**: (HOTFIXes with retrospective ADR within 48h / Total HOTFIXes) × 100%
+- **Target**: 100%
+- **Measurement**: Automated tracking in issue system
+- **Alert**: Engineering manager notified if <100%
+
+**ADR Review Time**:
+- **Formula**: Time from ADR creation to approval (median)
+- **Target**: <24 hours
+- **Measurement**: Git commit timestamps (creation → approval commit)
+- **Alert**: If >3 days, escalate to architect for review bottleneck
+
+### Violation Escalation Path
+
+**First Violation** (within 30 days):
+1. Team lead notified via automated alert
+2. Retrospective scheduled within 7 days
+3. Root cause analysis: Was this process unclear? Tooling gap? Time pressure?
+4. Action items assigned with deadlines
+
+**Second Violation** (within 30 days of first):
+1. Engineering manager notified
+2. Process audit required within 14 days
+3. Audit questions:
+   - Is the team aware of the requirement?
+   - Is the tooling preventing compliance?
+   - Is there time pressure causing shortcuts?
+   - Do we need additional training?
+4. Corrective action plan created
+
+**Systemic Violations** (>3 in 90 days):
+1. Escalate to governance committee
+2. Audit non-conformance report generated
+3. Options considered:
+   - Process simplification (if too burdensome)
+   - Additional tooling/automation
+   - Team restructuring
+   - De-escalation to Level 2 (if Level 3 not justified)
+4. Decision documented in ADR
+
+### Consequences for Non-Compliance
+
+**Team-Level**:
+- ADR violations visible in team metrics dashboard (public)
+- Team velocity potentially impacted by rework
+- Increased scrutiny from leadership
+
+**Individual-Level** (repeated violations):
+- Mentioned in performance reviews
+- May block promotion to senior/staff engineer
+- May impact bonus/compensation (if tied to quality metrics)
+
+**Organizational-Level**:
+- Audit findings can fail SOC 2, ISO 9001 certification
+- Regulatory fines (FDA, PCI DSS if applicable)
+- Customer trust erosion (if quality issues reach production)
+
+**Note**: Consequences should be proportional and focus on process improvement, not punishment. First step is always understanding why violations occurred.
+
+---
+
+**Last Updated**: 2026-01-25
 **Review Schedule**: Annually or when team size/risk changes

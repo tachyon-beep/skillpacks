@@ -312,7 +312,5 @@ We chose **Option B** (stakeholder preference).
 
 ---
 
-**Last Updated**: 2026-01-24  
+**Last Updated**: 2026-01-24
 **Review Schedule**: When making architectural decisions, before vendor commitments
-EOF
-DAR

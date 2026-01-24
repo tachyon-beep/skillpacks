@@ -1,6 +1,6 @@
 ---
 name: lifecycle-adoption
-description: Incrementally adopt CMMI practices on existing projects without starting over - bootstrapping, retrofitting, and change management
+description: Use when starting new projects with CMMI, adding CMMI to active development, preparing for audits, migrating tools, or facing team resistance to process adoption
 ---
 
 # Lifecycle Adoption
@@ -340,14 +340,14 @@ Common rationalizations that undermine adoption (and how to counter them):
 
 ## Enforcement Mechanisms
 
-**Purpose**: Prevent common loophole exploits discovered through TDD adversarial testing. These 22 mechanisms close rationalizations teams use under pressure.
+**Purpose**: Prevent common loophole exploits discovered through TDD adversarial testing. These 19 mechanisms close rationalizations teams use under pressure.
 
 **Organization**:
-- **Adoption & Progression** (#1-2, #11-13): Gates, workshops, pilots, early adopters
+- **Adoption & Progression** (#1-5): Emergency bypass, progression gates, workshops, parallel tracks, early adopters
 - **Requirements & Design** (#6-10): Depth, validation, coverage, traceability, discovery
-- **Code Review** (#3-4): Risk assessment, quality standards
-- **Small Teams** (#16-20): External review, written docs, timing, emergencies, admin access
-- **Git Security** (#21-22): Fork attacks, branch protection
+- **Code Review** (#11-12): Risk assessment, quality standards
+- **Small Teams** (#13-17): External review, written docs, timing, emergencies, admin access
+- **Git Security** (#18-19): Fork attacks, branch protection
 
 ---
 
@@ -378,7 +378,7 @@ Common rationalizations that undermine adoption (and how to counter them):
 
 **Red flag**: Still at quick wins in Month 3 → escalate
 
-#### 11. Workshop Quality Standards
+#### 3. Workshop Quality Standards
 
 **Prevents**: Workshop theater (checkbox attendance without engagement)
 
@@ -391,7 +391,7 @@ Common rationalizations that undermine adoption (and how to counter them):
 
 **Red flag**: <50% felt they could influence → repeat workshop
 
-#### 12. Parallel Tracks Deadline
+#### 4. Parallel Tracks Deadline
 
 **Prevents**: Indefinite legacy exemption
 
@@ -403,7 +403,7 @@ Common rationalizations that undermine adoption (and how to counter them):
 
 **Red flag**: Work started Week 7 claimed as "legacy"
 
-#### 13. Early Adopter Credibility
+#### 5. Early Adopter Credibility
 
 **Prevents**: Junior dev pilot theater
 
@@ -481,7 +481,7 @@ Common rationalizations that undermine adoption (and how to counter them):
 
 ### Code Review
 
-#### 3. Risk Assessment Authority
+#### 11. Risk Assessment Authority
 
 **Prevents**: Risk-labeling game (self-declaring "low risk")
 
@@ -492,7 +492,7 @@ Common rationalizations that undermine adoption (and how to counter them):
 
 **Red flag**: >80% features labeled "low risk"
 
-#### 4. Review Quality Standards
+#### 12. Review Quality Standards
 
 **Prevents**: Rubber-stamp theater
 
@@ -509,7 +509,7 @@ Common rationalizations that undermine adoption (and how to counter them):
 
 ### Small Team Enforcement (2-4 person teams)
 
-#### 16. External Review Requirement
+#### 13. External Review Requirement
 
 **Prevents**: Rubber-stamp between friends
 
@@ -520,7 +520,7 @@ Common rationalizations that undermine adoption (and how to counter them):
 
 **Accountability**: External reviewer reports to executive
 
-#### 17. Written Requirements Mandate
+#### 14. Written Requirements Mandate
 
 **Prevents**: Verbal-only work
 
@@ -531,7 +531,7 @@ Common rationalizations that undermine adoption (and how to counter them):
 
 **Red flag**: >20% Issues created within 1 hour of PR
 
-#### 18. ADR Timing Verification
+#### 15. ADR Timing Verification
 
 **Prevents**: Backdating architectural decisions
 
@@ -542,7 +542,7 @@ Common rationalizations that undermine adoption (and how to counter them):
 
 **Verification**: `git log --format=%ai -- docs/adr/` vs implementation commits
 
-#### 19. Solo Emergency Protocol
+#### 16. Solo Emergency Protocol
 
 **Prevents**: Skipping review when partner unavailable
 
@@ -553,7 +553,7 @@ Common rationalizations that undermine adoption (and how to counter them):
 
 **Red flag**: >4 solo emergencies/year
 
-#### 20. Admin Bypass Audit
+#### 17. Admin Bypass Audit
 
 **Prevents**: GitHub admin bypass enabled
 
@@ -568,7 +568,7 @@ Common rationalizations that undermine adoption (and how to counter them):
 
 ### Git Workflow Security
 
-#### 21. Fork Security Configuration
+#### 18. Fork Security Configuration
 
 **Prevents**: Fork-based bypass attack
 
@@ -580,7 +580,7 @@ Common rationalizations that undermine adoption (and how to counter them):
 
 **Red flag**: Multiple failed force-push attempts
 
-#### 22. Emergency Hotfix Enforcement
+#### 19. Emergency Hotfix Enforcement
 
 **Prevents**: Disabling branch protection
 
