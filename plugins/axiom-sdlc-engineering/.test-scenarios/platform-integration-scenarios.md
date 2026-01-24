@@ -1,264 +1,156 @@
-# platform-integration - Test Scenarios
+# Platform Integration Test Scenarios
 
-## Purpose
-
-Test that platform-integration skill correctly:
-1. Maps CMMI processes to GitHub/Azure DevOps features
-2. Provides platform-specific implementation guidance
-3. Handles hybrid/multi-platform scenarios
-4. Guides platform selection based on needs
-5. Supports platform migration strategies
-
-## Scenario 1: GitHub Requirements Traceability
-
-### Context
-- Using GitHub Issues for requirements
-- Level 3 project needs traceability
-- Don't know how to link issues to PRs to tests
-- Team of 6 developers
-
-### User Request
-"How do I implement requirements traceability in GitHub for CMMI Level 3?"
-
-### Expected Behavior
-- Requirements in GitHub reference sheet
-- Issue templates for requirements
-- Traceability via issue refs in PR descriptions
-- Labels for requirement categorization
-- GitHub Projects for RTM queries
-- Automation via Actions (check for issue refs)
-
-### Baseline Behavior (RED)
-[To be filled]
-
-### With Skill (GREEN)
-[To be filled]
-
-### Loopholes Found (REFACTOR)
-[To be filled]
+**Skill Type**: Reference (retrieval + application testing)
+**Test Approach**: Can agents find and correctly apply platform-specific implementation guidance?
 
 ---
 
-## Scenario 2: Azure DevOps Work Item Hierarchy
+## Scenario 1: Requirements Traceability in GitHub
 
-### Context
-- Using Azure DevOps
-- Need Epic → Feature → User Story hierarchy
-- Level 3 project
-- Confused about work item types
+**Context**: Level 3 project, GitHub repository, need bidirectional traceability between requirements and code.
 
-### User Request
-"What work item types should I use in Azure DevOps for CMMI requirements?"
+**User Request**: "We need to implement requirements traceability in GitHub. I want to link user stories in issues to code changes in PRs and then to tests. How do I set this up following CMMI REQM practices?"
 
-### Expected Behavior
-- Requirements in Azure DevOps reference sheet
-- Epic → Feature → User Story hierarchy
-- Custom fields for traceability
-- Queries for RTM
-- Acceptance criteria fields
-- References requirements-lifecycle for WHAT to capture
+**Success Criteria**:
+1. Agent identifies the correct reference sheet (GitHub Requirements)
+2. Agent provides specific implementation pattern (issue references in PR descriptions, labels, projects)
+3. Agent covers bidirectional traceability (requirements → code → tests)
+4. Agent provides template/example
+5. Agent mentions traceability verification approach
 
-### Baseline Behavior (RED)
-[To be filled]
-
-### With Skill (GREEN)
-[To be filled]
-
-### Loopholes Found (REFACTOR)
-[To be filled]
+**Expected Coverage**:
+- Issue templates for requirements with IDs
+- PR description linking pattern (`Implements #123`, `Closes #456`)
+- Label strategy for requirement types (feature, enhancement, defect)
+- Milestone/project organization
+- Traceability verification (API query or manual review)
 
 ---
 
-## Scenario 3: GitHub vs Azure DevOps - Which to Choose?
+## Scenario 2: CI/CD Pipeline with Quality Gates in Azure DevOps
 
-### Context
-- New project, no platform chosen yet
-- Team split: developers want GitHub, management wants Azure DevOps
-- **Authority conflict**: Different stakeholders
-- Level 3 project
+**Context**: Level 3 project, Azure DevOps, need multi-stage pipeline with quality gates for integration testing (PI) and verification (VER).
 
-### User Request
-"Should we use GitHub or Azure DevOps for our CMMI Level 3 project?"
+**User Request**: "Set up a CI/CD pipeline in Azure DevOps with proper quality gates. We need unit tests to pass before integration tests run, and integration tests to pass before deployment to staging. This is for a .NET Core API."
 
-### Expected Behavior
-- Platform selection criteria (not subjective preference)
-- GitHub strengths: developer experience, ecosystem
-- Azure DevOps strengths: work item hierarchy, analytics
-- Decision matrix: team size, existing tooling, integration needs
-- References governance-and-risk for DAR process
-- Counters "platform wars" bias
+**Success Criteria**:
+1. Agent identifies correct reference sheet (Azure DevOps Quality Gates)
+2. Agent provides multi-stage pipeline YAML example
+3. Agent covers gate dependencies (unit → integration → deployment)
+4. Agent includes quality metrics (test coverage, code analysis)
+5. Agent mentions approval workflows for production deployment
 
-### Baseline Behavior (RED)
-[To be filled]
-
-### With Skill (GREEN)
-[To be filled]
-
-### Loopholes Found (REFACTOR)
-[To be filled]
+**Expected Coverage**:
+- Azure Pipelines YAML structure (stages, jobs, steps)
+- Test execution with result publishing
+- Quality gates between stages
+- Conditional stage execution (on success)
+- Approval gates for production
+- Work item linking in commits
 
 ---
 
-## Scenario 4: GitHub Actions Quality Gates
+## Scenario 3: Branch Protection and Code Review in GitHub
 
-### Context
-- Using GitHub
-- Need automated quality gates for Level 3
-- Want to enforce coverage, linting, traceability checks
-- Currently manual
+**Context**: Level 3 project, GitHub, need to enforce code review and prevent direct pushes to main branch (CM process area).
 
-### User Request
-"How do I set up automated quality gates in GitHub for CMMI Level 3?"
+**User Request**: "Configure GitHub branch protection for our main branch. We need at least 2 reviewers, all tests must pass, and code owners must approve changes to critical files. What's the step-by-step setup?"
 
-### Expected Behavior
-- Quality gates in GitHub reference sheet
-- Required status checks
-- Coverage gates (fail if below threshold)
-- Traceability check (PR must reference issue)
-- Branch protection rules
-- Example GitHub Actions workflows
+**Success Criteria**:
+1. Agent identifies correct reference sheet (GitHub Configuration Management)
+2. Agent provides step-by-step GitHub UI configuration OR API/settings file
+3. Agent covers required reviewers, status checks, CODEOWNERS
+4. Agent explains how to set up CODEOWNERS file
+5. Agent mentions audit trail (PR review history)
 
-### Baseline Behavior (RED)
-[To be filled]
-
-### With Skill (GREEN)
-[To be filled]
-
-### Loopholes Found (REFACTOR)
-[To be filled]
+**Expected Coverage**:
+- Branch protection rules configuration
+- Required status checks setup
+- Required reviewers (number + dismissal settings)
+- CODEOWNERS file format and patterns
+- Merge strategies (squash vs merge vs rebase)
+- Branch naming conventions (GitFlow, GitHub Flow, trunk-based)
 
 ---
 
-## Scenario 5: Azure DevOps Metrics Dashboard
+## Scenario 4: Risk Tracking in Azure DevOps Work Items
 
-### Context
-- Using Azure DevOps
-- Level 3 requires metrics and baselines
-- Want to track DORA metrics
-- Don't know where to start
+**Context**: Level 3 project, Azure DevOps, need to implement risk register using work items (RSKM process area).
 
-### User Request
-"How do I create a metrics dashboard in Azure DevOps for CMMI Level 3?"
+**User Request**: "We want to track risks in Azure DevOps work items instead of a spreadsheet. How do I set up a risk work item type with probability, impact, mitigation tracking, and a dashboard to visualize high-priority risks?"
 
-### Expected Behavior
-- Measurement in Azure DevOps reference sheet
-- Analytics views for DORA metrics
-- Dashboard widgets
-- OData queries for custom metrics
-- PowerBI integration (if available)
-- References quantitative-management for WHAT to measure
+**Success Criteria**:
+1. Agent identifies correct reference sheet (Azure DevOps risk tracking OR work items)
+2. Agent provides work item customization approach (custom type or use Bug/Issue with fields)
+3. Agent covers risk fields (probability, impact, score, mitigation, owner)
+4. Agent mentions queries for risk prioritization
+5. Agent provides dashboard widget configuration
 
-### Baseline Behavior (RED)
-[To be filled]
-
-### With Skill (GREEN)
-[To be filled]
-
-### Loopholes Found (REFACTOR)
-[To be filled]
+**Expected Coverage**:
+- Custom work item type creation (or adaptation of existing type)
+- Custom fields for probability (1-5), impact (1-5), risk score (calculated)
+- Mitigation plan field
+- Risk owner assignment
+- Query for high-priority risks (score > 12)
+- Dashboard widgets (risk board, risk trend chart)
+- State workflow (Identified → Assessed → Mitigating → Closed/Accepted)
 
 ---
 
-## Scenario 6: Hybrid Setup - GitHub + Azure DevOps
+## Scenario 5: Automated Metrics Collection in GitHub
 
-### Context
-- Code in GitHub (developer preference)
-- Work tracking in Azure DevOps (management requirement)
-- **Complexity**: Two platforms to integrate
-- Level 3 project
+**Context**: Level 3 project, GitHub, need to collect DORA metrics automatically (MA process area).
 
-### User Request
-"Can we use GitHub for code and Azure DevOps for work items? How do we maintain traceability?"
+**User Request**: "We need to track deployment frequency, lead time, and change failure rate in GitHub. Can you show me how to automate metrics collection using GitHub Actions and display them on a dashboard?"
 
-### Expected Behavior
-- Multi-platform scenario guidance
-- Azure Boards + GitHub integration
-- Traceability via AB# references in commits
-- Sync mechanisms
-- Trade-offs (complexity vs. stakeholder needs)
-- Decision: possible but adds overhead
+**Success Criteria**:
+1. Agent identifies correct reference sheet (GitHub Measurement)
+2. Agent provides GitHub Actions workflow for metrics collection
+3. Agent covers DORA metrics calculation logic
+4. Agent mentions storage (GitHub API, database, or artifact)
+5. Agent provides dashboard/visualization approach
 
-### Baseline Behavior (RED)
-[To be filled]
-
-### With Skill (GREEN)
-[To be filled]
-
-### Loopholes Found (REFACTOR)
-[To be filled]
+**Expected Coverage**:
+- GitHub Actions workflow triggered on deployment events
+- API queries for commit → deploy timestamps (lead time)
+- Deployment counting (deployment frequency)
+- Failed deployment detection (change failure rate)
+- Metrics storage options (GitHub Packages artifacts, external DB, API)
+- Visualization options (GitHub Insights, Grafana, custom dashboard)
+- Scheduled metric calculation (weekly/monthly aggregation)
 
 ---
 
-## Scenario 7: Platform Migration - GitHub to Azure DevOps
+## Baseline Testing Questions
 
-### Context
-- 2-year project on GitHub
-- Organization standardizing on Azure DevOps
-- **Sunk cost**: All history in GitHub
-- **Concern**: Lose traceability during migration
-- Level 3 project
+For each scenario, test WITHOUT the skill:
 
-### User Request
-"We're migrating from GitHub to Azure DevOps. How do we preserve our CMMI compliance?"
+1. **Can the agent find the right information?** (Retrieval)
+   - Do they know which CMMI process area applies?
+   - Do they know where to look in GitHub/Azure DevOps?
 
-### Expected Behavior
-- Migration strategy guidance
-- Export/import patterns (Git history, work items)
-- Parallel operation period
-- Update traceability links
-- Audit trail preservation
-- Timeline: 2-4 weeks for migration
+2. **Can they apply the information correctly?** (Application)
+   - Do they provide specific, actionable steps?
+   - Do they give working examples?
+   - Do they cover edge cases?
 
-### Baseline Behavior (RED)
-[To be filled]
-
-### With Skill (GREEN)
-[To be filled]
-
-### Loopholes Found (REFACTOR)
-[To be filled]
+3. **Are common use cases covered?** (Coverage)
+   - Are critical features mentioned?
+   - Are integration points explained?
+   - Are alternatives discussed?
 
 ---
 
-## Scenario 8: Audit Trail Requirements
+## Expected Baseline Gaps
 
-### Context
-- Financial system (SOX compliance)
-- Need 7-year audit trail
-- Using GitHub
-- Worried about retention policies
-
-### User Request
-"How do we ensure our GitHub audit trail meets SOX retention requirements?"
-
-### Expected Behavior
-- Audit trail in GitHub reference sheet
-- Commit history retention (permanent in Git)
-- PR review history (GitHub retention settings)
-- Action logs (retention policies)
-- Backup strategy for compliance
-- References compliance mapping for SOX specifics
-
-### Baseline Behavior (RED)
-[To be filled]
-
-### With Skill (GREEN)
-[To be filled]
-
-### Loopholes Found (REFACTOR)
-[To be filled]
-
----
-
-## Success Criteria
-
-platform-integration skill is ready when:
-
-- [ ] All 8+ scenarios provide actionable guidance
-- [ ] GitHub implementation patterns (5 reference sheets)
-- [ ] Azure DevOps implementation patterns (5 reference sheets)
-- [ ] Platform selection criteria (decision matrix)
-- [ ] Migration strategies (both directions)
-- [ ] Hybrid scenarios handled
-- [ ] Audit trail guidance for both platforms
-- [ ] References to process skills for WHAT (this skill is HOW)
+Without the skill, agents may:
+1. Provide generic advice without platform-specific steps
+2. Miss CMMI requirements (e.g., bidirectional traceability, audit trail)
+3. Not know about platform features (CODEOWNERS, multi-stage pipelines, custom work items)
+4. Give partial solutions without end-to-end implementation
+5. Not connect CMMI process areas to platform capabilities
+6. Skip verification/monitoring setup
+7. Provide outdated or deprecated approaches
+8. Miss compliance/audit requirements
+9. Not explain trade-offs between approaches
+10. Forget to mention tool limitations or workarounds
