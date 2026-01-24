@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, Python engineering, web backend, DevOps, game development, security, documentation, and UX skills for Claude Code - 24 complete skillpacks with 165+ TDD-validated skills",
-    "version": "3.1.1",
+    "description": "Professional AI/ML, Python engineering, web backend, DevOps, game development, security, documentation, and UX skills for Claude Code - 25 complete skillpacks with 165+ TDD-validated skills",
+    "version": "3.2.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -88,6 +88,19 @@
         "technical-debt",
         "engineering",
         "methodology"
+      ],
+      "category": "development"
+    },
+    {
+      "name": "axiom-planning",
+      "source": "./plugins/axiom-planning",
+      "description": "TDD-validated implementation planning with comprehensive anti-rationalization defenses - atomic task breakdown, complete code examples, exact file paths - 1 skill with test scenarios",
+      "keywords": [
+        "axiom",
+        "planning",
+        "implementation",
+        "tdd-validated",
+        "documentation"
       ],
       "category": "development"
     },

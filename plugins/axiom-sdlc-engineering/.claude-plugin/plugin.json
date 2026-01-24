@@ -1,0 +1,35 @@
+{
+  "name": "axiom-sdlc-engineering",
+  "version": "1.0.0",
+  "description": "CMMI-based SDLC framework (Levels 2-4) with GitHub/Azure DevOps integration - comprehensive process guidance for high-quality software development",
+  "category": "development",
+  "keywords": [
+    "axiom",
+    "sdlc",
+    "cmmi",
+    "process",
+    "governance",
+    "requirements",
+    "quality",
+    "github",
+    "azure-devops",
+    "maturity",
+    "traceability",
+    "verification",
+    "validation"
+  ],
+  "suggestedPlugins": [
+    "axiom-python-engineering",
+    "axiom-web-backend",
+    "axiom-engineering-foundations",
+    "ordis-quality-engineering",
+    "muna-technical-writer"
+  ],
+  "compatibleWith": {
+    "axiom-python-engineering": ">=1.0.0",
+    "axiom-web-backend": ">=1.0.0",
+    "axiom-engineering-foundations": ">=1.0.0",
+    "ordis-quality-engineering": ">=1.0.0",
+    "muna-technical-writer": ">=1.0.0"
+  }
+}

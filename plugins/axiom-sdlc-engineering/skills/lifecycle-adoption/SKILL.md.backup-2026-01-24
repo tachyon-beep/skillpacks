@@ -1,0 +1,3440 @@
+---
+name: lifecycle-adoption
+description: Incrementally adopt CMMI practices on existing projects without starting over - bootstrapping, retrofitting, and change management
+---
+
+# Lifecycle Adoption
+
+## Overview
+
+This skill guides **incremental CMMI adoption** on existing projects without halting development. Whether you're starting a new project with CMMI from day one or retrofitting practices onto a 5-year-old codebase, this skill provides strategies for:
+
+- **Parallel tracks adoption**: New work follows new process, legacy code exempt
+- **Retrofitting existing systems**: Adding traceability, CM, testing, and metrics to running projects
+- **Change management**: Overcoming team resistance and executive skepticism
+- **Right-sizing practices**: Scaling from 2-person teams to large organizations
+- **Managing transitions**: Tool migrations, process changes, audit preparation
+
+**Reference**: See `docs/sdlc-prescription-cmmi-levels-2-4.md` Section 9 (Adoption Guide) for complete policy.
+
+### When to Use This Skill
+
+Use this skill when:
+
+- **Starting new project**: Bootstrapping CMMI Level 2/3/4 from day one
+- **Mid-project adoption**: Adding CMMI to active development without stopping
+- **Audit preparation**: Retrofitting traceability/documentation for upcoming compliance review
+- **Tool migration**: Changing platforms (GitHub ↔ Azure DevOps) while maintaining compliance
+- **Team resistance**: Developers push back on "process overhead"
+- **Executive skepticism**: Need to demonstrate ROI for CMMI investment
+
+### What This Skill Covers
+
+**High-Level Guidance:**
+- The Parallel Tracks Strategy (don't stop development)
+- Incremental vs. Big Bang Adoption
+- Quick Wins vs. Foundational Practices
+- Team Size Adaptations (2 developers to 50+)
+
+**Reference Sheets (On-Demand):**
+1. **Maturity Assessment** - Gap analysis, current state mapping, prioritization
+2. **Incremental Adoption Roadmap** - Phased rollout, pilot projects, scaling strategies
+3. **Retrofitting Requirements** - Adding traceability to existing features
+4. **Retrofitting Configuration Management** - Adopting branching strategies mid-project
+5. **Retrofitting Quality Practices** - Adding tests and reviews to legacy code
+6. **Retrofitting Measurement** - Establishing baselines without historical data
+7. **Managing the Transition** - Parallel operations, migration strategies, preserving compliance
+8. **Change Management** - Team buy-in, executive sponsorship, demonstrating value
+
+---
+
+## High-Level Guidance
+
+### The Parallel Tracks Strategy
+
+**The Core Principle**: You don't need to stop development to adopt CMMI. Use parallel tracks:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ NEW FEATURES (Follow New Process)                       │
+│ - Requirements tracked in issues                        │
+│ - ADRs for design decisions                            │
+│ - PR reviews required                                   │
+│ - Test coverage enforced                                │
+│ - Full CMMI compliance                                  │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           │ Parallel Development
+                           │
+┌─────────────────────────────────────────────────────────┐
+│ EXISTING CODE (Exempt from Retrofit)                    │
+│ - Legacy code untouched unless modified                │
+│ - Bug fixes follow minimal process                     │
+│ - Critical paths retrofitted selectively               │
+│ - No "rewrite everything" required                     │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Timeline**: 2-3 months to full adoption for typical team (5-10 developers)
+
+**Benefits**:
+- ✅ Development velocity maintained
+- ✅ Team learns gradually (not overwhelmed)
+- ✅ Quick wins demonstrate value
+- ✅ Audit trail created going forward
+
+**Anti-Pattern**: "Big Bang Adoption" - Trying to go from Level 1 to Level 3 overnight. Result: Development freeze, team revolt, incomplete implementation.
+
+### Incremental vs. Big Bang Adoption
+
+| Aspect | Big Bang (❌ Anti-Pattern) | Incremental (✅ Recommended) |
+|--------|---------------------------|------------------------------|
+| **Timeline** | "We're Level 3 starting Monday!" | 2-3 month phased rollout |
+| **Development** | Freeze while implementing | Parallel tracks, continuous shipping |
+| **Team reaction** | Overwhelm, resistance | Gradual learning, buy-in |
+| **Risk** | High (all-or-nothing) | Low (course corrections possible) |
+| **First milestone** | Full compliance | Quick wins (branch protection, PR reviews) |
+
+**Why Big Bang Fails**:
+1. **Cognitive overload**: 11 process areas, 100+ practices = team paralysis
+2. **Business pressure**: "Why aren't we shipping?" within 2 weeks
+3. **Incomplete implementation**: Rushing leads to cargo cult compliance (checklist theater)
+4. **No feedback loop**: Can't learn what works for your team context
+
+**Incremental Approach**:
+1. **Week 1-2**: Quick wins (branch protection, PR templates, issue tracking)
+2. **Week 3-4**: Foundation (CM workflow, basic traceability)
+3. **Week 5-8**: Quality practices (test coverage, peer reviews, ADRs)
+4. **Week 9-12**: Measurement (metrics collection, baselines)
+5. **Month 4+**: Refinement (Level 3 enhancements, continuous improvement)
+
+### Quick Wins vs. Foundational Practices
+
+**Quick Wins** (implement first - immediate value):
+
+| Practice | Time to Implement | Value |
+|----------|------------------|-------|
+| **Branch protection rules** | 30 minutes | Prevents force pushes, lost work |
+| **PR review requirement** | 1 hour | Catches bugs before merge |
+| **Issue templates** | 2 hours | Structured requirement capture |
+| **CI/CD basic pipeline** | 1 day | Automated testing, faster feedback |
+| **ADR template** | 1 hour | Decision documentation starts |
+
+**Foundational Practices** (implement second - enables maturity):
+
+| Practice | Time to Implement | Enables |
+|----------|------------------|---------|
+| **Requirements traceability** | 1-2 weeks | Audit trail, impact analysis |
+| **Branching workflow (GitFlow/Trunk)** | 1 week + training | Release management, parallel dev |
+| **Test coverage baseline** | 2-3 weeks | Quality metrics, regression prevention |
+| **Metrics collection** | 2-4 weeks | Baselines, trend analysis, process improvement |
+| **Risk register** | 1 week | Proactive risk management |
+
+**Strategy**: Lead with quick wins to demonstrate value, then invest in foundations while team is bought in.
+
+### Team Size Adaptations
+
+**2-3 Person Team** (Minimal Viable CMMI):
+- Target: Level 2 (Managed)
+- **REQM**: GitHub Issues as requirements
+- **CM**: Feature branches + PR review (both review each other)
+- **VER**: Automated tests only, no formal test plan
+- **Documentation**: Minimal (ADRs for major decisions, no formal specs)
+- **Effort**: 5% of project time on process
+
+**4-10 Person Team** (Sweet Spot):
+- Target: Level 3 (Defined)
+- **REQM**: Work items with acceptance criteria, RTM via tool
+- **CM**: GitFlow or GitHub Flow, 2 reviewers required
+- **VER**: Test coverage >80%, formal peer review checklist
+- **Documentation**: Standard templates, comprehensive ADRs
+- **Effort**: 10-15% of project time on process
+
+**11-30 Person Team** (Organizational Standard):
+- Target: Level 3 → Level 4
+- **REQM**: Requirements templates, formal elicitation
+- **CM**: Branching strategy document, release management
+- **VER**: Test plans (IEEE 829), defect density tracking
+- **Documentation**: Architecture review board, design reviews
+- **Effort**: 15-20% of project time on process
+
+**30+ Person Team** (Full CMMI):
+- Target: Level 4 (Quantitatively Managed)
+- **All Level 3 practices** +
+- **Metrics**: Statistical process control, baselines, prediction models
+- **Roles**: Dedicated process owner, metrics analyst
+- **Effort**: 20-25% of project time on process
+
+#### Enforcement Mechanisms for 2-Person Teams
+
+**Problem**: 2-person teams lack independent oversight (no tech lead, no manager, no external review). Under deadline pressure, teams can exploit this to APPEAR compliant while AVOIDING actual work. The following mechanisms prevent gaming specifically for small teams.
+
+##### 16. External Review Requirement (Prevents: Rubber-stamp review between friends)
+
+**Problem**: Alice and Bob approve each other's PRs instantly with "LGTM". Lines 377-402 assume tech lead exists to audit reviews, but 2-person teams have no tech lead.
+
+**Enforcement for 2-person teams**:
+- **Quarterly external review**: Advisor, consultant, or rotating peer from another team reviews 10% of PRs
+  - Check: Review time >5 min/100 LOC?
+  - Check: Substantive comments present?
+  - Check: Issues caught in review?
+
+- **Automation-enforced minimum time**: GitHub Action BLOCKS merge if review time <5 min/100 LOC
+  - Not just flagging—actual blocking
+  - Example: `gh-review-time-enforcer` Action checks PR opened time vs. approved time
+
+- **Self-audit requirement**: Monthly, team reviews their own review metrics
+  - Median review time
+  - % of reviews with substantive comments
+  - Bugs caught in review count
+  - Documented action items if metrics decline
+
+**Accountability**: External reviewer reports to executive sponsor quarterly
+
+##### 17. Written Requirements Mandate (Prevents: Verbal-only work)
+
+**Problem**: "We discussed this at lunch" excuse. Team implements features based on verbal agreement, creates GitHub Issues retroactively.
+
+**Enforcement for 2-person teams**:
+- **Explicit prohibition**: "GitHub Issue MUST exist BEFORE PR is created. No exceptions for 'we discussed it verbally.' Even for 2-person teams."
+
+- **Timestamp verification**:
+  - Issue created date < PR created date (automated check)
+  - GitHub Action fails PR if no linked issue exists
+  - Cannot close an issue created AFTER the PR was opened
+
+- **Pre-implementation requirement**:
+  - PR template includes: "Issue #XXX was created on [date], BEFORE implementation began on [date]"
+  - Automated check: `git log --all --since="ISSUE_CREATED_DATE" | grep "first commit for this feature"`
+
+- **Audit trail**: Issue creation timestamps are immutable in GitHub API (cannot be backdated)
+
+**Red flag**: >20% of PRs have Issues created within 1 hour of PR creation → retroactive documentation, investigate
+
+##### 18. ADR Timing Verification (Prevents: Backdating architectural decisions)
+
+**Problem**: Team makes architectural decision to use MongoDB verbally, implements it, then writes ADR backdated 3 weeks to appear compliant.
+
+**Enforcement for 2-person teams**:
+- **Timing requirement**: "ADRs MUST be committed BEFORE implementation begins. Use git commit timestamps to verify."
+
+- **Automated verification**:
+  - ADR commit timestamp < first implementation commit timestamp
+  - Example: ADR for "Use MongoDB" committed Jan 10 → first MongoDB code committed Jan 12 ✅
+  - Example: ADR committed Jan 20, MongoDB code committed Jan 10 ❌ → retroactive ADR detected
+
+- **Emergency exception process**:
+  - If decision made under time pressure WITHOUT ADR: Create ADR within 24 hours AND mark "Status: Retroactive"
+  - Justification required: "Decision made [date] due to [emergency reason], documented retroactively [date]"
+  - Limit: 2 retroactive ADRs per quarter
+
+**Verification command**:
+```bash
+# Check ADR timing for MongoDB decision
+ADR_DATE=$(git log --format=%ai -- docs/adr/0005-use-mongodb.md | tail -1)
+FIRST_MONGO_COMMIT=$(git log --all --grep="mongodb" --format=%ai | tail -1)
+if [[ "$ADR_DATE" > "$FIRST_MONGO_COMMIT" ]]; then
+  echo "ERROR: ADR was backdated"
+fi
+```
+
+##### 19. Solo Emergency Protocol (Prevents: Skipping review when partner unavailable)
+
+**Problem**: Production bug at 9 PM Friday, only Alice available (Bob traveling). Alice merges without review claiming "emergency + no reviewer available."
+
+**Enforcement for 2-person teams**:
+- **Preferred path**: 4-hour async review (partner reviews from phone/laptop remotely)
+  - Slack/email notification
+  - Review via GitHub mobile app acceptable
+  - 4 hours allows cross-timezone support
+
+- **If truly solo** (partner completely unreachable):
+  1. Implement fix and merge with `emergency-solo` tag
+  2. Within 48 hours: External reviewer (advisor/consultant/peer) reviews the change
+  3. If external reviewer finds issues: Document as lessons learned, fix immediately
+
+- **Hard limits**:
+  - 1 solo emergency per quarter without external review
+  - >1 solo emergency/quarter → requires process change (e.g., hire on-call contractor for review)
+  - Cannot claim "partner unavailable" >3 times in 6 months
+
+- **Abuse detection**: Track who claims "solo emergency"
+  - If same person claims this >3x in 6 months → requires investigation
+  - Possible issue: Partner deliberately making themselves unavailable to avoid review work
+
+**Red flag**: >4 solo emergencies per year → 2-person team is understaffed, need third person or external review arrangement
+
+##### 20. Admin Bypass Audit (Prevents: GitHub admin bypass enabled)
+
+**Problem**: Team enables branch protection but checks "Allow administrators to bypass these settings." Branch protection appears enabled in audit, but both can bypass it.
+
+**Enforcement for 2-person teams**:
+- **Configuration verification**: Use GitHub API to verify bypass is DISABLED
+  ```bash
+  gh api repos/{owner}/{repo}/branches/main/protection | jq -r '.enforce_admins.enabled'
+  # Must return: true (admins are NOT allowed to bypass)
+  ```
+
+- **Weekly automated audit**: GitHub Action checks branch protection settings
+  ```yaml
+  name: Audit Branch Protection
+  on:
+    schedule:
+      - cron: '0 9 * * 1'  # Every Monday 9 AM
+
+  jobs:
+    audit:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Check admin bypass disabled
+          run: |
+            ENFORCE=$(gh api repos/${{ github.repository }}/branches/main/protection | jq -r '.enforce_admins.enabled')
+            if [ "$ENFORCE" != "true" ]; then
+              echo "ERROR: Admin bypass is enabled! Disable immediately."
+              exit 1
+            fi
+  ```
+
+- **Separation of duties** (CRITICAL):
+  - **Option A**: Third person (advisor/consultant) has admin privileges, core team has "write" permissions only
+  - **Option B**: Both team members are admins, but GitHub Actions enforces settings weekly
+  - **Option C**: Use GitHub organization settings to prevent admins from disabling branch protection
+
+- **Audit evidence**: Screenshot of branch protection settings required for quarterly external review
+
+**Red flag**: Admin bypass enabled → immediate security/compliance violation, must be disabled within 24 hours
+
+---
+
+**Summary: 2-Person Team Enforcement**
+
+These 5 mechanisms require **external verification** (advisor, consultant, or automation) since 2-person teams cannot self-police:
+
+1. **Quarterly external PR review** (can't audit themselves)
+2. **Automated timestamp checks** (prevent retroactive documentation)
+3. **Git commit verification** (ADRs before implementation)
+4. **External review for solo emergencies** (when partner truly unavailable)
+5. **Weekly automation audit** (GitHub settings enforcement)
+
+**Cost**: 4-6 hours per quarter for external reviewer + 1 day initial automation setup
+
+### When NOT to Retrofit Everything
+
+**Selective Retrofitting Principle**: Not all legacy code needs full CMMI compliance.
+
+**DO retrofit**:
+- ✅ Critical path features (security, payment processing, data integrity)
+- ✅ High-change areas (frequent bugs, ongoing development)
+- ✅ Audit-required components (regulated functionality)
+- ✅ New features (all new work follows new process)
+
+**DON'T retrofit**:
+- ❌ Stable, low-risk code (hasn't changed in 6+ months)
+- ❌ Deprecated features (scheduled for removal)
+- ❌ Prototypes and throwaway code
+- ❌ Well-tested legacy code with no known issues
+
+**Risk-Based Decision Matrix**:
+
+```
+High Change Frequency │ RETROFIT    │ RETROFIT    │
+                      │ (Full)      │ (Selective) │
+─────────────────────┼─────────────┼─────────────┤
+Low Change Frequency  │ RETROFIT    │ EXEMPT      │
+                      │ (Critical)  │             │
+                      └─────────────┴─────────────┘
+                        High Risk     Low Risk
+```
+
+**Example**: 100 features shipped over 2 years
+- **10 critical features** (payment, auth, data sync) → Full retrofit (requirements, tests, ADRs)
+- **30 active features** (ongoing development) → Selective retrofit (traceability only)
+- **60 stable features** (no changes in 6+ months) → Exempt (document as legacy)
+
+**Time savings**: Retrofitting 40 features instead of 100 = 60% effort reduction
+
+### Common Objections and Responses
+
+**Objection 1**: "CMMI will slow us down"
+
+**Response**:
+- Acknowledge: "Poorly implemented process DOES slow teams down. Let's avoid that."
+- Show lightweight Level 2 approach (not bureaucracy)
+- Quick wins demonstrate value: "Branch protection prevented 3 lost-work incidents this month"
+- Data: Teams with code review find bugs 60% faster than those without (Microsoft Research)
+
+**Objection 2**: "We're too small for CMMI"
+
+**Response**:
+- Level 2 works for 2-person teams (see Team Size Adaptations above)
+- GitHub Issues + PR reviews + ADRs = minimal overhead, maximum audit trail
+- Automation reduces burden (GitHub Actions, not manual checklists)
+- Small teams benefit MORE from process (no redundancy to catch errors)
+
+**Objection 3**: "We're agile, CMMI is waterfall"
+
+**Response**:
+- CMMI is methodology-agnostic (works with Scrum, Kanban, XP)
+- Map CMMI to sprints: REQM in planning, VER in reviews, VAL in demos
+- User stories = requirements, ADRs = design, sprint retro = process improvement
+- See prescription Section 6.2 for Agile workflow mapping
+
+**Objection 4**: "It's too late to change mid-project"
+
+**Response**:
+- Parallel tracks mean you don't change existing code
+- New features follow new process starting TODAY
+- Retrofitting is selective (critical paths only)
+- 2-3 month transition is feasible even on 2-year-old projects
+
+**Objection 5**: "We don't have time for this"
+
+**Response**:
+- Time pressure is exactly why you need process (reduce rework, catch bugs early)
+- Quick wins (branch protection, PR reviews) take <1 day to implement
+- ROI calculation: 1 hour of code review saves 5 hours of debugging (industry average)
+- Audit failure costs MORE time than incremental adoption
+
+### Red Flags: Thoughts That Mean "STOP"
+
+If you or the user are thinking these thoughts, STOP and reconsider:
+
+| Thought | Reality | What to Do Instead |
+|---------|---------|-------------------|
+| **"Let's do a big bang rollout"** | 95% failure rate for big bang CMMI adoption | Use parallel tracks: new work follows new process, old code exempt |
+| **"We'll retrofit everything before starting new work"** | Analysis paralysis, development freeze | Selective retrofit (30% critical features), parallel new development |
+| **"We're too small for CMMI"** | 2-person teams can do Level 2 in 1 week | Show team size adaptation table (Level 2 = minimal viable) |
+| **"CMMI = waterfall, we're agile"** | CMMI is methodology-agnostic | Map CMMI to sprint ceremonies (RD in planning, VER in review) |
+| **"Let's wait until the project is done"** | Post-hoc compliance is 10x harder | Start now with parallel tracks, minimal disruption |
+| **"We need perfect compliance from day one"** | Perfectionism kills adoption | Incremental: 30% → 50% → 70% compliance over 3 months |
+| **"Process first, then demonstrate value"** | Team will revolt before seeing benefits | Quick wins first (branch protection Day 1), then deeper practices |
+| **"Everyone must follow the same process"** | One-size-fits-all fails | Tailoring by team size, risk, and domain |
+| **"We'll add tests after the feature is done"** | "Later" = never | Require tests for all new code NOW, retrofit selectively |
+| **"Management just needs to mandate it"** | Top-down mandates create cargo cult compliance | Involve team in process design, demonstrate value, then enforce |
+
+### Rationalization Table
+
+Common rationalizations that undermine adoption (and how to counter them):
+
+| Rationalization | Pattern | Counter |
+|----------------|---------|---------|
+| **"Just this once we'll skip [practice]"** | Slippery slope | "Just this once" becomes "every time". Enforce consistently from Day 1. |
+| **"We're in a hurry, no time for [practice]"** | Time pressure override | "Hurry is why we NEED process. Skipping reviews = 5x more debugging time later." |
+| **"This feature is too small for [practice]"** | Scope minimization | "Small changes cause big bugs. All features follow process, no exceptions." |
+| **"The process is slowing us down"** | Productivity panic | "Initial 10% slowdown, long-term 30% speedup. Measure before/after." |
+| **"We already do code review informally"** | Informal = good enough | "Informal = inconsistent. 8 of last 10 PRs had no review (check GitHub)." |
+| **"Our team is experienced, we don't make mistakes"** | Overconfidence | "Last month: 12 production bugs. Experience ≠ infallibility." |
+| **"We'll fix the process later"** | Procrastination | "Process debt compounds like technical debt. Fix now or pay 10x later." |
+| **"The audit is months away"** | Distant deadline | "Process takes 2-3 months to stabilize. Start now or fail audit." |
+| **"Let's use our own process, not CMMI"** | Not invented here | "Your process likely duplicates CMMI. Map it, fill gaps, save time." |
+| **"We need to finish this sprint first"** | Perpetual deferral | "Every sprint will have 'just one more thing'. Parallel tracks start TODAY." |
+| **"This is too bureaucratic"** | Fear of overhead | "Level 2 = branch protection + PR template. That's not bureaucracy." |
+| **"Our old process worked fine"** | Status quo bias | "13 bugs last quarter, 45% of time on rework. That's not 'fine'." |
+
+**How to use this table:**
+- When user or team member says a rationalization, identify the pattern
+- Respond with the counter (data-driven, not defensive)
+- Redirect to the appropriate reference sheet for concrete guidance
+
+### Enforcement Mechanisms (Closing Loopholes)
+
+The following mechanisms prevent common loophole exploits discovered through adversarial testing:
+
+#### 1. Emergency Bypass Process (Prevents: "Just this once" abuse)
+
+**Problem**: Developers claim "emergency" to skip process for urgent features.
+
+**Enforcement**:
+- Emergency hotfixes STILL require 1 reviewer (async approval acceptable within 4 hours)
+- Commit tagged with `emergency-bypass` label
+- Post-hoc documentation required within 24 hours (issue created retroactively, ADR if architecture changed)
+- Monthly retrospective review of all emergency bypasses (>2 per month = process problem, not emergency)
+
+**Template**:
+```markdown
+## Emergency Hotfix Process
+
+**When to use**: Production outage, security vulnerability, data loss prevention ONLY
+
+**Process**:
+1. Create hotfix branch immediately
+2. Implement fix
+3. Request emergency review (Slack @oncall-reviewer)
+4. Reviewer has 4 hours to approve (async acceptable)
+5. Merge with `emergency-bypass` tag
+6. Within 24 hours:
+   - Create GitHub Issue documenting problem + fix
+   - Write ADR if architecture changed
+   - Add tests for the bug (retroactively)
+7. Monthly review: Ensure emergencies are genuine, not process avoidance
+
+**Red flag**: >2 emergencies per month = broken process, not bad luck
+```
+
+#### 2. Adoption Progression Gates (Prevents: Eternal quick-wins loop)
+
+**Problem**: Team implements quick wins (branch protection, PR template) but never progresses to foundations (traceability, test coverage).
+
+**Enforcement**:
+- **Gate 1 (Week 2)**: Quick wins must show measurable value
+  - ✅ 1+ bug caught in PR review
+  - ✅ 0 force-push incidents
+  - ✅ 100% of new PRs use template
+  - ❌ If failed: Troubleshoot before progressing
+
+- **Gate 2 (Week 4)**: Foundation work begun
+  - ✅ 50% of new issues have traceability links (issue # in PR description)
+  - ✅ Branching workflow documented
+  - ✅ 3+ ADRs written for recent decisions
+  - ❌ If failed: Escalate to executive sponsor (adoption stalled)
+
+- **Gate 3 (Week 8)**: Quality practices active
+  - ✅ Test coverage >60% on new code (enforced in CI)
+  - ✅ 100% of PRs reviewed against checklist
+  - ✅ 3+ stakeholder demos completed (VAL process)
+  - ❌ If failed: Roll back to simpler Level 2 target, reassess Level 3 feasibility
+
+**Accountability**: Tech lead reviews gates, reports status to management weekly
+
+#### 3. Risk Assessment Authority (Prevents: Risk-labeling game)
+
+**Problem**: Developers self-label all code as "low risk" to avoid retrofit work.
+
+**Enforcement**:
+- **Objective high-risk criteria** (non-negotiable):
+  - Handles money (payment processing, billing, refunds)
+  - Handles credentials (authentication, authorization, password reset)
+  - Handles PII (customer data, GDPR scope, HIPAA scope)
+  - External integrations (APIs, third-party services)
+  - Data integrity (database writes, backups, migrations)
+
+- **Assessment process**:
+  1. Developer proposes risk level with evidence
+  2. Tech lead or security team validates (2-person sign-off)
+  3. Disputed assessments escalate to architecture review board
+  4. Audit checklist enforced: "Does this code touch money/credentials/PII? → HIGH RISK"
+
+- **Override prevention**: Security/payment/auth modules are HIGH RISK by default (cannot be downgraded without CISO approval)
+
+**Risk Matrix** (non-gameable):
+```
+High Change Frequency │ HIGH RISK    │ HIGH RISK    │
+                      │ (Full Audit) │ (Full Audit) │
+─────────────────────┼──────────────┼──────────────┤
+Low Change Frequency  │ HIGH RISK    │ MEDIUM RISK  │
+                      │ (Critical)   │ (Selective)  │
+                      └──────────────┴──────────────┘
+                        PII/Money/Auth  Other
+```
+
+#### 4. Review Quality Standards (Prevents: Rubber-stamp theater)
+
+**Problem**: PRs get instant "LGTM" approvals with no actual review, gaming the "100% reviewed" metric.
+
+**Enforcement**:
+- **Minimum review time**: 5 minutes per 100 lines of code changed
+  - <2 minute reviews flagged for audit (GitHub PR timestamps)
+  - Pattern of instant approvals = warning to reviewer
+
+- **Substantive comments required**:
+  - At least 1 comment per PR (not just "LGTM" or emoji)
+  - Comment must reference code ("Line 45: What happens if user is null?")
+
+- **Monthly audit**: Tech lead spot-checks 10% of PRs
+  - Verify reviews are thorough (comments show code was read)
+  - If >20% are rubber stamps → reviewer loses approval privileges for 1 month
+
+- **Automation**: GitHub Action to flag instant approvals
+  ```yaml
+  - name: Check review quality
+    run: |
+      # Flag reviews <2 minutes for PRs >100 lines
+      # Post comment: "Review time seems short, please verify thoroughness"
+  ```
+
+**Red flag**: 90%+ of reviews complete in <2 minutes → investigate team culture
+
+#### 5. Pilot Exit Criteria (Prevents: Perpetual pilot limbo)
+
+**Problem**: Team runs endless "pilots" to avoid organization-wide rollout.
+
+**Enforcement**:
+- **Pilot duration**: 4-6 weeks maximum (hard deadline)
+- **Success criteria** (defined before pilot starts):
+  - 80% team satisfaction survey (anonymous)
+  - 1+ measurable improvement (bugs caught in review, cycle time reduced, defect rate decreased)
+  - <5% process exceptions granted during pilot
+
+- **Mandatory rollout decision** (Week 6):
+  - ✅ **Pilot succeeds**: Org-wide adoption begins Week 8 (no second pilot allowed)
+  - ❌ **Pilot fails**: Run retrospective, fix issues, retry ONCE with adjusted process
+  - ⚠️ **Ambiguous**: Default to rollout with tailoring (failure-to-decide = proceed)
+
+- **No perpetual piloting**: Only 2 attempts allowed (initial pilot + 1 retry if failed). After that, escalate to executive decision.
+
+**Accountability**: Executive sponsor reviews pilot results in Week 6, makes go/no-go decision
+
+#### 6. Requirement Depth Standards (Prevents: Shallow requirements speed run)
+
+**Problem**: Under audit pressure, team retrofits 30 features at 1-2 hours each with 3-4 superficial requirements per feature instead of proper depth.
+
+**Enforcement**:
+- **Minimum granularity**: 6-12 functional requirements per moderate-complexity feature
+  - Example: Authentication feature requires 10+ requirements (login flow, session management, error handling, logout, password reset, etc.)
+  - Simple features (settings toggle): 3-5 requirements acceptable
+  - Complex features (payment processing): 15-25 requirements expected
+
+- **Quality gate**: Tech lead reviews 20% sample before audit
+  - Check requirement granularity (not just "System shall authenticate users")
+  - Verify testability (each requirement maps to 1-3 test cases)
+  - Reject if average <5 requirements per feature
+
+- **Time expectation calibration**:
+  - 4-8 hours per moderate feature is REALISTIC (not negotiable)
+  - 1-2 hours = superficial requirements (insufficient for audit)
+  - Retrofit schedule must reflect real effort (30 features = 180-240 hours minimum)
+
+**Red flag**: Completing 5+ feature retrofits per day → requirements too shallow
+
+#### 7. Stakeholder Validation Enforcement (Prevents: "Pending validation" indefinite deferral)
+
+**Problem**: Skill line 1263 says "If stakeholders unavailable: Document as pending validation". Teams exploit this to skip validation entirely under audit pressure.
+
+**Clarification**:
+- **"Pending validation" is NOT acceptable for audit scenarios** (6-week deadline)
+- **Stakeholder validation is MANDATORY before audit** (even if async)
+
+**Enforcement**:
+- **Contact attempts**: 3 documented attempts to reach stakeholder (email, Slack, calendar invite)
+- **Escalation path** (if stakeholder non-responsive):
+  - Week 1: Direct contact (product owner, team lead)
+  - Week 2: Manager escalation
+  - Week 3: Executive sponsor intervention
+  - **If stakeholder truly unavailable**: Use proxy validation (engineering manager who understands product) + document as "Validated by proxy due to [reason], requires confirmation from [stakeholder] by [date]"
+
+- **Quality gate**: No requirements marked "pending validation" at audit time
+  - If stakeholder confirmation arrives post-audit: Document as "Validated by [name] on [date]" (retroactive validation acceptable within 30 days)
+
+**Red flag**: >10% of requirements still "pending validation" at Week 4 → escalate immediately
+
+#### 8. Level 2 vs Level 3 Coverage Clarification (Prevents: 30% escape hatch abuse)
+
+**Problem**: Skill lines 1262-1263 contradict each other. Line 1262 says "30% coverage may be sufficient for Level 2" but context suggests Level 3 audit.
+
+**Clarification**:
+- **Level 2 (Managed)**: 30-40% coverage of CRITICAL features acceptable
+  - Focuses on high-risk features (authentication, payment, PII handling)
+  - Audit accepts selective retrofitting with risk justification
+
+- **Level 3 (Defined)**: 80-100% coverage of ALL shipped features required
+  - Organizational standard applies uniformly
+  - Audit expects comprehensive traceability
+  - 30% coverage = audit failure at Level 3
+
+**Enforcement**:
+- **Determine audit level FIRST** (Week 0):
+  - Ask auditor: "Are we being assessed for Level 2 or Level 3?"
+  - Document in project plan
+
+- **Prevent downgrade gaming**:
+  - If organization claims Level 3: Cannot selectively claim Level 2 for this project
+  - Auditor decides scope, not project manager
+
+- **Coverage calculation**:
+  - Level 2: % of critical features with requirements (target 30-50%)
+  - Level 3: % of ALL features with requirements (target 80-100%)
+
+**Red flag**: PM unilaterally decides "we're only Level 2" to justify 30% coverage → verify with auditor
+
+#### 9. Tool-Based RTM Requirement (Prevents: Spreadsheet escape hatch)
+
+**Problem**: Skill line 1243-1245 presents spreadsheet as "minimal" option. Teams use this to avoid tool-based traceability at Level 3.
+
+**Clarification**:
+- **Level 2**: Spreadsheet RTM acceptable (manual maintenance)
+- **Level 3**: Tool-based RTM required (GitHub Projects, Azure DevOps Queries, Jira)
+  - Rationale: Organizational standard requires automated enforcement
+  - Spreadsheets break over time (no CI integration)
+
+**Enforcement**:
+- **For Level 3 audits**:
+  - Spreadsheet = audit finding (insufficient traceability mechanism)
+  - Must use platform-integrated tool (issue tracking system)
+
+- **Migration timeline** (if starting with spreadsheet):
+  - Week 1-2: Spreadsheet for initial inventory (acceptable bootstrap)
+  - Week 3-4: Migrate to GitHub/ADO (use import tools)
+  - Week 5+: Tool-based RTM only (spreadsheet deprecated)
+
+- **Quality gate**: CI check verifies issue refs in code
+  - Example: GitHub Actions checks all new code has `// See #123` comments
+  - Prevents traceability breakage over time
+
+**Exception**: Level 2 audits can use spreadsheets if documented and maintained
+
+#### 10. Dark Matter Feature Detection (Prevents: Hiding undocumented features)
+
+**Problem**: Skill line 1227 acknowledges "dark matter" risk but provides no audit-proof detection mechanism. Teams can hide 20% of shipped features by claiming ignorance.
+
+**Enforcement**:
+- **Feature inventory verification** (Week 1):
+  - Code analysis: `git log --all --oneline | grep -i "feat:"` (find feature commits)
+  - Route analysis: Scan API endpoints, URL routes, CLI commands
+  - UI audit: Walkthrough of all screens/menus
+  - Stakeholder workshop: Product owner lists features from memory
+
+- **Cross-validation**:
+  - Compare 4 lists above (code commits, routes, UI audit, stakeholder memory)
+  - Discrepancies = potential dark matter
+  - Example: API endpoint `/admin/secret-feature` not in stakeholder list → investigate
+
+- **Quality gate**: External reviewer spot-checks 10 random code sections
+  - Ask: "What feature does this code implement?"
+  - If reviewer finds undocumented feature → requires explanation
+  - Prevents "we forgot" excuse
+
+- **Honesty enforcement**:
+  - Document feature discovery process in audit evidence
+  - If dark matter found during audit: Major finding (shows inadequate inventory process)
+  - Better to find and document BEFORE audit than hide and get caught
+
+**Red flag**: Feature count suspiciously low compared to codebase size (e.g., 50K LOC but only 20 features) → likely missing dark matter
+
+---
+
+## Reference Sheets
+
+The following reference sheets provide detailed, step-by-step guidance for specific adoption scenarios. Each sheet follows the standard format: Purpose & Context, CMMI Level Scaling (L2/L3/L4), Implementation Guidance, Anti-Patterns, and Tool Integration.
+
+**Available Reference Sheets**:
+1. Maturity Assessment
+2. Incremental Adoption Roadmap
+3. Retrofitting Requirements
+4. Retrofitting Configuration Management
+5. Retrofitting Quality Practices
+6. Retrofitting Measurement
+7. Managing the Transition
+8. Change Management
+
+When you need detailed guidance on any of these topics, ask for the specific reference sheet.
+
+---
+
+## Reference Sheet 1: Maturity Assessment
+
+### Purpose & Context
+
+**What this achieves**: Systematic gap analysis between current state and target CMMI level
+
+**When to apply**:
+- Before starting adoption (understand where you are)
+- During pilot project (baseline current practices)
+- After 6 months (measure progress)
+
+**Prerequisites**:
+- Target CMMI level identified (Level 2, 3, or 4)
+- Willingness to honestly assess current state (no sandbagging)
+
+### CMMI Maturity Scaling
+
+#### Level 2: Managed (Assessment)
+
+**Assessment Focus**: Do basic project management practices exist?
+
+**Key Questions**:
+- Are requirements documented before implementation?
+- Is version control used consistently?
+- Are work products reviewed before release?
+- Are changes tracked and controlled?
+- Is testing performed systematically?
+
+**Assessment Method**: Simple checklist (yes/no)
+
+**Time Required**: 2-4 hours interview + observation
+
+#### Level 3: Defined (Assessment)
+
+**Assessment Focus**: Are practices standardized across the organization?
+
+**Key Questions** (in addition to Level 2):
+- Do organizational process templates exist?
+- Are processes tailored per project with justification?
+- Are peer reviews formal with checklists?
+- Are organizational baselines maintained?
+- Is training provided for process execution?
+
+**Assessment Method**: Process documentation review + practice observation + interview
+
+**Time Required**: 1-2 days
+
+#### Level 4: Quantitatively Managed (Assessment)
+
+**Assessment Focus**: Is process performance measured statistically?
+
+**Key Questions** (in addition to Level 3):
+- Are quantitative process objectives set?
+- Are statistical baselines established with control limits?
+- Is process performance monitored with control charts?
+- Are predictions made from quantitative models?
+- Are out-of-control signals analyzed for root cause?
+
+**Assessment Method**: Metrics analysis + statistical review + prediction model validation
+
+**Time Required**: 3-5 days
+
+### Implementation Guidance
+
+#### Quick Start Checklist
+
+**Step 1: Define Scope** (30 minutes)
+- [ ] Identify target CMMI level (2, 3, or 4)
+- [ ] Define project/organization boundary (single project vs. department vs. company)
+- [ ] Select 1-2 projects as representative samples
+
+**Step 2: Gather Evidence** (2-8 hours depending on level)
+- [ ] Review existing documentation (requirements, design docs, test plans)
+- [ ] Examine version control history (branching, commit messages, PR reviews)
+- [ ] Check issue tracker (requirements tracking, traceability)
+- [ ] Interview 3-5 team members (different roles: dev, QA, PM)
+- [ ] Observe 1-2 ceremonies (sprint planning, design review, code review)
+
+**Step 3: Score Current Practices** (1-2 hours)
+
+Use this scoring rubric per process area:
+
+| Score | Meaning | Evidence |
+|-------|---------|----------|
+| **0 - Not Performed** | Practice doesn't exist | No documentation, no mentions in interviews |
+| **1 - Ad Hoc** | Practice performed inconsistently | Some evidence, but not systematic |
+| **2 - Managed (L2)** | Practice performed per plan for projects | Documented plan, executed on projects |
+| **3 - Defined (L3)** | Organizational standard exists, tailored per project | Template exists, tailoring documented |
+| **4 - Quantitative (L4)** | Statistical process control applied | Metrics collected, control charts used |
+
+**Example Scoring**:
+
+| Process Area | Current Score | Evidence | Gap to Target (L3) |
+|--------------|--------------|----------|-------------------|
+| REQM | 1 (Ad Hoc) | Requirements in email threads, no tracking | 2 levels |
+| CM | 2 (Managed) | Git used, no branching strategy | 1 level |
+| VER | 1 (Ad Hoc) | Manual testing only, no reviews | 2 levels |
+| DAR | 0 (Not Performed) | Decisions undocumented | 3 levels |
+
+**Step 4: Prioritize Gaps** (1 hour)
+
+Use this prioritization framework:
+
+```
+High Priority = High Risk × High Value × Low Effort
+```
+
+**Risk-Based Prioritization**:
+
+| Gap | Risk if Not Addressed | Value if Addressed | Effort | Priority |
+|-----|----------------------|-------------------|--------|----------|
+| No CM workflow | High (lost work, conflicts) | High (prevents issues) | Low (1 day) | **CRITICAL** |
+| No traceability | Medium (audit failure) | High (compliance) | Medium (2 weeks) | **HIGH** |
+| No formal reviews | Medium (bugs escape) | Medium (quality) | Low (1 week) | **HIGH** |
+| No metrics | Low (no improvement) | Medium (insight) | High (1 month) | **MEDIUM** |
+
+**Step 5: Create Gap Closure Roadmap** (1-2 hours)
+
+Map gaps to adoption phases:
+
+- **Phase 1 (Quick Wins)**: Critical priority, low effort (CM workflow, PR templates)
+- **Phase 2 (Foundations)**: High priority, medium effort (traceability, test coverage)
+- **Phase 3 (Enhancements)**: Medium priority, high effort (metrics, baselines)
+- **Phase 4 (Continuous Improvement)**: Long-term evolution
+
+#### Templates & Examples
+
+**Maturity Assessment Template**:
+
+```markdown
+# CMMI Maturity Assessment
+
+**Project**: [Name]
+**Date**: [YYYY-MM-DD]
+**Assessor**: [Name]
+**Target Level**: Level [2/3/4]
+
+## Process Area Scores
+
+| Process Area | Current | Target | Gap | Priority |
+|--------------|---------|--------|-----|----------|
+| REQM | [0-4] | [2/3/4] | [#] | [C/H/M/L] |
+| RD | [0-4] | [2/3/4] | [#] | [C/H/M/L] |
+| TS | [0-4] | [2/3/4] | [#] | [C/H/M/L] |
+| CM | [0-4] | [2/3/4] | [#] | [C/H/M/L] |
+| PI | [0-4] | [2/3/4] | [#] | [C/H/M/L] |
+| VER | [0-4] | [2/3/4] | [#] | [C/H/M/L] |
+| VAL | [0-4] | [2/3/4] | [#] | [C/H/M/L] |
+| DAR | [0-4] | [2/3/4] | [#] | [C/H/M/L] |
+| RSKM | [0-4] | [2/3/4] | [#] | [C/H/M/L] |
+| MA | [0-4] | [2/3/4] | [#] | [C/H/M/L] |
+
+## Top 5 Gaps (Priority Order)
+
+1. **[Process Area]**: [Description] - [Effort estimate]
+2. **[Process Area]**: [Description] - [Effort estimate]
+3. **[Process Area]**: [Description] - [Effort estimate]
+4. **[Process Area]**: [Description] - [Effort estimate]
+5. **[Process Area]**: [Description] - [Effort estimate]
+
+## Recommended Adoption Roadmap
+
+- **Month 1**: [Quick wins]
+- **Month 2**: [Foundations]
+- **Month 3**: [Enhancements]
+```
+
+**Filled Example** (2-person startup, no process):
+
+```markdown
+# CMMI Maturity Assessment
+
+**Project**: PaymentGateway API
+**Date**: 2026-01-24
+**Assessor**: John (Tech Lead)
+**Target Level**: Level 2 (Managed)
+
+## Process Area Scores
+
+| Process Area | Current | Target | Gap | Priority |
+|--------------|---------|--------|-----|----------|
+| REQM | 0 | 2 | 2 | HIGH |
+| CM | 1 (Git, no workflow) | 2 | 1 | CRITICAL |
+| VER | 0 (manual only) | 2 | 2 | HIGH |
+| DAR | 0 | 2 | 2 | MEDIUM |
+
+## Top 5 Gaps
+
+1. **CM Workflow**: No branching strategy, force pushes common - 1 day to implement
+2. **REQM**: Requirements in Slack, not tracked - 2 days to set up GitHub Issues
+3. **VER**: No code review, no automated tests - 1 week for basic CI + review policy
+4. **DAR**: Decisions undocumented - 1 hour to create ADR template
+5. **VAL**: No stakeholder acceptance process - 2 days to set up demo process
+
+## Recommended Adoption Roadmap
+
+- **Week 1**: CM workflow (branch protection, PR template), GitHub Issues for REQM
+- **Week 2**: Basic CI (linting, unit tests), code review policy
+- **Week 3**: ADR template, first 3 ADRs for existing decisions
+- **Week 4**: Stakeholder demo process, acceptance criteria in issues
+```
+
+### Common Anti-Patterns
+
+| Anti-Pattern | Why It Fails | Better Approach |
+|--------------|--------------|-----------------|
+| **Sandbagging Assessment** | Claiming worse state than reality to show "improvement" | Honest baseline enables realistic roadmap |
+| **Optimism Bias** | "We're almost Level 3!" when barely Level 1 | Use evidence-based scoring, external validation |
+| **Analysis Paralysis** | Spending 2 months on assessment | Time-box to 2-4 hours for Level 2, 1-2 days for Level 3 |
+| **One-Size-Fits-All** | Using same assessment for 2-person and 50-person teams | Scale assessment depth to team size/risk |
+| **Ignoring Assessment Results** | Conduct assessment but don't act on gaps | Turn gaps into actionable roadmap immediately |
+
+### Tool Integration
+
+**GitHub Approach**:
+- **Evidence**: Review repository (branch protection rules, PR history, Issues, Actions)
+- **Scoring**: Count PRs with reviews, calculate % issues with labels/milestones
+- **Automation**: GitHub API to pull metrics (review rate, test coverage)
+
+**Azure DevOps Approach**:
+- **Evidence**: Review work item queries, branch policies, pipeline history
+- **Scoring**: Analytics views for work item completion, pipeline success rate
+- **Automation**: OData queries for process compliance metrics
+
+**Tool-Agnostic Approach**:
+- **Evidence**: Interview team, observe ceremonies, review any documentation
+- **Scoring**: Manual checklist-based assessment
+- **Automation**: N/A (use for very small teams or tool-less environments)
+
+### Verification & Validation
+
+**How to verify this assessment is accurate**:
+- Cross-check with 2+ team members (do they agree on current state?)
+- Compare with observable evidence (don't rely solely on claims)
+- Pilot a practice (does "we do code review" match reality in 10 random PRs?)
+- External validation (peer from another team reviews assessment)
+
+**Common failure modes**:
+- **Assessment shows gaps, team denies them** → Show evidence (check 10 PRs, find 8 with no review)
+- **Assessment shows no gaps, audit finds violations** → Insufficient evidence gathering, biased sample
+- **Roadmap created but not followed** → Lack of executive support, competing priorities (see Change Management sheet)
+
+### Related Practices
+
+- **Next step after assessment**: See Reference Sheet 2 (Incremental Adoption Roadmap)
+- **If gaps include traceability**: See Reference Sheet 3 (Retrofitting Requirements)
+- **If gaps include CM**: See Reference Sheet 4 (Retrofitting Configuration Management)
+- **If team resists findings**: See Reference Sheet 8 (Change Management)
+
+---
+
+## Reference Sheet 2: Incremental Adoption Roadmap
+
+### Purpose & Context
+
+**What this achieves**: Phased rollout plan for CMMI practices over 2-3 months
+
+**When to apply**:
+- After maturity assessment (you know the gaps)
+- Before starting adoption (need structured plan)
+- When pivoting from "big bang" to incremental approach
+
+**Prerequisites**:
+- Maturity assessment complete (know current and target state)
+- Executive sponsorship secured (at least tentative approval)
+- Team aware of adoption plan (no surprise mandates)
+
+### CMMI Maturity Scaling
+
+#### Level 2: Managed (Adoption Roadmap)
+
+**Adoption Strategy**: Basic practices in 1 month
+
+**Phases**:
+1. **Week 1**: CM workflow (branching, PR reviews)
+2. **Week 2**: REQM (issue tracking, basic traceability)
+3. **Week 3**: VER (CI with basic tests, code review policy)
+4. **Week 4**: Consolidation (team training, process refinement)
+
+**Pilot Project**: Not required (can adopt organization-wide for Level 2)
+
+**Rollout Approach**: All projects simultaneously (practices are lightweight)
+
+#### Level 3: Defined (Adoption Roadmap)
+
+**Adoption Strategy**: Pilot → Scale → Refine over 3 months
+
+**Phases**:
+1. **Month 1**: Pilot project with comprehensive practices
+2. **Month 2**: Scale to 2-3 additional projects
+3. **Month 3**: Organization-wide rollout
+
+**Pilot Project**: Required (validate templates, identify issues)
+
+**Rollout Approach**: Wave-based (pilot → early adopters → majority → laggards)
+
+#### Level 4: Quantitatively Managed (Adoption Roadmap)
+
+**Adoption Strategy**: Data infrastructure → Baselines → SPC over 6+ months
+
+**Phases**:
+1. **Month 1-2**: Establish metrics collection infrastructure
+2. **Month 3-4**: Gather data, calculate initial baselines
+3. **Month 5-6**: Implement control charts, train on SPC
+4. **Month 7+**: Quantitative management, prediction models
+
+**Pilot Project**: Required (prove feasibility of quantitative approach)
+
+**Rollout Approach**: Sequential (must have data before SPC)
+
+### Implementation Guidance
+
+#### Quick Start Checklist
+
+**Phase 0: Preparation** (1 week before adoption)
+- [ ] Maturity assessment complete
+- [ ] Target level selected and justified
+- [ ] Executive sponsor identified
+- [ ] Team informed (no surprise announcements)
+- [ ] Tools selected (GitHub, Azure DevOps, etc.)
+
+**Phase 1: Quick Wins** (Week 1-2)
+- [ ] CM: Branch protection rules enabled
+- [ ] CM: PR template created
+- [ ] REQM: Issue templates set up
+- [ ] VER: Basic CI pipeline (linting)
+- [ ] Team Training: 1-hour workshop on new workflow
+
+**Deliverables**: Branch protection active, first 5 PRs using template, 10 issues created with template
+
+**Phase 2: Foundations** (Week 3-6)
+- [ ] REQM: Traceability policy (PRs reference issues)
+- [ ] CM: Branching workflow documented and enforced
+- [ ] VER: Test coverage target set (e.g., 70%)
+- [ ] TS: ADR template created, first 3 ADRs written
+- [ ] Team Training: 2-hour workshop on traceability and ADRs
+
+**Deliverables**: 90% of PRs reference issues, branching workflow adopted, 10 ADRs documenting major decisions
+
+**Phase 3: Quality Practices** (Week 7-10)
+- [ ] VER: Code review checklist created
+- [ ] VER: Test coverage enforced in CI
+- [ ] VAL: Stakeholder demo process established
+- [ ] RSKM: Risk register template created
+- [ ] Team Training: Peer review best practices
+
+**Deliverables**: 100% of PRs reviewed against checklist, test coverage >70%, 3 stakeholder demos completed
+
+**Phase 4: Measurement** (Week 11-12)
+- [ ] MA: Metrics collection automated (velocity, defect rate, coverage)
+- [ ] MA: Dashboard created (Grafana, GitHub Insights, Azure Analytics)
+- [ ] Retrospective: Lessons learned from adoption
+- [ ] Process refinement based on feedback
+
+**Deliverables**: Metrics dashboard live, baselines calculated, process tailoring documented
+
+#### Pilot Project Selection
+
+**Criteria for pilot project**:
+
+| Criterion | Why Important | Example |
+|-----------|---------------|---------|
+| **Medium complexity** | Not trivial (won't test practices), not critical (can tolerate issues) | 5-10K LOC, 2-4 developers, 3-6 month timeline |
+| **Representative** | Practices must work for typical projects | Uses common tech stack, similar team structure |
+| **Supportive team** | Early adopters willing to give feedback | Developers open to process experimentation |
+| **Visible success** | Demonstrates value to rest of organization | Launches publicly, has metrics to show improvement |
+| **Not time-critical** | Can tolerate learning curve slowdown | Not emergency project or tight external deadline |
+
+**Bad pilot choices**:
+- ❌ Mission-critical production system (too risky)
+- ❌ Prototype with 1 developer (not representative)
+- ❌ 2-year legacy monolith (too complex for first adoption)
+- ❌ Project with skeptical team (will sabotage)
+
+#### Wave-Based Rollout (Level 3)
+
+**Wave 1: Pilot** (Month 1)
+- 1 project, 3-5 developers
+- Comprehensive practices implementation
+- Daily feedback collection
+- Process refinement in real-time
+
+**Wave 2: Early Adopters** (Month 2)
+- 2-3 projects, 10-15 developers
+- Validated practices from pilot
+- Weekly feedback sessions
+- Minor process adjustments
+
+**Wave 3: Majority** (Month 3)
+- Remaining projects
+- Standard templates and checklists
+- Self-service onboarding docs
+- Monthly process review
+
+**Wave 4: Laggards** (Month 4+)
+- Holdout projects (if any)
+- Mandate enforcement (if necessary)
+- Individual coaching
+- Process exceptions granted case-by-case
+
+#### Codebase Size Scaling
+
+**Timeline adjustments based on existing codebase size**:
+
+| Codebase Size | Level 2 Adoption | Level 3 Adoption | Key Challenges |
+|---------------|------------------|------------------|----------------|
+| **Small (1-10K LOC)** | 2-3 weeks | 1-2 months | Minimal retrofitting, quick wins dominate |
+| **Medium (10-50K LOC)** | 1-2 months | 2-4 months | Moderate retrofitting, selective coverage acceptable |
+| **Large (50-200K LOC)** | 2-4 months | 4-6 months | Extensive retrofitting, requires prioritization |
+| **Very Large (200K+ LOC)** | 4-6 months | 6-12 months | Massive retrofitting effort, multi-team coordination |
+
+**Effort scaling factors**:
+
+**Retrofitting Requirements** (Reference Sheet 3):
+- 1-10K LOC: 20-40 hours (1 week)
+- 10-50K LOC: 80-160 hours (3-4 weeks)
+- 50-200K LOC: 240-480 hours (6-12 weeks)
+- 200K+ LOC: 600-1200 hours (15-30 weeks)
+
+**Retrofitting CM** (Reference Sheet 4):
+- 1-10K LOC: 1-2 days (cleanup minimal branches)
+- 10-50K LOC: 1-2 weeks (moderate branch cleanup, migration)
+- 50-200K LOC: 3-4 weeks (extensive history, many active branches)
+- 200K+ LOC: 6-8 weeks (multi-repo coordination, complex history)
+
+**Retrofitting Quality Practices** (Reference Sheet 5):
+- 1-10K LOC: 1-2 weeks (write initial tests)
+- 10-50K LOC: 4-6 weeks (selective test coverage)
+- 50-200K LOC: 12-16 weeks (extensive test gap analysis)
+- 200K+ LOC: 24-32 weeks (multi-team test strategy)
+
+**Team size interaction**:
+
+| Team Size | Small Codebase | Large Codebase | Coordination Overhead |
+|-----------|----------------|----------------|----------------------|
+| **2-4 developers** | 2-3 months | 6-9 months | Low (direct communication) |
+| **5-10 developers** | 2-4 months | 4-8 months | Medium (need coordination meetings) |
+| **10-20 developers** | 3-5 months | 6-12 months | High (formal coordination process) |
+| **20+ developers** | 4-6 months | 9-18 months | Very high (multi-team orchestration) |
+
+**Red flags**:
+- Promising <1 month adoption for 50K+ LOC codebase → unrealistic
+- Not adjusting timeline for codebase size → guaranteed failure
+- Treating 10K LOC and 200K LOC identically → shows lack of understanding
+
+**Calibration guideline**: Use 200 LOC per developer-day as baseline for analysis effort (understanding existing code, documenting requirements, writing tests). Adjust for complexity and quality of existing code.
+
+#### Templates & Examples
+
+**3-Month Incremental Adoption Roadmap (Level 3)**:
+
+```markdown
+# CMMI Level 3 Adoption Roadmap
+
+**Organization**: Acme Software Inc.
+**Target Level**: Level 3 (Defined)
+**Timeline**: 3 months (Jan-Mar 2026)
+**Pilot Project**: Mobile App Redesign
+
+## Month 1: Pilot (Mobile App Team)
+
+### Week 1-2: CM & REQM
+- ✅ GitHub repository with branch protection
+- ✅ GitFlow workflow documented
+- ✅ Issue templates for features/bugs
+- ✅ PR template with checklist
+- **Training**: 2-hour Git workflow workshop
+- **Success Metric**: 100% PRs follow template
+
+### Week 3-4: TS & VER
+- ✅ ADR template + first 5 ADRs
+- ✅ Code review checklist
+- ✅ CI pipeline with tests + coverage
+- ✅ Test coverage target: 80%
+- **Training**: 2-hour code review workshop
+- **Success Metric**: All PRs reviewed, coverage >80%
+
+## Month 2: Scale to Early Adopters
+
+### Wave 2 Projects:
+- Backend API Refactor (5 devs)
+- Data Pipeline Modernization (4 devs)
+
+### Rollout:
+- Week 5: Onboarding sessions (1 hour per team)
+- Week 6-8: Adoption with coach support
+- **Deliverables**: Same as pilot (branch protection, templates, ADRs, CI)
+- **Success Metric**: 90% compliance with standards
+
+## Month 3: Organization-Wide Rollout
+
+### Remaining Projects: All (20 developers across 5 projects)
+
+### Rollout:
+- Week 9: Self-service onboarding docs published
+- Week 10: Team-by-team adoption
+- Week 11: Compliance review
+- Week 12: Retrospective and refinement
+
+### Deliverables:
+- All projects using standard templates
+- 50+ ADRs documenting decisions
+- Organizational metrics dashboard live
+- Process tailoring guide published
+
+## Success Criteria
+
+- [ ] 100% of projects using CM workflow
+- [ ] 95% of PRs reference issues (traceability)
+- [ ] 90% test coverage across all projects
+- [ ] 50+ ADRs documenting key decisions
+- [ ] Metrics dashboard showing baselines
+- [ ] <5 process exceptions granted
+```
+
+### Common Anti-Patterns
+
+| Anti-Pattern | Why It Fails | Better Approach |
+|--------------|--------------|-----------------|
+| **Big Bang Adoption** | Overwhelming, no learning, high failure rate | Phased rollout over 3 months |
+| **No Pilot** | Untested templates, organization-wide pain | Pilot on 1 project, refine, then scale |
+| **Too Many Pilots** | Fragmented, no clear winner | 1-2 pilots max, standardize quickly |
+| **Pilot Forever** | Never scale beyond initial project | Hard deadline for scaling (Month 2) |
+| **Forced Rollout** | Team revolt, cargo cult compliance | Involve team in tailoring, demonstrate value |
+
+### Tool Integration
+
+**GitHub**:
+- **Phase 1**: Enable branch protection, create templates (Settings → Branches, .github/)
+- **Phase 2**: Enforce issue references in PRs (GitHub Actions check)
+- **Phase 3**: Required status checks (CI must pass), required reviewers
+- **Phase 4**: GitHub Insights for metrics
+
+**Azure DevOps**:
+- **Phase 1**: Branch policies, work item templates
+- **Phase 2**: Linked work items required, PR templates
+- **Phase 3**: Build validation policies, test coverage gates
+- **Phase 4**: Analytics views, dashboards
+
+### Verification & Validation
+
+**How to verify adoption is on track**:
+- Weekly spot checks (review 5 random PRs, do they follow template?)
+- Metrics tracking (% PRs with issue refs, test coverage trend)
+- Team feedback sessions (is process helping or hindering?)
+- External audit (peer review from another team/organization)
+
+**Common failure modes**:
+- **Pilot succeeds, scaling fails** → Insufficient training materials, lack of coach support
+- **Compliance drops after Month 1** → No enforcement, competing priorities, no demonstrated value
+- **Teams create workarounds** → Process is too bureaucratic, needs tailoring
+- **Executives pull support** → No visible ROI, need quick wins and metrics
+
+### Related Practices
+
+- **Before creating roadmap**: See Reference Sheet 1 (Maturity Assessment)
+- **During rollout if team resists**: See Reference Sheet 8 (Change Management)
+- **If traceability is a gap**: See Reference Sheet 3 (Retrofitting Requirements)
+- **If CM is a gap**: See Reference Sheet 4 (Retrofitting Configuration Management)
+
+---
+
+## Reference Sheet 3: Retrofitting Requirements
+
+### Purpose & Context
+
+**What this achieves**: Add requirements traceability to features already shipped
+
+**When to apply**:
+- Pre-audit compliance (need RTM for existing features)
+- Incident analysis (need to trace which requirements led to this code)
+- Impact analysis (which features affected by this change?)
+
+**Prerequisites**:
+- Existing codebase with shipped features
+- Access to stakeholders/product owners (for validation)
+- Tool for traceability (GitHub Issues, Azure DevOps Work Items, etc.)
+
+### CMMI Maturity Scaling
+
+#### Level 2: Managed (Retrofitting Requirements)
+
+**Approach**: Manual reverse engineering for critical features only
+
+**Traceability Target**:
+- Critical/high-risk features documented (30-40% of features)
+- Traceability via issue references in code comments or commit messages
+- Spreadsheet RTM (Excel/Google Sheets)
+
+**Effort**: 2-4 hours per feature (10 features = 20-40 hours)
+
+**Audit Sufficiency**: Yes (Level 2 allows selective traceability)
+
+#### Level 3: Defined (Retrofitting Requirements)
+
+**Approach**: Systematic reverse engineering + stakeholder validation
+
+**Traceability Target**:
+- All shipped features documented (100%)
+- Bidirectional traceability (requirements ↔ code ↔ tests)
+- Tool-based RTM (GitHub Projects, Azure DevOps Queries)
+
+**Effort**: 4-8 hours per feature (100 features = 400-800 hours)
+
+**Audit Sufficiency**: Yes (with justification for pre-traceability era)
+
+#### Level 4: Quantitatively Managed (Retrofitting Requirements)
+
+**Approach**: Statistical sampling + risk-based prioritization
+
+**Traceability Target**:
+- Statistical sample of features (95% confidence interval)
+- Quantitative risk assessment to prioritize which features to retrofit
+- Automated traceability checks going forward
+
+**Effort**: Reduced via sampling (50 features instead of 100 with statistical validity)
+
+**Audit Sufficiency**: Yes (statistical sampling is acceptable for Level 4)
+
+### Implementation Guidance
+
+#### Quick Start Checklist
+
+**Step 1: Inventory Features** (2-4 hours)
+- [ ] List all shipped features from release notes, changelog, or product backlog
+- [ ] Categorize by risk (critical, high, medium, low)
+- [ ] Identify "dark matter" (shipped but undocumented features)
+
+**Example** (100 shipped features):
+- 10 critical (payment, auth, data integrity)
+- 30 high (core user flows)
+- 40 medium (secondary features)
+- 20 low (nice-to-haves, experimental)
+
+**Step 2: Prioritize for Retrofit** (1 hour)
+
+Use risk-based prioritization:
+
+```
+Retrofit Priority = (Regulatory Impact) × (Change Frequency) × (Defect History)
+```
+
+| Feature | Regulatory | Change Freq | Defect History | Priority |
+|---------|-----------|-------------|----------------|----------|
+| Payment Processing | Critical (PCI DSS) | High (monthly) | 5 bugs | **CRITICAL** |
+| User Auth | Critical (HIPAA) | Medium (quarterly) | 2 bugs | **HIGH** |
+| Settings Page | None | Low (yearly) | 0 bugs | **LOW** |
+
+**Retrofitting Target** (for 6-week audit prep):
+- ✅ All critical features (10)
+- ✅ Top 20 high-risk features (20)
+- ⏸ Defer medium/low (70 features)
+- **Total**: 30 features (30% coverage, 70% risk reduction)
+
+**Step 3: Reverse Engineer Requirements** (4-8 hours per feature)
+
+For each feature to retrofit:
+
+**Method 1: Code Analysis**
+- Read implementation code
+- Identify key behaviors (inputs, outputs, validations)
+- Extract implicit requirements
+
+**Example**: Payment processing feature
+- Code reveals: "Accept Visa/MC/Amex, validate CVV, encrypt card data, call Stripe API"
+- Reverse engineered requirements:
+  - REQ-PAY-001: System shall accept Visa, MasterCard, American Express
+  - REQ-PAY-002: System shall validate CVV (3 or 4 digits)
+  - REQ-PAY-003: System shall encrypt card data before transmission
+  - REQ-PAY-004: System shall integrate with Stripe payment API
+
+**Method 2: Test Analysis**
+- Read test cases (unit, integration, E2E)
+- Tests reveal intended behavior
+- Convert test scenarios to requirements
+
+**Example**: Test case `test_payment_rejects_invalid_cvv()`
+- Reverse engineered requirement: REQ-PAY-005: System shall reject payments with invalid CVV
+
+**Method 3: Documentation Mining**
+- Review design docs, ADRs, meeting notes
+- Extract requirements mentioned in decisions
+- Consolidate into structured requirements
+
+**Step 4: Stakeholder Validation** (1-2 hours per feature)
+
+- Present reverse-engineered requirements to product owner/stakeholder
+- Ask: "Are these the requirements you intended?"
+- Capture missing requirements (undocumented features)
+- Resolve conflicts (intended behavior vs. actual behavior)
+
+**Step 5: Create Traceability** (1 hour per feature)
+
+**GitHub Approach**:
+- Create GitHub Issue for each reverse-engineered requirement
+- Label: `requirement`, `retrofitted`, `feature-name`
+- Link to code: Add issue number in code comment or commit message
+- Link to tests: Reference tests in issue description
+
+**Example**:
+```python
+# Payment processing implementation
+# Requirements: #123, #124, #125 (retrofitted 2026-01-24)
+def process_payment(card_number, cvv, amount):
+    # REQ-PAY-001: Accept Visa/MC/Amex
+    if not validate_card_type(card_number):
+        raise InvalidCardError
+    # REQ-PAY-002: Validate CVV
+    if not validate_cvv(cvv):
+        raise InvalidCVVError
+    ...
+```
+
+**Azure DevOps Approach**:
+- Create Work Item (type: Requirement) for each requirement
+- Link to code via commit associations
+- Link to tests via test plan references
+- Query-based RTM: "Show all requirements for Feature X"
+
+**Step 6: Document Retrofit in RTM** (30 minutes total)
+
+Create lightweight RTM showing retrofitted traceability:
+
+```markdown
+# Requirements Traceability Matrix (Retrofitted Features)
+
+**Note**: Features shipped before 2026-01-01 have retrospectively documented requirements as part of CMMI adoption. Traceability established via code analysis, test analysis, and stakeholder validation.
+
+| Requirement ID | Feature | Source Code | Tests | Status | Retrofit Date |
+|----------------|---------|-------------|-------|--------|---------------|
+| REQ-PAY-001 | Payment | payment.py:45 | test_payment.py:12 | Validated | 2026-01-24 |
+| REQ-PAY-002 | Payment | payment.py:67 | test_payment.py:34 | Validated | 2026-01-24 |
+| REQ-AUTH-001 | Auth | auth.py:23 | test_auth.py:8 | Validated | 2026-01-24 |
+...
+```
+
+#### Templates & Examples
+
+**Reverse Engineering Template**:
+
+```markdown
+# Feature: [Name]
+
+**Retrofit Date**: YYYY-MM-DD
+**Analyst**: [Name]
+**Stakeholder Validator**: [Name]
+
+## Reverse Engineered Requirements
+
+### From Code Analysis
+
+- REQ-XXX-001: [Requirement extracted from code]
+- REQ-XXX-002: [Requirement extracted from code]
+
+### From Test Analysis
+
+- REQ-XXX-003: [Requirement extracted from tests]
+- REQ-XXX-004: [Requirement extracted from tests]
+
+### From Documentation
+
+- REQ-XXX-005: [Requirement found in ADR/design doc]
+
+## Stakeholder Validation
+
+- ✅ Validated by [Name] on [Date]
+- Missing requirements identified:
+  - REQ-XXX-006: [Previously undocumented]
+- Conflicts resolved:
+  - REQ-XXX-002: Updated per stakeholder feedback
+
+## Traceability
+
+- **Code**: [File paths and line numbers]
+- **Tests**: [Test file paths]
+- **GitHub Issues**: #123, #124, #125
+```
+
+**Filled Example**:
+
+```markdown
+# Feature: Two-Factor Authentication (2FA)
+
+**Retrofit Date**: 2026-01-24
+**Analyst**: John (Tech Lead)
+**Stakeholder Validator**: Alice (Product Owner)
+
+## Reverse Engineered Requirements
+
+### From Code Analysis (auth.py)
+
+- REQ-AUTH-010: System shall support TOTP-based 2FA (RFC 6238)
+- REQ-AUTH-011: System shall generate QR code for authenticator app setup
+- REQ-AUTH-012: System shall validate 6-digit TOTP codes with 30-second window
+- REQ-AUTH-013: System shall provide backup codes (10 codes, single-use)
+
+### From Test Analysis (test_2fa.py)
+
+- REQ-AUTH-014: System shall reject invalid TOTP codes
+- REQ-AUTH-015: System shall prevent reuse of backup codes
+- REQ-AUTH-016: System shall allow 2FA reset via email for locked accounts
+
+### From Documentation (ADR-042-2fa-implementation.md)
+
+- REQ-AUTH-017: System shall use Google Authenticator-compatible TOTP
+- REQ-AUTH-018: System shall store backup codes hashed (bcrypt)
+
+## Stakeholder Validation
+
+- ✅ Validated by Alice on 2026-01-24
+- Missing requirements identified:
+  - REQ-AUTH-019: System shall allow users to disable 2FA (Alice: "This was implied but not documented")
+- Conflicts resolved:
+  - REQ-AUTH-012: Window was 60 seconds in code but should be 30 (fixed in PR #456)
+
+## Traceability
+
+- **Code**: `auth.py:234-456`, `totp.py:12-89`
+- **Tests**: `test_2fa.py:45-234`
+- **GitHub Issues**: #789 (2FA feature), #790 (backup codes), #791 (QR generation)
+```
+
+### Common Anti-Patterns
+
+| Anti-Pattern | Why It Fails | Better Approach |
+|--------------|--------------|-----------------|
+| **Retrofit Everything** | 100 features × 6 hours = 600 hours (4 person-months) | Risk-based: 30 critical features × 6 hours = 180 hours |
+| **Fake Requirements** | Writing requirements to match code (not stakeholder needs) | Stakeholder validation required |
+| **No Validation** | Reverse-engineered reqs never checked with product owner | 1-hour validation session per feature |
+| **Traceability Theater** | Create requirements but don't actually link to code | Bidirectional links enforced |
+| **Ignore Dark Matter** | Only document known features, miss undocumented ones | Code analysis reveals undocumented features |
+
+### Tool Integration
+
+**GitHub**:
+- **Issues as requirements**: Create issue per requirement, label `requirement` + `retrofitted`
+- **Code links**: Use issue refs in comments: `// See #123 for requirement`
+- **Test links**: Reference tests in issue description
+- **RTM**: GitHub Project board with columns: Requirements | Code | Tests | Validated
+
+**Azure DevOps**:
+- **Work Items**: Type = Requirement, State = Retrofitted
+- **Code links**: Associated commits feature
+- **Test links**: Test plan integration
+- **RTM**: Query-based: "SELECT Requirements WHERE Tags CONTAINS 'Retrofitted'"
+
+**Spreadsheet (Minimal)**:
+- Excel/Google Sheets with columns: Requirement ID, Description, Code File, Test File, Validated By, Date
+- Manual maintenance (update when code changes)
+
+### Verification & Validation
+
+**How to verify retrofit is complete**:
+- Sample check: Pick 5 random critical features, verify requirements exist and link to code
+- Stakeholder sign-off: Product owner confirms all critical features documented
+- Audit dry-run: External reviewer checks RTM for completeness
+
+**Common failure modes**:
+- **Requirements don't match code** → Reverse engineering errors, need code review
+- **Stakeholder disagrees with requirements** → Conflict between intended vs. actual behavior, may reveal bugs
+- **Traceability breaks over time** → No enforcement for new changes, need CI check
+
+### Related Practices
+
+- **After retrofit**: Enforce traceability going forward (see requirements-lifecycle skill)
+- **If audit is imminent**: Prioritize ruthlessly (30% coverage may be sufficient for Level 2)
+- **If stakeholders unavailable**: Document as "Derived from code analysis, pending validation"
+
+---
+
+## Reference Sheet 4: Retrofitting Configuration Management
+
+### Purpose & Context
+
+**What this achieves**: Adopt branching workflow and CM practices mid-project without chaos
+
+**When to apply**:
+- Git workflow is chaotic (force pushes, merge conflicts, lost work)
+- Need to establish branching strategy on active project
+- Team frustrated with current CM practices
+
+**Prerequisites**:
+- Git repository exists (not migrating version control systems)
+- Team willing to learn new workflow
+- Management supports brief transition period
+
+### CMMI Maturity Scaling
+
+#### Level 2: Managed (Retrofitting CM)
+
+**Approach**: Minimal viable workflow immediately
+
+**Practices to Adopt**:
+- Branch protection (prevent force pushes to main)
+- Feature branches (isolate work)
+- PR workflow (review before merge)
+- Basic release tagging
+
+**Timeline**: 1-2 days to implement, 1-2 weeks to stabilize
+
+**Training**: 1-hour Git workshop
+
+#### Level 3: Defined (Retrofitting CM)
+
+**Approach**: Documented workflow with organizational standard
+
+**Practices to Adopt** (beyond Level 2):
+- GitFlow or GitHub Flow (documented strategy)
+- Branching naming convention
+- Merge policies (squash vs. merge commit)
+- Release management process
+- CODEOWNERS file
+
+**Timeline**: 1 week to implement, 1 month to fully adopt
+
+**Training**: 2-hour workshop + written docs
+
+#### Level 4: Quantitatively Managed (Retrofitting CM)
+
+**Approach**: Metrics-driven CM with statistical monitoring
+
+**Practices to Adopt** (beyond Level 3):
+- Branch metrics (age, size, merge time)
+- Merge conflict rate tracking
+- Statistical baselines for CM health
+- Automated workflow enforcement
+
+**Timeline**: 2-3 weeks to implement metrics
+
+**Training**: Metrics interpretation
+
+### Implementation Guidance
+
+#### Quick Start Checklist
+
+**Step 1: Assess Current CM Chaos** (1 hour)
+
+Identify pain points:
+- [ ] Force pushes causing lost work?
+- [ ] Merge conflicts daily/weekly?
+- [ ] No clear release process?
+- [ ] Difficulty tracking what's in production?
+- [ ] Team members working on same files without coordination?
+
+**Step 2: Choose Workflow** (30 minutes)
+
+| Workflow | Best For | Complexity |
+|----------|----------|------------|
+| **GitHub Flow** | Continuous deployment, small teams | Low |
+| **GitFlow** | Scheduled releases, larger teams | Medium |
+| **Trunk-Based** | Very frequent deploys, mature CI/CD | Low (but requires discipline) |
+
+**Recommendation for retrofitting**: Start with **GitHub Flow** (simplest), evolve to GitFlow if needed.
+
+**Step 3: Enable Branch Protection** (15 minutes)
+
+GitHub:
+- Settings → Branches → Add rule for `main`
+- ✅ Require pull request before merging
+- ✅ Require approvals (1-2 reviewers)
+- ✅ Dismiss stale approvals when new commits pushed
+- ✅ Require status checks to pass (CI)
+- ✅ Do not allow bypassing (even for admins)
+
+Azure DevOps:
+- Repos → Branches → `main` → Branch Policies
+- ✅ Require minimum 1-2 reviewers
+- ✅ Check for linked work items
+- ✅ Build validation (CI pipeline must pass)
+
+#### 21. Fork Security Configuration (Prevents: Fork-based bypass attack)
+
+**Problem**: Developer forks repository, disables branch protection in fork, force-pushes from fork/main back to origin/main to bypass branch protection rules.
+
+**Exploit scenario**:
+1. Friday 5 PM deadline, PR reviews take too long
+2. Developer forks repository to personal account
+3. Disables all protection rules in fork (allowed since it's their repo)
+4. Implements changes, force-pushes within fork
+5. Force-pushes from fork/main to origin/main OR creates fork PR and immediately merges
+6. Bypasses branch protection entirely
+
+**Enforcement for GitHub**:
+
+**Repository Settings**:
+- Settings → Branches → `main` branch protection
+  - ✅ **Restrict who can push to matching branches** (critical setting)
+  - Select: Specific teams/users only (not "Everyone")
+  - This prevents force-push from forks to protected branch
+
+  - ✅ **Require linear history**
+  - Prevents force-push merges (rejects non-fast-forward pushes)
+
+- Settings → Actions → General
+  - ✅ **Require approval for all outside collaborators** (for fork PRs)
+  - Prevents fork-based auto-merge
+
+**GitHub Organizati settings** (if using organization):
+- Settings → Member privileges
+  - ✅ **Base permissions: Read** (not Write)
+  - Prevents fork-based push by default
+  - Grant Write permissions explicitly per repository
+
+**Enforcement for Azure DevOps**:
+
+- Repos → Branches → `main` → Security
+  - ✅ **Remove "Force Push" permission for ALL users** (including Project Administrators)
+  - ✅ **Remove "Bypass policies when pushing"** (including admins)
+
+- Repos → Security → Permissions
+  - ✅ Limit "Contribute" permission to specific teams
+  - Deny "Force push" and "Remove Others' Locks"
+
+**Audit & Detection**:
+
+**Weekly automated audit** (GitHub Action):
+```yaml
+name: Audit Branch Protection & Force Push Attempts
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday 9 AM
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch protection settings
+        run: |
+          # Verify "Restrict who can push" is enabled
+          PROTECTION=$(gh api repos/${{ github.repository }}/branches/main/protection)
+
+          ENFORCE_ADMINS=$(echo "$PROTECTION" | jq -r '.enforce_admins.enabled')
+          if [ "$ENFORCE_ADMINS" != "true" ]; then
+            echo "ERROR: Admin bypass is enabled!"
+            exit 1
+          fi
+
+          RESTRICTIONS=$(echo "$PROTECTION" | jq -r '.restrictions')
+          if [ "$RESTRICTIONS" == "null" ]; then
+            echo "ERROR: No push restrictions configured - fork bypass possible!"
+            exit 1
+          fi
+
+      - name: Check for force-push attempts
+        run: |
+          # Scan git reflog for force-push attempts in last 7 days
+          git fetch --all
+          FORCE_PUSHES=$(git reflog --all --since="1 week ago" | grep -E 'forced|reset --hard' || true)
+          if [ -n "$FORCE_PUSHES" ]; then
+            echo "WARNING: Force-push attempts detected in last 7 days:"
+            echo "$FORCE_PUSHES"
+            # Alert security team
+            curl -X POST ${{ secrets.SLACK_WEBHOOK }} -d "{\"text\":\"Force-push attempt detected on main branch\"}"
+          fi
+```
+
+**Monthly manual audit**:
+- Review GitHub audit log: Settings → Security → Audit log
+- Filter by: "Branch protection rule" actions
+- Check for:
+  - Branch protection disabled
+  - "Restrict who can push" settings changed
+  - Force-push permission grants
+- Any changes require documented justification
+
+**Command to check for force-push attempts** (run locally):
+```bash
+# Check git reflog for force-push attempts in last 30 days
+git fetch --all --reflog
+git reflog --all --date=iso | grep -E 'forced update|reset --hard' | grep -v '30 days ago'
+
+# Check GitHub audit log (requires gh CLI with admin access)
+gh api /repos/{owner}/{repo}/events | jq '.[] | select(.type=="PushEvent" and .payload.forced==true)'
+```
+
+**Red flags**:
+- Multiple failed force-push attempts from same developer → attempting bypass, investigate
+- Force-push attempt from fork → security incident (how did it succeed?)
+- Branch protection settings changed → audit log must show justification
+
+**Incident response**:
+- If force-push detected: Immediate code review of forced commits
+- If malicious: Revert commits, revoke developer access pending investigation
+- If accidental: Developer training on proper workflow
+
+#### 22. Emergency Hotfix Enforcement (Prevents: Disabling branch protection)
+
+**Problem**: Production down at 2 AM Friday. Manager temporarily disables branch protection, developer force-pushes hotfix, manager forgets to re-enable protection. Branch protection remains disabled for days/weeks.
+
+**Critical clarification**: Emergency bypass process (lines 443-472) does NOT mean disabling branch protection. It means FASTER review, not NO review.
+
+**What "emergency" means**:
+- Production outage affecting users
+- Active security vulnerability being exploited
+- Data loss in progress
+
+**What "emergency" does NOT allow**:
+- ❌ Temporarily disabling branch protection rules
+- ❌ Force pushing to protected branches
+- ❌ Merging without ANY review
+- ❌ Skipping CI/CD pipeline entirely
+- ❌ Admin override of protection settings
+
+**Emergency hotfix process (ALL steps required, even at 2 AM)**:
+
+1. **Create hotfix branch** (not push to main):
+   ```bash
+   git checkout main
+   git pull
+   git checkout -b hotfix/prod-outage-description
+   ```
+
+2. **Implement fix, push hotfix branch**:
+   ```bash
+   # Make changes
+   git add .
+   git commit -m "[EMERGENCY] Fix production outage - description"
+   git push -u origin hotfix/prod-outage-description
+   ```
+
+3. **Create PR with [EMERGENCY] prefix**:
+   - Title: `[EMERGENCY] Fix production database connection timeout`
+   - Body: Include severity, impact, affected users, root cause
+
+4. **Request oncall reviewer** (4-hour SLA):
+   - Slack: `@oncall-reviewer EMERGENCY PR #XXX needs immediate review`
+   - PagerDuty: Trigger oncall engineer if reviewer not responding within 1 hour
+   - Reviewer can approve from phone via GitHub mobile app
+
+5. **Reviewer approval within 4 hours**:
+   - Async acceptable (reviewer in different timezone)
+   - Substantive review still required (not rubber-stamp)
+   - Check: Does fix address root cause? Any obvious issues?
+
+6. **Merge via PR** (branch protection STAYS ENABLED):
+   - Use GitHub's "Squash and merge" or "Merge commit"
+   - Branch protection enforces this path
+   - NO force push, NO direct commit to main
+
+7. **Post-hotfix documentation** (within 24 hours):
+   - Create GitHub Issue documenting incident
+   - Write ADR if architectural decision was made under pressure
+   - Add tests for the bug (prevent regression)
+   - Mark issue with `emergency-bypass` label
+
+8. **Monthly review**: All emergency bypasses reviewed in retrospective
+   - >2 emergencies per month = process problem OR abuse
+   - Root cause: Are emergencies preventable with better monitoring?
+
+**Branch protection audit alerts**:
+
+**Real-time alert** (GitHub webhook → Slack/PagerDuty):
+```python
+# GitHub webhook endpoint (hosted on your infrastructure)
+@app.route('/github-webhook', methods=['POST'])
+def github_webhook():
+    event = request.headers.get('X-GitHub-Event')
+    payload = request.json
+
+    # Detect branch protection changes
+    if event == 'branch_protection_rule' and payload['action'] in ['deleted', 'edited']:
+        branch = payload['rule']['name']
+        actor = payload['sender']['login']
+
+        if branch == 'main':
+            # IMMEDIATE ALERT - branch protection changed on main
+            send_alert_to_cto(
+                severity='CRITICAL',
+                message=f'Branch protection for main was {payload["action"]} by {actor}',
+                action='Verify this change was authorized. If not, revert immediately.'
+            )
+
+            # If deleted (disabled), this is a security incident
+            if payload['action'] == 'deleted':
+                create_security_incident(
+                    title='Branch protection disabled on main',
+                    assignee='security-team'
+                )
+
+    return 'OK', 200
+```
+
+**Weekly verification** (GitHub Action):
+```yaml
+name: Verify Branch Protection Never Disabled
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch protection is enabled
+        run: |
+          PROTECTION=$(gh api repos/${{ github.repository }}/branches/main/protection 2>&1)
+
+          if echo "$PROTECTION" | grep -q "Not Found"; then
+            echo "CRITICAL: Branch protection is DISABLED on main!"
+            echo "Re-enabling immediately..."
+
+            # Auto-remediate: Re-enable branch protection with standard settings
+            gh api -X PUT repos/${{ github.repository }}/branches/main/protection \
+              -f "required_pull_request_reviews[required_approving_review_count]=1" \
+              -f "required_status_checks[strict]=true" \
+              -f "enforce_admins=true" \
+              -f "restrictions=null"
+
+            # Alert CTO
+            curl -X POST ${{ secrets.SLACK_WEBHOOK_CTO }} \
+              -d "{\"text\":\"CRITICAL: Branch protection was disabled on main. Auto-remediated, but investigate who disabled it.\"}"
+
+            exit 1
+          fi
+```
+
+**Post-incident review**:
+- If branch protection was disabled: Mandatory post-mortem
+  - Who disabled it?
+  - Why? (claimed reason)
+  - Was there an actual emergency? (verify)
+  - How long was it disabled? (audit log timestamps)
+  - What commits were pushed while disabled? (git log review)
+  - Consequences: Training, policy update, or access revocation
+
+**Red flags**:
+- Branch protection disabled outside of business hours → suspicious (2 AM Friday)
+- Branch protection disabled for >1 hour → forgot to re-enable
+- Same person disables protection >2 times in 6 months → pattern of bypass abuse
+- Force-push immediately after protection disabled → deliberate bypass
+
+**Enforcement**:
+- Automated remediation: Protection auto-re-enables within 6 hours (GitHub Action)
+- Manual audit: CTO reviews ALL protection changes monthly
+- Consequence: Disabling branch protection without documented justification = security incident
+- Access revocation: 2nd unauthorized disable = lose admin access
+
+**Cost**: 4 hours to set up webhooks + GitHub Actions (one-time), 30 minutes/month for audit review
+
+---
+
+**Summary: Git Workflow Enforcement**
+
+These 2 mechanisms close CRITICAL security loopholes:
+
+1. **Fork security**: Prevents force-push from fork to protected branch (restrict push permissions, require linear history, audit force-push attempts)
+2. **Emergency bypass prevention**: Branch protection NEVER gets disabled (real-time alerts, auto-remediation, post-incident review)
+
+**Impact**: Eliminates the 2 trivial bypasses that undermine all other Git workflow enforcement.
+
+**Step 4: Migrate Existing Work** (2-4 hours)
+
+**Current state**: Team working directly on `main` or chaotic branches
+
+**Migration strategy**:
+
+1. **Announce cutover**: "Starting Monday, all work via feature branches"
+2. **Clean up main**:
+   - Merge any pending work-in-progress
+   - Create release tag for current state: `v1.0-pre-workflow`
+3. **Create first feature branch**: Lead by example
+   ```bash
+   git checkout main
+   git pull
+   git checkout -b feature/update-readme
+   # Make changes
+   git push -u origin feature/update-readme
+   # Create PR on GitHub/Azure DevOps
+   ```
+4. **First PR walkthrough**: Team observes, learns process
+
+**Step 5: Document Workflow** (1-2 hours)
+
+Create `docs/git-workflow.md`:
+
+```markdown
+# Git Workflow
+
+## Branching Strategy: GitHub Flow
+
+### For New Features/Bug Fixes
+
+1. **Start from latest main**:
+   ```bash
+   git checkout main
+   git pull origin main
+   ```
+
+2. **Create feature branch**:
+   ```bash
+   git checkout -b feature/short-description
+   # OR for bugs:
+   git checkout -b fix/bug-short-description
+   ```
+
+3. **Make changes, commit frequently**:
+   ```bash
+   git add .
+   git commit -m "Add feature X"
+   git push -u origin feature/short-description
+   ```
+
+4. **Create Pull Request**:
+   - Navigate to GitHub/Azure DevOps
+   - Create PR from your branch to `main`
+   - Fill in PR template
+   - Request 1-2 reviewers
+
+5. **Address review feedback**:
+   - Make changes
+   - Push to same branch (PR updates automatically)
+
+6. **Merge after approval**:
+   - Squash and merge (keeps history clean)
+   - Delete branch after merge
+
+### Release Process
+
+- Tag releases from `main`: `git tag -a v1.2.0 -m "Release 1.2.0"`
+- Push tags: `git push origin v1.2.0`
+- Create GitHub Release with changelog
+
+### Branch Naming Convention
+
+- Features: `feature/short-description`
+- Bug fixes: `fix/short-description`
+- Hotfixes: `hotfix/critical-issue`
+- Experiments: `experiment/what-you-are-trying`
+```
+
+**Step 6: Team Training** (1 hour workshop)
+
+Agenda:
+- Explain why (Git chaos → structured workflow)
+- Demo the workflow (live coding)
+- Practice exercise (everyone creates a feature branch, PR, review, merge)
+- Q&A
+
+**Step 7: Enforce and Monitor** (Ongoing)
+
+- Week 1: Coach each PR individually
+- Week 2: Spot checks (are people following workflow?)
+- Week 3-4: Collect feedback, adjust if needed
+- Month 2+: Workflow becomes second nature
+
+#### Templates & Examples
+
+**PR Template** (`.github/pull_request_template.md`):
+
+```markdown
+## Description
+
+[Brief description of changes]
+
+## Type of Change
+
+- [ ] Bug fix (non-breaking change fixing an issue)
+- [ ] New feature (non-breaking change adding functionality)
+- [ ] Breaking change (fix or feature causing existing functionality to not work as expected)
+
+## How Has This Been Tested?
+
+[Describe testing: unit tests, manual testing, etc.]
+
+## Checklist
+
+- [ ] My code follows the style guidelines
+- [ ] I have performed a self-review
+- [ ] I have commented hard-to-understand code
+- [ ] I have updated documentation
+- [ ] My changes generate no new warnings
+- [ ] I have added tests covering my changes
+- [ ] All tests pass locally
+
+## Related Issues
+
+Closes #[issue number]
+```
+
+### Common Anti-Patterns
+
+| Anti-Pattern | Why It Fails | Better Approach |
+|--------------|--------------|-----------------|
+| **Force Workflow Overnight** | Team revolts, workarounds created | Announce 1 week ahead, provide training |
+| **No Branch Protection** | Workflow optional = not followed | Enforce via GitHub/Azure settings |
+| **Complex Workflow First** | GitFlow too complex for team new to branching | Start simple (GitHub Flow), evolve later |
+| **No Documentation** | Team forgets workflow after training | Written docs + PR template reinforcement |
+| **Admin Bypass** | Managers force-push "just this once" → culture broken | No exceptions, not even for admins |
+
+### Tool Integration
+
+**GitHub**:
+- **Branch protection**: Settings → Branches → Add rule
+- **PR templates**: `.github/pull_request_template.md`
+- **CODEOWNERS**: `.github/CODEOWNERS` (auto-assign reviewers)
+- **Status checks**: Require CI to pass before merge
+
+**Azure DevOps**:
+- **Branch policies**: Repos → Branches → Policies
+- **PR templates**: Repo settings → Pull request templates
+- **Required reviewers**: Branch policies → Automatically include reviewers
+- **Build validation**: Branch policies → Build validation
+
+### Verification & Validation
+
+**How to verify workflow is adopted**:
+- Spot check: Last 10 merges, all via PR? (GitHub Insights → Pull Requests)
+- Zero force pushes to `main` (check Git reflog)
+- 100% of PRs have reviews (GitHub/Azure analytics)
+- Team feedback: Is workflow helping or hindering?
+
+**Common failure modes**:
+- **Workflow abandoned after 2 weeks** → No enforcement, revert to protecting main
+- **Team creates many exceptions** → Workflow too rigid, needs tailoring
+- **Merge conflicts increase** → Branches too long-lived, encourage smaller PRs
+
+### Related Practices
+
+- **After CM workflow stable**: See design-and-build skill for deeper CM practices
+- **If team resists**: See Reference Sheet 8 (Change Management)
+- **If tooling migration needed**: See Reference Sheet 7 (Managing the Transition)
+
+---
+
+## Reference Sheet 5: Retrofitting Quality Practices
+
+### Purpose & Context
+
+**What this achieves**: Add testing and code review to projects with little/no quality assurance
+
+**When to apply**:
+- Legacy code with zero tests
+- No code review culture
+- Production bugs frequent
+- Manual testing only (slow, error-prone)
+
+**Prerequisites**:
+- Codebase exists (not greenfield)
+- Team willing to write tests (may require convincing)
+- CI/CD infrastructure or willingness to set it up
+
+### CMMI Maturity Scaling
+
+#### Level 2: Managed (Retrofitting Quality)
+
+**Approach**: Basic tests + informal code review
+
+**Practices to Adopt**:
+- Unit tests for new code only (don't retrofit everything)
+- PR review requirement (1 approver)
+- Manual testing checklist
+- Basic CI (linting + tests)
+
+**Timeline**: 2 weeks to establish baseline
+
+**Baseline Target**: 30-40% test coverage (new code + critical paths)
+
+#### Level 3: Defined (Retrofitting Quality)
+
+**Approach**: Comprehensive testing + formal peer review
+
+**Practices to Adopt** (beyond Level 2):
+- Test coverage target (70-80%)
+- Code review checklist
+- Integration tests for key flows
+- Automated regression suite
+- Test pyramid enforcement
+
+**Timeline**: 2-3 months to reach 70% coverage
+
+**Organizational Standard**: Templates, checklists, baselines
+
+#### Level 4: Quantitatively Managed (Retrofitting Quality)
+
+**Approach**: Metrics-driven quality with prediction models
+
+**Practices to Adopt** (beyond Level 3):
+- Defect density tracking
+- Test effectiveness metrics
+- Defect prediction models
+- Statistical process control for quality
+
+**Timeline**: 6+ months (requires historical data)
+
+**Quantitative Objectives**: Defect density <0.5/KLOC, test escape rate <5%
+
+### Implementation Guidance
+
+#### Quick Start Checklist
+
+**Step 1: Assess Current Quality** (2 hours)
+
+Gather baseline metrics:
+- [ ] Current test coverage: `coverage run; coverage report` (likely 0-10%)
+- [ ] Manual test time: How long to regression test? (likely days/weeks)
+- [ ] Recent bug count: Production bugs in last 3 months
+- [ ] Code review rate: % of changes reviewed (likely 0%)
+
+**Step 2: Prioritize What to Test** (1-2 hours)
+
+**DO NOT try to test everything at once**. Prioritize:
+
+| Priority | What to Test | Why |
+|----------|--------------|-----|
+| **CRITICAL** | Payment, auth, data integrity | Bugs here = business impact |
+| **HIGH** | Core user flows (top 10 features) | Used daily, bugs visible |
+| **MEDIUM** | Secondary features | Less frequent use |
+| **LOW** | Edge cases, experimental features | Defer until critical/high covered |
+
+**Example** (E-commerce system):
+- Critical: Payment processing, checkout flow, inventory management
+- High: Product search, user registration, order history
+- Medium: Wishlist, product reviews, email notifications
+- Low: Admin analytics dashboard, experimental recommendation engine
+
+**Step 3: Create Test Infrastructure** (1-2 days)
+
+**For Python**:
+```bash
+# Install test framework
+pip install pytest pytest-cov
+
+# Create test directory structure
+mkdir -p tests/unit tests/integration tests/e2e
+
+# Create pytest config
+cat > pytest.ini <<EOF
+[pytest]
+testpaths = tests
+python_files = test_*.py
+python_classes = Test*
+python_functions = test_*
+addopts = --cov=src --cov-report=html --cov-report=term
+EOF
+
+# Create sample test
+cat > tests/unit/test_sample.py <<EOF
+def test_placeholder():
+    assert True  # Replace with real tests
+EOF
+
+# Run tests
+pytest
+```
+
+**For JavaScript/TypeScript**:
+```bash
+# Install test framework
+npm install --save-dev jest @types/jest
+
+# Create test directory
+mkdir -p tests
+
+# Create jest config
+npx jest --init
+
+# Run tests
+npm test
+```
+
+**Step 4: Write Tests for Critical Paths** (2-4 weeks)
+
+**Strategy**: New code + critical existing code
+
+**New code**:
+- 100% test coverage requirement (enforced via CI)
+- No PR merges without tests
+
+**Critical existing code**:
+- Characterization tests (document current behavior)
+- Focus on "happy path" first
+- Add edge case tests over time
+
+**Example** (retrofitting payment processing):
+
+```python
+# tests/unit/test_payment.py
+import pytest
+from payment import process_payment, PaymentError
+
+def test_process_payment_valid_visa():
+    """Test successful Visa payment"""
+    result = process_payment(
+        card_number="4111111111111111",
+        cvv="123",
+        amount=100.00
+    )
+    assert result.status == "success"
+    assert result.transaction_id is not None
+
+def test_process_payment_invalid_cvv():
+    """Test payment rejection for invalid CVV"""
+    with pytest.raises(PaymentError, match="Invalid CVV"):
+        process_payment(
+            card_number="4111111111111111",
+            cvv="12",  # Too short
+            amount=100.00
+        )
+
+def test_process_payment_zero_amount():
+    """Test rejection of zero-amount payments"""
+    with pytest.raises(PaymentError, match="Amount must be positive"):
+        process_payment(
+            card_number="4111111111111111",
+            cvv="123",
+            amount=0.00
+        )
+```
+
+**Coverage goal**: 10 critical paths × 5 tests each = 50 tests in 2-4 weeks
+
+**Step 5: Establish Code Review Process** (1 week)
+
+**Minimal viable review process**:
+
+1. **PR requirement**: All changes via PR (enforced via branch protection)
+2. **Review checklist**: Create simple checklist (see template below)
+3. **1+ approver**: At least one team member must approve
+4. **Review training**: 1-hour workshop on effective code review
+
+**Code Review Checklist**:
+
+```markdown
+## Code Review Checklist
+
+### Functionality
+- [ ] Code does what the PR description says
+- [ ] Edge cases handled (null, empty, invalid input)
+- [ ] No obvious bugs
+
+### Testing
+- [ ] Tests included for new code
+- [ ] Tests pass locally and in CI
+- [ ] Critical paths have test coverage
+
+### Code Quality
+- [ ] Code is readable (clear variable names, simple logic)
+- [ ] No commented-out code (unless explained)
+- [ ] No obvious performance issues
+
+### Security
+- [ ] No hardcoded secrets/passwords
+- [ ] User input validated/sanitized
+- [ ] No SQL injection or XSS vulnerabilities
+
+### Documentation
+- [ ] Complex logic has comments explaining "why"
+- [ ] Public APIs have docstrings
+- [ ] README updated if needed
+```
+
+**Step 6: Automate in CI** (1 day)
+
+**GitHub Actions example**:
+
+```yaml
+# .github/workflows/ci.yml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
+
+    - name: Run linting
+      run: |
+        pip install flake8
+        flake8 src/ --max-line-length=100
+
+    - name: Run tests with coverage
+      run: |
+        pytest --cov=src --cov-report=xml --cov-report=term
+
+    - name: Check coverage threshold
+      run: |
+        coverage report --fail-under=70
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+```
+
+**Step 7: Gradual Coverage Increase** (2-3 months)
+
+**Month 1**: 30-40% coverage (critical paths)
+**Month 2**: 50-60% coverage (add high-priority features)
+**Month 3**: 70%+ coverage (comprehensive)
+
+**Strategy**:
+- Ratchet enforcement: Coverage must not decrease
+- New code: 100% coverage requirement
+- Bug fixes: Add test reproducing bug before fixing
+
+#### Templates & Examples
+
+**Test Plan for Retrofitting** (lightweight):
+
+```markdown
+# Test Plan: Payment System Retrofit
+
+**Goal**: Achieve 70% test coverage on payment processing module
+
+**Timeline**: 4 weeks
+
+## Week 1: Infrastructure & Critical Happy Paths
+- [ ] Set up pytest, coverage reporting
+- [ ] Test: Process valid Visa payment
+- [ ] Test: Process valid MasterCard payment
+- [ ] Test: Process valid Amex payment
+- **Target**: 20% coverage
+
+## Week 2: Error Handling
+- [ ] Test: Invalid CVV rejection
+- [ ] Test: Expired card rejection
+- [ ] Test: Insufficient funds handling
+- [ ] Test: Network timeout handling
+- **Target**: 40% coverage
+
+## Week 3: Edge Cases
+- [ ] Test: Zero amount rejection
+- [ ] Test: Negative amount rejection
+- [ ] Test: Very large amounts (>$10,000)
+- [ ] Test: Special characters in cardholder name
+- **Target**: 60% coverage
+
+## Week 4: Integration & Refactoring
+- [ ] Integration test: End-to-end checkout flow
+- [ ] Refactor untested code to be testable
+- [ ] Add missing edge case tests
+- **Target**: 70% coverage
+
+## Success Criteria
+- [ ] 70% coverage achieved
+- [ ] All critical paths tested
+- [ ] CI enforcing coverage threshold
+- [ ] Zero production bugs in payment (30-day window)
+```
+
+### Common Anti-Patterns
+
+| Anti-Pattern | Why It Fails | Better Approach |
+|--------------|--------------|-----------------|
+| **Test Everything** | 0% → 100% is overwhelming, unsustainable | Incremental: 30% → 50% → 70% over 3 months |
+| **Tests After Code** | "We'll add tests later" = never | Require tests for all new code NOW |
+| **Rubber Stamp Reviews** | "LGTM" without reading = theater | Checklist + spot checks for thoroughness |
+| **Testing Theater** | High coverage, low quality tests | Review test quality, not just quantity |
+| **No Enforcement** | Coverage target suggestion, not requirement | CI fails if coverage drops |
+
+### Tool Integration
+
+**GitHub**:
+- **Required status checks**: CI must pass before merge (branch protection)
+- **Codecov integration**: Visual coverage reports on PRs
+- **PR templates**: Include testing checklist
+
+**Azure DevOps**:
+- **Build validation**: Pipeline must pass for PR approval
+- **Code coverage widget**: Dashboard showing trend
+- **Quality gates**: Fail build if coverage <70%
+
+### Verification & Validation
+
+**How to verify quality practices adopted**:
+- Spot check last 10 PRs: All have tests? All reviewed?
+- Coverage trend: Increasing month-over-month?
+- Production bugs: Decreasing?
+- Team feedback: Are tests helping catch bugs?
+
+**Common failure modes**:
+- **Coverage increases, bugs don't decrease** → Low-quality tests (testing implementation, not behavior)
+- **Team avoids writing tests** → Too hard to test (architecture issue), need refactoring
+- **Code reviews become bottleneck** → Too few reviewers, need to distribute responsibility
+
+### Related Practices
+
+- **For deeper testing strategies**: See quality-assurance skill
+- **If team resists testing**: See Reference Sheet 8 (Change Management)
+- **If code is hard to test**: See design-and-build skill (refactoring for testability)
+
+---
+
+## Reference Sheet 6: Retrofitting Measurement
+
+### Purpose & Context
+
+**What this achieves**: Establish metrics and baselines without historical data
+
+**When to apply**:
+- Want to measure process performance (velocity, defect rate, cycle time)
+- No historical data collected
+- Need baselines for Level 3 or Level 4
+- Chicken-egg problem: need data to create baselines, need baselines to know what to measure
+
+**Prerequisites**:
+- Willingness to start collecting data NOW (can't retroactively create data)
+- Tools capable of automated collection (GitHub, Azure DevOps, CI/CD)
+- Patience (baselines require 2-3 months of data)
+
+### CMMI Maturity Scaling
+
+#### Level 2: Managed (Retrofitting Measurement)
+
+**Approach**: Basic tracking (counts, dates)
+
+**Metrics to Collect**:
+- Velocity (features shipped per sprint/month)
+- Build success rate (% of builds passing)
+- Defect count (bugs found per release)
+- No baselines yet (just start collecting)
+
+**Timeline**: Start immediately, 1 month to see trends
+
+**Effort**: Minimal (use built-in tool analytics)
+
+#### Level 3: Defined (Retrofitting Measurement)
+
+**Approach**: Organizational baselines from historical data
+
+**Metrics to Collect** (beyond Level 2):
+- Test coverage %
+- Code review coverage (% PRs reviewed)
+- Defect escape rate (bugs found in production)
+- Cycle time (PR open → merge)
+- Organizational baselines (mean, std dev for each metric)
+
+**Timeline**: 3 months to establish initial baselines
+
+**Effort**: 1-2 days to set up automated collection, ongoing analysis
+
+#### Level 4: Quantitatively Managed (Retrofitting Measurement)
+
+**Approach**: Statistical process control with prediction
+
+**Metrics to Collect** (beyond Level 3):
+- Control charts (X-bar, R, p-charts)
+- Process capability indices (Cp, Cpk)
+- Defect density predictions
+- DORA metrics with SPC
+
+**Timeline**: 6+ months (need enough data for statistical validity)
+
+**Effort**: 1 week to implement SPC infrastructure, weekly monitoring
+
+### Implementation Guidance
+
+#### Quick Start Checklist
+
+**Step 1: Solve the Chicken-Egg Problem** (Think through strategy)
+
+**Problem**: "We need baselines to know if we're improving, but we have no historical data to create baselines."
+
+**Solution**: Three-phase approach:
+
+1. **Phase 1 (Month 1)**: Start collecting metrics NOW (no baselines yet)
+2. **Phase 2 (Month 2-3)**: Use industry benchmarks as temporary targets
+3. **Phase 3 (Month 4+)**: Calculate baselines from your own historical data
+
+**Step 2: Select Metrics (GQM Approach)** (1 hour)
+
+Use Goal-Question-Metric framework:
+
+**Example**: Goal = Improve code quality
+
+| Goal | Question | Metric |
+|------|----------|--------|
+| Improve code quality | Are we catching bugs before production? | Defect escape rate = (Production bugs / Total bugs) × 100% |
+| Improve code quality | Are we reviewing code thoroughly? | Code review coverage = (Reviewed PRs / Total PRs) × 100% |
+| Improve code quality | Are we preventing regressions? | Test coverage % |
+
+**Start with 5-7 key metrics** (resist urge to measure everything):
+
+1. **Velocity**: Story points per sprint (or features per month)
+2. **Quality**: Test coverage %
+3. **Quality**: Defect escape rate
+4. **Process**: Code review coverage %
+5. **Deployment**: Deployment frequency (times per week)
+6. **Stability**: Build success rate %
+7. **Speed**: Lead time (commit → production)
+
+**Step 3: Automate Collection** (1-2 days)
+
+**GitHub API example** (Python):
+
+```python
+# collect_metrics.py
+import requests
+import os
+from datetime import datetime, timedelta
+
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+REPO = "owner/repo"
+
+headers = {
+    "Authorization": f"token {GITHUB_TOKEN}",
+    "Accept": "application/vnd.github.v3+json"
+}
+
+def get_pr_metrics(days=30):
+    """Collect PR metrics for last N days"""
+    since = (datetime.now() - timedelta(days=days)).isoformat()
+
+    # Get all PRs
+    url = f"https://api.github.com/repos/{REPO}/pulls"
+    params = {"state": "closed", "since": since}
+    response = requests.get(url, headers=headers, params=params)
+    prs = response.json()
+
+    total_prs = len(prs)
+    reviewed_prs = sum(1 for pr in prs if pr.get("reviews_count", 0) > 0)
+
+    # Calculate metrics
+    review_coverage = (reviewed_prs / total_prs * 100) if total_prs > 0 else 0
+
+    print(f"Total PRs (last {days} days): {total_prs}")
+    print(f"Reviewed PRs: {reviewed_prs}")
+    print(f"Code Review Coverage: {review_coverage:.1f}%")
+
+    return {
+        "date": datetime.now().isoformat(),
+        "total_prs": total_prs,
+        "reviewed_prs": reviewed_prs,
+        "review_coverage_pct": review_coverage
+    }
+
+if __name__ == "__main__":
+    metrics = get_pr_metrics(days=30)
+    # Save to file/database for historical tracking
+```
+
+**Run weekly via cron/GitHub Actions to build historical dataset**
+
+**Step 4: Use Industry Benchmarks Temporarily** (30 minutes)
+
+While collecting your own data, use industry benchmarks as temporary targets:
+
+| Metric | Industry Benchmark | Source |
+|--------|-------------------|--------|
+| **Test Coverage** | 70-80% | Google/Microsoft research |
+| **Defect Escape Rate** | <5% | DORA State of DevOps |
+| **Deployment Frequency** | 1+ per day (elite) | DORA 2023 |
+| **Lead Time** | <1 day (elite) | DORA 2023 |
+| **Code Review Coverage** | >90% | Google Engineering Practices |
+
+**Use as targets**: "We're aiming for 70% test coverage (industry standard) while we collect our own baseline"
+
+**Step 5: Collect Data for 2-3 Months** (Automated)
+
+- Run metrics collection weekly
+- Store in CSV/database
+- Don't make major process changes (need clean data period)
+
+**Example data collection** (CSV):
+
+```csv
+Date,Test_Coverage_%,Review_Coverage_%,Defect_Escape_Rate_%,Deployment_Freq_Per_Week
+2026-01-01,45,85,12,2
+2026-01-08,47,88,10,2
+2026-01-15,48,90,8,3
+2026-01-22,50,92,7,3
+...
+```
+
+**Step 6: Calculate Baselines** (After 3 months data)
+
+**Statistical baseline calculation**:
+
+```python
+import pandas as pd
+import numpy as np
+
+# Load historical data
+df = pd.read_csv("metrics_history.csv")
+
+# Calculate baselines
+baselines = {}
+for metric in ["Test_Coverage_%", "Review_Coverage_%", "Defect_Escape_Rate_%"]:
+    mean = df[metric].mean()
+    std = df[metric].std()
+    baselines[metric] = {
+        "mean": mean,
+        "std_dev": std,
+        "upper_control_limit": mean + 3*std,  # For SPC
+        "lower_control_limit": max(0, mean - 3*std)
+    }
+
+print("Organizational Baselines:")
+for metric, stats in baselines.items():
+    print(f"{metric}: {stats['mean']:.1f}% ± {stats['std_dev']:.1f}%")
+```
+
+**Output example**:
+```
+Organizational Baselines:
+Test_Coverage_%: 52.3% ± 5.2%
+Review_Coverage_%: 91.5% ± 3.1%
+Defect_Escape_Rate_%: 7.8% ± 2.4%
+```
+
+**Step 7: Monitor Against Baselines** (Ongoing)
+
+- Weekly: Check if current metrics within control limits
+- Monthly: Recalculate baselines (rolling window)
+- Quarterly: Review and adjust targets
+
+#### Templates & Examples
+
+**Metrics Dashboard Requirements**:
+
+```markdown
+# Metrics Dashboard Requirements
+
+## Key Metrics (displayed prominently)
+
+1. **Test Coverage**:
+   - Current: 52.3%
+   - Baseline: 52.3% ± 5.2%
+   - Trend: 📈 +2.3% (last 30 days)
+
+2. **Code Review Coverage**:
+   - Current: 91.5%
+   - Baseline: 91.5% ± 3.1%
+   - Trend: 📊 Stable
+
+3. **Defect Escape Rate**:
+   - Current: 7.8%
+   - Baseline: 7.8% ± 2.4%
+   - Target: <5% (industry)
+   - Trend: 📉 -1.2% (improving)
+
+## Trend Charts (last 3 months)
+
+[Line chart showing each metric over time with baseline bands]
+
+## Alerts
+
+- ⚠️  Defect escape rate above baseline (9.5% > 10.2% UCL)
+- ✅  Test coverage improving (+5% in 30 days)
+```
+
+### Common Anti-Patterns
+
+| Anti-Pattern | Why It Fails | Better Approach |
+|--------------|--------------|-----------------|
+| **Measurement Theater** | Tracking 50 metrics, using none | GQM: 5-7 actionable metrics |
+| **No Historical Data** | "We should have started collecting years ago" (paralysis) | Start NOW, use industry benchmarks temporarily |
+| **Vanity Metrics** | Measure what's easy, not what matters | Measure outcomes (defect rate), not activity (# of tests) |
+| **Dashboard Overload** | 20 charts, cognitive overload | 5-7 key metrics prominently, drill-down on demand |
+| **Ignoring the Data** | Collect but don't review/act | Weekly review, action items from anomalies |
+
+### Tool Integration
+
+**GitHub**:
+- **GitHub Insights**: Built-in metrics (PR throughput, review time)
+- **GitHub API**: Custom metrics collection
+- **Codecov**: Test coverage tracking
+- **Actions**: Automated weekly metrics export
+
+**Azure DevOps**:
+- **Analytics views**: Pre-built queries for velocity, cycle time
+- **Dashboards**: Customizable widgets
+- **OData**: API for custom metrics
+- **PowerBI**: Advanced analytics and visualizations
+
+**Grafana** (tool-agnostic):
+- Visualize metrics from any source
+- Alerting on thresholds
+- Historical trend analysis
+
+### Verification & Validation
+
+**How to verify measurement is working**:
+- Data collection automated and running weekly?
+- Dashboard accessible to team?
+- Team actually looks at dashboard in retrospectives?
+- Metrics driving decisions (e.g., "Defect rate high, let's add tests")?
+
+**Common failure modes**:
+- **Data collection breaks, nobody notices** → Set up alerts for missing data
+- **Baselines never calculated** → Calendar reminder after 3 months
+- **Metrics don't reflect reality** → Validate with spot checks (claimed 90% coverage, run coverage report)
+
+### Related Practices
+
+- **For deeper metrics guidance**: See quantitative-management skill
+- **For DORA metrics implementation**: See quantitative-management skill
+- **For Level 4 SPC**: See quantitative-management skill
+
+---
+
+## Reference Sheet 7: Managing the Transition
+
+### Purpose & Context
+
+**What this achieves**: Preserve CMMI compliance during tool/process changes
+
+**When to apply**:
+- Migrating between platforms (GitHub ↔ Azure DevOps)
+- Changing processes mid-project (waterfall → agile, gitflow → trunk-based)
+- Team/org restructuring
+- Tooling upgrades that might break existing practices
+
+**Prerequisites**:
+- Understanding of current CMMI compliance level
+- New tool/process selected
+- Migration timeline (2-4 weeks typical)
+
+### CMMI Maturity Scaling
+
+#### Level 2: Managed (Transition Management)
+
+**Approach**: Preserve audit trail, minimal disruption
+
+**Key Concerns**:
+- Don't lose work product history
+- Maintain traceability links
+- Document the transition itself
+
+**Acceptable Downtime**: 1-2 days (manual processes)
+
+**Documentation**: Transition plan (1-page)
+
+#### Level 3: Defined (Transition Management)
+
+**Approach**: Parallel operation period, systematic migration
+
+**Key Concerns** (beyond Level 2):
+- Organizational templates migrated
+- Training materials updated
+- Process documentation reflects new tools
+- Baselines preserved
+
+**Acceptable Downtime**: 0 (parallel operation required)
+
+**Documentation**: Detailed migration plan, rollback procedure
+
+#### Level 4: Quantitatively Managed (Transition Management)
+
+**Approach**: Metrics-driven validation of transition success
+
+**Key Concerns** (beyond Level 3):
+- Metrics collection continues uninterrupted
+- Baselines remain valid (or recalculated if methodology changes)
+- Statistical process control unaffected
+
+**Acceptable Downtime**: 0 (metrics continuity critical)
+
+**Documentation**: Impact analysis on process performance baselines
+
+### Implementation Guidance
+
+#### Quick Start Checklist
+
+**Phase 1: Pre-Transition Planning** (1-2 weeks before)
+
+- [ ] **Inventory current state**:
+  - What work products exist? (requirements, ADRs, test plans)
+  - What traceability links exist? (issue refs, commit associations)
+  - What baselines exist? (metrics, process performance)
+
+- [ ] **Map current → new**:
+  - GitHub Issues → Azure DevOps Work Items (or vice versa)
+  - GitHub Labels → Azure DevOps Tags
+  - GitHub Projects → Azure DevOps Boards
+  - Traceability links (issue #123 → work item 456)
+
+- [ ] **Create migration plan**:
+  - Timeline (parallel operation period, cutover date)
+  - Responsibility (who migrates what)
+  - Validation criteria (how to verify success)
+  - Rollback procedure (if migration fails)
+
+**Phase 2: Parallel Operation** (2-4 weeks)
+
+**Strategy**: Both tools active, new work goes to new tool, old tool read-only
+
+**Week 1-2**: New work in new tool only
+- Create requirements in Azure DevOps (not GitHub)
+- Reference old GitHub issues where relevant
+- Update traceability: "Migrated from GitHub #123 → ADO 456"
+
+**Week 3-4**: Selective migration of active work
+- Migrate in-progress features (PRs not yet merged)
+- Migrate recent ADRs (last 6 months)
+- Leave old/completed work in GitHub (historical reference)
+
+**Phase 3: Historical Data Migration** (1-2 weeks)
+
+**Critical work products to migrate**:
+- ✅ ADRs (all, especially recent)
+- ✅ Requirements for active features
+- ✅ Open bugs/issues
+- ✅ Traceability matrix
+
+**Nice-to-have (defer if time-constrained)**:
+- ⏸ Closed bugs from >1 year ago
+- ⏸ Deprecated features
+- ⏸ Experimental/prototype documentation
+
+**Migration tools**:
+- **GitHub → Azure DevOps**: `gh-ado-migrator` (official MS tool)
+- **Azure DevOps → GitHub**: `ado-to-github` (community tool)
+- Manual export/import for small datasets
+
+**Phase 4: Cutover & Validation** (1 day)
+
+**Cutover**:
+- Make old tool read-only (archive repository, disable new issues)
+- Announce: "All new work in Azure DevOps as of Monday"
+- Update onboarding docs with new tool links
+
+**Validation checklist**:
+- [ ] Can trace requirement → code → test in new tool?
+- [ ] ADRs migrated and accessible?
+- [ ] Metrics collection working in new tool?
+- [ ] Team trained on new tool?
+- [ ] Rollback procedure documented (in case of emergency)?
+
+**Phase 5: Post-Cutover Cleanup** (1-2 weeks)
+
+- Archive old tool (but don't delete - historical reference)
+- Update all documentation links (point to new tool)
+- Recalculate baselines if metrics methodology changed
+- Retrospective: What went well, what didn't?
+
+#### Templates & Examples
+
+**Tool Migration Plan (GitHub → Azure DevOps)**:
+
+```markdown
+# Tool Migration Plan: GitHub → Azure DevOps
+
+**Goal**: Migrate project "PaymentGateway" from GitHub to Azure DevOps while preserving CMMI Level 3 compliance
+
+**Timeline**: 4 weeks (Feb 1-28, 2026)
+
+## Current State
+
+- **GitHub Repository**: github.com/acme/payment-gateway
+- **Work Items**: 150 open issues, 500 closed
+- **ADRs**: 25 decision records in docs/adr/
+- **Traceability**: Issue refs in PR descriptions
+- **Metrics**: GitHub Actions collecting coverage, cycle time
+
+## Migration Phases
+
+### Week 1: Setup & Parallel Start
+- [ ] Create Azure DevOps project "PaymentGateway"
+- [ ] Set up branch policies (match GitHub branch protection)
+- [ ] Import Git repo (preserves commit history)
+- [ ] Create work item templates (match GitHub issue templates)
+- [ ] Train team (2-hour workshop on Azure DevOps)
+
+### Week 2-3: Parallel Operation
+- [ ] New features: Create work items in Azure DevOps
+- [ ] New code: PRs in Azure DevOps (GitHub still accessible read-only)
+- [ ] Migrate critical work products:
+  - [ ] All 25 ADRs → Azure DevOps Wiki
+  - [ ] 30 open issues (in-progress features) → Work items
+  - [ ] Traceability matrix → Azure DevOps Queries
+
+### Week 4: Cutover & Validation
+- [ ] Feb 22: Announce cutover date (Feb 25)
+- [ ] Feb 25: Make GitHub repo read-only
+- [ ] Feb 25: Update all documentation links
+- [ ] Feb 26-28: Validation and bug fixes
+
+## Traceability Preservation
+
+Old format (GitHub):
+```
+Issue #123: Add 2FA support
+PR #456: Implements issue #123
+```
+
+New format (Azure DevOps):
+```
+Work Item 789: Add 2FA support
+(Migrated from GitHub #123 on 2026-02-15)
+PR 12: Linked to Work Item 789
+```
+
+## Rollback Procedure
+
+If critical issues found within 1 week of cutover:
+1. Re-enable GitHub for new work
+2. Pause Azure DevOps migration
+3. Root cause analysis
+4. Decide: fix and retry, or abandon migration
+
+## Success Criteria
+
+- [ ] All active work items migrated
+- [ ] Traceability functional (can trace requirement → code)
+- [ ] Metrics collection restored
+- [ ] Zero work lost
+- [ ] Team confident in new tool (survey)
+```
+
+### Common Anti-Patterns
+
+| Anti-Pattern | Why It Fails | Better Approach |
+|--------------|--------------|-----------------|
+| **Big Bang Migration** | Cutover on Friday, chaos Monday | Parallel operation for 2-4 weeks |
+| **Migrate Everything** | 5 years of closed issues = wasted effort | Migrate active work + critical historical only |
+| **No Rollback Plan** | "We'll fix forward" → panic if issues | Document rollback procedure before cutover |
+| **Break Traceability** | Old links broken, compliance lost | Update links, preserve refs (e.g., "Migrated from GH #123") |
+| **No Training** | Team confused, productivity drops | 2-hour workshop before cutover |
+
+### Tool Integration
+
+**GitHub → Azure DevOps**:
+- Microsoft's `gh-ado-migrator` tool
+- Preserves: Issue history, comments, labels → tags
+- Manual: ADR migration (copy to Wiki)
+
+**Azure DevOps → GitHub**:
+- Community tool `ado-to-github` (less official support)
+- Manual for complex migrations
+- Alternative: Keep both active (Azure DevOps for work management, GitHub for code)
+
+**Hybrid (Both Tools)**:
+- Some organizations keep GitHub for code, Azure DevOps for work tracking
+- Requires cross-tool linking automation
+
+### Verification & Validation
+
+**How to verify transition succeeded**:
+- Spot check 10 random requirements: Can you trace to code and tests?
+- Compare metrics before/after: Are baselines similar (accounting for growth)?
+- Team survey: Confident in new tool?
+- Audit dry-run: Would this pass compliance review?
+
+**Common failure modes**:
+- **Traceability links broken** → Update references, add "Migrated from X" notes
+- **Team productivity drop** → More training, simpler workflows
+- **Metrics discontinuity** → Recalculate baselines with new methodology
+
+### Related Practices
+
+- **Platform-specific migration**: See platform-integration skill
+- **If team resists transition**: See Reference Sheet 8 (Change Management)
+- **For metrics continuity**: See Reference Sheet 6 (Retrofitting Measurement)
+
+---
+
+## Reference Sheet 8: Change Management
+
+### Purpose & Context
+
+**What this achieves**: Overcome team resistance and executive skepticism
+
+**When to apply**:
+- Team says "This will slow us down"
+- Developers resist process ("bureaucracy")
+- Executives question ROI ("Why aren't you shipping faster?")
+- Pilot succeeded but scaling fails (adoption resistance)
+
+**Prerequisites**:
+- Some evidence of value (pilot results, industry data)
+- Executive sponsor (even tentative)
+- Willingness to involve team in tailoring
+
+### CMMI Maturity Scaling
+
+#### Level 2: Managed (Change Management)
+
+**Approach**: Demonstrate value through quick wins
+
+**Tactics**:
+- Lead with lightweight practices (not bureaucracy)
+- Show bug caught by code review within first week
+- Use industry data ("Teams with reviews find bugs 60% faster")
+- Pilot on small, low-risk project
+
+**Resistance Type**: "Too much overhead"
+
+**Response**: Show Level 2 is minimal viable, not heavy
+
+#### Level 3: Defined (Change Management)
+
+**Approach**: Involve team in process definition
+
+**Tactics** (beyond Level 2):
+- Collaborative template creation (team writes PR checklist)
+- Tailoring workshops (team adjusts organizational standard)
+- Celebrate successes publicly (recognize early adopters)
+- Metrics showing improvement (before/after comparison)
+
+**Resistance Type**: "Not invented here"
+
+**Response**: "You design the process, we'll support you"
+
+#### Level 4: Quantitatively Managed (Change Management)
+
+**Approach**: Data-driven justification
+
+**Tactics** (beyond Level 3):
+- Statistical evidence of process improvement
+- Cost-benefit analysis with real project data
+- Prediction models showing ROI
+- Process performance baselines
+
+**Resistance Type**: "Unproven"
+
+**Response**: "Here's 6 months of data showing 40% defect reduction"
+
+### Implementation Guidance
+
+#### Quick Start Checklist
+
+**Step 1: Identify Resistance Type** (30 minutes)
+
+Common resistance patterns:
+
+| Resistance | Root Cause | Evidence |
+|-----------|------------|----------|
+| **"Too slow"** | Fear of bureaucracy, past bad experiences | "Last place had 20-page design docs for every change" |
+| **"Not needed"** | Overconfidence, lack of pain awareness | "We've never had a major bug" (they have, don't realize) |
+| **"Too late"** | Sunk cost fallacy | "We're 2 years in, can't change now" |
+| **"Too small"** | Misunderstanding CMMI scope | "We're only 3 people, this is for big corps" |
+| **"Not my job"** | Role confusion | "That's the QA team's job" (no QA team exists) |
+
+**Step 2: Tailor Resistance Response** (See table below)
+
+**Step 3: Involve Team in Solution** (1-2 hours)
+
+**Workshop format**: Process Tailoring Session
+
+- **Goal**: Design lightweight process together
+- **Duration**: 1-2 hours
+- **Participants**: Whole team (5-10 people)
+- **Facilitator**: External or senior team member
+
+**Agenda**:
+1. Present problem (10 min): "We need traceability for audit. How can we do this without slowing down?"
+2. Brainstorm options (20 min): Sticky notes, all ideas welcome
+3. Evaluate options (20 min): Effort vs. value matrix
+4. Select approach (10 min): Team votes
+5. Define process (30 min): Write checklist, template
+6. Pilot (30 min): Try on sample feature right now
+
+**Output**: Team-designed process (more buy-in than mandate)
+
+**Step 4: Demonstrate Quick Wins** (Week 1)
+
+**Examples of quick wins**:
+
+| Practice | Quick Win | Time to Value |
+|----------|-----------|---------------|
+| **Branch protection** | Prevented force-push that would have lost 4 hours of work | Day 1 |
+| **PR reviews** | Caught SQL injection bug before production | Week 1 |
+| **ADRs** | New team member understood architecture decision from 6 months ago | Week 2 |
+| **CI tests** | Detected breaking change before deployment | Day 3 |
+
+**Communication**: Celebrate wins in standup, Slack, retrospectives
+
+**Step 5: Build Coalition of Early Adopters** (Week 2-4)
+
+**Strategy**: Rogers' Diffusion of Innovations
+
+1. **Innovators (2.5%)**: Already on board, excited
+2. **Early Adopters (13.5%)**: Respected peers, convince them first
+3. **Early Majority (34%)**: Pragmatists, will adopt when proven
+4. **Late Majority (34%)**: Skeptics, adopt when everyone else has
+5. **Laggards (16%)**: Resistors, may never fully adopt
+
+**Focus effort on Early Adopters** (weeks 2-4):
+- Identify 1-2 respected developers who are open-minded
+- Give them extra support during pilot
+- Ask them to champion to peers
+- Let them present at team meeting
+
+**Step 6: Address Executive Concerns** (Throughout)
+
+**Executive concern**: "Why aren't you shipping faster?"
+
+**Response framework**:
+1. **Acknowledge tradeoff**: "Yes, initial investment of 5% time on process"
+2. **Show ROI data**: "But reduced rework by 30% (Microsoft study)"
+3. **Project-specific evidence**: "Our defect escape rate dropped from 15% to 5% in pilot"
+4. **Long-term value**: "Audit compliance = contract eligibility = $2M opportunity"
+
+**Metrics executives care about**:
+- Time to market (are we shipping faster long-term?)
+- Defect rates (fewer production bugs?)
+- Rework (less time fixing mistakes?)
+- Risk reduction (fewer audit failures, security incidents?)
+
+#### Tailored Responses to Common Objections
+
+| Objection | Underlying Fear | Response | Evidence |
+|-----------|----------------|----------|----------|
+| **"This will slow us down"** | Bureaucracy, past trauma | Show lightweight Level 2, not heavy docs | GitHub Flow = 1 PR template, done |
+| **"We're agile, CMMI is waterfall"** | Methodology conflict | CMMI works with Scrum/Kanban | Map RD to sprint planning, VER to sprint review |
+| **"We're too small for this"** | Scale mismatch | Level 2 works for 2-person teams | 2-person example: GH Issues + PR reviews + ADRs = audit trail |
+| **"It's too late to change"** | Sunk cost | Parallel tracks = no rewrite | New features follow new process, old code exempt |
+| **"Not invented here"** | Autonomy threat | Team designs process in workshop | "You write the PR checklist, not me" |
+| **"We've never had problems"** | Denial | Show hidden problems | "Last 6 months: 12 bugs found in production, 0 in review" |
+| **"Just this once"** | Slippery slope | Policy applies to everyone | "Not even for emergency hotfixes" (then have emergency process) |
+| **"Audit is months away"** | Procrastination | Process takes 2-3 months to stabilize | "If we start now, barely ready by audit" |
+
+#### Templates & Examples
+
+**ROI Calculation Template**:
+
+```markdown
+# CMMI Adoption ROI Analysis
+
+## Investment (Costs)
+
+**Time Investment**:
+- Training: 5 developers × 4 hours = 20 hours
+- Process setup: 2 days (branch protection, templates) = 16 hours
+- Ongoing overhead: 5% of development time (PR reviews, ADRs)
+- **Total Year 1**: ~120 hours (3 weeks)
+
+**Cost**: 120 hours × $100/hour = $12,000
+
+## Returns (Benefits)
+
+**Rework Reduction**:
+- Before: 15% of time spent on rework (bug fixes, rebuilding)
+- After: 10% (code review catches bugs early)
+- Savings: 5% × 2000 hours/year = 100 hours/year
+- **Value**: 100 hours × $100/hour = $10,000/year
+
+**Defect Cost Avoidance**:
+- Before: 12 production bugs/year × 8 hours each = 96 hours
+- After: 4 production bugs/year × 8 hours each = 32 hours
+- Savings: 64 hours/year
+- **Value**: 64 hours × $100/hour + reputation damage avoided = $15,000/year
+
+**Audit Compliance**:
+- Contract opportunity requiring CMMI Level 2 = $500,000
+- Win probability: 80% (vs. 0% without compliance)
+- **Expected Value**: $400,000
+
+## Net ROI
+
+- **Year 1**: ($12,000 investment) + $10,000 + $15,000 + $400,000 = **+$413,000**
+- **ROI**: 3,441% in year 1
+- **Payback Period**: 2-3 months
+```
+
+### Common Anti-Patterns
+
+| Anti-Pattern | Why It Fails | Better Approach |
+|--------------|--------------|-----------------|
+| **Mandate Without Buy-In** | Team sabotages, workarounds created | Involve team in process design |
+| **All Carrot, No Stick** | Adoption remains optional, peters out | Enforce via tooling (branch protection) after pilot |
+| **All Stick, No Carrot** | Resentment, cargo cult compliance | Demonstrate value first, then enforce |
+| **Ignore Feedback** | Team says "too bureaucratic", you ignore | Continuously tailor based on feedback |
+| **Overpromise** | "This will make us 10x faster!" → disappointment | Realistic expectations: "5-10% slower initially, faster long-term" |
+
+### Tool Integration
+
+**Cultural change requires tool enforcement**:
+
+- **GitHub branch protection**: Makes PR reviews non-optional
+- **CI gates**: Makes tests non-optional
+- **Issue templates**: Makes requirements structured
+- **Dependabot**: Makes security fixes automatic
+
+**Anti-pattern**: Policy without enforcement = suggestion
+
+### Verification & Validation
+
+**How to verify change is succeeding**:
+- Team survey (anonymous): "Is process helping or hindering?" (monthly)
+- Compliance metrics: % of PRs following process (should be 95%+)
+- Rework metrics: Defect rate decreasing?
+- Voluntary adoption: Are people following process even when not required?
+
+**Common failure modes**:
+- **Pilot succeeds, scaling fails** → Early adopters ≠ majority, need different tactics
+- **Initial enthusiasm fades after 2 months** → No sustained value demonstration
+- **Process becomes cargo cult** → Checklists followed but not understood, need training
+
+### Enforcement Mechanisms (Preventing Gaming)
+
+**Problem**: Under team resistance pressure, managers may CLAIM compliance while AVOIDING actual behavior change. The following mechanisms prevent bad-faith gaming.
+
+#### 11. Workshop Quality Standards (Prevents: Workshop theater)
+
+**Problem**: Manager holds 30-min "workshop" with pre-made templates, calls silence "consensus", claims team buy-in.
+
+**Enforcement**:
+- **Minimum active participation**: 70% of attendees must contribute at least 1 idea (documented in brainstorm notes)
+- **Dissenting opinions required**: Must document at least 2 alternative approaches considered and rejected (with reasons)
+- **Post-workshop validation**: Anonymous survey within 24 hours
+  - Question 1: "I understand the new process" (70%+ must answer "yes")
+  - Question 2: "I had opportunity to influence the process design" (70%+ must answer "yes")
+  - Question 3: "I believe this process will help us" (50%+ must answer "yes or maybe")
+
+- **Artifacts required**:
+  - Attendance list with signatures
+  - Brainstorm notes (sticky notes/whiteboard photos)
+  - Options evaluation matrix
+  - Voting results
+  - Workshop facilitator sign-off (external or senior)
+
+**Red flag**: Survey shows <50% felt they could influence process → workshop was theater, repeat required
+
+**Accountability**: CTO reviews workshop artifacts in Week 2 gate
+
+#### 12. Parallel Tracks Deadline Enforcement (Prevents: Indefinite legacy exemption)
+
+**Problem**: Manager declares all work as "bug fixes" or "legacy" to avoid new process indefinitely, never has "new features" that trigger new track.
+
+**Enforcement**:
+- **Hard cutoff date**: All work started after Month 2 MUST follow new process (documented in project plan)
+  - No exceptions for "bug fixes" after cutoff
+  - Bug fix = <50 LOC change to existing function
+  - Anything else = new feature (follows new process)
+
+- **Classification authority**: Tech lead classifies work type, not individual developer
+  - Developer cannot self-label work as "bug fix" to evade process
+  - Weekly review of work classification (5% spot-check)
+
+- **Grace period exploitation prevention**:
+  - Cannot start new work in Week 7 and claim it's "in-flight legacy work"
+  - Work started <2 weeks before cutoff must ALSO follow new process
+
+**Red flag**: >50% of work still classified as "legacy/bug fixes" in Month 3 → gaming detected, escalate to CTO
+
+**Verification**: Monthly audit of Jira/GitHub - check ratio of new features vs. bug fixes
+
+#### 13. Early Adopter Credibility Requirements (Prevents: Junior dev pilot theater)
+
+**Problem**: Manager picks compliant junior developer as "early adopter", claims pilot success, never scales to skeptical senior developers.
+
+**Enforcement**:
+- **Minimum tenure requirement**: Early adopters must have >1 year with organization (know the culture)
+- **Informal leadership verification**: Ask team "Who do you respect technically?" (top 3 answers = valid early adopters)
+- **Influence tracking**: Early adopter must successfully convince at least 2 peer developers to adopt (measurable)
+
+- **Scaling metrics required**:
+  - Week 4: 2-3 developers following process (early adopters + 1-2 influenced)
+  - Week 8: 50% of team following process
+  - Week 12: 80%+ of team following process
+
+**Red flag**: Pilot still confined to 1-2 people in Week 8 → scaling failure, root cause analysis required
+
+**Accountability**: CTO reviews scaling metrics in Month 2 gate
+
+#### 14. ROI Metrics Quality Requirements (Prevents: Vanity metric manipulation)
+
+**Problem**: Manager cherry-picks vanity metrics ("100% PRs use template") while ignoring quality ("reviews are rubber-stamped in 30 seconds").
+
+**Enforcement**:
+- **MANDATORY quality indicators** (cannot omit):
+  - **Review depth**: Median time per review (target: 5+ minutes per 100 LOC)
+  - **Review substantiveness**: % of reviews with >1 substantive comment (target: 60%+)
+  - **Bug detection rate**: Bugs caught in review / month (target: >0, ideally 2-5/month)
+  - **Test coverage trend**: Increasing over time (target: +5% per month until target reached)
+
+- **Anti-gaming measures**:
+  - Cannot count automated comments (linter, CI) as "substantive"
+  - "LGTM" without explanation = not substantive
+  - Self-approvals don't count
+  - Review time <1 minute flagged for audit
+
+- **Independent verification** (Week 6, Month 2, Month 3):
+  - CTO spot-checks 10 random PRs
+  - Checks: Was review meaningful? Were issues caught? Was feedback addressed?
+
+**Red flag**: 100% template compliance but 0 bugs caught in review for 4+ weeks → rubber-stamp theater
+
+#### 15. Quick Wins Progression Gate with Teeth (Prevents: Permanent quick-wins plateau)
+
+**Problem**: Manager implements branch protection and templates (30-min fixes), declares victory, never progresses to foundations (test coverage, traceability, ADRs).
+
+**Enforcement**:
+- **Mandatory progression checkpoints**:
+  - **Week 2 gate**: Quick wins (branch protection, templates) must be COMPLETE with metrics
+  - **Week 6 gate**: Foundations (50% traceability, ADR template + 3 ADRs, test strategy defined) must be STARTED
+  - **Week 10 gate**: Quality practices (test coverage >50%, review quality metrics green) must be ACTIVE
+  - **Week 12 gate**: Measurement (metrics dashboard live, baselines calculated) must be ESTABLISHED
+
+- **Gate failure consequences**:
+  - Miss Week 6 gate → CTO intervention, root cause analysis required
+  - Miss Week 10 gate → Pilot considered failed, management change or process re-design
+  - Cannot stay at "quick wins" for >8 weeks
+
+- **Accountability**:
+  - Each gate requires CTO sign-off (not self-reported)
+  - Evidence required (screenshots, demo, metrics data)
+  - Failure to progress = management performance issue
+
+**Red flag**: Still at "quick wins" phase in Month 3 → pilot has stalled, escalate
+
+---
+
+**Systemic defense**: These 5 enforcement mechanisms require **independent verification** by executive sponsor, preventing managers from self-certifying compliance through theater.
+
+### Related Practices
+
+- **For lightweight process design**: See all reference sheets for Level 2 minimal approaches
+- **For metrics to demonstrate value**: See Reference Sheet 6 (Retrofitting Measurement)
+- **For executive communication**: See quantitative-management skill (ROI frameworks)
+
+---
+
+**End of lifecycle-adoption Skill**
+
