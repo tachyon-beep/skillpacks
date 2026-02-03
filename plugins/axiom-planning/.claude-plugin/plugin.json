@@ -1,7 +1,19 @@
 {
   "name": "axiom-planning",
-  "version": "1.0.1",
-  "description": "TDD-validated implementation planning skill with comprehensive anti-rationalization defenses",
-  "author": "Axiom Faction",
-  "license": "CC BY-SA 4.0"
+  "version": "1.1.0",
+  "description": "TDD-validated implementation planning with plan review quality gate (2 skills, 5 agents, 1 command) - write plans, validate against codebase reality before execution",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "axiom",
+    "planning",
+    "implementation",
+    "plan-review",
+    "quality-gate",
+    "tdd-validated"
+  ]
 }

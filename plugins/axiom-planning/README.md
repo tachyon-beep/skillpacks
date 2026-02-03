@@ -1,12 +1,20 @@
 # Axiom Planning
 
-**Version:** 1.0.0
+**Version:** 1.1.0
 **Category:** Software Engineering
 **License:** CC BY-SA 4.0
 
 ## Overview
 
-Axiom Planning provides TDD-validated implementation planning guidance designed to resist common rationalization patterns that lead to incomplete or vague plans. Built from comprehensive analysis of the original `superpowers:writing-plans` skill with all identified issues corrected.
+Axiom Planning provides TDD-validated implementation planning with a quality gate for plan validation. The planning workflow:
+
+```
+brainstorming → implementation-planning → plan-review → executing-plans
+```
+
+**implementation-planning** creates comprehensive plans with anti-rationalization defenses.
+
+**plan-review** validates plans against codebase reality before execution - catching hallucinations, convention violations, and risks before any code is written.
 
 ## Skills
 
@@ -15,22 +23,31 @@ Axiom Planning provides TDD-validated implementation planning guidance designed 
 **When to use:** Creating comprehensive implementation plans for multi-step features requiring documentation for handoff
 
 **Key features:**
-- ✅ Complete code examples (not pseudocode or "add validation")
-- ✅ Exact file paths for every file touched
-- ✅ Exact commands with expected output
-- ✅ Atomic task breakdown (one action per step)
-- ✅ Definition of Done checklists
-- ✅ Anti-rationalization defenses
+- Complete code examples (not pseudocode or "add validation")
+- Exact file paths for every file touched
+- Exact commands with expected output
+- Atomic task breakdown (one action per step)
+- Definition of Done checklists
+- Anti-rationalization defenses
 
-**Improvements over original:**
-- Fixed CSO (Claude Search Optimization) - description focuses on triggers only
-- Removed time estimates (violates best practices)
-- Added "When to Use" section with clear decision guidance
-- Added "Common Mistakes" table
-- Added "Red Flags" rationalization table
-- Fixed cross-reference guidance (no `@` syntax that burns context)
-- Softer, more professional tone
-- Includes TDD test scenarios for validation
+### plan-review
+
+**When to use:** After implementation-planning, before executing the plan (high-risk or high-complexity work)
+
+**Invoke:** `/review-plan [plan_file]`
+
+**Architecture:** Spawns 4 specialized reviewer agents in parallel, then synthesizes findings:
+
+| Reviewer | Focus |
+|----------|-------|
+| **Reality** | Symbol existence, path validity, version compatibility, CLAUDE.md conventions |
+| **Architecture** | Blast radius, one-way doors, complexity, patterns, technical debt |
+| **Quality** | Test strategy, observability, edge cases, security anti-patterns |
+| **Systems** | Second-order effects, feedback loops, failure modes, timing assumptions |
+
+**Philosophy:** Accuracy over speed. Token-intensive by design - reserve for high-risk work. Simplified single-reviewer mode available for lower-risk plans.
+
+**Output:** JSON report with verdict (APPROVED, APPROVED_WITH_WARNINGS, CHANGES_REQUESTED) plus human-readable summary with prioritized issues
 
 ## What's Different from superpowers:writing-plans
 
@@ -142,11 +159,21 @@ The skill explicitly counters common excuses:
 ```
 axiom-planning/
 ├── .claude-plugin/
-│   └── plugin.json              # Plugin metadata
+│   └── plugin.json                  # Plugin metadata
 ├── skills/
-│   └── implementation-planning/
-│       └── SKILL.md             # Main skill (TDD-validated)
-└── README.md                    # This file
+│   ├── implementation-planning/
+│   │   └── SKILL.md                 # Plan creation skill (TDD-validated)
+│   └── plan-review/
+│       └── SKILL.md                 # Plan validation skill
+├── agents/
+│   ├── plan-review-reality.md       # Hallucination detection
+│   ├── plan-review-architecture.md  # Patterns, complexity, debt
+│   ├── plan-review-quality.md       # Testing, observability, security
+│   ├── plan-review-systems.md       # Second-order effects, failure modes
+│   └── plan-review-synthesizer.md   # Collates findings into verdict
+├── commands/
+│   └── review-plan.md               # /review-plan slash command
+└── README.md                        # This file
 ```
 
 ## Contributing
@@ -160,16 +187,21 @@ Found a rationalization pattern not covered? Discovered a new loophole?
 
 ## Version History
 
+**1.1.0** (2026-02-03)
+- Added plan-review skill - quality gate between planning and execution
+- Multi-reviewer architecture: 4 specialized agents + synthesizer
+  - Reality reviewer (hallucination detection)
+  - Architecture reviewer (patterns, complexity, debt)
+  - Quality reviewer (testing, observability, security)
+  - Systems reviewer (second-order effects, failure modes)
+  - Synthesizer (collates into prioritized verdict)
+- Added /review-plan command with cost warning and simplified mode
+- Token-intensive by design - thoroughness over speed
+- JSON output with human-readable summary
+
 **1.0.0** (2026-01-25)
-- Initial release
-- Fixed all issues from superpowers:writing-plans analysis:
-  - CSO description (pure triggers)
-  - Removed time estimates
-  - Added When to Use, Common Mistakes, Red Flags sections
-  - Fixed cross-reference guidance
-  - Softer professional tone
+- Initial release with implementation-planning skill
 - TDD-validated (RED-GREEN-REFACTOR): 100% GREEN phase pass rate
-- Production ready
 
 ## Related Skills
 

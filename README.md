@@ -99,10 +99,11 @@ cd skillpacks
 - Specialist agents for architecture decisions, bug triage, QA, and process routing
 - `/plugin install axiom-sdlc-engineering`
 
-**axiom-planning** - 1 skill
+**axiom-planning** - 2 skills, 5 agents, 1 command
 
-- TDD-validated implementation planning with anti-rationalization defenses
-- Atomic task breakdown, complete code examples, exact file paths
+- TDD-validated implementation planning with plan review quality gate
+- Plan review spawns 4 parallel reviewers (reality, architecture, quality, systems) + synthesizer
+- Catches hallucinations, convention violations, and risks before code execution
 - `/plugin install axiom-planning`
 
 ### 🤖 AI/ML Engineering (Yzmir) - 10 Packs
