@@ -1,0 +1,23 @@
+{
+  "name": "yzmir-deep-rl",
+  "version": "1.2.5",
+  "description": "Reinforcement learning - DQN, PPO, SAC, reward shaping, exploration, counterfactual reasoning, Shapley credit assignment. Includes 13 reference sheets, 3 commands (diagnose, scaffold-experiment, select-algorithm), 2 agents (rl-training-diagnostician, reward-function-reviewer).",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "yzmir",
+    "deep-rl",
+    "reinforcement-learning",
+    "ppo",
+    "sac",
+    "dqn",
+    "reward-shaping",
+    "counterfactual",
+    "shapley",
+    "credit-assignment"
+  ]
+}

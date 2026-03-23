@@ -1,0 +1,21 @@
+{
+  "name": "ordis-quality-engineering",
+  "version": "2.2.3",
+  "description": "Quality engineering: E2E, API, integration, performance, chaos, flaky tests, observability, mutation testing, coverage gap analysis. 21 reference sheets, 5 commands, 3 agents.",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "ordis",
+    "quality",
+    "testing",
+    "flaky-tests",
+    "test-pyramid",
+    "chaos-engineering",
+    "ci-cd",
+    "automation"
+  ]
+}

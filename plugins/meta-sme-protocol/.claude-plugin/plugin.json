@@ -1,0 +1,21 @@
+{
+  "name": "meta-sme-protocol",
+  "version": "1.0.0",
+  "description": "SME (Subject Matter Expert) Agent Protocol - mandatory protocol for all specialist agents defining fact-finding requirements, output contracts, confidence/risk assessment, and qualification of advice.",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "meta",
+    "sme",
+    "agent",
+    "protocol",
+    "specialist",
+    "expert",
+    "confidence",
+    "risk-assessment"
+  ]
+}
