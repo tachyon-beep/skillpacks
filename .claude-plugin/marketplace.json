@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, Python engineering, web backend, DevOps, SDLC process management, game development, security, documentation, and UX skills for Claude Code - 28 complete skillpacks with 173+ TDD-validated skills",
-    "version": "3.6.1",
+    "description": "Professional AI/ML, Python engineering, web backend, DevOps, SDLC process management, game development, security, documentation, site design, and UX skills for Claude Code - 30 complete skillpacks with 173+ TDD-validated skills",
+    "version": "3.7.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -145,6 +145,22 @@
       "category": "game-development"
     },
     {
+      "name": "lyra-site-designer",
+      "source": "./plugins/lyra-site-designer",
+      "description": "Static site design and implementation for developer tools and documentation - information architecture, HTML/CSS, design tokens, developer UX patterns - 1 skill, 1 agent, 1 command, 6 reference sheets",
+      "keywords": [
+        "lyra",
+        "site",
+        "design",
+        "static-site",
+        "html",
+        "css",
+        "documentation",
+        "developer-tools"
+      ],
+      "category": "user-experience"
+    },
+    {
       "name": "lyra-ux-designer",
       "source": "./plugins/lyra-ux-designer",
       "description": "UX design fundamentals - visual design, accessibility, interaction patterns - 11 skills",
@@ -190,6 +206,21 @@
         "editorial",
         "audience",
         "persona"
+      ],
+      "category": "documentation"
+    },
+    {
+      "name": "muna-document-designer",
+      "source": "./plugins/muna-document-designer",
+      "description": "Professional document design with Pandoc and Typst - typography, layout, templates, format conversion, 6 reference sheets (academic, accessibility, data-heavy, multilingual, print, standards) - 1 skill, 1 agent, 1 command",
+      "keywords": [
+        "muna",
+        "document",
+        "design",
+        "typst",
+        "pandoc",
+        "typography",
+        "pdf"
       ],
       "category": "documentation"
     },

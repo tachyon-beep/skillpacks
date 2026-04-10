@@ -1,0 +1,21 @@
+{
+  "name": "lyra-site-designer",
+  "version": "1.0.0",
+  "description": "Static site design and implementation for developer tools, open-source projects, and technical documentation sites - information architecture, HTML/CSS craftsmanship, design tokens, developer UX patterns - 1 skill, 1 agent, 1 command, 6 reference sheets",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "lyra",
+    "site",
+    "design",
+    "static-site",
+    "html",
+    "css",
+    "developer-tools",
+    "documentation"
+  ]
+}

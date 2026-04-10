@@ -1,8 +1,8 @@
 # Claude Code Skill Packs Marketplace
 
-## Professional AI/ML, game development, security, documentation, and UX skills for Claude Code
+## Professional AI/ML, Python engineering, web backend, DevOps, SDLC, game development, security, documentation, and UX skills for Claude Code
 
-26 complete skillpacks • 173+ skills • Install what you need
+30 complete skillpacks • 173+ skills • Install what you need
 
 ---
 
@@ -45,15 +45,34 @@ cd skillpacks
 - ATO processes, classified systems, security architecture review
 - `/plugin install ordis-security-architect`
 
-### 📝 Documentation (Muna)
+### 📝 Documentation (Muna) - 4 Packs
 
-**muna-technical-writer** - 9 skills
+**muna-document-designer** - 1 skill, 1 agent, 1 command
+
+- Professional document design with Pandoc and Typst
+- Typography, layout, templates, branded document systems
+- Reports, proposals, specifications, resumes, brochures
+- `/plugin install muna-document-designer`
+
+**muna-technical-writer** - 10 skills, 4 commands, 3 agents
 
 - Documentation structure, clarity & style, diagram conventions
 - Security-aware docs, incident response, ITIL/governance
 - `/plugin install muna-technical-writer`
 
-### 🔬 Development (Axiom) - 7 Packs
+**muna-panel-review** - 3 agents, 1 skill, 3 commands
+
+- Simulated audience panel review with persona-driven editorial intelligence
+- Spawn reader personas, collect mood journals, synthesize cross-panel feedback
+- `/plugin install muna-panel-review`
+
+**muna-wiki-management** - 7 skills, 4 commands, 2 agents
+
+- Document set management as wikis with architecture and governance
+- Derivation tracking, consistency auditing, evolution management
+- `/plugin install muna-wiki-management`
+
+### 🔬 Development (Axiom) - 8 Packs
 
 **axiom-python-engineering** - 10 skills
 
@@ -105,6 +124,13 @@ cd skillpacks
 - Plan review spawns 4 parallel reviewers (reality, architecture, quality, systems) + synthesizer
 - Catches hallucinations, convention violations, and risks before code execution
 - `/plugin install axiom-planning`
+
+**axiom-engineering-foundations** - 6 skills
+
+- Universal software engineering methodology (language-agnostic)
+- Systematic debugging, safe refactoring, code review, incident response
+- Technical debt triage, codebase confidence building
+- `/plugin install axiom-engineering-foundations`
 
 ### 🤖 AI/ML Engineering (Yzmir) - 10 Packs
 
@@ -172,7 +198,15 @@ cd skillpacks
 - Emergent gameplay, player-driven narratives, strategic depth
 - `/plugin install bravos-systems-as-experience`
 
-### 🎨 UX Design (Lyra)
+### 🎨 UX & Site Design (Lyra) - 2 Packs
+
+**lyra-site-designer** - 1 skill, 1 agent, 1 command, 6 reference sheets
+
+- Static site design for developer tools and documentation sites
+- Information architecture, HTML/CSS craftsmanship, design tokens
+- Developer UX patterns: code blocks, dark mode, search, responsive layouts
+- Static site tooling guidance (Hugo, Astro, Eleventy)
+- `/plugin install lyra-site-designer`
 
 **lyra-ux-designer** - 11 skills
 
@@ -197,10 +231,11 @@ cd skillpacks
 - Mandatory protocol for all specialist agents: fact-finding, confidence/risk assessment
 - `/plugin install meta-sme-protocol`
 
-**meta-skillpack-maintenance** - 1 skill
+**meta-skillpack-maintenance** - 3 skills
 
 - Systematic maintenance and enhancement of skill packs
-- RED-GREEN-REFACTOR testing methodology
+- Investigative domain analysis, RED-GREEN-REFACTOR testing
+- Automated quality improvements
 - `/plugin install meta-skillpack-maintenance`
 
 ---
@@ -316,8 +351,8 @@ I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO
 
 ## What's Inside
 
-- **160+ Skills**: Production-ready guidance across 6 domains
-- **23 Packs**: Install only what you need
+- **173+ Skills**: Production-ready guidance across 7 domains
+- **30 Packs**: Install only what you need
 - **Per-Pack Plugins**: Independent versioning, clean dependencies
 - **Complete Coverage**: Design → Foundation → Training → Production
 
@@ -329,12 +364,12 @@ I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO
 skillpacks/
 ├── .claude-plugin/
 │   └── marketplace.json       # Marketplace catalog
-├── plugins/                   # All 23 skillpacks
-│   ├── axiom-*/               # Development (5 packs)
+├── plugins/                   # All 30 skillpacks
+│   ├── axiom-*/               # Development (8 packs)
 │   ├── bravos-*/              # Game development (2 packs)
-│   ├── lyra-*/                # UX design (1 pack)
+│   ├── lyra-*/                # UX & site design (2 packs)
 │   ├── meta-*/                # Meta utilities (2 packs)
-│   ├── muna-*/                # Documentation (1 pack)
+│   ├── muna-*/                # Documentation (4 packs)
 │   ├── ordis-*/               # Quality & security (2 packs)
 │   └── yzmir-*/               # AI/ML (10 packs)
 └── docs/                      # Planning documents
