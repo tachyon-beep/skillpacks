@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is the **Skillpacks Marketplace** - a modular collection of 15 professional skillpacks providing 135 production-ready skills for Claude Code across AI/ML, Python engineering, game development, security, documentation, and UX design.
+This is the **Skillpacks Marketplace** - a modular collection of 16 professional skillpacks providing 144 production-ready skills for Claude Code across AI/ML, Python engineering, game development, security, documentation, UX design, and solution architecture.
 
 **Status**: v1.2.0 - Production ready, CC BY-SA 4.0 licensed, publicly available
 
@@ -29,9 +29,10 @@ skillpacks/
 
 ### Plugin Categories
 
-1. **Python Engineering (Axiom faction)** - 2 plugins, 15 skills
+1. **Python Engineering (Axiom faction)** - 3 plugins, 24 skills
    - `axiom-python-engineering` (10 skills)
    - `axiom-system-archaeologist` (5 skills - router + specialists)
+   - `axiom-solution-architect` (9 skills - router + specialists, forward design)
 
 2. **AI/ML (Yzmir faction)** - 8 plugins, 70 skills
    - `yzmir-ai-engineering-expert` (router)
@@ -65,6 +66,7 @@ To use a router skill, invoke it as a slash command:
 ```
 /ai-engineering      # Routes to AI/ML skills
 /system-archaeologist # Routes to architecture analysis
+/solution-architect  # Routes to forward solution design
 /deep-rl            # Routes to RL algorithms
 /python-engineering  # Routes to Python skills
 ```
@@ -210,7 +212,7 @@ This repository uses a unique testing methodology:
 
 **Total**: 201+ production files
 
-- 135 skill files (SKILL.md)
+- 144 skill files (SKILL.md)
 - 15 plugin metadata files (plugin.json)
 - 1 marketplace catalog (marketplace.json)
 - Core documentation (README, LICENSE, CLAUDE.md, FACTIONS.md, CONTRIBUTING.md, LICENSE_ADDENDUM.md)
@@ -277,7 +279,7 @@ for dir in plugins/*/; do
 done
 
 # Count total skills
-find plugins -name "SKILL.md" | wc -l  # Should be 135
+find plugins -name "SKILL.md" | wc -l  # Should be 144
 ```
 
 ## Important Notes
