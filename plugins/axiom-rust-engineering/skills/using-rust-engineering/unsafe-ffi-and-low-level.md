@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Core Principle:** Soundness is the contract between `unsafe` authors and the rest of the program. When you write `unsafe`, you are asserting to the compiler that you have verified invariants it cannot check. Breaking those invariants — even once, even in a code path you believe is unreachable — is always your fault. The compiler did not fail you; you failed the contract.
+**Core Principle:** If you can avoid `unsafe`, do. Every `unsafe` block is a promise to the compiler that *you* have verified invariants it cannot check, and breaking them — even once, even in a code path you believe is unreachable — is always your fault. The compiler did not fail you; you failed the contract. Reach for `unsafe` only when (a) no safe API exists (FFI, raw pointer data structures, specific hardware intrinsics) or (b) measurement has proved a safe implementation insufficient *and* the unsafe version has been carefully bounded and audited. "I'm pretty sure this is fine" is not a reason.
 
 Safe Rust prevents the majority of undefined behavior (UB) by construction. `unsafe` grants five additional capabilities, each of which can violate memory safety if misused. The purpose of `unsafe` is not to bypass Rust's rules but to implement abstractions that enforce those rules at a higher level — behind a safe public API whose correctness depends on the invariants you document and uphold.
 
@@ -87,13 +87,13 @@ The compiler cannot enforce these. You must.
 
 ### 1. No Mutable Aliasing with Shared References
 
-Rust's aliasing rules, as defined in the Miri / LLVM model, forbid:
+Rust's aliasing rules are part of the language's memory model — not yet fully formalized, and approximated operationally by the Stacked Borrows and Tree Borrows models implemented in Miri. They forbid:
 
 - Having a `&mut T` and any other reference (`&T` or `&mut T`) to the same memory alive at the same time.
 - Writing through a `*mut T` while a `&T` to the same location is live.
 - Creating two `&mut T` to overlapping memory regions simultaneously.
 
-These rules hold even if you use raw pointers. The underlying model (currently "Stacked Borrows" in miri) tracks borrow tags on memory. Violating the alias rules is UB regardless of whether the write physically causes corruption in your test run.
+These rules hold even if you use raw pointers. Miri tracks borrow tags on memory under its chosen model (default: Stacked Borrows; `-Zmiri-tree-borrows` switches to the newer Tree Borrows). LLVM's own `noalias` metadata exploits these guarantees during optimization, but LLVM does not *define* them. Violating the rules is UB regardless of whether the write physically causes corruption in your test run.
 
 ```rust
 // WRONG — aliasing UB: a shared reference and a mutable pointer to the same data
@@ -113,7 +113,7 @@ fn wrong_alias(data: &[u8]) -> u8 {
 A raw pointer must be non-null, properly aligned for `T`, and pointing to live memory before you dereference it. Specifically:
 
 - `*ptr` on a null pointer is UB.
-- `*ptr` on a misaligned pointer (e.g., reading `u32` from an odd address) is UB on most architectures.
+- `*ptr` on a misaligned pointer (e.g., reading `u32` from an odd address) is UB per the Rust memory model, even if the hardware silently tolerates it. x86 will often execute the load without trapping; that does not make it defined. For unaligned reads use `std::ptr::read_unaligned` / `write_unaligned`.
 - `*ptr` on a dangling pointer (pointing to freed or moved memory) is UB.
 
 ### 3. Initialization
@@ -298,7 +298,7 @@ cargo +nightly miri run
 - **Reads of uninitialized memory**: reading from `MaybeUninit<T>` before writing.
 - **Aliasing violations**: creating `&mut T` while a live `&T` to the same location exists; violating Stacked Borrows tag rules.
 - **Invalid values**: creating a `bool` with value 2, a `char` with a surrogate code point, an enum with an invalid discriminant.
-- **Data races** (with `-Zmiri-preemption-rate` and threading): miri detects data races under its modeled execution, but it does NOT catch bugs that arise from weak-memory reorderings permitted by the hardware. Treat miri as a necessary-but-not-sufficient race check; fuzz under `loom` for algorithms sensitive to relaxed atomics.
+- **Data races**: miri's data-race detector is enabled by default for multi-threaded tests. `-Zmiri-preemption-rate` tunes how aggressively it preempts (higher rate surfaces races that depend on thread interleaving). Miri does NOT catch bugs that arise from weak-memory reorderings the hardware permits — treat it as a necessary-but-not-sufficient race check and fuzz with `loom` for algorithms sensitive to relaxed atomics.
 
 ### Example: Catching an Aliasing Bug
 
@@ -484,20 +484,22 @@ otool -L target/release/my-binary   # macOS
 
 ## FFI Basics — Exposing Rust to C
 
-### `#[no_mangle]` and `extern "C"`
+### `#[unsafe(no_mangle)]` and `extern "C"`
 
 ```rust
 /// Adds two integers. Safe to call from C.
 ///
 /// # Safety (for C callers)
 /// Both arguments are plain i32 values; no pointer invariants required.
-#[no_mangle]
+#[unsafe(no_mangle)]          // 2024 edition: `unsafe` wrapper is required
 pub extern "C" fn rust_add(a: i32, b: i32) -> i32 {
     a + b
 }
 ```
 
-`#[no_mangle]` prevents Rust's name mangling so the symbol is visible to C linkers as `rust_add`. `extern "C"` uses the C calling convention (System V ABI on Linux/macOS x86-64, MSVC ABI on Windows).
+`#[unsafe(no_mangle)]` prevents Rust's name mangling so the symbol is visible to C linkers as `rust_add`. `extern "C"` uses the C calling convention (System V ABI on Linux/macOS x86-64, MSVC ABI on Windows).
+
+**Edition 2024 unsafe attributes:** On the 2024 edition, `#[no_mangle]`, `#[link_section]`, and `#[export_name]` must be wrapped in `#[unsafe(...)]` — bare forms are a hard error. Older editions still accept the bare form but emit a warning. The wrapper reflects that these attributes can produce UB (symbol collisions, violated linker contracts) and therefore need the same author acknowledgement as an `unsafe` block. Apply the same pattern to any crate exports shown later in this sheet.
 
 ### `#[repr(C)]` for ABI Stability
 
@@ -510,7 +512,7 @@ pub struct Point {
     pub y: f64,
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn point_distance(a: Point, b: Point) -> f64 {
     let dx = a.x - b.x;
     let dy = a.y - b.y;
@@ -614,7 +616,7 @@ not be (and on Windows isn't) `malloc`.
 ```rust
 /// Creates a Rust struct on the heap and transfers ownership to C.
 /// C must call `widget_free` to release the memory.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn widget_create(id: u32) -> *mut Widget {
     let w = Box::new(Widget { id, data: vec![0u8; 64] });
     Box::into_raw(w)
@@ -627,7 +629,7 @@ pub extern "C" fn widget_create(id: u32) -> *mut Widget {
 /// `ptr` must be a non-null pointer returned by `widget_create` that has
 /// not already been passed to `widget_free`. Calling this twice on the
 /// same pointer is a double-free (UB).
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn widget_free(ptr: *mut Widget) {
     if ptr.is_null() {
         return; // defensive: treat null as no-op
@@ -844,7 +846,16 @@ Any unsynchronized concurrent access to the same memory location where at least 
 static mut COUNTER: u64 = 0;
 // Accessing COUNTER from two threads simultaneously is a data race (UB)
 // even if both accesses appear "atomic" on your architecture.
-// Use: static COUNTER: AtomicU64 = AtomicU64::new(0);
+//
+// Edition 2024 note: taking `&` or `&mut` to a `static mut` is now a hard
+// error (the `static_mut_refs` lint is deny-by-default / promoted). Any
+// access must go through `std::ptr::addr_of!` / `addr_of_mut!` inside an
+// `unsafe` block — and even then it is only sound if you have exclusive
+// access. Prefer:
+//   static COUNTER: AtomicU64 = AtomicU64::new(0);
+//   static DATA: OnceLock<Mutex<T>> = OnceLock::new();
+//   static LAZY: LazyLock<T> = LazyLock::new(|| ...);
+// over `static mut` in all new code.
 ```
 
 ### Invalid `bool` / `char` / Enum Discriminant
@@ -961,10 +972,10 @@ fn get_ref() -> &'static str { "hello" }
 
 ```rust
 // WRONG: no documentation; double-free is easy to trigger
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn make_thing() -> *mut Thing { Box::into_raw(Box::new(Thing::new())) }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn free_thing(p: *mut Thing) {
     unsafe { drop(Box::from_raw(p)); } // if called twice: double-free UB
 }
@@ -972,7 +983,7 @@ pub unsafe extern "C" fn free_thing(p: *mut Thing) {
 // CORRECT: documented, null-checked, contract is explicit
 /// Creates a Thing on the Rust heap. Transfer ownership to C.
 /// The returned pointer must be freed with exactly one call to `free_thing`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn make_thing() -> *mut Thing {
     Box::into_raw(Box::new(Thing::new()))
 }
@@ -983,7 +994,7 @@ pub extern "C" fn make_thing() -> *mut Thing {
 /// `ptr` must be a non-null pointer returned by `make_thing` that has not
 /// previously been passed to `free_thing`. Passing null is safe (no-op).
 /// Passing any other pointer is UB.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn free_thing(ptr: *mut Thing) {
     if ptr.is_null() { return; }
     // SAFETY: ptr is non-null (checked), was produced by Box::into_raw

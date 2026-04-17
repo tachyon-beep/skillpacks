@@ -24,7 +24,7 @@ Use this sheet when:
 - "Tests run fine locally but flake in CI."
 - Choosing between `mockall`, fakes, and in-process test doubles.
 
-**Trigger keywords**: `#[test]`, `#[cfg(test)]`, `cargo test`, `cargo-nextest`, `proptest`, `insta`, `criterion`, `mockall`, `cargo-llvm-cov`, `tarpaulin`, `assert_snapshot!`, snapshot review, `#[should_panic]`, doctest, `no_run`, `compile_fail`, coverage, flaky, retry.
+**Trigger keywords**: `#[test]`, `#[cfg(test)]`, `cargo test`, `cargo-nextest`, `proptest`, `quickcheck`, `insta`, `criterion`, `divan`, `iai-callgrind`, `mockall`, `wiremock`, `cargo-llvm-cov`, `tarpaulin`, `cargo-fuzz`, `afl.rs`, `assert_snapshot!`, snapshot review, `#[should_panic]`, doctest, `no_run`, `compile_fail`, coverage, flaky, retry, fuzz.
 
 ## When NOT to Use
 
@@ -304,9 +304,45 @@ fn client_can_echo() {
 }
 ```
 
+### Testing CLI binaries
+
+For crates that ship a binary, integration tests usually want to invoke the compiled binary and assert on its stdout/stderr/exit-status. The standard combination is:
+
+- **`assert_cmd`** — finds the binary (`Command::cargo_bin("my-cli")`) and wraps it in a fluent assertion API (`.assert().success().stdout(...)`).
+- **`predicates`** — ships matchers used by `assert_cmd` (`predicate::str::contains(...)`, `predicate::str::is_match(regex)`, etc.).
+- **`tempfile`** — creates throwaway `TempDir` / `NamedTempFile` instances for tests that need real filesystem state; directories are cleaned up on drop.
+
+```rust
+// tests/cli.rs
+use assert_cmd::Command;
+use predicates::prelude::*;
+use tempfile::tempdir;
+
+#[test]
+fn cli_reports_missing_config_file() {
+    let dir = tempdir().unwrap();
+    Command::cargo_bin("my-cli")
+        .unwrap()
+        .arg("--config").arg(dir.path().join("missing.toml"))
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("no such file"));
+}
+```
+
+These three crates compose cleanly; reach for them whenever you're tempted to shell out with `std::process::Command` in a test.
+
 ## Property-Based Testing with proptest
 
 Property-based testing generates hundreds of random inputs and checks that a property holds for all of them. It is most valuable when you can describe an invariant that *must* hold regardless of input, rather than specifying expected output for specific inputs.
+
+The Rust ecosystem has three related crates in this space:
+
+- **`proptest`** — strategies are first-class values; shrinking is built in; integrates with `prop_compose!` and `prop_oneof!` for compositional strategies. The default recommendation.
+- **`quickcheck`** — older, simpler API modelled directly on Haskell's QuickCheck; requires types to implement `Arbitrary` and does less sophisticated shrinking. Fine for very simple cases, but most projects graduate to proptest.
+- **`arbitrary`** — a trait crate (not a test harness). Bridges raw `&[u8]` byte streams into typed inputs, which is what fuzzing harnesses need. You'll see it paired with `cargo-fuzz` more than with proptest (see the fuzzing section below).
+
+The rest of this section uses `proptest`.
 
 ### When PBT beats example-based testing
 
@@ -470,7 +506,7 @@ fn short_format() {
 }
 ```
 
-The `@"..."` literal is written by `cargo insta review --check-only` on first acceptance.
+The `@"..."` literal is written back into the test file by `cargo insta accept` or by the interactive `cargo insta review` flow when you accept a pending inline snapshot. The `--check-only` flag is the opposite — it's the CI mode that fails if any pending snapshots exist without accepting them.
 
 ### Review workflow
 
@@ -570,6 +606,40 @@ cargo bench -- encode/1kb
 # Generate HTML report
 cargo bench  # creates target/criterion/report/index.html
 ```
+
+### Alternatives to `criterion`
+
+- **`divan`** — simpler API, terser output, noticeably faster warmup than criterion, and supports allocation counting out of the box. Good choice for a large number of small benches where criterion's HTML reports feel like overkill.
+- **`iai-callgrind`** — runs the benchmark under Valgrind/callgrind and reports instruction counts (and cache/branch estimates) rather than wall-clock time. Cost: you need Valgrind installed and the numbers are not directly comparable to wall-clock. Benefit: results are deterministic and portable across machines, so CI regression gates become reliable without a dedicated benchmark host.
+
+Criterion is still the default for wall-clock microbenchmarks on a dev machine. Use `iai-callgrind` when you need deterministic CI numbers; use `divan` when criterion's reporting overhead is outweighing the signal. Don't run all three — pick one benchmarking harness per crate to keep comparisons coherent. See [performance-and-profiling.md](performance-and-profiling.md) for when to reach for benchmarking at all vs. profiling.
+
+### Fuzzing
+
+Property tests and fuzzers both explore an input space, but they do different things:
+
+- `proptest` / `quickcheck` generate structured inputs against explicit strategies. Fast feedback, good for round-trip properties and API-level invariants.
+- Coverage-guided fuzzers (`cargo fuzz` on libFuzzer, `afl.rs` on AFL++) mutate raw bytes and use runtime coverage feedback to reach new code paths. Slow per iteration but excellent at finding parser/decoder crashes and panics that no strategy would have hit.
+
+```bash
+# cargo-fuzz: requires a nightly toolchain (libFuzzer ships in nightly's runtime).
+cargo install cargo-fuzz
+cargo fuzz init
+cargo fuzz add parse_header
+cargo +nightly fuzz run parse_header
+```
+
+```rust
+// fuzz/fuzz_targets/parse_header.rs
+#![no_main]
+use libfuzzer_sys::fuzz_target;
+
+fuzz_target!(|data: &[u8]| {
+    let _ = my_crate::parse_header(data);   // must not panic on any input
+});
+```
+
+Rule of thumb: reach for `cargo fuzz` when you have a decoder/parser/format handler and "never panics" is a hard requirement. Use `afl.rs` when integrating with an existing AFL corpus or when running on platforms where libFuzzer is awkward. For in-process property checks, `proptest` is faster to iterate on and gives you shrinking for free.
 
 ## Doctests
 
@@ -763,6 +833,34 @@ fn password_reset_sends_to_correct_address() {
 
 **Rule of thumb:** Use `mockall` when the interaction contract itself is what you're verifying (e.g., "exactly one email is sent per reset"). Use a fake when you care about the downstream state (e.g., "the right email address received the message"). Never use either when you can test with the real dependency in-process (e.g., an in-memory database).
 
+### Mocking external HTTP services
+
+`mockall` mocks *traits* in your own code. When the external dependency is an HTTP API, mock it at the network boundary instead:
+
+- **`wiremock`** — async-first, built on `hyper` + `tokio`, runs an actual HTTP server on a random port. The test calls the real HTTP client against the mock server. Best for `tokio`-based code and for contract-level verification ("the client sends PATCH with `Content-Type: application/merge-patch+json`").
+- **`mockito`** — simpler and synchronous-by-default, also spins up a local HTTP server; less featureful than `wiremock`, but lighter weight and adequate for straightforward request-response stubbing.
+
+```rust
+// wiremock example
+use wiremock::matchers::{method, path};
+use wiremock::{Mock, MockServer, ResponseTemplate};
+
+#[tokio::test]
+async fn client_handles_404() {
+    let mock = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/users/42"))
+        .respond_with(ResponseTemplate::new(404))
+        .mount(&mock)
+        .await;
+
+    let client = my_crate::Client::new(mock.uri());
+    assert!(matches!(client.get_user(42).await, Err(my_crate::Error::NotFound)));
+}
+```
+
+Prefer HTTP-level mocks to trait-level mocks for HTTP clients — they verify that the actual wire bytes match what the server expects, which trait-level mocks cannot.
+
 ## Coverage
 
 Coverage tools report which lines and branches are executed during tests. They identify dead code and untested code paths, but a high coverage number does not prove correctness — it proves reachability. Treat coverage as a gap-finding tool, not a quality metric.
@@ -795,6 +893,8 @@ cargo llvm-cov --branch -- my_module::tests
 cargo llvm-cov --branch --doctests
 ```
 
+> **Toolchain note:** `--branch` (accurate branch coverage) and `--doctests` have historically required a nightly toolchain in `cargo-llvm-cov`; the exact requirements drift with rustc releases. If the commands above fail under your pinned stable toolchain, either run them under `cargo +nightly llvm-cov ...` or check the current [`cargo-llvm-cov` README](https://github.com/taiki-e/cargo-llvm-cov) for the stable/nightly split in the version you have installed.
+
 ### `cargo-tarpaulin`
 
 Tarpaulin uses ptrace-based instrumentation. It works on Linux without the LLVM toolchain and integrates directly with coveralls.io and codecov.
@@ -814,6 +914,8 @@ cargo tarpaulin --out Xml
 ```
 
 **`cargo-llvm-cov` vs `cargo-tarpaulin`:** Prefer `llvm-cov` for accuracy (especially branch coverage). Prefer `tarpaulin` in Docker environments where the LLVM toolchain is heavy, or when targeting a coveralls workflow with minimal setup.
+
+**`grcov` (Mozilla)** is a third option: it aggregates `.profraw` outputs into LCOV/HTML using source-based coverage, same as `cargo-llvm-cov` under the hood. Use it when you need to combine coverage across multiple `cargo` invocations (e.g., unit tests + integration tests built separately + CLI integration runs) — that's what `cargo-llvm-cov` wraps for the common case. For a single `cargo test` pipeline, `cargo-llvm-cov` is simpler.
 
 ### Interpreting results
 

@@ -362,6 +362,37 @@ fn main() {
 
 **Rule:** Default to generics (static dispatch). Switch to `dyn Trait` when you have a specific reason: heterogeneous collection, runtime-determined type, or a measured binary size problem.
 
+### Decision: `impl Trait` vs `<T: Trait>` vs `dyn Trait`
+
+The canonical Rust API-design decision. Apply it per-parameter and per-return-type independently:
+
+```
+Is the concrete type fixed at compile time at this site?
+│
+├─ Yes, and the caller chooses (function is called with that type)
+│   │
+│   ├─ Parameter position, simple bound, used only in this signature
+│   │                                                       → argument-position `impl Trait` (APIT)
+│   ├─ Parameter position, bound needs to be referenced again (where clause, second param)
+│   │                                                       → named generic `<T: Trait>`
+│   └─ Return position, one concrete type                   → return-position `impl Trait` (RPIT)
+│
+├─ Yes, but the function chooses a single opaque concrete type it won't let callers name
+│                                                           → RPIT (`-> impl Trait`)
+│
+└─ No — the concrete type depends on runtime state, or you need a heterogeneous collection
+    │
+    ├─ Collection of mixed types, owned                     → `Vec<Box<dyn Trait>>`
+    ├─ Shared ownership across threads                      → `Arc<dyn Trait + Send + Sync>`
+    ├─ Borrowed trait object, lifetime scoped               → `&dyn Trait`
+    └─ Return value chosen at runtime across branches       → `Box<dyn Trait>` (or `Arc<dyn Trait>`)
+```
+
+**Tiebreakers when two options work:**
+- Hot-path numerical code → always prefer static dispatch (generics / `impl Trait`).
+- Public API where callers want to store/clone/name the type → named generic `<T: Trait>`, not `impl Trait`.
+- `dyn Trait` usage requires the trait to be **dyn-compatible** (see next section) — if it isn't, the decision is forced back to generics.
+
 ## Trait Objects
 
 ### `dyn Trait` Mechanics
@@ -392,19 +423,19 @@ build a vtable entry for each method without knowing the concrete type.
 
 **Rule 1: All methods must be dispatchable through a vtable receiver.**
 
-Valid receivers: `&self`, `&mut self`, `Box<Self>`, `Rc<Self>`, `Arc<Self>`, `Pin<P>` where `P` is a valid receiver.
+Valid receivers (stable set; `Arc<Self>`, `Rc<Self>`, and `Pin<P>`-of-a-valid-receiver stabilized as dispatchable receivers in Rust 1.33): `&self`, `&mut self`, `Box<Self>`, `Rc<Self>`, `Arc<Self>`, `Pin<P>` where `P` is itself a valid receiver.
 
-Not valid: `self` (consuming without boxing), or any custom smart pointer not marked with `#[arbitrary_self_types]` (nightly).
+Not valid: `self` (consuming without boxing — `dyn Trait` is unsized and cannot be moved), or custom smart pointers outside the stable receiver set. (Nightly offers `#[feature(arbitrary_self_types)]` to extend the set, but that is not available on stable Rust.)
 
 ```rust
-trait ObjectSafe {
+trait DynCompatible {
     fn by_ref(&self) -> i32;          // OK
     fn by_mut(&mut self);             // OK
     fn boxed(self: Box<Self>);        // OK
     fn pinned(self: std::pin::Pin<&mut Self>); // OK
 }
 
-trait NotObjectSafe {
+trait NotDynCompatible {
     fn consuming(self);               // NOT OK — dyn Trait is unsized, cannot move
 }
 ```
@@ -429,31 +460,32 @@ trait Processor<T> {
 }
 ```
 
-**Rule 3: `Self` may not appear in method signatures unless behind a dispatchable receiver (and those methods are excluded with `where Self: Sized`).**
+**Rule 3: Any method that mentions `Self` outside of the receiver — as a return type, as a non-receiver argument, or as a bound — must be excluded from the vtable with `where Self: Sized`.**
 
 ```rust
-trait MixedObjectSafety {
-    fn object_safe(&self) -> i32;
+trait MixedDynCompat {
+    fn in_vtable(&self) -> i32;
 
-    // NOT dyn-compatible as-is — Self appears in return position
-    // Fix: add where Self: Sized to exclude from the vtable
+    // `Self` in any non-receiver position (including `-> Self`, `&Self`, `Box<Self>`
+    // as an argument) requires `where Self: Sized` to keep the trait dyn-compatible.
+    // `where Self: Sized` *removes* the method from the vtable for `dyn` users,
+    // while still making it available on concrete impls.
     fn clone_self(&self) -> Self where Self: Sized;
 
-    // NOT dyn-compatible as-is — Self in argument position  
-    fn compare(&self, other: &Self) where Self: Sized; // OK with this bound
+    fn compare(&self, other: &Self) where Self: Sized;
 }
 
 // Implementing and using as dyn:
 struct Concrete;
-impl MixedObjectSafety for Concrete {
-    fn object_safe(&self) -> i32 { 42 }
+impl MixedDynCompat for Concrete {
+    fn in_vtable(&self) -> i32 { 42 }
     fn clone_self(&self) -> Self { Concrete }
     fn compare(&self, _other: &Self) {}
 }
 
-let obj: &dyn MixedObjectSafety = &Concrete;
-obj.object_safe(); // OK
-// obj.clone_self(); // compile error: method not available on dyn MixedObjectSafety
+let obj: &dyn MixedDynCompat = &Concrete;
+obj.in_vtable(); // OK
+// obj.clone_self(); // compile error: method not available on dyn MixedDynCompat
 // obj.compare(&Concrete); // compile error: same reason
 ```
 
@@ -472,6 +504,8 @@ trait Flexible { fn example(&self); }              // can be dyn
 ### `Box<dyn Trait>` vs `&dyn Trait` vs `Arc<dyn Trait>`
 
 ```rust
+use std::sync::Arc;
+
 trait Handler: Send + Sync {
     fn handle(&self, input: &str) -> String;
 }

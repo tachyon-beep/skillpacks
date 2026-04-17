@@ -42,7 +42,8 @@ Four checks:
 
 ## Minimal `deny.toml` Template
 
-Create at workspace root if missing:
+If `deny.toml` is missing, bootstrap it with `cargo deny init` (generates a default
+config you then tighten) or create it at the workspace root using the template below:
 
 ```toml
 [advisories]

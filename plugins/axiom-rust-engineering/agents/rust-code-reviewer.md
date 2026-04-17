@@ -158,7 +158,7 @@ If you encounter complex `unsafe` blocks, raw pointer arithmetic, or transmute c
 
 If you notice potential vulnerabilities, input validation issues, or trust boundary problems:
 
-**Check**: `Glob` for `plugins/ordis-security-architect/.claude-plugin/plugin.json`
+**Check**: `Glob` for `**/ordis-security-architect/.claude-plugin/plugin.json`
 
 **If found**: Recommend loading the security skill for threat modeling
 **If NOT found**: Recommend installing `ordis-security-architect` from the skillpacks marketplace
@@ -177,3 +177,11 @@ If you notice potential vulnerabilities, input validation issues, or trust bound
 | `pub` fields with invariants | Minor | Prefer accessor methods |
 | Missing `///` on public items | Minor | Required for usable crate docs |
 | `clone()` where borrow suffices | Nitpick | Note allocation cost |
+
+## Related Skills and Agents
+
+- **[../skills/using-rust-engineering/error-handling-patterns.md](../skills/using-rust-engineering/error-handling-patterns.md)** — `Result`, `thiserror`/`anyhow`, `?` propagation, `# Errors` documentation
+- **[../skills/using-rust-engineering/async-and-concurrency.md](../skills/using-rust-engineering/async-and-concurrency.md)** — tokio runtime, Send/Sync, `.await` + locks, backpressure
+- **[../skills/using-rust-engineering/traits-generics-and-dispatch.md](../skills/using-rust-engineering/traits-generics-and-dispatch.md)** — object safety, associated types vs generics, blanket impls
+- **[clippy-specialist.md](./clippy-specialist.md)** — Delegate lint sweeps and warning-count reduction
+- **[unsafe-auditor.md](./unsafe-auditor.md)** — Delegate soundness analysis of `unsafe` blocks, FFI contracts, and `Send`/`Sync` impls

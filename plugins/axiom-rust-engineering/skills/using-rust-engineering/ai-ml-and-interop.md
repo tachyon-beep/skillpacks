@@ -12,16 +12,23 @@ What this sheet covers: PyO3 extension modules, the candle and burn inference fr
 
 What this sheet does not cover: training pipelines, gradient computation, automatic differentiation, or research workflow tooling. Those belong in Python with PyTorch. See the Yzmir skillpack for that work.
 
-Baseline: Rust stable 1.87, 2024 edition, PyO3 0.22+, candle 0.7+.
+Baseline: Rust stable 1.87, 2024 edition, PyO3 0.22+, candle 0.8+, burn 0.16+.
 
-> **PyO3 0.23 heads-up**: all the Python-binding code in this sheet targets the
-> `Bound<'py, T>` API that became primary in 0.21 and is the only API in 0.22.
-> PyO3 0.23 (Nov 2024) introduced `IntoPyObject` to replace the legacy `IntoPy`
-> / `ToPyObject` traits (both deprecated) and added experimental support for
-> free-threaded CPython (3.13t). If you are on 0.23, expect deprecation warnings
-> on any `impl IntoPy<PyObject>` or `#[derive(ToPyObject)]` — the replacement is
-> `impl<'py> IntoPyObject<'py> for ...`. The `Bound` patterns in this sheet are
-> forward-compatible with 0.23.
+> **PyO3 version drift (0.22 → 0.23 → 0.24)**: all the Python-binding code in
+> this sheet targets the `Bound<'py, T>` API that became primary in 0.21 and is
+> the only API in 0.22. Key transitions to know about:
+>
+> - **0.23 (Nov 2024)** introduced `IntoPyObject` to replace the legacy `IntoPy`
+>   / `ToPyObject` traits (both deprecated) and added experimental support for
+>   free-threaded CPython (3.13t). Expect deprecation warnings on any
+>   `impl IntoPy<PyObject>` or `#[derive(ToPyObject)]` — the replacement is
+>   `impl<'py> IntoPyObject<'py> for ...`.
+> - **0.24 (early 2025)** continues the `Bound` migration and is tightening the
+>   GIL-token API; `Python::with_gil` is the stable entry point, and the older
+>   `&PyAny` / `Py<PyAny>` return types are being phased out in favour of
+>   `Bound<'py, PyAny>`. Track the `pyo3` CHANGELOG before bumping majors.
+>
+> The `Bound` patterns in this sheet are forward-compatible with 0.23 and 0.24.
 
 ## When to Use
 
@@ -93,6 +100,30 @@ The threshold for adding Rust to an ML system: a Python profiler run has identif
 
 PyO3 lets you write Python extension modules in Rust. Maturin is the build system that compiles the Rust crate and packages it as a Python wheel.
 
+### Choosing a Python-binding approach
+
+```
+Do you need to call Rust from Python, or Python from Rust?
+├─ Python calls Rust (the common case)
+│  ├─ Performance-critical hot loop, tight numeric kernel
+│  │  └─ PyO3 + maturin (this sheet)
+│  ├─ Wrap an existing C / C++ library, no Rust involved
+│  │  └─ cffi or ctypes (not a Rust problem; skip this sheet)
+│  ├─ One wheel that works on CPython 3.9..3.13 without per-version rebuilds
+│  │  └─ PyO3 with the `abi3-pyXY` feature (stable ABI, slight perf cost)
+│  └─ Occasional script bridge, not production
+│     └─ PyO3 is still fine; maturin develop; don't overthink it
+└─ Rust calls Python (uncommon)
+   ├─ Embed a Python interpreter inside a Rust binary
+   │  └─ PyO3 with the `auto-initialize` feature and `Python::with_gil`
+   └─ Run a subprocess and pipe data
+      └─ `std::process::Command` + JSON / msgpack (no PyO3 needed)
+```
+
+Rule of thumb: **PyO3 + maturin for ~95% of real use cases**. The alternatives
+(`cffi`, raw `ctypes`, subprocess) exist but only win when the Rust side is not
+actually Rust (wrapping existing C) or when you do not want a compile step.
+
 ### Project layout
 
 ```
@@ -125,7 +156,7 @@ features = ["pyo3/extension-module"]
 [package]
 name = "my_extension"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"   # edition 2024 needs Rust >= 1.85; use "2021" if on older toolchains
 
 [lib]
 # cdylib = shared library that Python can import
@@ -134,6 +165,9 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 pyo3 = { version = "0.22", features = ["extension-module"] }
+# On PyO3 0.23+, additionally consider enabling abi3 for a single wheel that
+# works across Python minor versions:
+#   pyo3 = { version = "0.23", features = ["extension-module", "abi3-py39"] }
 ```
 
 ### A complete extension module: functions and classes
@@ -344,7 +378,11 @@ fn normalize_inplace<'py>(
         let std_dev = var.sqrt();
         owned.iter().map(|x| (x - mean) / (std_dev + 1e-8)).collect()
     });
-    Ok(result.into_pyarray(py))
+    // numpy 0.22: `into_pyarray` returns the deprecated `&'py PyArray<...>`;
+    // `into_pyarray_bound` returns the `Bound<'py, PyArray<...>>` this signature
+    // expects. numpy 0.23+ collapses them — there `into_pyarray` itself returns
+    // `Bound` and `into_pyarray_bound` is removed.
+    Ok(result.into_pyarray_bound(py))
 }
 ```
 
@@ -358,12 +396,18 @@ Add to `Cargo.toml`:
 
 ```toml
 [dependencies]
-candle-core = "0.7"
-candle-nn = "0.7"
-candle-transformers = "0.7"    # optional: pre-built transformer blocks
+candle-core = "0.8"            # 0.8.x is the Dec-2024 line; check crates.io for latest 0.x
+candle-nn = "0.8"
+candle-transformers = "0.8"    # optional: pre-built transformer blocks
 safetensors = "0.4"
-tokenizers = "0.19"            # optional: Hugging Face tokenizer
+tokenizers = "0.20"            # optional: Hugging Face tokenizer (0.21 available as of early 2025)
 ```
+
+Candle is pre-1.0 and every 0.x bump is allowed to be a breaking change — pin
+an exact minor (`0.8`, not `>=0.8`) in production builds and upgrade
+intentionally. The three candle crates (`candle-core`, `candle-nn`,
+`candle-transformers`) must move together; mixing versions breaks the `VarBuilder`
+and `Module` traits.
 
 ### Tensor basics and device abstraction
 
@@ -511,13 +555,21 @@ Burn is an alternative ML framework for Rust with a focus on backend abstraction
 
 ```toml
 [dependencies]
-burn = { version = "0.14", features = ["wgpu"] }
+burn = { version = "0.16", features = ["wgpu"] }
 # Available backends:
-#   "wgpu"    — cross-platform GPU via WebGPU (works on macOS, Linux, Windows)
+#   "wgpu"    — cross-platform GPU via WebGPU (works on macOS, Linux, Windows,
+#              and browsers via wasm — this is burn's unique selling point)
 #   "candle"  — use candle as burn's backend
 #   "ndarray" — CPU-only, no GPU, pure Rust
 #   "tch"     — libtorch backend (see tch-rs section)
+#   "cuda"    — direct CUDA backend (burn 0.15+, separate from the tch path)
 ```
+
+Burn is moving faster than candle and has had breaking API changes roughly every
+minor release (0.13 → 0.14 → 0.15 → 0.16 all broke something). Pin the exact
+minor, read the release notes before upgrading, and expect `Module` derives and
+`Backend` bounds to churn. The code below targets 0.16; earlier versions use
+slightly different `init` / `LinearConfig` signatures.
 
 ### Backend abstraction
 
@@ -788,7 +840,10 @@ fn nalgebra_basics() {
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-bincode = "2"
+# bincode 2.x gates its serde bridge behind the "serde" feature; without it
+# `bincode::serde::encode_to_vec` is not in scope. The default features DO NOT
+# include serde — you must enable it explicitly.
+bincode = { version = "2", features = ["serde"] }
 ```
 
 ```rust

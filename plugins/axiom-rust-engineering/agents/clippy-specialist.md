@@ -43,7 +43,7 @@ DO NOT trigger: Delinting is a separate concern; do not interrupt feature work w
 
 ## Process
 
-Detailed methodology in `skills/using-rust-engineering/systematic-delinting.md` — this section summarizes only.
+Detailed methodology in `../skills/using-rust-engineering/systematic-delinting.md` — this section summarizes only.
 
 1. **Baseline**: Capture `cargo clippy 2>&1 | grep "^warning" | wc -l` and commit
 2. **Priority**: Fix categories in order: `correctness` → `suspicious` → `perf` → `complexity` → `style` → `pedantic`

@@ -60,9 +60,12 @@ samply record ./target/release/${ARGUMENTS}
 
 Opens Firefox Profiler UI automatically. Timeline view shows exactly which functions consume time per thread.
 
-### Option 3: Perf (Linux-native)
+### Option 3: Perf (Linux-only)
 
-Lower-level but powerful:
+Lower-level but powerful. Not available on macOS or Windows — on macOS use `samply`
+(Option 2) or `cargo instruments`; on Windows use Windows Performance Analyzer or
+`samply`. `cargo flamegraph` (Option 1) uses `perf` under the hood on Linux and
+`dtrace` on macOS, so it works cross-platform.
 
 ```bash
 # Record with call stacks (99Hz sampling rate).

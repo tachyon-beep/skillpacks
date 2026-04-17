@@ -1,4 +1,4 @@
-# Systematic Delinting (Rust/Clippy)
+# Systematic Delinting
 
 ## Overview
 
@@ -62,7 +62,7 @@ Commit `clippy-baseline.txt` so progress is measurable.
 | Tier | Effort | Examples | Strategy |
 |------|--------|----------|----------|
 | Mechanical auto-fix | Very low | `needless_return`, `redundant_field_names`, `map_flatten` | `cargo clippy --fix` per lint |
-| Mechanical manual | Low | `or_fun_call`, `clone_on_copy`, `needless_collect` | Pattern replace, file-by-file |
+| Mechanical manual | Low | `or_fun_call`, `clone_on_copy`, `needless_collect` (nursery, opt in) | Pattern replace, file-by-file |
 | Requires thought | Medium | `too_many_arguments`, `large_enum_variant`, `module_name_repetitions` | Case-by-case review |
 | Defers to refactor | High | `cognitive_complexity`, `too_many_lines`, design lints | Create ticket, defer |
 
@@ -154,15 +154,15 @@ High volume, low risk. Fix with `cargo clippy --fix` where available.
 
 Code that is more complex than necessary.
 
-Examples: `too_many_arguments` (>7 params), `cognitive_complexity`, `needless_collect`, `manual_flatten`.
+Examples: `too_many_arguments` (>7 params), `manual_flatten`, `needless_borrow`. Note: `cognitive_complexity` and `needless_collect` were moved out of `complexity` into `nursery` (allow-by-default) around 2022 — you have to opt into them explicitly with `-W clippy::cognitive_complexity` / `-W clippy::needless_collect` before they fire.
 
-Some are mechanical (`needless_collect`), some require architectural thought (`too_many_arguments`). Separate them during triage.
+Some are mechanical (`manual_flatten`), some require architectural thought (`too_many_arguments`). Separate them during triage.
 
 ### `perf` — warn by default
 
 Performance opportunities that are almost always improvements.
 
-Examples: `or_fun_call`, `redundant_clone`, `unnecessary_to_owned`, `iter_overeager_cloned`.
+Examples: `or_fun_call`, `unnecessary_to_owned`, `iter_overeager_cloned`, `large_types_passed_by_value`. Note: `redundant_clone` lives in `nursery` (allow-by-default) because of a long false-positive history — opt in explicitly with `-W clippy::redundant_clone` and review each reported site before applying the fix.
 
 Fix these early — they're usually local changes with clear wins.
 
@@ -275,6 +275,8 @@ Track warning count by category daily. Never allow the count to increase.
 ## Common Clippy Lints and Fixes
 
 ### 1. `clippy::needless_collect`
+
+> `clippy::needless_collect` is in the `nursery` group (allow-by-default) since 2022 — the default `cargo clippy` run will *not* emit it. Surface it by running `cargo clippy -- -W clippy::needless_collect`, or add `needless_collect = "warn"` under `[lints.clippy]` in `Cargo.toml`.
 
 **Why it fires:** A collection is built and immediately iterated, with no intermediate need for ownership.
 

@@ -154,12 +154,23 @@ For Linux-only, io_uring-based I/O with thread-per-core architecture. Latency an
 
 ```
 Target environment?
-├── Linux, io_uring, thread-per-core storage → glommio or monoio
-├── WASM → wasm-bindgen-futures or gloo
-├── Embedded / no-alloc → Embassy
-├── Lightweight CLI, no ecosystem needs → smol
-└── Everything else (services, tools, HTTP, gRPC, databases) → tokio
+├── Embedded / no-std / no-alloc (Cortex-M, ESP32, RISC-V) → Embassy
+├── Browser WASM → wasm-bindgen-futures (or gloo for UI glue)
+├── Linux-only, io_uring, thread-per-core storage engine → glommio or monoio
+├── Lightweight CLI or tool, no tokio-ecosystem deps needed → smol
+└── Anything else (services, tools, HTTP, gRPC, databases, ML) → tokio
+                      │
+                      └── Tokio flavor?
+                          ├── CLI / test / WASI / single-connection app    → `flavor = "current_thread"`
+                          ├── !Send futures must be spawned                → `current_thread` + `LocalSet`
+                          └── HTTP/gRPC service, mixed I/O + CPU (default) → `flavor = "multi_thread"`
+                                                                             (default; tune `worker_threads`
+                                                                              to CPU count, raise
+                                                                              `max_blocking_threads` if
+                                                                              spawn_blocking load is high)
 ```
+
+**Do not pick `async-std` for new work.** Its maintainers have stepped back; community migration is toward tokio (or smol for lightweight cases). Existing code on `async-std` still functions, but new dependencies almost always assume tokio.
 
 ## Tokio Essentials
 
@@ -504,7 +515,7 @@ async fn do_work() {
 }
 ```
 
-**Cancellation propagation tree:** `token.child_token()` creates a token that is cancelled when either it is cancelled directly or the parent is cancelled. This allows coarse-grained top-level cancellation with fine-grained override.
+**Cancellation propagation tree:** `token.child_token()` creates a token that is cancelled when either it is cancelled directly or the parent is cancelled. Cancellation flows **top-down only** — cancelling a child does NOT cancel the parent or its siblings. This allows coarse-grained top-level cancellation with fine-grained override.
 
 ## Channels
 
@@ -580,7 +591,7 @@ Single producer, multiple subscribers. Each receiver gets every message. Lagging
 use tokio::sync::broadcast;
 
 async fn event_bus() {
-    let (tx, _rx) = broadcast::channel::<String>(64); // single shared ring buffer of 64 messages; slow subscribers see `Lagged` if they fall behind
+    let (tx, _rx) = broadcast::channel::<String>(64); // channel retains up to 64 values total (shared ring buffer, NOT per-subscriber); slow subscribers see `Lagged` if they fall behind
 
     // Spawn multiple subscribers
     for sub_id in 0..3 {
@@ -749,7 +760,7 @@ async fn fetch_from_db(_key: &str) -> String { "value".to_string() }
 
 This is the most important async-specific ownership rule. A `std::sync::Mutex` guard (`MutexGuard<T>`) is `!Send`. Holding it across an `.await` means the future captures a `!Send` type — the future itself becomes `!Send`, which prevents `tokio::spawn` from accepting it.
 
-Even in `current_thread` mode where `!Send` futures are allowed, holding the guard across `.await` can deadlock: the task yields (suspends), another task on the same thread tries to lock the same mutex — and blocks the thread, preventing the first task from resuming.
+Note that `tokio::spawn` requires `F: Future + Send + 'static` on *every* runtime flavor — including `current_thread`. The flavor controls thread count, not the `Send` bound. `!Send` futures must use `tokio::task::spawn_local` (inside a `LocalSet`) or be driven directly by `Runtime::block_on`. Even on `current_thread`, code that uses `spawn_local`/`block_on` can still deadlock while holding a `std::sync::Mutex` guard across `.await`: the task yields (suspends), another task on the same thread tries to lock the same mutex — and blocks the thread, preventing the first task from resuming.
 
 ```rust
 use std::sync::{Arc, Mutex};
@@ -779,7 +790,10 @@ async fn correct_usage_drop_first(state: Arc<Mutex<Vec<String>>>) {
 }
 
 async fn correct_usage_tokio_mutex(state: Arc<tokio::sync::Mutex<Vec<String>>>) {
-    // tokio::sync::Mutex is async-aware: .lock().await yields instead of blocking
+    // tokio::sync::Mutex is async-aware: .lock().await yields instead of blocking.
+    // CAVEAT: `lock().await` is NOT cancel-safe — cancelling a pending lock
+    // loses your place in the fair FIFO queue. Do not put `lock().await` in a
+    // `select!` branch that can be cancelled without care.
     let mut guard = state.lock().await;
     guard.push("start".to_string());
     some_async_operation().await; // OK: guard is Send in a tokio::sync::Mutex
@@ -800,6 +814,8 @@ async fn some_async_operation() {}
 | `tokio::sync::Semaphore` | Bounded concurrency (rate limiting, connection pools). |
 
 Prefer `std::sync::Mutex` when the lock is not held across await points — it has lower overhead than the async variant. Only reach for `tokio::sync::Mutex` when you genuinely need to await while holding the lock.
+
+**Cancel-safety note:** `tokio::sync::Mutex::lock().await`, `RwLock::{read,write}().await`, and `Semaphore::acquire().await` are **not** cancel-safe. Cancelling a pending acquisition drops the waiter from the fair FIFO queue — no state is corrupted, but the wait is lost. Wrap these in `select!` branches only when the branch is genuinely "give up on this work" (shutdown, deadline). To wait for a lock under a timeout without losing cancel safety, use `tokio::time::timeout(dur, lock.lock())` rather than racing `sleep` against `lock()` in `select!`.
 
 ### Deadlock Avoidance
 
@@ -849,7 +865,10 @@ impl DataSource for MemorySource {
 }
 ```
 
-This is stable and works for concrete types. The **caveat**: native async fn in traits produces futures that may or may not be `Send` — the compiler infers this from the future body. If your trait implementations will be used with `tokio::spawn`, you often need `Send` bounds.
+This is stable for concrete types and generic bounds (`T: DataSource`). Two caveats as of the 1.87 baseline:
+
+1. **Not yet dyn-compatible (object-safe).** A trait containing `async fn` cannot be used as `dyn DataSource`. The compiler tells you to use `#[trait_variant::make]` or the `async-trait` macro if you need trait objects. Native async fn in `dyn` trait objects is still unstable.
+2. **`Send` inference is implicit.** Native async fn in traits produces futures that may or may not be `Send` — the compiler infers this from the future body. If your implementations will be used with `tokio::spawn` on a multi-thread runtime, you often need `Send` bounds, which the `async fn` sugar cannot express directly. See workarounds below.
 
 ### `?Send` Bounds and Why They Matter
 
@@ -1004,7 +1023,7 @@ async fn main() -> std::io::Result<()> {
 }
 ```
 
-actix-web uses its own `#[actix_web::main]` macro which sets up tokio internally. Handlers must be `Send + 'static` by default. For shared mutable state, use `web::Data<Arc<Mutex<T>>>`.
+actix-web uses its own `#[actix_web::main]` macro which sets up tokio internally. It runs a **per-worker, non-`Send` runtime** (each worker thread owns a `current_thread` runtime), so the `Handler` trait requires only `Clone + 'static` — handlers and per-worker state do **not** need `Send`/`Sync` bounds. Cross-worker shared state still does: use `web::Data<Arc<T>>` (optionally with `Mutex`/`RwLock`) for state that must outlive or be visible across workers.
 
 **axum vs actix-web:** Both are production-grade. axum has tighter integration with the tokio ecosystem and tower middleware. actix-web has a longer track record and slightly higher throughput benchmarks at extreme concurrency. Either is a defensible choice; axum is more common for new projects in 2025.
 

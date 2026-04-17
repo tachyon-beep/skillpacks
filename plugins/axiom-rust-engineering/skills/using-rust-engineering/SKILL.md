@@ -1,6 +1,6 @@
 ---
 name: using-rust-engineering
-description: Routes to appropriate Rust specialist skill based on symptoms and problem type
+description: Use when working in Rust — routes to specialist sheets for borrow-checker errors (E0502/E0597/E0382), trait bounds (E0277), async Send/Sync, clippy warnings, unsafe/FFI soundness, performance profiling, or PyO3/candle interop
 ---
 
 # Using Rust Engineering
@@ -322,6 +322,38 @@ Some symptoms cross multiple specialist domains. Use the following priority rule
 
 ---
 
+## Cross-Cutting Scenarios
+
+Some tasks span multiple specialists and must be loaded in a specific order. Setup before fixes, diagnosis before optimization, soundness before polish.
+
+**New Rust project with FFI** (greenfield crate that will call C or be called from C):
+1. [project-structure-and-tooling.md](project-structure-and-tooling.md) — workspace layout, `build.rs`, feature flags, `links=` metadata
+2. [unsafe-ffi-and-low-level.md](unsafe-ffi-and-low-level.md) — bindgen/cbindgen, ABI contracts, safe wrapper patterns
+3. [testing-and-quality.md](testing-and-quality.md) — Miri, integration tests across the FFI boundary
+
+**Legacy crate cleanup** (inherited codebase, no lint config, warnings everywhere):
+1. [project-structure-and-tooling.md](project-structure-and-tooling.md) — establish `[lints]` table, rustfmt config, CI gates
+2. [systematic-delinting.md](systematic-delinting.md) — staged clippy reduction by category
+3. [testing-and-quality.md](testing-and-quality.md) — coverage baseline with cargo-llvm-cov before larger refactors
+
+**Slow release binary** (production binary missing performance targets):
+1. [performance-and-profiling.md](performance-and-profiling.md) — measure first (flamegraph, criterion, heaptrack)
+2. Then EITHER [async-and-concurrency.md](async-and-concurrency.md) (if hotspot is runtime/executor) OR [traits-generics-and-dispatch.md](traits-generics-and-dispatch.md) (if dynamic dispatch or monomorphization is hot)
+
+**Adding a Python binding to an existing Rust crate** (exposing a mature Rust library via PyO3):
+1. [ownership-borrowing-lifetimes.md](ownership-borrowing-lifetimes.md) — fix the Rust-side lifetime model before crossing languages
+2. [unsafe-ffi-and-low-level.md](unsafe-ffi-and-low-level.md) — understand the FFI boundary and invariants
+3. [ai-ml-and-interop.md](ai-ml-and-interop.md) — PyO3 patterns (`Python<'py>`, GIL, NumPy buffer protocol)
+
+**Migrating to edition 2024** (upgrading edition on an established crate):
+1. [modern-rust-and-editions.md](modern-rust-and-editions.md) — capture rule changes, `cargo fix --edition`, resolver differences
+2. [traits-generics-and-dispatch.md](traits-generics-and-dispatch.md) — dyn-compatibility changes, `impl Trait` precise capture
+3. [async-and-concurrency.md](async-and-concurrency.md) — async trait changes (`async fn in trait`, RPITIT interactions)
+
+**Load in order of execution**: Setup before optimization, diagnosis before fixes, soundness before polish.
+
+---
+
 ## Common Routing Mistakes
 
 | Symptom | Wrong Route | Correct Route | Why |
@@ -347,6 +379,54 @@ If you catch yourself about to:
 - Suggest "just box it" for a trait object → Route to [traits-generics-and-dispatch.md](traits-generics-and-dispatch.md) for trade-off analysis
 
 **All of these mean: You're about to give incomplete advice. Route to the specialist instead.**
+
+---
+
+## Common Rationalizations (Don't Do These)
+
+| Excuse | Reality | What To Do |
+|--------|---------|------------|
+| "Just a simple borrow-checker fix" | Ad-hoc fixes mask the real ownership issue and recur later | Route to [ownership-borrowing-lifetimes.md](ownership-borrowing-lifetimes.md) |
+| "User knows Rust, skip routing" | Experience in safe Rust ≠ expertise in async Send/Sync or unsafe invariants | Route based on symptom, not assumed skill |
+| "I'll just add `.clone()`" | That's the anti-pattern the specialist exists to prevent | Route to [ownership-borrowing-lifetimes.md](ownership-borrowing-lifetimes.md) for the systematic alternative |
+| "Quick lifetime annotation" | Sprinkling `'a` without a model creates compounding problems | Route to [ownership-borrowing-lifetimes.md](ownership-borrowing-lifetimes.md) |
+| "One clippy `allow` won't hurt" | Allows accumulate; that's exactly why the delinting sheet exists | Route to [systematic-delinting.md](systematic-delinting.md) |
+| "unsafe is fine here, I checked" | Unsafe requires documented invariants, not gut-check | Route to [unsafe-ffi-and-low-level.md](unsafe-ffi-and-low-level.md) |
+
+**If you catch yourself thinking ANY of these, STOP and route to the specialist.**
+
+---
+
+## Red Flags Checklist — Self-Check Before Answering
+
+Before giving ANY Rust advice, ask yourself:
+
+1. ❓ **Did I identify the symptom?**
+   - If no → Read the query again, identify the symptom (error code, tool output, runtime behavior)
+
+2. ❓ **Is this symptom in my routing table?**
+   - If yes → Route to that specialist
+   - If no → Ask a clarifying question
+
+3. ❓ **Am I about to give advice directly?**
+   - If yes → STOP. Why am I not routing?
+   - Check the rationalization table — am I making excuses?
+
+4. ❓ **Is this a diagnosis issue or a solution issue?**
+   - Diagnosis (performance, runtime panic, "something is wrong") → Route to profiling/diagnostic skill FIRST
+   - Solution (known symptom, known category) → Route to the appropriate specialist
+
+5. ❓ **Is the query ambiguous?**
+   - If yes → Ask ONE clarifying question
+   - If no → Route confidently
+
+6. ❓ **Am I feeling pressure to skip routing?**
+   - Time pressure → Route anyway (faster overall, fewer wrong turns)
+   - Complexity → Route anyway (specialists are built for the complexity)
+   - User confidence → Route anyway (verify assumptions against symptoms)
+   - "Simple" question → Route anyway (simple questions deserve correct answers)
+
+**If you failed ANY check above, do NOT give direct advice. Route to the specialist or ask a clarifying question.**
 
 ---
 

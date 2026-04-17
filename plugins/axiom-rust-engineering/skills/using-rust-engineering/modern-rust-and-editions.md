@@ -4,7 +4,7 @@
 
 **Core Principle:** Write code against the latest stable edition. Rust editions are not breaking changes — they are opt-in gates that unlock better semantics. Using 2015-era idioms in a 2024-edition codebase is technical debt from day one.
 
-Modern Rust has evolved substantially since the 2015 release. Edition boundaries crystallize accumulated ergonomic improvements: the 2018 edition introduced the `use` path simplification and non-lexical lifetimes; 2021 brought disjoint closure captures and the `IntoIterator` impl for arrays; 2024 tightens temporary lifetimes, stabilizes `gen` blocks, and introduces `async` closures as a language construct. Each edition represents a curated set of changes designed to be adopted together via `cargo fix --edition`.
+Modern Rust has evolved substantially since the 2015 release. Edition boundaries crystallize accumulated ergonomic improvements: the 2018 edition introduced `use` path simplification and made non-lexical lifetimes the default; 2021 brought disjoint closure captures and owning-iterator semantics for `array.into_iter()`; 2024 narrows temporary lifetimes in scrutinees and block-tail expressions, requires `unsafe extern` blocks, makes bare (`dyn`-less) trait objects a hard error, adds RPIT lifetime-capture opt-in (`use<>`), and gates `let` chains. Separately and independent of edition: `async`/`await` stabilized in 1.39, native async fn in traits in 1.75, async closures in 1.85. Each edition represents a curated set of changes designed to be adopted together via `cargo fix --edition`.
 
 Beyond editions, stable Rust has grown a set of features that fundamentally change how idiomatic code looks: `let`-`else` eliminates the "indent-and-early-return" pattern; native async fn in traits (stable since 1.75) removes the `#[async_trait]` macro dependency for most use cases; GATs unlock higher-kinded patterns; `impl Trait` in both argument and return position reduces boilerplate without sacrificing expressiveness. Failing to use these features is not just stylistically dated — it often produces longer, less correct code.
 
@@ -27,7 +27,7 @@ Use this sheet when:
 ## When NOT to Use
 
 - **Borrow checker errors** (`E0597`, `E0502`): see [ownership-borrowing-lifetimes.md](ownership-borrowing-lifetimes.md).
-- **Trait bound errors**, object safety, HRTB: see [traits-generics-and-dispatch.md](traits-generics-and-dispatch.md).
+- **Trait bound errors**, dyn compatibility (formerly object safety), HRTB: see [traits-generics-and-dispatch.md](traits-generics-and-dispatch.md).
 - **Async executor / Send errors**: see [async-and-concurrency.md](async-and-concurrency.md).
 - **Clippy warning suppression strategy**: see [systematic-delinting.md](systematic-delinting.md).
 - **Feature flags and workspace layout**: see [project-structure-and-tooling.md](project-structure-and-tooling.md).
@@ -52,9 +52,9 @@ Editions are **not** API versions. Code compiled with different editions interop
 | Edition | Key Changes |
 |---------|-------------|
 | 2015 | Original Rust. `extern crate`, `mod.rs` required, macro import via `#[macro_use]`. |
-| 2018 | `use` path simplification, `extern crate` mostly removed, NLL (non-lexical lifetimes) default, `async`/`await` syntax (1.39). |
-| 2021 | Disjoint closure captures, `IntoIterator` for arrays, resolver v2 default, panic macro consistency. |
-| 2024 | Tighter temporary lifetime rules, `gen` blocks, `async` closures, `impl Trait` in `let`/`static`/`const`, `unsafe` attribute required on certain unsafe operations. |
+| 2018 | `use` path simplification, `extern crate` mostly removed, NLL (non-lexical lifetimes) default. (`async`/`await` stabilized in 1.39 and is available on all editions — it is a language-version feature, not an edition feature.) |
+| 2021 | Disjoint closure captures, method-call `array.into_iter()` yields the owning iterator (the `IntoIterator for [T; N]` trait impl itself stabilized in 1.53 for all editions), resolver v2 default, panic macro consistency. |
+| 2024 | Temporary scope narrowing in `if let`/`while let`/`match` scrutinees and in block tail expressions; `unsafe extern` blocks required; bare-trait `dyn`-less trait objects become a hard error; RPIT lifetime capture opt-in (`use<>`); match ergonomics refinements; unsafe attributes (`#[unsafe(no_mangle)]` etc.); reserved syntax for future use; `let` chains available (stabilized in 1.88, edition-2024-gated). **Not in 2024:** `impl Trait` in `let`/`static`/`const` bindings (still nightly) and `gen` blocks (still nightly). |
 
 ### Migrating with `cargo fix`
 
@@ -137,18 +137,14 @@ Rust 2024 (stabilized with Rust 1.85) introduces several important changes. Alwa
 
 ### Temporary Lifetime Extension Changes
 
-In 2021, temporaries created in `let` initializers could be "extended" to live as long as the binding. 2024 tightens this in specific positions (particularly in `if let`, `while let`, and `match` scrutinees):
+See the detailed example in [Edition-Specific Gotchas → 2021 → 2024](#edition-specific-gotchas) above. The short form: 2024 narrows temporary lifetimes in `if let`, `while let`, and `match` scrutinees, and in block tail expressions. Plain `let` initializers still extend temporaries in both editions. If a temporary's lifetime matters, bind it explicitly:
 
 ```rust
-// 2024: temporary lifetime semantics are more explicit
-// If a temporary's lifetime matters, bind it explicitly
 fn get_str() -> String { "hello".to_string() }
 
-// Prefer:
+// Preferred: explicit binding makes the lifetime legible to the reader.
 let owned = get_str();
-let s = &owned; // lifetime is clear
-
-// Over relying on temporary extension
+let s = &owned;
 ```
 
 ### `gen` Blocks (nightly)
@@ -183,8 +179,10 @@ achieve the same behaviour. Async generators (`async gen`) are also still nightl
 
 ### `async` Closures
 
+Async closures are a language-version feature, not an edition feature — they stabilized in Rust 1.85 (Feb 2025) and are available on **all** editions once you're on a 1.85+ toolchain. They are covered in this section because their stabilization coincided with the 2024 edition release.
+
 ```rust
-// 2024 edition: async closures are a first-class construct
+// Stable since Rust 1.85 (available on all editions): async closures are a first-class construct
 let fetch = async |url: &str| -> Result<String, reqwest::Error> {
     reqwest::get(url).await?.text().await
 };
@@ -196,9 +194,10 @@ Previously, async closures required workarounds (`move || async move { ... }`). 
 
 `impl Trait` in argument position (APIT) and return position (RPIT) has been stable for
 years; RPITIT (return-position `impl Trait` in traits) stabilized in Rust 1.75. `impl
-Trait` in `let`, `static`, and `const` bindings (type-alias-`impl`-Trait, aka TAIT) is
-**still unstable** — do not put `impl Trait` on the left-hand side of a `let`, `static`,
-or `const` item on stable Rust.
+Trait` on the left-hand side of `let`, `static`, and `const` items — and the closely
+related type-alias-`impl`-Trait (`type Foo = impl Trait;`, tracking issue #63063, aka
+TAIT) — remain **nightly-only**. Do not put `impl Trait` on the left-hand side of a
+`let`, `static`, or `const` item on stable Rust.
 
 ```rust
 // OK: impl Trait in return position (stable).
@@ -326,6 +325,7 @@ async fn run_concurrent(fetcher: &dyn Fetcher) {
 }
 
 // Solution 1: Use RPIT with + Send bound (return_position_impl_trait_in_trait)
+// (assumes `use std::future::Future;`)
 trait Fetcher: Send + Sync {
     fn fetch(&self, url: &str) -> impl Future<Output = Result<String, FetchError>> + Send;
 }
@@ -623,7 +623,7 @@ implement additional traits (`DoubleEndedIterator`, `ExactSizeIterator`), be
 
 ### `let` Chains
 
-`let` chains (`if let ... && let ...`) are stable since Rust **1.88**. They allow chaining multiple pattern bindings in a single condition:
+`let` chains (`if let ... && let ...`) are stable since Rust **1.88**, but **only on edition 2024 or later** — they are not available on edition 2021 regardless of compiler version. They allow chaining multiple pattern bindings in a single condition:
 
 ```rust
 fn process(data: &Option<Vec<String>>) {
@@ -860,7 +860,7 @@ The fix: audit who actually needs your MSRV guarantee. For library crates, check
 
 ### 6. `try!()` Macro in Post-2015 Code
 
-**Why wrong**: `try!()` was deprecated in Rust 1.13 when `?` was stabilized. It's visually noisier, doesn't work in closures or `main`, and signals code that hasn't been maintained.
+**Why wrong**: `try!()` was superseded by `?` in Rust 1.13, soft-deprecated in 1.39, and hard-deprecated in 1.72. It's visually noisier, has awkward semantics in closures and `main`, and signals code that hasn't been maintained.
 
 ```rust
 // WRONG
@@ -887,7 +887,7 @@ The fix: global search for `try!(` and replace with `?`. `cargo fix` handles thi
 **Why wrong**: The bare `Trait` syntax for trait objects was deprecated in 2018 and removed in the 2021 edition lints. It generates warnings, and `dyn` makes the dynamic dispatch explicit — an important signal for performance review.
 
 ```rust
-// WRONG: bare trait object (lint warning in 2018+, hard error in some contexts)
+// WRONG: bare trait object (warn-by-default lint in 2015/2018/2021 editions, hard error in 2024 edition)
 fn process(handler: &Handler) { ... }
 fn boxed() -> Box<Handler> { ... }
 
@@ -911,14 +911,13 @@ Before shipping code against modern Rust/2024 edition:
 - [ ] `#[async_trait]` reviewed: kept only where `dyn Trait + Send` dispatch requires it.
 - [ ] `let`-`else` used for "bind or diverge" patterns.
 - [ ] `impl Trait` usage reviewed: RPIT for complex return types; named types or `Vec` for stored state.
-- [ ] `gen` blocks considered for complex iterator logic (if MSRV >= 1.87).
 - [ ] After edition migration: `cargo test` and `cargo clippy` pass cleanly.
 - [ ] `rust-toolchain.toml` present in application repos to pin contributor toolchain.
 
 ## Related Skills
 
 - [ownership-borrowing-lifetimes.md](ownership-borrowing-lifetimes.md) — When edition migration or new features trigger borrow checker errors: NLL edge cases, temporary lifetime changes in 2024, GAT lifetime bounds.
-- [traits-generics-and-dispatch.md](traits-generics-and-dispatch.md) — Deep dive on `impl Trait` vs generics vs `dyn Trait` trade-offs, object safety rules, HRTB, and monomorphization costs.
+- [traits-generics-and-dispatch.md](traits-generics-and-dispatch.md) — Deep dive on `impl Trait` vs generics vs `dyn Trait` trade-offs, dyn-compatibility (formerly object safety) rules, HRTB, and monomorphization costs.
 - [async-and-concurrency.md](async-and-concurrency.md) — Native async fn in traits: `Send` bounds, executor interaction, `BoxFuture` patterns, and when `async-trait` remains necessary.
 - [project-structure-and-tooling.md](project-structure-and-tooling.md) — `rust-toolchain.toml` setup, `rust-version` in Cargo.toml, edition configuration across workspaces.
 - [systematic-delinting.md](systematic-delinting.md) — After edition migration, large-scale clippy warning remediation without allow-attribute proliferation.

@@ -48,7 +48,7 @@ DO NOT trigger: There is nothing to audit; defer to `rust-code-reviewer` for idi
 
 ## Review Methodology
 
-Read `skills/using-rust-engineering/unsafe-ffi-and-low-level.md` for the full methodology including the five `unsafe` superpowers, SAFETY comment conventions, miri integration, and FFI ownership patterns. The sections below summarize the UB classes this audit checks.
+Read `../skills/using-rust-engineering/unsafe-ffi-and-low-level.md` for the full methodology including the five `unsafe` superpowers, SAFETY comment conventions, miri integration, and FFI ownership patterns. The sections below summarize the UB classes this audit checks.
 
 ### UB Classes Checked
 
@@ -200,7 +200,7 @@ Rationale: [what you read, what invariants you could trace, what you could not d
 
 - **Not a safe-code reviewer**: idiomatic Rust, error handling strategy, API ergonomics, and trait design are outside scope. Defer to the `rust-code-reviewer` agent.
 - **Not a clippy sweep**: lint suppression, warning count reduction, and pedantic category management are outside scope. Defer to the `clippy-specialist` agent.
-- **Not a performance reviewer**: unsafe for performance (SIMD, allocation-free hot paths) is analyzed for soundness only, not efficiency. Defer to `skills/using-rust-engineering/performance-and-profiling.md` for throughput guidance.
+- **Not a performance reviewer**: unsafe for performance (SIMD, allocation-free hot paths) is analyzed for soundness only, not efficiency. Defer to `../skills/using-rust-engineering/performance-and-profiling.md` for throughput guidance.
 - **Not a test author**: note missing miri test coverage and testing gaps; do not implement tests.
 
 ## Scope Boundaries
@@ -209,7 +209,7 @@ Rationale: [what you read, what invariants you could trace, what you could not d
 
 If an `unsafe` block handles untrusted input — parsing bytes from a network socket, deserializing from a file, processing user-controlled offsets — the soundness finding has a security dimension.
 
-**Check**: `Glob` for `plugins/ordis-security-architect/.claude-plugin/plugin.json`
+**Check**: `Glob` for `**/ordis-security-architect/.claude-plugin/plugin.json`
 
 **If found**: Note that the finding should be reviewed by the `ordis-security-architect` for threat modeling beyond pure soundness.
 **If NOT found**: Recommend installing `ordis-security-architect` from the skillpacks marketplace to add security context to the audit.
@@ -220,7 +220,7 @@ If a critical invariant depends on external C library documentation that is not 
 
 ## Reference
 
-Full methodology, SAFETY comment conventions, FFI ownership patterns, and miri integration details: `skills/using-rust-engineering/unsafe-ffi-and-low-level.md`.
+Full methodology, SAFETY comment conventions, FFI ownership patterns, and miri integration details: `../skills/using-rust-engineering/unsafe-ffi-and-low-level.md`.
 
 Related agents:
 - **[rust-code-reviewer.md](./rust-code-reviewer.md)** — Safe Rust quality review; flags unsafe blocks and defers soundness analysis here

@@ -119,7 +119,17 @@ cargo bench -- --baseline before
 open target/criterion/report/index.html
 ```
 
-Criterion runs each benchmark for a configurable warm-up duration (default 3 s), then collects samples for the measurement period (default 5 s). It fits a linear model, reports mean ± confidence interval, and flags regressions statistically. A "2% faster" claim from libtest is noise; a "2% faster" claim from Criterion with a tight confidence interval is evidence.
+Criterion runs each benchmark for a configurable warm-up duration (default 3 s), then collects samples for the measurement period (default 5 s). It fits a linear model to per-iteration cost, reports mean ± 95 % bootstrap confidence interval, and flags regressions statistically. A "2% faster" claim from libtest is noise; a "2% faster" claim from Criterion with a tight confidence interval is evidence.
+
+### Criterion vs iai-callgrind vs divan
+
+| Harness | Measures | Noise sensitivity | When to use |
+|---------|----------|-------------------|-------------|
+| `criterion` | Wall-clock time (nanoseconds/op) | High — needs ~3–5 s warm-up + 5 s measurement | Default benchmark harness; detecting real-world perf changes |
+| `iai-callgrind` | Deterministic counts from Valgrind/callgrind (instructions, cache refs/misses) | Near zero — deterministic execution | CI regression gates; comparing builds when wall-clock noise is too high |
+| `divan` | Wall-clock time; very low setup, `#[divan::bench]` macro | Similar to criterion | New-code microbenches where criterion's boilerplate is disproportionate |
+
+Use Criterion for the primary performance story; pair with iai-callgrind in CI if wall-clock variance masks small real regressions; `divan` is a pragmatic alternative for small projects that want nanosecond-precision benches without the Criterion ceremony.
 
 ### Sampling vs tracing profilers
 
@@ -335,14 +345,20 @@ samply record cargo bench --bench my_bench -- --profile-time 10
 
 ```toml
 [dependencies]
-pprof = { version = "0.13", features = ["flamegraph", "protobuf-codec"] }
+pprof = { version = "0.14", features = ["flamegraph", "protobuf-codec"] }
 ```
 
 ```rust
-use pprof::ProfilerGuard;
+use pprof::ProfilerGuardBuilder;
 
-// ✅ CORRECT: targeted profiling of a known-slow section
-let guard = ProfilerGuard::new(100).unwrap();   // 100 Hz sampling
+// ✅ CORRECT: targeted profiling of a known-slow section.
+// Modern API: ProfilerGuardBuilder. Passing a `blocklist` skips frames from
+// known-noisy symbols (libc, libgcc, pthread) that otherwise dominate samples.
+let guard = ProfilerGuardBuilder::default()
+    .frequency(100)                                // 100 Hz sampling
+    .blocklist(&["libc", "libgcc", "pthread", "vdso"])
+    .build()
+    .unwrap();
 
 // ... run the code you want to profile ...
 
@@ -397,7 +413,7 @@ heaptrack output answers:
 
 ### dhat — allocation profiling in-process (Linux/macOS/Windows)
 
-DHAT (`dhat-rs` crate) is a lightweight heap profiler that instruments the global allocator. It produces a JSON file readable by the DHAT viewer at `valgrind.org/dhat-viewer`.
+DHAT (`dhat-rs` crate) is a lightweight heap profiler that instruments the global allocator. It produces a JSON file readable by the DHAT viewer hosted at <https://nnethercote.github.io/dh_view/dh_view.html>.
 
 ```toml
 [dependencies]
@@ -416,7 +432,7 @@ fn main() {
 
     run_application();
 
-    // Profiler drops here; dhat.json written automatically
+    // Profiler drops here; `dhat-heap.json` is written automatically in the cwd
 }
 ```
 
@@ -428,7 +444,7 @@ dhat-heap = ["dhat"]
 
 ```bash
 cargo run --features dhat-heap
-# Open dhat.json in https://nnethercote.github.io/dh_view/dh_view.html
+# Open dhat-heap.json in https://nnethercote.github.io/dh_view/dh_view.html
 ```
 
 DHAT's distinguishing output is the **"at peak"** view: which allocations were live at the moment of maximum heap usage, ranked by bytes. This is the right starting point for reducing memory footprint.
@@ -526,7 +542,7 @@ If the benchmark does not show a measurable difference, the bottleneck is not th
 
 ### `#[inline]` — a hint, not a command
 
-The Rust compiler inlines functions based on estimated code size, call depth, and optimization level. `#[inline]` marks a function as a candidate for cross-crate inlining (without it, functions in library crates may not be inlined even if the optimizer would otherwise choose to). It is a hint; LLVM may still decline.
+The Rust compiler inlines functions based on estimated code size, call depth, and optimization level. `#[inline]` primarily controls *cross-crate* inlining: non-generic functions in library crates are only emitted as inline candidates when marked `#[inline]` (or under fat LTO). Generic functions are *monomorphised in the caller's crate* regardless, so they do not need `#[inline]` to be inlined downstream. Within a single crate, the optimizer makes its own inlining decisions and the attribute mostly biases its cost model. In all cases `#[inline]` is a hint; LLVM may still decline.
 
 ```rust
 // ✅ CORRECT: mark small, hot utility functions as inline candidates
@@ -563,6 +579,21 @@ fn is_power_of_two(n: usize) -> bool {
     n != 0 && (n & (n - 1)) == 0
 }
 ```
+
+### `#[cold]` — marking error / slow paths
+
+`#[cold]` is the counterpart to inlining hints: it tells the optimizer that a function is rarely called, so the compiler should place it out-of-line and optimize callers for the case where the cold function is *not* taken. It pairs well with error paths and `#[inline(never)]` on helpers that format diagnostics.
+
+```rust
+// ✅ CORRECT: use #[cold] on the uncommon branch target
+#[cold]
+#[inline(never)]
+fn handle_corrupt_header(buf: &[u8]) -> Error {
+    Error::Corrupt(format!("invalid header: {:x?}", &buf[..8.min(buf.len())]))
+}
+```
+
+Use `#[cold]` only when the profiler confirms the branch is rare; marking a hot path cold produces bad codegen. `std::intrinsics::cold_path()` is nightly-only — stable code should stick to `#[cold]` on functions.
 
 ### Codegen unit count
 
@@ -883,7 +914,7 @@ fn bench_process(b: &mut Bencher) {
 
 **Why wrong:** libtest produces a single point estimate with a noise figure that has no statistical meaning. The `+/- 456` is not a confidence interval; it is the range of measured samples with no outlier rejection. Two runs can differ by 20% due to OS scheduling noise. You cannot reliably detect a 5% regression.
 
-**The fix:** Use Criterion. It runs proper warm-up, collects enough samples for a Student's t-test, reports a 95% confidence interval, and detects regressions against a saved baseline. `harness = false` in `[[bench]]` and a 3-line Criterion setup replaces the entire libtest bench infrastructure.
+**The fix:** Use Criterion. It runs proper warm-up, fits a linear model to per-iteration cost, and reports a 95% confidence interval via **bootstrap resampling** (not a Student's t-test — Criterion's analysis does not assume a parametric sampling distribution). It also detects regressions against a saved baseline. `harness = false` in `[[bench]]` and a 3-line Criterion setup replaces the entire libtest bench infrastructure.
 
 ---
 

@@ -347,17 +347,42 @@ The decision is structural, not preferential. It depends on whether code is a li
 ### Decision Flowchart
 
 ```
-Is this code in a library crate (published to crates.io, or consumed by other crates)?
-├── YES → use thiserror
-│   ├── Define a public error enum per subsystem
-│   ├── Mark it #[non_exhaustive] for version stability
-│   └── Expose variants callers can match on for recovery
-└── NO (binary, CLI, app, integration test, example)
-    └── use anyhow
-        ├── anyhow::Result<T> in all function signatures
-        ├── .context()/.with_context() at each subsystem boundary
-        └── anyhow! / bail! / ensure! for ad-hoc errors
+Is this code on the public API of a library crate?
+│  (published to crates.io, consumed by other crates as a boundary)
+│
+├─ Yes — exposed to external callers
+│   │
+│   ├─ Callers need to pattern-match to recover differently per variant
+│   │                                                       → thiserror enum
+│   │                                                         + #[non_exhaustive]
+│   │                                                         + #[from] for direct wraps
+│   │
+│   ├─ Callers only care "it failed", never match
+│   │   and you still want a stable named type
+│   │                                                       → thiserror (single opaque variant
+│   │                                                         or transparent wrapper)
+│   │
+│   └─ You need custom Display/source() beyond what thiserror's
+│       attribute syntax can express (rare)
+│                                                           → manual `impl Error + Display`
+│                                                             (reserve for genuinely complex cases)
+│
+└─ No — binary, CLI, service, test, example, internal helper
+    │
+    ├─ Default                                              → anyhow::Result<T>
+    │                                                         + .context()/.with_context()
+    │                                                         at each subsystem boundary
+    │
+    ├─ Developer-facing tool where error rendering quality matters
+    │                                                       → color-eyre (drop-in for anyhow)
+    │
+    └─ Internal helper inside a library crate (not exposed)
+                                                            → anyhow is fine; convert to the
+                                                              library's public error type at
+                                                              the public boundary
 ```
+
+**Rule of thumb**: `thiserror` expresses *what can go wrong* (a taxonomy); `anyhow` expresses *what went wrong* (a propagation + context chain). Libraries owe callers the first; applications owe operators the second.
 
 ### thiserror in Libraries
 
@@ -709,7 +734,7 @@ impl ServiceError {
 
 ### `color-eyre` for Enhanced Display
 
-`color-eyre` is a drop-in replacement for `anyhow` with colored, human-friendly error rendering, span traces, and section annotations:
+`color-eyre` sits on top of the `eyre` crate — an `anyhow`-style propagation library — and adds colored, human-friendly error rendering, span traces, and section annotations. Migration from `anyhow` is near-mechanical (swap `anyhow::Error`/`anyhow::Result` for `eyre::Report`/`eyre::Result`; `Context`/`with_context` become `WrapErr`/`wrap_err`):
 
 ```rust
 use color_eyre::eyre::{Context, Result, WrapErr};

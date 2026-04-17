@@ -100,6 +100,8 @@ unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
 ```
 
+After writing `deny.toml`, run `/rust-engineering:audit` (or `/audit` if scoped) to verify supply-chain posture against advisories, licenses, bans, and sources.
+
 8. **Write `.github/workflows/ci.yml`**
 
 ```yaml

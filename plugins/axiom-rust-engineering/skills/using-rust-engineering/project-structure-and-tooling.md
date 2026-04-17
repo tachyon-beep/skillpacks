@@ -4,7 +4,7 @@
 
 **Core Principle:** Project setup is infrastructure. Infrastructure that is correct from day one disappears into the background; infrastructure bolted on later generates friction at every step. Rust's toolchain is unusually coherent — `rustup`, `cargo`, `clippy`, and `rustfmt` are first-party tools designed to compose — so there is very little excuse for a poorly configured Rust project.
 
-The Rust 2024 edition with `resolver = "3"` is the current baseline. The 2024 resolver understands `[workspace.dependencies]` inheritance, respects `default-features = false` at the workspace level, and resolves feature unification correctly in multi-crate workspaces. Getting edition, resolver, and toolchain pinning right at project start costs an hour; getting them wrong costs days of baffling dependency conflicts and CI failures later.
+The Rust 2024 edition with `resolver = "3"` is the current baseline. Resolver 2 (Rust 2021) was the one that fixed feature unification across targets, dev-dependencies, and build-dependencies; resolver 3 adds MSRV-aware resolution on top of that (`resolver.incompatible-rust-versions` defaults to `fallback`, so Cargo prefers dependency versions whose `rust-version` your toolchain actually supports). Resolver 3 requires Rust 1.84+. Getting edition, resolver, and toolchain pinning right at project start costs an hour; getting them wrong costs days of baffling dependency conflicts and CI failures later.
 
 This sheet covers: Cargo.toml anatomy, workspace layout, feature-flag design, lint configuration via the `[lints]` table, toolchain pinning, test acceleration with cargo-nextest, supply-chain auditing with cargo-deny, and a concrete CI skeleton. For writing lint-free code, see [systematic-delinting.md](systematic-delinting.md). For test-writing patterns, see [testing-and-quality.md](testing-and-quality.md).
 
@@ -22,7 +22,7 @@ Use this sheet when:
 - "How do I share lint config across workspace members?"
 - "Why are my feature flags combining in ways I didn't expect?"
 
-**Trigger keywords**: `Cargo.toml`, `workspace`, `Cargo.lock`, `rust-toolchain.toml`, `cargo-nextest`, `cargo-deny`, `clippy.toml`, `rustfmt.toml`, `[lints]`, `resolver`, feature flags, `default-features`, CI workflow.
+**Trigger keywords**: `Cargo.toml`, `workspace`, `Cargo.lock`, `rust-toolchain.toml`, `cargo-nextest`, `cargo-deny`, `cargo-audit`, `cargo-machete`, `cargo-outdated`, `cargo-hack`, `cargo-msrv`, `cargo-binstall`, `clippy.toml`, `rustfmt.toml`, `[lints]`, `[workspace.lints]`, `[workspace.dependencies]`, `resolver`, feature flags, `default-features`, `build.rs`, `rust-version`, MSRV, CI workflow.
 
 ## When NOT to Use
 
@@ -258,11 +258,11 @@ workspace = true                # Inherit all [workspace.lints] settings
 
 | Resolver | Edition | Key Behavior |
 |----------|---------|--------------|
-| `"1"` | 2015, 2018 | Legacy; does not respect `default-features = false` across dependencies |
-| `"2"` | 2021 default | Respects `default-features = false` in most cases |
-| `"3"` | 2024 default | Full feature unification correctness; required when `edition = "2024"` |
+| `"1"` | 2015, 2018 | Legacy; unifies features across targets/dev-deps/build-deps, which can pull extra features into your production build |
+| `"2"` | 2021 default | Fixes feature unification — dev-dependencies and build-dependencies no longer contaminate the normal dependency feature set |
+| `"3"` | 2024 default | Adds MSRV-aware resolution on top of resolver 2 (`incompatible-rust-versions` defaults to `fallback`); requires Rust 1.84+ |
 
-Always set `resolver = "3"` for new projects. If you use `edition = "2024"`, Cargo requires it.
+Always set `resolver = "3"` for new projects. Edition 2024 defaults to resolver 3 (you don't *have* to set it explicitly), but setting it makes the intent clear.
 
 ### Virtual Manifests
 
@@ -698,7 +698,7 @@ highlight         = "all"
 # Crates that must not appear in the dependency tree
 deny = [
     { name = "openssl", reason = "use rustls instead" },
-    { name = "chrono",  reason = "use time or jiff instead; chrono has known soundness issues" },
+    { name = "chrono",  reason = "team-level preference; prefer time or jiff. (The historical RUSTSEC-2020-0159 localtime_r concern was fixed in chrono 0.4.20 — pin a recent version if chrono is kept.)" },
 ]
 
 # Crates allowed to have multiple versions (common for transitional periods)
@@ -736,6 +736,70 @@ cargo deny init
 ```
 
 **Commit `deny.toml` immediately.** An uncommitted `deny.toml` means the next developer who adds a dependency bypasses the policy. The file is the policy — without it there is none.
+
+## Other Cargo Tooling
+
+A short catalogue of the supporting tools that round out a Rust project's toolchain. Install all of these via `cargo install --locked <tool>` or — much faster — via `cargo binstall <tool>` (prebuilt binaries).
+
+| Tool | Purpose | When to reach for it |
+|------|---------|----------------------|
+| `cargo-binstall` | Installs prebuilt binaries of other `cargo-*` tools instead of compiling from source. | First tool to install in CI; turns minute-scale installs into second-scale downloads. |
+| `cargo-audit` | Checks the dependency tree against the RustSec advisory database. Narrower scope than `cargo-deny` (advisories only, no licenses/bans/sources). | Lightweight security check in local dev or a small project that doesn't need full `cargo-deny` policy. `cargo-deny check advisories` covers the same ground if you already use deny. |
+| `cargo-machete` | Detects unused dependencies listed in `Cargo.toml`. Useful when a refactor removed all call sites but the `[dependencies]` entry lingers. | Periodic dependency hygiene sweep. Not every report is accurate on macro-only crates — double-check before deleting. |
+| `cargo-outdated` | Reports crates with newer versions available. Reads semver and flags whether updates are within the requested version range or require a manifest bump. | Monthly dependency freshness pass. Pair with `cargo update --dry-run` for within-range updates. |
+| `cargo-hack` | Runs `cargo check`/`test`/`build` over every combination of features (or individual features) to catch non-additive feature sets. | CI gate on any crate with 3+ feature flags — this is the mechanical enforcement of the "features must be additive" rule. |
+| `cargo-msrv` | Binary-searches the minimum Rust version that still compiles your crate, and verifies the result against the `rust-version` field. | When introducing `rust-version` for the first time, or when a suspiciously new stdlib API might have silently raised your MSRV. |
+| `cargo-edit` | Adds `cargo add`/`rm`/`upgrade` subcommands (mostly superseded by built-in `cargo add`, but `cargo upgrade` for bumping version reqs is still useful). | Ad-hoc manifest editing; less needed since `cargo add` landed in 1.62. |
+
+### MSRV Strategy
+
+Minimum Supported Rust Version (MSRV) is a contract you make with your users: "this crate compiles on at least this Rust version." Set it deliberately and verify it in CI.
+
+```toml
+# Cargo.toml
+[package]
+rust-version = "1.87"    # enforced by cargo check at build time
+```
+
+Verification loop:
+
+```bash
+# Confirm the declared MSRV actually works
+cargo +1.87.0 check --all-features
+
+# Find the true minimum (don't rely on guesswork)
+cargo msrv find                # binary-searches for the lowest version that builds
+cargo msrv verify              # checks that the current rust-version still compiles
+```
+
+The CI skeleton below runs an `msrv` job that installs the exact toolchain pinned in `rust-version` and runs `cargo check`. That job is the contract enforcement — without it, you don't actually know whether a PR raised the MSRV until a user reports it.
+
+### build.rs basics
+
+A crate can include a `build.rs` at its root. Cargo compiles it as a build script and runs it before compiling the crate itself. Use it for:
+
+- Generating Rust code from a schema (protobuf, SQL) into `OUT_DIR`.
+- Invoking `cc` to compile C/C++ sources and link them (see [unsafe-ffi-and-low-level.md](unsafe-ffi-and-low-level.md) for the FFI side).
+- Detecting host features via `cfg` flags.
+
+```rust
+// build.rs
+fn main() {
+    // Tell Cargo to re-run the build script only if these change
+    println!("cargo:rerun-if-changed=schema.proto");
+    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-env-changed=PROTOC");
+
+    // Set a cfg the main crate can use: #[cfg(has_feature_x)]
+    if detect_feature_x() {
+        println!("cargo:rustc-cfg=has_feature_x");
+    }
+}
+
+fn detect_feature_x() -> bool { /* ... */ false }
+```
+
+`cargo:rerun-if-changed` is the important one: without it, Cargo re-runs the build script on *every* invocation (because the default is "rerun if any file changed"), which blows away incremental compilation. List every input the script reads, plus `build.rs` itself. Use `cargo:rerun-if-env-changed=VAR` for environment-variable inputs.
 
 ## CI Skeleton
 
