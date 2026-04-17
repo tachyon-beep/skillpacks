@@ -22,6 +22,22 @@
       "category": "development"
     },
     {
+      "name": "axiom-rust-engineering",
+      "source": "./plugins/axiom-rust-engineering",
+      "description": "Modern Rust 2024 edition engineering: ownership, traits, async (tokio), testing, clippy/cargo tooling, performance/unsafe/FFI, AI/ML interop (PyO3, candle). Router + 11 reference sheets, 5 commands, 3 agents.",
+      "keywords": [
+        "axiom",
+        "rust",
+        "cargo",
+        "clippy",
+        "tokio",
+        "pyo3",
+        "unsafe",
+        "ffi"
+      ],
+      "category": "development"
+    },
+    {
       "name": "axiom-system-archaeologist",
       "source": "./plugins/axiom-system-archaeologist",
       "description": "Deep codebase architecture analysis (4 commands, 2 agents) - C4 diagrams, subsystem catalogs, security surface mapping, test infrastructure analysis, dependency visualization, incremental delta analysis, cross-pack specialist integration",
