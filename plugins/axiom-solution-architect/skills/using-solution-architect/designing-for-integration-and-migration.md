@@ -12,14 +12,15 @@ Three related failure modes land here:
 
 This skill produces three artifacts that keep those failures from landing in production: `15-integration-plan.md`, `16-migration-plan.md` (brownfield only), and `17-risk-register.md`.
 
-**Core principle:** Every external touchpoint has a contract. Every cutover has a rollback trigger. Every risk is architectural and actionable.
+**Core principle:** Every external touchpoint has a contract. Every cutover has an observable rollback trigger. Every risk in the register is architectural, not operational.
 
 ## When to Use
 
-- Producing the `15-`, `16-`, `17-` artifacts
-- The design extends or modifies an existing system
-- The design depends on external vendor APIs, batch pipelines, or legacy systems
-- You feel the urge to describe rollout as "we'll deploy and monitor"
+This skill is not optional. Every solution workflow runs it, with the migration artifact gated on brownfield.
+
+- **Always run for `15-integration-plan.md` and `17-risk-register.md`.** Every system — greenfield included — integrates with auth, observability, vendor APIs, analytics, or a data plane it does not own. Every system carries architectural risk.
+- **Run `16-migration-plan.md` only for brownfield** — when the design modifies, extends, replaces, or coexists with an existing production system. A greenfield system's first production deployment is a *rollout*, not a migration; the migration artifact is specifically for replacing existing capability.
+- **Explicit trigger for this skill:** any of — external touchpoint present; brownfield change; feeling the urge to describe rollout as "we'll deploy and monitor"; risk register not yet produced.
 
 ## `15-integration-plan.md`
 
@@ -85,10 +86,36 @@ For brownfield only: also include how your new design **currently consumes or di
 
 **Guidance:**
 
-- Prefer data-migration strategies that leave old data readable during transition (shadow writes, dual-write-then-switch, read-from-old-write-to-both-then-switch).
+- Prefer data-migration strategies that leave old data readable during transition (see the pattern selection table below).
 - Feature flags default *off* and flip on per stage; default *on* only when the stage's success has been sustained.
 - Time estimates are bounded ranges, not single dates. Stages gated on observable success, not wall-clock.
 - If a stage has no rollback procedure, it's not a stage — it's a leap of faith. Reshape it.
+
+### Data-migration pattern selection
+
+Pick the pattern deliberately. Each has a distinct correctness harness and abort path — naming the pattern without specifying the harness is a half-plan the consistency gate will reject.
+
+| Pattern | Use when | Correctness harness | Abort criterion |
+|---------|----------|---------------------|-----------------|
+| **Shadow writes** (write to new, read from old, compare async) | Low risk tolerance; reads dominate writes; new store unverified | Per-request diff log + nightly full-table reconciliation; divergence-rate SLI | Divergence > N% for K windows → stop shadowing, investigate |
+| **Dual-write synchronous** (write to both, read from old) | Reads dominate writes; consistency window tolerable; rollback to old store must remain possible | Transactional wrapper or outbox pattern; drift detector comparing both stores; write-failure alerting on either side | Write-success asymmetry sustained → fail back to single-write-old |
+| **Dual-write async / outbox** (write to old, async replicate to new) | Writes dominate; eventual consistency acceptable; scale pressure on old store | Outbox consumer lag SLI; end-to-end replication SLO; reconciliation batch job | Lag beyond SLO sustained → throttle writes or pause replication |
+| **Read-from-old-write-to-both-then-switch** | Full migration with reversibility | Both patterns' harnesses above, in sequence | Phase-specific: see both rows |
+| **CDC-based streaming** (Debezium-like) | High write volume, low operational tolerance for dual-write wrapping | Replication lag SLI; schema-change detection; DLQ for untransformable events | Schema drift or sustained DLQ growth → pause, fix transform, resume from LSN |
+| **Backfill + forward stream** (one-time backfill then CDC or shadow for delta) | Cold historical data large, live tail small | Backfill row-count + checksum parity; forward stream divergence SLI | Parity mismatch on backfill → block cutover; stream divergence → treat as CDC abort |
+| **Strangler (per-capability cutover)** | Coexistence manageable per-capability; clear seam in the old system | Per-capability routing with feature flag; parity log on shadow path | Any capability regresses SLO post-cutover → flip flag back |
+| **Dump-and-load / point-in-time copy** | Low-traffic systems, non-live data, maintenance-window acceptable | Row-count + checksum parity; business-key spot checks | Parity mismatch → block cutover, keep old live |
+| **Big-bang** (no coexistence) | Forbidden by default — requires a business-time-constraint reason recorded in `06-` | Pre-cutover dress rehearsal in a parity environment; tight post-cutover SLO monitoring | Post-cutover SLO breach within rollback-window → full rollback to old |
+
+**Required fields for each stage using any of the above:**
+
+- **Pattern:** named from the list above (or justified deviation)
+- **Comparison / reconciliation harness:** concrete tool or code location
+- **Divergence SLO:** e.g., "< 0.01% row divergence sustained over 24 h before tier promotion"
+- **Abort criterion:** observable, not "if it looks bad"
+- **Cutover reversibility window:** how long the old system remains the system of record after switch
+
+A migration stage that names a pattern without these five fields fails the consistency gate's Check 6.
 
 ## `17-risk-register.md`
 
@@ -96,22 +123,25 @@ For brownfield only: also include how your new design **currently consumes or di
 
 Ops generics ("server could fail", "AWS region could go down") belong in operations runbooks, not the architectural risk register. The risk register here captures risks *created by the architectural choices themselves*.
 
-Starter categories:
+Starter categories (open list — add categories when real risks don't fit):
 
-- **Component overload** (from `03-nfr-mapping.md`: components load-bearing for many NFRs simultaneously)
-- **Integration fragility** (high-volume integrations with high-blast-radius failure modes)
-- **Migration window** (stages with long coexistence periods doubling operational surface)
-- **Vendor / technology concentration** (single vendor carrying multiple NFRs)
-- **Contract evolution** (integrations where version drift would break many consumers)
-- **Data consistency** (eventual-consistency windows with business-visible impact)
-- **Security surface** (new attack vectors introduced by the architecture)
+- **Component overload** — components load-bearing for many NFRs simultaneously (cross-ref `03-nfr-mapping.md`)
+- **Integration fragility** — high-volume integrations with high-blast-radius failure modes
+- **Migration window** — stages with long coexistence periods doubling operational surface
+- **Vendor / technology concentration** — single vendor carrying multiple NFRs
+- **Contract evolution** — integrations where version drift would break many consumers
+- **Data consistency** — eventual-consistency windows with business-visible impact
+- **Capacity ceiling** — the architecture works at today's load profile and collapses at Nx; scaling requires redesign, not provisioning
+- **Operability / cognitive load** — the runtime is too complex for the operating team to diagnose under pressure; observability debt that creates outage risk
+- **Security surface** — new attack vectors introduced by the architecture. **Protocol when `ordis-security-architect` is in play:** the threat model owns the canonical entries; `17-` carries a pointer and the architectural mitigation only. Do not duplicate threat-model entries here.
+- **Compliance / regulatory exposure** — the architecture creates or alters a compliance posture (data residency, retention, auditability, tenant isolation). Distinct from security surface: compliance is about demonstrable posture to a regulator, not just attacker resistance.
 
 ### Entry template
 
 ```markdown
 ## RSK-NN: [Architectural risk — one line]
 
-- **Category:** [component overload | integration fragility | migration window | vendor concentration | contract evolution | data consistency | security surface]
+- **Category:** [component overload | integration fragility | migration window | vendor concentration | contract evolution | data consistency | capacity ceiling | operability | security surface | compliance exposure]
 - **Likelihood:** [Low | Medium | High] — [brief justification]
 - **Impact:** [Low | Medium | High] — [brief justification, scoped to users/business/ops]
 - **Affected components / ADRs:** [names / IDs]
@@ -125,6 +155,33 @@ Starter categories:
 ```
 
 The consistency gate rejects entries without Likelihood/Impact/Trigger/Mitigation all present.
+
+### Risk → ADR feedback loop
+
+Every risk with likelihood × impact at the High/High or High/Medium level must be traced to the ADRs that caused or accepted it. If the responsible ADR doesn't acknowledge the risk:
+
+1. **Re-open the ADR.** Add the risk to its Consequences (Negative). The ADR may stand as-is — trade-offs are the point — but they must be recorded.
+2. **Check rollback criteria.** If the risk is realizable and the ADR has no exit criterion, add one. "We accept this risk unless X observable condition" is a valid exit.
+3. **If re-opening surfaces that the ADR would not be made today,** raise a superseding ADR rather than editing the original. The original records the decision at the time it was made; the new one records the revision.
+
+This is not a one-shot loop — each pass through the design surfaces more risks. Check 7 of the consistency gate enforces that every High-level risk names at least one ADR it traces to.
+
+## NFR Conflicts Surfaced by Integration and Migration
+
+Integration and migration work is where NFR conflicts commonly become visible. Examples:
+
+- An availability NFR targeting 99.95% against a migration stage that requires coexistence-downtime.
+- A strong-consistency NFR against a chosen dual-write async pattern.
+- A latency NFR against a vendor integration whose own SLO is slower than the target.
+
+When a conflict surfaces here:
+
+1. Name the conflicting NFR IDs in the affected `15-` entry or `16-` stage.
+2. State whether the integration/stage **strengthens**, **preserves**, or **temporarily relaxes** each NFR. A relaxation is acceptable only with a scheduled restoration (stage and trigger named).
+3. If the conflict is not resolvable in the current design, record it as a resolution statement in `02-nfr-specification.md` — the consistency gate's Check 3 requires every conflict to have a resolution or waiver.
+4. If the resolution requires revisiting a decision, raise a superseding ADR (see Risk → ADR feedback loop above).
+
+A migration or integration that silently relaxes an NFR without a restoration path is the failure mode this step exists to catch.
 
 ## Pressure Responses
 
@@ -173,6 +230,8 @@ If the design is brownfield and no `axiom-system-archaeologist` workspace exists
 - **Do not invent the existing system.** Stop and return to the user.
 - Recommend: `/system-archaeologist` to produce `01-discovery-findings.md` and `02-subsystem-catalog.md`.
 - Alternative if archaeology is infeasible in the time available: record `[ASSUMED]` details about the existing system in `00-scope-and-context.md`, mark them as open questions, and raise an RSK entry: "`RSK-NN: brownfield context unverified` — likelihood High, impact High, mitigation: run archaeologist before execution."
+
+This section is operational guidance and must be applied before `16-` is drafted, not after. Scope Boundaries (below) is intentionally the last section.
 
 ## Scope Boundaries
 

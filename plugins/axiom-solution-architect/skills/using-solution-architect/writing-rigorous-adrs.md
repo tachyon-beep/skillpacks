@@ -6,15 +6,29 @@
 
 The difference: a conclusion records what won. A choice records what was considered, what won, and *why*. The consequences of the loser get remembered; the consequences of the winner are planned for.
 
-**Core principle:** Every ADR has at least two alternatives, trace-able decision drivers, explicit consequences (good and bad), a rollback plan, and an expiry date.
+**Core principle:** Every ADR has traceable decision drivers, at least two genuine alternatives (or an explicit *constrained — no alternatives existed* statement), explicit consequences (good and bad), a rollback plan, and an expiry / review date.
+
+The pattern is Michael Nygard's (2011) "Architecture Decision Records"; the specifics below tighten Nygard's original with MADR-style drivers, explicit negatives, rollback, and expiry.
 
 ## When to Use
 
 - Recording any significant architectural decision: language, datastore, messaging, deployment target, auth, major framework, style (monolith/microservices/event-driven/serverless)
 - A decision in `05-tech-selection-rationale.md` affects multiple components, downstream teams, or the rollback path
 - You are tempted to write a one-paragraph "we chose X" without alternatives
+- **Post-hoc:** a significant decision was already made without an ADR and is worth capturing now — see `Pressure Responses → "We already decided, just document it"`
 
-**When *not* to use:** trivial decisions (JSON library, linter rules). A one-line note in `05-` is enough.
+### When *not* to write an ADR
+
+False positives are the most common ADR failure. Do not write an ADR for:
+
+- **Implementation details that change often.** Choice of JSON library, utility library (lodash), test matchers, CSS framework — note in `05-tech-selection-rationale.md`.
+- **Decisions inside an already-decided framework.** Once "use Django" is an ADR, "use Django REST Framework" is a direct consequence, not a new decision. Mention it in `05-` or in the original ADR's consequences.
+- **Naming conventions, code style, linter rules.** Belongs in a style guide or CONTRIBUTING.md.
+- **Reversible-within-a-sprint decisions affecting a single module.** Code comment or `05-` suffices.
+- **Policy pass-throughs.** "We do code reviews" — policy, not architecture.
+- **Forced choices with no genuine alternative.** "The client mandates Oracle 19c" is a constraint (record as `CON-NN` in `01-requirements.md`), not a decision. A post-hoc ADR is legitimate only if the constraint itself is architecturally significant and the forgone alternatives merit the historical record.
+
+> If in doubt: can you name two genuine options that a competent architect would have evaluated? If not, don't write an ADR.
 
 ## ADR File Convention
 
@@ -27,12 +41,12 @@ The difference: a conclusion records what won. A choice records what was conside
 Every ADR MUST include every section. Empty sections are the most common drift mode.
 
 ```markdown
-# ADR-NNNN: [Title — the decision, in imperative form]
+# ADR-NNNN: [Imperative title — e.g., "Use PostgreSQL 16 as the primary datastore"]
 
-- **Status:** [Proposed | Accepted | Superseded by ADR-NNNN | Deprecated]
+- **Status:** [Proposed | Accepted | Superseded by ADR-NNNN | Superseded in part by ADR-NNNN | Deprecated]
 - **Date decided:** YYYY-MM-DD
 - **Decision makers:** [Roles, not names where possible]
-- **Expiry / review date:** YYYY-MM-DD  [default: 18 months from decision]
+- **Expiry / review date:** YYYY-MM-DD  [appropriate to the decision horizon — typically 12–24 months for application stacks, 6–12 for fast-moving tech (LLM providers, frontend frameworks), 3–5 years for infrastructure or regulatory decisions]
 
 ## Context
 
@@ -43,7 +57,7 @@ Every ADR MUST include every section. Empty sections are the most common drift m
 - **DRIVER-1:** [In the form: "From NFR-02, we need 3000 writes/s sustained" or "From CON-01, data must stay in EU"]
 - **DRIVER-2:** …
 
-(Drivers are what the alternatives are scored against. If a driver doesn't appear in `01-requirements.md` or `02-nfr-specification.md`, either add it there or reject it as a driver — drivers must trace.)
+(Drivers are what the alternatives are scored against. Every driver must trace to an entry in `01-requirements.md` (including `CON-NN` constraints) or `02-nfr-specification.md`. If a driver has no such entry, either add it there or reject it as a driver — untraced drivers are opinions, not drivers.)
 
 ## Alternatives considered
 
@@ -62,7 +76,7 @@ Every ADR MUST include every section. Empty sections are the most common drift m
 
 …
 
-(At least two alternatives. A single option is not a decision; it's a reflex.)
+(At least two *genuine* alternatives. A single option is usually a reflex — but a decision forced by contract, regulation, or mandated standard has no alternatives. In that case, replace the "Alternatives considered" section with a single subsection titled **"Constrained decision — no alternatives"** naming the constraint source (contract clause, regulation, mandated standard, `CON-NN`) and what would have been considered absent the constraint. Inventing strawman alternatives to satisfy the rule is worse than admitting the constraint.)
 
 ## Decision
 
@@ -102,13 +116,77 @@ Every ADR MUST include every section. Empty sections are the most common drift m
 
 - Requirements / NFRs / Constraints: FR-…, NFR-…, CON-…
 - Related ADRs: ADR-…
-- Supersedes: ADR-NNNN (if applicable)
+- Supersedes: ADR-NNNN (if applicable — see *Lifecycle transitions*)
 - External references: [standards, docs, vendor pages]
+
+## Traceability
+
+- **Requirements satisfied / impacted:** FR-…, NFR-…, CON-… (each must also be updated in `14-requirements-traceability-matrix.md` to reference this ADR — forward link here, back link there)
+- **RTM updated:** [ ] yes / [ ] pending at time of ADR merge
+- **Requirements conflict check:** Does this decision relax, tighten, or contradict any listed FR/NFR/CON? If yes, the requirement file must be updated with the trade-off note — or the ADR is wrong. The assembly consistency gate will catch silent relaxations (e.g., an ADR that adopts eventual consistency while `02-NFR-05` still requires strong consistency); catching it here is cheaper.
 
 ## Review log
 
 - YYYY-MM-DD — [Reviewer] — [Decision: still valid | revisit | superseded]
 ```
+
+## Lifecycle transitions
+
+Four operations change an ADR's state after it ships: supersession, deprecation, partial supersession, and amendment. They are distinct — do not blur them.
+
+### Supersession
+
+A newer ADR replaces an older one when the decision has genuinely changed.
+
+- Create the new ADR (next `NNNN`).
+- In the new ADR's **Status:** `Accepted`.
+- In the new ADR's **Links → Supersedes:** `ADR-NNNN` (the old one).
+- **Update the old ADR's Status** to `Superseded by ADR-NNNN`. Change nothing else — the old ADR is a historical record, not a working document.
+- Add a review-log entry in the old ADR noting the supersession date and the new ADR number.
+
+Do **not** edit the old ADR's context, decision, or consequences. Future readers need to see the decision as it stood, with its superseded pointer as the only change.
+
+### Deprecation
+
+An ADR is deprecated (not superseded) when the thing it decided is no longer being done, with no replacement. E.g., "Use Kafka for event streaming" deprecated because the event-streaming feature is being removed.
+
+- Update the ADR's **Status** to `Deprecated`.
+- Add a review-log entry with the deprecation date and reason.
+- No new ADR is created.
+
+**Superseded vs. Deprecated:** Superseded means "the question still exists, the answer has changed — here is the new answer." Deprecated means "the question no longer exists." If you can't name a replacement ADR, it's deprecation.
+
+### Partial supersession
+
+A new ADR replaces only part of an earlier one — e.g., swap the datastore but keep the messaging choice from an original multi-decision ADR.
+
+- **Do not** write a single supersession ADR that replaces the whole original.
+- Write one new ADR per sub-decision that is actually changing.
+- Mark the original as `Superseded in part by ADR-NNNN, ADR-MMMM` and list which sub-decisions each replaces.
+- Better: split the original into separate ADRs retroactively if it grouped decisions that should have been separate. Note the split in the review log.
+
+Mixing supersessions in a single ADR corrupts the traceability graph — the RTM cannot point at "half of an ADR."
+
+### Amendment
+
+An ADR's *content* needs a correction (typo, clarification, link update) without the decision changing.
+
+- Edit in place.
+- Add a review-log entry: `YYYY-MM-DD — [Editor] — amendment: [what and why]`.
+- Do **not** amend the decision, drivers, or alternatives. If those change, it is a supersession, not an amendment.
+
+### The bidirectional linking rule
+
+Every supersession or deprecation-with-replacement must be reflected in **both** ADRs:
+
+- New ADR → old ADR via `Links → Supersedes: ADR-NNNN`.
+- Old ADR → new ADR via `Status: Superseded by ADR-NNNN`.
+
+A dangling forward or back-reference is an integrity failure. The assembly consistency gate should catch it, but catching it here is cheaper.
+
+### Moving from Proposed to Accepted
+
+A `Proposed` ADR that ships is a lie in progress. Before merge, the status must move to `Accepted` (or the ADR must be rejected and removed). If the project uses SDLC governance, the governance step owns the move — but the ADR author is responsible for ensuring the status is correct on ship day. See `axiom-sdlc-engineering/design-and-build` for approval-flow specifics.
 
 ## Pressure Responses
 
@@ -148,17 +226,35 @@ If every consequence is positive, the decision is insufficiently interrogated. E
 
 ### ❌ ADRs older than their expiry
 
-An ADR whose review date has passed, still driving decisions. At the expiry, either confirm (new review-log entry), supersede (status: Superseded by ADR-NNNN), or deprecate.
+An ADR whose review date has passed, still driving decisions. At the expiry, either confirm (new review-log entry), supersede (new ADR with bidirectional link), or deprecate.
+
+### ❌ Dangling supersession links
+
+New ADR claims `Supersedes: ADR-0003` but ADR-0003 still shows `Status: Accepted`. Or ADR-0003 shows `Status: Superseded by ADR-0007` but ADR-0007 does not list ADR-0003 in its `Supersedes` field. One-way supersession links are integrity failures — see *Lifecycle transitions → The bidirectional linking rule*.
+
+### ❌ Supersession used where deprecation fits (or vice versa)
+
+Superseded = "the question still exists, the answer changed — here is the new ADR." Deprecated = "the question no longer exists, no replacement." Marking an ADR `Superseded by ADR-NNNN` when ADR-NNNN doesn't actually replace the same decision confuses readers and poisons the traceability graph.
+
+### ❌ Multi-decision ADR replaced by one supersession ADR
+
+Original ADR decided datastore + messaging + cache; new ADR changes only the datastore. Writing a single supersession ADR that replaces all three is wrong — only the datastore changed. Write one ADR per sub-decision that is actually changing and mark the original `Superseded in part`.
 
 ### ❌ "Status: Proposed" that never gets moved
 
 A proposed ADR that shipped anyway. The status is a lie at that point. Accept or reject; don't leave undecided ADRs running the design.
 
+## ADR index
+
+Maintain `adrs/README.md` (or `adrs/index.md`) listing every ADR by number, title, and current status. Without an index, 30+ ADRs become unbrowsable — new readers cannot find what is still in force versus what has been superseded. Tools like `adr-tools` generate this automatically; a hand-maintained table is fine if the rules are observed.
+
 ## Interaction with `axiom-sdlc-engineering/design-and-build`
 
-The SDLC pack's `design-and-build` skill owns ADR lifecycle governance (who approves, when status changes, archive rules). This skill owns ADR *content quality*. A rigorous ADR produced here satisfies the content criteria that lifecycle governance expects.
+**This skill stops at:** ADR *content quality* — structure, drivers, alternatives, consequences, rollback, expiry, lifecycle-state hygiene.
 
-If the project follows SDLC governance, the ADR needs an approval signature block at the bottom; add it in the project's house style. The template above does not prescribe one because styles vary (GitHub PR approval, Markdown sign-off, JIRA link, etc.).
+**The SDLC pack picks up at:** ADR lifecycle *governance* — who approves, the state-machine for status transitions, archive and retention rules, ARB signatures.
+
+A rigorous ADR produced here satisfies the content criteria that lifecycle governance expects. If the project follows SDLC governance, the ADR needs an approval signature block at the bottom in the project's house style — GitHub PR approval, Markdown sign-off, JIRA link, etc. The template does not prescribe one because styles vary.
 
 ## Scope Boundaries
 
@@ -168,9 +264,12 @@ If the project follows SDLC governance, the ADR needs an approval signature bloc
 - Alternatives, drivers, consequences, rollback discipline
 - Expiry and review log
 - NFR-contradiction check (surface, or block)
+- Lifecycle transitions: supersession, deprecation, partial supersession, amendment, and bidirectional linking
+- ADR-to-RTM traceability (forward link from ADR; back-link enforced in `maintaining-requirements-traceability`)
+- ADR index maintenance
 
 **Not covered:**
 
-- ADR lifecycle governance (approval flow, archive) — `axiom-sdlc-engineering/design-and-build`
+- ADR lifecycle *governance* (approval flow, archive, ARB sign-off) — `axiom-sdlc-engineering/design-and-build`
 - Minor decisions that belong in `05-tech-selection-rationale.md` rather than an ADR
 - Tradeoff matrices (those live in `05-`; the ADR summarises the outcome)

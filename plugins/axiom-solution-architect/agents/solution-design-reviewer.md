@@ -42,16 +42,16 @@ Check for a `solution-architecture/` workspace. If only a consolidated SAD is pr
 
 Walk through each of the ten failure modes, with file-level evidence:
 
-1. **Tech-before-problem (d):** Does `05-` name tech without NFR/CON references? Is every tradeoff matrix fully populated? Evidence: specific rows in `05-`.
-2. **Gold-plating (e):** Does `04-`/`09-` contain abstractions with no named requirement? Is `06-descoped-and-deferred.md` empty or cursory?
-3. **NFR handwaving (a):** Any adjective-only NFRs in `02-`? Any NFRs missing Target/Measured/Source?
-4. **Weak ADRs (b):** Single-option ADRs? Missing rollback? Missing expiry? NFR-contradicting ADRs?
-5. **Untraceable (c):** Are FR/NFR/CON IDs referenced in `09-`? Does `14-` have orphans without actions?
-6. **Integration reality gap (f):** For brownfield — does `15-` describe real touchpoints with contracts, or is it prose? Is there an `archaeologist` workspace that's been consumed?
-7. **Diagram proliferation (g):** Multiple C4 views duplicating content? Sequence diagrams per endpoint instead of per scenario?
-8. **Migration gap (h):** Brownfield design with missing or big-bang `16-`?
-9. **Risk theatre (i):** Ops-generic risks in `17-`? Risks missing trigger or mitigation?
-10. **Stakeholder capture (j):** Tech choices suspiciously aligned with a vendor mention in the input — any trace of tradeoff matrix being tilted?
+1. **Tech-before-problem:** Does `05-` name tech without NFR/CON references? Is every tradeoff matrix fully populated? Evidence: specific rows in `05-`.
+2. **Gold-plating / speculative generality:** Does `04-`/`09-` contain abstractions with no named requirement? Is `06-descoped-and-deferred.md` empty or cursory?
+3. **NFR handwaving:** Any adjective-only NFRs in `02-`? Any NFRs missing Target/Measured/Source?
+4. **Weak ADRs:** Single-option ADRs? Missing rollback? Missing expiry? NFR-contradicting ADRs?
+5. **Untraceable design:** Are FR/NFR/CON IDs referenced in `09-`? Does `14-` have orphans without actions?
+6. **Integration reality gap (brownfield):** Does `15-` describe real touchpoints with contracts, or is it prose? Is there an archaeologist workspace that's been consumed?
+7. **Diagram proliferation:** Multiple C4 views duplicating content? Sequence diagrams per endpoint instead of per scenario?
+8. **Migration gap (brownfield):** Brownfield design with missing or big-bang `16-`?
+9. **Risk theatre:** Ops-generic risks in `17-`? Risks missing trigger or mitigation?
+10. **Stakeholder capture:** Tech choices suspiciously aligned with a vendor mention in the input — any trace of the tradeoff matrix being tilted?
 
 ### Step 3 — Write the review
 
@@ -70,7 +70,7 @@ Walk through each of the ten failure modes, with file-level evidence:
 
 ### Critical (must-fix before emission)
 
-1. **[Failure mode letter] — [Title]**
+1. **[Failure mode name] — [Finding title]**
    - Evidence: `path/to/file.md` line or section
    - Impact: [what goes wrong downstream if unfixed]
    - Recommendation: [specific — "add NFR target to NFR-04 (suggested: P95 ≤ 200 ms)"]

@@ -49,7 +49,7 @@ Ask:
 2. **Is the ops-cost row of the matrix honest?** Deployment, monitoring, upgrade path, on-call burden, licensing at scale, vendor lock-in.
 3. **Were the alternatives evaluated at comparable depth?** A suspiciously thin evaluation of B and C is a tell.
 4. **Is there a simpler option that wasn't considered?** Often the missing row is the right answer.
-5. **Is the choice secretly satisfying a preference, not a requirement?** Vendor relationships, resume incentives, team familiarity-as-comfort not competence.
+5. **Is the choice secretly satisfying a preference, not a requirement?** Vendor relationships, resume incentives, team comfort rather than team competence.
 
 ### Step 3 — Write the critique
 
@@ -82,11 +82,19 @@ Ask:
 
 ## Confidence Assessment
 
+[How confident the critique is in its findings, and what factors limit that confidence. Examples of factors: absence of in-env benchmarks, team experience profile unknown, production workload shape unclear, vendor claims not corroborated. If no doubts: "High confidence — NFRs are quantified, alternatives were named at comparable depth, team history with the candidate is documented."]
+
 ## Risk Assessment
+
+[What could still go wrong if the recommendation (keep / revisit / reject) is accepted. Examples: "Keeping PostgreSQL is correct today, but if write volume grows 5× the current projection, this decision should be revisited within 12 months." Or: "Rejecting Kafka in favour of RabbitMQ streams is defensible for today's throughput, but re-examine if ordered-delivery-per-partition becomes load-bearing for a new FR."]
 
 ## Information Gaps
 
+[What the critic could not verify and would need to close the loop. Examples: "Vendor-quoted P99 at the target RDS class is claimed but not benchmarked in-env." "DynamoDB alternative is listed in the matrix but its ops-cost cell is blank." "Team's Cassandra experience is asserted as '0 years' but not cross-checked against CVs or project history."]
+
 ## Caveats
+
+[Scope limits of this critique. Examples: "Critique covers datastore selection only; messaging and caching selections were explicitly out of scope." "No cost modelling performed — decisions that turn on total cost of ownership require separate analysis." "Critique assumes the NFRs in `02-` are themselves correct; an NFR-quantification review is separate work."]
 ```
 
 ## Handling Pressure
@@ -101,7 +109,7 @@ Response: That's a constraint (record it as CON-NN) not an architectural fit. If
 
 ### "Let's just pick something and move on"
 
-Response: Fine — but the picked thing gets evaluated against alternatives so the rollback plan has something to roll back to. No evaluation means no alternative on the shelf when the pick fails.
+Response: The shortcut is the tech debt. "Picking something" without comparing it to at least one alternative means the rollback plan has nothing to roll back *to* — and the decision can't be defended in review. The fifteen-minute matrix is cheaper than the six-month regret. If the pick is obvious, the matrix is fifteen minutes; if the pick isn't obvious, the matrix is exactly where the time should be spent.
 
 ## Scope Boundaries
 
@@ -112,4 +120,4 @@ Covered:
 Not covered:
 - Producing the full `05-` from scratch (use resisting-tech-and-scope-creep)
 - Making the final decision (that's the architect's, informed by this critique)
-- Cost modelling (deferred from v1.0.0)
+- Cost modelling (not in scope)

@@ -9,7 +9,7 @@ This skill runs at the end of the workflow. It does two things:
 1. **Consistency gate** — cross-artifact checks across the numbered files; failures block emission unless waived with recorded rationale
 2. **Assembly** — consolidates the numbered artifact set into a single readable Solution Architecture Document at `99-solution-architecture-document.md`
 
-**Core principle:** The gate fails loud. The SAD is not emitted until the gate passes or the waivers are explicit.
+**Core principle:** The gate fails loud. The SAD is not emitted until every check passes or each failure carries a recorded waiver with rationale.
 
 ## When to Use
 
@@ -21,31 +21,42 @@ This skill runs at the end of the workflow. It does two things:
 
 Run these checks in order. Record the result of each. Emit the SAD only when all checks pass or have documented waivers.
 
-### Check 1 — File presence
+### Check 1 — File presence (tiered)
 
-| Required for all workflows | Required for brownfield | Required for enterprise |
-|----------------------------|-------------------------|-------------------------|
-| `00-scope-and-context.md` | `16-migration-plan.md` | `archimate-model/` with business/application/technology files |
-| `01-requirements.md` | | `archimate-model/viewpoints/` with at least cio/arb/engineering |
-| `02-nfr-specification.md` | | `togaf-deliverable-map.md` |
-| `03-nfr-mapping.md` | | |
-| `04-solution-overview.md` | | |
-| `05-tech-selection-rationale.md` | | |
-| `06-descoped-and-deferred.md` | | |
-| `09-component-specifications.md` | | |
-| `14-requirements-traceability-matrix.md` | | |
-| `15-integration-plan.md` | | |
-| `17-risk-register.md` | | |
-| `adrs/` (may be empty only if the workflow produced no significant decisions — rare) | | |
+Identify the tier declared in `00-scope-and-context.md` (XS / S / M / L / XL). Required files by tier:
 
-Router-owned artifacts (`07`, `08`, `10`, `11`, `12`, `13`) may be absent for XS/S scopes, but if `04-solution-overview.md` references them, they must exist.
+- **All tiers:** `00-scope-and-context.md`, `01-requirements.md`, `02-nfr-specification.md`, `03-nfr-mapping.md`, `04-solution-overview.md`, `06-descoped-and-deferred.md`, `09-component-specifications.md`, `14-requirements-traceability-matrix.md`, `15-integration-plan.md`, `17-risk-register.md`. The `adrs/` directory exists (may be empty only if the tier is XS and no decisions were made — record the "no decisions" rationale in `04-`).
+- **S and above:** add `05-tech-selection-rationale.md`, `11-interface-contracts.md`.
+- **M and above:** add `07-c4-context.md`, `08-c4-containers.md`, `10-data-model.md`, `13-deployment-view.md`.
+- **L and above:** add `12-sequence-diagrams.md`.
+- **Brownfield (any tier):** add `16-migration-plan.md`.
+- **Enterprise / XL:** add `archimate-model/` (business, application, technology layers, ≥1 viewpoint per concern) and `togaf-deliverable-map.md`.
+
+**Tier promotion rule:** if `04-solution-overview.md` or any ADR in scope references an artifact from a higher tier, the gate promotes the tier and the higher-tier requirements apply. This is not a waiver; it's a consistency correction.
+
+### Check 1b — Router-owned artifact quality floor
+
+For each structural artifact present (`07, 08, 09, 10, 11, 12, 13`), confirm:
+
+- `07-c4-context.md`: exactly one system box; named external actors and systems; no internal detail.
+- `08-c4-containers.md`: technology labels on each container; one page; no component-level elements.
+- `09-component-specifications.md`: every component has name, single-sentence responsibility, public interface, dependencies, consumed NFR IDs (cross-ref `03-`), satisfied requirement IDs.
+- `10-data-model.md`: every entity names its owning service / bounded context; cardinalities stated; logical (not ORM-specific).
+- `11-interface-contracts.md`: machine-readable where the protocol supports it (OpenAPI, AsyncAPI, Protobuf, GraphQL SDL) or prose contract including inputs, outputs, errors, idempotency, versioning.
+- `12-sequence-diagrams.md`: 3–5 scenarios; each scenario has at least one failure-path variant; source is PlantUML or Mermaid and checked in.
+- `13-deployment-view.md`: environments, runtime topology, scaling posture, zones/regions, network boundaries.
+
+An artifact that is present but fails its floor fails Check 1b — independent of file presence.
 
 ### Check 2 — Traceability
 
 - Every `FR-*` in `01-` appears in `14-` with ≥1 satisfying component
 - Every `NFR-*` in `02-` appears in `14-` and in `03-` with ≥1 load-bearing component
 - Every `CON-*` in `01-` appears in `14-` with an "addressed by" entry
-- Every component in `09-` appears in `14-` with ≥1 requirement (or is marked decorative with rationale)
+- Every component in `09-` appears in `14-` with ≥1 requirement. A component without a requirement is one of:
+  - **Cross-cutting infrastructure** (e.g., logging, auth, service-mesh sidecar) — acceptable only if `09-` marks it `cross-cutting: true` with a sentence naming the non-functional concern it serves, and that concern is an NFR in `02-`. The gate follows the link; "cross-cutting" without a followable NFR fails.
+  - **Speculative / future scope** — move the component to `06-descoped-and-deferred.md` with a reactivation trigger.
+  - **Orphan** — Check 2 fails. Fix the RTM or remove the component. "Decorative with rationale" is not acceptable.
 - Orphan report section in `14-` is either empty or non-empty with proposed actions for each orphan
 
 ### Check 3 — Quantification
@@ -74,13 +85,15 @@ For every file in `adrs/`:
 
 ### Check 6 — Integration and migration
 
-- Every integration in `15-` has: direction, ownership, contract summary, failure modes, observability
-- For brownfield: every migration stage in `16-` has: success criteria, rollback triggers (SLI-observable), rollback procedure
-- No big-bang cutovers in `16-` without a waiver in `06-descoped-and-deferred.md` citing business reason
+- Every integration in `15-` has: direction, ownership, contract summary, failure modes, observability, and **versioning stance** (how the contract evolves; deprecation policy).
+- Integrations and migration stages that operate against a load-bearing NFR from `03-` (e.g., availability, consistency, latency) name the NFR explicitly and state whether the integration/stage strengthens, preserves, or temporarily relaxes the NFR. A relaxation without a scheduled restoration is a Check-3 conflict and must be resolved or waived.
+- For brownfield: every migration stage in `16-` has success criteria, rollback triggers (SLI-observable), and a rollback procedure. Stages involving data movement additionally name a pattern from the `designing-for-integration-and-migration` data-migration pattern selection table with its five required fields (pattern, comparison harness, divergence SLO, abort criterion, cutover reversibility window).
+- No big-bang cutovers in `16-` without a waiver in `06-descoped-and-deferred.md` citing a business reason.
 
 ### Check 7 — Risk register
 
 - Every entry in `17-` has: category, likelihood, impact, observable triggers, mitigation (design + runtime), owner, review
+- Every High/High or High/Medium risk names at least one ADR it traces to. If no such ADR exists, either (a) add the risk to the responsible ADR's Negative consequences, or (b) raise a superseding ADR. A High-level risk cannot be orphan.
 - Overloaded components flagged by `03-` appear in `17-` with a risk entry
 - No ops-generic risks ("server could fail") in `17-` — they belong to operational runbooks
 
@@ -90,6 +103,21 @@ For every file in `adrs/`:
 - `archimate-model/` layer files have no cross-layer element mistakes (application components on business layer, etc.)
 - Viewpoint files name their concerns and selected elements — not colour-filtered copies
 
+### Sampling protocol — making checks substantive
+
+An LLM or human running this gate is susceptible to ticking every box without reading the artifacts. For each check, perform the specified sampling and record the sampled items in the gate report. A gate report that says "Check 2: PASS" without naming the sampled IDs is a ceremonial gate report.
+
+| Check | Sampling protocol |
+|-------|-------------------|
+| Check 1 / 1b | List files actually present in the workspace. Compare to tier requirements. Do not rely on prior knowledge of the workspace. |
+| Check 2 | Pick 3 random `FR-*` IDs, 3 random `NFR-*` IDs, and 3 random components. For each, trace through `01-`/`02-` → `14-` → `09-`. A single broken trace fails the check. |
+| Check 3 | Pick 3 random NFRs from `02-`. Verify target, measurement method, and source are all present; verify none are adjective-only. |
+| Check 4 | For every ADR, read the Drivers and Consequences sections. Count Negatives/trade-offs and alternatives. |
+| Check 5 | List decisions in `05-`. List ADR titles. Match them. |
+| Check 6 | For every stage in `16-`, state the rollback trigger and procedure aloud in the gate report. A vague trigger becomes obvious when stated. |
+| Check 7 | For every RSK entry, state the observable trigger. If you cannot describe how you would detect the risk materializing, the entry fails. |
+| Check 8 | For every ArchiMate file, confirm at least one element's layer matches the filename. |
+
 ### Gate outcome
 
 Produce a gate report even if everything passes:
@@ -98,10 +126,14 @@ Produce a gate report even if everything passes:
 # Consistency Gate Report
 
 **Run date:** YYYY-MM-DD
+**Tier:** [XS | S | M | L | XL]
+**Brownfield:** [yes | no]
+**Enterprise mode:** [activated — driver | not activated — reason]
 
-## Check 1 — File presence: PASS
-## Check 2 — Traceability: PASS
-## Check 3 — Quantification: FAIL
+## Check 1 — File presence: PASS (tier: M; files present: [list])
+## Check 1b — Quality floor: PASS (artifacts audited: 07, 08, 09, 10, 11, 13)
+## Check 2 — Traceability: PASS (sampled: FR-02, FR-11, FR-17, NFR-03, NFR-07, NFR-12, components: order-api, event-router, reconciler)
+## Check 3 — Quantification: FAIL (sampled: NFR-09, NFR-03, NFR-15)
 - NFR-09 ("intuitive admin UI") is adjective-only. Either quantify (e.g., "admin onboarding < 30 min for a new user") or move to UX scope and remove from NFR set.
 ## Check 4 — ADR rigor: PASS
 …
@@ -110,7 +142,7 @@ Produce a gate report even if everything passes:
 - [Check X, item Y]: waived because [explicit rationale]. Waiver recorded in the SAD.
 ```
 
-**A waiver requires an explicit rationale.** "Waived because time-pressure" is not a rationale; it's an abdication. A rationale names the business / technical reason the check is accepted-as-failed.
+**A waiver requires an explicit rationale.** "Waived because time-pressure" is not a rationale; it's an abdication. A rationale names the business / technical reason the check is accepted-as-failed. Waivers live in the gate report and in Appendix A of the SAD; `06-descoped-and-deferred.md` records scope decisions, not gate waivers.
 
 ## Emitting `99-solution-architecture-document.md`
 
@@ -121,7 +153,7 @@ Produce a gate report even if everything passes:
 **Version:** [semver]
 **Date:** YYYY-MM-DD
 **Authors:** [roles]
-**Consistency gate:** PASS (gate report date: YYYY-MM-DD)
+**Consistency gate:** PASS | PASS-WITH-WAIVERS | FAIL-WAIVED-FOR-RELEASE (gate report date: YYYY-MM-DD; see Appendix A for waivers)
 
 ## 1. Scope and context
 [Pulled from 00-]
@@ -144,11 +176,11 @@ Produce a gate report even if everything passes:
 ## 7. Interfaces
 [From 11-]
 
-## 8. Key decisions
-[ADR summary — title, decision, reason, link to full ADR]
+## 8. NFR satisfaction
+[From 03-: how each NFR is satisfied, with links to the load-bearing components. This section precedes Key decisions because most ADRs cite NFRs as drivers; reading NFR satisfaction first makes the ADRs scannable.]
 
-## 9. NFR satisfaction
-[From 03-: how each NFR is satisfied, with links to the load-bearing components]
+## 9. Key decisions
+[ADR summary — title, decision, reason driven by which NFR/FR/CON IDs, link to full ADR]
 
 ## 10. Traceability
 [Link to 14-RTM; summary of coverage stats]
