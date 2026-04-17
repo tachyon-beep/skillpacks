@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, Python engineering, web backend, DevOps, SDLC process management, game development, security, documentation, site design, and UX skills for Claude Code - 30 complete skillpacks with 173+ TDD-validated skills",
-    "version": "3.7.0",
+    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, game development, security, documentation, site design, and UX skills for Claude Code - 31 complete skillpacks with 184+ TDD-validated skills",
+    "version": "3.8.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -18,6 +18,22 @@
         "axiom",
         "python",
         "engineering"
+      ],
+      "category": "development"
+    },
+    {
+      "name": "axiom-rust-engineering",
+      "source": "./plugins/axiom-rust-engineering",
+      "description": "Modern Rust 2024 edition engineering: ownership, traits, async (tokio), testing, clippy/cargo tooling, performance/unsafe/FFI, AI/ML interop (PyO3, candle). Router + 11 reference sheets, 5 commands, 3 agents.",
+      "keywords": [
+        "axiom",
+        "rust",
+        "cargo",
+        "clippy",
+        "tokio",
+        "pyo3",
+        "unsafe",
+        "ffi"
       ],
       "category": "development"
     },

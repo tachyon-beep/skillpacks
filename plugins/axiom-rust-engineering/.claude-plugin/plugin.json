@@ -1,0 +1,23 @@
+{
+  "name": "axiom-rust-engineering",
+  "version": "1.0.0",
+  "description": "Modern Rust (2024 edition) engineering: ownership, traits, async (tokio), testing, tooling, performance/unsafe/FFI, AI/ML interop. Includes 11 reference sheets, 5 commands, 3 agents.",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "axiom",
+    "rust",
+    "cargo",
+    "clippy",
+    "tokio",
+    "pyo3",
+    "unsafe",
+    "ffi",
+    "candle",
+    "serde"
+  ]
+}
