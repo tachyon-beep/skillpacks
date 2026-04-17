@@ -165,6 +165,75 @@ struct Point { x: f32, y: f32 }  // guaranteed: x at offset 0, y at offset 4
 
 ---
 
+## Interior Mutability: UnsafeCell Is the Only Exception
+
+**Core rule:** `UnsafeCell<T>` is the *only* legal way to mutate a value through a shared reference (`&T`). Every type in the standard library that offers interior mutability — `Cell`, `RefCell`, `OnceCell`/`LazyCell`, `Mutex`, `RwLock`, `Atomic*` — is built on `UnsafeCell` at the bottom. If you are writing an interior-mutability primitive by hand, you *must* use it; if you are merely consuming one, you should reach for the safe wrapper instead.
+
+### Why The Rule Exists
+
+The aliasing rules above state that `&T` is a promise to the compiler that the pointee's bits will not change for the lifetime of the borrow. That promise is what enables the compiler (and LLVM, via `noalias`) to hoist loads, cache values in registers, and elide rereads. `UnsafeCell<T>` is the compiler-visible marker that says "bits under this cell may change behind a shared reference; do not apply those optimizations here." Casting `&T` to `*mut T` and writing through the raw pointer does **not** opt out of the optimization — the compiler never sees the marker, and the write is UB even if no reader observes it in your test run.
+
+### The Layered Wrappers
+
+| Wrapper | Borrowing | Threading | Built on |
+|---|---|---|---|
+| `Cell<T>` | None (value-based `get`/`set`) | `!Sync` (single-thread) | `UnsafeCell` |
+| `RefCell<T>` | Runtime-checked RAII guards | `!Sync` | `UnsafeCell` |
+| `OnceCell<T>` / `LazyCell<T>` | One-shot init (stable 1.70) | `!Sync` | `UnsafeCell` |
+| `OnceLock<T>` / `LazyLock<T>` | One-shot init (stable 1.80) | `Sync` | `UnsafeCell` + atomics |
+| `Mutex<T>` / `RwLock<T>` | Runtime lock (RAII guards) | `Sync` | `UnsafeCell` + OS primitives |
+| `Atomic{Bool,U8,…,Ptr}` | CPU atomic ops | `Sync` | `UnsafeCell` + LLVM atomics |
+
+If a safe wrapper fits, use it. Writing your own over `UnsafeCell` is a last resort for library authors implementing new primitives.
+
+### Soundness Obligations For Hand-Rolled Wrappers
+
+If you *are* implementing an interior-mutability primitive:
+
+1. Wrap the mutable field in `UnsafeCell<T>` and only mutate through `(&self.cell).get()` (which returns `*mut T`), never through `&T -> *mut T` casts.
+2. Never materialize two overlapping `&mut T` — even briefly — from the `*mut T` returned by `get()`. The aliasing rules (see above) apply to references derived from the raw pointer.
+3. If the wrapper is `Sync`, all writers must synchronize using atomics or an OS lock. Interior mutability does **not** grant permission to data-race; it only grants permission to mutate through `&self`.
+4. Implement `Send`/`Sync` by hand only after auditing the above. `UnsafeCell<T>: !Sync` is the default — you must `unsafe impl Sync` yourself and justify it.
+
+### WRONG vs CORRECT
+
+```rust
+use std::cell::UnsafeCell;
+
+// WRONG: casting &T to *mut T to mutate — aliasing UB even though no reader exists.
+// The compiler is permitted to assume *ptr does not change while `shared` is live.
+struct BadCounter { n: u64 }
+impl BadCounter {
+    fn bump(&self) {
+        let shared: &u64 = &self.n;
+        let p = shared as *const u64 as *mut u64;
+        // SAFETY: ← cannot be written truthfully; this is UB.
+        unsafe { *p += 1; } // UB under Stacked Borrows and Tree Borrows
+    }
+}
+
+// CORRECT: the mutable field lives inside UnsafeCell, so the compiler knows
+// its contents may change behind a shared reference.
+struct GoodCounter { n: UnsafeCell<u64> }
+impl GoodCounter {
+    fn bump(&self) {
+        // SAFETY: single-threaded counter; no overlapping &mut u64 is materialized,
+        // and this type is !Sync by virtue of UnsafeCell, so no concurrent writer
+        // can exist. The raw pointer write respects the aliasing rules because
+        // UnsafeCell opts the pointee out of the shared-reference immutability guarantee.
+        unsafe { *self.n.get() += 1; }
+    }
+}
+// Equivalent and preferred in 99% of cases:
+use std::cell::Cell;
+struct BestCounter { n: Cell<u64> }
+impl BestCounter { fn bump(&self) { self.n.set(self.n.get() + 1); } } // no unsafe
+```
+
+See also the Initialization soundness rule above for the uninitialized-memory pattern via `MaybeUninit` (a related but distinct exception to validity invariants), and the aliasing-rules section for the guarantee that `UnsafeCell` opts out of.
+
+---
+
 ## Writing Sound unsafe Code
 
 ### Minimize Scope
@@ -360,6 +429,107 @@ MIRIFLAGS="-Zmiri-disable-stacked-borrows" cargo +nightly miri test
 # Show backtraces on UB
 MIRIFLAGS="-Zmiri-backtrace=full" cargo +nightly miri test
 ```
+
+---
+
+## Strict Provenance and `&raw` Pointers
+
+**Core rule:** Every pointer in Rust carries *provenance* — the allocation it was derived from and the permissions attached to that derivation — in addition to its numeric address. Provenance is invisible at runtime but tracked by the memory model (and by miri). Round-tripping a pointer through `usize` via `as` casts loses provenance in poorly specified ways; the strict-provenance APIs (stable since 1.84) let you manipulate addresses while preserving provenance explicitly.
+
+### Why Provenance Matters
+
+Two pointers with the same numeric address need not be interchangeable. A pointer derived from allocation A, even if its address happens to equal a pointer into allocation B, may not legally access B's memory. LLVM, miri, and the Rust aliasing rules (see above) all enforce this: `ptr_a.add(offset)` is UB if `offset` walks past A's extent, even if the resulting address lands inside B. The casts `ptr as usize` and `usize as *const T` blur the trail; miri's strict-provenance mode (`-Zmiri-strict-provenance`) rejects the reverse cast unless the address was first *exposed* through a matching opt-in.
+
+### The Stable API (1.84+)
+
+```rust
+use std::ptr;
+
+let arr = [10u32, 20, 30, 40];
+let base: *const u32 = arr.as_ptr();
+
+// Extract the address without exposing provenance.
+let addr: usize = base.addr();
+
+// Derive a new pointer from `base`'s provenance with a chosen address.
+// This is the idiomatic "pointer arithmetic without exposing provenance".
+let third: *const u32 = base.with_addr(addr + 2 * std::mem::size_of::<u32>());
+// SAFETY: third is within arr's allocation (index 2 of 4), aligned, and
+// shares provenance with base, so the read is well-defined.
+assert_eq!(unsafe { *third }, 30);
+
+// map_addr is a convenience wrapper: with_addr(f(self.addr())).
+let masked = base.map_addr(|a| a & !0xF); // clear low nibble (sentinel encoding)
+
+// Intentionally-no-provenance pointer for a sentinel value that must never be dereferenced.
+let sentinel: *const u32 = ptr::without_provenance(0xDEAD_BEEF);
+
+// Well-aligned, no-provenance pointer (useful for empty-slice ZST placeholders).
+let empty: *const u32 = ptr::dangling();
+
+// Explicit opt-in to exposed-provenance semantics — needed when an integer round-trip
+// is unavoidable (e.g., FFI returns an integer handle you must interpret as a pointer).
+let exposed_addr: usize = base.expose_provenance();
+let recovered: *const u32 = ptr::from_exposed_provenance(exposed_addr);
+// `recovered` carries "exposed" provenance, which may alias any previously-exposed
+// pointer whose allocation is still live. Prefer with_addr where possible.
+```
+
+### WRONG vs CORRECT
+
+```rust
+// WRONG: round-trip through usize drops provenance. miri under strict-provenance
+// flags the reverse cast; without strict-provenance it still pessimizes optimizer
+// reasoning and can alias unrelated allocations that share the numeric address.
+let p = arr.as_ptr();
+let addr = p as usize;
+let q = (addr + 8) as *const u32; // provenance lost
+// SAFETY: ← cannot be written; q's provenance is unspecified.
+unsafe { let _ = *q; }
+
+// CORRECT: preserve provenance explicitly.
+let p = arr.as_ptr();
+let q = p.with_addr(p.addr() + 8);
+// SAFETY: q is within arr's allocation (bounds-checked by the author) and shares
+// p's provenance, so the read is well-defined.
+unsafe { let _ = *q; }
+```
+
+### `&raw const` / `&raw mut` (Stable 1.82) vs `addr_of!` / `addr_of_mut!`
+
+To take a raw pointer to a place *without* first materializing a reference (which would trigger the aliasing rules and possibly UB on unaligned/uninitialized fields), Rust historically offered the `core::ptr::addr_of!` and `addr_of_mut!` macros. Since 1.82 the syntactic forms `&raw const place` and `&raw mut place` are stable and preferred in new code. The macros remain stable and are fine for code that needs to compile against older toolchains.
+
+```rust
+use std::ptr;
+
+#[repr(C, packed)]
+struct Packed { tag: u8, value: u32 } // `value` is unaligned inside `Packed`
+
+let p = Packed { tag: 1, value: 0xDEADBEEF };
+
+// WRONG: &p.value would create a misaligned &u32, which is *always* UB — the
+// reference need not be dereferenced for the UB to manifest.
+// let r: &u32 = &p.value; // UB
+
+// OLD, stable: addr_of! macro (still fine, still supported).
+let ptr_old: *const u32 = ptr::addr_of!(p.value);
+
+// NEW, preferred since 1.82: &raw const syntactic form.
+let ptr_new: *const u32 = &raw const p.value;
+
+// SAFETY: both ptr_old and ptr_new are valid raw pointers to the (possibly
+// unaligned) field; read_unaligned is the correct load for packed data.
+unsafe {
+    let v = ptr_new.read_unaligned();
+    assert_eq!(v, 0xDEADBEEF);
+}
+```
+
+### Interaction With Other Rules
+
+- The strict-provenance APIs do **not** weaken the aliasing rules (see above) or the validity invariants. `with_addr` produces a pointer with the same provenance as the receiver; dereferencing it still requires the address to be within that provenance's allocation, aligned, and valid for the access.
+- Under FFI (see below), pointers received from C arrive with *exposed* provenance by convention — use `ptr::from_exposed_provenance` if you are constructing a Rust pointer from a C-returned `uintptr_t`, and audit whether C's aliasing discipline matches Rust's (it usually does not).
+- Run `MIRIFLAGS="-Zmiri-strict-provenance" cargo +nightly miri test` on unsafe-heavy crates to surface accidental provenance loss. Some older crates fail this lint; flagging is still valuable as a regression gate for new unsafe code.
 
 ---
 
@@ -1038,7 +1208,47 @@ const _: () = assert!(core::mem::offset_of!(Config, timeout_ms) == 4);
 
 ---
 
-### 6. Skipping miri on Unsafe-Heavy Code
+### 6. Mutating Through `&T` via a Raw Cast Instead of `UnsafeCell`
+
+**Why wrong**: Casting `&T` to `*mut T` (or `*const T as *mut T`) and writing through it is UB whenever `T` is not inside an `UnsafeCell`, *even if no other reader observes the write*. The compiler treats `&T` as a promise that the pointee's bits do not change for the lifetime of the borrow and optimizes accordingly (caching loads, hoisting, applying LLVM `noalias`). The raw pointer write is invisible to that optimization pass — which is precisely why it is UB, not merely a race.
+
+**The fix**: Put the mutable field inside `UnsafeCell<T>` (or, in practice, use `Cell<T>`, `RefCell<T>`, `Mutex<T>`, or an atomic). `UnsafeCell` is the compiler-visible marker that opts the pointee out of the shared-reference immutability guarantee. See the Interior Mutability section above.
+
+```rust
+// WRONG: UB under Stacked Borrows and Tree Borrows.
+struct Bad { n: u64 }
+impl Bad {
+    fn bump(&self) {
+        let p = &self.n as *const u64 as *mut u64;
+        unsafe { *p += 1; } // UB
+    }
+}
+
+// CORRECT: idiomatic single-threaded interior mutability.
+use std::cell::Cell;
+struct Good { n: Cell<u64> }
+impl Good { fn bump(&self) { self.n.set(self.n.get() + 1); } }
+```
+
+---
+
+### 7. Round-Tripping Pointers Through `usize` and Losing Provenance
+
+**Why wrong**: `ptr as usize as *const T` loses the original allocation's provenance. The resulting pointer is either provenance-less (you cannot legally dereference it for anything) or has "exposed" provenance that may alias any still-live allocation with a matching address. In either case, the optimizer's reasoning about your pointer is strictly worse, and miri's strict-provenance mode rejects the reverse cast. Common triggers: manual pointer alignment masking, tagged-pointer tricks, and FFI code that "just passes addresses around."
+
+**The fix**: Use the strict-provenance APIs (`<*const T>::addr`, `<*const T>::with_addr`, `<*const T>::map_addr`, `ptr::without_provenance`, `ptr::dangling`) for intra-allocation arithmetic. Reserve `expose_provenance` / `from_exposed_provenance` for the rare case where an integer round-trip is genuinely unavoidable, and document the lifetime it ties to. See the Strict Provenance section above.
+
+```rust
+// WRONG: numeric round-trip drops provenance.
+let q = ((p as usize) + 8) as *const u32;
+
+// CORRECT: preserve provenance.
+let q = p.with_addr(p.addr() + 8);
+```
+
+---
+
+### 8. Skipping miri on Unsafe-Heavy Code
 
 **Why wrong**: `unsafe` code that passes all normal tests can still have undefined behavior. The absence of a crash does not mean the code is sound — UB is nasal-demon territory. Aliasing violations, reads of uninitialized memory, and invalid discriminants often do not crash on common platforms but will manifest as data corruption, miscompilation, or crashes in a future compiler version or on a different target.
 
@@ -1077,6 +1287,8 @@ Before shipping code with non-trivial `unsafe`:
 - [ ] Mutable statics accessed from multiple threads use atomics or `Mutex`; `static mut` is not used across threads.
 - [ ] Aliasing: no `&T` and `*mut T` to the same location alive at the same time.
 - [ ] Validity invariants: no `bool` with value other than 0/1, no invalid enum discriminants, no uninitialized values read via `assume_init` before writing.
+- [ ] Mutation through a shared reference only occurs through `UnsafeCell<T>` (directly or via `Cell`/`RefCell`/`Mutex`/`RwLock`/atomics); no `&T as *mut T` casts for mutation.
+- [ ] Pointer arithmetic preserves provenance via `with_addr` / `map_addr` rather than `ptr as usize as *const T` round-trips; `&raw const` / `&raw mut` (or `addr_of!` / `addr_of_mut!` for older toolchains) is used when taking a pointer to an unaligned, uninitialized, or `packed` field.
 - [ ] The safe public API cannot be used to trigger UB through any sequence of valid calls.
 
 ---

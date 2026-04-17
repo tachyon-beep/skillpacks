@@ -63,6 +63,92 @@ enum FetchAndParseState<'a> {
 
 The `poll` model is explicit: the executor calls `poll` on a future. If the future is ready, it returns `Poll::Ready(output)`. If it is waiting for I/O, it registers a waker with the reactor and returns `Poll::Pending`. The executor will call `poll` again when the waker fires. No thread is blocked in between.
 
+### Pin, `!Unpin`, and Pin Projection in Practice
+
+An `async fn` that holds a reference across `.await` desugars into a state machine that stores the reference AND the referent in the same struct. Moving that struct would invalidate the reference — hence the generated future is `!Unpin`. This is the async-specific *application* of Pin; for the underlying move-semantics mental model, see [ownership-borrowing-lifetimes.md](ownership-borrowing-lifetimes.md).
+
+```rust
+// The async fn you write:
+async fn borrow_across_await() {
+    let data = vec![1, 2, 3];
+    let first = &data[0];               // borrow into `data`
+    tokio::task::yield_now().await;     // suspension point — future is stored somewhere
+    println!("{first}");                // reference must still be valid after resume
+}
+
+// Conceptual desugaring (not the real generator, but the shape):
+// struct BorrowAcrossAwait {
+//     data: Vec<i32>,
+//     first: *const i32,   // points INTO `data` above — self-referential
+//     state: State,
+// }
+// Moving this struct after `first` is initialized would leave `first` dangling.
+// The compiler marks it `!Unpin` so the type system forbids safe moves once pinned.
+```
+
+Once a future is pinned (e.g. inside `Box::pin(...)` or on the executor's task slab), you can only reach its fields through `Pin<&mut Self>`. You cannot get an unrestricted `&mut Self`, because that would let you `std::mem::swap` the struct and break the self-reference. A manual `Future` impl therefore looks like:
+
+```rust
+use std::future::Future;
+use std::pin::Pin;
+use std::task::{Context, Poll};
+
+struct MyFuture { /* fields, possibly including a child future */ }
+
+impl Future for MyFuture {
+    type Output = ();
+    fn poll(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
+        // Can't just write `self.inner.poll(cx)` — we'd need a `Pin<&mut Inner>`
+        // for a structurally-pinned field. Projection is how you get there.
+        Poll::Ready(())
+    }
+}
+```
+
+**`pin-project-lite` is the safe, stable-Rust answer.** It generates a projection method that hands you `Pin<&mut T>` for fields marked `#[pin]` and plain `&mut T` for the rest — and enforces the structural-pin rules at compile time:
+
+```rust
+use std::future::Future;
+use std::pin::Pin;
+use std::task::{Context, Poll};
+
+pin_project_lite::pin_project! {
+    struct Timed<F> {
+        #[pin] inner: F,       // structurally pinned — projection yields Pin<&mut F>
+        polls: u64,            // not pinned — freely movable
+    }
+}
+
+impl<F: Future> Future for Timed<F> {
+    type Output = F::Output;
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let this = self.project();       // generated: { inner: Pin<&mut F>, polls: &mut u64 }
+        *this.polls += 1;
+        this.inner.poll(cx)
+    }
+}
+```
+
+Why not just do the projection by hand with unsafe? You can — but the invariant ("never move out of a structurally-pinned field, never re-pin a non-pinned field as pinned, uphold drop ordering") is easy to violate silently:
+
+- **WRONG — unsafe projection that breaks pin guarantees:**
+
+    ```rust
+    // impl<F: Future> Future for Timed<F> {
+    //     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<F::Output> {
+    //         let this = unsafe { self.get_unchecked_mut() };  // now have &mut Self
+    //         this.polls += 1;
+    //         // Easy mistake: someone later adds `mem::swap(&mut this.inner, &mut other)`
+    //         // and the compiler will not stop them. Self-reference invalidated.
+    //         unsafe { Pin::new_unchecked(&mut this.inner) }.poll(cx)
+    //     }
+    // }
+    ```
+
+- **CORRECT:** use `pin_project!` / `pin_project_lite::pin_project!`. The generated `project()` enforces the discipline mechanically; any field access that would violate pinning fails to compile.
+
+**When you actually need this:** nearly always you don't — just write `async fn` and let the compiler generate the state machine. Reach for manual `Future` + pin projection only for custom executor primitives, combinators that wrap other futures (timeouts, rate limiters, instrumented wrappers), or FFI adapters that bridge a C callback to the `Future` trait. For day-to-day service code, `async fn` plus existing combinators (`tokio::time::timeout`, `futures::future::join_all`) is the right tool.
+
 ### Why the Runtime is a Crate, Not `std`
 
 `std::future::Future` defines the *interface*. The *execution* of futures (the executor that calls `poll`, the reactor that registers I/O readiness with the OS, the thread pool that runs work) is not in `std`. This is intentional:

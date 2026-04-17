@@ -695,6 +695,46 @@ codegen-units = 1
 
 PGO is high-value for: parsers, compilers, servers with hot request paths. It is low-value for: short-lived CLI tools, code dominated by I/O wait, code with uniform branch probabilities.
 
+### BOLT — Post-Link Binary Optimization
+
+BOLT (`llvm-bolt`, shipped with LLVM 18+) is a **post-link** binary optimizer. Where PGO feeds profile data into the compiler so it generates better code, BOLT rewrites an *already-compiled* binary using profile data — reordering basic blocks for branch-predictor friendliness, laying out functions for instruction-cache locality, splitting hot and cold code into separate sections, and promoting indirect calls when one target dominates. PGO and BOLT are **complementary**: PGO optimizes *what code is generated*; BOLT optimizes *how that code is laid out in memory*. The typical pipeline is `release + LTO` → `PGO` → `BOLT`.
+
+Rust has no first-party BOLT integration — run it as a standalone step after `cargo build`. BOLT needs relocations preserved in the final binary, which requires a linker flag:
+
+```toml
+# .cargo/config.toml  (or in the release profile via RUSTFLAGS)
+[target.'cfg(target_os = "linux")']
+rustflags = ["-C", "link-arg=-Wl,--emit-relocs"]
+```
+
+```bash
+# 1. Build the release binary (ideally already PGO-optimized)
+cargo build --release
+
+# 2. Collect a profile. Two options:
+#    (a) instrument-and-run:
+llvm-bolt target/release/myapp -instrument -o target/release/myapp.inst
+./target/release/myapp.inst --run-representative-workload   # writes *.fdata
+#    (b) perf-based, no instrumentation:
+perf record -e cycles:u -j any,u -o perf.data -- ./target/release/myapp ...
+perf2bolt -p perf.data -o myapp.fdata target/release/myapp
+
+# 3. Rewrite the binary with the collected profile.
+llvm-bolt target/release/myapp -data=myapp.fdata -o target/release/myapp.bolted \
+    -reorder-blocks=ext-tsp -reorder-functions=hfsort \
+    -split-functions -split-all-cold -icf=1 -use-gnu-stack
+```
+
+Caveats:
+
+- The `--emit-relocs` link flag is mandatory; without it BOLT refuses to process the binary.
+- The bolted binary is **larger on disk** (relocations are retained) and its layout no longer matches DWARF line tables perfectly — keep the pre-BOLT binary as the debug artifact.
+- Typical wins are **5–15% on latency-sensitive services** (RPC servers, databases, compilers) with large text sections. Gains shrink on small binaries; rules of thumb put the break-even around ~10 MB of `.text`.
+- The profiling workload must be representative, same as PGO. A microbenchmark profile will lay out the binary for the microbenchmark, not production.
+- Order matters: PGO first (compiler sees profile), BOLT last (linker output is rewritten). Running BOLT on a non-PGO binary still works and still helps; the two just stack.
+
+Adjacent: `llvm-propeller` pursues the same goal (profile-driven layout) but integrates into the compiler/linker rather than rewriting post-link. As of LLVM 18 it is still experimental and has no cargo integration; BOLT is the pragmatic choice today.
+
 ---
 
 ## Common Hot Spots
@@ -973,6 +1013,7 @@ Before claiming a performance improvement is ready to ship:
 - [ ] CI/distribution build does not use `-C target-cpu=native`.
 - [ ] If LTO was enabled: link time increase is acceptable in CI.
 - [ ] If PGO was used: the profiling workload is representative of production.
+- [ ] After PGO, consider BOLT for additional instruction-cache wins on latency-sensitive services (requires `-C link-arg=-Wl,--emit-relocs`).
 - [ ] Binary size checked with `cargo-bloat` if size is a concern.
 - [ ] Correctness tests still pass at all optimization levels.
 - [ ] Change is not the "obvious" optimization — it is the *profiled* optimization.
