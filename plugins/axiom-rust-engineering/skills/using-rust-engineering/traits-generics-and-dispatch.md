@@ -4,9 +4,11 @@
 
 **Core Principle:** Traits are Rust's mechanism for describing shared behavior across types. Generics allow code to be parameterized over types that satisfy those traits. Dispatch — deciding which concrete function to call — happens either at compile time (static/monomorphization) or at runtime (dynamic/vtable). Getting this trio right is the difference between an expressive, zero-cost API and a wall of E0277 errors and unnecessary heap allocations.
 
-Rust's trait system is more expressive than interfaces in most languages and more restrictive in specific ways that matter. Traits define contracts. Implementations bind contracts to types. Blanket impls apply contracts to entire families of types. The orphan rule enforces coherence. Object safety rules govern what can be erased behind a `dyn` pointer.
+Rust's trait system is more expressive than interfaces in most languages and more restrictive in specific ways that matter. Traits define contracts. Implementations bind contracts to types. Blanket impls apply contracts to entire families of types. The orphan rule enforces coherence. Dyn-compatibility rules (historically called "object safety") govern what can be erased behind a `dyn` pointer.
 
-Understanding why these rules exist — and not just what they are — is essential for designing APIs that others can use, extend, and not accidentally break. A generic function that compiles is not necessarily correct; a trait that compiles is not necessarily object-safe; and a `dyn Trait` that works in tests may be a vtable bottleneck in production.
+Understanding why these rules exist — and not just what they are — is essential for designing APIs that others can use, extend, and not accidentally break. A generic function that compiles is not necessarily correct; a trait that compiles is not necessarily dyn-compatible; and a `dyn Trait` that works in tests may be a vtable bottleneck in production.
+
+> **Terminology note**: The Rust project renamed "object safety" to **"dyn compatibility"** in Rust 1.82 (Oct 2024). Compiler error messages and the Rust reference now use the new term (`E0038` reads "the trait ... is not dyn compatible"). This document uses "dyn compatibility" throughout; older books, blog posts, and error output may still say "object safety" — they refer to the same concept.
 
 For lifetime errors that arise inside generic or trait-bound code (`E0597`, `E0502`), see [ownership-borrowing-lifetimes.md](ownership-borrowing-lifetimes.md). For `Send`/`Sync` trait errors in async contexts, see [async-and-concurrency.md](async-and-concurrency.md). For edition-specific changes to `impl Trait` and GATs, see [modern-rust-and-editions.md](modern-rust-and-editions.md).
 
@@ -14,8 +16,8 @@ For lifetime errors that arise inside generic or trait-bound code (`E0597`, `E05
 
 Use this sheet when:
 
-- Compiler error codes: `E0277` (trait bound not satisfied), `E0225` (only auto traits as additional bounds), `E0276` (impl has stricter requirements), `E0038` (trait not object-safe), `E0596` (method not found due to missing bound), `E0308` (mismatched types involving generics).
-- Error messages: "the trait bound `T: Foo` is not satisfied", "cannot be made into an object", "method cannot be called on `dyn Trait` due to unsatisfied bounds", "trait objects require `dyn`".
+- Compiler error codes: `E0277` (trait bound not satisfied), `E0225` (only auto traits as additional bounds), `E0276` (impl has stricter requirements), `E0038` (trait is not dyn-compatible), `E0599` (method not found — often due to missing bound), `E0308` (mismatched types involving generics).
+- Error messages: "the trait bound `T: Foo` is not satisfied", "the trait ... is not dyn compatible" (older: "cannot be made into an object"), "method cannot be called on `dyn Trait` due to unsatisfied bounds", "trait objects require `dyn`".
 - Deciding between `impl Trait` (argument or return position), explicit generics with `where` clauses, and `dyn Trait`.
 - Designing a trait API: method signatures, associated types, supertraits, default methods.
 - Explaining when a custom type should implement `From`, `Into`, `Iterator`, `Deref`, or standard library traits.
@@ -23,13 +25,13 @@ Use this sheet when:
 - Higher-ranked trait bounds (`for<'a>`).
 - Advanced patterns: type-state machines, phantom types, `PhantomData`.
 
-**Trigger keywords**: `dyn`, `impl Trait`, trait bound, `E0277`, object safe, monomorphization, vtable, supertrait, associated type, blanket impl, orphan rule, newtype, `PhantomData`, `for<'a>`, HRTB.
+**Trigger keywords**: `dyn`, `impl Trait`, trait bound, `E0277`, dyn compatibility, object safety (legacy name), monomorphization, vtable, supertrait, associated type, blanket impl, orphan rule, newtype, `PhantomData`, `for<'a>`, HRTB.
 
 ## When NOT to Use
 
 - **Borrow checker errors** (`E0597`, `E0502`, `E0505`): the lifetime errors that appear *inside* a generic function are covered in [ownership-borrowing-lifetimes.md](ownership-borrowing-lifetimes.md).
 - **`future is not Send`**: async-specific `Send`/`Sync` propagation. See [async-and-concurrency.md](async-and-concurrency.md).
-- **Async fn in traits and `BoxFuture` patterns**: see [async-and-concurrency.md](async-and-concurrency.md) after understanding object safety here.
+- **Async fn in traits and `BoxFuture` patterns**: see [async-and-concurrency.md](async-and-concurrency.md) after understanding dyn compatibility here.
 - **Edition-level changes** to `impl Trait` in `let`/`static`/`const`, GATs, RPITIT: see [modern-rust-and-editions.md](modern-rust-and-editions.md).
 - **Clippy lint suppression** around trait usage: see [systematic-delinting.md](systematic-delinting.md).
 - **Performance bottlenecks attributed to dispatch**: measure first with [performance-and-profiling.md](performance-and-profiling.md), then optimize dispatch strategy here.
@@ -134,7 +136,7 @@ trait Transform {
     // &mut self: mutable access
     fn apply(&mut self, factor: f64);
 
-    // Consuming self (Box<Self> is also valid for object-safe variants)
+    // Consuming self (Box<Self> is also valid for dyn-compatible variants)
     fn into_output(self) -> Self::Output where Self: Sized;
 
     // Default implementation with supertrait method
@@ -147,7 +149,7 @@ trait Transform {
 }
 ```
 
-The `where Self: Sized` bound on `into_output` is significant: it makes the method unavailable on `dyn Transform` (because `dyn Trait` is unsized), preserving object safety while still allowing the method for concrete types. This is the standard escape hatch when a consuming `self` method is needed but object safety must be maintained.
+The `where Self: Sized` bound on `into_output` is significant: it makes the method unavailable on `dyn Transform` (because `dyn Trait` is unsized), preserving dyn compatibility while still allowing the method for concrete types. This is the standard escape hatch when a consuming `self` method is needed but dyn compatibility must be maintained.
 
 ## Generics and Trait Bounds
 
@@ -380,9 +382,13 @@ println!("{}", mem::size_of::<Box<dyn Foo>>());  // 16 bytes: same
 println!("{}", mem::size_of::<&i32>());          // 8 bytes: thin pointer
 ```
 
-### Object Safety Rules
+### Dyn-Compatibility Rules
 
-Not every trait can be used as `dyn Trait`. A trait is **object-safe** if and only if it satisfies all of the following rules. These rules exist because the vtable requires every method to have a known, fixed signature at the call site — the compiler must be able to build a vtable entry for each method without knowing the concrete type.
+Not every trait can be used as `dyn Trait`. A trait is **dyn-compatible** (the
+rules formerly called "object safety") if and only if it satisfies all of the
+following conditions. These rules exist because the vtable requires every method
+to have a known, fixed signature at the call site — the compiler must be able to
+build a vtable entry for each method without knowing the concrete type.
 
 **Rule 1: All methods must be dispatchable through a vtable receiver.**
 
@@ -409,17 +415,17 @@ The vtable is fixed at the time the concrete type is erased. If a method is gene
 
 ```rust
 trait WithGenericMethod {
-    fn process<T: Clone>(&self, t: T); // NOT object-safe
+    fn process<T: Clone>(&self, t: T); // NOT dyn-compatible
 }
 
 // Fix: use a trait object argument instead of a generic
 trait WithObjectArg {
-    fn process(&self, t: &dyn std::any::Any); // object-safe
+    fn process(&self, t: &dyn std::any::Any); // dyn-compatible
 }
 
 // Or: move the generic to the trait itself (then dyn Trait<T> is fine for fixed T)
 trait Processor<T> {
-    fn process(&self, t: T); // object-safe (T fixed when dyn Processor<T> is used)
+    fn process(&self, t: T); // dyn-compatible (T fixed when dyn Processor<T> is used)
 }
 ```
 
@@ -429,11 +435,11 @@ trait Processor<T> {
 trait MixedObjectSafety {
     fn object_safe(&self) -> i32;
 
-    // NOT object-safe as-is — Self appears in return position
+    // NOT dyn-compatible as-is — Self appears in return position
     // Fix: add where Self: Sized to exclude from the vtable
     fn clone_self(&self) -> Self where Self: Sized;
 
-    // NOT object-safe as-is — Self in argument position  
+    // NOT dyn-compatible as-is — Self in argument position  
     fn compare(&self, other: &Self) where Self: Sized; // OK with this bound
 }
 
@@ -480,7 +486,10 @@ struct Pipeline {
     handler: Box<dyn Handler>,
 }
 
-// Arc<dyn Trait>: shared ownership; heap-allocated; reference-counted; Send + Sync
+// Arc<dyn Trait>: shared ownership; heap-allocated; reference-counted.
+// Send + Sync only when the trait has `: Send + Sync` as supertraits (as Handler does here)
+// OR when the type is written explicitly as `Arc<dyn Handler + Send + Sync>`. A bare
+// `Arc<dyn Handler>` without those bounds is NOT cross-thread shareable.
 struct SharedPipeline {
     handler: Arc<dyn Handler>,
 }
@@ -511,7 +520,7 @@ fn main() {
 |------|-----------|-----------|-------------|
 | `&dyn Trait` | None (borrowed) | Borrowed | Short-lived, caller retains ownership |
 | `Box<dyn Trait>` | Heap (1 alloc) | Unique | Owned trait object, single owner |
-| `Arc<dyn Trait>` | Heap (1 alloc) | Shared + ref-counted | Multi-owner, multi-thread |
+| `Arc<dyn Trait>` | Heap (1 alloc) | Shared + ref-counted | Multi-owner; multi-thread requires `Trait: Send + Sync` or `Arc<dyn Trait + Send + Sync>` |
 | `Rc<dyn Trait>` | Heap (1 alloc) | Shared, single-thread | Multi-owner, single thread only |
 
 ## Associated Types vs Generic Parameters
@@ -566,7 +575,10 @@ Use a **generic parameter** when the relationship is **one-to-many** — the sam
 // A type can implement From<T> for many different T types
 impl From<&str> for String { ... }
 impl From<char> for String { ... }
-impl From<Vec<u8>> for String { ... }
+impl From<Box<str>> for String { ... }
+// Note: `String` does NOT implement `From<Vec<u8>>` — the conversion is fallible
+// (bytes may not be valid UTF-8). Use `String::from_utf8(Vec<u8>) -> Result<String, FromUtf8Error>`
+// as the constructor for that case.
 
 // A type can implement Add<Rhs> for many Rhs types
 impl Add<f32> for Vector2 { type Output = Vector2; ... }
@@ -744,7 +756,7 @@ use std::convert::TryFrom;
 struct Port(u16);
 
 #[derive(Debug)]
-struct InvalidPort(u16);
+struct InvalidPort(u32); // keep the full invalid value for error reporting
 
 impl std::fmt::Display for InvalidPort {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -760,13 +772,13 @@ impl TryFrom<u32> for Port {
     fn try_from(n: u32) -> Result<Self, Self::Error> {
         u16::try_from(n)
             .map(Port)
-            .map_err(|_| InvalidPort(n as u16))
+            .map_err(|_| InvalidPort(n)) // no `as u16` — that would silently truncate
     }
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let port = Port::try_from(8080u32)?;
-    let _bad = Port::try_from(99999u32)?; // returns Err(InvalidPort)
+    let _bad = Port::try_from(99999u32)?; // propagates Err(InvalidPort) out of main
     Ok(())
 }
 ```
@@ -1042,14 +1054,14 @@ impl<T: std::fmt::Display> std::fmt::Display for PrettyVec<T> {
 
 ### 4. Making Traits Object-Unsafe by Accident (Generic Methods Without `where Self: Sized`)
 
-**Why wrong:** Traits with generic methods cannot be used as `dyn Trait`. If you add a convenience generic method to an otherwise object-safe trait, you silently make the entire trait non-object-safe — which breaks all existing uses of `Box<dyn Trait>` for it.
+**Why wrong:** Traits with generic methods cannot be used as `dyn Trait`. If you add a convenience generic method to an otherwise dyn-compatible trait, you silently make the entire trait non-dyn-compatible — which breaks all existing uses of `Box<dyn Trait>` for it.
 
 ```rust
-// WRONG: adding a generic method destroys object safety
+// WRONG: adding a generic method destroys dyn compatibility
 trait Serializer {
     fn serialize_str(&self, s: &str) -> Vec<u8>;
 
-    // This method breaks object safety for ALL dyn Serializer uses
+    // This method breaks dyn compatibility for ALL dyn Serializer uses
     fn serialize_any<T: std::fmt::Debug>(&self, value: &T) -> Vec<u8> {
         self.serialize_str(&format!("{:?}", value))
     }
@@ -1074,7 +1086,7 @@ trait Serializer {
 // Concrete types still get serialize_any for free
 ```
 
-**The fix:** For any method on a trait that will be used as `dyn Trait`, either: (a) ensure the method has no generic type parameters, or (b) add `where Self: Sized` to exclude it from the vtable. Run `cargo check` with an explicit `Box<dyn YourTrait>` test in your test suite to catch object safety regressions early.
+**The fix:** For any method on a trait that will be used as `dyn Trait`, either: (a) ensure the method has no generic type parameters, or (b) add `where Self: Sized` to exclude it from the vtable. Run `cargo check` with an explicit `Box<dyn YourTrait>` test in your test suite to catch dyn-compatibility regressions early.
 
 ### 5. Reinventing `From`/`TryFrom` with Custom Conversion Methods
 
@@ -1187,8 +1199,8 @@ fn make_iter(use_evens: bool) -> Box<dyn Iterator<Item = u32>> {
 
 Before shipping trait-based API or generic code:
 
-- [ ] Every trait is checked for object safety: is it intended to be `dyn Trait`? If yes, verify with a compile-time test `let _: Box<dyn YourTrait> = ...`.
-- [ ] Generic methods on object-safe traits have `where Self: Sized` to exclude them from the vtable.
+- [ ] Every trait is checked for dyn compatibility: is it intended to be `dyn Trait`? If yes, verify with a compile-time test `let _: Box<dyn YourTrait> = ...`.
+- [ ] Generic methods on dyn-compatible traits have `where Self: Sized` to exclude them from the vtable.
 - [ ] Associated types used where the relationship is one-to-one (Iterator::Item, not From<T>).
 - [ ] Generic parameters used where multiple impls per type are semantically valid (From<T>, Add<Rhs>).
 - [ ] Supertrait bounds are only present if the trait body calls supertrait methods on `self`. Caller-specific requirements (Send, Sync) are on individual function bounds, not on the trait.
@@ -1200,7 +1212,7 @@ Before shipping trait-based API or generic code:
 - [ ] `for<'a>` HRTBs in place wherever a closure or function pointer must work for any lifetime (common with stored callbacks).
 - [ ] Blanket impls scoped tightly — bounds do not overlap with other blanket impls for the same trait.
 - [ ] Type-state machines use zero-sized marker types and `PhantomData` — not runtime flags or enums when compile-time enforcement is achievable.
-- [ ] Error messages read carefully: `E0277` indicates a missing bound (add it or restructure); `E0038` indicates an object safety violation (add `where Self: Sized` or redesign the method).
+- [ ] Error messages read carefully: `E0277` indicates a missing bound (add it or restructure); `E0038` indicates a dyn-compatibility violation (add `where Self: Sized` or redesign the method).
 
 ## Related Skills
 
@@ -1210,7 +1222,7 @@ Before shipping trait-based API or generic code:
 - [project-structure-and-tooling.md](project-structure-and-tooling.md) — Feature flags that gate trait impls, workspace-level visibility of traits, publishing crates with trait stability considerations.
 - [testing-and-quality.md](testing-and-quality.md) — Mocking traits in unit tests: `mockall` crate, manual mock structs, test double patterns for `dyn Trait` dependencies.
 - [systematic-delinting.md](systematic-delinting.md) — Clippy lints around trait usage: `clippy::redundant_closure`, `clippy::needless_pass_by_value`, `clippy::wrong_self_convention` and similar.
-- [async-and-concurrency.md](async-and-concurrency.md) — Object safety of async traits, `BoxFuture`, `async-trait` crate vs native async fn in traits, `Send` bounds on `dyn Trait` in tokio contexts.
+- [async-and-concurrency.md](async-and-concurrency.md) — Dyn compatibility of async traits, `BoxFuture`, `async-trait` crate vs native async fn in traits, `Send` bounds on `dyn Trait` in tokio contexts.
 - [performance-and-profiling.md](performance-and-profiling.md) — Measuring monomorphization binary size impact, vtable overhead in hot paths, inlining decisions for generic functions.
 - [unsafe-ffi-and-low-level.md](unsafe-ffi-and-low-level.md) — `PhantomData` variance rules in depth, implementing `Send`/`Sync` manually for custom pointer types, vtable ABI across `cdylib` boundaries.
 - [ai-ml-and-interop.md](ai-ml-and-interop.md) — PyO3 trait objects, exposing Rust trait-based abstractions to Python, generic numerical kernel design with ndarray/nalgebra traits.

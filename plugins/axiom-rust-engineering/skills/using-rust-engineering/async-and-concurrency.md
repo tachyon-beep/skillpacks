@@ -315,7 +315,9 @@ async fn main() {
 }
 
 #[instrument(skip(request), fields(method = %request.method()))]
-async fn handle_request(request: hyper::Request<hyper::Body>) -> &'static str {
+// hyper 1.0 replaced `hyper::Body` with `hyper::body::Incoming` on the server
+// side and `http_body_util::*` bodies on the client side. Use `Incoming` here.
+async fn handle_request(request: hyper::Request<hyper::body::Incoming>) -> &'static str {
     // span created automatically, fields recorded, duration logged
     info!("handling request");
     "ok"
@@ -356,16 +358,22 @@ async fn process_urls(urls: Vec<String>) -> Vec<Result<String, reqwest::Error>> 
     results
 }
 
-// JoinSet with bounded concurrency (semaphore + JoinSet)
+// JoinSet with bounded concurrency (semaphore + JoinSet).
+// CRITICAL: acquire the permit BEFORE spawning. Acquiring inside the spawned
+// task does not bound spawn rate — N tasks would still be created immediately
+// and simply contend on the semaphore once running. The pattern below blocks
+// the spawning loop until a permit is available, providing real backpressure.
 async fn process_bounded(urls: Vec<String>, max_concurrent: usize) -> Vec<String> {
     let sem = std::sync::Arc::new(tokio::sync::Semaphore::new(max_concurrent));
     let mut set = JoinSet::new();
 
     for url in urls {
-        let permit = std::sync::Arc::clone(&sem);
+        // Acquire BEFORE spawning — this is the backpressure point.
+        let permit = sem.clone().acquire_owned().await.unwrap();
         set.spawn(async move {
-            let _permit = permit.acquire_owned().await.unwrap(); // drops when task finishes
-            reqwest::get(&url).await.unwrap().text().await.unwrap()
+            let body = reqwest::get(&url).await.unwrap().text().await.unwrap();
+            drop(permit); // explicit drop for clarity; would drop at scope end regardless
+            body
         });
     }
 
@@ -432,7 +440,7 @@ async fn event_loop(
 async fn run_server() {}
 ```
 
-**`select!` cancellation semantics:** The dropped branch's future is cancelled at its next `.await` point. Any resources held by the future are dropped. This is safe and correct — but if the dropped future was mid-way through a non-atomic operation (partially written to a buffer, mid-transaction), that must be accounted for. Design futures to be cancel-safe: prefer atomic operations or checkpoint-based state.
+**`select!` cancellation semantics:** The losing branch's future is dropped synchronously the moment another branch completes; its `Drop` impl runs immediately, releasing any resources it held. There is no "next await point" — cancellation is instantaneous. If the dropped future was mid-way through a non-atomic operation (partially written to a buffer, mid-transaction), that partial state must be accounted for. Design futures to be cancel-safe: prefer atomic operations or checkpoint-based state.
 
 ### Graceful Shutdown with `CancellationToken`
 
@@ -572,7 +580,7 @@ Single producer, multiple subscribers. Each receiver gets every message. Lagging
 use tokio::sync::broadcast;
 
 async fn event_bus() {
-    let (tx, _rx) = broadcast::channel::<String>(64); // capacity per subscriber
+    let (tx, _rx) = broadcast::channel::<String>(64); // single shared ring buffer of 64 messages; slow subscribers see `Lagged` if they fall behind
 
     // Spawn multiple subscribers
     for sub_id in 0..3 {
@@ -663,6 +671,9 @@ struct AppState {
 type SharedState = Arc<Mutex<AppState>>;
 
 async fn increment(state: SharedState) {
+    // OK to use std::sync::Mutex here: the guard never crosses an .await.
+    // It is acquired, used, and dropped before this async fn yields anywhere.
+    // See "Don't hold std::sync::Mutex across .await" rule below — it doesn't apply.
     let mut guard = state.lock().unwrap(); // blocks; see async vs std below
     guard.counter += 1;
 }   // guard dropped here — lock released
@@ -704,7 +715,7 @@ Key differences:
 |-|-------------------|---------------------|
 | Lock poisoning | Yes (panics propagate) | No |
 | Memory overhead | Larger (OS primitive) | Smaller |
-| `const` constructor | No (use `OnceLock`) | Yes |
+| `const` constructor | Yes (`Mutex::new` is `const fn` since 1.63) | Yes |
 | `try_lock_for` / timeout | No | Yes |
 | Performance | Good | Better under contention |
 
@@ -848,8 +859,13 @@ This is stable and works for concrete types. The **caveat**: native async fn in 
 async fn spawn_fetch<S>(source: S, id: u64) -> Option<String>
 where
     S: DataSource + Send + 'static,
-    // The problem: we can't easily express "the future from fetch() is Send"
-    // with native async fn in traits — the bound is implicit in the impl body.
+    // The problem: with native `async fn` sugar we can't directly bound the
+    // returned future as Send. Workarounds: (a) rewrite the trait method using
+    // explicit RPITIT — `fn fetch(&self, id: u64) -> impl Future<Output=...> + Send;`
+    // — which lets callers require Send futures; or (b) use the
+    // `#[trait_variant::make]` attribute to auto-generate a Send-bound variant
+    // of the trait. On nightly, return-type notation (`S: DataSource<fetch(..): Send>`)
+    // expresses this bound directly.
 {
     tokio::spawn(async move { source.fetch(id).await })
         .await
@@ -1031,7 +1047,7 @@ Each async state machine captures all locals across yield points. A future that 
 async fn recursive_bad(n: u64) -> u64 {
     if n == 0 { return 0; }
     // Each await frame stacks the locals of this function
-    1 + recursive_bad(n - 1).await  // compile warning: large future
+    1 + recursive_bad(n - 1).await  // compile error E0733: recursion in an `async fn` requires boxing
 }
 
 // CORRECT: box the recursive future to move it to the heap
@@ -1161,7 +1177,7 @@ async fn network_call() {}
 
 ### Anti-Pattern 2: Calling `block_on` Inside an Async Function
 
-**Why wrong:** `Runtime::block_on` and `Handle::block_on` expect to run on a non-async thread. Calling them from within an already-running async context panics with "Cannot start a runtime from within a runtime" (tokio) or causes undefined behavior.
+**Why wrong:** `Runtime::block_on` and `Handle::block_on` expect to run on a non-async thread. Calling them from within an already-running async context **panics** at runtime with "Cannot start a runtime from within a runtime" (tokio). This is a panic, not undefined behaviour — but the caller is still broken.
 
 ```rust
 // WRONG: block_on inside async context → panic at runtime

@@ -57,7 +57,9 @@ fn main() {
 Types that implement `Copy` are duplicated bitwise when assigned or passed. The original remains valid. Types that do **not** implement `Copy` are moved.
 
 ```rust
-// Copy types: all integers, floats, bool, char, arrays of Copy types, tuples of Copy types
+// Copy types: all integers, floats, bool, char, arrays of Copy types, tuples of Copy types.
+// Also: every shared reference `&T` is Copy regardless of T.
+// Never Copy: `&mut T` (exclusive references), String, Vec, Box, any type with a Drop impl.
 let x: i32 = 42;
 let y = x; // bitwise copy — x is still valid
 println!("{x} {y}"); // both valid
@@ -305,18 +307,26 @@ In practice, explicit lifetime subtyping (`'a: 'b`) appears in:
 
 ## Lifetime Pitfalls
 
-### E0597: Borrowed Value Does Not Live Long Enough
+### E0515: Cannot Return Reference to Local Variable
 
-The classic "reference escapes its owner" error.
+The classic "reference escapes its owner" error. Note: if the signature omits the
+lifetime entirely (`-> &str`), the compiler emits **E0106 (missing lifetime specifier)**
+first. Once a lifetime is in place, returning a borrow of a function-local produces
+E0515.
 
 ```rust
-// compile_fail: E0597
-fn make_ref() -> &str {
+// compile_fail: E0515
+fn make_ref<'a>() -> &'a str {
     let s = String::from("hello"); // s owns the allocation
     &s                             // error: s is dropped at end of function
                                    // but we're returning a reference to it
 }
 ```
+
+**Related**: E0597 ("borrowed value does not live long enough") appears in a similar
+shape when a *binding* inside a scope outlives the data it points at — see the
+example further down in this section.
+
 
 **Fix**: Return the owned value, not a reference to a local.
 
@@ -738,6 +748,22 @@ fn process(v: &[String]) -> usize {
     v.iter().map(|s| s.len()).sum()
 }
 ```
+
+### E0506: Cannot Assign to Variable Because It Is Borrowed
+
+```rust
+let mut x = 5;
+let r = &x;       // shared borrow of x
+x = 10;           // compile_fail: E0506 — can't assign while r is live
+println!("{r}");
+```
+
+**Why**: Active borrows freeze the value. Assigning (or any other mutation path)
+while a borrow is outstanding would invalidate what the borrow points at.
+
+**Fix**: Let the borrow end before mutating — either scope it explicitly with a
+block, or reorder so the borrow's last use precedes the mutation (NLL handles the
+latter automatically).
 
 ### E0502: Cannot Borrow as Mutable Because It Is Also Borrowed as Immutable
 

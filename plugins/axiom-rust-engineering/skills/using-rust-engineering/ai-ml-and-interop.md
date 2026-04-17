@@ -14,6 +14,15 @@ What this sheet does not cover: training pipelines, gradient computation, automa
 
 Baseline: Rust stable 1.87, 2024 edition, PyO3 0.22+, candle 0.7+.
 
+> **PyO3 0.23 heads-up**: all the Python-binding code in this sheet targets the
+> `Bound<'py, T>` API that became primary in 0.21 and is the only API in 0.22.
+> PyO3 0.23 (Nov 2024) introduced `IntoPyObject` to replace the legacy `IntoPy`
+> / `ToPyObject` traits (both deprecated) and added experimental support for
+> free-threaded CPython (3.13t). If you are on 0.23, expect deprecation warnings
+> on any `impl IntoPy<PyObject>` or `#[derive(ToPyObject)]` — the replacement is
+> `impl<'py> IntoPyObject<'py> for ...`. The `Bound` patterns in this sheet are
+> forward-compatible with 0.23.
+
 ## When to Use
 
 Use this sheet when:
@@ -309,6 +318,9 @@ use pyo3::types::PyBytes;
 //   numpy = "0.22"
 
 use numpy::{PyArray1, PyReadonlyArray1, IntoPyArray};
+// When you extend the example to mutable arrays, you'll also need:
+//   use numpy::PyArrayMethods;   // required for .as_array_mut(), .readwrite(), etc.
+// The Bound-API array methods live on this trait in numpy 0.21+.
 
 #[pyfunction]
 fn normalize_inplace<'py>(
@@ -466,9 +478,9 @@ fn embed_text(
     let input_ids: Vec<u32> = encoding.get_ids().to_vec();
     let n = input_ids.len();
 
-    // Build input tensor [1, seq_len]
-    let input = Tensor::from_vec(input_ids, (1, n), device)?
-        .to_dtype(DType::U32)?;
+    // Build input tensor [1, seq_len]. `from_vec(Vec<u32>, ...)` already produces
+    // a U32 tensor, so no `to_dtype` conversion is needed here.
+    let input = Tensor::from_vec(input_ids, (1, n), device)?;
 
     // Run embedding lookup — this assumes a model with a pre-built embedding layer
     // For production, use candle_transformers::models::bert::BertModel
@@ -513,6 +525,9 @@ The core design: write your model once against the `Backend` trait; swap backend
 
 ```rust
 use burn::prelude::*;
+// burn::prelude re-exports `Tensor`, `Backend`, `Module`, `nn`, but NOT `activation`.
+// Import it explicitly for `activation::relu`, `activation::sigmoid`, etc.
+use burn::tensor::activation;
 
 // Define a model generically over the backend
 #[derive(Module, Debug)]
@@ -658,7 +673,10 @@ Rust's two main numerical array libraries serve different use cases and should n
 ndarray = { version = "0.16", features = ["rayon"] }
 ndarray-rand = "0.15"    # optional: random initialization
 blas-src = { version = "0.10", features = ["openblas"] }  # optional: BLAS backend
-ndarray-linalg = { version = "0.16", features = ["openblas"] }  # optional: linalg
+# Note: ndarray-linalg lags ndarray releases — check crates.io for the version that
+# matches your `ndarray` version before uncommenting this line. The 0.16.x series
+# tracks ndarray 0.15; an ndarray 0.16-compatible release may still be on git only.
+# ndarray-linalg = { version = "0.17", features = ["openblas"] }  # optional: linalg
 ```
 
 ```rust
@@ -685,7 +703,10 @@ fn ndarray_basics() {
         .for_each(|c_i, &a_i, &b_i| *c_i = a_i * b_i + 0.5);
 
     // Parallel map (requires rayon feature)
-    let d: Array1<f32> = a.par_map(|&x| x.sqrt());
+    // Parallel element-wise map via the `rayon` feature of ndarray.
+    // Note: there is no `par_map` on `Array1`; use `Zip::par_map_collect`.
+    use ndarray::Zip;
+    let d: Array1<f32> = Zip::from(&a).par_map_collect(|&x| x.sqrt());
 
     // Matrix multiply (uses BLAS if configured)
     let p: Array2<f32> = Array2::eye(3);
@@ -788,8 +809,12 @@ fn serialize_config(config: &ModelConfig) -> anyhow::Result<()> {
     std::fs::write("config.json", &json)?;
 
     // Bincode (compact binary, ~5–10× smaller than JSON, fast)
-    // Good for internal caches or IPC; NOT good for cross-language exchange
-    let bytes = bincode::encode_to_vec(config, bincode::config::standard())?;
+    // Good for internal caches or IPC; NOT good for cross-language exchange.
+    // bincode 2.x requires either the serde bridge (as used here, with
+    // `bincode = { version = "2", features = ["serde"] }`) when the type derives
+    // `serde::Serialize`/`Deserialize`, or `#[derive(bincode::Encode, Decode)]`
+    // on the type itself (no serde needed in that case).
+    let bytes = bincode::serde::encode_to_vec(config, bincode::config::standard())?;
     std::fs::write("config.bin", &bytes)?;
 
     Ok(())
@@ -857,7 +882,8 @@ fn save_weights(weights: &[(&str, Vec<f32>, Vec<usize>)]) -> anyhow::Result<()> 
         })
         .collect();
 
-    serialize_to_file(&views, &None, std::path::Path::new("weights.safetensors"))?;
+    // serialize_to_file takes the data by value (move), not by reference.
+    serialize_to_file(views, &None, std::path::Path::new("weights.safetensors"))?;
     Ok(())
 }
 ```

@@ -1,6 +1,6 @@
 ---
 description: Profile a Rust binary with cargo-flamegraph / perf / samply and interpret results
-allowed-tools: ["Read", "Edit", "Bash", "Glob", "Grep"]
+allowed-tools: ["Read", "Edit", "Bash", "Glob", "Grep", "Skill"]
 argument-hint: "[binary or bench target] - what to profile"
 ---
 

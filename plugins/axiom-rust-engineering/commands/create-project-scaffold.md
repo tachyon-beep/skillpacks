@@ -1,6 +1,6 @@
 ---
 description: Scaffold a new Rust project with modern tooling (cargo, clippy, rustfmt, cargo-nextest, cargo-deny, CI)
-allowed-tools: ["Read", "Write", "Edit", "Bash"]
+allowed-tools: ["Read", "Write", "Edit", "Bash", "Skill"]
 argument-hint: "[project-name] - name for the new Rust project"
 ---
 
@@ -41,8 +41,10 @@ max_width = 100
 newline_style = "Unix"
 use_field_init_shorthand = true
 use_try_shorthand = true
-imports_granularity = "Crate"
-group_imports = "StdExternalCrate"
+# imports_granularity and group_imports are nightly-only rustfmt options.
+# Uncomment if you run nightly rustfmt (e.g., `cargo +nightly fmt`).
+# imports_granularity = "Crate"
+# group_imports = "StdExternalCrate"
 ```
 
 5. **Write `clippy.toml`** (relax unreasonable pedantic thresholds)

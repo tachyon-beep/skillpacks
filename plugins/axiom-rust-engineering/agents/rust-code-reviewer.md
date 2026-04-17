@@ -152,15 +152,7 @@ X critical, Y important, Z minor, W nitpicks
 
 ### Unsafe Soundness
 
-If you encounter complex `unsafe` blocks, raw pointer arithmetic, or transmute chains:
-
-**Check**: `Glob` for `plugins/axiom-rust-engineering/agents/unsafe-auditor.md`
-
-**If found**:
-> "This block requires unsafe soundness analysis. Trigger the `unsafe-auditor` agent for a full audit of memory safety invariants."
-
-**If NOT found**:
-> "This code contains unsafe blocks that require careful soundness review. Ensure all invariants are documented in `# Safety` comments and consider a dedicated unsafe audit before shipping."
+If you encounter complex `unsafe` blocks, raw pointer arithmetic, or transmute chains, trigger the `unsafe-auditor` agent (co-located in this skillpack) for a full audit of memory safety invariants. Ensure all invariants are documented in `# Safety` comments before merging.
 
 ### Security Concerns
 

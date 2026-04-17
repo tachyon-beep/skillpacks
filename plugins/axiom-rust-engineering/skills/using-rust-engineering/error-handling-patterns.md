@@ -301,7 +301,7 @@ fn initialize_plugin(name: &str) -> Result<Plugin> {
 
     // .with_context(): lazily evaluated — use when formatting is expensive
     let config: PluginConfig = toml::from_str(&config_text)
-        .with_context(|| format!("failed to parse '{path}'"  ))?;
+        .with_context(|| format!("failed to parse '{path}'"))?;
 
     ensure!(config.version >= 2, "plugin '{name}' requires config version >= 2");
 
@@ -603,7 +603,7 @@ let config = env::var("DATABASE_URL")
     .map_err(|_| ConfigError::MissingEnvVar("DATABASE_URL"))?;
 ```
 
-Clippy's `clippy::unwrap_used` and `clippy::expect_used` flag these in production paths. Enable them in library code via `.clippy.toml` or `#![deny(clippy::unwrap_used)]`. See [systematic-delinting.md](systematic-delinting.md) for the methodology.
+Clippy's `clippy::unwrap_used` and `clippy::expect_used` flag these in production paths. Enable them in library code via a crate-level attribute (`#![deny(clippy::unwrap_used)]`) or the `[lints.clippy]` / `[workspace.lints.clippy]` table in `Cargo.toml`. Note that `clippy.toml` is for lint *configuration* (thresholds), not for enabling/disabling lints. See [systematic-delinting.md](systematic-delinting.md) for the methodology.
 
 ### `panic = "abort"` vs `"unwind"`
 
@@ -617,7 +617,9 @@ panic = "abort"   # process terminates immediately on panic, no unwinding
 [profile.release]
 panic = "unwind"  # default: unwinds the stack on panic
                   # required if you catch_unwind() in a library
-                  # required if you expose Rust panics across FFI (though this is UB)
+                  # unwinding across a plain `extern "C"` boundary is UB — use
+                  # `extern "C-unwind"` (stable since 1.71) to propagate panics
+                  # safely, or wrap in `std::panic::catch_unwind` on the Rust side.
 ```
 
 `panic = "abort"` is appropriate for most application binaries and embedded targets. Use `panic = "unwind"` for libraries that need `catch_unwind` (e.g., a testing framework), or for Rust code called from C via FFI where panics must be caught at the boundary.
@@ -658,7 +660,7 @@ fn handle_request(id: u64) -> Result<Response> {
 
 ```bash
 RUST_BACKTRACE=1 cargo run 2>&1
-RUST_LIB_BACKTRACE=1 cargo run 2>&1   # backtrace for library errors specifically
+RUST_LIB_BACKTRACE=1 cargo run 2>&1   # when RUST_BACKTRACE is unset, this enables backtraces captured via Backtrace::capture() in library code without forcing backtraces on panics. If RUST_BACKTRACE is also set, RUST_BACKTRACE takes precedence.
 ```
 
 In code, capture and display the backtrace:
@@ -703,7 +705,7 @@ impl ServiceError {
 }
 ```
 
-`thiserror` recognizes fields named `backtrace` of type `Backtrace` and wires them to `Error::provide()` for the backtrace provider protocol. `RUST_BACKTRACE=1` must be set for `Backtrace::capture()` to collect frames.
+`thiserror` recognizes fields named `backtrace` of type `Backtrace` and, on **nightly**, wires them to `std::error::Error::provide()` (the `error_generic_member_access` feature, tracking [#99301](https://github.com/rust-lang/rust/issues/99301)). On **stable Rust**, `Error::provide` is not yet available, so thiserror cannot surface the backtrace through the provider protocol — you must expose it via a custom method or include it in the `Display` output. In all cases, `RUST_BACKTRACE=1` (or `RUST_LIB_BACKTRACE=1` as noted above) must be set for `Backtrace::capture()` to actually record frames.
 
 ### `color-eyre` for Enhanced Display
 

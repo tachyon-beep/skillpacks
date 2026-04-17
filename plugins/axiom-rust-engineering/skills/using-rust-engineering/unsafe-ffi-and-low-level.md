@@ -199,12 +199,16 @@ Every `unsafe { ... }` block must carry a `// SAFETY:` comment that names the in
 The comment answers: *Which rule does this unsafe block invoke, and why is it satisfied here?*
 
 ```rust
-// CORRECT: explicit SAFETY comment explaining each invariant
-fn byte_slice_to_str(bytes: &[u8]) -> &str {
-    // SAFETY: The caller of the enclosing function has guaranteed that
-    // `bytes` contains valid UTF-8 (documented in the function contract).
-    // The lifetime of the returned &str is tied to `bytes`, so no
-    // dangling reference can be produced.
+// CORRECT: explicit SAFETY comment explaining each invariant.
+// The function itself is `unsafe fn` because it cannot validate its precondition
+// — marking it safe while delegating to `from_utf8_unchecked` would be unsound
+// (any caller could pass arbitrary bytes).
+/// # Safety
+/// The caller must ensure `bytes` contains valid UTF-8. If this precondition
+/// is unknown at the call site, use the safe `std::str::from_utf8` instead.
+unsafe fn byte_slice_to_str(bytes: &[u8]) -> &str {
+    // SAFETY: upheld by the caller per the function contract. The returned
+    // &str lifetime is tied to `bytes`, so no dangling reference can be produced.
     unsafe { std::str::from_utf8_unchecked(bytes) }
 }
 ```
@@ -230,11 +234,13 @@ impl AlignedBuffer {
     /// # Panics
     /// Panics if `align` is not a power of two or if allocation fails.
     pub fn new(len: usize, align: usize) -> Self {
+        assert!(len > 0, "AlignedBuffer::new requires len > 0 (std::alloc::alloc is UB for zero-size layouts)");
         assert!(align.is_power_of_two(), "alignment must be a power of two");
         let layout = std::alloc::Layout::from_size_align(len, align)
             .expect("invalid layout");
-        // SAFETY: layout is valid (non-zero size, power-of-two align, both
-        // verified by Layout::from_size_align). We check for null below.
+        // SAFETY: layout has non-zero size (asserted above) and a power-of-two
+        // alignment (verified by Layout::from_size_align). We check for null
+        // allocation failure below.
         let ptr = unsafe { std::alloc::alloc(layout) };
         assert!(!ptr.is_null(), "allocation failed");
         AlignedBuffer { ptr, len, align }
@@ -292,7 +298,7 @@ cargo +nightly miri run
 - **Reads of uninitialized memory**: reading from `MaybeUninit<T>` before writing.
 - **Aliasing violations**: creating `&mut T` while a live `&T` to the same location exists; violating Stacked Borrows tag rules.
 - **Invalid values**: creating a `bool` with value 2, a `char` with a surrogate code point, an enum with an invalid discriminant.
-- **Data races** (with `-Zmiri-preemption-rate` and threading): miri can detect potential data races in multi-threaded tests.
+- **Data races** (with `-Zmiri-preemption-rate` and threading): miri detects data races under its modeled execution, but it does NOT catch bugs that arise from weak-memory reorderings permitted by the hardware. Treat miri as a necessary-but-not-sufficient race check; fuzz under `loom` for algorithms sensitive to relaxed atomics.
 
 ### Example: Catching an Aliasing Bug
 
@@ -362,9 +368,10 @@ MIRIFLAGS="-Zmiri-backtrace=full" cargo +nightly miri test
 ### Declaring an External Function
 
 ```rust
-// Link against libm at compile time
+// Link against libm at compile time.
+// 2024 edition requires `unsafe extern` on foreign declaration blocks.
 #[link(name = "m")]
-extern "C" {
+unsafe extern "C" {
     fn sqrt(x: f64) -> f64;
     fn sin(x: f64) -> f64;
 }
@@ -557,7 +564,7 @@ use std::os::raw::c_char;
 fn log_message(msg: &str) {
     // CString::new fails if msg contains interior null bytes.
     let c_msg = CString::new(msg).expect("log message contains null byte");
-    extern "C" {
+    unsafe extern "C" {
         fn c_log(msg: *const c_char);
     }
     // SAFETY: c_log reads the null-terminated string and does not store
@@ -569,7 +576,7 @@ fn log_message(msg: &str) {
 
 /// Wraps a C function that returns a static null-terminated string.
 fn get_version() -> &'static str {
-    extern "C" {
+    unsafe extern "C" {
         fn c_version() -> *const c_char;
     }
     // SAFETY: c_version returns a pointer to a static null-terminated
@@ -628,7 +635,9 @@ pub unsafe extern "C" fn widget_free(ptr: *mut Widget) {
     // SAFETY: ptr was produced by Box::into_raw in widget_create,
     // is non-null (checked above), and has not been freed (caller's
     // responsibility as documented in the Safety section above).
-    drop(Box::from_raw(ptr));
+    // 2024 edition: unsafe ops inside `unsafe fn` still require an explicit
+    // `unsafe { }` block (unsafe_op_in_unsafe_fn is deny-by-default).
+    unsafe { drop(Box::from_raw(ptr)); }
 }
 ```
 
@@ -678,20 +687,25 @@ Rust lifetimes do not cross FFI boundaries; raw pointers are used instead. The p
 // C callback receives a void* context pointer (erased lifetime)
 extern "C" fn callback(ctx: *mut std::ffi::c_void, value: i32) {
     // SAFETY: ctx was cast from &mut MyState in register_callback below.
-    // The callback is invoked synchronously before register_callback returns,
+    // The callback is invoked synchronously before register_and_run returns,
     // so MyState is still alive and exclusively accessible.
     let state: &mut MyState = unsafe { &mut *(ctx as *mut MyState) };
     state.accumulate(value);
 }
 
 fn register_and_run(state: &mut MyState) {
-    extern "C" {
+    unsafe extern "C" {
         fn c_process(ctx: *mut std::ffi::c_void, cb: extern "C" fn(*mut std::ffi::c_void, i32));
     }
     let ctx = state as *mut MyState as *mut std::ffi::c_void;
     // SAFETY: c_process invokes cb synchronously before returning.
     // ctx points to state, which is exclusively borrowed for this call.
     // The callback re-borrows state for the duration of each invocation.
+    //
+    // **Re-entrancy hazard**: this pattern is sound only because `c_process`
+    // does not retain `ctx` or invoke `cb` after returning. Adapting this to
+    // an async C API that stores the pointer would create aliasing UB — every
+    // new call through `cb` would materialize a second `&mut MyState`.
     unsafe { c_process(ctx, callback) }
 }
 ```
@@ -909,7 +923,7 @@ pub fn read_at<'a>(slice: &'a [u8], offset: usize, len: usize) -> Option<&'a [u8
 - `as` cast for numeric conversions.
 - `u8::from(bool)` or `bool as u8` for bool-to-integer.
 - `From`/`Into` for type-safe conversions.
-- `bytemuck::cast` or `bytemuck::cast_slice` (with the `bytemuck` crate) for POD reinterpretation — it checks alignment and size at compile time.
+- `bytemuck::cast` or `bytemuck::cast_slice` (with the `bytemuck` crate) for POD reinterpretation. Note: scalar `bytemuck::cast::<A, B>()` enforces equal size and alignment at **compile time** (mismatches fail to compile); `bytemuck::cast_slice` checks size at compile time but alignment at **runtime** (returns `PodCastError` or panics on misaligned input). For guaranteed compile-time checks, prefer `cast` where the fixed-size form fits.
 - `std::ptr::read` / `std::ptr::write` for raw memory access with explicit control.
 - `MaybeUninit::assume_init` for the uninitialized-memory initialization pattern.
 
@@ -952,7 +966,7 @@ pub extern "C" fn make_thing() -> *mut Thing { Box::into_raw(Box::new(Thing::new
 
 #[no_mangle]
 pub unsafe extern "C" fn free_thing(p: *mut Thing) {
-    drop(Box::from_raw(p)); // if called twice: double-free UB
+    unsafe { drop(Box::from_raw(p)); } // if called twice: double-free UB
 }
 
 // CORRECT: documented, null-checked, contract is explicit
@@ -975,7 +989,8 @@ pub unsafe extern "C" fn free_thing(ptr: *mut Thing) {
     // SAFETY: ptr is non-null (checked), was produced by Box::into_raw
     // in make_thing (caller's responsibility), and is freed exactly once
     // (caller's responsibility per documentation above).
-    drop(Box::from_raw(ptr));
+    // 2024 edition: unsafe_op_in_unsafe_fn requires the explicit block here.
+    unsafe { drop(Box::from_raw(ptr)); }
 }
 ```
 

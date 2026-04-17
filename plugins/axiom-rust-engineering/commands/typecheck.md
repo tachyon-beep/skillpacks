@@ -1,6 +1,6 @@
 ---
 description: Run cargo check + clippy + compile-tests + doctests to verify the crate is healthy
-allowed-tools: ["Read", "Edit", "Bash"]
+allowed-tools: ["Read", "Edit", "Bash", "Skill"]
 argument-hint: "[package spec] - optional `-p <name>` package selector; defaults to current workspace"
 ---
 

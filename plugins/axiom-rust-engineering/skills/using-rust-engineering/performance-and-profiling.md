@@ -251,7 +251,7 @@ sudo perf report --stdio | head -100
 readelf -S target/profiling/my-binary | grep debug  # should show .debug_info etc.
 
 # ❌ WRONG: profiling a stripped binary
-cargo build --release                          # strip = true in release by default (1.77+)
+cargo build --release                          # set `strip = "debuginfo"` or `"symbols"` in [profile.release] to shrink binaries; default is `"none"`
 sudo perf record ./target/release/my-binary  # → function names are '??'
 
 # ✅ CORRECT: profile with the profiling profile
@@ -347,9 +347,13 @@ let guard = ProfilerGuard::new(100).unwrap();   // 100 Hz sampling
 // ... run the code you want to profile ...
 
 if let Ok(report) = guard.report().build() {
-    // Write protobuf for upload to Pyroscope / go tool pprof
-    let mut file = std::fs::File::create("profile.pb").unwrap();
-    report.pprof().unwrap().encode(&mut file).unwrap();
+    // Write protobuf for upload to Pyroscope / go tool pprof.
+    // `Profile::encode` (prost-generated) writes into a BufMut / Vec<u8>, not a File.
+    use pprof::protos::Message;
+    let profile = report.pprof().unwrap();
+    let mut buf = Vec::new();
+    profile.encode(&mut buf).unwrap();
+    std::fs::write("profile.pb", &buf).unwrap();
 
     // Or write a local flamegraph SVG
     let file = std::fs::File::create("flamegraph.svg").unwrap();
@@ -636,16 +640,16 @@ cargo install cargo-pgo
 
 ```bash
 # Step 1: build an instrumented binary
-cargo pgo instrument build
+cargo pgo build
 
-# Step 2: run under representative workload to collect profiles
-./target/release/my-binary --run-representative-workload
-# This writes *.profraw files to the current directory
+# Step 2: run under representative workload to collect profiles.
+# `cargo pgo run` invokes the instrumented binary with the correct LLVM profile
+# directory pre-configured; you can also run it manually.
+cargo pgo run -- --run-representative-workload
+# Instrumented runs write *.profraw files under target/pgo-profiles/ by default.
 
-# Step 3: merge profiles
-cargo pgo optimize merge
-
-# Step 4: build the optimized binary
+# Step 3: build the optimized binary. `cargo pgo optimize build` runs
+# `llvm-profdata merge` internally and passes the merged profile to rustc.
 cargo pgo optimize build
 
 # Benchmark the PGO binary vs the non-PGO binary
@@ -752,7 +756,7 @@ struct EventKey {
 
 ### SIMD opportunities and `std::simd`
 
-Rust's portable SIMD API (`std::simd`) is available on nightly as of 2024 but has not stabilized in 1.87. Use it on nightly or via the `wide` / `packed_simd2` crates for stable.
+Rust's portable SIMD API (`std::simd`, the `portable_simd` feature) has been on nightly since ~2021 and is still unstable as of 2026. For stable code, use the `wide` crate (ergonomic fixed-width SIMD), `simba` (generic SIMD over scalar types), or reach directly for `core::arch::{x86_64, aarch64}` intrinsics behind `#[cfg(target_feature)]` gates. Do **not** use `packed_simd2` — it is deprecated and no longer maintained.
 
 ```rust
 // ✅ CORRECT: let the compiler auto-vectorize first
@@ -799,7 +803,7 @@ opt-level = "s"        # moderate size reduction, slight speed cost
 # Abort on panic instead of unwinding — removes unwinder tables
 panic = "abort"        # saves 50–200 KiB in many binaries
 
-# Strip debug info (default true in release since Rust 1.77)
+# Strip debug info (the release default is "none" — must be set explicitly)
 strip = "debuginfo"    # removes DWARF; "symbols" also strips symbol table
 ```
 

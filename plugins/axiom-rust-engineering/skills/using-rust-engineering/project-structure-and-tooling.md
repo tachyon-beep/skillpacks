@@ -221,7 +221,9 @@ missing_docs    = "warn"
 [workspace.lints.clippy]
 all           = { level = "warn", priority = -1 }
 pedantic      = { level = "warn", priority = -1 }
-unwrap_used   = "deny"
+unwrap_used   = "deny"    # test modules should override this with
+                          # `#![allow(clippy::unwrap_used)]` at the mod head —
+                          # see systematic-delinting.md
 expect_used   = "warn"
 ```
 
@@ -616,8 +618,8 @@ Run CI profile: `cargo nextest run --profile ci`.
 # Run tests in a specific crate
 cargo nextest run -p my-core
 
-# Exclude slow integration tests tagged with #[ignore]
-cargo nextest run --ignore-default-filter
+# Include tests marked `#[ignore]` (run-ignored values: default, ignored-only, all)
+cargo nextest run --run-ignored all
 
 # Run only tests that match a partition (for splitting across CI nodes)
 cargo nextest run --partition count:1/4   # Run 1st quarter of tests
@@ -648,18 +650,17 @@ cargo install cargo-deny --locked
 # deny.toml (workspace root)
 
 # --- Advisories ---
+# cargo-deny v2 schema: the old `vulnerability`/`unmaintained`/`notice`
+# per-severity keys were removed. All matched advisories produce errors; triage
+# via the `ignore` list (with a reason) and/or the `yanked` key.
 [advisories]
-# Deny crates with known security vulnerabilities
-version    = 2
-db-path    = "~/.cargo/advisory-db"
-db-urls    = ["https://github.com/rustsec/advisory-db"]
-vulnerability = "deny"
-unmaintained  = "warn"
-yanked        = "deny"
-notice        = "warn"
+version = 2
+db-path = "~/.cargo/advisory-db"
+db-urls = ["https://github.com/rustsec/advisory-db"]
+yanked  = "deny"
 # Crates to ignore (add with justification)
 ignore = [
-    # "RUSTSEC-2021-0000",  # Example: { id = "RUSTSEC-...", reason = "..." }
+    # { id = "RUSTSEC-2021-0000", reason = "explain why it's accepted" },
 ]
 
 # --- Licenses ---

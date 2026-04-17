@@ -236,10 +236,14 @@ fn parse_valid_config() -> anyhow::Result<()> {
 | `assert!(expr)` | Boolean condition |
 | `assert_eq!(left, right)` | Equality; prints both on failure |
 | `assert_ne!(left, right)` | Inequality |
-| `assert_matches!(expr, pattern)` | Pattern matching (stable 1.82) |
+| `assert_matches!(expr, pattern)` | Pattern matching (nightly-only in `std`; use `assert_matches` crate on stable) |
 
 ```rust
-use std::assert_matches::assert_matches;
+// On stable, pull from the external `assert_matches` crate on crates.io:
+//   [dev-dependencies]
+//   assert_matches = "1.5"
+use assert_matches::assert_matches;
+// Or avoid the dependency entirely with: assert!(matches!(x, pattern))
 
 #[test]
 fn error_is_correct_variant() {
@@ -248,7 +252,7 @@ fn error_is_correct_variant() {
 }
 ```
 
-`assert_matches!` is stable since Rust 1.82. Prefer it over `matches!(x, pat) == true` or `if let Err(ParseError::InvalidMagic(_)) = result {}`.
+`std::assert_matches::assert_matches!` is **not yet stable** in 2026 (tracking issue [#82775](https://github.com/rust-lang/rust/issues/82775); gated behind `#![feature(assert_matches)]`). On stable Rust use either the external `assert_matches` crate (drop-in equivalent) or the `assert!(matches!(x, pat))` idiom. All three produce equivalent pattern-match assertions; the external crate offers clearer failure messages.
 
 ## Integration Tests
 
@@ -452,7 +456,7 @@ fn config_yaml_output() {
 }
 ```
 
-On first run, insta writes the snapshot to `src/snapshots/<crate>__<test_name>.snap`. The test fails with a "new snapshot" notice. Run `cargo insta review` to accept or reject each new or changed snapshot interactively.
+On first run, insta writes the snapshot to a `snapshots/` directory **adjacent to the test file** (so a test in `src/foo.rs` produces `src/snapshots/<module_path>__<test_name>.snap`; a test in `tests/bar.rs` produces `tests/snapshots/...`). The test fails with a "new snapshot" notice. Run `cargo insta review` to accept or reject each new or changed snapshot interactively.
 
 ### Inline snapshots
 
@@ -477,8 +481,9 @@ cargo test
 # Interactively accept or reject each snapshot
 cargo insta review
 
-# In CI: fail if any snapshot differs from committed snapshots
-cargo test && cargo insta test --check
+# In CI: fail if any snapshot differs from committed snapshots.
+# `cargo insta test` runs the test binary itself, so a preceding `cargo test` is redundant.
+cargo insta test --check
 ```
 
 Commit all `.snap` files. They are the ground truth for snapshot tests. Never commit `.snap.new` files.
@@ -818,14 +823,18 @@ Coverage gaps worth investigating:
 - **`#[cold]` rare conditions**: timeout handling, OOM handlers.
 - **Complex match arms**: especially the `_ => unreachable!()` arm.
 
-Coverage gaps worth suppressing with `#[cfg(not(test))]` or `// coverage: ignore`:
+Coverage gaps worth suppressing via `#[cfg(not(test))]`, the nightly `#[coverage(off)]` attribute (behind `#![feature(coverage_attribute)]`), or LCOV exclusion comments recognised by `cargo-llvm-cov`'s LCOV output (`// LCOV_EXCL_LINE`, `// LCOV_EXCL_START` / `// LCOV_EXCL_STOP`). Note: there is no built-in `// coverage: ignore` pragma — use one of the mechanisms above.
 
 - `Display` / `Debug` implementations you only use in production logs.
 - Panic handlers in embedded targets.
 - Generated code (proc-macro output).
 
 ```rust
-// Exclude a function from coverage reporting
+// Exclude a function from coverage reporting (nightly only).
+// Requires `#![feature(coverage_attribute)]` at the crate root and a build invocation
+// that sets the `coverage_nightly` cfg flag, e.g.
+//   RUSTFLAGS="--cfg coverage_nightly" cargo +nightly llvm-cov --no-default-features ...
+// Without that cfg being configured, `#[cfg_attr(coverage_nightly, ...)]` is a silent no-op.
 #[cfg_attr(coverage_nightly, coverage(off))]
 fn fmt_display_impl(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "{}", self.inner)
@@ -883,8 +892,9 @@ cargo nextest run --profile ci
 When a test is flaky (fails non-deterministically), the first step is to reproduce it:
 
 ```bash
-# Run a specific test repeatedly to reproduce
-cargo nextest run --test-threads 1 my_module::my_test -- --nocapture
+# Run a specific test repeatedly to reproduce.
+# nextest uses its own flag `--no-capture` directly (not the libtest `-- --nocapture` pattern).
+cargo nextest run --test-threads 1 --no-capture my_module::my_test
 
 # Run all tests multiple times
 for i in $(seq 1 20); do cargo nextest run || break; done
@@ -1193,7 +1203,7 @@ Before merging a PR with new or changed tests:
 - [ ] Test names follow `verb_subject_condition` style.
 - [ ] `#[should_panic]` uses `expected = "..."` to pin the message.
 - [ ] Fallible tests return `Result<(), E>` rather than `unwrap`-ing.
-- [ ] `assert_matches!` is used instead of `assert!(matches!(...))`.
+- [ ] `assert_matches!` (from the `assert_matches` crate, or `assert!(matches!(...))` on stable without the dep) is used for pattern-match assertions.
 - [ ] New proptest strategies are narrowed to the actual input domain.
 - [ ] Snapshot tests have `.snap` files committed; no `.snap.new` files in the diff.
 - [ ] Criterion benchmarks use `--save-baseline` / `--baseline` for before/after comparison.
@@ -1206,7 +1216,7 @@ Before merging a PR with new or changed tests:
 
 ## Related Skills
 
-- [modern-rust-and-editions.md](modern-rust-and-editions.md) — Edition-specific test behavior and `assert_matches!` stabilization history.
+- [modern-rust-and-editions.md](modern-rust-and-editions.md) — Edition-specific test behavior.
 - [ownership-borrowing-lifetimes.md](ownership-borrowing-lifetimes.md) — Lifetime issues that surface when sharing test fixtures across threads.
 - [traits-generics-and-dispatch.md](traits-generics-and-dispatch.md) — Designing trait-object seams that make `mockall` practical.
 - [error-handling-patterns.md](error-handling-patterns.md) — Returning `anyhow::Result<()>` from tests; error context in test output.

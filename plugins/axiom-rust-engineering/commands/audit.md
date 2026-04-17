@@ -1,6 +1,6 @@
 ---
 description: Run cargo-audit and cargo-deny to check advisories, licenses, bans, and sources
-allowed-tools: ["Read", "Edit", "Bash"]
+allowed-tools: ["Read", "Edit", "Bash", "Skill"]
 argument-hint: "[workspace root] - defaults to current directory"
 ---
 

@@ -38,8 +38,8 @@ Edition mechanics are the scope of this sheet. The behavior of what those featur
 
 A Rust **edition** is a per-crate opt-in that changes the language semantics in backward-incompatible ways. Editions are declared in `Cargo.toml`:
 
-```rust
-// Cargo.toml
+```toml
+# Cargo.toml
 [package]
 name = "my-crate"
 edition = "2024"
@@ -53,7 +53,7 @@ Editions are **not** API versions. Code compiled with different editions interop
 |---------|-------------|
 | 2015 | Original Rust. `extern crate`, `mod.rs` required, macro import via `#[macro_use]`. |
 | 2018 | `use` path simplification, `extern crate` mostly removed, NLL (non-lexical lifetimes) default, `async`/`await` syntax (1.39). |
-| 2021 | Disjoint closure captures, `IntoIterator` for arrays, `use std::collections::HashMap` resolver v2 default, panic in non-unwinding contexts. |
+| 2021 | Disjoint closure captures, `IntoIterator` for arrays, resolver v2 default, panic macro consistency. |
 | 2024 | Tighter temporary lifetime rules, `gen` blocks, `async` closures, `impl Trait` in `let`/`static`/`const`, `unsafe` attribute required on certain unsafe operations. |
 
 ### Migrating with `cargo fix`
@@ -94,15 +94,31 @@ println!("{}", name); // OK in 2021
 
 **2021 → 2024: Temporary lifetime tightening**
 
-```rust
-// In 2021, this compiles — the temporary `String` lives for the statement
-let s: &str = &String::from("hello");
+The 2024 change affects temporaries in `if let`, `while let`, and `match`
+scrutinees. Those temporaries are dropped **before** the block body runs, not at
+the end of the containing statement. (Simple `let` initializers like
+`let s = &String::from("hello");` are *unchanged* — that is a temporary-lifetime
+*extension*, not a narrowing.)
 
-// In 2024, temporaries in tail position of blocks may not extend
-// Use an explicit binding instead:
-let owned = String::from("hello");
-let s: &str = &owned;
+```rust
+use std::sync::Mutex;
+let m = Mutex::new(Vec::<i32>::new());
+
+// 2021: the temporary MutexGuard lives until end of statement; the body
+//       executes with the lock HELD. Potential deadlocks if the body re-locks.
+// 2024: the temporary guard is dropped after evaluating the scrutinee,
+//       before the body runs. The body executes WITHOUT the lock.
+if let Some(&first) = m.lock().unwrap().first() {
+    // 2021: guard still held here
+    // 2024: guard already dropped
+    println!("{first}");
+}
 ```
+
+Migration: if you relied on the 2021 scoping (e.g., to hold a lock across the
+branch body), bind the guard to a `let` explicitly so its lifetime is clear. See
+the [2024 edition guide — temporary scope narrowing](https://doc.rust-lang.org/edition-guide/rust-2024/temporary-if-let-scope.html).
+
 
 **2024: `unsafe` attribute on extern blocks**
 
@@ -291,7 +307,13 @@ impl Fetcher for HttpFetcher {
 
 ### `?Send` Considerations
 
-The key limitation: native async fn in traits returns an *opaque* future whose `Send`-ness depends on the impl. When used as a trait object (`dyn Fetcher`), the runtime has no guarantee the future is `Send`.
+The key limitation: native `async fn` in traits returns an *opaque* future whose
+`Send`-ness depends on the impl. When used as a trait object (`dyn Fetcher`), the
+runtime has no guarantee the future is `Send`. Additionally, `dyn` dispatch of an
+async trait method requires boxing the returned future at each call site — you
+cannot call an `async fn` through `&dyn Trait` without either `async-trait`'s
+boxing machinery or the `#[trait_variant::make]` attribute from the
+`trait-variant` crate to emit a Send-bound variant.
 
 ```rust
 // This does NOT work for dyn dispatch with Send requirement:
@@ -514,11 +536,20 @@ fn parse_list<T: FromStr>(input: &str) -> Vec<T> where T::Err: Debug {
 // APIT wouldn't allow turbofish here
 ```
 
-## gen Blocks and Iterators
+## gen Blocks and Iterators (Nightly Preview)
 
-`gen` blocks (stable in Rust 1.87 for sequential iterators) allow writing iterator logic as straight-line code with `yield` points.
+> **Status**: `gen` blocks are **nightly-only** (tracking issue
+> [#117078](https://github.com/rust-lang/rust/issues/117078)) as of 2026-04. Every
+> snippet below requires `#![feature(gen_blocks)]` on a nightly toolchain — they
+> will NOT compile on stable. Verify the current stabilization status before
+> using in production code.
+
+`gen` blocks allow writing iterator logic as straight-line code with `yield`
+points, avoiding the manual state-machine boilerplate of `impl Iterator`.
 
 ```rust
+#![feature(gen_blocks)]
+
 fn collatz(start: u64) -> impl Iterator<Item = u64> {
     gen {
         let mut n = start;
@@ -536,7 +567,7 @@ fn main() {
 }
 ```
 
-### When to Use `gen` Blocks
+### When `gen` Blocks Will Be Useful (once stable)
 
 - Iterator logic with complex control flow (early returns, multiple loops, stateful transitions).
 - When the equivalent `struct` + `Iterator` impl would require extensive manual state tracking.
@@ -545,10 +576,12 @@ fn main() {
 ### Limitations
 
 - `gen` blocks are sequential only (`impl Iterator`, not `impl Stream`).
-- `async gen` (async generators / streams) is **nightly-only** as of Rust 1.87 — do not use in stable code.
+- `async gen` (async generators / streams) is a separate nightly feature.
 - `gen` blocks cannot use `?` directly (they don't return `Result`); handle errors by yielding `Result<T, E>` items or unwrapping inside the block.
 
 ```rust
+#![feature(gen_blocks)]
+
 // Yielding Results from gen blocks
 fn parse_lines(input: &str) -> impl Iterator<Item = Result<i32, std::num::ParseIntError>> {
     let owned = input.to_string();
@@ -562,8 +595,11 @@ fn parse_lines(input: &str) -> impl Iterator<Item = Result<i32, std::num::ParseI
 
 ### `gen` vs Manual Iterator Struct
 
+Until `gen` stabilizes, implement `Iterator` directly for anything that needs to
+ship on stable Rust:
+
 ```rust
-// Manual: explicit state, more boilerplate, but works everywhere
+// Manual: explicit state, more boilerplate, but works on stable today
 struct Counter { count: u32, max: u32 }
 
 impl Iterator for Counter {
@@ -577,14 +613,11 @@ impl Iterator for Counter {
         }
     }
 }
-
-// gen: concise for simple cases
-fn counter(max: u32) -> impl Iterator<Item = u32> {
-    gen { for i in 1..=max { yield i; } }
-}
 ```
 
-Use manual structs when the iterator needs to implement additional traits (`DoubleEndedIterator`, `ExactSizeIterator`), be `Clone`, or be named for public API stability.
+Even after `gen` stabilizes, prefer manual structs when the iterator needs to
+implement additional traits (`DoubleEndedIterator`, `ExactSizeIterator`), be
+`Clone`, or be named for public API stability.
 
 ## Other Modern Features
 

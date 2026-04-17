@@ -324,6 +324,8 @@ fn process(s: String) -> String {
 ```
 
 **Auto-fix:** `cargo clippy --fix -- -W clippy::redundant_clone`
+(Caveat: `redundant_clone`'s auto-fix can change drop ordering if the clone was
+load-bearing for a `Drop` impl's side effects. Review the diff before committing.)
 
 ### 4. `clippy::too_many_arguments`
 
@@ -541,6 +543,24 @@ pub fn raw_device_init(
 2. **Narrowest possible scope** — prefer per-function over per-module; never per-crate.
 3. **TODO if temporary** — if the suppression is waiting on a refactor, add a `// TODO(#issue): remove when ...` comment.
 
+### `#[expect(...)]` — Self-Cleaning Suppressions
+
+Rust 1.81 (Sept 2024) stabilized `#[expect(lint_name)]`, a sibling of `#[allow]`
+that emits an `unfulfilled_lint_expectations` warning if the expected lint does
+*not* fire. Use `#[expect]` for time-bounded suppressions (waiting on a refactor,
+pending a library update) so the suppression self-deletes once the underlying
+problem is resolved:
+
+```rust
+// Will be cleaned up once refactor #1234 lands
+#[expect(clippy::too_many_arguments, reason = "temporary; see #1234")]
+fn wide(a: u32, b: u32, c: u32, d: u32, e: u32, f: u32, g: u32, h: u32) { ... }
+```
+
+Prefer `#[expect]` over `#[allow]` whenever the suppression is meant to be
+temporary — the compiler becomes the enforcement mechanism.
+
+
 ### Code Review Discipline
 
 Every `#[allow(clippy::...)]` that reaches code review must carry a comment. PRs that add allows without justification should be blocked at review.
@@ -557,11 +577,13 @@ Every `#[allow(clippy::...)]` that reaches code review must carry a comment. PRs
 ### Count Warnings
 
 ```bash
-# Total default-lint warnings
-cargo clippy 2>&1 | grep "^warning\[" | wc -l
+# Total default-lint warnings.
+# Clippy warnings print as "warning: <message>" (no `[code]` bracket — that's rustc's
+# error format). Count with `grep -c "^warning:"`.
+cargo clippy 2>&1 | grep -c "^warning:"
 
-# Warnings that would block -Dwarnings
-cargo clippy -- -Dwarnings 2>&1 | grep "^warning\[" | wc -l
+# Warnings broken down (without -Dwarnings, which would upgrade them to errors
+# and make the above count return zero).
 
 # Warnings by lint name (requires parsing)
 cargo clippy --message-format=json 2>/dev/null | \
@@ -606,10 +628,16 @@ date,total_warnings,fixed_lint,warnings_in_lint
 Move from advisory to enforced in stages:
 
 **Stage 1: Warn (advisory)**
+
+Use the `[lints]` / `[workspace.lints]` table in `Cargo.toml`. `rustflags` in
+`.cargo/config.toml` is the *wrong* mechanism for clippy lints — rustc does not
+load clippy's tool lints, so those flags take effect only under `cargo clippy`
+and silently noop under `cargo build`/`cargo check`.
+
 ```toml
-# .cargo/config.toml
-[target.'cfg(all())']
-rustflags = ["-W", "clippy::all"]
+# Cargo.toml (or workspace root)
+[lints.clippy]
+all = { level = "warn", priority = -1 }
 ```
 
 **Stage 2: Ratchet (count must not increase)**
@@ -617,8 +645,8 @@ rustflags = ["-W", "clippy::all"]
 In CI, compare warning count to the committed baseline:
 
 ```bash
-BASELINE=$(cat clippy-baseline.txt | grep "^warning\[" | wc -l)
-CURRENT=$(cargo clippy 2>&1 | grep "^warning\[" | wc -l)
+BASELINE=$(grep -c "^warning:" clippy-baseline.txt)
+CURRENT=$(cargo clippy 2>&1 | grep -c "^warning:")
 if [ "$CURRENT" -gt "$BASELINE" ]; then
   echo "Clippy warnings increased: $BASELINE -> $CURRENT"
   exit 1
