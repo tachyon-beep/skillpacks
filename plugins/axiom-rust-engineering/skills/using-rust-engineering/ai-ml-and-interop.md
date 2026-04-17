@@ -315,14 +315,22 @@ fn normalize_inplace<'py>(
     py: Python<'py>,
     arr: PyReadonlyArray1<'py, f32>,
 ) -> PyResult<Bound<'py, PyArray1<f32>>> {
-    let slice = arr.as_slice()?;
-    let mean: f32 = slice.iter().sum::<f32>() / slice.len() as f32;
-    let std_dev: f32 = (slice.iter().map(|x| (x - mean).powi(2)).sum::<f32>()
-        / slice.len() as f32)
-        .sqrt();
+    // SAFETY / SOUNDNESS: `arr.as_slice()?` hands out a borrow into Python-owned
+    // numpy memory. That borrow is only valid while the GIL is held — once the GIL
+    // is released, another Python thread can resize, free, or overwrite the array.
+    // Never pass a slice derived from Python memory into `py.allow_threads`.
+    //
+    // The safe pattern is: copy out under the GIL -> compute without the GIL ->
+    // return. For small arrays the copy is cheap; for large arrays it still beats
+    // the UB of a dangling borrow.
+    let owned: Vec<f32> = arr.as_slice()?.to_vec();
 
-    let result: Vec<f32> = py.allow_threads(|| {
-        slice.iter().map(|x| (x - mean) / (std_dev + 1e-8)).collect()
+    let result: Vec<f32> = py.allow_threads(move || {
+        let n = owned.len() as f32;
+        let mean: f32 = owned.iter().sum::<f32>() / n;
+        let var: f32 = owned.iter().map(|x| (x - mean).powi(2)).sum::<f32>() / n;
+        let std_dev = var.sqrt();
+        owned.iter().map(|x| (x - mean) / (std_dev + 1e-8)).collect()
     });
     Ok(result.into_pyarray(py))
 }
@@ -395,9 +403,18 @@ struct LinearClassifier {
 
 impl LinearClassifier {
     fn load(weights_path: &str, device: &Device) -> candle_core::Result<Self> {
-        // Load weights from safetensors (safe, fast, language-portable)
-        let weights = unsafe { candle_core::safetensors::MmapedSafetensors::new(weights_path)? };
-        let vb = VarBuilder::from_mmaped_safetensors(&[weights_path], candle_core::DType::F32, device)?;
+        // Load weights from safetensors (safe, fast, language-portable).
+        // `VarBuilder::from_mmaped_safetensors` mmaps the file internally — no need
+        // to construct a separate `MmapedSafetensors` alongside it. The inner mmap
+        // is still `unsafe` because another process could mutate the file while
+        // candle has it mapped; the constructor is marked unsafe to surface that.
+        let vb = unsafe {
+            VarBuilder::from_mmaped_safetensors(
+                &[weights_path],
+                candle_core::DType::F32,
+                device,
+            )?
+        };
 
         Ok(Self {
             fc1: candle_nn::linear(128, 64, vb.pp("fc1"))?,
@@ -791,6 +808,7 @@ Safetensors is the standard for sharing model weights. Key properties:
 [dependencies]
 safetensors = "0.4"
 memmap2 = "0.9"
+bytemuck = "1"   # for the f32 -> &[u8] reinterpretation in the write path
 ```
 
 ```rust
@@ -820,24 +838,26 @@ fn load_weights(path: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn save_weights(weights: &[(&str, Vec<f32>, &[usize])]) -> anyhow::Result<()> {
+fn save_weights(weights: &[(&str, Vec<f32>, Vec<usize>)]) -> anyhow::Result<()> {
     use safetensors::serialize_to_file;
+    use safetensors::tensor::TensorView;
+    use safetensors::Dtype;
     use std::collections::HashMap;
 
-    let tensors: HashMap<String, safetensors::tensor::Tensor> = weights
+    // safetensors has no `Tensor::new` — the public construction API is
+    // `TensorView::new(dtype, shape: Vec<usize>, data: &[u8])`. Data must be raw
+    // bytes, so reinterpret the f32 backing store as a `&[u8]` slice.
+    let views: HashMap<String, TensorView<'_>> = weights
         .iter()
         .map(|(name, data, shape)| {
-            let tensor = safetensors::tensor::Tensor::new(
-                data.as_slice(),
-                safetensors::Dtype::F32,
-                shape,
-            )
-            .unwrap();
-            (name.to_string(), tensor)
+            let bytes: &[u8] = bytemuck::cast_slice(data.as_slice());
+            let view = TensorView::new(Dtype::F32, shape.clone(), bytes)
+                .expect("shape/data length mismatch");
+            (name.to_string(), view)
         })
         .collect();
 
-    serialize_to_file(&tensors, &None, "weights.safetensors")?;
+    serialize_to_file(&views, &None, std::path::Path::new("weights.safetensors"))?;
     Ok(())
 }
 ```
@@ -1103,14 +1123,19 @@ fn fused_wrong(a: &Array1<f32>, b: &Array1<f32>, c: &Array1<f32>) -> Array1<f32>
     (a + b) * c   // alloc for (a+b), then alloc for result
 }
 
-// ✅ CORRECT: single output allocation, no intermediates
+// ✅ CORRECT: single output allocation, no intermediates.
+// Zip::from needs something that *produces elements* (`&mut out`), not the
+// dimension descriptor. `Zip::from(out.raw_dim())` would iterate shape axes, not
+// array elements. Use `&mut out` to walk the `MaybeUninit<f32>` slots, and call
+// `.for_each` (the `.apply` name was removed in ndarray 0.15+).
 fn fused_correct(a: &Array1<f32>, b: &Array1<f32>, c: &Array1<f32>) -> Array1<f32> {
-    let mut out = Array1::uninit(a.len());
-    Zip::from(out.raw_dim().clone())
+    let mut out = Array1::<f32>::uninit(a.raw_dim());
+    Zip::from(&mut out)
         .and(a).and(b).and(c)
-        .apply(|out_i, &ai, &bi, &ci| {
-            out_i.write(( ai + bi) * ci);
+        .for_each(|out_i, &ai, &bi, &ci| {
+            out_i.write((ai + bi) * ci);
         });
+    // SAFETY: the Zip above writes every element exactly once.
     unsafe { out.assume_init() }
 }
 

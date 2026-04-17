@@ -242,7 +242,7 @@ pub enum AppError {
 }
 ```
 
-`#[error(transparent)]` is useful for wrapping a single error type while preserving its chain. Avoid using it for an enum with multiple variants — it only applies to single-variant structs or tuple structs.
+`#[error(transparent)]` is useful for wrapping a single inner error type while preserving its chain. It is applied **per variant** (or on a single-field struct), not on the enum as a whole — the example above correctly uses it on one variant of a multi-variant enum. What you cannot do is annotate the enum itself with `#[error(transparent)]`: there is no single source error for the attribute to delegate to. Each variant must also have exactly one inner error (the field to delegate to).
 
 ## Application Errors: anyhow
 

@@ -1,7 +1,7 @@
 ---
 description: Run cargo check + clippy + compile-tests + doctests to verify the crate is healthy
 allowed-tools: ["Read", "Edit", "Bash"]
-argument-hint: "[path or workspace member] - defaults to current workspace"
+argument-hint: "[package spec] - optional `-p <name>` package selector; defaults to current workspace"
 ---
 
 # Typecheck Command
@@ -16,7 +16,8 @@ Run the Rust compile-health battery: `cargo check` + `cargo clippy` + test-binar
 
 1. **Run `cargo check` for fast type/borrow verification**
    ```bash
-   cargo check --all-targets --all-features ${ARGUMENTS:-.}
+   # $ARGUMENTS is an optional package selector like `-p my-crate`; leave empty for current workspace.
+   cargo check --all-targets --all-features $ARGUMENTS
    ```
    
    - Fastest compile-health feedback
@@ -26,7 +27,7 @@ Run the Rust compile-health battery: `cargo check` + `cargo clippy` + test-binar
 
 2. **Run `cargo clippy` for lint warnings and anti-patterns**
    ```bash
-   cargo clippy --all-targets --all-features ${ARGUMENTS:-.} -- -D warnings
+   cargo clippy --all-targets --all-features $ARGUMENTS -- -D warnings
    ```
    
    - `clippy` is the Rust linter — recommends style, performance, and correctness improvements
@@ -35,7 +36,7 @@ Run the Rust compile-health battery: `cargo check` + `cargo clippy` + test-binar
 
 3. **Ensure test binaries compile**
    ```bash
-   cargo test --no-run --all-targets ${ARGUMENTS:-.}
+   cargo test --no-run --all-targets $ARGUMENTS
    ```
    
    - Compiles tests without running them
@@ -44,7 +45,7 @@ Run the Rust compile-health battery: `cargo check` + `cargo clippy` + test-binar
 
 4. **Run doctests**
    ```bash
-   cargo test --doc ${ARGUMENTS:-.}
+   cargo test --doc $ARGUMENTS
    ```
    
    - Compiles and executes code blocks in documentation (Markdown in comments)
@@ -58,9 +59,9 @@ Rust compiler errors use `E0XXX` codes for categorization. Common error families
 | Code Range | Category | Skill Link |
 |-----------|----------|-----------|
 | E0106–E0145 | Lifetimes, borrowing, ownership | ownership-borrowing-lifetimes.md |
-| E0308, E0425, E0433 | Type mismatch, unresolved names | ownership-borrowing-lifetimes.md |
-| E0599, E0631 | Missing trait impl, type mismatch in function call | traits-generics-and-dispatch.md |
-| E0560, E0561 | Wrong trait bound, missing generic param | traits-generics-and-dispatch.md |
+| E0308, E0425 | Type mismatch, unresolved name | ownership-borrowing-lifetimes.md |
+| E0277, E0283, E0284 | Trait bound not satisfied / type annotations needed | traits-generics-and-dispatch.md |
+| E0599, E0631 | Method not found on type / closure signature mismatch | traits-generics-and-dispatch.md |
 | E0433, E0426 | Module/crate not found, undefined variable | project-structure-and-tooling.md |
 
 When you encounter an error, read the full message carefully — Rust's compiler output includes:

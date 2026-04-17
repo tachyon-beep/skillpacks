@@ -135,12 +135,15 @@ let s = &owned; // lifetime is clear
 // Over relying on temporary extension
 ```
 
-### `gen` Blocks
+### `gen` Blocks (nightly)
 
-`gen` blocks allow writing iterator logic with `yield` syntax. Stable as of Rust 1.87:
+`gen` blocks allow writing iterator logic with `yield` syntax. They remain **nightly-only**
+(tracking issue [#117078](https://github.com/rust-lang/rust/issues/117078)) — verify the
+current stabilization status before relying on them in stable code.
 
 ```rust
-#![feature(gen_blocks)] // Was nightly; check current stable status
+// nightly only — requires the feature gate
+#![feature(gen_blocks)]
 
 fn fibonacci() -> impl Iterator<Item = u64> {
     gen {
@@ -159,7 +162,8 @@ fn main() {
 }
 ```
 
-Note: `gen` blocks are stabilized for sequential iterators. Async generators (`async gen`) remain nightly at the time of writing. Verify current status with `rustup doc --std`.
+On stable, use an explicit `Iterator` impl or a `std::iter::from_fn(...)` closure to
+achieve the same behaviour. Async generators (`async gen`) are also still nightly.
 
 ### `async` Closures
 
@@ -172,15 +176,27 @@ let fetch = async |url: &str| -> Result<String, reqwest::Error> {
 
 Previously, async closures required workarounds (`move || async move { ... }`). The new syntax provides a true `AsyncFn` trait bound.
 
-### `impl Trait` in `let`, `static`, and `const` Position
+### `impl Trait` in Argument and Return Positions
+
+`impl Trait` in argument position (APIT) and return position (RPIT) has been stable for
+years; RPITIT (return-position `impl Trait` in traits) stabilized in Rust 1.75. `impl
+Trait` in `let`, `static`, and `const` bindings (type-alias-`impl`-Trait, aka TAIT) is
+**still unstable** — do not put `impl Trait` on the left-hand side of a `let`, `static`,
+or `const` item on stable Rust.
 
 ```rust
-// 2024: impl Trait allowed in more positions
-const SORTED: impl Fn(&[i32]) -> Vec<i32> = |slice| {
+// OK: impl Trait in return position (stable).
+// No `+ '_` — the returned `IntoIter<i32>` owns its data outright.
+fn sorted_copy(slice: &[i32]) -> impl Iterator<Item = i32> {
     let mut v = slice.to_vec();
     v.sort();
-    v
-};
+    v.into_iter()
+}
+
+// OK: impl Trait in argument position (stable)
+fn consume(iter: impl IntoIterator<Item = i32>) -> i32 {
+    iter.into_iter().sum()
+}
 ```
 
 ### Macro Fragment Specifier Changes
@@ -752,20 +768,13 @@ The fix: audit all uses of `#[async_trait]`. If no `dyn Trait` usage exists, rem
 **Why wrong**: `impl Trait` in return position creates an opaque type that cannot be named by callers. This prevents storing the return value in structs, implementing `Clone`, or chaining with other combinators that need the concrete type.
 
 ```rust
-// WRONG: hiding a simple, nameable type
+// WRONG: hiding a trivially-nameable, stored/returned value behind an opaque type.
+// Callers cannot store it in a struct, `Clone` it, or constrain it further.
 fn get_sorted_ids(users: &[User]) -> impl Iterator<Item = u64> {
     users.iter().map(|u| u.id)
-    // Caller cannot: collect into a known type, clone the iterator,
-    // or pass to a function that needs the concrete type
 }
 
-// CORRECT: if the type is simple and public, name it
-fn get_sorted_ids(users: &[User]) -> std::iter::Map<std::slice::Iter<'_, User>, fn(&User) -> u64> {
-    // ... but this is ugly. Use a type alias or just collect:
-}
-
-// ACTUALLY CORRECT: for complex iterator chains, RPIT is fine;
-// for stored/returned state, collect to Vec
+// CORRECT: if the caller wants ownership and reuse, return a concrete type.
 fn get_sorted_ids(users: &[User]) -> Vec<u64> {
     let mut ids: Vec<u64> = users.iter().map(|u| u.id).collect();
     ids.sort();
@@ -773,7 +782,16 @@ fn get_sorted_ids(users: &[User]) -> Vec<u64> {
 }
 ```
 
-The fix: use `impl Trait` for iterator returns where the concrete type is an implementation detail. Use named types or `Vec`/`Box<dyn>` when callers need to store, clone, or further constrain the return.
+Note: you cannot "name the iterator type" ergonomically either — `.map(closure)` produces
+`Map<Iter<_>, {closure}>` whose second parameter is the closure's unnameable anonymous
+type, not `fn(&User) -> u64`. A non-capturing closure *coerces* to a `fn` pointer, but
+only when the target type is fixed externally; in a bare `.map(|u| u.id)` the inferred
+type is the closure's own. If you genuinely need a nameable type, either define a named
+`fn item(u: &User) -> u64` and pass that, or return `Vec<u64>` as above.
+
+The fix: use `impl Trait` for iterator returns where the concrete type is an
+implementation detail *and* the caller only consumes it once. Use named types or
+`Vec`/`Box<dyn>` when callers need to store, clone, or further constrain the return.
 
 ### 4. Using Third-Party `once_cell` When `std` Provides It
 

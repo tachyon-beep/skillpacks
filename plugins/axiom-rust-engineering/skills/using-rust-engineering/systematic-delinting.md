@@ -138,7 +138,7 @@ If `correctness` lints fire in your codebase, treat them as bugs.
 
 These lints identify code that is **probably wrong or confusing** even if technically valid.
 
-Examples: `suspicious_arithmetic_impl`, `misrefactored_assign_op`, `suspicious_map`, `cast_lossless` violations.
+Examples: `suspicious_arithmetic_impl`, `misrefactored_assign_op`, `suspicious_map`. (`cast_lossless` is **not** a suspicious lint — it was moved to the `pedantic` group, which is allow-by-default; you only see it if you opt into `-W clippy::pedantic`.)
 
 Fix suspicious lints in the same sprint as correctness.
 

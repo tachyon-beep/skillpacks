@@ -735,10 +735,21 @@ impl EmailSender for InMemoryEmailSender {
     }
 }
 
+// Forward through `Arc` so the test and the service can share one instance.
+// The test keeps a handle to observe state; the service owns a `Box<dyn EmailSender>`.
+impl EmailSender for std::sync::Arc<InMemoryEmailSender> {
+    fn send(&self, to: &str, subject: &str, body: &str) -> Result<(), SendError> {
+        (**self).send(to, subject, body)
+    }
+}
+
 #[test]
 fn password_reset_sends_to_correct_address() {
-    let mailer = Arc::new(InMemoryEmailSender::new());
-    let service = UserService::new(Box::new(InMemoryEmailSender::new()));
+    let mailer = std::sync::Arc::new(InMemoryEmailSender::new());
+    // Hand the service a clone of the *same* Arc — the observation handle and the
+    // service now point at one shared fake. Handing over a fresh InMemoryEmailSender
+    // would make the assertion vacuous.
+    let service = UserService::new(Box::new(std::sync::Arc::clone(&mailer)));
     service.reset_password("alice@example.com").unwrap();
     // verify behavior, not call sequence
     assert_eq!(mailer.last_recipient().as_deref(), Some("alice@example.com"));
@@ -1150,11 +1161,16 @@ proptest! {
         prop_assert!(result.is_ok(), "valid hex should parse: {}", hex);
     }
 
-    // Strategy 2: near-valid inputs — off-by-one lengths
+    // Strategy 2: near-valid inputs — off-by-one lengths.
+    // Combine two regex strategies with `prop_oneof!`. You cannot chain `.prop_union(...)`
+    // off a `&str` literal — a bare string only becomes a `Strategy` through the
+    // `proptest!` macro, and `prop_union` is a method on `Strategy`, not on `&str`.
     #[test]
     fn wrong_length_hex_rejected(
-        hex in "[0-9a-f]{1,63}"  // too short
-            .prop_union("[0-9a-f]{65,128}")  // too long
+        hex in prop_oneof![
+            "[0-9a-f]{1,63}",    // too short
+            "[0-9a-f]{65,128}",  // too long
+        ]
     ) {
         prop_assert!(parse_hex_digest(&hex).is_err());
     }

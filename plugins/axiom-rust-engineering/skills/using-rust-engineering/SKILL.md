@@ -75,7 +75,8 @@ When you see a link like `[systematic-delinting.md](systematic-delinting.md)`, r
 - "E0502: cannot borrow as mutable because it is also borrowed as immutable"
 - "lifetime annotation required but I don't know where to put it"
 - "cannot return reference to local variable"
-- "runtime panic: cannot drop while borrowed"
+- "cannot move out of `*self` because it is borrowed" (E0505)
+- "use of moved value" (E0382) / "cannot assign to `x` because it is borrowed" (E0506)
 
 **Route to**: [ownership-borrowing-lifetimes.md](ownership-borrowing-lifetimes.md)
 
@@ -137,7 +138,7 @@ When you see a link like `[systematic-delinting.md](systematic-delinting.md)`, r
 **Symptoms**:
 - "How do I structure a Cargo workspace?"
 - "Conditional compilation with feature flags"
-- "cargo.toml dependency resolution conflicts"
+- "Cargo.toml dependency resolution conflicts"
 - "How to set up pre-commit hooks with rustfmt and clippy?"
 - "Build scripts (build.rs) basics"
 - "Cross-compilation setup"
@@ -385,10 +386,10 @@ After routing, load the appropriate specialist skill for detailed guidance:
 
 | Issue Type | Diagnosis Skill | Then Solution Skill |
 |------------|----------------|---------------------|
-| Performance | performance-and-profiling | async-and-concurrency or performance-and-profiling |
-| Runtime panic | ownership-borrowing-lifetimes | ownership or unsafe-ffi |
+| Performance | performance-and-profiling (flamegraph, heaptrack) | async-and-concurrency or performance-and-profiling |
+| Runtime panic (unwrap, index out of bounds) | ownership-borrowing-lifetimes | error-handling-patterns or unsafe-ffi-and-low-level |
 | Trait errors in async | traits-generics-and-dispatch | async-and-concurrency |
-| Lint warnings | systematic-delinting | systematic-delinting (same) |
+| Test failure of unclear cause | testing-and-quality | the relevant domain skill once isolated |
 
 **If unclear what's wrong, route to diagnostic skill first.**
 

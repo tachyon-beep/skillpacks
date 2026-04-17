@@ -573,11 +573,14 @@ fn get_version() -> &'static str {
         fn c_version() -> *const c_char;
     }
     // SAFETY: c_version returns a pointer to a static null-terminated
-    // ASCII string embedded in the C library. The lifetime is 'static.
-    // We verify it is valid UTF-8 for the Rust side; the library
-    // documents that version strings are ASCII (a subset of UTF-8).
+    // ASCII string embedded in the C library. The library documents that
+    // it is non-null, null-terminated, lives for the process lifetime, and
+    // is ASCII (a subset of UTF-8). We verify UTF-8 for the Rust side.
+    // CStr::from_ptr requires: non-null, null-terminated, valid for reads
+    // up to and including the terminator, not mutated during the borrow.
     unsafe {
         let ptr = c_version();
+        assert!(!ptr.is_null(), "c_version returned NULL");
         CStr::from_ptr(ptr)
             .to_str()
             .expect("version string is not valid UTF-8")
@@ -590,6 +593,16 @@ fn get_version() -> &'static str {
 When Rust allocates memory that C will later free (or vice versa), use `Box::into_raw` and `Box::from_raw` to transfer ownership across the FFI boundary.
 
 **The rule**: exactly one side owns the value at any given time. The pointer must be reconstructed with `Box::from_raw` exactly once to drop the allocation. Dropping it zero times is a leak; dropping it twice is a double-free (UB).
+
+**CRITICAL — allocator match**: `Box::from_raw(p)` deallocates `p` using Rust's global
+allocator. It is **undefined behaviour** to call `Box::from_raw` on a pointer that was
+not obtained from `Box::into_raw` (or `Box::into_raw_with_allocator` with a *matching*
+allocator). In particular, a `*mut T` returned from C's `malloc`/`calloc`/a custom C
+arena must be freed by the matching C `free` — wrap it in something like a
+`ForeignAllocated<T>` newtype whose `Drop` calls the C free function, *not* a `Box`.
+Conversely, a pointer produced by `Box::into_raw` must eventually come back through
+`Box::from_raw` — handing it to `free()` is equally UB because Rust's allocator need
+not be (and on Windows isn't) `malloc`.
 
 ```rust
 /// Creates a Rust struct on the heap and transfers ownership to C.
@@ -637,11 +650,18 @@ pub unsafe extern "C" fn widget_free(ptr: *mut Widget) {
 /// # Safety
 /// `ptr` must be non-null, aligned to `u8`, and valid for reads of `len`
 /// bytes. The buffer must not be mutated for the duration of this call.
-/// `len` must not exceed `isize::MAX`.
+/// The total byte size `len * size_of::<u8>()` must not exceed `isize::MAX`.
+///
+/// **Important:** `slice::from_raw_parts::<T>(ptr, len)` requires
+/// `len * size_of::<T>() <= isize::MAX`, NOT `len <= isize::MAX`. For `T = u8`
+/// the two are equivalent, but if you copy this template for `*const u32`,
+/// `*const f64`, or any `T` with `size_of::<T>() > 1`, you must scale the
+/// bound: `len <= isize::MAX as usize / size_of::<T>()`.
 pub unsafe fn process_buffer(ptr: *const u8, len: usize) -> u64 {
     // SAFETY: All invariants are documented in the Safety section of this
     // function and are the caller's responsibility. ptr is non-null, aligned
-    // (u8 has alignment 1), valid for len bytes, and len <= isize::MAX.
+    // (u8 has alignment 1), valid for len bytes, and the total byte size
+    // len*size_of::<u8>() = len does not exceed isize::MAX.
     let slice = std::slice::from_raw_parts(ptr, len);
     slice.iter().map(|&b| b as u64).sum()
 }

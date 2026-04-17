@@ -128,7 +128,7 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: clippy
-        run: cargo clippy --all-targets --all-features
+        run: cargo clippy --all-targets --all-features -- -D warnings
 
       - name: install cargo-nextest
         uses: taiki-e/install-action@cargo-nextest

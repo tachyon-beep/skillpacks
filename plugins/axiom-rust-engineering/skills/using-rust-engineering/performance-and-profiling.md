@@ -201,9 +201,13 @@ Action: profile regex::exec. Is the Regex being compiled on every request?
 ### Cargo-flamegraph tips
 
 ```bash
-# Profile for a longer duration (more samples = more statistical confidence)
+# cargo-flamegraph has no built-in duration flag — it profiles the child process for
+# its full lifetime. To get more samples, either run a longer workload, or raise the
+# sampling frequency via the inner perf command with `-c`:
 CARGO_PROFILE_PROFILING_DEBUG=line-tables-only \
-  cargo flamegraph --profile profiling --bin my-binary --output flame.svg -- --duration 30
+  cargo flamegraph --profile profiling --bin my-binary --output flame.svg \
+    -c "record -F 997 --call-graph dwarf -g" \
+    -- --my-bench-arg value   # anything after `--` is passed to the binary itself
 
 # Exclude noise from the flamegraph (common in async code)
 cargo flamegraph --profile profiling -- 2>&1 | head   # stderr shows perf output
@@ -465,16 +469,21 @@ Use Massif when you need a *time series* of heap usage — for example, to under
 - **Latency-sensitive paths**: `mimalloc`'s design favors low-latency first free over raw throughput.
 - **Fragmentation under load**: `jemalloc`'s size-class design reduces fragmentation for servers with long-running allocation patterns.
 
-### jemallocator
+### tikv-jemallocator
+
+The original `jemallocator` crate has been unmaintained for years; the actively
+maintained fork is `tikv-jemallocator`, which is what crates like TiKV, Parquet, and
+Rust compiler internals use today. It exposes the same `Jemalloc` global-allocator
+type, just under a different crate name.
 
 ```toml
 [dependencies]
-jemallocator = "0.5"
+tikv-jemallocator = "0.6"
 ```
 
 ```rust
 #[global_allocator]
-static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
+static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
 fn main() { /* ... */ }
 ```

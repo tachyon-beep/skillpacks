@@ -397,17 +397,28 @@ pub fn parse_legacy(s: &str) -> OldType { ... }
 edition              = "2024"
 max_width            = 100         # Wider than default 80; fits modern screens
 use_small_heuristics = "Max"       # Aggressively inline short items
-imports_granularity  = "Crate"     # Group all imports from same crate
-group_imports        = "StdExternalCrate"  # std, then external, then self
 newline_style        = "Unix"
-format_strings       = false       # Don't reformat string literals
-format_macro_matchers = true
-normalize_comments   = true
-wrap_comments        = true
-comment_width        = 100
+
+# ---- Stable rustfmt options end here. Everything below is nightly-only. ----
+# `imports_granularity`, `group_imports`, `format_strings`, `format_macro_matchers`,
+# `normalize_comments`, and `wrap_comments` are all unstable rustfmt options. They
+# require nightly rustfmt *and* `unstable_features = true`. Stable rustfmt will
+# silently ignore them (or warn, depending on the toolchain) — don't be surprised
+# when CI on stable produces different output than a nightly-using developer.
+unstable_features    = true        # REQUIRED for any option below on nightly rustfmt
+imports_granularity  = "Crate"     # nightly — group all imports from same crate
+group_imports        = "StdExternalCrate"  # nightly — std / external / self ordering
+format_strings       = false       # nightly — don't reformat string literals
+format_macro_matchers = true       # nightly — format macro matcher patterns
+normalize_comments   = true        # nightly
+wrap_comments        = true        # nightly
+comment_width        = 100         # nightly (takes effect only with wrap_comments)
 ```
 
-Run: `cargo fmt` (formats) or `cargo fmt --check` (CI gate).
+Run: `cargo fmt` (formats) or `cargo fmt --check` (CI gate). If you use the nightly
+options above, pin a nightly toolchain in `rust-toolchain.toml` for the `rustfmt`
+component specifically (e.g. `components = ["rustfmt"]` with `channel = "nightly"`)
+or run `cargo +nightly fmt`.
 
 ### `clippy.toml` — Project-Level Settings
 
@@ -447,13 +458,30 @@ todo         = "warn"
 
 **Member crate opt-out (for crates that legitimately need unsafe):**
 
-```toml
-# crates/my-ffi-layer/Cargo.toml
-[lints]
-workspace = true               # Inherit workspace defaults
+Cargo rejects mixing `[lints] workspace = true` with sibling override tables like
+`[lints.rust]` in the same manifest — the error is `cannot override workspace.lints
+in lints`. Two legal patterns:
 
+```toml
+# Option A — crates/my-ffi-layer/Cargo.toml
+# Opt out of workspace inheritance entirely and re-declare what this crate needs.
+# Workspace lints are NOT merged in when `workspace = true` is absent.
 [lints.rust]
-unsafe_code = "allow"          # Override: this crate wraps C APIs
+unsafe_code  = "allow"          # this crate wraps C APIs
+missing_docs = "warn"
+# ... re-declare any other lints you want carried over from the workspace.
+```
+
+```toml
+# Option B — crates/my-ffi-layer/Cargo.toml
+# Keep workspace inheritance and scope the override to a source-level attribute.
+[lints]
+workspace = true
+```
+
+```rust
+// crates/my-ffi-layer/src/lib.rs — narrow, auditable override at the crate root.
+#![allow(unsafe_code)]
 ```
 
 ### `.cargo/config.toml` — Build-Level Configuration

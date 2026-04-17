@@ -1,7 +1,7 @@
 ---
 description: Systematically fix clippy warnings using category-by-category approach
 allowed-tools: ["Read", "Edit", "Bash", "Glob", "Grep", "Skill"]
-argument-hint: "[path or crate] - defaults to current workspace"
+argument-hint: "[package spec] - optional `-p <name>` package selector; defaults to current workspace"
 ---
 
 # Delint Command
@@ -12,7 +12,8 @@ Apply systematic delinting following the Rust engineering methodology. Fix warni
 
 1. **Assess current state**
    ```bash
-   cargo clippy --all-targets --all-features --workspace ${ARGUMENTS:-.} -- -W clippy::all 2>&1 | grep "warning:"
+   # $ARGUMENTS is an optional package selector like `-p my-crate`; leave empty to scan the whole workspace.
+   cargo clippy --all-targets --all-features --workspace $ARGUMENTS -- -W clippy::all 2>&1 | grep "warning:"
    ```
 
 2. **Group by rule category**

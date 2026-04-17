@@ -65,8 +65,10 @@ Opens Firefox Profiler UI automatically. Timeline view shows exactly which funct
 Lower-level but powerful:
 
 ```bash
-# Record with call stacks (99Hz sampling rate)
-perf record -F 99 -g ./target/release/${ARGUMENTS}
+# Record with call stacks (99Hz sampling rate).
+# Use DWARF unwinding — Rust builds frequently omit frame pointers, so the default
+# `-g` (fp) produces broken/truncated stacks. DWARF requires debug info in the binary.
+perf record -F 99 --call-graph dwarf ./target/release/${ARGUMENTS}
 
 # View results interactively
 perf report
@@ -116,7 +118,7 @@ Then read: performance-and-profiling.md
 ## Example Session
 
 ```
-User: /rust-engineering:profile --bin my-app --duration 10
+User: /rust-engineering:profile my-app
 
 Claude:
 1. Checking debug symbols... [profile.release] debug = true ✓
