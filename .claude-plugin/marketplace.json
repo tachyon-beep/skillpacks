@@ -62,6 +62,20 @@
       "category": "development"
     },
     {
+      "name": "axiom-solution-architect",
+      "source": "./plugins/axiom-solution-architect",
+      "description": "Forward solution architecture: brief/HLD/epic → traceable artifact set (ADRs, C4, NFRs, RTM, integration/migration, risks, TOGAF/ArchiMate, consolidated SAD). 9 skills, 2 agents, 2 commands.",
+      "keywords": [
+        "axiom",
+        "solution-architect",
+        "architecture",
+        "adr",
+        "togaf",
+        "archimate"
+      ],
+      "category": "development"
+    },
+    {
       "name": "axiom-web-backend",
       "source": "./plugins/axiom-web-backend",
       "description": "Web backend development expertise across FastAPI, Django, Express, REST/GraphQL APIs, microservices, and production deployment patterns - router + specialist skills for modern web APIs",

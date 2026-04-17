@@ -1,0 +1,24 @@
+{
+  "name": "axiom-solution-architect",
+  "version": "1.0.0",
+  "description": "Forward solution architecture: takes a brief / HLD / epic / brownfield change and produces a traceable artifact set (ADRs, C4, NFRs, RTM, integration & migration plans, risk register, TOGAF/ArchiMate bindings, consolidated SAD). 9 skills, 2 agents, 2 commands.",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "axiom",
+    "solution-architect",
+    "solution-architecture",
+    "architecture",
+    "adr",
+    "c4",
+    "togaf",
+    "archimate",
+    "nfr",
+    "traceability",
+    "migration"
+  ]
+}
