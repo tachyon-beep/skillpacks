@@ -44,3 +44,4 @@ build/
 .DS_Store
 
 tests/
+.codex
