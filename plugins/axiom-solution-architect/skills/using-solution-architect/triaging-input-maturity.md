@@ -16,6 +16,8 @@ elicitation; a contradictory input needs a stakeholder round-trip (see
 
 ## When to Use
 
+See the router's Start Here (SKILL.md) if this is your first pass through the pack.
+
 Use this skill when:
 
 - A new design request arrives (brief, HLD, epic, change request)
@@ -272,7 +274,7 @@ Proceed to emit `00-scope-and-context.md` and `01-requirements.md` with best-eff
 
 ### "It's obvious what's needed, skip the requirements list"
 
-**Response:** "The RTM in `14-` and the consistency gate in the assembly step both depend on requirement IDs. Skipping this breaks traceability end to end. I'll keep it minimal but complete."
+**Response:** "The RTM in `14-` and the consistency gate both depend on requirement IDs. Skipping this breaks traceability end to end. I'll keep it minimal but complete."
 
 ### "We already picked [tech]; no need to document constraints"
 
@@ -282,7 +284,7 @@ Proceed to emit `00-scope-and-context.md` and `01-requirements.md` with best-eff
 
 ### ❌ Skipping `00-scope-and-context.md`
 
-Going straight to C4 diagrams or tech selection. The assembly step's consistency gate will fail, and downstream packs (security, technical-writer) won't have the scope statement they consume.
+Going straight to C4 diagrams or tech selection. The consistency gate will fail, and downstream packs (security, technical-writer) won't have the scope statement they consume.
 
 ### ❌ Requirement IDs that don't trace
 

@@ -11,7 +11,11 @@ This skill runs at the end of the workflow. It does two things:
 
 **Core principle:** The gate fails loud. The SAD is not emitted until every check passes or each failure carries a recorded waiver with rationale.
 
+**Contents:** [The Consistency Gate (Checks 1–8)](#the-consistency-gate) · [Sampling and audit protocol](#sampling-and-audit-protocol--making-checks-substantive) · [Gate outcome](#gate-outcome) · [Emitting 99-](#emitting-99-solution-architecture-documentmd) · [Pressure Responses](#pressure-responses) · [Anti-Patterns](#anti-patterns-to-reject)
+
 ## When to Use
+
+See the router's Start Here (SKILL.md) if this is your first pass through the pack.
 
 - The numbered artifacts are all drafted (or the user has declared the design otherwise complete)
 - You are tempted to "just paste everything together and call it done"
@@ -70,9 +74,12 @@ An artifact that is present but fails its floor fails Check 1b — independent o
 
 For every file in `adrs/`:
 
-- Status is one of: Proposed, Accepted, Superseded by ADR-NNNN, Deprecated
+- Status is one of: Proposed, Accepted, Superseded by ADR-NNNN, Superseded in part by ADR-NNNN (one or more), Deprecated
 - Expiry / review date is populated and in the future (or marked for imminent review)
-- Alternatives considered ≥ 2 (or explicit "post-hoc ADR" statement)
+- ADR has exactly one of:
+  - Alternatives considered: ≥ 2 genuine options, each with cost (build + run first-year + run at-scale), reversibility, and a rejected-because line; OR
+  - Constrained decision — no alternatives, with all three required fields (constraint source citing CON-*-NN + authority, foreclosed alternatives with rationale, re-test trigger). A CON-ORG-NN alone is not a valid constraint source (`tech-selection-critic` High finding class); OR
+  - Recorded post-hoc — ADR header field `Recorded post-hoc: Yes` with the decision date and months-later gap stated.
 - Drivers trace to FR/NFR/CON IDs
 - Consequences include at least one Negative / accepted trade-off
 - Rollback / exit criteria populated

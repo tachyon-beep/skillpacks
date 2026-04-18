@@ -8,9 +8,13 @@ The difference: a conclusion records what won. A choice records what was conside
 
 **Core principle:** Every ADR has traceable decision drivers, at least two genuine alternatives (or an explicit *constrained — no alternatives existed* statement), explicit consequences (good and bad), a rollback plan, a reversibility tag, an expiry / review date, and a cost dimension named in at least one driver.
 
+**Contents:** [Template](#adr-template) · [Lifecycle transitions](#lifecycle-transitions) (supersession, deprecation, partial supersession, amendment) · [Pressure Responses](#pressure-responses) · [Anti-Patterns](#anti-patterns-to-reject) · [SDLC handoff](#interaction-with-axiom-sdlc-engineeringdesign-and-build) · [Security handoff](#interaction-with-ordis-security-architect)
+
 The pattern is Michael Nygard's (2011) "Architecture Decision Records"; the specifics below tighten Nygard's original with MADR-style (Markdown Architectural Decision Records) drivers, explicit negatives, rollback, reversibility, cost as a first-class dimension, and expiry.
 
 ## When to Use
+
+See the router's Start Here (SKILL.md) if this is your first pass through the pack.
 
 - Recording any significant architectural decision: language, datastore, messaging, deployment target, auth, major framework, style (monolith/microservices/event-driven/serverless)
 - A decision in `05-tech-selection-rationale.md` affects multiple components, downstream teams, or the rollback path
@@ -62,7 +66,7 @@ Every ADR MUST include every section. Empty sections are the most common drift m
 - **DRIVER-2 [CON-REG-01]:** [e.g., "EU data residency (GDPR Art. 44–49)"]
 - **DRIVER-3 [COST]:** [if the decision has a cost driver — e.g., "first-year run cost ≤ $30k, see `05-tech-selection-rationale.md`"]
 
-(Drivers are what the alternatives are scored against. Every driver MUST carry at least one ID in square brackets: `FR-NN`, `NFR-NN`, `CON-*-NN`, or the reserved driver class `[COST]` (when the driver is a cost/licence/TCO target named in `05-`). A driver without a bracketed ID is an opinion, not a driver, and the assembly consistency gate cannot cross-check it. At least one cost-class driver should appear for decisions that affect infrastructure, licence, or operational spend — a decision whose drivers never name cost is a decision that will be re-opened when the bill arrives.)
+(Drivers are what the alternatives are scored against. Every driver MUST carry at least one ID in square brackets: `FR-NN`, `NFR-NN`, `CON-*-NN`, or the reserved driver class `[COST]` (when the driver is a cost/licence/TCO target named in `05-`). A driver without a bracketed ID is an opinion, not a driver, and the consistency gate cannot cross-check it. At least one cost-class driver should appear for decisions that affect infrastructure, licence, or operational spend — a decision whose drivers never name cost is a decision that will be re-opened when the bill arrives.)
 
 ## Alternatives considered
 
@@ -141,7 +145,7 @@ Inventing strawman alternatives to satisfy the two-genuine-alternatives rule is 
 - **Threats addressed / enabled:** THREAT-NN — explicit statement of which threats this decision mitigates, and which it creates or leaves open. A decision that changes the trust boundary, authN/authZ posture, data-at-rest or data-in-transit stance, or segmentation MUST have at least one entry here (or a `N/A — not a security-affecting decision` line).
 - **Controls implemented / impacted:** CTRL-NN — if the threat model names controls, name which ones this decision realises or weakens.
 - **RTM updated:** [ ] yes / [ ] pending at time of ADR merge
-- **Requirements conflict check:** Does this decision relax, tighten, or contradict any listed FR/NFR/CON? If yes, the requirement file must be updated with the trade-off note — or the ADR is wrong. The assembly consistency gate will catch silent relaxations (e.g., an ADR that adopts eventual consistency while `02-NFR-05` still requires strong consistency); catching it here is cheaper.
+- **Requirements conflict check:** Does this decision relax, tighten, or contradict any listed FR/NFR/CON? If yes, the requirement file must be updated with the trade-off note — or the ADR is wrong. The consistency gate will catch silent relaxations (e.g., an ADR that adopts eventual consistency while `02-NFR-05` still requires strong consistency); catching it here is cheaper.
 - **Security-control conflict check:** Does this decision weaken or bypass a control named in the threat model? If yes, the threat-model control row must be updated with the trade-off note — or the ADR is wrong.
 
 ## Review log
@@ -206,7 +210,7 @@ Every supersession must update **both** ADRs:
 - New ADR `Links → Supersedes: ADR-NNNN`.
 - Old ADR `Status: Superseded by ADR-NNNN`.
 
-One-way links are integrity failures. The assembly gate catches them; catching them here is cheaper.
+One-way links are integrity failures. The consistency gate catches them; catching them here is cheaper.
 
 ### Moving from Proposed to Accepted
 
@@ -250,7 +254,7 @@ If every consequence is positive, the decision is insufficiently interrogated. E
 
 ### ❌ ADRs that silently relax NFRs
 
-"ADR-0006: adopt eventual consistency" while `02-NFR-05` still says "strong consistency required." Either the NFR changes (and the NFR file is updated with a note of the tradeoff) or the ADR is wrong. The assembly-skill consistency gate will catch this; catching it earlier here saves rework.
+"ADR-0006: adopt eventual consistency" while `02-NFR-05` still says "strong consistency required." Either the NFR changes (and the NFR file is updated with a note of the tradeoff) or the ADR is wrong. The consistency gate will catch this; catching it earlier here saves rework.
 
 ### ❌ ADRs that silently bypass security controls
 

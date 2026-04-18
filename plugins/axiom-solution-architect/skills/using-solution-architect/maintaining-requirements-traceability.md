@@ -8,7 +8,11 @@ The Requirements Traceability Matrix (RTM) is the audit trail between what-was-a
 
 **Core principle:** Every requirement has at least one satisfier. Every component has at least one requirement (or is explicitly decorative — rare). Every security-affecting requirement names the threats addressed and the controls realised.
 
+**Contents:** [The RTM Format](#the-rtm-format) · [How to Build It](#how-to-build-it) · [Forward vs backward traceability](#forward-vs-backward-traceability) · [Evidence types](#evidence-types--verification-vs-validation) · [Matching verification to requirement type](#matching-verification-to-requirement-type) · [Derived / emergent requirements](#derived--emergent-requirements) · [Change propagation](#change-propagation) · [Pressure Responses](#pressure-responses) · [Anti-Patterns](#anti-patterns-to-reject) · [Interaction with Consistency Gate](#interaction-with-consistency-gate)
+
 ## When to Use
+
+See the router's Start Here (SKILL.md) if this is your first pass through the pack.
 
 - Producing `14-requirements-traceability-matrix.md`
 - Validating the design before `assembling-solution-architecture-document` runs its consistency gate
@@ -26,6 +30,7 @@ The Requirements Traceability Matrix (RTM) is the audit trail between what-was-a
 | FR-01 | User can create account via OIDC | api-gateway, auth-service | ADR-0003 | THREAT-07 (credential stuffing) via CTRL-04 (rate limit), CTRL-09 (MFA enforcement) | integration-test `[INT]`: `auth/create-account` | product-owner UAT sign-off (account-flow acceptance criteria) |
 | FR-02 | User receives order confirmation within 5 s | order-service, notification-service, email-adapter | ADR-0005 | — (not security-affecting) | E2E `[E2E]`: `order/confirmation-latency` | — (fully VER) |
 | FR-03 | … | … | … | … | … | … |
+| FR-D-01 | Cache warm-up on deploy (derived from NFR-01 — P99 latency unmet on cold cache) | deploy-pipeline, cache | — (design-time only) | — (not security-affecting) | `[PLANNED][LOAD]` cache-warmup-rig, before stage-gate 2 | — (fully VER) |
 
 ## Non-functional requirements
 
@@ -35,6 +40,7 @@ The Requirements Traceability Matrix (RTM) is the audit trail between what-was-a
 | NFR-07 | 99.9% availability | api-gateway, read-service, datastore (Multi-AZ) | ADR-0004, ADR-0008 | — (not security-affecting) | SLO burn-rate alerts `[SLO]` + quarterly DR drill `[MANUAL]` | customer SLA review (top-3 customers, annual) |
 | NFR-12 | OIDC + MFA for admins | auth-service | ADR-0003 | THREAT-07, THREAT-11 via CTRL-09 (MFA), CTRL-12 (session-TTL enforcement) | pen-test checklist item 4.2 `[PENTEST]` + config audit script `[AUDIT]` | SOC2 auditor attestation (annual) |
 | NFR-U1 | SUS ≥ 80 for admin flows | admin-ui, auth-service | ADR-0011 | — (not security-affecting) | task-metric dashboard `[SYNTHETIC]` (completion rate, time-on-task) | usability test with ≥ 5 real admin users each release |
+| NFR-D-01 | Cold-start latency ≤ 10 s on deploy (derived from NFR-01 availability tail) | cache, deploy-pipeline | — | — (not security-affecting) | `[PLANNED][SYNTHETIC]` cold-start-probe, from release 2.3 | — (fully VER) |
 
 ## Constraints
 
@@ -124,7 +130,7 @@ Rule: the `Threats addressed / Controls` cell must be a positive statement — e
 #### NFR coverage gaps
 - NFR-07 has no ADR tracing to the 99.9% target design choice. Proposed action: add ADR for multi-AZ deployment (the architectural decision that achieves the target) and record it in the NFR-07 RTM row.
 
-**Resolution:** Each orphan must be resolved (add satisfier, remove the item, or move to `06-`) before the assembly gate passes Check 2.
+**Resolution:** Each orphan must be resolved (add satisfier, remove the item, or move to `06-`) before the consistency gate passes Check 2.
 
 ## Forward vs backward traceability
 
@@ -174,7 +180,7 @@ Requirements that arise during design, not in the input brief — e.g., "the cac
 2. Name the parent requirement in a "Derived from" column in the RTM.
 3. Are back-appended to `01-requirements.md` / `02-nfr-specification.md` at end of the design pass — **not** invented silently in the RTM.
 4. Count as scope changes for the input brief — flag in `00-scope-and-context.md` open-questions list until confirmed with the stakeholder.
-5. **VER/VAL back-fill:** a derived requirement whose verification does not yet exist must carry an explicit `[PLANNED]` marker in the VER cell, naming the test type and the stage at which it will be implemented — e.g., `[PLANNED][LOAD] cache-warmup-rig, before stage-gate 2`. A blank or hand-waved VER cell on a derived requirement is an orphan and fails the gate. Satisfied-in-design is not the same as satisfied-in-verification; the RTM must surface the difference.
+5. **VER/VAL back-fill:** a derived requirement whose verification does not yet exist must carry an explicit `[PLANNED]` marker in the VER cell, naming the test type and the stage at which it will be implemented — e.g., `[PLANNED][LOAD] cache-warmup-rig, before stage-gate 2`. A blank or hand-waved VER cell on a derived requirement is an orphan and fails the gate. Satisfied-in-design is not the same as satisfied-in-verification; the RTM must surface the difference. Derived requirements appear in the RTM with their `-D-` ID and (if verification is not yet implemented) the `[PLANNED][LEVEL]` marker. See the `FR-D-01` and `NFR-D-01` example rows in the RTM template above.
 
 If you discover three or more derived requirements of the same shape, the brief was under-specified for that concern. Record this as an input-maturity finding (see `triaging-input-maturity`).
 
@@ -194,7 +200,7 @@ The consistency gate in `assembling-solution-architecture-document` runs step 6 
 
 ## ADR ↔ requirement direction
 
-ADRs record decisions; requirements drive decisions. Every ADR names its drivers (see `writing-rigorous-adrs`), and drivers must cite `FR-*`, `NFR-*`, `CON-*-*`, or `[COST]` IDs. The RTM's "Satisfied by ADRs" column is therefore the inverse of ADR drivers; if an ADR names a driver but that requirement doesn't list the ADR — or vice versa — the RTM or the ADR is out of date. The assembly gate runs this bidirectional check and flags any mismatch.
+ADRs record decisions; requirements drive decisions. Every ADR names its drivers (see `writing-rigorous-adrs`), and drivers must cite `FR-*`, `NFR-*`, `CON-*-*`, or `[COST]` IDs. The RTM's "Satisfied by ADRs" column is therefore the inverse of ADR drivers; if an ADR names a driver but that requirement doesn't list the ADR — or vice versa — the RTM or the ADR is out of date. The consistency gate runs this bidirectional check and flags any mismatch.
 
 **Resolution rule when directions disagree:** the requirement side is authoritative. Requirements existed before the ADR; an ADR whose driver cites a requirement that is not in `01-` / `02-` is an orphan ADR (see orphan report), not a reason to silently add the requirement. Fix the ADR or add the requirement deliberately with a change-propagation pass — do not backfill requirements from ADR drivers to reconcile the gate.
 
@@ -206,7 +212,7 @@ When `ordis-security-architect` produces a threat model, every `THREAT-NN` names
 
 - Every security-affecting requirement (any `FR-*` touching authN/authZ/data-handling, any `NFR-*` in the security category, any `CON-REG-*`) MUST either name at least one `THREAT-NN` with its realising `CTRL-NN` IDs, or state `— (not security-affecting)` explicitly.
 - Every `CTRL-NN` in the threat model MUST appear in at least one RTM row. A control with no requirement to serve is either over-design (flag for removal) or an undocumented requirement (add it).
-- The assembly gate runs this bidirectional check when a threat-model artifact is present in the workspace.
+- The consistency gate runs this bidirectional check when a threat-model artifact is present in the workspace.
 
 Threat-model entries do not get requirement IDs. Like ADRs, they are responses to requirements, not requirements themselves.
 
@@ -262,7 +268,7 @@ A requirement in `01-` that quietly disappears by the RTM stage, without a note 
 
 A derived requirement whose verification is "to be implemented" with no `[PLANNED][level]` tag and no named test rig. Satisfied-in-design is not satisfied-in-verification; the difference must be visible in the matrix.
 
-## Interaction with Assembly Consistency Gate
+## Interaction with Consistency Gate
 
 `assembling-solution-architecture-document` runs these checks:
 

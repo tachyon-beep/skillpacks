@@ -14,7 +14,19 @@ This skill produces three artifacts that keep those failures from landing in pro
 
 **Core principle:** Every external touchpoint has a contract. Every cutover has an observable rollback trigger. Every risk in the register is architectural, not operational.
 
+- [`15-integration-plan.md`](#15-integration-planmd)
+- [`16-migration-plan.md`](#16-migration-planmd-brownfield-only) — brownfield only
+- [Data-migration pattern selection](#data-migration-pattern-selection)
+- [`17-risk-register.md`](#17-risk-registermd)
+- [Risk → origin feedback loop](#risk--origin-feedback-loop)
+- [NFR conflicts surfaced by integration and migration](#nfr-conflicts-surfaced-by-integration-and-migration)
+- [Pressure Responses](#pressure-responses)
+- [Anti-Patterns to Reject](#anti-patterns-to-reject)
+- [Brownfield Without Archaeologist Output](#brownfield-without-archaeologist-output)
+
 ## When to Use
+
+See the router's Start Here (SKILL.md) if this is your first pass through the pack.
 
 This skill is not optional. Every solution workflow runs it, with the migration artifact gated on brownfield.
 

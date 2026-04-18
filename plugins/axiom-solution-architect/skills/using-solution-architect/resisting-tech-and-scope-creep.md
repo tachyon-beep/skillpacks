@@ -16,6 +16,8 @@ This skill exists to kill all three, even under pressure from stakeholders with 
 
 ## When to Use
 
+See the router's Start Here (SKILL.md) if this is your first pass through the pack.
+
 - Producing `04-solution-overview.md`, `05-tech-selection-rationale.md`, `06-descoped-and-deferred.md`
 - The user or a stakeholder has already "chosen" the tech and wants you to rubber-stamp it
 - A CTO, VP, or founder has vendor relationships steering tech choices
@@ -288,7 +290,7 @@ the classified tier, that reference triggers a **tier promotion**. Record any
 architectural assumption that would promote the tier explicitly in `04-` so
 `triaging-input-maturity` can re-classify. Example: "The solution assumes
 per-region replication, which requires `13-deployment-view.md` (L-tier
-artifact), promoting this from S to L tier." The assembly consistency gate
+artifact), promoting this from S to L tier." The consistency gate
 will catch undeclared tier promotions, but surfacing them here saves rework.
 
 **Not covered:**

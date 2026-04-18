@@ -8,7 +8,11 @@
 
 **Core principle:** Every NFR has a number and a measurement method. Every component's NFR load is explicit.
 
+**Contents:** [NFR Categories](#nfr-categories-starter-set) · [`02-nfr-specification.md` template](#02-nfr-specificationmd--the-quantified-list) · [`03-nfr-mapping.md` template](#03-nfr-mappingmd--the-load-bearing-map) · [Per-component NFR contract](#per-component-nfr-contract) · [Handling NFR Conflicts](#handling-nfr-conflicts) · [Pressure Responses](#pressure-responses) · [Anti-Patterns](#anti-patterns-to-reject)
+
 ## When to Use
+
+See the router's Start Here (SKILL.md) if this is your first pass through the pack.
 
 - Producing `02-nfr-specification.md` and `03-nfr-mapping.md`
 - The input lists NFRs as adjectives ("performant", "reliable", "user-friendly")
@@ -45,14 +49,12 @@ stakeholder / auditor validation). Some categories list both.
 | Portability | Target environments (clouds, on-prem, browsers, OS versions), infra-abstraction boundary | VER |
 | Localisation / i18n | Locales supported, string externalisation %, bidi / plural-rule coverage | VER |
 
-**Verification and validation are not alternates.** Every NFR needs both:
-*verification* asks "does the system meet the target?" (automated probe, audit
-script, load test); *validation* asks "is this target the right one for the
-business?" (stakeholder sign-off, regulator confirmation, usability-test result).
-The column names the *primary evidence mode* — where the weight of evidence
-lives — not the only one. A VER-primary NFR still needs a stated validator (the
-role that agrees the target is correct). A VAL-primary NFR still needs a
-verification predicate (what observation would confirm or refute it).
+**Verification vs validation — primary mode is load-bearing; cross-mode is required only where noted.**
+
+- *Verification* asks "does the system meet the target?" (probe, audit script, load test).
+- *Validation* asks "is this target the right one for the business?" (stakeholder sign-off, regulator confirmation, usability evidence).
+
+The table's column names the **primary evidence mode**. For the following rows, *both* modes are required (the VAL column in `14-requirements-traceability-matrix.md` must be populated, not `—`): Accessibility, Usability, Compliance — attestation, Privacy / Data residency where DPO sign-off is contractual, and any NFR whose Source/driver is a stakeholder ask rather than an engineering target. For every other row, `— (fully VER)` is acceptable in the RTM's VAL column. A VER-primary NFR still names its **owner** — the role that signs off the target has been met — but does not require a separate validator.
 
 Not every category applies to every system. A `02-nfr-specification.md` with 3
 well-quantified NFRs beats one with 15 handwavy adjectives. A category that
@@ -188,7 +190,7 @@ component-level NFR contract:
 | NFR-07 | 99.95% (exceeds app SLO of 99.9%) | instance health probe | read-service team |
 ```
 
-Rule: the component spec's NFR contract table must match `03-nfr-mapping.md` exactly. The assembly consistency gate diffs them; any mismatch fails the gate.
+Rule: the component spec's NFR contract table must match `03-nfr-mapping.md` exactly. The consistency gate diffs them; any mismatch fails the gate.
 
 ## Handling NFR Conflicts
 
@@ -257,7 +259,7 @@ Budget check:
 
 **Per-component NFR contract cross-check:**
 
-The following appears in `09-component-specifications.md` for `auth-service`. It must match the mapping above exactly — the assembly gate diffs them.
+The following appears in `09-component-specifications.md` for `auth-service`. It must match the mapping above exactly — the consistency gate diffs them.
 
 | NFR | Contribution | Measured | Owner |
 |-----|--------------|----------|-------|

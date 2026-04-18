@@ -69,13 +69,13 @@ The pack produces numbered artifacts in a `solution-architecture/` workspace:
 | 04 | `solution-overview.md` | `resisting-tech-and-scope-creep` |
 | 05 | `tech-selection-rationale.md` | `resisting-tech-and-scope-creep` |
 | 06 | `descoped-and-deferred.md` | `resisting-tech-and-scope-creep` |
-| 07 | `c4-context.md` | router catalog guidance |
-| 08 | `c4-containers.md` | router catalog guidance |
-| 09 | `component-specifications.md` | router catalog guidance |
-| 10 | `data-model.md` | router catalog guidance |
-| 11 | `interface-contracts.md` | router catalog guidance |
-| 12 | `sequence-diagrams.md` | router catalog guidance |
-| 13 | `deployment-view.md` | router catalog guidance |
+| 07 | `c4-context.md` | router-owned artifacts |
+| 08 | `c4-containers.md` | router-owned artifacts |
+| 09 | `component-specifications.md` | router-owned artifacts |
+| 10 | `data-model.md` | router-owned artifacts |
+| 11 | `interface-contracts.md` | router-owned artifacts |
+| 12 | `sequence-diagrams.md` | router-owned artifacts |
+| 13 | `deployment-view.md` | router-owned artifacts |
 | 14 | `requirements-traceability-matrix.md` | `maintaining-requirements-traceability` |
 | 15 | `integration-plan.md` | `designing-for-integration-and-migration` |
 | 16 | `migration-plan.md` (brownfield only) | `designing-for-integration-and-migration` |
@@ -96,6 +96,8 @@ Every workflow is classified at the end of `triaging-input-maturity` into one of
 | M | New subsystem, new integrations, or new NFR targets | S set + `07, 08, 10, 13` |
 | L | Cross-system, multiple new services, new data stores | M set + `12` (sequence diagrams) + C4 component view (produced as a subsection of `09-component-specifications.md` — not a new numbered artifact) |
 | XL | Governed by ARB / TOGAF / regulator (enterprise context) | L set + `archimate-model/`, `togaf-deliverable-map.md` |
+
+`triaging-input-maturity` is the authoritative source for tier classification — if a trigger here is ambiguous, defer to the precise form in that sheet.
 
 The tier is authoritative. If `04-solution-overview.md` or any ADR references an artifact from a higher tier, that artifact becomes required regardless of the declared tier — this is a tier promotion, not a waiver. Brownfield adds `16-migration-plan.md` at every tier.
 
@@ -158,18 +160,18 @@ Target environments, runtime topology, scaling posture, regions/zones, network b
 
 ### Scenario: "Critique this design package"
 
-Use the `/review-solution-design` command, which dispatches the `solution-design-reviewer` agent. Provide the path to your `solution-architecture/` workspace or a single SAD file.
+Use `/review-solution-design`, which dispatches `agent: solution-design-reviewer`. Provide the path to your `solution-architecture/` workspace or a single SAD file.
 
 ### Scenario: "Is Kafka the right choice for this?"
 
-Use the `tech-selection-critic` agent. Red-teams a tech choice against requirements and constraints.
+Use `agent: tech-selection-critic`. Red-teams a tech choice against requirements and constraints.
 
 ### Specialist Agents
 
 The pack includes two agents that review or critique designs without producing artifacts:
 
-- **`solution-design-reviewer`** — Critiques an existing design package (`99-solution-architecture-document.md` or numbered artifact set) for the ten canonical failure modes (tech-before-problem, NFR handwaving, untraceable design, etc.). Invoked via `/review-solution-design`.
-- **`tech-selection-critic`** — Red-teams a single tech choice (datastore, messaging, language, platform) against requirements and alternatives. Invoke when you have a proposed choice and want to validate it before recording in `05-` or an ADR.
+- **`agent: solution-design-reviewer`** — Critiques an existing design package (`99-solution-architecture-document.md` or numbered artifact set) for the ten canonical failure modes (tech-before-problem, NFR handwaving, untraceable design, etc.). Invoked via `/review-solution-design`.
+- **`agent: tech-selection-critic`** — Red-teams a single tech choice (datastore, messaging, language, platform) against requirements and alternatives. Invoke when you have a proposed choice and want to validate it before recording in `05-` or an ADR.
 
 **Agents vs. skills:** Skills *produce* artifacts end-to-end (triage → assembly). Agents *review or critique* existing artifacts or decisions. Invoke an agent when the work is in review or validation; load a skill when you are producing.
 
@@ -274,7 +276,7 @@ The pipeline is designed to be run end-to-end for M-tier and above. For lighter 
 | Enterprise binding required but no TOGAF/ArchiMate skill capacity on the team | Produce the non-enterprise artifact set; record as a gate waiver in the Check 8 section of the gate report (not in `06-descoped-and-deferred.md` — waivers and scope decisions are distinct; see `assembling-solution-architecture-document`); schedule the TOGAF mapping as a follow-up task |
 | Stakeholder insists on big-bang cutover with no business-time-constraint reason | Stop `16-` production, return to stakeholder with the "reshape into stages" guidance from `designing-for-integration-and-migration` |
 
-**Gate waiver vs descope:** a gate waiver says "this check failed and we are shipping anyway — here is why"; a `06-descoped-and-deferred.md` entry says "this capability or artifact is outside this design's scope — here is the trigger for reconsideration." An incomplete artifact is a waiver candidate; an out-of-scope feature is a `06-` candidate.
+**Gate waiver vs descope:** gate waivers record failures shipped anyway; `06-descoped-and-deferred.md` entries record out-of-scope features with reactivation triggers. See `assembling-solution-architecture-document` for the full distinction between gate waivers and descopes.
 
 ## Update Workflows
 

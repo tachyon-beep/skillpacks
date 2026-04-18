@@ -8,14 +8,27 @@ When a solution design will enter an organisation's EA function (ARB, enterprise
 
 **Core principle:** Right layer, right element, right relationship, right viewpoint. Nothing "close enough."
 
+- [ArchiMate Layer and Aspect Taxonomy](#archimate-layer-and-aspect-taxonomy-short-reference)
+- [ArchiMate Relationships](#archimate-relationships)
+- [Views and Viewpoints](#views-and-viewpoints)
+- [Model Files](#model-files) — `archimate-model/` directory
+- [`togaf-deliverable-map.md`](#togaf-deliverable-mapmd)
+- [Pressure Responses](#pressure-responses)
+- [Anti-Patterns to Reject](#anti-patterns-to-reject)
+- [Stop Conditions](#stop-conditions)
+
 ## When to Use
 
-Activate only when `triaging-input-maturity` confirms enterprise context — one of:
+See the router's Start Here (SKILL.md) if this is your first pass through the pack.
 
-- TOGAF / ADM / phase references (A/B/C/D/E/F/G/H)
-- ArchiMate references or named EA tooling (Sparx, Archi, BiZZdesign, Visual Paradigm)
-- ARB submission required
-- "Enterprise architecture" / "target state" / "current state" / explicit phase gates named in the brief
+Activate only when `triaging-input-maturity` confirms enterprise context. The four activation criteria (`SKILL.md`) are:
+
+- ARB submission is a release gate for this project
+- The customer organization publishes a TOGAF-aligned deliverable set (even if not named as such)
+- A governing enterprise-architecture function must countersign the SAD
+- ArchiMate models are a required artifact for downstream tooling
+
+**Keywords are probes, not triggers.** Phrases such as TOGAF, ADM, phase A–H, ArchiMate, Sparx EA / Archi / BiZZdesign, "enterprise architecture", "target state", "current state", "architecture governance", or explicit phase gates appearing in a brief mean *ask which of the four criteria applies*. They do not by themselves activate this skill. Activation is recorded in `00-scope-and-context.md` as `Enterprise: activated — [criterion]` or `Enterprise: not activated — [reason]`; silence is a gate failure.
 
 Do not produce TOGAF/ArchiMate artifacts for product-engineering work without an EA consumer. Overhead without a reader is waste.
 
