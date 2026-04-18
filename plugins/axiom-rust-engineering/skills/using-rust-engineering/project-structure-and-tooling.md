@@ -112,28 +112,32 @@ inherits   = "release"         # Benchmarks should match release performance
 - `panic = "abort"` is fine for binaries; **never** set it for library crates — downstream users may need unwinding.
 - `codegen-units = 1` is for release only; dev builds use the default 256 for maximum parallelism.
 
-### Cargo.lock Policy: Commit for Binaries, Skip for Libraries
+### Cargo.lock Policy: Commit It by Default
 
-**Binary / application crates (commit `Cargo.lock`):**
+The Cargo book's current guidance is explicit: **"when in doubt, check
+`Cargo.lock` into version control."** That applies to binaries AND libraries.
 
 ```gitignore
-# .gitignore for a binary crate — Cargo.lock is NOT listed
+# .gitignore — works for binaries and libraries alike
 target/
 ```
 
-Committing `Cargo.lock` for a binary makes CI exactly reproducible. Without it, `cargo install` on CI can pull a newer patch release that breaks the build.
+Committing `Cargo.lock` makes CI exactly reproducible, pins MSRV verification
+against a known-good graph, and makes bisection deterministic. For binaries and
+workspaces with binary targets, skipping it means `cargo install` on CI can pull
+a newer patch release that breaks the build. For libraries, the file is simply
+ignored by `cargo` when the library is consumed as a dependency — committing it
+does not affect downstream consumers either way, so the upside (reproducible
+CI, MSRV, bisect) is essentially free.
 
-**Library crates (skip `Cargo.lock`):**
+**Historical carve-out (now weakening):**
 
-```gitignore
-# .gitignore for a library crate
-/target/
-Cargo.lock
-```
-
-Libraries must let their consumers resolve the full dependency graph. A committed `Cargo.lock` in a library is ignored by `cargo` anyway when the library is used as a dependency — but it pollutes the repository and misleads contributors who think it provides reproducibility.
-
-**Rationale:** The Cargo book is explicit: library authors should not commit `Cargo.lock`. Binary authors should.
+Older guidance was "libraries should skip `Cargo.lock` so contributors' first
+build uses the latest compatible versions." That rationale has faded: if you
+want to test against fresh versions, run `cargo update` on a schedule in CI
+rather than relying on each contributor's local resolution. The only remaining
+case for skipping is a library with no CI, no MSRV check, and no binary tooling
+that benefits from a locked graph — rare in practice. When in doubt, commit it.
 
 ### Build Profiles Quick Reference
 
@@ -163,7 +167,7 @@ A workspace groups multiple crates under a single `Cargo.lock` and shared `targe
 ```
 my-project/
 ├── Cargo.toml              # Workspace manifest (no [package])
-├── Cargo.lock              # Shared lock (commit for binary workspace)
+├── Cargo.lock              # Shared lock (commit by default — see policy section)
 ├── rust-toolchain.toml     # Shared toolchain pin
 ├── deny.toml               # cargo-deny policy
 ├── clippy.toml             # Shared clippy config
@@ -460,14 +464,19 @@ todo         = "warn"
 
 **Member crate opt-out (for crates that legitimately need unsafe):**
 
-Cargo rejects mixing `[lints] workspace = true` with sibling override tables like
-`[lints.rust]` in the same manifest — the error is `cannot override workspace.lints
-in lints`. Two legal patterns:
+Cargo's `[lints]` inheritance is all-or-nothing at the table level: a member either
+opts in with `[lints] workspace = true` and inherits the workspace set verbatim,
+or declares its own `[lints.rust]` / `[lints.clippy]` tables and takes full
+responsibility for its policy. There is no syntax for "inherit everything except
+one lint" inside `[lints]` itself — any per-lint override for an inherited lint
+must happen at the source level via an `#![allow(...)]` / `#![deny(...)]`
+attribute on the crate root. Two common patterns:
 
 ```toml
 # Option A — crates/my-ffi-layer/Cargo.toml
-# Opt out of workspace inheritance entirely and re-declare what this crate needs.
-# Workspace lints are NOT merged in when `workspace = true` is absent.
+# Opt out of workspace inheritance and re-declare the lints this crate wants.
+# Workspace lints are NOT merged in when `workspace = true` is absent — whatever
+# you don't re-declare here is simply not enforced in this crate.
 [lints.rust]
 unsafe_code  = "allow"          # this crate wraps C APIs
 missing_docs = "warn"
@@ -476,7 +485,8 @@ missing_docs = "warn"
 
 ```toml
 # Option B — crates/my-ffi-layer/Cargo.toml
-# Keep workspace inheritance and scope the override to a source-level attribute.
+# Keep workspace inheritance and scope the single override to a source-level
+# attribute in the crate root. The rest of the workspace policy stays in force.
 [lints]
 workspace = true
 ```
@@ -485,6 +495,10 @@ workspace = true
 // crates/my-ffi-layer/src/lib.rs — narrow, auditable override at the crate root.
 #![allow(unsafe_code)]
 ```
+
+Option B is usually the better choice when you only need to relax one or two
+lints, because the workspace set stays the source of truth and the exception is
+visible in the affected crate's source.
 
 ### `.cargo/config.toml` — Build-Level Configuration
 
@@ -501,8 +515,10 @@ linker  = "clang"
 rustflags = ["-C", "link-arg=-fuse-ld=mold"]
 
 [target.aarch64-apple-darwin]
-# Apple Silicon: use lld
-rustflags = ["-C", "link-arg=-fuse-ld=/opt/homebrew/opt/llvm/bin/ld64.lld"]
+# Apple Silicon: use lld (install via `brew install lld`).
+# The `ld64.lld` binary lives in the Homebrew `lld` formula's bin directory,
+# not the `llvm` formula. Verify with `brew --prefix lld` if the path differs.
+rustflags = ["-C", "link-arg=-fuse-ld=/opt/homebrew/opt/lld/bin/ld64.lld"]
 
 [alias]
 # Convenient cargo aliases
@@ -1009,21 +1025,24 @@ clean-dev  = "clean --profile dev"
 
 ## Anti-Patterns
 
-### AP1: Committing `target/` or Mishandling `Cargo.lock`
+### AP1: Committing `target/`
 
-**Why wrong:** `target/` is gigabytes of compiled artifacts — committing it destroys repository usability. Committing `Cargo.lock` in a library crate is ignored by downstream users but misleads contributors who think it provides reproducibility.
+**Why wrong:** `target/` is gigabytes of compiled artifacts — committing it
+destroys repository usability, bloats clones, and produces merge conflicts on
+every build. Workspaces all share a single root `target/`, so one entry at the
+workspace root is enough.
 
 **The fix:**
 
 ```gitignore
-# For both libraries and binaries:
+# .gitignore at the workspace root — applies to all member crates
 /target/
-
-# For library crates ONLY — skip Cargo.lock
-Cargo.lock
 ```
 
-**Rule:** Binary (application) crates commit `Cargo.lock`. Library crates do not.
+**Rule on `Cargo.lock`:** commit it by default, for binaries AND libraries.
+See the "Cargo.lock Policy" section earlier in this sheet for the full
+rationale; the older "libraries should skip Cargo.lock" guidance is no longer
+the Cargo book's recommendation.
 
 ---
 
@@ -1123,10 +1142,10 @@ git commit -m "chore: add cargo-deny policy"
 - [ ] `rust-toolchain.toml`: exact stable channel pinned, `rustfmt` + `clippy` + `rust-src` components listed
 - [ ] `rustfmt.toml`: `edition = "2024"`, `imports_granularity = "Crate"`, `group_imports = "StdExternalCrate"`
 - [ ] `[lints]` table in `Cargo.toml`: `unsafe_code = "deny"`, `clippy::all = "warn"`, `clippy::pedantic = "warn"`
-- [ ] `.gitignore`: `/target/` listed; `Cargo.lock` listed iff it's a library
+- [ ] `.gitignore`: `/target/` listed (no `Cargo.lock` entry — commit it)
+- [ ] `Cargo.lock` committed (default for binaries AND libraries in 2025+)
 - [ ] `deny.toml` created and committed with license allowlist
 - [ ] CI workflow: fmt, clippy, test (nextest), deny, doc jobs
-- [ ] `Cargo.lock` committed iff binary/application crate
 
 **New workspace:**
 

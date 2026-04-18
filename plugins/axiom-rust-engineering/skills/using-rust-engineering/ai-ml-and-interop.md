@@ -12,23 +12,34 @@ What this sheet covers: PyO3 extension modules, the candle and burn inference fr
 
 What this sheet does not cover: training pipelines, gradient computation, automatic differentiation, or research workflow tooling. Those belong in Python with PyTorch. See the Yzmir skillpack for that work.
 
-Baseline: Rust stable 1.87, 2024 edition, PyO3 0.22+, candle 0.8+, burn 0.16+.
+Baseline: recent stable Rust (edition 2024, MSRV 1.85+), PyO3 0.25+, numpy 0.25+,
+candle 0.11+, burn 0.17+, tch 0.19+. The ML-interop crate ecosystem moves fast —
+verify each pin against crates.io before shipping rather than trusting the exact
+version numbers below.
 
-> **PyO3 version drift (0.22 → 0.23 → 0.24)**: all the Python-binding code in
-> this sheet targets the `Bound<'py, T>` API that became primary in 0.21 and is
-> the only API in 0.22. Key transitions to know about:
+> **PyO3 version drift**: all the Python-binding code in this sheet targets the
+> `Bound<'py, T>` API that became primary in 0.21, became the recommended API in
+> 0.22, and has been iteratively refined through 0.23, 0.24, and 0.25 while the
+> legacy `&PyAny` / `Py<PyAny>` surface was gradually phased out. If you are starting
+> a new project, pin the latest 0.x on crates.io. Key transitions to know about
+> when bumping majors on an existing project:
 >
 > - **0.23 (Nov 2024)** introduced `IntoPyObject` to replace the legacy `IntoPy`
 >   / `ToPyObject` traits (both deprecated) and added experimental support for
 >   free-threaded CPython (3.13t). Expect deprecation warnings on any
 >   `impl IntoPy<PyObject>` or `#[derive(ToPyObject)]` — the replacement is
 >   `impl<'py> IntoPyObject<'py> for ...`.
-> - **0.24 (early 2025)** continues the `Bound` migration and is tightening the
->   GIL-token API; `Python::with_gil` is the stable entry point, and the older
->   `&PyAny` / `Py<PyAny>` return types are being phased out in favour of
->   `Bound<'py, PyAny>`. Track the `pyo3` CHANGELOG before bumping majors.
+> - **0.24 / 0.25 (2025)** continue the `Bound` migration, tighten the
+>   GIL-token API (`Python::with_gil` is the stable entry point), finish phasing
+>   out `&PyAny` / `Py<PyAny>` return types in favour of `Bound<'py, PyAny>`,
+>   and remove several forward-compat shims that existed in 0.21/0.22 (notably
+>   the `_bound`-suffixed numpy constructors). Read the CHANGELOG before
+>   bumping.
 >
-> The `Bound` patterns in this sheet are forward-compatible with 0.23 and 0.24.
+> The `Bound` patterns in this sheet are forward-compatible with 0.23, 0.24,
+> and 0.25. If you are still on 0.22, the only code in this sheet that needs
+> adjustment is the numpy return path — see the note in the `normalize_inplace`
+> example.
 
 ## When to Use
 
@@ -164,10 +175,12 @@ edition = "2024"   # edition 2024 needs Rust >= 1.85; use "2021" if on older too
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-pyo3 = { version = "0.22", features = ["extension-module"] }
-# On PyO3 0.23+, additionally consider enabling abi3 for a single wheel that
-# works across Python minor versions:
-#   pyo3 = { version = "0.23", features = ["extension-module", "abi3-py39"] }
+pyo3 = { version = "0.25", features = ["extension-module"] }
+# Consider enabling abi3 for a single wheel that works across Python minor
+# versions (stable since PyO3 0.19):
+#   pyo3 = { version = "0.25", features = ["extension-module", "abi3-py39"] }
+# Check crates.io for the latest 0.x before pinning — PyO3 has been releasing
+# roughly two minor versions per year and 0.26+ may already be out.
 ```
 
 ### A complete extension module: functions and classes
@@ -347,9 +360,10 @@ Avoid copying data between Python and Rust when possible. The buffer protocol le
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
-// For numpy arrays, use the `numpy` crate (pyo3 extension)
+// For numpy arrays, use the `numpy` crate (pyo3 extension). Its major version
+// tracks pyo3's — keep them in lockstep.
 // Add to Cargo.toml:
-//   numpy = "0.22"
+//   numpy = "0.25"
 
 use numpy::{PyArray1, PyReadonlyArray1, IntoPyArray};
 // When you extend the example to mutable arrays, you'll also need:
@@ -378,11 +392,12 @@ fn normalize_inplace<'py>(
         let std_dev = var.sqrt();
         owned.iter().map(|x| (x - mean) / (std_dev + 1e-8)).collect()
     });
-    // numpy 0.22: `into_pyarray` returns the deprecated `&'py PyArray<...>`;
-    // `into_pyarray_bound` returns the `Bound<'py, PyArray<...>>` this signature
-    // expects. numpy 0.23+ collapses them — there `into_pyarray` itself returns
-    // `Bound` and `into_pyarray_bound` is removed.
-    Ok(result.into_pyarray_bound(py))
+    // numpy 0.23+ (which you should be on — see the version note at the top of
+    // this sheet): `into_pyarray` returns `Bound<'py, PyArray<...>>` directly,
+    // which is what this signature expects. The older `into_pyarray_bound`
+    // helper existed in 0.21/0.22 as a forward-compat shim and was removed in
+    // 0.23. If you are still on 0.22, call `into_pyarray_bound(py)` instead.
+    Ok(result.into_pyarray(py))
 }
 ```
 
@@ -396,15 +411,15 @@ Add to `Cargo.toml`:
 
 ```toml
 [dependencies]
-candle-core = "0.8"            # 0.8.x is the Dec-2024 line; check crates.io for latest 0.x
-candle-nn = "0.8"
-candle-transformers = "0.8"    # optional: pre-built transformer blocks
-safetensors = "0.4"
-tokenizers = "0.20"            # optional: Hugging Face tokenizer (0.21 available as of early 2025)
+candle-core = "0.11"           # check crates.io for the latest 0.x before pinning
+candle-nn = "0.11"
+candle-transformers = "0.11"   # optional: pre-built transformer blocks
+safetensors = "0.4"            # 0.4.x is the long-lived stable line
+tokenizers = "0.21"            # optional: Hugging Face tokenizer
 ```
 
 Candle is pre-1.0 and every 0.x bump is allowed to be a breaking change — pin
-an exact minor (`0.8`, not `>=0.8`) in production builds and upgrade
+an exact minor (e.g. `0.11`, not `>=0.11`) in production builds and upgrade
 intentionally. The three candle crates (`candle-core`, `candle-nn`,
 `candle-transformers`) must move together; mixing versions breaks the `VarBuilder`
 and `Module` traits.
@@ -555,7 +570,7 @@ Burn is an alternative ML framework for Rust with a focus on backend abstraction
 
 ```toml
 [dependencies]
-burn = { version = "0.16", features = ["wgpu"] }
+burn = { version = "0.17", features = ["wgpu"] }
 # Available backends:
 #   "wgpu"    — cross-platform GPU via WebGPU (works on macOS, Linux, Windows,
 #              and browsers via wasm — this is burn's unique selling point)
@@ -566,10 +581,12 @@ burn = { version = "0.16", features = ["wgpu"] }
 ```
 
 Burn is moving faster than candle and has had breaking API changes roughly every
-minor release (0.13 → 0.14 → 0.15 → 0.16 all broke something). Pin the exact
-minor, read the release notes before upgrading, and expect `Module` derives and
-`Backend` bounds to churn. The code below targets 0.16; earlier versions use
-slightly different `init` / `LinearConfig` signatures.
+minor release. Pin the exact minor, read the release notes before upgrading, and
+expect `Module` derives, `Backend` bounds, and `init` / `LinearConfig` signatures
+to churn. The code below targets 0.17; verify the exact signatures of
+`LinearConfig::new(...).init(device)`, `DropoutConfig::new(...).init()`, and
+`Tensor::from_floats` against the version you actually pin — earlier versions
+and later versions both differ in subtle ways.
 
 ### Backend abstraction
 
@@ -649,8 +666,10 @@ Choose **burn** when: you need training in Rust, want WebGPU support, or need Vu
 
 ```toml
 [dependencies]
-# Gate behind a feature flag — most users should not need tch-rs
-tch = { version = "0.16", optional = true }
+# Gate behind a feature flag — most users should not need tch-rs.
+# Each tch minor is pinned to a specific libtorch version; check the tch
+# README for the required libtorch before upgrading.
+tch = { version = "0.19", optional = true }
 
 [features]
 libtorch = ["tch"]
@@ -666,9 +685,11 @@ libtorch = ["tch"]
 export LIBTORCH=/opt/libtorch               # path to extracted libtorch
 export LD_LIBRARY_PATH=/opt/libtorch/lib:$LD_LIBRARY_PATH
 
-# CUDA version must match libtorch's CUDA expectation exactly.
-# libtorch 2.3 + CUDA 12.1 will not work with CUDA 12.4.
-# This is the main pain point.
+# CUDA version must match libtorch's CUDA expectation exactly. Each libtorch
+# release is built against one CUDA minor (e.g. libtorch 2.5 + CUDA 12.4);
+# a host CUDA install at a different minor version WILL break runtime loading,
+# typically with a cryptic "CUDA driver version is insufficient" error.
+# This is the main operational pain point with tch-rs.
 cargo build --features libtorch
 ```
 
@@ -778,7 +799,7 @@ nalgebra's type system encodes matrix dimensions at compile time. A `Matrix3<f64
 
 ```toml
 [dependencies]
-nalgebra = "0.33"
+nalgebra = "0.34"
 ```
 
 ```rust
@@ -1150,7 +1171,7 @@ fn process(py: Python<'_>, data: Vec<f32>) -> PyResult<Vec<f32>> {
 ```toml
 # ✅ CORRECT: optional, feature-gated
 [dependencies]
-tch = { version = "0.16", optional = true }
+tch = { version = "0.19", optional = true }
 
 [features]
 libtorch-backend = ["tch"]

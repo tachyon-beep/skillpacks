@@ -46,21 +46,41 @@ If `deny.toml` is missing, bootstrap it with `cargo deny init` (generates a defa
 config you then tighten) or create it at the workspace root using the template below:
 
 ```toml
+# deny.toml — cargo-deny 0.16+ (v2 schema; older `vulnerability`/`unmaintained`/
+# `licenses.deny`/`licenses.default` fields were removed).
 [advisories]
-vulnerability = "deny"
-unmaintained = "warn"
-yanked = "warn"
+version = 2
+yanked = "deny"
+ignore = []
+# In the v2 schema, any unhandled advisory fails the run by default — there is
+# no separate `vulnerability` knob. Add `ignore = ["RUSTSEC-YYYY-NNNN"]` entries
+# with a comment when you deliberately accept a finding.
 
 [licenses]
-allow = ["MIT", "Apache-2.0", "Apache-2.0 OR MIT", "BSD-3-Clause", "ISC"]
-deny = ["GPL-2.0", "GPL-3.0", "AGPL-3.0"]
-default = "deny"
+version = 2
+# Anything NOT in this list is denied. Use SPDX short identifiers only — compound
+# expressions like "MIT OR Apache-2.0" are not valid here; they belong in
+# per-crate `exceptions` if needed.
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",   # still used by some older versions of unicode-ident
+]
+confidence-threshold = 0.8
 
 [bans]
 multiple-versions = "warn"
+wildcards = "deny"
 # deny = [{ name = "forbidden-crate" }]
 
 [sources]
+unknown-registry = "deny"
+unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
 allow-git = []
 ```

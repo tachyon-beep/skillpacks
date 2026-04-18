@@ -27,8 +27,15 @@ cd ${ARGUMENTS}
 
 3. **Write `rust-toolchain.toml`** (pins the toolchain for all contributors and CI)
 
+If the MSRV policy collected in step 1 is "stable-latest", write `channel =
+"stable"`. If the user chose a specific version (e.g. `1.82`), pin that
+version in `channel` so local builds and CI use the same compiler the MSRV
+policy promises.
+
 ```toml
 [toolchain]
+# Replace "stable" with the exact MSRV (e.g. "1.82.0") when the user
+# specified a version in step 1.
 channel = "stable"
 components = ["clippy", "rustfmt", "llvm-tools-preview"]
 ```
@@ -55,13 +62,22 @@ too-many-arguments-threshold = 8
 too-many-lines-threshold = 120
 ```
 
-6. **Update `Cargo.toml`** — add `[lints]` section and set edition
+6. **Update `Cargo.toml`** — add `[lints]` section, set edition, record MSRV
+
+Record the MSRV policy from step 1 in `rust-version`. `cargo check` will then
+fail with a clear error if someone tries to build with an older toolchain
+instead of producing cryptic feature-gate errors deep in the dependency graph.
+If the user chose "stable-latest" in step 1, omit `rust-version` or set it to
+the current stable at scaffold time.
 
 ```toml
 [package]
 name = "PROJECT_NAME"
 version = "0.1.0"
 edition = "2024"
+# MSRV — set to the version chosen in step 1 (e.g. "1.82"). Omit for
+# stable-latest projects if you do not want to pin a floor.
+rust-version = "1.85"
 
 [lints.rust]
 unsafe_code = "forbid"
@@ -77,18 +93,29 @@ missing_errors_doc = "allow"
 7. **Write `deny.toml`** (supply-chain hygiene baseline)
 
 ```toml
+# deny.toml — cargo-deny 0.16+ (v2 schema). The old `licenses.deny` and
+# `licenses.default` fields were removed; anything not in `allow` is denied.
 [advisories]
+version = 2
+yanked = "deny"
 ignore = []
 
 [licenses]
+version = 2
+# SPDX short identifiers only. Expand this list as your dependency graph needs;
+# compound expressions like "MIT OR Apache-2.0" are not valid here and must be
+# expressed via per-crate `exceptions`.
 allow = [
     "MIT",
     "Apache-2.0",
     "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
     "ISC",
-    "Unicode-DFS-2016",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",   # still used by some older versions of unicode-ident
 ]
-deny = ["GPL-2.0", "GPL-3.0", "AGPL-3.0"]
+confidence-threshold = 0.8
 
 [bans]
 multiple-versions = "warn"
@@ -98,6 +125,7 @@ wildcards = "deny"
 unknown-registry = "deny"
 unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []
 ```
 
 After writing `deny.toml`, run `/rust-engineering:audit` (or `/audit` if scoped) to verify supply-chain posture against advisories, licenses, bans, and sources.

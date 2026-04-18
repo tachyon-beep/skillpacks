@@ -1075,7 +1075,7 @@ unsafe { std::slice::from_raw_parts(ptr, len) }
 
 ### 2. Wide `unsafe fn` Public Boundaries
 
-**Why wrong**: Declaring a public function `unsafe fn` pushes the invariant burden onto every caller. Each call site must reason about the same invariant independently, which multiplies the audit surface. A single unsound call anywhere in the codebase causes UB. The library author is also committing to keeping that function `unsafe fn` forever — removing `unsafe` from a public function signature is a breaking change that can never be un-done.
+**Why wrong**: Declaring a public function `unsafe fn` pushes the invariant burden onto every caller. Each call site must reason about the same invariant independently, which multiplies the audit surface. A single unsound call anywhere in the codebase causes UB. (Note: the semver direction on this is asymmetric — per the Cargo semver reference, *adding* `unsafe` to a previously-safe public function IS a breaking (major) change, but *removing* `unsafe` to make a previously-unsafe function safe is a minor-compatible change. So making a public API safe later is always on the table; you are not stuck with `unsafe fn` forever.)
 
 **The fix**: Make the public API safe. Validate inputs at the boundary. Put the `unsafe { ... }` block inside the safe function. If the function genuinely cannot be made safe (because correct use requires caller invariants that cannot be encoded in types), document that contract exhaustively and prefer a type-system encoding (newtype wrappers, `NonNull<T>`, sealed traits) to reduce the burden on callers.
 

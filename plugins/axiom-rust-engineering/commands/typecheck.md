@@ -139,7 +139,7 @@ Next step: Fix clippy warnings, then run full test suite.
 
 - **Type errors you don't understand**: Load ownership-borrowing-lifetimes.md
 - **Trait/Generic issues**: Load traits-generics-and-dispatch.md
-- **Borrow checker false positives**: Check for lifetime annotation issues; consider `&'static` or `'a` bounds
+- **Borrow checker errors**: These are almost never "false positives." When the compiler suggests `'static`, resist adding it — the Rust book notes that the real fix is usually to resolve the underlying lifetime mismatch (restructure ownership, shorten a borrow, clone at a boundary), not to promote a value to `'static`. `'static` on function signatures is an appropriate bound only when the value genuinely needs to live for the whole program. Load ownership-borrowing-lifetimes.md before reaching for lifetime annotations.
 - **Clippy false positives**: Suppress narrowly with `#[allow(clippy::LINT_NAME)]` + comment explaining why
 
 ## Key Principles
