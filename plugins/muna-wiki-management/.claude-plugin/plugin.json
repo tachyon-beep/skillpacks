@@ -1,6 +1,6 @@
 {
   "name": "muna-wiki-management",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Document set management as wikis - 7 skills, 4 commands, 2 agents for architecture, derivation, consistency, evolution, and governance of multi-document collections",
   "author": {
     "name": "tachyon-beep",

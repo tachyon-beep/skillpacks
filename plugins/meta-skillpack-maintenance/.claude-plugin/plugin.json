@@ -1,6 +1,6 @@
 {
   "name": "meta-skillpack-maintenance",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Systematic maintenance of Claude Code plugins - skills, commands, agents, hooks - through domain analysis, behavioral testing, and quality improvements",
   "author": {
     "name": "tachyon-beep",

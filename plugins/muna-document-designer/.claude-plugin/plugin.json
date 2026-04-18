@@ -1,6 +1,6 @@
 {
   "name": "muna-document-designer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Professional document design with Pandoc and Typst - typography, layout, templates, format conversion, 6 reference sheets (academic, accessibility, data-heavy, multilingual, print, standards) - 1 skill, 1 agent, 1 command",
   "author": {
     "name": "tachyon-beep",

@@ -1,6 +1,6 @@
 {
   "name": "axiom-engineering-foundations",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Universal software engineering methodology: systematic debugging, safe refactoring, code review, incident response, technical debt triage, and codebase comprehension. Language-agnostic foundations for professional engineering practice.",
   "author": {
     "name": "tachyon-beep",

@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, solution architecture, game development, security, documentation, site design, and UX skills for Claude Code - 32 complete skillpacks with 193+ TDD-validated skills",
-    "version": "3.9.0",
+    "version": "3.9.1",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -64,7 +64,7 @@
     {
       "name": "axiom-solution-architect",
       "source": "./plugins/axiom-solution-architect",
-      "description": "Forward solution architecture: brief/HLD/epic → traceable artifact set (ADRs, C4, NFRs, RTM, integration/migration, risks, TOGAF/ArchiMate, consolidated SAD). 9 skills, 2 agents, 2 commands.",
+      "description": "Forward solution architecture: brief/HLD/epic \u2192 traceable artifact set (ADRs, C4, NFRs, RTM, integration/migration, risks, TOGAF/ArchiMate, consolidated SAD). 9 skills, 2 agents, 2 commands.",
       "keywords": [
         "axiom",
         "solution-architect",
@@ -228,7 +228,7 @@
     {
       "name": "muna-panel-review",
       "source": "./plugins/muna-panel-review",
-      "description": "Simulated audience panel review — persona-driven editorial intelligence for document suites. 3 agents (persona-reader, panel-synthesiser, persona-designer), 1 orchestration skill, 3 slash commands",
+      "description": "Simulated audience panel review \u2014 persona-driven editorial intelligence for document suites. 3 agents (persona-reader, panel-synthesiser, persona-designer), 1 orchestration skill, 3 slash commands",
       "keywords": [
         "muna",
         "panel",
