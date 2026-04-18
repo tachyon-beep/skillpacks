@@ -20,6 +20,9 @@ All router skills from the 18 plugins are now available as slash commands:
 ### Web Backend Development (Axiom)
 - **`/web-backend`** - Routes to web backend development (FastAPI, Django, Express, APIs, microservices)
 
+### SDLC Engineering (Axiom)
+- **`/sdlc-engineering`** - Routes to CMMI process areas: requirements, design, quality, governance, risk, metrics, platform integration
+
 ### Game Development (Bravos)
 - **`/simulation-tactics`** - Routes to simulation and game development tactics
 - **`/systems-as-experience`** - Routes to game systems design and player experience
@@ -60,6 +63,7 @@ The router will then guide you to the appropriate specialized skill for your tas
 | Plugin | Original Skill | Slash Command |
 |--------|----------------|---------------|
 | axiom-python-engineering | using-python-engineering | /python-engineering |
+| axiom-sdlc-engineering | using-sdlc-engineering | /sdlc-engineering |
 | axiom-system-archaeologist | using-system-archaeologist | /system-archaeologist |
 | axiom-system-architect | using-system-architect | /system-architect |
 | axiom-web-backend | using-web-backend | /web-backend |
