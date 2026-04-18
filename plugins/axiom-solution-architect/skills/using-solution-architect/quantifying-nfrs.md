@@ -4,7 +4,7 @@
 
 **An unquantified NFR is a wish, not a requirement.**
 
-"Fast", "secure", "scalable", "highly available" are adjectives. They cannot be satisfied, verified, or designed against. This skill converts adjectives into numbers with measurement methods, and then maps each NFR to the components that are load-bearing for it.
+"Fast", "secure", "scalable", "highly available" are adjectives. They cannot be satisfied, verified, or designed against. This skill converts adjectives into numbers with measurement methods, then maps each NFR to the components that are load-bearing for it.
 
 **Core principle:** Every NFR has a number and a measurement method. Every component's NFR load is explicit.
 
@@ -17,15 +17,15 @@
 
 ## NFR Categories (starter set)
 
-Each row lists the category, typical metrics, and whether the NFR is typically
-**verified** (objective, testable) or **validated** (requires stakeholder
-judgement or auditor sign-off). Some categories span both.
+Each row lists the category, typical metrics, and the **primary evidence mode** —
+the mode where the weight of evidence lives (VER = objective verification, VAL =
+stakeholder / auditor validation). Some categories list both.
 
-| Category | Common metrics | V/V |
-|----------|----------------|-----|
+| Category | Common metrics | Primary evidence mode |
+|----------|----------------|-----------------------|
 | Performance — latency | P50/P95/P99 per operation, measured from a named point (caller/gateway/service) | VER |
 | Performance — throughput | Requests/s, msgs/s, jobs/hour, with burst factor and sustained window | VER |
-| Scalability | Ceiling before architectural change (e.g., "works to 10k tenants, 100k requires re-shard"); scaling posture (vertical/horizontal/shard) | VER |
+| Scalability | Ceiling before architectural change with utilisation headroom (e.g., "works to 10k tenants at ≤ 70% CPU; 100k requires re-shard"); scaling posture (vertical/horizontal/shard); elasticity profile (time to scale out/in); degradation mode under overrun (shed-load / queue / graceful-degrade / hard-fail) | VER |
 | Availability | SLO (e.g., 99.9% monthly), error-budget window, RTO, RPO | VER |
 | Durability | Data-loss tolerance (e.g., 11 nines), replication factor, backup retention, restore-tested frequency | VER |
 | Security — auth | Authentication strength, session TTL, MFA coverage %, secret rotation period | VER |
@@ -45,19 +45,24 @@ judgement or auditor sign-off). Some categories span both.
 | Portability | Target environments (clouds, on-prem, browsers, OS versions), infra-abstraction boundary | VER |
 | Localisation / i18n | Locales supported, string externalisation %, bidi / plural-rule coverage | VER |
 
-**VER** = objectively testable (probe, load test, audit script, automated check).
-**VAL** = requires stakeholder / user / auditor judgement. Both may be required;
-neither replaces the other.
+**Verification and validation are not alternates.** Every NFR needs both:
+*verification* asks "does the system meet the target?" (automated probe, audit
+script, load test); *validation* asks "is this target the right one for the
+business?" (stakeholder sign-off, regulator confirmation, usability-test result).
+The column names the *primary evidence mode* — where the weight of evidence
+lives — not the only one. A VER-primary NFR still needs a stated validator (the
+role that agrees the target is correct). A VAL-primary NFR still needs a
+verification predicate (what observation would confirm or refute it).
 
 Not every category applies to every system. A `02-nfr-specification.md` with 3
-well-quantified NFRs is better than one with 15 handwavy adjectives — but if a
-category that plainly applies to your system is missing, that's a scope bug.
+well-quantified NFRs beats one with 15 handwavy adjectives. A category that
+plainly applies but is missing is a scope bug.
 
 **Exclusion is explicit.** If a category from the table does not apply,
 `02-nfr-specification.md` ends with an `## Excluded categories` section naming
 the excluded categories and a one-line reason each ("Accessibility — internal
 service, no UI"; "Localisation — single-region, English only, CON-ORG-04").
-Silent exclusion is forbidden — if something's missing we need to see the reason.
+Silent exclusion is forbidden.
 
 ## `02-nfr-specification.md` — the quantified list
 
@@ -118,11 +123,11 @@ level), and optionally Notes/tradeoffs.
 | Adjective | Translate to |
 |-----------|--------------|
 | "Fast" | Latency P95/P99 numbers |
-| "Scalable" | Ceiling before architectural change + scaling posture |
+| "Scalable" | Ceiling with utilisation headroom + scaling posture + elasticity profile + degradation mode under overrun |
 | "Highly available" | SLO + RTO + RPO |
 | "Secure" | Authentication strength + encryption + specific compliance framework |
 | "Maintainable" | Split into (a) delivery — lead-time-for-change, test coverage floor, onboarding time; (b) structure — cyclomatic complexity ceiling, public-API breaking-change rate, dependency freshness SLA |
-| "Reliable" | Name which facet: (a) availability SLO, (b) durability target, (c) correctness-under-fault (idempotency, replay safety, recovery after partial failure), (d) MTBF/MTTR targets. "Reliable" alone is ambiguous. |
+| "Reliable" | Name the facet: (a) availability SLO, (b) durability target, (c) correctness-under-fault (idempotency, replay safety, recovery after partial failure), (d) MTBF/MTTR targets. "Reliable" alone is ambiguous. |
 | "User-friendly" | Split into (a) **VER** — measurable task metrics (completion rate ≥ X%, time-on-task ≤ Y s, error-recovery rate ≥ Z%); (b) **VAL** — SUS score ≥ N from usability testing with ≥ 5 representative users. Raw "user-friendly" is a UX concern; the *quantified* slice is an architectural NFR when it drives structure (offline-first, optimistic-UI support, idempotent retries). |
 | "Cost-effective" | Unit economics target |
 
@@ -150,19 +155,20 @@ Envelope fits NFR-01 (≤ 120 ms) with 10 ms of headroom on the miss path.
 - Primary datastore — RDS Multi-AZ with automatic failover ≤ 60 s
 - Cache layer — degrades gracefully (cache miss, not outage)
 
-## Overload flag (from `06-descoped-and-deferred.md` flow)
+## Overload flags
 - **Auth service** is load-bearing for NFR-01, NFR-07, NFR-12 simultaneously and is a single point of failure. Raised as RSK-02.
 ```
 
 **Rules:**
 
 - Every NFR in `02-` must appear in `03-` with at least one component.
-- Every component in `09-component-specifications.md` should appear in `03-` for at least one NFR (or be explicitly marked "no NFR load").
+- Every component in `09-component-specifications.md` must appear in `03-` for at least one NFR, or be explicitly marked "no NFR load".
 - Where budgets are summed (latency, cost, memory), the sum must satisfy the target.
 - A component is **overloaded** when any of these hold:
   1. It is load-bearing for both low-latency (NFR-*-latency) and high-durability (NFR-*-durability or strong-consistency) requirements — these fight each other.
   2. It is load-bearing for an availability SLO stricter than its own infrastructure ceiling (e.g., a single-AZ service asked to meet 99.99%).
-  3. It is load-bearing for ≥ 4 NFRs across ≥ 2 categories (heuristic; favour rules 1 and 2 when they fire).
+  3. It has no degradation path that preserves one NFR when another is breached (e.g., no graceful degradation from P99-latency failure to availability-only mode).
+  4. It is load-bearing for ≥ 4 NFRs across ≥ 2 categories (heuristic; favour rules 1–3 when they fire).
 - Overloaded components are raised in `17-risk-register.md` with the specific conflicting NFRs cited.
 
 ## Per-component NFR contract
@@ -182,12 +188,7 @@ component-level NFR contract:
 | NFR-07 | 99.95% (exceeds app SLO of 99.9%) | instance health probe | read-service team |
 ```
 
-Rule: the component spec's NFR contract table must match `03-nfr-mapping.md`
-exactly. The assembly consistency gate diffs them; any mismatch fails the gate.
-
-This prevents "everyone owns performance, nobody owns performance": a component
-without its own NFR contract table has no inherited obligation, and the next
-incident about that NFR will have no assigned owner.
+Rule: the component spec's NFR contract table must match `03-nfr-mapping.md` exactly. The assembly consistency gate diffs them; any mismatch fails the gate.
 
 ## Handling NFR Conflicts
 
@@ -195,11 +196,11 @@ NFRs frequently conflict. Do not pretend they don't.
 
 **Common conflicts:**
 
-- Strong consistency ↔ low global-read latency → resolve with consistency boundary choice, record the tradeoff in `02-` under the affected NFRs' "Notes / tradeoffs" sections
+- Strong consistency ↔ low global-read latency → resolve with consistency boundary choice; record the tradeoff in `02-` under the affected NFRs' "Notes / tradeoffs" sections
 - Low cost ↔ high availability → record the availability tier chosen and the cost it buys
 - Low latency ↔ durability → document which operations prioritise which (e.g., "write path durable and slower; read path cache-optimised")
-- Auditability ↔ deletability → immutable audit logs vs. GDPR right-to-erasure. Resolve by naming which records are subject to erasure, which are retained under audit obligation, and the segregation mechanism (e.g., pseudonymisation of personal fields in audit log, hard-delete of source record)
-- Maintainability (delivery ergonomics) ↔ security hardening → short-lived credentials, MFA on every deploy, tight network egress, etc. impose dev-loop friction. Resolve by naming the friction budget (e.g., "credential refresh ≤ 5 s in dev loop; MFA only on production promotion") so the tradeoff is visible, not accidental
+- Auditability ↔ deletability → immutable audit logs vs. GDPR right-to-erasure. Resolve by naming which records are subject to erasure, which are retained under audit obligation, and the segregation mechanism (pseudonymisation of personal fields in audit log, hard-delete of source record).
+- Maintainability (delivery ergonomics) ↔ security hardening → short-lived credentials, MFA on every deploy, tight network egress impose dev-loop friction. Resolve by naming the friction budget (e.g., "credential refresh ≤ 5 s in dev loop; MFA only on production promotion") so the tradeoff is visible, not accidental.
 
 **Resolution format:**
 
@@ -212,6 +213,57 @@ Resolution: per-region primary + async replication. Global consistency is eventu
 
 Accepted trade: NFR-05 relaxed to "strong within-region, eventual across regions" because writes are < 5% of traffic and cross-region reads represent < 1% of user journeys.
 ```
+
+## Worked example — full `03-nfr-mapping.md` snapshot
+
+The following shows how `03-nfr-mapping.md` looks after a full M-tier pass: three
+NFRs, four components, one overload flag raised, and the per-component NFR
+contract cross-check.
+
+---
+
+## NFR-01 (Latency — primary read path, P99 ≤ 120 ms)
+- `api-gateway` — P99 contribution ≤ 10 ms (TLS termination, rate-limit check, routing)
+- `read-service` — P99 contribution ≤ 60 ms (validation, orchestration, cache probe)
+- `cache` (Redis) — cache-hit P99 ≤ 5 ms; target hit ratio ≥ 90%
+- `primary-store` (PostgreSQL read replica) — cache-miss P99 ≤ 40 ms (prepared statement, index scan)
+
+Budget check:
+- All-cache-hit path: 10 + 60 + 5 = **75 ms** ✓ (NFR-01 ≤ 120 ms; 45 ms headroom)
+- Cache-miss path:   10 + 60 + 40 = **110 ms** ✓ (10 ms headroom — tight; flagged in NFR-01 notes)
+
+## NFR-07 (Availability SLO — 99.9% monthly)
+- `api-gateway` — multi-AZ, target 99.99% (exceeds app SLO; protects against single-AZ loss)
+- `read-service` — multi-instance, stateless, rolling deploys; target 99.95%
+- `primary-store` — RDS Multi-AZ; automatic failover ≤ 60 s (within RTO of 30 min)
+- `cache` — graceful degradation on total loss (cache miss, not outage); does not contribute to availability ceiling
+
+## NFR-12 (Security — OIDC + MFA for admins)
+- `auth-service` — OIDC provider; session TTL enforcement; MFA enforcement
+- `api-gateway` — token validation on every request (bearer token, expiry check)
+
+## Overload flags
+
+### OVERLOAD-01: auth-service — NFR-01, NFR-07, NFR-12
+
+`auth-service` is load-bearing for NFR-01 (token validation adds ≤ 10 ms to the gateway contribution on the critical path), NFR-07 (if auth-service is down, all authenticated requests fail — a 100% error rate), and NFR-12 (the sole MFA enforcement point).
+
+- Rule 2 fires: `auth-service` must meet 99.9% availability (NFR-07) but is currently a single-AZ deployment — its infrastructure ceiling is ~99.5%.
+- Rule 4 fires: load-bearing for ≥ 4 NFRs across ≥ 2 categories (latency + availability + security).
+
+**Action:** Raised as RSK-02 in `17-risk-register.md`. Mitigation: deploy `auth-service` multi-AZ with session-cache warm-up on failover. See ADR-0003.
+
+---
+
+**Per-component NFR contract cross-check:**
+
+The following appears in `09-component-specifications.md` for `auth-service`. It must match the mapping above exactly — the assembly gate diffs them.
+
+| NFR | Contribution | Measured | Owner |
+|-----|--------------|----------|-------|
+| NFR-01 | P99 ≤ 10 ms (token validation on gateway hot path) | internal trace span `auth.validate-token` | platform-security team |
+| NFR-07 | 99.95% (single-AZ today; see RSK-02 for multi-AZ migration) | health probe every 30 s | platform-security team |
+| NFR-12 | OIDC + MFA enforced; session TTL ≤ 60 min | config audit script + pen-test item 3.1 | platform-security team |
 
 ## Pressure Responses
 
@@ -229,23 +281,23 @@ Accepted trade: NFR-05 relaxed to "strong within-region, eventual across regions
 
 ## Anti-Patterns to Reject
 
-### ❌ Adjective NFRs
+### Adjective NFRs
 
 "The system should be fast, secure, and reliable." Not a specification; a wish.
 
-### ❌ NFRs without measurement methods
+### NFRs without measurement methods
 
-"P99 ≤ 100 ms" with no definition of P99 from *where* — client, gateway, origin, server — is ambiguous. Always name the measurement point.
+"P99 ≤ 100 ms" with no definition of P99 from *where* — client, gateway, origin, server — is ambiguous. Name the measurement point.
 
-### ❌ Component mapping by adjective
+### Component mapping by adjective
 
 "Cache layer: handles performance." What performance? Which NFR? What budget?
 
-### ❌ Pretending conflicts don't exist
+### Pretending conflicts don't exist
 
 If two NFRs conflict and the mapping satisfies both without a resolution statement, the mapping is wrong. One of the NFRs has been softened without acknowledgement.
 
-### ❌ Zero overload flags on a complex system
+### Zero overload flags on a complex system
 
 If every component sits under its own small NFR load, either the system is genuinely simple or the mapping is rubber-stamping. Revisit.
 

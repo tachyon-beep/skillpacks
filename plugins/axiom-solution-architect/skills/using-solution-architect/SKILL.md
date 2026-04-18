@@ -31,6 +31,18 @@ Do **not** use this pack when:
 - You are documenting an existing system → use `/system-archaeologist`
 - You need process governance (branching, CI/CD, ADR lifecycle) → use `/sdlc-engineering`
 
+## Start Here
+
+If your input is a new brief, HLD, epic, or change request and you have not run this pack before:
+
+1. Read `triaging-input-maturity` — classify the input and emit `00-scope-and-context.md` and `01-requirements.md`.
+2. Use the workflow plan triage emits to see which subsequent skills apply at your scope tier.
+3. Return to the **Routing** section below for scenario-specific branching.
+4. Produce the numbered artifacts required by your tier (see **Scope Tier** table) using each specialist skill.
+5. Run `assembling-solution-architecture-document` to consolidate into `99-` and pass the consistency gate.
+
+The **Expected Artifact Set** and **Scope Tier** tables below are reference material — consult them when producing or checking artifacts, not as a linear read.
+
 ## How to Access Reference Sheets
 
 All reference sheets are in the same directory as this `SKILL.md`. When you see a link like `[quantifying-nfrs.md](quantifying-nfrs.md)`, read the file from the same directory.
@@ -79,17 +91,17 @@ Every workflow is classified at the end of `triaging-input-maturity` into one of
 
 | Tier | Trigger | Required structural artifacts |
 |------|---------|-------------------------------|
-| XS | Single-component change, ≤1 integration, no new data, no new NFR targets | `00, 01, 02, 04, 09, 14, 15, 17`; ADRs only if a decision is made |
+| XS | Single-component change, ≤1 integration, no new data, no new NFR targets | `00, 01, 02, 03, 04, 06, 09, 14, 15, 17`; ADRs only if a decision is made |
 | S | ≤3 components, ≤2 integrations, existing NFR envelope | XS set + `05, 11` |
 | M | New subsystem, new integrations, or new NFR targets | S set + `07, 08, 10, 13` |
 | L | Cross-system, multiple new services, new data stores | M set + `12` (sequence diagrams) + C4 component view (produced as a subsection of `09-component-specifications.md` — not a new numbered artifact) |
-| XL / enterprise | Governed by ARB / TOGAF / regulator | L set + `archimate-model/`, `togaf-deliverable-map.md` |
+| XL | Governed by ARB / TOGAF / regulator (enterprise context) | L set + `archimate-model/`, `togaf-deliverable-map.md` |
 
 The tier is authoritative. If `04-solution-overview.md` or any ADR references an artifact from a higher tier, that artifact becomes required regardless of the declared tier — this is a tier promotion, not a waiver. Brownfield adds `16-migration-plan.md` at every tier.
 
-## Catalog-Level Guidance for Router-Owned Artifacts
+## Guidance for Router-Owned Artifacts (07–13)
 
-The artifacts in this section (`07, 08, 09, 10, 11, 12, 13`) are produced under router guidance with no dedicated specialist skill. The consistency gate's Check 1b enforces a quality floor for each — follow the criteria below when producing them, and expect the gate to reject artifacts that fall below the floor.
+**Note:** These seven artifacts (C4 context through deployment view) are **not** produced by specialist skills. Every workflow produces them according to the quality floor below. The consistency gate's Check 1b enforces this floor — follow the criteria below when producing them, and expect the gate to reject artifacts that fall below the floor.
 
 **Required quality floor per artifact:**
 
@@ -134,7 +146,7 @@ Target environments, runtime topology, scaling posture, regions/zones, network b
 
 ### Scenario: "Design me a solution for X"
 
-1. Read the input. Use: `triaging-input-maturity` → `00-scope-and-context.md`, `01-requirements.md` (triage also classifies scope tier and records it in `00-`; the tier is internal routing state, not a durable artifact)
+1. Read the input. Use: `triaging-input-maturity` → `00-scope-and-context.md`, `01-requirements.md` (scope tier is classified and recorded in `00-`).
 2. Use: `quantifying-nfrs` → `02-`, `03-`
 3. Use: `resisting-tech-and-scope-creep` → `04-`, `05-`, `06-`
 4. Produce router-owned artifacts required by the scope tier (`07-13` subset per the Scope Tier table) following the quality floor above
@@ -146,11 +158,20 @@ Target environments, runtime topology, scaling posture, regions/zones, network b
 
 ### Scenario: "Critique this design package"
 
-Use the `solution-design-reviewer` agent via `/review-solution-design`.
+Use the `/review-solution-design` command, which dispatches the `solution-design-reviewer` agent. Provide the path to your `solution-architecture/` workspace or a single SAD file.
 
 ### Scenario: "Is Kafka the right choice for this?"
 
 Use the `tech-selection-critic` agent. Red-teams a tech choice against requirements and constraints.
+
+### Specialist Agents
+
+The pack includes two agents that review or critique designs without producing artifacts:
+
+- **`solution-design-reviewer`** — Critiques an existing design package (`99-solution-architecture-document.md` or numbered artifact set) for the ten canonical failure modes (tech-before-problem, NFR handwaving, untraceable design, etc.). Invoked via `/review-solution-design`.
+- **`tech-selection-critic`** — Red-teams a single tech choice (datastore, messaging, language, platform) against requirements and alternatives. Invoke when you have a proposed choice and want to validate it before recording in `05-` or an ADR.
+
+**Agents vs. skills:** Skills *produce* artifacts end-to-end (triage → assembly). Agents *review or critique* existing artifacts or decisions. Invoke an agent when the work is in review or validation; load a skill when you are producing.
 
 ## Integration with Other Skillpacks
 
@@ -166,7 +187,7 @@ When the threat model exists, the solution architect's `17-risk-register.md` doe
 
 ### Compliance drivers
 
-When compliance frameworks are in scope (SOC 2, HIPAA, PCI-DSS, GDPR, data residency), the framework itself is a driver for NFRs (auditability, retention, encryption-at-rest, residency) and for risks (compliance exposure). Record the framework as a `CON-*` in `01-requirements.md` and trace it through `02-` → `14-` → `17-`. If `ordis-security-architect` is in play, the threat model carries the canonical control mapping; the solution architect carries the architectural consequences.
+When compliance frameworks are in scope (SOC 2, HIPAA, PCI-DSS, GDPR, data residency), the framework itself is a driver for NFRs (auditability, retention, encryption-at-rest, residency) and for risks (compliance exposure). Record the framework as a `CON-REG-*` in `01-requirements.md` and trace it through `02-` → `14-` → `17-`. If `ordis-security-architect` is in play, the threat model carries the canonical control mapping; the solution architect carries the architectural consequences.
 
 ### Documentation (muna-technical-writer)
 
@@ -228,12 +249,16 @@ Keyword presence alone (a stakeholder saying "ArchiMate" in passing) does not ac
 - A governing enterprise-architecture function must countersign the SAD
 - ArchiMate models are a required artifact for downstream tooling
 
-```
-├─ Activated → Activate mapping-to-togaf-archimate; record
-│              "Enterprise: activated — [driver]" in 00-scope-and-context.md
-└─ Not activated → Record "Enterprise: not activated — [reason]" in 00-;
-                   do not load mapping-to-togaf-archimate
-```
+**If any of these four criteria are true:**
+
+1. Use the `mapping-to-togaf-archimate` skill to produce `archimate-model/` (Business, Application, Technology layers) and `togaf-deliverable-map.md` (phase mapping).
+2. Record `Enterprise: activated — [which criterion applies]` in `00-scope-and-context.md`.
+3. This promotes the scope tier to XL — all L-tier artifacts are required, plus ArchiMate and TOGAF binding.
+
+**If none of these criteria are true:**
+
+1. Skip `mapping-to-togaf-archimate` entirely — TOGAF and ArchiMate binding is overhead for product-engineering work without an EA consumer.
+2. Record `Enterprise: not activated — [reason]` in `00-scope-and-context.md`.
 
 The gate report carries the activation state explicitly so a reader can tell whether enterprise mode was considered-and-declined or forgotten.
 
@@ -246,8 +271,10 @@ The pipeline is designed to be run end-to-end for M-tier and above. For lighter 
 | Tier is XS and no cross-system impact | Run the XS artifact subset (see Scope Tier table); emit the SAD with tier noted; skip enterprise binding unless explicitly required |
 | Requirements cannot be quantified because the business context is absent | Stop at `quantifying-nfrs`. Do not proceed to tech selection with adjective-only NFRs. Escalate to the business owner. |
 | Brownfield with no archaeologist output and no budget to run archaeology | Record `[ASSUMED]` context in `00-` with explicit unknowns, raise `RSK-NN: brownfield context unverified` (High/High, mitigation = run archaeologist), proceed but mark the SAD as "provisional — unverified brownfield context" |
-| Enterprise binding required but no TOGAF/ArchiMate skill capacity on the team | Produce the non-enterprise artifact set; record as gate waiver with rationale; schedule the TOGAF mapping as a follow-up task |
+| Enterprise binding required but no TOGAF/ArchiMate skill capacity on the team | Produce the non-enterprise artifact set; record as a gate waiver in the Check 8 section of the gate report (not in `06-descoped-and-deferred.md` — waivers and scope decisions are distinct; see `assembling-solution-architecture-document`); schedule the TOGAF mapping as a follow-up task |
 | Stakeholder insists on big-bang cutover with no business-time-constraint reason | Stop `16-` production, return to stakeholder with the "reshape into stages" guidance from `designing-for-integration-and-migration` |
+
+**Gate waiver vs descope:** a gate waiver says "this check failed and we are shipping anyway — here is why"; a `06-descoped-and-deferred.md` entry says "this capability or artifact is outside this design's scope — here is the trigger for reconsideration." An incomplete artifact is a waiver candidate; an out-of-scope feature is a `06-` candidate.
 
 ## Update Workflows
 
@@ -261,7 +288,7 @@ A SAD is a living document. After v1.0.0, changes come as scope extensions, requ
 | New integration | `15-`, `17-` | Checks 6, 7 |
 | Migration stage added or redesigned | `16-`, `17-` | Checks 6, 7, 1 |
 | NFR re-target (e.g., scale target raised) | `02-`, `03-`, affected components in `09-`, affected ADRs | Checks 3, 4, 7 |
-| Scope descope | `06-`, `01-`, `14-` (remove), affected `09-` | Checks 1, 2 |
+| Scope descope | `06-`, `01-`, `14-` (remove), affected `09-`, `03-` (redistribute NFR load), affected ADRs | Checks 1, 2, 3 |
 
 Bump the SAD version (semver) on every re-emission. The gate report is versioned alongside the SAD. A SAD whose gate report is older than its latest numbered artifact is stale and must be re-gated before the SAD is cited downstream.
 
@@ -282,7 +309,6 @@ Bump the SAD version (semver) on every re-emission. The gate report is versioned
 
 ## Related Documentation
 
-- **Design spec:** `docs/superpowers/specs/2026-04-17-axiom-solution-architect-pack-design.md`
 - **Archaeologist plugin:** `axiom-system-archaeologist`
 - **System architect plugin:** `axiom-system-architect`
 

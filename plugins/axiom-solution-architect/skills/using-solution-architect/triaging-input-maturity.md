@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Your job is classification, not design.** Solution architecture fails fast when the wrong workflow is chosen for the input shape. Triage decides the workflow before a single artifact is produced.
+**Your job is classification, not design.** Triage decides the workflow before a single artifact is produced.
 
 **Input maturity** is the ratio of specified-to-unspecified across the four
 axes below: shape (how structured), mode (greenfield/brownfield context known),
@@ -44,7 +44,7 @@ Classify the input on four axes. Record the classification in `00-scope-and-cont
 - **Brownfield:** integrates with or modifies an existing system. `16-migration-plan.md` is required. Check for archaeologist output:
 
 ```bash
-# Look for archaeologist workspace
+# Example: look for archaeologist workspace
 ls docs/arch-analysis-*/ 2>/dev/null
 ls **/02-subsystem-catalog.md 2>/dev/null
 ```
@@ -85,10 +85,17 @@ enforce the artifact subset for it.
 | Tier | Trigger | Workflow adjustment |
 |------|---------|---------------------|
 | XS | Single-component change, ≤1 integration, no new data, no new NFR targets | Minimal artifact set; ADRs only if a decision is made |
-| S | ≤3 components, ≤2 integrations, existing NFR envelope | XS set + tech-selection rationale and interface contracts |
-| M | New subsystem, new integrations, or new NFR targets | Full artifact set, expect 3-8 ADRs |
-| L | Cross-system, multiple new services, new data stores | Full artifact set + sequence diagrams + C4 component view, expect 8-15 ADRs, detailed migration |
-| XL | Governed by ARB / TOGAF / regulator | L set + ArchiMate model + TOGAF deliverable map. Decompose into sub-projects if multiple independent subsystems are in play — do not try to fit in one SAD. |
+| S | ≤3 components touched (modified, not new), ≤2 integrations (existing or new), NFR targets within ±10% of the current envelope and no new NFR dimensions | XS set + tech-selection rationale and interface contracts |
+| M | At least one of: (a) new bounded context / new deployment unit / new data owner; (b) new NFR dimension (one that did not previously have a target); (c) an NFR target shifting by >10% on a load-bearing dimension; (d) >3 components touched or >2 integrations | Full artifact set, expect 3–8 ADRs |
+| L | At least one of: (a) cross-system scope (two or more existing systems under design in the same SAD); (b) ≥2 new services spun up; (c) new data store (not a new schema in an existing store — a genuinely new technology choice) | Full artifact set + sequence diagrams + C4 component view, expect 8–15 ADRs, detailed migration |
+| XL | Governed by ARB / TOGAF / regulator, OR L-tier triggers with ≥2 independent subsystems | L set + ArchiMate model + TOGAF deliverable map. If multiple independent subsystems are in play, decompose into sub-projects — do not try to fit in one SAD. |
+
+**Terms used in the tier triggers:**
+
+- **New bounded context / deployment unit / data owner** — any of: a new DDD bounded context, a new independently-deployable artifact (service, lambda, worker), or a new team owning data previously owned by another team.
+- **NFR dimension** — a measured property (latency, throughput, availability, durability, security-posture level). A new dimension means `02-nfr-specification.md` previously had no entry for that property.
+- **Load-bearing dimension** — an NFR cited as a driver in at least one ADR, or flagged as contractually binding via `CON-CTR-*`.
+- **Component touched** — modified, not merely called. A component whose interface is unchanged but whose internals are refactored counts.
 
 **Tier promotion.** If an ADR or `04-solution-overview.md` references an
 artifact from a higher tier (e.g., an XS-tier workflow ends up citing a
@@ -220,11 +227,7 @@ Omit steps that don't apply (e.g., migration for greenfield, TOGAF binding for n
 
 ## Asking Clarifying Questions
 
-**One question per message. Prefer multiple choice. Stop after the highest-value
-questions are answered.** Cap at **five rounds** of clarification; beyond that,
-proceed with explicit `[ASSUMED]` markers rather than blocking indefinitely.
-Five unanswered questions is itself a finding about input maturity and should
-be recorded in `00-scope-and-context.md` open questions.
+**One question per message. Prefer multiple choice.** Cap at **five rounds** of clarification; beyond that, proceed with `[ASSUMED]` markers. Record unanswered questions in `00-scope-and-context.md` open questions.
 
 Do not ask questions whose answers will not change the design. "What colour should the UI be?" is not triage; it's a taste check.
 
@@ -240,12 +243,11 @@ Record answers inline as they come and update `00-scope-and-context.md` / `01-re
 
 ## Handling contradictory input
 
-Contradictions are not missing-info and cannot be covered by `[ASSUMED]`. They
-require a stop-and-ask, recorded as a blocking open question.
+Contradictions cannot be covered by `[ASSUMED]`. Stop, record, and ask.
 
 **Detect:**
 
-- Two sections of the input disagree on a numeric target (e.g., scale vs. latency vs. budget).
+- Two sections disagree on a numeric target (scale vs. latency vs. budget).
 - Pre-picked tech contradicts a stated constraint (e.g., "use DynamoDB" with `CON-REG-NN: EU data residency, no AWS global services`).
 - A stakeholder ask contradicts a contractual constraint (e.g., "reduce cost" vs. an existing customer SLA).
 - Greenfield framing with brownfield specifics ("new system" but "must use existing auth service").
@@ -274,7 +276,7 @@ Proceed to emit `00-scope-and-context.md` and `01-requirements.md` with best-eff
 
 ### "We already picked [tech]; no need to document constraints"
 
-**Response:** Constraints and tech selection are different artifacts. Constraints go in `01-requirements.md` (`CON-NN`). The pre-picked tech is recorded in `05-tech-selection-rationale.md` by `resisting-tech-and-scope-creep`, which will check whether the pre-pick actually satisfies the constraints.
+**Response:** Constraints and tech selection are different artifacts. Constraints go in `01-requirements.md` (`CON-*-NN`). The pre-picked tech is recorded in `05-tech-selection-rationale.md` by `resisting-tech-and-scope-creep`, which will check whether the pre-pick actually satisfies the constraints.
 
 ## Anti-Patterns to Reject
 
@@ -303,8 +305,7 @@ An XL-scope design compressed into one SAD will be incoherent. Decompose or fail
 
 ## Re-triaging mid-design
 
-Input changes after triage are normal, not failures. When the brief, scope, or
-constraints change after `00-` / `01-` exist:
+When the brief, scope, or constraints change after `00-` / `01-` exist:
 
 1. **Annotate** `00-scope-and-context.md` under a new `## Change log` heading —
    append the change, date, source, and the axes affected (shape / mode /

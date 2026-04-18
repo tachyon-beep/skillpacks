@@ -10,14 +10,14 @@ When a solution design will enter an organisation's EA function (ARB, enterprise
 
 ## When to Use
 
-This skill activates when `triaging-input-maturity` flags enterprise context:
+Activate only when `triaging-input-maturity` confirms enterprise context — one of:
 
-- TOGAF, ADM, or specific phase references (Phase A/B/C/D/E/F/G/H)
-- ArchiMate references or EA tool names (Sparx EA, Archi, BiZZdesign, Visual Paradigm)
-- Architecture Review Board (ARB) submission
-- "Enterprise architecture", "target state", "current state", explicit phase gates
+- TOGAF / ADM / phase references (A/B/C/D/E/F/G/H)
+- ArchiMate references or named EA tooling (Sparx, Archi, BiZZdesign, Visual Paradigm)
+- ARB submission required
+- "Enterprise architecture" / "target state" / "current state" / explicit phase gates named in the brief
 
-Skip this skill entirely for product-engineering work without enterprise context. Do not produce TOGAF/ArchiMate bindings "for completeness" — they're overhead without an EA consumer.
+Do not produce TOGAF/ArchiMate artifacts for product-engineering work without an EA consumer. Overhead without a reader is waste.
 
 ## What This Skill Produces
 
@@ -41,13 +41,13 @@ ArchiMate 3.2 organises the language into **layers** (Strategy, Business, Applic
 **How axiom-solution-architect artifacts bind to Motivation:**
 
 - `01-requirements.md` → Motivation `Requirement` elements (functional requirements FR-NN)
-- `02-nfr-specification.md` → Motivation `Requirement` elements typed as quality-attribute requirements (NFR-NN), plus `Goal` elements for the intent behind the NFRs
+- `02-nfr-specification.md` → Motivation `Requirement` elements (NFR-NN), each related to a `Goal` element representing the quality-attribute intent via `Realization` or `Influence`. ArchiMate 3.2 has no standard stereotype for "NFR"; if the target EA tool supports local stereotypes, declare `«NFR»` as a tool convention in `togaf-deliverable-map.md` (this is a tool convention, not a standard element).
 - Constraints (CON-NN) from `01-requirements.md` → Motivation `Constraint` elements
 - `17-risk-register.md` → Motivation `Assessment` elements (a risk is a negatively-valued assessment of a driver)
 
 Without a Motivation binding, requirements and risks have no home in the ArchiMate model; the ARB's first question ("where do the NFRs sit?") has no answer.
 
-**TOGAF content metamodel bridge:** TOGAF's Architecture Content Framework names its own data element, `DataEntity`, in matrices such as the Data Entity / Business Function matrix. `DataEntity` maps onto ArchiMate `DataObject` at the Application layer. When the deliverable map references a TOGAF matrix that names `DataEntity`, read it as the `DataObject` bound to the same concept.
+> **Note — TOGAF content metamodel bridge:** TOGAF's Architecture Content Framework calls its data element `DataEntity` (Data Entity / Business Function matrix). `DataEntity` maps to ArchiMate `DataObject` at the Application layer. Where the deliverable map references `DataEntity`, read `DataObject`.
 
 **Common layer mistakes (reject on sight):**
 
@@ -69,6 +69,10 @@ The common structural relationships and their strict meanings:
 | Access | Behavioural element acts on a passive element | BusinessProcess *reads/writes* BusinessObject |
 | Flow | Transfer between active elements | ApplicationComponent *flows to* ApplicationComponent |
 | Triggering | Temporal or causal sequence | BusinessProcess triggers BusinessProcess |
+| Influence | Motivation-aspect: an element positively or negatively affects another (drivers → goals, assessments → goals, NFRs → goals) | Driver *influences* Goal; Assessment *influences* Requirement |
+| Association | Generic fallback when no stronger relationship applies; commonly used to link NFRs to the elements they constrain | Requirement *associated-with* ApplicationComponent |
+
+`Specialisation` (one element is a subtype of another) is also a structural relationship in the standard but is rarely used in solution-level modelling; reserve it for type hierarchies (e.g., `Contract` specialises `BusinessObject`).
 
 **Note on "used-by":** ArchiMate 2.x had a distinct `UsedBy` relationship. ArchiMate 3.x folded it into `Serving`, drawn provider → consumer. There is no standalone `used-by` edge in 3.x — if you encounter "used-by" in older documentation, read it as `Serving` with the arrow reversed. Tooling on 3.1 / 3.2 (Archi, Sparx, BiZZdesign) will reject a `used-by` relationship.
 
@@ -85,38 +89,46 @@ ISO 42010 / ArchiMate distinction:
 - A **viewpoint** is the template — stakeholders, concerns, model-kind, selection rules.
 - A **view** is the concrete instance for a specific system.
 
-We define three custom viewpoints below (concerns + selection rules) and produce one view per viewpoint for each solution. The view files are `archimate-model/viewpoints/<name>-view.md` — the filename aligns with the viewpoint, the contents are the view for this solution.
+We produce views from the **standard ArchiMate 3.2 viewpoint catalogue** by default. ArchiMate 3.2 ships ~23 standard viewpoints (Strategy, Capability Map, Goal Realization, Outcome Realization, Business Process Cooperation, Product, Application Cooperation, Information Structure, Technology, Implementation & Deployment, Migration, Layered, etc.). Prefer a standard viewpoint if the EA tool or the consuming ARB specifies one.
 
-**Note on the standard catalogue:** ArchiMate 3.2 ships with ~23 standard viewpoints (Strategy, Capability Map, Goal Realization, Outcome Realization, Business Process Cooperation, Product, Application Cooperation, Information Structure, Technology, Implementation & Deployment, Migration, Layered, etc.). Prefer a standard viewpoint if the EA tool or the consuming ARB specifies one. The three below are pragmatic stakeholder defaults mapping approximately to CIO ≈ Strategy + Capability Map, ARB ≈ Layered, Engineering ≈ Application Cooperation + Technology.
+The table below names the stakeholder alias, the standard viewpoint(s) it maps to, and the file used in `archimate-model/viewpoints/`. The file name aligns with the stakeholder alias; the contents are the view for this solution, selected using the standard viewpoint's rules.
 
-### CIO viewpoint (instance: `cio-view.md`)
+| Stakeholder alias | Standard viewpoint(s) | Filename | Selection rule (summary) |
+|---|---|---|---|
+| CIO alias | Strategy; Capability Map; Goal Realization | `cio-view.md` | Strategy + top-level Business; suppress Application/Technology detail |
+| ARB alias | Layered; Application Cooperation | `arb-view.md` | Application + Technology; cross-layer realization/assignment; Motivation principles/constraints |
+| Engineering alias | Application Cooperation; Technology; Implementation & Deployment | `engineering-view.md` | Components, interfaces, nodes, artifacts; Work Packages when migration-relevant |
 
+Each view file names the **concerns it addresses**, the **elements and relationships it shows**, and **what is suppressed** — a view without these is a filter, not a view.
+
+### CIO alias view (instance: `cio-view.md`)
+
+- Derived from: Strategy, Capability Map, Goal Realization viewpoints
 - Stakeholders: CIO, CTO, VP Engineering
 - Concerns: strategic alignment, investment, risk, roadmap
-- Model-kind: layered model emphasising Strategy and top-level Business
 - Selects: Strategy layer (Capabilities, CourseOfAction), Business layer (major BusinessServices), Motivation (Goals, Assessments), Implementation & Migration (Plateaus)
 - Suppresses: Application layer detail, Technology layer, element-level interfaces
 - Output: `archimate-model/viewpoints/cio-view.md`
 
-### ARB viewpoint (instance: `arb-view.md`)
+### ARB alias view (instance: `arb-view.md`)
 
+- Derived from: Layered, Application Cooperation viewpoints
 - Stakeholders: Architecture Review Board
 - Concerns: standards adherence, architectural integrity, cross-programme impact
-- Model-kind: layered model with Application/Technology emphasis
 - Selects: Application layer (Components, Interfaces), Technology layer (Nodes, Services), cross-layer relationships (realization, assignment), Motivation (Principles, Constraints)
 - Suppresses: process-level Business detail unless directly relevant
 - Output: `archimate-model/viewpoints/arb-view.md`
 
-### Engineering viewpoint (instance: `engineering-view.md`)
+### Engineering alias view (instance: `engineering-view.md`)
 
+- Derived from: Application Cooperation, Technology, Implementation & Deployment viewpoints
 - Stakeholders: engineering leads, senior developers
 - Concerns: implementation detail, deployment, integration contracts, operational ownership
-- Model-kind: application cooperation + technology infrastructure
 - Selects: Application (Components, Services, Interfaces, DataObjects), Technology (Nodes, Artifacts, Networks), Implementation & Migration (WorkPackages when relevant)
 - Suppresses: Strategy layer, high-level Motivation
 - Output: `archimate-model/viewpoints/engineering-view.md`
 
-Each view file names the **concerns it addresses**, the **elements and relationships it shows**, and **what is suppressed** — a view without these is a filter, not a view.
+If the ARB or EA tool specifies a different standard viewpoint (e.g., Information Structure, Migration), produce an additional view under the standard viewpoint's name and cross-reference from the stakeholder alias file.
 
 ## Model Files
 
@@ -136,9 +148,9 @@ archimate-model/
     └── engineering-view.md
 ```
 
-Each layer file declares elements and the relationships that originate from them. Cross-layer relationships (realization, assignment) live with the more concrete end — this keeps the realizing element's file self-contained, so the abstract element's file does not need to be edited every time a new realizer appears.
+Each layer file declares elements and the relationships that originate from them. Place cross-layer relationships (realization, assignment) in the more-concrete element's file — this keeps the realizing element self-contained and prevents cascading edits to the abstract element's file every time a new realizer appears.
 
-**Format:** textual / Mermaid / PlantUML is acceptable. If the target EA tool requires the **Open Group ArchiMate Model Exchange File Format** (MEF, file extension `.xml`), the structural content here translates straightforwardly — call the translation out in `togaf-deliverable-map.md` as an export step rather than duplicating the model.
+**Format:** Use textual prose, Mermaid, or PlantUML. If the target EA tool requires the **Open Group ArchiMate Model Exchange File Format** (MEF, file extension `.xml`), the structural content here translates straightforwardly — call the translation out in `togaf-deliverable-map.md` as an export step rather than duplicating the model.
 
 ### Example element declaration (textual)
 
@@ -155,6 +167,89 @@ Naming convention: we use `Element:instance-name` as the in-prose identifier (e.
 - Depends-on (Flow → ): ApplicationComponent:payment-service
 - NFR load (from 03-nfr-mapping.md): NFR-01, NFR-02, NFR-07
 ```
+
+### Worked layer binding — order-fulfilment capability (example)
+
+This shows how a two-component slice (`order-service` + `payment-service`, plus their data and business context) binds across three ArchiMate layers and the Motivation aspect. Use it as a pattern check when building `application-layer.md`, `business-layer.md`, `technology-layer.md`, and the Motivation extract.
+
+---
+
+**`business-layer.md` (extract):**
+
+```markdown
+## BusinessService: order-capture
+
+- Layer: Business
+- Realized-by: ApplicationService:submit-order (Application layer)
+- Serving: BusinessProcess:place-order
+- Owner: order-fulfilment team
+
+## BusinessObject: Order
+
+- Layer: Business
+- Accessed-by: BusinessProcess:place-order (read/write)
+- Implemented-as: DataObject:order-record (Application layer)
+```
+
+**`application-layer.md` (extract):**
+
+```markdown
+## ApplicationComponent: order-service
+
+- Layer: Application
+- Realizes: BusinessService:order-capture (Business layer)
+- Assigned-to: Node:order-service-container (Technology layer)
+- Serving: BusinessProcess:place-order (Business layer)
+- Composed-of: ApplicationService:submit-order, ApplicationService:query-order
+- Depends-on (Flow →): ApplicationComponent:payment-service
+- NFR load (from 03-nfr-mapping.md): NFR-01, NFR-07
+
+## DataObject: order-record
+
+- Layer: Application
+- Implements: BusinessObject:Order (Business layer)
+- Accessed-by: ApplicationComponent:order-service (read/write), ApplicationComponent:payment-service (read)
+- Stored-on: Artifact:order-db-schema (Technology layer → postgresql-node)
+```
+
+**`technology-layer.md` (extract):**
+
+```markdown
+## Node: order-service-container
+
+- Layer: Technology
+- Assigned-from: ApplicationComponent:order-service (Application layer)
+- Composed-of: SystemSoftware:jvm-21, Artifact:order-service-jar
+- Hosted-on: Node:eks-node-group (eu-west-1)
+- Network-boundary: vpc-private-subnet
+```
+
+**Motivation extract (inline in `business-layer.md` or a dedicated `motivation-aspect.md`):**
+
+```markdown
+## Requirement: NFR-01-latency
+
+- Aspect: Motivation
+- Maps-to: 02-nfr-specification.md → NFR-01 (P99 read latency ≤ 120 ms)
+- Realizes: Goal:responsive-user-experience (via Realization)
+- Associated-with: ApplicationComponent:order-service, ApplicationComponent:api-gateway
+
+## Constraint: CON-REG-01-residency
+
+- Aspect: Motivation
+- Maps-to: 01-requirements.md → CON-REG-01 (EU data residency, GDPR Art. 44–49)
+- Associated-with: Node:order-service-container, Artifact:order-db-schema
+```
+
+---
+
+**Anti-pattern checks (apply after binding):**
+
+- `order-service` is Application layer, not Business. The *capability* it provides (order-capture) is a `BusinessService` (Business layer) realized-by the component. Two distinct elements — do not collapse.
+- `order-record` as a `DataObject` is Application layer. The conceptual `Order` as a `BusinessObject` is Business layer. They are connected via `Implements` — do not model one and claim it covers both.
+- `order-service-container` is a `Node` at Technology layer, not Application. The component is `Assigned-to` the node; the node does not "contain" the component in the ArchiMate sense (that would require a different relationship).
+- `NFR-01-latency` is a `Requirement` on the Motivation aspect, not a label on `order-service`. It `Realizes` the `Goal` for the quality attribute and is `Associated-with` the components that carry the NFR load. It is not an attribute of the component.
+- CIO alias view (`cio-view.md`) suppresses `DataObject`, `Artifact`, `Node` — the CIO sees `BusinessService:order-capture` and the capability it realises, not the PostgreSQL node.
 
 ## `togaf-deliverable-map.md`
 
@@ -175,7 +270,7 @@ Map every numbered artifact to its TOGAF phase and Architecture Content Framewor
 | 07-c4-context.md | Phase B (Business Architecture) | Business Architecture catalogs and diagrams (context subset) |
 | 08-c4-containers.md | Phases C & D | Application / Technology Architecture diagrams |
 | 09-component-specifications.md | Phase C (Application Architecture) | Application Components catalog |
-| 10-data-model.md | Phase C (Data Architecture) | Data Entity / Business Function matrix; Logical Data Model |
+| 10-data-model.md | Phase C — Data Architecture (primary) + Application Architecture (entity ownership cross-cut) | Data Entity / Business Function matrix; Logical Data Model; Application Components → Data Entities ownership matrix |
 | 11-interface-contracts.md | Phase C | Application Interface catalog |
 | 12-sequence-diagrams.md | Phase B (business flows) + Phase C (application flows) | Process flow diagrams (B); Application sequence diagrams (C) |
 | 13-deployment-view.md | Phase D (Technology Architecture) | Technology Architecture diagrams |
@@ -193,7 +288,7 @@ Map every numbered artifact to its TOGAF phase and Architecture Content Framewor
 - ADRs record decisions about Solution Building Blocks (SBBs — the specific products, services, and patterns chosen for this solution). They are not Architecture Building Blocks (ABBs — reusable enterprise reference models), which are decided at enterprise level, not solution level.
 
 ## Export notes
-- Target EA tool: `[target EA tool from 00-scope-and-context.md]` (e.g., Sparx Enterprise Architect, Archi, BiZZdesign, Visual Paradigm)
+- Target EA tool: *[from 00-scope-and-context.md]* (e.g., Sparx Enterprise Architect, Archi, BiZZdesign, Visual Paradigm)
 - Export format: **Open Group ArchiMate Model Exchange File Format** (MEF, `.xml`) — translate the textual model at handover
 - Viewpoint export: generate CIO/ARB/Engineering view images from the tool after import
 ```
@@ -214,32 +309,45 @@ Map every numbered artifact to its TOGAF phase and Architecture Content Framewor
 
 ## Anti-Patterns to Reject
 
-### ❌ Element on wrong layer
+### Element on wrong layer
 
 Database on Business layer; service on Strategy layer; process on Technology layer. Layer is a commitment, not a preference.
 
-### ❌ Composition and aggregation used interchangeably
+### Composition and aggregation used interchangeably
 
 Part of how ArchiMate tooling rolls up cost, risk, and coverage depends on these being distinct.
 
-### ❌ Viewpoint that shows everything
+### Viewpoint that shows everything
 
 A viewpoint is a *subset*. If it doesn't hide anything, it's the master model in a different hat.
 
-### ❌ Partial phase mapping
+### Partial phase mapping
 
 "Most artifacts have a phase; the rest are 'various'." Every artifact has a phase (or is explicitly out-of-scope for ADM, recorded as such).
 
-### ❌ "ArchiMate said" without an exchange path
+### "ArchiMate said" without an exchange path
 
 If the design mentions ArchiMate but produces only prose, the EA tool ingestion path is unclear. Name the target tool and the export format — even if export is a manual later step.
+
+### NFR typed as a tool-specific construct without a Motivation binding
+
+"The tool has a `QualityRequirement` stereotype" is not a substitute for a `Requirement` element related to a `Goal`. Model the standard element first; the stereotype is a tool convention on top, not a replacement.
+
+## Stop Conditions
+
+| Condition | Response |
+|-----------|----------|
+| Target EA tool not identified | Do not produce the `archimate-model/` export step. Record `target-ea-tool: TBD` in `togaf-deliverable-map.md` export notes and raise an open question in `00-scope-and-context.md`. The model can still be produced in textual/Mermaid form; tool export is deferred. |
+| ARB viewpoint requirements unknown | Produce the three stakeholder-alias views (CIO, ARB, Engineering) derived from the standard catalogue. Flag in the gate report (Check 8) that the ARB's preferred viewpoint set has not been confirmed — the ARB may require a different subset from the ArchiMate 3.2 catalogue. |
+| TOGAF phase mapping conflicts with internal governance | Record the conflict in `togaf-deliverable-map.md` under a `## Conflicts` section; do not silently remap. Escalate to the EA function before the ARB submission. |
+| Motivation aspect not modelled by consuming EA function | Produce the Motivation extract inline in the relevant layer file (most commonly `business-layer.md`) and flag in the export notes that the Motivation subset may need to be re-homed into a `motivation-aspect.md` file at import. Do not omit the Motivation binding — requirements and risks must map to Motivation elements. |
 
 ## Scope Boundaries
 
 **This skill covers:**
 
 - ArchiMate layer, element, and relationship discipline
-- Viewpoint subsets (CIO, ARB, Engineering as defaults)
+- View production from the standard ArchiMate 3.2 viewpoint catalogue (stakeholder aliases: CIO, ARB, Engineering)
 - TOGAF ADM phase mapping
 - Architecture Content Framework deliverable mapping
 

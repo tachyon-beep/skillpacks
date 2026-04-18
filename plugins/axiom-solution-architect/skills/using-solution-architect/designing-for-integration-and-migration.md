@@ -10,7 +10,7 @@ Three related failure modes land here:
 - Missing migration / rollout thinking — assumed clean cutovers
 - Risk theatre — generic ops risks instead of architectural ones
 
-This skill produces three artifacts that keep those failures from landing in production: `15-integration-plan.md`, `16-migration-plan.md` (brownfield only), and `17-risk-register.md`.
+This skill produces three artifacts that keep those failures from landing in production: `15-integration-plan.md`, `16-migration-plan.md` (brownfield only), and `17-risk-register.md`. Integration contracts and the architectural risk register apply to greenfield too — every system integrates with something and every system carries architectural risk. Only `16-` is gated on brownfield.
 
 **Core principle:** Every external touchpoint has a contract. Every cutover has an observable rollback trigger. Every risk in the register is architectural, not operational.
 
@@ -36,18 +36,26 @@ For every external touchpoint (system, vendor, legacy component, batch source/si
 - **Contract:**
   - Protocol: [e.g., PostgreSQL logical replication, REST, gRPC, SFTP batch]
   - Message / schema: [link to schema, OpenAPI, Protobuf]
-  - Idempotency: [guaranteed? key?]
+  - Delivery semantics (upstream): [at-most-once | at-least-once | effectively-exactly-once via idempotency key <name>]
+  - Consumer dedup: [key(s); window; behaviour outside window (treat as new / reject / alert)]
+  - Operation idempotency: [handler safe to retry? idempotency proof, or "best-effort" disclosure]
   - Versioning: [how we evolve without breaking callers; deprecation policy]
 - **Assumptions about the other side:**
   - Latency: …
   - Availability: …
   - Error modes we accept from it: …
 - **What we protect against:**
-  - [Concrete failure mode, e.g., "duplicate events from source — dedup on event_id within 24h window"]
+  - [Concrete failure mode, e.g., "duplicate events from source — dedup by event_id over the last 7 days; events older than 7 days are rejected with alert, not silently accepted, because the upstream's max replay window is 72h"]
   - [Backpressure, timeouts, circuit breakers]
 - **Observability:** [what SLIs we emit for this integration]
 - **Who to call when it breaks:** [team / on-call rotation]
 ```
+
+The three idempotency fields are not interchangeable. Teams that collapse them into a single "idempotent? yes, by event_id" answer ship races:
+
+- **Delivery semantics (upstream)** describes what the producer guarantees. At-least-once is the common case and forces the consumer to dedup.
+- **Consumer dedup** describes how we detect and handle repeats on our side — and crucially, what happens at `window + 1`. A 24h dedup window with no stated behaviour outside it silently accepts a replayed event as new. State the out-of-window behaviour.
+- **Operation idempotency** describes whether the handler itself is safe to retry. A dedup cache in front of a non-idempotent handler still breaks on cache eviction or partition.
 
 For brownfield only: also include how your new design **currently consumes or displaces** existing integrations:
 
@@ -86,10 +94,10 @@ For brownfield only: also include how your new design **currently consumes or di
 
 **Guidance:**
 
-- Prefer data-migration strategies that leave old data readable during transition (see the pattern selection table below).
-- Feature flags default *off* and flip on per stage; default *on* only when the stage's success has been sustained.
-- Time estimates are bounded ranges, not single dates. Stages gated on observable success, not wall-clock.
-- If a stage has no rollback procedure, it's not a stage — it's a leap of faith. Reshape it.
+- Use data-migration strategies that leave old data readable during transition (see pattern table below).
+- Feature flags default *off*; flip to *on* only after the stage's success criteria are sustained.
+- Time estimates are bounded ranges, not single dates. Stages gate on observable success, not wall-clock.
+- A stage with no rollback procedure is not a stage — it's a leap of faith. Reshape it.
 
 ### Data-migration pattern selection
 
@@ -114,8 +122,9 @@ Pick the pattern deliberately. Each has a distinct correctness harness and abort
 - **Divergence SLO:** e.g., "< 0.01% row divergence sustained over 24 h before tier promotion"
 - **Abort criterion:** observable, not "if it looks bad"
 - **Cutover reversibility window:** how long the old system remains the system of record after switch
+- **Backpressure stance:** what happens when downstream absorption is slower than upstream production — shed / queue with bounded depth / throttle upstream / graceful-degrade to single-write-old. Dual-write-sync and CDC have distinct backpressure profiles; state the one this stage uses.
 
-A migration stage that names a pattern without these five fields fails the consistency gate's Check 6.
+A migration stage that names a pattern without these six fields fails the consistency gate's Check 6.
 
 ## `17-risk-register.md`
 
@@ -156,30 +165,34 @@ Starter categories (open list — add categories when real risks don't fit):
 
 The consistency gate rejects entries without Likelihood/Impact/Trigger/Mitigation all present.
 
-### Risk → ADR feedback loop
+### Risk → origin feedback loop
 
-Every risk with likelihood × impact at the High/High or High/Medium level must be traced to the ADRs that caused or accepted it. If the responsible ADR doesn't acknowledge the risk:
+Every risk with likelihood × impact at the High/High or High/Medium level traces to a recorded origin — one of:
+
+- **(a) an ADR** that caused or accepted the risk;
+- **(b) an `00-scope-and-context.md` assumption or stakeholder decision** (e.g., unverified brownfield context); or
+- **(c) an external driver recorded in `01-requirements.md`** (e.g., a regulation, a vendor SLO that sits below our NFR target).
+
+A High-level risk with no traceable origin fails Check 7 of the consistency gate.
+
+When the origin is an ADR and that ADR does not acknowledge the risk:
 
 1. **Re-open the ADR.** Add the risk to its Consequences (Negative). The ADR may stand as-is — trade-offs are the point — but they must be recorded.
 2. **Check rollback criteria.** If the risk is realizable and the ADR has no exit criterion, add one. "We accept this risk unless X observable condition" is a valid exit.
 3. **If re-opening surfaces that the ADR would not be made today,** raise a superseding ADR rather than editing the original. The original records the decision at the time it was made; the new one records the revision.
 
-This is not a one-shot loop — each pass through the design surfaces more risks. Check 7 of the consistency gate enforces that every High-level risk names at least one ADR it traces to.
+This is not a one-shot loop — each pass through the design surfaces more risks. Risks that originate outside any ADR (e.g., `RSK: brownfield context unverified`, `RSK: regulation post-dates all current ADRs`) are valid and should not be forced to mint ceremonial ADRs; they trace to `00-` or `01-` instead.
 
 ## NFR Conflicts Surfaced by Integration and Migration
 
-Integration and migration work is where NFR conflicts commonly become visible. Examples:
+Common conflicts: availability NFR vs coexistence-downtime stage; strong-consistency NFR vs dual-write async; latency NFR vs vendor SLO that doesn't meet target.
 
-- An availability NFR targeting 99.95% against a migration stage that requires coexistence-downtime.
-- A strong-consistency NFR against a chosen dual-write async pattern.
-- A latency NFR against a vendor integration whose own SLO is slower than the target.
-
-When a conflict surfaces here:
+When a conflict surfaces:
 
 1. Name the conflicting NFR IDs in the affected `15-` entry or `16-` stage.
 2. State whether the integration/stage **strengthens**, **preserves**, or **temporarily relaxes** each NFR. A relaxation is acceptable only with a scheduled restoration (stage and trigger named).
 3. If the conflict is not resolvable in the current design, record it as a resolution statement in `02-nfr-specification.md` — the consistency gate's Check 3 requires every conflict to have a resolution or waiver.
-4. If the resolution requires revisiting a decision, raise a superseding ADR (see Risk → ADR feedback loop above).
+4. If the resolution requires revisiting a decision, raise a superseding ADR (see Risk → origin feedback loop above).
 
 A migration or integration that silently relaxes an NFR without a restoration path is the failure mode this step exists to catch.
 
@@ -215,6 +228,10 @@ A list of concerns without scoring is a worry list, not a register. Gate fails.
 
 Every touchpoint has failure modes. "Vendor never goes down" is not accurate; it's convenient.
 
+### ❌ Single-field idempotency
+
+"Idempotent: yes, by event_id" collapses three properties (upstream delivery semantics, consumer dedup window + out-of-window behaviour, handler idempotency) into one. State each.
+
 ### ❌ Stages that share a rollback
 
 Stage 3's rollback requires undoing Stage 2's data migration. That means Stage 2 wasn't reversible — it should have been split further.
@@ -229,7 +246,7 @@ If the design is brownfield and no `axiom-system-archaeologist` workspace exists
 
 - **Do not invent the existing system.** Stop and return to the user.
 - Recommend: `/system-archaeologist` to produce `01-discovery-findings.md` and `02-subsystem-catalog.md`.
-- Alternative if archaeology is infeasible in the time available: record `[ASSUMED]` details about the existing system in `00-scope-and-context.md`, mark them as open questions, and raise an RSK entry: "`RSK-NN: brownfield context unverified` — likelihood High, impact High, mitigation: run archaeologist before execution."
+- Alternative if archaeology is infeasible in the time available: record `[ASSUMED]` details about the existing system in `00-scope-and-context.md`, mark them as open questions, and raise an RSK entry: "`RSK-NN: brownfield context unverified` — likelihood High, impact High, origin `00-` assumption, mitigation: run archaeologist before execution."
 
 This section is operational guidance and must be applied before `16-` is drafted, not after. Scope Boundaries (below) is intentionally the last section.
 

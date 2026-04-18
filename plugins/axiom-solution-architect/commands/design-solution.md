@@ -8,6 +8,10 @@ argument-hint: "[input_file_or_description]"
 
 You are running the full solution-architect workflow. Your job is to take an input (brief, HLD, epic, or brownfield change) and produce the complete numbered artifact set in `solution-architecture/`, culminating in `99-solution-architecture-document.md` that has passed the consistency gate.
 
+## Invocation path
+
+`/design-solution` is a Claude Code slash command that drives the forward-design workflow in the current session. It orchestrates the specialist skills in `axiom-solution-architect` (triage, NFRs, tech selection, ADRs, RTM, integration / migration, optional TOGAF/ArchiMate, assembly). The command is the entry point; the specialist skills do the work; the consistency gate decides whether the SAD ships. For critique of an *existing* design package, use `/review-solution-design`.
+
 ## Preconditions
 
 The command takes a single argument: a file path to an input brief / HLD / epic / brownfield change-request, a directory of source material, or a short inline description of the change.
@@ -17,7 +21,7 @@ The command takes a single argument: a file path to an input brief / HLD / epic 
 ```bash
 INPUT="${ARGUMENTS}"
 
-# Empty argument → ask the user
+# Empty argument -> ask the user
 if [ -z "${INPUT}" ]; then
   # Use AskUserQuestion to collect:
   # "What brief / HLD / epic / change are we designing for?
@@ -25,7 +29,7 @@ if [ -z "${INPUT}" ]; then
   :
 fi
 
-# File path → verify readable
+# File path -> verify readable
 if [ -f "${INPUT}" ]; then
   echo "Reading input file: ${INPUT}"
 elif [ -d "${INPUT}" ]; then
@@ -69,35 +73,36 @@ If no `solution-architecture/` exists, proceed fresh without asking.
 ## Workflow
 
 1. **Triage** — use `triaging-input-maturity`
-   → Produces `00-scope-and-context.md`, `01-requirements.md`, and a workflow plan
-   → If input is brownfield and no archaeologist output exists, pause and recommend `/system-archaeologist` first
+   -> Produces `00-scope-and-context.md`, `01-requirements.md`, and a workflow plan
+   -> If input is brownfield and no archaeologist output exists, pause and recommend `/system-archaeologist` first
 
 2. **NFRs** — use `quantifying-nfrs`
-   → Produces `02-nfr-specification.md`, `03-nfr-mapping.md`
+   -> Produces `02-nfr-specification.md`, `03-nfr-mapping.md`
 
 3. **Shape & tech** — use `resisting-tech-and-scope-creep`
-   → Produces `04-solution-overview.md`, `05-tech-selection-rationale.md`, `06-descoped-and-deferred.md`
-   → Each significant decision identified here also requires an ADR (step 4)
+   -> Produces `04-solution-overview.md`, `05-tech-selection-rationale.md`, `06-descoped-and-deferred.md`
+   -> Each significant decision identified here also requires an ADR (step 4)
+   -> To red-team a single contentious choice mid-draft, dispatch the `tech-selection-critic` agent via the `Task` tool
 
 4. **ADRs** — use `writing-rigorous-adrs` for each significant decision
-   → Produces `adrs/NNNN-*.md`
+   -> Produces `adrs/NNNN-*.md`
 
 5. **Router-owned artifacts** — produce per catalog guidance in `using-solution-architect/SKILL.md`
-   → `07-c4-context.md`, `08-c4-containers.md`, `09-component-specifications.md`, `10-data-model.md`, `11-interface-contracts.md`, `12-sequence-diagrams.md`, `13-deployment-view.md`
+   -> `07-c4-context.md`, `08-c4-containers.md`, `09-component-specifications.md`, `10-data-model.md`, `11-interface-contracts.md`, `12-sequence-diagrams.md`, `13-deployment-view.md`
 
 6. **Traceability** — use `maintaining-requirements-traceability`
-   → Produces `14-requirements-traceability-matrix.md`
+   -> Produces `14-requirements-traceability-matrix.md`
 
 7. **Integration / migration / risks** — use `designing-for-integration-and-migration`
-   → Produces `15-integration-plan.md`, `16-migration-plan.md` (brownfield only), `17-risk-register.md`
+   -> Produces `15-integration-plan.md`, `16-migration-plan.md` (brownfield only), `17-risk-register.md`
 
 8. **TOGAF/ArchiMate (if enterprise)** — use `mapping-to-togaf-archimate`
-   → Produces `archimate-model/`, `togaf-deliverable-map.md`
+   -> Produces `archimate-model/`, `togaf-deliverable-map.md`
 
 9. **Assembly** — use `assembling-solution-architecture-document`
-   → Runs the 8-check consistency gate
-   → If gate fails: report failures, fix artifacts, rerun. Do not emit SAD with silent waivers.
-   → Produces `99-solution-architecture-document.md` + consistency gate report
+   -> Runs the 8-check consistency gate
+   -> If the gate fails: report failures, fix artifacts, rerun. Do not emit the SAD with silent waivers.
+   -> Produces `99-solution-architecture-document.md` + consistency gate report
 
 ## Output Location
 
@@ -105,9 +110,10 @@ All artifacts land in `solution-architecture/` (repo-root relative by default; o
 
 ## Downstream Handoffs (suggest after completion)
 
-- Security threat model → `ordis-security-architect` reads `02-`, `04-`, `09-`, `11-`, `15-`
-- Stakeholder polish → `muna-technical-writer` reads `99-`
-- ADR lifecycle governance → `axiom-sdlc-engineering` reads `adrs/`
+- Pre-emission review — `/review-solution-design` against the same `solution-architecture/` workspace
+- Security threat model — `ordis-security-architect` reads `02-`, `04-`, `09-`, `11-`, `15-`
+- Stakeholder polish — `muna-technical-writer` reads `99-`
+- ADR lifecycle governance — `axiom-sdlc-engineering` reads `adrs/`
 
 ## Scope Boundaries
 
