@@ -6,131 +6,60 @@ argument-hint: "[workspace root] - defaults to current directory"
 
 # Audit Command
 
-Run `cargo audit` (RustSec advisories) + `cargo deny check` (advisories, licenses, bans, sources) for supply-chain hygiene.
+Run `cargo audit` (RustSec advisories) and `cargo deny check` (advisories, licenses, bans, sources) for supply-chain hygiene.
 
-## Installation
+## Prerequisites
 
-```bash
-cargo install cargo-audit cargo-deny
-# Verify: cargo --list | grep -E 'audit|deny'
-```
+- `cargo audit` and `cargo deny` installed: `cargo install cargo-audit cargo-deny`
+- `deny.toml` committed at the workspace root. If missing, bootstrap with `cargo deny init` and tighten the allowlist/bans before running the audit — see `project-structure-and-tooling.md` for a complete template.
 
 ## Process
 
-### 1. Run `cargo audit`
+1. **Run `cargo audit`**
 
-```bash
-cargo audit --json
-```
-
-Shows vulnerabilities: RUSTSEC-YYYY-XXXX ID, affected crate, version range, severity, fix.
-
-### 2. Run `cargo deny check`
-
-```bash
-cargo deny check advisories licenses bans sources
-```
-
-Four checks:
-
-| Check | Catches |
-|-------|---------|
-| advisories | Known CVEs & unmaintained crates |
-| licenses | GPL, proprietary, conflicting licenses |
-| bans | Internal dependency blacklist |
-| sources | Git/path dependencies (block non-crates.io) |
-
-## Minimal `deny.toml` Template
-
-If `deny.toml` is missing, bootstrap it with `cargo deny init` (generates a default
-config you then tighten) or create it at the workspace root using the template below:
-
-```toml
-# deny.toml — cargo-deny 0.16+ (v2 schema; older `vulnerability`/`unmaintained`/
-# `licenses.deny`/`licenses.default` fields were removed).
-[advisories]
-version = 2
-yanked = "deny"
-ignore = []
-# In the v2 schema, any unhandled advisory fails the run by default — there is
-# no separate `vulnerability` knob. Add `ignore = ["RUSTSEC-YYYY-NNNN"]` entries
-# with a comment when you deliberately accept a finding.
-
-[licenses]
-version = 2
-# Anything NOT in this list is denied. Use SPDX short identifiers only — compound
-# expressions like "MIT OR Apache-2.0" are not valid here; they belong in
-# per-crate `exceptions` if needed.
-allow = [
-    "MIT",
-    "Apache-2.0",
-    "Apache-2.0 WITH LLVM-exception",
-    "BSD-2-Clause",
-    "BSD-3-Clause",
-    "ISC",
-    "Unicode-3.0",
-    "Unicode-DFS-2016",   # still used by some older versions of unicode-ident
-]
-confidence-threshold = 0.8
-
-[bans]
-multiple-versions = "warn"
-wildcards = "deny"
-# deny = [{ name = "forbidden-crate" }]
-
-[sources]
-unknown-registry = "deny"
-unknown-git = "deny"
-allow-registry = ["https://github.com/rust-lang/crates.io-index"]
-allow-git = []
-```
-
-## Triage Methodology
-
-**Critical/High Advisories**: Upgrade or remove immediately. Use `cargo update <crate>` and re-run.
-
-**License Violations**: 
-- MIT/Apache-2.0/BSD: Usually okay
-- GPL/AGPL: Requires source distribution (contamination risk)
-- Proprietary: Legal review needed
-
-**Bans**: Replace with approved alternative.
-
-**Sources**: Require crates.io releases (git deps are security risk).
-
-### Handling Unmaintained/Yanked Crates
-
-1. Check crate.io for newer versions
-2. If no newer version: evaluate risk assessment vs replacement
-3. If waiving: document in `deny.toml` with reason:
-   ```toml
-   [advisories]
-   ignore = ["RUSTSEC-YYYY-XXXX"]  # Reason: no patch available, low risk
+   ```bash
+   cargo audit --json
    ```
 
-## CI Integration
+   Each finding shows the RUSTSEC ID, affected crate, version range, severity, and fix.
 
-```bash
-cargo audit --deny warnings
-cargo deny check advisories licenses bans sources
-```
+2. **Run `cargo deny check`**
 
-Fail on critical/high advisories. Warn on medium. Fail on license violations.
+   ```bash
+   cargo deny check advisories licenses bans sources
+   ```
+
+   | Check | Catches |
+   |-------|---------|
+   | advisories | Known CVEs and unmaintained crates |
+   | licenses | GPL, proprietary, or disallowed licenses |
+   | bans | Crates blacklisted by the policy |
+   | sources | Git/path dependencies outside the allowlist |
+
+3. **Triage each finding**
+   - **Critical/High advisories**: upgrade (`cargo update <crate>`) or replace the dependency. Re-run step 1.
+   - **License violations**: swap to a permissive-licensed alternative, or add an `exceptions` entry with legal-review justification.
+   - **Bans**: replace with the approved alternative listed in `deny.toml`.
+   - **Unknown sources**: move the dependency to a released crates.io version, or add it to `allow-git` with an explanation.
+   - **Unmaintained / yanked** with no fix available: add to `[advisories] ignore` with a `reason` comment explaining why it is acceptable.
+
+## Success Criteria
+
+The audit is complete when:
+
+- `cargo audit --json` exits 0.
+- `cargo deny check advisories licenses bans sources` exits 0.
+- Every `ignore` entry or `exceptions` entry added to `deny.toml` in this pass carries a comment stating the justification.
+
+**Report back**: list each finding, its severity, and the action taken (upgraded, replaced, waived with reason, or deferred with a ticket reference).
 
 ## Load Detailed Guidance
 
-For comprehensive supply-chain patterns and Rust-specific threats:
+For supply-chain threat patterns, `deny.toml` design, and CI integration:
 
 ```
 Load skill: axiom-rust-engineering:using-rust-engineering
 Then read: project-structure-and-tooling.md
 ```
 
-References: https://rustsec.org, https://embarkstudios.github.io/cargo-deny/
-
-## Key Principles
-
-- **Fail-fast security**: No critical/high CVEs in production
-- **License policy**: Whitelist reflects your legal approval
-- **Regular audits**: Weekly or before releases
-- **Audit in CI**: Catch transitive-dependency breakage early
+References: <https://rustsec.org>, <https://embarkstudios.github.io/cargo-deny/>

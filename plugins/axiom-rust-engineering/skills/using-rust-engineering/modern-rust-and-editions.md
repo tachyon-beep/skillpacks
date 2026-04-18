@@ -623,7 +623,12 @@ implement additional traits (`DoubleEndedIterator`, `ExactSizeIterator`), be
 
 ### `let` Chains
 
-`let` chains (`if let ... && let ...`) are stable since Rust **1.88**, but **only on edition 2024 or later** — they are not available on edition 2021 regardless of compiler version. They allow chaining multiple pattern bindings in a single condition:
+> **Status**: stable since Rust 1.88 (Jul 2025) **but edition-2024-gated**. On
+> editions 2015 / 2018 / 2021, `let` chains are a syntax error regardless of
+> compiler version. You must have both `rustc >= 1.88` AND
+> `edition = "2024"` in `Cargo.toml` for the syntax below to compile.
+
+`let` chains (`if let ... && let ...`) allow chaining multiple pattern bindings in a single condition:
 
 ```rust
 fn process(data: &Option<Vec<String>>) {

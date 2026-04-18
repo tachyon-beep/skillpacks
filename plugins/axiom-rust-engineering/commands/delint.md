@@ -36,6 +36,10 @@ Apply systematic delinting following the Rust engineering methodology. Fix warni
    - If suppression is needed, add a `// Why:` comment explaining why at the narrowest possible scope
    - Document architectural reasons for allowing specific lints
 
+## Success Criteria
+
+Move to the next category only when `cargo clippy` shows **zero warnings in the current category**. The full delint is complete when `cargo clippy --all-targets --all-features -- -D warnings` exits 0, or when every remaining warning has a scoped `#[allow]` / `#[expect]` with a justification comment.
+
 ## Key Principles
 
 - **Category-first**: Fix by rule category, not by file. This builds pattern recognition.

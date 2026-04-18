@@ -421,10 +421,7 @@ Before giving ANY Rust advice, ask yourself:
    - If no → Route confidently
 
 6. ❓ **Am I feeling pressure to skip routing?**
-   - Time pressure → Route anyway (faster overall, fewer wrong turns)
-   - Complexity → Route anyway (specialists are built for the complexity)
-   - User confidence → Route anyway (verify assumptions against symptoms)
-   - "Simple" question → Route anyway (simple questions deserve correct answers)
+   - Route anyway. Time pressure, apparent complexity, user confidence, and "this is simple" all produce the same bad outcome — a direct answer that misses the specialist's checklist. Specialists exist precisely for the cases that feel like they don't need them.
 
 **If you failed ANY check above, do NOT give direct advice. Route to the specialist or ask a clarifying question.**
 

@@ -143,30 +143,7 @@ Miri absence is not proof of soundness. An audit of the static invariants (this 
 
 ## Output Contract
 
-For each `unsafe` block, produce one finding entry in this format:
-
-```markdown
-### Block N — <file>:<start_line>–<end_line>
-
-**Claimed invariants** (from `// SAFETY:` comment or inferred):
-> [Verbatim SAFETY comment, or "None — invariant inferred as: <description>"]
-
-**Verdict**: Sound | Unsound | Indeterminate
-
-**Evidence**:
-- [Specific reason the verdict holds; cite code lines, type constraints, or lifetimes]
-- [If Sound: explain why each UB class from the methodology is not triggered]
-- [If Unsound: identify the exact UB class and the code path that triggers it]
-- [If Indeterminate: state what information is missing]
-
-**Required remediation** (Unsound only):
-- [Concrete fix or mitigation, e.g., "add alignment assertion before cast", "use NonNull::new_unchecked only after null check"]
-
-**Required evidence** (Indeterminate only):
-- [What must be provided to reach a Sound or Unsound verdict, e.g., "need to see all callers of make_slice to verify the pointer outlives the returned slice"]
-```
-
-After all per-block findings, produce the aggregate sections:
+Output the aggregate SME Protocol sections **first**, then the per-block findings. Dispatchers scan the verdict summary at the top of the response — do not bury it behind N block reports.
 
 ```markdown
 ## Confidence Assessment
@@ -188,6 +165,29 @@ Rationale: [what you read, what invariants you could trace, what you could not d
 - [When verdicts change: "If callers guarantee single-threaded access, the Send impl is safe"]
 - [Miri results not yet available — dynamic confirmation pending]
 - [Audit scope: only files provided; other crates that call into these types not reviewed]
+```
+
+Then, for each `unsafe` block, produce one finding entry in this format:
+
+```markdown
+### Block N — <file>:<start_line>–<end_line>
+
+**Claimed invariants** (from `// SAFETY:` comment or inferred):
+> [Verbatim SAFETY comment, or "None — invariant inferred as: <description>"]
+
+**Verdict**: Sound | Unsound | Indeterminate
+
+**Evidence**:
+- [Specific reason the verdict holds; cite code lines, type constraints, or lifetimes]
+- [If Sound: explain why each UB class from the methodology is not triggered]
+- [If Unsound: identify the exact UB class and the code path that triggers it]
+- [If Indeterminate: state what information is missing]
+
+**Required remediation** (Unsound only):
+- [Concrete fix or mitigation, e.g., "add alignment assertion before cast", "use NonNull::new_unchecked only after null check"]
+
+**Required evidence** (Indeterminate only):
+- [What must be provided to reach a Sound or Unsound verdict, e.g., "need to see all callers of make_slice to verify the pointer outlives the returned slice"]
 ```
 
 ### Verdict Semantics

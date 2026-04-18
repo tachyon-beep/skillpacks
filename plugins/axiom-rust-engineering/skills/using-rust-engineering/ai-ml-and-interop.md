@@ -375,17 +375,18 @@ fn normalize_inplace<'py>(
     py: Python<'py>,
     arr: PyReadonlyArray1<'py, f32>,
 ) -> PyResult<Bound<'py, PyArray1<f32>>> {
-    // SAFETY / SOUNDNESS: `arr.as_slice()?` hands out a borrow into Python-owned
-    // numpy memory. That borrow is only valid while the GIL is held — once the GIL
-    // is released, another Python thread can resize, free, or overwrite the array.
-    // Never pass a slice derived from Python memory into `py.allow_threads`.
+    // SAFETY: `arr.as_slice()?` produces a borrow into Python-owned numpy
+    // memory, valid only while the GIL is held. We immediately copy it into an
+    // owned Vec under the GIL. The closure below receives the owned Vec — NOT
+    // the Python-backed slice — so no borrow into Python memory crosses the
+    // GIL release.
     //
-    // The safe pattern is: copy out under the GIL -> compute without the GIL ->
-    // return. For small arrays the copy is cheap; for large arrays it still beats
-    // the UB of a dangling borrow.
-    let owned: Vec<f32> = arr.as_slice()?.to_vec();
+    // The rule: never `move` a reference to Python memory into `allow_threads`.
+    // Only owned Rust values may cross. Copying is cheap for small arrays and
+    // still beats the UB of a dangling borrow for large ones.
+    let owned: Vec<f32> = arr.as_slice()?.to_vec();  // copy under GIL
 
-    let result: Vec<f32> = py.allow_threads(move || {
+    let result: Vec<f32> = py.allow_threads(move || {  // owned data only
         let n = owned.len() as f32;
         let mean: f32 = owned.iter().sum::<f32>() / n;
         let var: f32 = owned.iter().map(|x| (x - mean).powi(2)).sum::<f32>() / n;
@@ -1225,11 +1226,20 @@ fn fused_wrong(a: &Array1<f32>, b: &Array1<f32>, c: &Array1<f32>) -> Array1<f32>
     (a + b) * c   // alloc for (a+b), then alloc for result
 }
 
-// ✅ CORRECT: single output allocation, no intermediates.
-// Zip::from needs something that *produces elements* (`&mut out`), not the
-// dimension descriptor. `Zip::from(out.raw_dim())` would iterate shape axes, not
-// array elements. Use `&mut out` to walk the `MaybeUninit<f32>` slots, and call
-// `.for_each` (the `.apply` name was removed in ndarray 0.15+).
+// ✅ CORRECT (preferred): single output allocation via `map_collect`, no
+// intermediates, no unsafe. This should be the default — reach for it first.
+fn fused_simple(a: &Array1<f32>, b: &Array1<f32>, c: &Array1<f32>) -> Array1<f32> {
+    Zip::from(a).and(b).and(c).map_collect(|&ai, &bi, &ci| (ai + bi) * ci)
+}
+
+// ✅ CORRECT (performance variant): writes into a caller-owned uninit buffer
+// without the final move that `map_collect` performs. Use only when profiling
+// shows the `map_collect` copy matters and you can reuse `out` across calls.
+//
+// `Zip::from(&mut out)` walks the `MaybeUninit<f32>` slots to allow `.write()`.
+// Note: `Zip::from(out.raw_dim())` would iterate shape axes, not elements —
+// don't conflate them. `.for_each` is the current method name; `.apply` was
+// removed in ndarray 0.15+.
 fn fused_correct(a: &Array1<f32>, b: &Array1<f32>, c: &Array1<f32>) -> Array1<f32> {
     let mut out = Array1::<f32>::uninit(a.raw_dim());
     Zip::from(&mut out)
@@ -1239,11 +1249,6 @@ fn fused_correct(a: &Array1<f32>, b: &Array1<f32>, c: &Array1<f32>) -> Array1<f3
         });
     // SAFETY: the Zip above writes every element exactly once.
     unsafe { out.assume_init() }
-}
-
-// Simpler alternative for this case:
-fn fused_simple(a: &Array1<f32>, b: &Array1<f32>, c: &Array1<f32>) -> Array1<f32> {
-    Zip::from(a).and(b).and(c).map_collect(|&ai, &bi, &ci| (ai + bi) * ci)
 }
 ```
 

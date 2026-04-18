@@ -1140,7 +1140,8 @@ git commit -m "chore: add cargo-deny policy"
 
 - [ ] `Cargo.toml`: `edition = "2024"`, `rust-version` set to target MSRV
 - [ ] `rust-toolchain.toml`: exact stable channel pinned, `rustfmt` + `clippy` + `rust-src` components listed
-- [ ] `rustfmt.toml`: `edition = "2024"`, `imports_granularity = "Crate"`, `group_imports = "StdExternalCrate"`
+- [ ] `rustfmt.toml`: `edition = "2024"`, `max_width = 100`, `use_small_heuristics = "Max"` (stable rustfmt options)
+- [ ] *(Nightly rustfmt only)* If pinning nightly via `rust-toolchain.toml`, also add `unstable_features = true`, `imports_granularity = "Crate"`, `group_imports = "StdExternalCrate"`. Stable rustfmt **silently ignores** these options — adding them to a stable-toolchain project has no effect.
 - [ ] `[lints]` table in `Cargo.toml`: `unsafe_code = "deny"`, `clippy::all = "warn"`, `clippy::pedantic = "warn"`
 - [ ] `.gitignore`: `/target/` listed (no `Cargo.lock` entry — commit it)
 - [ ] `Cargo.lock` committed (default for binaries AND libraries in 2025+)

@@ -1109,7 +1109,7 @@ async fn main() -> std::io::Result<()> {
 }
 ```
 
-actix-web uses its own `#[actix_web::main]` macro which sets up tokio internally. It runs a **per-worker, non-`Send` runtime** (each worker thread owns a `current_thread` runtime), so the `Handler` trait requires only `Clone + 'static` — handlers and per-worker state do **not** need `Send`/`Sync` bounds. Cross-worker shared state still does: use `web::Data<Arc<T>>` (optionally with `Mutex`/`RwLock`) for state that must outlive or be visible across workers.
+actix-web uses its own `#[actix_web::main]` macro which sets up tokio internally. It runs a **per-worker `current_thread` runtime** (each worker thread owns its own runtime), so the `Handler` trait requires only `Clone + 'static` — handlers and per-worker state do **not** need to be `Send` or `Sync`. (The runtime type itself is `Send`; what's non-`Send` is the work it schedules.) Cross-worker shared state still needs `Send + Sync`: use `web::Data<Arc<T>>` (optionally with `Mutex`/`RwLock`) for state that must outlive or be visible across workers.
 
 **axum vs actix-web:** Both are production-grade. axum has tighter integration with the tokio ecosystem and tower middleware. actix-web has a longer track record and slightly higher throughput benchmarks at extreme concurrency. Either is a defensible choice; axum is more common for new projects in 2025.
 

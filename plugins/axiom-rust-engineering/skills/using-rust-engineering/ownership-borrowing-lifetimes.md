@@ -332,10 +332,14 @@ In practice, explicit lifetime subtyping (`'a: 'b`) appears in:
 
 ### E0515: Cannot Return Reference to Local Variable
 
-The classic "reference escapes its owner" error. Note: if the signature omits the
+The classic "reference escapes its owner" error. If the signature omits the
 lifetime entirely (`-> &str`), the compiler emits **E0106 (missing lifetime specifier)**
-first. Once a lifetime is in place, returning a borrow of a function-local produces
-E0515.
+first. Once a lifetime annotation is in place, returning a borrow of a
+function-local produces E0515.
+
+**Related**: E0597 ("borrowed value does not live long enough") appears in a
+similar shape when a *binding* inside a scope outlives the data it points at —
+see the example further down in this section.
 
 ```rust
 // compile_fail: E0515
@@ -345,11 +349,6 @@ fn make_ref<'a>() -> &'a str {
                                    // but we're returning a reference to it
 }
 ```
-
-**Related**: E0597 ("borrowed value does not live long enough") appears in a similar
-shape when a *binding* inside a scope outlives the data it points at — see the
-example further down in this section.
-
 
 **Fix**: Return the owned value, not a reference to a local.
 

@@ -614,7 +614,7 @@ cargo bench  # creates target/criterion/report/index.html
 
 Criterion is still the default for wall-clock microbenchmarks on a dev machine. Use `iai-callgrind` when you need deterministic CI numbers; use `divan` when criterion's reporting overhead is outweighing the signal. Don't run all three — pick one benchmarking harness per crate to keep comparisons coherent. See [performance-and-profiling.md](performance-and-profiling.md) for when to reach for benchmarking at all vs. profiling.
 
-### Fuzzing
+## Fuzzing
 
 Property tests and fuzzers both explore an input space, but they do different things:
 
@@ -810,8 +810,13 @@ impl EmailSender for InMemoryEmailSender {
     }
 }
 
-// Forward through `Arc` so the test and the service can share one instance.
-// The test keeps a handle to observe state; the service owns a `Box<dyn EmailSender>`.
+// The test holds `Arc<InMemoryEmailSender>` so it can observe the fake's state
+// after calling the service. The service accepts `Box<dyn EmailSender>`. If we
+// handed the service a fresh InMemoryEmailSender, the two halves would point
+// at different instances and the assertion below would be vacuous. To make
+// both halves observe the *same* instance, the service receives a boxed clone
+// of the Arc — and that requires `Arc<InMemoryEmailSender>` itself to
+// implement `EmailSender`. This impl is the forwarding shim that enables it.
 impl EmailSender for std::sync::Arc<InMemoryEmailSender> {
     fn send(&self, to: &str, subject: &str, body: &str) -> Result<(), SendError> {
         (**self).send(to, subject, body)

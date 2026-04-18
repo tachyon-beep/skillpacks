@@ -401,7 +401,7 @@ A `dyn Trait` value is a **fat pointer** consisting of:
 1. A pointer to the concrete data.
 2. A pointer to the **vtable** — a static struct of function pointers for the concrete type's implementation of the trait.
 
-Do not pass `dyn Trait` values — `&dyn Trait`, `Box<dyn Trait>`, `*const dyn Trait`, etc. — across FFI or `cdylib` boundaries. The real issue is not just that the vtable layout is unstable: Rust fat pointers have **no `extern "C"` representation at all**, and the compiler's `improper_ctypes` lint will flag them. To cross a C boundary you must flatten to a concrete ABI — a thin `*mut OpaqueT` alongside a separately-exported struct of `extern "C" fn` function pointers (the classic "hand-rolled vtable" pattern).
+> **FFI Safety Rule (soundness, not preference).** Never pass `dyn Trait` values — `&dyn Trait`, `Box<dyn Trait>`, `*const dyn Trait`, etc. — across FFI or `cdylib` boundaries. Rust fat pointers have **no `extern "C"` representation at all**, the vtable layout is unstable, and the compiler's `improper_ctypes` lint will flag such signatures. To cross a C boundary you must flatten to a concrete ABI: a thin `*mut OpaqueT` alongside a separately-exported struct of `extern "C" fn` function pointers (the classic "hand-rolled vtable" pattern). See [unsafe-ffi-and-low-level.md](unsafe-ffi-and-low-level.md) for the boundary design.
 
 ```rust
 // Size of a dyn Trait pointer:

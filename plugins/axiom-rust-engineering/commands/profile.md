@@ -14,100 +14,85 @@ Humans are terrible at guessing where code is slow, even in Rust. Profile first,
 
 ## Prerequisites
 
-Before profiling, ensure:
+1. **Debug symbols in the profiling profile** (do not pollute release):
 
-1. **Debug symbols in release profile**
    ```toml
-   [profile.release]
-   debug = true
-   # Or lighter-weight line tables only:
-   # debug = "line-tables-only"
+   [profile.profiling]
+   inherits = "release"
+   debug = "line-tables-only"   # function names + line numbers, minimal size impact
    ```
 
-2. **Install flamegraph**
+2. **Install a profiler**:
+
    ```bash
-   cargo install flamegraph
+   cargo install flamegraph   # Option 1
+   cargo install samply       # Option 2
+   # perf is the Linux kernel profiler; install via your package manager
    ```
 
 ## Process
 
-### Option 1: Cargo Flamegraph (Recommended)
+### Option 1 — cargo-flamegraph (recommended)
 
 ```bash
-cargo flamegraph --bin ${ARGUMENTS} -o flame.svg
+cargo flamegraph --profile profiling --bin ${ARGUMENTS} -- <binary args>
 ```
 
-Then open `flame.svg` in a browser:
+Opens `flamegraph.svg` in your browser.
 
-- **Wide bars** = CPU time spent in that function
-- **Tall stacks** = deep call chains
-- **Inlined frames** = may collapse into parent function
-- **Color** = different function, not significance
+- **Wide bars** = CPU time spent in that function (including callees)
+- **Vertical axis** = call depth (bottom = entry, top = leaves)
+- **Color** = distinguishes functions, not significance
 
-Read from **left to right** (time axis), **bottom to top** (call stack).
+Read bottom-to-top; look for wide bars near the top of the stack — those are the real work.
 
-### Option 2: Samply (Firefox Profiler UI)
-
-For interactive profiling:
+### Option 2 — samply (Firefox Profiler UI, no elevated privileges)
 
 ```bash
-# Install once
-cargo install samply
-
-# Profile a release binary
-samply record ./target/release/${ARGUMENTS}
+samply record ./target/profiling/${ARGUMENTS}
 ```
 
-Opens Firefox Profiler UI automatically. Timeline view shows exactly which functions consume time per thread.
+Opens Firefox Profiler. Provides timeline view, per-thread breakdown, and interactive zoom. Right tool when `sudo perf` is unavailable (CI, containers, macOS without DTrace) or when you want an interactive UI.
 
-### Option 3: Perf (Linux-only)
-
-Lower-level but powerful. Not available on macOS or Windows — on macOS use `samply`
-(Option 2) or `cargo instruments`; on Windows use Windows Performance Analyzer or
-`samply`. `cargo flamegraph` (Option 1) uses `perf` under the hood on Linux and
-`dtrace` on macOS, so it works cross-platform.
+### Option 3 — perf (Linux only)
 
 ```bash
-# Record with call stacks (99Hz sampling rate).
-# Use DWARF unwinding — Rust builds frequently omit frame pointers, so the default
-# `-g` (fp) produces broken/truncated stacks. DWARF requires debug info in the binary.
-perf record -F 99 --call-graph dwarf ./target/release/${ARGUMENTS}
+# Build with the profiling profile first
+cargo build --profile profiling
 
-# View results interactively
-perf report
+# DWARF unwinding — Rust builds often omit frame pointers, so default -g
+# produces broken stacks. Requires debug info.
+sudo perf record -F 99 --call-graph dwarf ./target/profiling/${ARGUMENTS}
+sudo perf report
 ```
 
-Navigate with arrow keys, `e` to expand, `+` to view full call tree.
+Go direct to perf when you need hardware counters (cache misses, branch mispredictions). Otherwise prefer Option 1 or 2.
 
-## Interpreting Results
+## Analysis
 
-1. **Identify hot paths**
-   - Top 5 functions by cumulative time
-   - Note call frequency (1000 calls × 1ms each = 1s total)
-   - Check for unexpected allocations in hot loops
+Produce a written analysis naming:
 
-2. **Distinguish CPU-bound vs I/O-bound**
-   - Flamegraph shows CPU time only (idle I/O is blank)
-   - Long flat sections with no growth = waiting for I/O
-   - Steep growth = CPU-intensive
+1. **Top 3–5 hot paths** by cumulative time, with call counts where visible.
+2. **CPU-bound vs. I/O-bound** character of each (I/O wait shows as blank/idle samples).
+3. **Red flags spotted**: repeated allocations in loops, deep call stacks in hot code, unexpected vtable lookups, lock contention.
 
-3. **Red flags**
-   - Repeated allocations in hot loops (use arenas, reuse buffers)
-   - Unexpected function calls (check for inline opportunities)
-   - Deep call stacks in tight loops (flatten with refactoring)
-   - Lock contention (check Mutex/RwLock usage)
+## Success Criteria
 
-## After Profiling - Route to Appropriate Skill
+The profile step is complete when:
 
-Based on findings, recommend:
+- A flamegraph SVG or samply recording has been generated.
+- The written analysis names the top bottleneck(s) and their approximate time share.
+- One concrete next action has been recommended from the routing table below (or "no action needed — bottleneck is outside the code under optimization").
+
+## Route to the Next Step
 
 | Bottleneck Type | Next Step |
 |-----------------|-----------|
-| Hot CPU loop without allocation | Check for `-C target-cpu=native`, SIMD, `#[inline]` hints |
-| Allocator pressure | Load performance-and-profiling.md for heaptrack/DHAT analysis |
-| Lock contention in async | Check for coarse-grained locking; see async-and-concurrency.md |
-| Deep call stacks | Refactor for flatter call graph or increase inlining |
-| I/O-bound (network, file) | Check for parallelism or buffering; see async-and-concurrency.md |
+| Hot CPU loop without allocation | Verify `-C target-cpu=native` / SIMD / `#[inline]`; load `performance-and-profiling.md` |
+| Allocator pressure (many small allocations) | Switch to heaptrack or DHAT; load `performance-and-profiling.md` → Memory Profiling |
+| Lock contention in async | Load `async-and-concurrency.md` — audit for coarse-grained locking and held guards across `.await` |
+| Deep call stacks in tight loops | Refactor to flatten; check `#[inline]` attributes |
+| I/O-bound (network, file) | Verify async I/O, parallelism, buffering; load `async-and-concurrency.md` |
 
 ## Load Detailed Guidance
 
@@ -124,33 +109,13 @@ Then read: performance-and-profiling.md
 User: /rust-engineering:profile my-app
 
 Claude:
-1. Checking debug symbols... [profile.release] debug = true ✓
-2. Running cargo flamegraph --bin my-app...
-3. Generated flame.svg
-
-Analysis:
-- process_data(): 45% of time, called 10000 times
-- allocate_buffer(): 25% of time (in hot path!)
-- thread synchronization: 15% (Mutex::lock in parallel section)
-
-Top recommendations:
-- Move buffer allocation outside loop (reuse allocation)
-- Consider lock-free queue or channel for data passing
-- Profile with samply to see exact thread contention pattern
+1. Verified [profile.profiling] debug = "line-tables-only"
+2. cargo flamegraph --profile profiling --bin my-app — generated flamegraph.svg
+3. Analysis:
+   - process_data(): 45% of time, ~10000 calls
+   - allocate_buffer(): 25% of time (inside process_data loop)
+   - Mutex::lock contention: 15% in parallel section
+4. Recommended next action: allocator pressure — move buffer allocation
+   outside the loop, re-profile. Load performance-and-profiling.md for
+   heaptrack/DHAT if the allocation pattern needs deeper analysis.
 ```
-
-## Iterate
-
-1. Profile baseline
-2. Make targeted change (one variable at a time)
-3. Re-profile and compare SVG visually
-4. Keep flamegraphs from each iteration for comparison
-5. Commit performance-related changes with measurement data in commit message
-
-## Alternative: In-Process Instrumentation
-
-For continuous monitoring (not one-shot profiling), consider:
-
-- `pprof-rs` - in-process profiler, can export flamegraph
-- `perf_event_open` - low-overhead sampling
-- Criterion benchmarks with baseline comparisons

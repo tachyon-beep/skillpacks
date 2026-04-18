@@ -119,6 +119,36 @@ Method: [auto-fix | pattern-by-pattern | file-by-file]
 Details: [if manual fixes, brief notes on the approach]
 ```
 
+## Confidence Assessment
+
+At the end of each category sweep, state:
+
+- **HIGH**: All warnings in this category were read, classified, and resolved or explicitly suppressed with justification.
+- **MEDIUM**: Some warnings remain unclassified or suppressed without full context (e.g., generated code, macro-expanded sites).
+- **LOW**: Warning counts are unreliable (e.g., proc-macro expansions inflating counts; workspace-level vs. crate-level discrepancy unresolved).
+
+## Risk Assessment
+
+At the end of the full sweep:
+
+- **Severity**: Critical if `correctness` or `suspicious` warnings remain; Medium while `perf`/`complexity` items are open; Low if only `pedantic`/`nursery` items remain.
+- **Likelihood**: Estimate how likely remaining warnings are to mask real bugs vs. represent stylistic noise.
+- **Suppressions added**: List every `#[allow]` / `#[expect]` introduced, with the category and a one-line justification summary.
+
+## Information Gaps
+
+Note any warnings you could not resolve and why:
+
+- Macro-generated sites where the lint target is not editable.
+- Generated bindings (e.g., `bindgen`, `prost-build`) requiring upstream changes.
+- Lints deferred to a refactoring ticket (include the ticket reference in the suppression comment).
+
+## Caveats
+
+- Warning counts can differ between `cargo clippy` and `cargo clippy --all-features` — state which invocation was used.
+- Pedantic lints on public API may require intentional suppression; this is acceptable with a documented justification.
+- Cross-crate lints (e.g., `clippy::wildcard_imports` interacting with re-exports) may require coordinated changes across workspace members.
+
 ## Non-Goals
 
 - **NOT** a refactoring engine: delinting makes minimal, mechanical changes. If a lint requires architectural redesign (e.g., `too_many_arguments` via builder API), create a separate refactoring ticket and add `#[allow]` with a TODO reference in the delinting PR.

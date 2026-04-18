@@ -212,11 +212,13 @@ Action: profile regex::exec. Is the Regex being compiled on every request?
 
 ```bash
 # cargo-flamegraph has no built-in duration flag — it profiles the child process for
-# its full lifetime. To get more samples, either run a longer workload, or raise the
-# sampling frequency via the inner perf command with `-c`:
+# its full lifetime. To get more samples, either run a longer workload, or raise
+# the perf sampling frequency. cargo-flamegraph forwards `-F` / `--freq` to perf
+# and accepts additional perf args via the `PERF_ARGS` environment variable:
 CARGO_PROFILE_PROFILING_DEBUG=line-tables-only \
+PERF_ARGS="--call-graph dwarf" \
   cargo flamegraph --profile profiling --bin my-binary --output flame.svg \
-    -c "record -F 997 --call-graph dwarf -g" \
+    --freq 997 \
     -- --my-bench-arg value   # anything after `--` is passed to the binary itself
 
 # Exclude noise from the flamegraph (common in async code)

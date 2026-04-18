@@ -6,11 +6,11 @@ argument-hint: "[package spec] - optional `-p <name>` package selector; defaults
 
 # Typecheck Command
 
-Run the Rust compile-health battery: `cargo check` + `cargo clippy` + test-binary compile + doctests. Rust has **no separate type checker** — the compiler IS the type checker.
+Run the Rust compile-health battery: `cargo check` + `cargo clippy` + test-binary compile + doctests.
 
 ## Core Principle
 
-**Rust has no separate type checker — `cargo check` is the fastest compile-health command.** Unlike Python (which has mypy) or TypeScript (which has tsc), Rust's borrow checker and type system are part of the compiler. `cargo check` runs the compiler frontend (type-checking and borrowing rules) without codegen, giving you type-safety feedback in seconds.
+**Rust has no separate type checker — `cargo check` is the fastest compile-health command.** Unlike Python (mypy) or TypeScript (tsc), Rust's borrow checker and type system are part of the compiler. `cargo check` runs the compiler frontend (type-checking and borrow-checking) without codegen, giving you type-safety feedback in seconds.
 
 ## Process
 

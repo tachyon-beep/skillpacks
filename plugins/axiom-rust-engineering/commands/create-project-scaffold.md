@@ -22,8 +22,9 @@ clippy pedantic warnings, cargo-nextest, cargo-deny, rustfmt, and GitHub Actions
 cargo new --lib ${ARGUMENTS}   # for a library
 # or
 cargo new --bin ${ARGUMENTS}   # for a binary
-cd ${ARGUMENTS}
 ```
+
+All subsequent shell snippets in this command run inside the new crate directory. Claude's Bash tool does not preserve the working directory between calls, so either prefix each command with `cd "${ARGUMENTS}" &&` or pass absolute paths (e.g., write to `"${ARGUMENTS}/Cargo.toml"` rather than `Cargo.toml`) when editing files.
 
 3. **Write `rust-toolchain.toml`** (pins the toolchain for all contributors and CI)
 

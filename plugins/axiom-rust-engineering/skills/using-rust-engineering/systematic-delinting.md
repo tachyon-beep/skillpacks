@@ -62,7 +62,8 @@ Commit `clippy-baseline.txt` so progress is measurable.
 | Tier | Effort | Examples | Strategy |
 |------|--------|----------|----------|
 | Mechanical auto-fix | Very low | `needless_return`, `redundant_field_names`, `map_flatten` | `cargo clippy --fix` per lint |
-| Mechanical manual | Low | `or_fun_call`, `clone_on_copy`, `needless_collect` (nursery, opt in) | Pattern replace, file-by-file |
+| Mechanical manual | Low | `or_fun_call`, `clone_on_copy` | Pattern replace, file-by-file |
+| Mechanical manual (opt-in) | Low | `needless_collect` *(nursery)*, `redundant_clone` *(nursery)* | Opt in with `-W clippy::<lint>` or `[lints.clippy]`, then pattern-replace. Review each site — `redundant_clone` has a false-positive history. |
 | Requires thought | Medium | `too_many_arguments`, `large_enum_variant`, `module_name_repetitions` | Case-by-case review |
 | Defers to refactor | High | `cognitive_complexity`, `too_many_lines`, design lints | Create ticket, defer |
 
@@ -647,8 +648,15 @@ all = { level = "warn", priority = -1 }
 In CI, compare warning count to the committed baseline:
 
 ```bash
-BASELINE=$(grep -c "^warning:" clippy-baseline.txt)
-CURRENT=$(cargo clippy 2>&1 | grep -c "^warning:")
+# Run WITHOUT -Dwarnings — we want advisory warnings, not errors. The baseline
+# file must have been generated the same way:
+#   cargo clippy 2>&1 > clippy-baseline.txt
+#
+# The "^warning[^(]" pattern excludes clippy's summary line
+# ("warning: N warnings emitted"), which would otherwise inflate both counts by
+# one — self-consistent but wrong for any downstream use.
+BASELINE=$(grep -c "^warning[^(]" clippy-baseline.txt)
+CURRENT=$(cargo clippy 2>&1 | grep -c "^warning[^(]")
 if [ "$CURRENT" -gt "$BASELINE" ]; then
   echo "Clippy warnings increased: $BASELINE -> $CURRENT"
   exit 1
