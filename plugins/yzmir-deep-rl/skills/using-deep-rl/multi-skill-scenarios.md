@@ -116,4 +116,32 @@ This reference provides routing sequences for common RL problem types.
 - The llm-specialist pack covers RLHF, LoRA, and LLM-specific optimization
 - Deep-rl pack focuses on general RL algorithms, not LLM-specific applications
 
-**Cross-pack note:** If user explicitly wants to understand the RL theory behind RLHF, route to **policy-gradient-methods** for PPO fundamentals, then to `llm-specialist` for LLM-specific application.
+**Cross-pack note:** If user explicitly wants to understand the RL theory behind RLHF, route to **policy-gradient-methods** for PPO fundamentals (including the GRPO section, which is the most-cited 2024–2026 PG variant), then to `llm-specialist` for LLM-specific application.
+
+---
+
+## Scenario: Agentic RL — Long-Horizon Tool-Use / LLM Agents
+
+**Need:** Train an LLM-based agent to use tools, browse, or solve multi-step problems where reward arrives at the end of a long trajectory (web tasks, software engineering tasks, math/code problems).
+
+**Routing:**
+
+1. **policy-gradient-methods** — Read the GRPO section first. Outcome-supervised, sparse-reward, KL-anchored fine-tuning is exactly GRPO's design point.
+2. **reward-shaping-engineering** — Designing process/outcome rewards correctly is the dominant failure mode here, more than algorithm choice.
+3. **rl-evaluation** — Eval on held-out tasks; understand variance from sampling temperature; track pass-at-k.
+4. `yzmir-llm-specialist` — Reward model training, KL-to-reference scheduling, format/length rewards, length bias mitigation, trainer-side tooling (TRL, OpenRLHF, verl).
+
+**Why this is borderline-out-of-scope for deep-rl:**
+
+- The "environment" is the LLM's own generation + tool-call loop, not a simulator.
+- Action space is the token vocabulary (tens of thousands of discrete actions); credit assignment is over thousands of tokens.
+- The dominant techniques (GRPO, DPO, RLOO, REINFORCE++) all live in or near the LLM stack.
+- Classic RL infrastructure (replay buffers, ensembles, target networks) mostly does not apply.
+
+**What deep-rl does contribute:**
+
+- Theoretical lineage of GRPO (PPO → GRPO; see `policy-gradient-methods.md` Part 5.5).
+- Sparse-reward / hard-exploration thinking (see `exploration-strategies.md` for why pure outcome rewards are hard).
+- Reward-design discipline (see `reward-shaping-engineering.md` — process rewards, reward hacking).
+
+**Cross-pack note:** If the user is building an agentic RL system, expect ~80% of their work to live in `llm-specialist` and only ~20% in this pack. Don't try to keep them here.

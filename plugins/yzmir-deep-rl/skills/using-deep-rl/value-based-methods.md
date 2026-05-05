@@ -725,6 +725,49 @@ Learning progression:
 6. Rainbow (combine all)
 ```
 
+### Beyond Rainbow — R2D2, Agent57, BBF
+
+Rainbow was the 2017 SOTA. The post-Rainbow line of work focuses on **scale**, **memory**, and **sample efficiency**. You don't need to implement these to ship working RL, but you should know they exist when someone asks about discrete-action SOTA.
+
+**R2D2** (Recurrent Replay Distributed DQN; Kapturowski et al., ICLR 2019)
+
+- Adds an LSTM to the Q-network to handle partial observability.
+- Stores **fixed-length sequences** in the replay buffer with stored recurrent state for "burn-in" before learning.
+- Distributed actor-learner architecture (similar to Ape-X).
+- The first DQN-family method to substantially exceed human performance across Atari-57.
+
+**Agent57** (Badia et al., ICML 2020)
+
+- First single agent to beat the human baseline on **all 57 Atari games**, including hard-exploration games (Montezuma's Revenge, Pitfall) where DQN/Rainbow scored zero.
+- Combines R2D2 with **Never Give Up (NGU)** intrinsic motivation and a **meta-controller** that adaptively balances exploration vs exploitation across episodes.
+- Headline result; expensive (multi-billion env steps).
+
+**MEME** (Kapturowski et al., ICLR 2023): A 200×-faster successor to Agent57 — same Atari-57 coverage with much smaller compute. Same authors.
+
+**BBF — Bigger, Better, Faster** (Schwarzer et al., ICML 2023)
+
+- A *practical* sample-efficient discrete-RL recipe: Atari 100k regime (only 100K frames = 2 hours of gameplay).
+- Key tricks: **harder weight decay**, **higher replay ratio**, **periodic network resets** ("primacy bias" mitigation), **larger network with proper normalization**, **n-step Q-learning**.
+- Achieves super-human median Atari 100k with a single GPU — practical for lab work.
+
+**Selection Table — Discrete-Action SOTA**
+
+| Goal                                        | First choice  | Notes                                       |
+|---------------------------------------------|---------------|---------------------------------------------|
+| Learn the basics, simple env                | DQN / Double DQN | Pedagogically clearest                   |
+| Strong baseline, modest compute             | **Rainbow**   | Still excellent in 2026 for Atari-style     |
+| Atari 100k (sample-efficient lab work)      | **BBF**       | Designed exactly for this regime            |
+| Partial observability / memory              | **R2D2**      | LSTM+sequence replay; standard for POMDPs   |
+| Hard exploration (Montezuma-style)          | **Agent57** or NGU | See exploration-strategies.md          |
+| Discrete + offline data                     | **CQL** / **Decision Transformer** | See offline-rl.md             |
+
+**Citations**:
+
+- R2D2: Kapturowski et al., *Recurrent Experience Replay in Distributed Reinforcement Learning* (ICLR 2019).
+- Agent57: Badia et al., *Agent57: Outperforming the Atari Human Benchmark* (ICML 2020).
+- MEME: Kapturowski et al., *Human-level Atari 200× Faster* (ICLR 2023).
+- BBF: Schwarzer et al., *Bigger, Better, Faster: Human-level Atari with Human-level Efficiency* (ICML 2023).
+
 
 ## Part 7: Common Bugs and Debugging
 

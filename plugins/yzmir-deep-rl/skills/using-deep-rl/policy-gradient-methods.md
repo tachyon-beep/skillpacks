@@ -626,6 +626,76 @@ Result: PPO achieves ~95% of TRPO's benefits with ~10% of complexity
 ```
 
 
+## Part 5.5: GRPO — Group Relative Policy Optimization
+
+GRPO (Shao et al., DeepSeek, 2024) is the most-cited 2024–2026 policy-gradient variant. It started in the LLM-RLHF world (DeepSeekMath, DeepSeek-R1) but the algorithmic idea is general: **drop the value network and estimate advantages by group-relative comparison instead**.
+
+### The Idea
+
+For each prompt / state `s`, sample a **group** of `G` rollouts under the current policy:
+
+```text
+{ τ_1, τ_2, ..., τ_G } ~ π_θ(·|s)
+
+Compute group-relative advantage:
+
+A_i = (R_i - mean(R_1..R_G)) / std(R_1..R_G)
+
+Use A_i in place of GAE advantage in the PPO clipped objective:
+
+L^GRPO(θ) = E_i [ min( r_i(θ) A_i,  clip(r_i(θ), 1-ε, 1+ε) A_i ) ]
+                                                                       - β · KL(π_θ || π_ref)
+```
+
+That's the entire change vs PPO:
+
+- **No value network.** No GAE. No bootstrapping.
+- **Advantage = z-score within the group of rollouts.**
+- **Reference-policy KL** is an explicit term in the loss (not just a clip), because GRPO is typically used to fine-tune from a strong reference (e.g., a pretrained LLM).
+
+### Why It Matters
+
+1. **Memory**: No critic network. For LLMs (where the critic would be the same size as the policy), this halves training memory.
+2. **No value-function bias**: Group-relative ranking only needs **relative** rewards, so reward-model miscalibration matters less.
+3. **Sparse / outcome-only rewards**: GRPO works naturally when reward is only available at the end of a trajectory (math problem solved or not, code passed tests or not). PPO with GAE struggles here because the value function has nothing to bootstrap from at intermediate steps.
+
+### When GRPO Beats PPO
+
+- **Outcome-supervised tasks** with binary or sparse rewards (math, code, theorem proving).
+- **Fine-tuning from a strong reference policy** where the KL-to-reference term is principled.
+- **Memory-constrained** training of large models.
+
+### When PPO Still Wins
+
+- **Dense rewards** (continuous control, games with shaped rewards) — GAE is genuinely useful when you have step-level reward signal.
+- **Online RL from scratch** without a reference policy — the KL-to-π_ref term is meaningless.
+- **Small action / state spaces** where the critic is cheap.
+
+### Cross-Pack Note
+
+GRPO's most prominent use is **LLM post-training** (DeepSeek-R1-style reasoning training). For LLM-specific GRPO recipes — reward model design, length bias, format rewards, reference-policy snapshotting — route to `yzmir-llm-specialist`. The technique itself, as described above, is a general policy-gradient method and belongs here.
+
+**Citation**: Shao et al., *DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models* (arXiv:2402.03300, 2024). The DeepSeek-R1 paper (arXiv:2501.12948, 2025) extends GRPO to general reasoning.
+
+### Lineage and Related Methods
+
+```text
+REINFORCE
+   ↓ + value baseline
+Actor-Critic
+   ↓ + trust region
+TRPO
+   ↓ + clipping
+PPO
+   ↓ - critic + group-relative baseline
+GRPO
+   ↓ direct preference optimization (no policy gradient at all)
+DPO / IPO / SimPO  (see yzmir-llm-specialist)
+```
+
+DPO and its descendants drop policy gradients entirely — they reformulate RLHF as classification on preference pairs. They are **not** policy-gradient methods despite solving the same problem. Don't conflate them with GRPO.
+
+
 ## Part 6: When to Use Policy Gradients vs Value Methods
 
 ### Decision Framework

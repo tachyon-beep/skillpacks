@@ -27,6 +27,43 @@ Invoke this skill when you need to:
 - **Exploration strategy selection** (route to exploration-strategies for ε-greedy, curiosity-driven, RND methods)
 
 
+## The 2026 Ecosystem at a Glance
+
+Before reaching for a custom environment, know the standard ecosystem. The Farama Foundation maintains the actively-developed successors to OpenAI's original gym packages.
+
+### Environment Libraries
+
+| Library                | Domain                              | Notes                                                    |
+|------------------------|-------------------------------------|----------------------------------------------------------|
+| **gymnasium**          | Single-agent RL (gym successor)     | The standard. `import gymnasium as gym`. `gym` is frozen.|
+| **PettingZoo**         | Multi-agent RL                      | AEC + parallel APIs. Standard for MARL.                  |
+| **Gymnasium-Robotics** | Robot manipulation / locomotion     | Fetch, FrankaKitchen, AdroitHand (D4RL successors)       |
+| **MuJoCo (DM Control)**| Continuous control benchmark        | DMC suite; standard for SAC/TD3 papers                   |
+| **ALE (ale-py)**       | Atari                               | Use `ALE/<Game>-v5` IDs in gymnasium                     |
+| **Brax**               | JAX-native rigid-body physics       | GPU-parallel; thousands of envs at once                  |
+| **Isaac Lab** (NVIDIA) | GPU-accelerated robotics            | Modern successor to Isaac Gym; thousands of envs on GPU  |
+| **EnvPool**            | Vectorized C++ env runner           | 10–100× faster than Python multiprocessing for Atari/Mujoco |
+| **Crafter**            | Open-world Minecraft-like benchmark | Used in DreamerV3 paper                                  |
+| **Procgen**            | Procedurally-generated benchmarks   | Tests generalization                                     |
+| **MetaWorld**          | Multi-task robotics                 | 50 manipulation tasks; ML1/ML10/ML45 splits              |
+| **MyoSuite**           | Musculoskeletal control             | Used in TD-MPC2 evaluation                               |
+| **SMACv2**             | Cooperative MARL (StarCraft)        | Successor to SMAC; standardized for MAPPO benchmarks     |
+| **Minari**             | Offline RL datasets                 | D4RL successor (Farama). Use for new offline-RL work.    |
+
+### Algorithm Implementations
+
+| Library              | Style                    | When to use                                          |
+|----------------------|--------------------------|------------------------------------------------------|
+| **CleanRL**          | Single-file reference    | Reading or copying a clean implementation           |
+| **Stable-Baselines3**| Production / API-first   | Standard production library; PPO/SAC/DQN/A2C/TD3    |
+| **Tianshou**         | Modular research         | More flexible than SB3; good for novel algos        |
+| **Pearl** (Meta)     | Production RL platform   | Newer; modular contextual-bandit + RL focus         |
+| **RLlib** (Ray)      | Distributed scale        | Multi-GPU/multi-node training                       |
+| **TRL** (HuggingFace)| LLM RL (PPO/GRPO/DPO)    | LLM post-training — see `yzmir-llm-specialist`      |
+
+**Default starting point**: `gymnasium` for env API + `Stable-Baselines3` or `CleanRL` for algorithms. Reach for distributed (RLlib) or GPU-vectorized (Brax/Isaac Lab) only when single-machine throughput is the bottleneck.
+
+
 ## Part 1: Understanding the Gym/Gymnasium API
 
 ### The Standard Interface
@@ -619,8 +656,13 @@ class FrameStackWrapper(gym.Wrapper):
 ### Wrapper Chaining
 
 ```python
-# Correct: Chain wrappers for composable functionality
-env = gym.make("Atari2600-v0")
+# Correct: Chain wrappers for composable functionality.
+# Modern Atari env IDs use the ALE namespace (requires `ale-py` and `gymnasium[atari]`).
+# Pattern: "ALE/<Game>-v5" — e.g. "ALE/Pong-v5", "ALE/Breakout-v5".
+# The legacy "Atari2600-v0" / "Pong-v4" IDs are deprecated/removed.
+import gymnasium as gym
+
+env = gym.make("ALE/Pong-v5")
 env = gym.wrappers.TimeLimit(env, max_episode_steps=4500)
 env = gym.wrappers.ClipAction(env)
 env = FrameStackWrapper(env, num_frames=4)

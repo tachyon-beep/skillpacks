@@ -753,6 +753,140 @@ Why it works:
 - **Perturbation network complexity**: Another network to train
 
 
+## Part 4.5: Modern Offline RL — TD3+BC, AWAC, Decision Transformer
+
+CQL/IQL/BCQ established the field; the next wave of algorithms (2021–2023) made offline RL **simpler and more reliable**. The general lesson: explicit pessimism is often unnecessary when you constrain the policy to stay near the behavior data, or when you reframe offline RL as supervised sequence modeling.
+
+**This part is a survey** — the implementation patterns mirror CQL/IQL closely, so we cover them at the algorithm-summary level rather than full code.
+
+### TD3+BC: Minimalism Wins (Fujimoto & Gu, 2021)
+
+**Idea**: Take TD3 and add a single behavior-cloning regularizer to the actor loss. That's the entire algorithm change.
+
+```text
+TD3+BC actor loss:
+
+L_actor(θ) = -λ · E[Q(s, π_θ(s))] + E[(π_θ(s) - a)²]
+                ↑ TD3 actor objective         ↑ BC regularizer (toward dataset action)
+
+λ = α / mean(|Q|)   (normalization to balance scales)
+```
+
+**Why it works**:
+
+- BC term keeps the learned policy near the behavior policy — same intuition as BCQ, but as a soft penalty rather than a hard constraint.
+- Q-normalization (λ above) is the only hyperparameter that meaningfully matters.
+- No conservative critic needed (unlike CQL); no expectile target (unlike IQL).
+
+**When to choose TD3+BC**:
+
+- Continuous-action offline RL with **medium-quality** data (D4RL medium / medium-replay).
+- You want the **simplest** strong baseline you can implement in an afternoon.
+- Codebase already has TD3 — TD3+BC is a 5-line change.
+
+**When NOT to use TD3+BC**:
+
+- Discrete actions (use CQL or DT).
+- Random data (BC term anchors you to garbage; CQL handles this better).
+- Multi-modal demonstrations (BC pulls toward the mean of modes).
+
+**Citation**: Fujimoto & Gu, *A Minimalist Approach to Offline Reinforcement Learning* (NeurIPS 2021).
+
+### AWAC: Advantage-Weighted Actor-Critic (Nair et al., 2020)
+
+**Idea**: Implicitly constrain the policy by training it to imitate dataset actions weighted by exponentiated advantage. High-advantage actions get high weight; low-advantage actions get pushed away.
+
+```text
+AWAC actor loss:
+
+L_actor(θ) = -E_{(s,a)~D} [ log π_θ(a|s) · exp(A(s,a) / λ) ]
+
+where A(s,a) = Q(s,a) - V(s),  λ = temperature (lower → more selective)
+```
+
+**Why it matters**:
+
+- **Same algorithm for offline pretraining and online fine-tuning** — no schedule changes, no lambda annealing. AWAC was specifically designed for the **offline-to-online** transition that IQL also targets.
+- Closed-form policy improvement (no explicit constraint optimization).
+- Works for both continuous and discrete actions with minor changes.
+
+**When to choose AWAC**:
+
+- You plan to **fine-tune online** after offline pretraining.
+- Mixed-quality data where you want to "filter" by advantage.
+- You want a single actor objective that handles both regimes.
+
+**Citation**: Nair et al., *Accelerating Online Reinforcement Learning with Offline Datasets* (arXiv:2006.09359, 2020).
+
+### Decision Transformer (DT): Offline RL as Sequence Modeling
+
+**Idea**: Drop the Bellman equation entirely. Treat trajectories as token sequences `(R̂_1, s_1, a_1, R̂_2, s_2, a_2, …)` where `R̂_t` is **return-to-go**, and train a causal Transformer to predict the next action. At inference, condition on a target return and let the Transformer generate actions autoregressively.
+
+```text
+Trajectory token stream (return-conditioned):
+
+τ = (R̂_1, s_1, a_1,  R̂_2, s_2, a_2,  ...,  R̂_T, s_T, a_T)
+        ↑
+        return-to-go: R̂_t = Σ_{k≥t} r_k
+
+Loss = Σ_t  -log π_θ(a_t | R̂_{≤t}, s_{≤t}, a_{<t})
+
+Inference:
+  - User picks a target return R̂_target (e.g., dataset max).
+  - Roll out: feed (R̂_target, s_t) → sample a_t → observe r_t, s_{t+1}.
+  - Update: R̂_{t+1} = R̂_t - r_t.
+```
+
+**Why this is a big deal**:
+
+- **No value function, no Bellman target, no policy improvement step.** Pure supervised learning on trajectories.
+- Inherits all Transformer infrastructure (positional encodings, attention, scaling laws).
+- Side-steps the deadly-triad failure modes that haunt Q-learning offline.
+
+**Variants worth knowing**:
+
+- **RvS (Reinforcement Learning via Supervised Learning)** (Emmons et al., 2022): Showed that an MLP conditioned on goal/return often matches DT — the *return conditioning* is doing most of the work, not the Transformer.
+- **Trajectory Transformer** (Janner et al., 2021): Tokenizes states/actions/rewards individually, uses beam search for planning.
+- **Online Decision Transformer (ODT)**: Adds an online fine-tuning phase by maximizing entropy of the action distribution.
+
+**When DT is the right choice**:
+
+- You have **trajectory-structured** data (full episodes, not random transitions).
+- You care about **stability** more than peak performance — DT rarely diverges, while value-based offline RL can.
+- You want to leverage Transformer scaling / pretraining.
+
+**When NOT to use DT**:
+
+- Stitching matters: DT is famously bad at **trajectory stitching** (composing good sub-trajectories into novel returns) — value-based methods (CQL, IQL) handle this better.
+- Tiny datasets where you can't afford a Transformer's parameter count.
+- Online-only settings (use SAC/PPO).
+
+**Citation**: Chen et al., *Decision Transformer: Reinforcement Learning via Sequence Modeling* (NeurIPS 2021).
+
+### Quick Algorithm Selection Table (Modern Offline RL)
+
+| Data type                          | First choice          | Backup        | Notes                                  |
+|------------------------------------|-----------------------|---------------|----------------------------------------|
+| Continuous, medium-quality         | **TD3+BC**            | IQL           | Simplest strong baseline               |
+| Continuous, mixed/random           | **CQL** or IQL        | TD3+BC        | TD3+BC pulls toward bad actions        |
+| Discrete (Atari-style) offline     | **CQL** or DT         | IQL           | DT works well on Atari with returns    |
+| Trajectory data, stability priority| **Decision Transformer** | RvS        | Most stable, weak at stitching         |
+| Offline → online fine-tuning       | **AWAC** or IQL       | TD3+BC + SAC  | AWAC/IQL designed for both regimes     |
+| Behavior policy is roughly known   | BCQ                   | TD3+BC        | BCQ explicitly models β(a\|s)          |
+
+### Ensembles for Robustness: EDAC
+
+**EDAC** (Ensemble-Diversified Actor-Critic; An et al., 2021) takes IQL/SAC and trains an **ensemble of Q-networks** with explicit diversity penalty. The ensemble's variance acts as a free pessimism signal: high-variance state-action pairs get implicitly penalized. This often beats CQL on D4RL without an explicit conservative penalty.
+
+**Use when**: You're already running an ensemble for uncertainty estimation; the marginal cost of EDAC is small.
+
+**Citation**: An et al., *Uncertainty-Based Offline RL with Diversified Q-Ensemble* (NeurIPS 2021).
+
+### Cross-Pack Note: RLHF / DPO / GRPO
+
+If your "offline RL" problem is actually **fine-tuning an LLM from preference data**, this pack is the wrong place. Route to `yzmir-llm-specialist` for DPO, IPO, KTO, SimPO, and RLHF-with-PPO. The deep-rl pack covers GRPO at the policy-gradient level (see `policy-gradient-methods.md`) because GRPO is a general PG technique, but the LLM-specific tooling lives in `llm-specialist`.
+
+
 ## Part 5: Distribution Shift and Offline Evaluation
 
 ### Understanding Distribution Shift in Offline RL
@@ -1556,12 +1690,19 @@ gap = online_return_actual - offline_return_estimate
 - CQL: "Conservative Q-Learning for Offline Reinforcement Learning" (Kumar et al., 2020)
 - IQL: "Offline Reinforcement Learning with Implicit Q-Learning" (Kostrikov et al., 2021)
 - BCQ: "Batch-Constrained Deep Q-Learning" (Fujimoto et al., 2018)
+- TD3+BC: "A Minimalist Approach to Offline Reinforcement Learning" (Fujimoto & Gu, NeurIPS 2021)
+- AWAC: "Accelerating Online Reinforcement Learning with Offline Datasets" (Nair et al., 2020)
+- Decision Transformer: "Reinforcement Learning via Sequence Modeling" (Chen et al., NeurIPS 2021)
+- Trajectory Transformer: "Reinforcement Learning as One Big Sequence Modeling Problem" (Janner et al., NeurIPS 2021)
+- RvS: "RvS: What is Essential for Offline RL via Supervised Learning?" (Emmons et al., ICLR 2022)
+- EDAC: "Uncertainty-Based Offline RL with Diversified Q-Ensemble" (An et al., NeurIPS 2021)
 
 **Offline RL Benchmarks**:
 
-- D4RL: Offline RL benchmark suite
-- Atari 5M: Limited sample offline Atari
-- Locomotion: MuJoCo continuous control
+- **Minari** (Farama Foundation): The official D4RL successor — actively maintained, standardized dataset format, integrated with `gymnasium`. Use Minari for new work.
+- D4RL: Original offline RL benchmark suite (frozen; superseded by Minari but still cited).
+- Atari 5M / Atari 10M: Limited-sample offline Atari (CQL paper uses these).
+- RL Unplugged (DeepMind): Large-scale offline RL benchmark with diverse domains.
 
 **Related Skills**:
 

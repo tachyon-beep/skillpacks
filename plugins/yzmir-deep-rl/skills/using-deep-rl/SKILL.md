@@ -50,17 +50,17 @@ The correct approach depends on:
 ## The 13 Deep RL Skills
 
 1. **rl-foundations** - MDP formulation, Bellman equations, value vs policy basics
-2. **value-based-methods** - Q-learning, DQN, Double DQN, Dueling DQN, Rainbow
-3. **policy-gradient-methods** - REINFORCE, PPO, TRPO, policy optimization
-4. **actor-critic-methods** - A2C, A3C, SAC, TD3, advantage functions
-5. **model-based-rl** - World models, Dyna, MBPO, planning with learned models
-6. **offline-rl** - Batch RL, CQL, IQL, learning from fixed datasets
-7. **multi-agent-rl** - MARL, cooperative/competitive, communication
-8. **exploration-strategies** - ε-greedy, UCB, curiosity, RND, intrinsic motivation
+2. **value-based-methods** - Q-learning, DQN, Double DQN, Dueling DQN, Rainbow, R2D2/Agent57/BBF
+3. **policy-gradient-methods** - REINFORCE, PPO, TRPO, GRPO, policy optimization
+4. **actor-critic-methods** - A2C, A3C, SAC, TD3, REDQ/DroQ/CrossQ, advantage functions
+5. **model-based-rl** - World models, MBPO, Dreamer / DreamerV3, TD-MPC2, MuZero / EfficientZero
+6. **offline-rl** - CQL, IQL, BCQ, TD3+BC, AWAC, Decision Transformer; D4RL → Minari
+7. **multi-agent-rl** - QMIX, MADDPG, MAPPO/IPPO, PettingZoo, SMACv2
+8. **exploration-strategies** - ε-greedy, UCB, ICM, RND, Go-Explore, NGU/Agent57, BYOL-Explore
 9. **reward-shaping** - Reward design, potential-based shaping, inverse RL
 10. **counterfactual-reasoning** - Causal inference, HER, off-policy evaluation, twin networks
 11. **rl-debugging** - Common RL bugs, why not learning, systematic debugging
-12. **rl-environments** - Gym, MuJoCo, custom envs, wrappers, vectorization
+12. **rl-environments** - Gymnasium, MuJoCo, PettingZoo, Brax, Isaac Lab, EnvPool, Minari
 13. **rl-evaluation** - Evaluation methodology, variance, sample efficiency metrics
 
 ---
@@ -111,8 +111,9 @@ The correct approach depends on:
 | Problem | Route To | Key Consideration |
 |---------|----------|-------------------|
 | Multiple agents | **multi-agent-rl** | Non-stationarity, credit assignment |
-| Sample efficiency extreme | **model-based-rl** | Learns environment model |
+| Sample efficiency extreme | **model-based-rl** (DreamerV3, TD-MPC2) or **actor-critic** (DroQ, CrossQ) | Learns env model OR high UTD |
 | Counterfactual/causal | **counterfactual-reasoning** | HER, off-policy evaluation |
+| Agentic / LLM tool-use RL | **policy-gradient-methods** (GRPO) → `yzmir-llm-specialist` | Outcome-supervised, sparse reward |
 
 ### Step 5: Debugging and Infrastructure
 
@@ -224,7 +225,10 @@ START: RL problem
 | "Train classifier on labeled data" | training-optimization | Supervised learning |
 | "Design transformer architecture" | neural-architectures | Architecture design |
 | "Deploy model to production" | ml-production | Deployment |
-| "Fine-tune LLM with RLHF" | llm-specialist | LLM-specific |
+| "Fine-tune LLM with RLHF / DPO / GRPO on prompts" | llm-specialist | LLM-specific tooling (TRL, reward models, KL schedules) |
+| "Preference optimization (DPO/IPO/KTO/SimPO)" | llm-specialist | Not policy-gradient; route out |
+
+**Note on GRPO**: The *algorithm* is covered in `policy-gradient-methods.md` because it is a general PG technique. The *LLM-specific recipe* (reward models, format rewards, length bias, trainer integration) lives in `yzmir-llm-specialist`.
 
 ---
 

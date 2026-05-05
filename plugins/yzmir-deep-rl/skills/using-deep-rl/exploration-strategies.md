@@ -888,6 +888,84 @@ state_space_size = 10^18  # Image observations
 ```
 
 
+## Part 6.5: Frontier Exploration — Go-Explore, NGU, BYOL-Explore
+
+ICM, RND, and pseudo-counts handle most "sparse but reachable" problems. The really hard exploration benchmarks (Montezuma's Revenge, Pitfall, the Atari hard-exploration set) historically defeated all of them. The 2019–2022 line of work below cracked those problems.
+
+### Go-Explore (Ecoffet et al., Nature 2021)
+
+**The idea**: Most curiosity bonuses get distracted by stochastic noise or local novelty and forget how to *return* to a useful frontier. Go-Explore separates exploration into two phases:
+
+1. **Phase 1 — Explore from a state archive**:
+   - Maintain an archive of "interesting" cells (downsampled state representations).
+   - Each iteration: pick a cell, **deterministically reset/restore** the simulator to that cell, then take random actions.
+   - Add new cells to the archive when reached.
+   - Crucially: this requires either a deterministic env or the ability to save/restore state.
+
+2. **Phase 2 — Robustify**:
+   - Train an RL policy to imitate the discovered trajectories.
+   - This makes the policy robust to stochasticity at deployment.
+
+**Result**: First algorithm to solve Montezuma's Revenge to completion (>2M score) and Pitfall.
+
+**When Go-Explore applies**:
+
+- Hard-exploration tasks with **deterministic** simulation (or save/load support).
+- Procedural worlds where you can warp to states.
+
+**When it doesn't**:
+
+- Stochastic/non-resettable real environments (robotics, real users).
+- The "robustification" phase is essentially imitation learning and may not transfer.
+
+**Citation**: Ecoffet et al., *First Return, then Explore* (Nature 2021).
+
+### Never Give Up (NGU) and Agent57
+
+**NGU** (Badia et al., ICLR 2020): Two intrinsic-reward signals combined.
+
+- **Episodic novelty**: Within an episode, reward states dissimilar to those already visited (k-NN on a learned embedding).
+- **Lifelong novelty**: Across episodes, RND-style global novelty.
+- A learned **embedding network** trained on inverse-dynamics (predict action from `(s, s')`) makes the novelty signal task-relevant rather than perceptual-noise-driven.
+
+**Agent57** (Badia et al., ICML 2020) wraps NGU in a **multi-arm bandit meta-controller** that adaptively selects exploration intensity per episode. It's the first single agent to beat humans on all 57 Atari games. See `value-based-methods.md` Part 6 for the value-learning side.
+
+**When NGU pattern applies**:
+
+- Sparse reward + visual observations.
+- You can afford the inverse-dynamics embedding training.
+
+**Citations**:
+
+- NGU: Badia et al., *Never Give Up: Learning Directed Exploration Strategies* (ICLR 2020).
+- Agent57: Badia et al., *Agent57: Outperforming the Atari Human Benchmark* (ICML 2020).
+
+### BYOL-Explore (Guo et al., NeurIPS 2022)
+
+**The idea**: Replace the RND target network with a self-supervised representation learned via BYOL (Bootstrap-Your-Own-Latent). The intrinsic reward is the prediction error of a latent forward model whose target is a slow-moving copy of the encoder. This avoids RND's "frozen random target" arbitrariness and gives a more semantically meaningful novelty signal.
+
+**When to choose**:
+
+- You're already using self-supervised representation learning.
+- You want a single embedding shared between exploration and policy.
+
+**Citation**: Guo et al., *BYOL-Explore: Exploration by Bootstrapped Prediction* (NeurIPS 2022).
+
+### Selection Table — Modern Exploration
+
+| Setting                                  | First choice              | Notes                                       |
+|------------------------------------------|---------------------------|---------------------------------------------|
+| Simple sparse reward                     | RND or ICM (Parts 4–5)    | Established, easy to implement              |
+| Hard exploration, deterministic sim      | **Go-Explore**            | The only thing that solves Montezuma cleanly|
+| Visual sparse reward, episodic novelty   | **NGU / Agent57 pattern** | Episodic + lifelong combination             |
+| Self-supervised pipeline already exists  | **BYOL-Explore**          | Reuses your representation learning         |
+| Tabular / count-based feasible           | Pseudo-counts (Part 6)    | Don't over-engineer if you can count        |
+
+### Cross-Reference
+
+These exploration techniques pair naturally with the offline-RL "no online interaction" world via **unsupervised pretraining** — APT (Liu & Abbeel, 2021), Proto-RL (Yarats et al., 2021) pretrain a policy purely from intrinsic reward, then fine-tune with task reward. If your problem decomposes into "first explore, then specialize," consider this two-phase pattern.
+
+
 ## Part 7: When Exploration is Critical
 
 ### Decision Framework

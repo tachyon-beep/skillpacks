@@ -301,7 +301,7 @@ No synchronization barrier (race conditions possible)
 
 ### SAC Overview
 
-SAC = Soft Actor-Critic. The current SOTA (state-of-the-art) for continuous control. Three key innovations:
+SAC = Soft Actor-Critic (Haarnoja et al., ICML 2018). For years the default off-policy continuous-control algorithm and still the strongest **single-baseline** to start with. Modern variants — REDQ, DroQ, CrossQ — match or beat plain SAC on sample efficiency (see Part 5.5 below); pick SAC first, reach for the variants when sample efficiency is the bottleneck. Three key innovations:
 
 1. **Entropy regularization**: Add H(π(·|s)) to objective (maximize entropy + reward)
 2. **Auto-tuning entropy coefficient**: Learn α automatically (no manual tuning!)
@@ -772,7 +772,7 @@ if step % policy_delay == 0:  # Only sometimes!
 
 ### SAC vs TD3 Decision Framework
 
-**Both are SOTA for continuous control. How to choose?**
+**Both are strong default baselines for continuous control. (For higher sample efficiency, see Part 4.5: REDQ / DroQ / CrossQ.) How to choose between SAC and TD3?**
 
 | Aspect | SAC | TD3 |
 |--------|-----|-----|
@@ -807,6 +807,87 @@ if step % policy_delay == 0:  # Only sometimes!
 - Know you want deterministic policy
 - Have tuning expertise for policy_delay
 - Need slightly faster computation
+
+
+## Part 4.5: Modern Sample-Efficient Variants — REDQ, DroQ, CrossQ
+
+When sample efficiency is the dominant constraint (real-robot RL, expensive simulators), three SAC variants from 2021–2023 push significantly further than vanilla SAC by **increasing the update-to-data (UTD) ratio** without divergence.
+
+UTD ratio = number of gradient updates per environment step. Vanilla SAC uses UTD=1. The variants below stably run at UTD=10–20, which roughly translates to 10–20× sample efficiency in the regime where wall-clock is dominated by env steps.
+
+### REDQ — Randomized Ensembled Double Q-Learning (Chen et al., 2021)
+
+**Idea**: Train an ensemble of `N` Q-networks (typically N=10), but **subsample** `M` of them (typically M=2) for the TD target each update. The random subsampling acts as a uncertainty-aware target estimator and stabilizes high-UTD training.
+
+```text
+For each gradient step:
+  # Sample M of N critics for target
+  i, j = random.sample(range(N), M)
+  target_q = min(Q_target_i(s', a'), Q_target_j(s', a')) - α log π(a'|s')
+
+  # Update ALL N critics on this target
+  for k in range(N):
+      L_k = (Q_k(s, a) - target_q)²
+```
+
+**Result**: Matches MBPO sample efficiency without a model. UTD up to ~20.
+
+**Citation**: Chen et al., *Randomized Ensembled Double Q-Learning: Learning Fast Without a Model* (ICLR 2021).
+
+### DroQ — Dropout Q-Functions (Hiraoka et al., 2022)
+
+**Idea**: REDQ is expensive (10 Q-nets). DroQ replaces the ensemble with **dropout + layer norm** on a small (2-network) critic. You get most of REDQ's stabilizing effect at a fraction of the cost.
+
+**Recipe**:
+
+- 2 Q-networks (same as SAC).
+- Dropout (p=0.01) inside the critic MLP.
+- Layer norm after each hidden layer.
+- UTD=20.
+
+**When to choose DroQ over REDQ**: You want REDQ-level sample efficiency without 10× the critic compute. DroQ is the more practical default in 2024–2026.
+
+**Citation**: Hiraoka et al., *Dropout Q-Functions for Doubly Efficient Reinforcement Learning* (ICLR 2022).
+
+### CrossQ — No Target Networks, BatchNorm Critic (Bhatt et al., 2024)
+
+**Idea**: Eliminate target networks entirely (the slow-moving `Q_target` copies). Use **BatchNorm** in the critic, which provides the implicit regularization that target networks were doing.
+
+**Recipe**:
+
+- No `Q_target` networks — bootstrap directly from the online critic.
+- BatchNorm (not LayerNorm) on critic inputs and hidden layers.
+- Wider critic (hidden 2048).
+- UTD=1 — same as SAC.
+
+**Why it's interesting**: Achieves REDQ/DroQ sample efficiency at vanilla-SAC compute cost, while removing the target-network mechanism that has been load-bearing since DQN. The BatchNorm trick is fragile; CrossQ is sensitive to batch composition.
+
+**When to choose CrossQ**: You want maximum sample efficiency at minimum wall-clock per step. Be aware of the BatchNorm fragility — small batches or distributed training can break it.
+
+**Citation**: Bhatt et al., *CrossQ: Batch Normalization in Deep Reinforcement Learning for Greater Sample Efficiency and Simplicity* (ICLR 2024).
+
+### Selection Table
+
+| Constraint                          | First choice  | Why                                              |
+|-------------------------------------|---------------|--------------------------------------------------|
+| Default off-policy continuous       | **SAC**       | Robust, well-understood, every codebase has it   |
+| Sample efficiency critical          | **DroQ**      | REDQ-quality with 2 critics, modest compute cost |
+| Maximum sample efficiency, GPU rich | **REDQ**      | Original high-UTD recipe, well-validated         |
+| Want target-network-free, fast/step | **CrossQ**    | Newest; watch for BatchNorm fragility            |
+| Deterministic policy needed         | **TD3**       | Unchanged advice                                 |
+
+### What These Don't Fix
+
+- **Reward shaping mistakes** — high UTD trains faster on the *wrong* signal too.
+- **Exploration** — these are all off-policy variants; they don't add intrinsic motivation. Combine with `exploration-strategies.md` techniques if reward is sparse.
+- **Sim-to-real gap** — sample efficiency in simulation doesn't help if the policy doesn't transfer.
+
+### Other 2023–2025 Lines Worth Knowing
+
+- **TQC** (Truncated Quantile Critics; Kuznetsov et al., ICML 2020): Distributional critic that drops the top-k quantiles to combat overestimation. Strong on MuJoCo.
+- **BRO / SimBa** (2024): Demonstrate that **scaling the critic network** (depth + width) is itself a sample-efficiency lever, contradicting the long-held "small critics are best" folklore. Worth tracking.
+
+These remain niche — DroQ is the safe default for "I want SAC but more sample-efficient."
 
 
 ## Part 5: Continuous Action Handling

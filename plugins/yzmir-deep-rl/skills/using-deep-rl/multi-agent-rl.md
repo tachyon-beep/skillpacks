@@ -1434,7 +1434,48 @@ Users often rationalize MARL mistakes:
 10. **"Nash equilibrium is always stable"**: No, it's just best-response equilibrium
 
 
-## Part 14: MAPPO - Multi-Agent Proximal Policy Optimization
+## Part 14: MAPPO and IPPO — Modern Cooperative Baselines
+
+Since 2022, **MAPPO** has become the default cooperative-MARL baseline (StarCraft Multi-Agent Challenge, Hanabi, MPE). It is consistently competitive with or stronger than QMIX/MADDPG while being conceptually simpler.
+
+**Two flavors to know**:
+
+- **IPPO** (Independent PPO; de Witt et al., 2020): Each agent runs PPO on its own observation, with **no centralized critic and no parameter sharing required**. Surprisingly strong; often the best simple-baseline-to-try-first.
+- **MAPPO** (Yu et al., 2022): IPPO with a **centralized critic** that takes the global state during training (CTDE). Almost always matches or beats IPPO on cooperative tasks; the gap depends on whether the global state is genuinely useful.
+
+The Yu et al. paper documented that PPO — with careful implementation hygiene — outperformed value-based MARL baselines on a wide range of cooperative benchmarks, overturning the prior assumption that "PPO is sample-inefficient for MARL." The paper is mostly an exhaustive ablation of implementation tricks.
+
+**Key MAPPO/IPPO implementation tricks** (these are what make the difference):
+
+1. **PopArt-style value normalization** for the centralized critic.
+2. **Death masking**: zero out advantages for dead/done agents instead of bootstrapping past terminations.
+3. **Agent-specific global state**: include each agent's local observation as part of the centralized critic input (not just pure global state).
+4. **Shared parameters with agent-id one-hot** when agents are homogeneous; separate networks when heterogeneous.
+5. **Generous PPO epochs** (15) and small mini-batch counts (1–2) — different from single-agent PPO defaults.
+
+**Citations**:
+
+- IPPO: de Witt et al., *Is Independent Learning All You Need in the StarCraft Multi-Agent Challenge?* (arXiv:2011.09533, 2020).
+- MAPPO: Yu et al., *The Surprising Effectiveness of PPO in Cooperative Multi-Agent Games* (NeurIPS 2022).
+
+**Selection table**:
+
+| Setting                               | First choice | Backup       | Notes                                       |
+|---------------------------------------|--------------|--------------|---------------------------------------------|
+| Cooperative, homogeneous, partial obs | **MAPPO**    | QMIX         | Centralized critic earns its keep           |
+| Cooperative, simple/well-shaped       | **IPPO**     | MAPPO        | Often as good, fewer moving parts           |
+| Discrete + value-factorization helpful| **QMIX**     | MAPPO        | When credit assignment is hard              |
+| Mixed/competitive (zero-sum or mixed) | **MADDPG** or self-play | MAPPO with self-play | See Part 4 / Part 15 |
+
+**Benchmarks worth knowing**:
+
+- **SMAC** (StarCraft Multi-Agent Challenge): The historical SOTA-tracking benchmark for cooperative MARL.
+- **SMACv2** (Ellis et al., 2022): Successor to SMAC with stronger randomization, addressing the criticism that SMAC was over-fit. Use SMACv2 for new MARL evaluations.
+- **PettingZoo** (Farama Foundation): Multi-agent successor to gym/gymnasium with a clean API for both AEC (turn-based) and parallel (simultaneous) environments. The standard MARL environment library in 2024–2026.
+
+### Code Sketch: MAPPO Agent
+
+The original code below is retained as a structural sketch; it omits some of the implementation tricks above (PopArt, death masking) — refer to the MAPPO paper or the official `MAPPO` reference implementation for production-quality details.
 
 ### When to Use MAPPO
 

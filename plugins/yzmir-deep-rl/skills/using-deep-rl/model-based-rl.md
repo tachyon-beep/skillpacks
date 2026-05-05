@@ -936,6 +936,117 @@ Solution:
 ```
 
 
+## Part 5.5: Modern World Models — DreamerV3, TD-MPC2, MuZero/EfficientZero
+
+The Dreamer description in Part 5 covers the original architecture (Hafner et al., 2019–2020). Three lines of work since 2022 are worth knowing — they represent the current state of model-based RL and routinely outperform model-free baselines.
+
+### DreamerV3 (Hafner et al., 2023)
+
+**The headline claim**: A *single set of hyperparameters* solves over 150 tasks across 8 different domains (Atari, DMC continuous control, Crafter, Minecraft, robot manipulation) — including being the first algorithm to mine diamonds in Minecraft from scratch without curricula or demonstrations.
+
+**Key innovations over DreamerV2**:
+
+1. **Symlog predictions** for rewards and values. Symlog squashes large magnitudes:
+
+   ```text
+   symlog(x) = sign(x) · log(1 + |x|)
+   symexp(x) = sign(x) · (exp(|x|) - 1)
+   ```
+
+   This is the single most-cited trick from the paper — it removes the need to tune reward scaling per environment.
+
+2. **Two-hot encoding** for value/reward regression. Predict a discrete distribution over a fixed support (e.g., 255 bins in symlog space) and decode via expected value. This combines distributional RL benefits with a simple classification loss.
+
+3. **Free bits and KL balancing** in the world-model loss to prevent posterior collapse.
+
+4. **Larger world model** (200M params) with a recurrent state-space model (RSSM) backbone.
+
+**When to choose DreamerV3**:
+
+- You want **one configuration** that works across many tasks without per-task tuning.
+- You have pixels or other high-dimensional observations.
+- You can afford ~1–2 GPUs for days, not seconds.
+
+**When NOT to use DreamerV3**:
+
+- Tabular or simple state-space problems (overkill).
+- You need < 1M-step training budgets (DreamerV3 shines at 10M+ env steps; for very-low-sample regimes, REDQ/DroQ are still competitive).
+
+**Citation**: Hafner et al., *Mastering Diverse Domains through World Models* (arXiv:2301.04104, 2023; Nature 2025).
+
+### TD-MPC2 (Hansen et al., 2024)
+
+**The idea**: Learn a latent world model, then plan **directly in latent space** via Model Predictive Path Integral (MPPI) at every action — no policy network rollout.
+
+**Architecture**:
+
+- Encoder `h_t = f(s_t)` (latent state).
+- Latent dynamics `h_{t+1} = d(h_t, a_t)`, reward `r_t = R(h_t, a_t)`, terminal `c_t = C(h_t)`.
+- Q-function `Q(h_t, a_t)` for terminal value.
+- **Action selection**: Sample `K` action sequences of length `H`, roll out in latent space, score `Σ r_t + γ^H · max_a Q(h_H, a)`, take a softmax-weighted mean of the top elites (MPPI).
+
+**What's new vs TD-MPC1**:
+
+- **Single hyperparameter set across 104 continuous-control tasks** (DMC, MetaWorld, ManiSkill, MyoSuite).
+- **Multi-task pretraining**: A 317M-param model trained on a mixture of tasks transfers zero-shot.
+- Replaces ensembles with **distributional Q-functions** for uncertainty.
+
+**When to choose TD-MPC2**:
+
+- High-quality continuous control with real-time planning budget.
+- You want strong out-of-the-box transfer to related tasks.
+- You're comfortable with the planner-at-inference pattern (vs. a learned policy).
+
+**When NOT to use TD-MPC2**:
+
+- Latency-critical inference (MPPI is expensive vs a feed-forward policy).
+- Discrete action spaces (TD-MPC2's MPPI is for continuous actions).
+
+**Citation**: Hansen et al., *TD-MPC2: Scalable, Robust World Models for Continuous Control* (ICLR 2024).
+
+### MuZero / EfficientZero (Discrete Planning)
+
+**MuZero** (Schrittwieser et al., 2020) extends AlphaZero to settings without a known simulator: learn a latent dynamics model that predicts the *quantities you need for MCTS* (policy, value, reward) rather than the full next state. This is a key departure from Dreamer-style world models — MuZero never tries to reconstruct observations.
+
+**EfficientZero** (Ye et al., 2021) adds three tricks to make MuZero work in low-data regimes (Atari 100k):
+
+1. Self-supervised consistency loss on latent transitions (SimSiam-style).
+2. End-to-end prediction of return (not just one-step reward).
+3. Off-policy correction for stale data.
+
+**EfficientZero V2** (Wang et al., 2024) extends this to continuous control via a Gaussian search-policy with sampled actions.
+
+**When to choose MuZero / EfficientZero**:
+
+- Discrete action games where MCTS is natural (board games, Atari).
+- Strong results required at moderate data budgets (Atari 100k).
+- You're willing to engineer MCTS infrastructure.
+
+**Don't use** for typical continuous-control problems unless you specifically need search-time planning — DreamerV3 or TD-MPC2 are simpler.
+
+**Citations**:
+
+- Schrittwieser et al., *Mastering Atari, Go, Chess and Shogi by Planning with a Learned Model* (Nature 2020).
+- Ye et al., *Mastering Atari Games with Limited Data* (NeurIPS 2021).
+- Wang et al., *EfficientZero V2: Mastering Discrete and Continuous Control with Limited Data* (ICML 2024).
+
+### Selection Table — Modern Model-Based RL
+
+| Setting                                | First choice    | Backup        | Notes                                       |
+|----------------------------------------|-----------------|---------------|---------------------------------------------|
+| Continuous control, single config      | **DreamerV3**   | TD-MPC2       | Symlog + two-hot — works out of the box     |
+| High-quality continuous control        | **TD-MPC2**     | DreamerV3     | Plan-at-inference; strong on DMC/MetaWorld  |
+| Discrete games, MCTS-friendly          | **EfficientZero V2** | MuZero  | Sample-efficient discrete planning          |
+| State-space, low compute               | **MBPO**        | Dyna-Q        | Original Part 4 advice still holds          |
+| Pixels, low-sample, no MCTS engineering| **DreamerV3**   | DroQ (model-free) | DreamerV3 was designed for this regime  |
+
+### What These Don't Solve
+
+- **Model exploitation**: Even DreamerV3's world model is wrong somewhere; the policy will find and exploit those errors. The MBPO short-rollout discipline (Part 4) and pessimism tricks still apply.
+- **Reward design**: Symlog handles reward scale, not reward correctness.
+- **Sim-to-real**: World models trained on simulation don't transfer dynamics any better than policies do.
+
+
 ## Part 6: When Model-Based Helps
 
 ### Sample Efficiency
