@@ -35,6 +35,35 @@ This pack provides a **document-designer agent** — a specialist subagent that 
 | **Design patterns** | Accent bars, sidebars, pull quotes, data cards, section dividers |
 | **Quality assurance** | Typography, table verification, font checks, accessibility |
 
+## Toolchain Versions
+
+This pack targets:
+
+- **Typst >= 0.14.0** (tagged-PDF-by-default, PDF/UA-1, `image(alt:)`, `pdf.artifact`, fixed CMYK image export). Several reference sheets and the agent assume 0.14+ semantics. Older 0.11–0.13 docs work for most examples but lose accessibility features and need manual `context` syntax checks.
+- **Pandoc >= 3.2** for the `--pdf-engine=typst` pipeline. Earlier versions have rougher Typst output and inconsistent admonition handling.
+
+Pin these at the top of any new template, e.g. `// Requires Typst >= 0.14.0` in a comment, so future readers know what they're compiling against.
+
+## Typst Universe Packages
+
+The Typst package registry at <https://typst.app/universe> is the modern way to add non-trivial functionality. Use `#import "@preview/<name>:<version>"` with a pinned version — naked names break when packages drift. Verify the latest version on Universe before pinning.
+
+Canonical packages by use case:
+
+| Package | Use case | Notes |
+|---------|----------|-------|
+| `@preview/cetz` | Drawing, plots, charts, geometry | TikZ-inspired API; the workhorse for diagrams in Typst |
+| `@preview/fletcher` | Node-and-arrow diagrams, commutative diagrams, flowcharts | Built on cetz |
+| `@preview/touying` | Modern presentation slides — themes, animations, speaker notes, PDF export | Active and recommended for slides |
+| `@preview/polylux` | Slides — older, still maintained, simpler model | Use touying for new decks |
+| `@preview/valkyrie` | Type-safe argument validation for template authors | Useful when shipping a parameterised template |
+| `@preview/glossarium` | Glossaries and acronym lists | |
+| `@preview/physica` / `@preview/mitex` | Physics math notation; LaTeX-math passthrough | |
+
+**Discovery pattern**: when the user asks for a capability that isn't a built-in (graph diagrams, citation styles, CV templates, slide themes), search Universe first. `typst init @preview/<template-name>` scaffolds a full project from a template package.
+
+**Note on `tablex`**: Typst 0.11+ absorbed most tablex functionality into native `table()`. Prefer the built-in unless you specifically need tablex's `fit-spans` or arbitrary line extension.
+
 ## Reference Sheets
 
 Reference sheets are located in the **same directory** as this SKILL.md file. Load them when the user's task matches:
@@ -60,6 +89,16 @@ Ask for what you need — the document-designer agent will be dispatched:
 "Create a professional PDF report template for our quarterly reviews"
 "I need a Typst template with our brand colors (#1a365d, #e53e3e) and Inter font"
 "Convert this markdown spec to a polished PDF with table of contents"
+```
+
+### Scaffolding from a Template Package
+
+```bash
+# List candidate templates on https://typst.app/universe and pick one
+typst init @preview/charged-ieee   # IEEE conference template
+typst init @preview/modern-cv      # CV/resume template
+
+# Then customise — most template packages expose a #show: <template-fn>.with(...) entrypoint
 ```
 
 ### Common Workflows

@@ -85,7 +85,7 @@ Reference sheet for formatting formal specifications, compliance documents, and 
 
 - Use `--number-sections` for automatic section numbering
 - YAML metadata for document control fields: `title`, `version`, `status`, `classification`, `author`, `date`
-- Lua filters can enforce normative language highlighting and requirement ID formatting
+- Lua filters can enforce normative language highlighting and requirement ID formatting — see the **Pandoc Lua Filter Pattern** section in the document-designer agent file for a working example, then adapt it to detect `Str` elements matching `REQ-\d+` and wrap them in a `#req(...)` call
 - CSL styles exist for standards citations (ISO 690, etc.)
 
 ## Quality Additions for Standards Documents

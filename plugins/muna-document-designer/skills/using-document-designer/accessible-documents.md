@@ -23,12 +23,23 @@ Reference sheet for creating documents that are usable by people with disabiliti
 
 Screen readers navigate PDFs using the tag tree — a structural representation of the document's logical reading order. An untagged PDF is essentially an image to a screen reader.
 
-Typst generates tagged PDF output. Key considerations:
+### Tagged PDF in Typst — current state (0.14.x)
 
-- **Heading hierarchy**: Use `= Heading 1`, `== Heading 2`, etc. — never skip levels (no jumping from H1 to H3)
-- **Reading order**: The source order in Typst determines the tag tree order. Decorative elements placed with `place()` may appear out of reading order
-- **Lists**: Use Typst's list syntax (`-`, `+`, `1.`) — don't fake lists with manual bullets and line breaks
-- **Tables**: Use Typst's `table()` function with `table.header()` — screen readers need header cell association
+This is a moving target. As of Typst 0.14.0:
+
+- **Tagged PDF is on by default.** Typst emits tag trees from heading levels, lists, tables, figures, and similar semantic elements without extra configuration.
+- **PDF/UA-1 conformance can be requested at export time** with `typst compile --pdf-standard ua-1 document.typ`. When this flag is set, Typst fails the build on detectable accessibility violations (missing alt text on a figure, skipped heading level, etc.) — treat the resulting PDF as a strong candidate for compliance, not a finished product.
+- **PDF/UA-2 is not yet supported** (planned). PDF/A-1 through PDF/A-4 variants are supported via `--pdf-standard`.
+- **Final-mile remediation may still be required.** Typst's automatic checks catch the structural violations; they do not catch every semantic problem (alt-text quality, heading-text clarity, complex-table relationships beyond what `pdf.table-summary` can express). Run an external validator — **veraPDF** or the **PDF Accessibility Checker (PAC)** — before sign-off, and test with a real screen reader (NVDA on Windows, VoiceOver on macOS).
+
+For Typst < 0.14, tagged PDF support is incomplete and you should use Pandoc → LaTeX or external tooling for accessibility-critical work.
+
+### Authoring rules that produce good tags
+
+- **Heading hierarchy**: Use `= Heading 1`, `== Heading 2`, etc. — never skip levels (no jumping from H1 to H3). PDF/UA-1 export will fail on a skipped level.
+- **Reading order**: The source order in Typst determines the tag tree order. Decorative elements placed with `place()` may appear out of reading order — wrap them in `pdf.artifact(...)` so they're excluded from the tag tree.
+- **Lists**: Use Typst's list syntax (`-`, `+`, `1.`) — don't fake lists with manual bullets and line breaks.
+- **Tables**: Use Typst's `table()` function with `table.header()` for column headers. For complex tables, use `pdf.header-cell`, `pdf.data-cell`, and `pdf.table-summary` to make row/column header relationships explicit.
 
 ### Heading Structure
 
@@ -61,7 +72,9 @@ Typst generates tagged PDF output. Key considerations:
 
 ## Color & Contrast
 
-### Minimum Contrast Ratios (WCAG 2.1)
+### Minimum Contrast Ratios (WCAG 2.2)
+
+WCAG 2.2 has been a W3C Recommendation since October 2023 and is the current normative target for new authoring. The contrast ratios are unchanged from 2.1, so existing assessments stay valid; the changes in 2.2 are mostly new success criteria around focus appearance and dragging movements that don't apply to print-style PDF authoring. (Some jurisdictions' Section 508 alignment still defers to 2.1 — that's still acceptable. WCAG 3.0 remains a working draft and is **not** yet normative.)
 
 | Element | Level AA | Level AAA |
 |---------|---------|----------|
@@ -145,10 +158,10 @@ Avoid red-green distinctions. Prefer palettes distinguishable under all common f
 
 ### Images and Figures
 
-Every non-decorative image needs alternative text. In Typst:
+Every non-decorative image needs alternative text. In Typst (>= 0.14):
 
 ```typst
-// Figure caption serves as the accessible description
+// image() takes an `alt` parameter (str | none) for assistive technology
 #figure(
   image("architecture.png", width: 80%,
     alt: "System architecture showing three microservices connected via message queue"
@@ -156,9 +169,24 @@ Every non-decorative image needs alternative text. In Typst:
   caption: [System architecture overview.],
 )
 
-// Decorative images should have empty alt text
-// (Typst doesn't yet have a standard way to mark images as decorative —
-//  use an empty alt string and note this limitation)
+// figure() also accepts `alt` directly (use this when the figure as a whole — image
+// plus caption — needs a description distinct from the image alone)
+#figure(
+  image("trends.png", width: 80%),
+  caption: [Quarterly revenue trends, FY24.],
+  alt: "Bar chart of quarterly revenue, FY24, showing 12% growth Q1→Q4.",
+)
+
+// Decorative images: wrap in pdf.artifact so the tag tree excludes them
+// from screen readers and reflow.
+#pdf.artifact[
+  #image("decorative-flourish.svg", width: 100%)
+]
+
+// Equations get math.equation.alt for screen-reader-friendly descriptions
+$ E = m c^2 $  // for trivial equations the rendered LaTeX-like text is fine
+#math.equation(alt: "Schrödinger equation in time-independent form",
+  $ hat(H) Psi = E Psi $)
 ```
 
 ### Charts and Data Visualizations
@@ -207,33 +235,51 @@ Typst generates PDF bookmarks from headings automatically. Verify:
 
 ## PDF/UA Compliance
 
-PDF/UA (Universal Accessibility, ISO 14289) is the accessibility standard for PDF. Key requirements:
+PDF/UA (Universal Accessibility, ISO 14289) is the accessibility standard for PDF. Typst supports **PDF/UA-1** export (PDF/UA-2 is planned). Key requirements:
 
 1. **All content is tagged** — no untagged text or images
 2. **Reading order is logical** — matches visual order
-3. **All images have alt text** — or are marked as decorative (artifacts)
+3. **All images have alt text** — or are marked as decorative via `pdf.artifact`
 4. **Language is declared** — both document-level and for language changes
 5. **Headings are properly nested** — no skipped levels
-6. **Tables have headers** — associated with data cells
+6. **Tables have headers** — associated with data cells (use `table.header()`, plus `pdf.header-cell` / `pdf.data-cell` / `pdf.table-summary` for complex tables)
 7. **Links have descriptive text** — not "click here"
 8. **Color is not the sole means** of conveying information
 9. **Document title is set** in metadata
 
 ```typst
-// Set document metadata
+// Set document metadata — required for PDF/UA-1
 #set document(
   title: "Quarterly Performance Report",
   author: "Planning Division",
+  description: "FY24 Q4 performance summary for executive review.",
 )
 ```
 
+```bash
+# Export with PDF/UA-1 conformance — fails the build on detectable violations
+typst compile --pdf-standard ua-1 report.typ report.pdf
+
+# Combine with PDF/A for archival + accessibility (some validators want both)
+typst compile --pdf-standard ua-1 --pdf-standard a-2b report.typ report.pdf
+```
+
+### Validation workflow
+
+Typst's PDF/UA-1 export catches structural violations but cannot judge alt-text quality, heading-text clarity, or every complex-table relationship. Always finish with:
+
+1. **Automated validator** — [veraPDF](https://verapdf.org/) (open source, scriptable) or **PDF Accessibility Checker (PAC)** for spec conformance
+2. **Manual screen-reader test** — NVDA on Windows or VoiceOver on macOS, checking that the reading order makes sense and that figure descriptions are useful (not just present)
+3. **Keyboard navigation** — Tab through links, verify focus order matches reading order
+
 ## Pandoc Considerations
 
-- Pandoc generates tagged PDF when using `--pdf-engine=typst`
+- Pandoc generates tagged PDF when using `--pdf-engine=typst` (Typst >= 0.14)
 - Set `lang` in YAML front matter for language declaration
-- Use Pandoc's figure syntax with alt text: `![Alt text](image.png "Optional title")`
+- Use Pandoc's figure syntax with alt text: `![Alt text](image.png "Optional title")` — Pandoc maps the alt text into Typst's `image(alt: ...)` parameter
 - `--toc` generates a linked table of contents
 - `--metadata=title:"Document Title"` sets the PDF title metadata
+- For PDF/UA-1 conformance via Pandoc, pass `--pdf-engine-opt=--pdf-standard --pdf-engine-opt=ua-1` to forward the flag through to Typst
 
 ## Quality Additions for Accessible Documents
 

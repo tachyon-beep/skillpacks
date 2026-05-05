@@ -108,15 +108,21 @@ Screen colors (RGB) don't map 1:1 to print colors (CMYK). Key issues:
 - **Rich black for large areas**: Use (40,30,20,100) or similar for large black backgrounds — K-only black looks washed out at large scale
 - **Total ink coverage**: Most printers limit to 300% total (C+M+Y+K) — exceeding causes drying problems
 
-Typst works in RGB natively. For print-critical work:
+Typst's color model is primarily RGB but ships a `cmyk()` constructor for print-critical work. As of Typst 0.14, the rewritten PDF export pipeline correctly handles CMYK images (earlier versions had bugs that mangled CMYK image embedding). For print-critical work:
 
 ```typst
-// Define colors with print awareness
-// These RGB values approximate their CMYK equivalents well
+// CMYK colors — defined in C, M, Y, K percentages (0%–100%)
+#let brand-blue = cmyk(100%, 65%, 0%, 30%)   // pure CMYK process blue
+#let body-black = cmyk(0%, 0%, 0%, 100%)     // K-only black for body text
+#let rich-black = cmyk(40%, 30%, 20%, 100%)  // rich black for large fills
+
+// RGB approximations (when CMYK isn't available or needed)
+// These RGB values render well after CMYK conversion in prepress
 #let print-blue = rgb("#1a4d80")    // avoids the oversaturated RGB blue trap
 #let print-red = rgb("#c0392b")     // printable red, not screen-bright
-#let text-black = rgb("#000000")    // maps to K-only in most PDF workflows
 ```
+
+For PDF/X workflows (commercial print), export with the appropriate PDF/A standard and confirm with the printer which PDF version they accept. Typst doesn't natively output PDF/X, but a PDF/A-2b export from Typst is usually accepted by digital print workflows.
 
 ### Spot Colors
 
