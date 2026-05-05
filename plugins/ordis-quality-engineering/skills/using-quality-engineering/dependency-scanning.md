@@ -1,6 +1,6 @@
 ---
 name: dependency-scanning
-description: Use when integrating SCA tools (Snyk, Dependabot, OWASP Dependency-Check), automating vulnerability management, handling license compliance, setting up automated dependency updates, or managing security advisories - provides tool selection, PR automation workflows, and false positive management
+description: Use when integrating SCA tools (Dependabot, Snyk, OWASP Dependency-Check, Trivy, Grype, OSV-Scanner), generating SBOMs (Syft, CycloneDX, SPDX), signing artifacts (Sigstore/Cosign), producing SLSA provenance, automating vulnerability management, or handling license compliance - provides tool selection, supply-chain layering, PR automation workflows, and false positive management
 ---
 
 # Dependency Scanning
@@ -47,7 +47,7 @@ description: Use when integrating SCA tools (Snyk, Dependabot, OWASP Dependency-
 
 ### Enable Dependabot (GitHub)
 
-``yaml
+```yaml
 # .github/dependabot.yml
 version: 2
 updates:
@@ -112,10 +112,15 @@ jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Run Snyk
-        uses: snyk/actions/node@master
+        # Pin to a specific commit SHA, not @master. snyk/actions does not
+        # publish semver tags, so floating refs are the documented supply-chain
+        # anti-pattern. Resolve the latest release SHA from
+        # https://github.com/snyk/actions and pin it; Dependabot can keep
+        # SHA-pinned actions up to date.
+        uses: snyk/actions/node@<commit-sha>
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -167,6 +172,173 @@ unzip dependency-check-8.0.0-release.zip
     </suppress>
 </suppressions>
 ```
+
+---
+
+## Modern Supply-Chain Stack (2025+)
+
+Dependabot/Snyk catch *known CVEs in declared dependencies*. The 2025-era
+supply-chain stack adds: **what is actually inside the artifact** (SBOM),
+**proof of how it was built** (SLSA provenance), and **proof of who built it**
+(Sigstore signatures). Together these answer "is this artifact trustworthy?"
+not just "are its declared deps clean?"
+
+### Tool selection
+
+| Tool | Layer | Use Case |
+|------|-------|----------|
+| **Trivy** | Scanner | Filesystem, container image, IaC, and SBOM scanning in one CLI |
+| **Grype** | Scanner | Vulnerability scanning of images and SBOMs (pairs with Syft) |
+| **OSV-Scanner** | Scanner | Lockfile + SBOM scanning against the OSV database (covers ecosystems Dependabot misses) |
+| **Syft** | SBOM | Generate CycloneDX or SPDX SBOMs from source, dirs, or images |
+| **Cosign** | Signing | Sign container images and artifacts; Sigstore keyless signing via OIDC |
+| **SLSA** | Framework | Build-integrity levels; `slsa-github-generator` produces L3 provenance |
+
+**Pick one of each layer.** Common 2025 stacks: Trivy + Syft + Cosign, or
+Grype + Syft + Cosign. OSV-Scanner is additive — run it alongside whichever
+you choose because OSV covers ecosystems (Go modules, Rust crates, OSS-Fuzz
+findings) that other scanners miss.
+
+### Trivy (filesystem + container)
+
+```yaml
+# .github/workflows/trivy.yml
+name: Trivy Scan
+
+on: [pull_request, push]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # for SARIF upload to GitHub Security tab
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@<commit-sha>  # pin to SHA
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: 1                # fail the build
+          ignore-unfixed: true        # don't block on CVEs without patches
+          format: sarif
+          output: trivy-results.sarif
+
+      - name: Upload SARIF to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+```
+
+### OSV-Scanner (lockfiles + SBOM)
+
+```yaml
+- name: OSV-Scanner
+  uses: google/osv-scanner-action/osv-scanner-action@<commit-sha>
+  with:
+    scan-args: |-
+      --recursive
+      --skip-git
+      ./
+```
+
+Or run locally against a generated SBOM:
+
+```bash
+osv-scanner --sbom=sbom.cdx.json
+```
+
+### Generating an SBOM with Syft
+
+```bash
+# CycloneDX (JSON) from source tree
+syft scan dir:. -o cyclonedx-json=sbom.cdx.json
+
+# SPDX from a built image
+syft scan registry:ghcr.io/example/app:1.2.3 -o spdx-json=sbom.spdx.json
+```
+
+Attach the SBOM to GitHub releases or push it as an OCI artifact next to the
+image so consumers can audit transitive content without rebuilding.
+
+### Signing with Cosign (Sigstore keyless)
+
+```yaml
+- uses: sigstore/cosign-installer@<commit-sha>
+
+- name: Sign image (keyless via OIDC)
+  env:
+    COSIGN_EXPERIMENTAL: "1"   # not required on cosign 2.x but harmless
+  run: |
+    cosign sign --yes ghcr.io/${{ github.repository }}@${DIGEST}
+
+- name: Attach SBOM as attestation
+  run: |
+    cosign attest --yes \
+      --predicate sbom.cdx.json \
+      --type cyclonedx \
+      ghcr.io/${{ github.repository }}@${DIGEST}
+```
+
+Verification:
+
+```bash
+cosign verify \
+  --certificate-identity-regexp "https://github.com/example/repo/.*" \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  ghcr.io/example/app@sha256:<digest>
+```
+
+### SLSA provenance (build integrity)
+
+SLSA defines build-integrity levels L1–L3+. For GitHub-hosted builds, the
+official `slsa-framework/slsa-github-generator` reusable workflows produce
+non-falsifiable L3 provenance attached to releases:
+
+```yaml
+# .github/workflows/release.yml
+jobs:
+  build:
+    # ... build artifacts ...
+    outputs:
+      digests: ${{ steps.hash.outputs.digests }}
+
+  provenance:
+    needs: [build]
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@<tag>
+    with:
+      base64-subjects: ${{ needs.build.outputs.digests }}
+      upload-assets: true
+```
+
+Consumers verify with `slsa-verifier` before trusting the artifact.
+
+### What this layered stack catches
+
+| Threat | Caught by |
+|--------|-----------|
+| Known CVE in direct dep | Dependabot, Snyk, OSV-Scanner, Trivy |
+| Known CVE in transitive dep | Snyk, OSV-Scanner, Trivy (via SBOM) |
+| Vulnerable OS package in container | Trivy, Grype |
+| Tampered dependency (typosquat / hijack) | SBOM diff + Sigstore verification |
+| Malicious build server / CI compromise | SLSA provenance |
+| Unsigned artifact substitution | Cosign verification at deploy |
+| License drift in transitive deps | SBOM + license policy (Trivy, Syft) |
+
+### Cross-reference
+
+For deeper coverage of supply-chain threat modeling, in-toto attestations,
+and policy enforcement at admission (Kyverno, Sigstore policy-controller),
+see the **`ordis-security-architect`** pack — this sheet covers the test/CI
+side of the boundary; that pack covers the architecture/policy side.
 
 ---
 
@@ -380,7 +552,7 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Run Snyk
         id: snyk

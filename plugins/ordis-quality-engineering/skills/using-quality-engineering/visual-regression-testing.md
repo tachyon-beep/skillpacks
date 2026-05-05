@@ -233,7 +233,7 @@ jobs:
   chromatic:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Required for Chromatic
 
@@ -408,7 +408,7 @@ jobs:
   update:
     runs-on: ubuntu-latest  # Same as test CI
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Update snapshots
         run: npx playwright test --update-snapshots
@@ -474,7 +474,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install Playwright
         run: |
@@ -486,7 +486,7 @@ jobs:
 
       - name: Upload failures
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: visual-test-failures
           path: test-results/

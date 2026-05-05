@@ -269,7 +269,7 @@ jobs:
   quality-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Run tests with coverage
         run: pytest --cov=src --cov-report=json

@@ -385,7 +385,7 @@ For low-probability failures (<5%), run more iterations:
 
 - name: Upload failure artifacts
   if: failure()
-  uses: actions/upload-artifact@v3
+  uses: actions/upload-artifact@v4
   with:
     name: failure-logs
     path: |

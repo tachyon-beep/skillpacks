@@ -415,7 +415,7 @@ jobs:
           --health-interval 10s
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Run integration tests
         run: pytest tests/integration/
         env:
