@@ -65,22 +65,32 @@ Search for skills that might inform your analysis:
 - Known anti-patterns
 - Best practices for the technology
 
+If the marketplace exposes a router skill for the domain (e.g. `/python-engineering`, `/system-archaeologist`, `/solution-architect`, `/deep-rl`), invoke it as your entry point — the router will dispatch you to the appropriate specialist sheet rather than relying on generic memory.
+
 ### 1.4 Fetch External Documentation
 
-When relevant, use WebFetch or firecrawl to get:
-- API documentation
-- Library specifications
-- Standards and RFCs
-- Current best practices
+When relevant, use:
+- `WebFetch` — retrieve and read a known URL (API docs, standards, RFCs, library specifications)
+- `WebSearch` — discover current best practices or up-to-date guidance when you do not yet have a URL
+
+Prefer primary sources (official docs, RFCs, the project's own README/ADR) over secondary commentary.
 
 ### 1.5 Use Available MCP Tools
 
-Leverage domain-specific tools:
-- LSP for type information and references
-- Database tools for schema information
-- Cloud provider tools for infrastructure state
+Leverage domain-specific MCP tools when they are configured in the user's environment. Examples (availability varies by environment):
+- IDE-integration MCP tools (e.g. `mcp__ide__*`) for diagnostics, definitions, references
+- Issue-tracker MCP tools (e.g. `mcp__filigree__*`) for project context, dependencies, history
+- Database / schema MCP tools for table and column information
+- Cloud-provider MCP tools for live infrastructure state
+- Observability MCP tools for logs, traces, errors
 
-### 1.6 Document What You Couldn't Find
+Do not assume any specific MCP server is present — check the tool list visible to you and use what is actually available. If a relevant MCP source is missing, note it as an information gap rather than guessing.
+
+### 1.6 Dispatch Subagents for Bounded Investigations (Optional)
+
+When fact-finding would otherwise pollute your context with large search results, you MAY dispatch a subagent via the `Agent` tool (e.g. `Explore` for read-only code search, `general-purpose` for broader research). Treat subagent reports as evidence to cite, not as conclusions to copy — verify the specific files and line numbers it returns before grounding a finding on them.
+
+### 1.7 Document What You Couldn't Find
 
 If information would help but isn't available:
 - Note it explicitly
@@ -198,6 +208,40 @@ This analysis does NOT account for:
 3. [Validation step]
 ```
 
+### 3.5 Machine-Readable Summary (OPTIONAL)
+
+When an SME agent is invoked as a subagent and its output will be parsed by a calling agent (rather than read directly by a human), it MAY append a JSON summary block at the end of the response. This is **optional** and additive — it does not replace any of §3.1–§3.4.
+
+````markdown
+## Summary (machine-readable)
+
+```json
+{
+  "overall_confidence": "Moderate",
+  "implementation_risk": "Medium",
+  "reversibility": "Moderate",
+  "top_findings": [
+    {"claim": "...", "confidence": "High", "evidence": "src/auth.py:45"}
+  ],
+  "blocking_gaps": ["..."],
+  "recommended_next_steps": ["..."]
+}
+```
+````
+
+**Rules:**
+- Use the same vocabulary as §3.1–§3.2 (`High` / `Moderate` / `Low` / `Insufficient Data`; `Low` / `Medium` / `High` / `Critical`).
+- The JSON block is a *summary* of the human-readable sections, never a replacement. If they disagree, the prose sections are authoritative.
+- Callers SHOULD treat the absence of this block as "no machine summary provided" and fall back to parsing the markdown sections.
+
+### 3.6 Subagent-Dispatch Context
+
+When you are invoked as a subagent (e.g. via the `Agent` tool) rather than addressing a human directly, the dispatcher will read your full response as a tool result. To remain useful in that setting:
+
+- Keep the four required sections (§3.1–§3.4) intact and in order — the dispatcher's parsing rules expect them.
+- Do not ask the dispatcher to "let me know if you want me to investigate further"; instead, list the investigation in **Information Gaps** so the dispatcher can decide whether to re-dispatch.
+- If you state `Confidence: Insufficient Data`, prefer that over guessing — the dispatcher can re-dispatch with more context, but it cannot un-trust a confidently-wrong claim.
+
 ---
 
 ## Anti-Patterns to Avoid
@@ -255,6 +299,26 @@ GOOD: "This will fail when user.email is None (possible per your User model
        Risk: Medium. Mitigation: Add null check or make email required."
 ```
 
+### Don't Treat the Protocol as Python-Only
+
+The four-section contract is language- and domain-agnostic. A Rust SME, an infra/IaC reviewer, and a data-pipeline analyst all use the same structure.
+
+```
+BAD (Rust example): "You probably have a borrow-checker issue. Try cloning."
+
+GOOD: "I read src/cache.rs:88-104 and the conflict is at line 97: `&mut self.entries`
+       is held across the call to `self.refresh()` on line 101, which also takes
+       `&mut self`. The compiler error E0499 confirms this.
+
+       Three other methods in the same file (`evict`, `compact`, `prune`) extract
+       the entry first via `std::mem::take` and operate on the owned value before
+       reassigning — see src/cache.rs:142-156 for the established pattern.
+
+       Confidence: High (compiler error directly verified).
+       Risk: Low (pattern is local; tests at tests/cache_test.rs:23 already cover
+       the eviction path)."
+```
+
 ---
 
 ## Tool Requirements for SME Agents
@@ -262,17 +326,22 @@ GOOD: "This will fail when user.email is None (possible per your User model
 All SME agents SHOULD have access to:
 
 **Required:**
-- `Read` - Read files and documents
-- `Grep` - Search for patterns
-- `Glob` - Find files by pattern
+- `Read` — Read files and documents
+- `Grep` — Search for patterns
+- `Glob` — Find files by pattern
 
 **Recommended:**
-- `WebFetch` or firecrawl - External documentation
-- `LSP` - Type information and references
-- `Bash` (read-only commands) - Git history, file stats
+- `WebFetch` — Retrieve external documentation by URL
+- `WebSearch` — Discover documentation when no URL is known
+- `Bash` (read-only commands) — Git history, file stats, build status
+- `Agent` — Dispatch read-only subagents (e.g. `Explore`) for bounded code search
 
-**Domain-specific:**
-- Add relevant MCP tools for your domain
+**Domain-specific (use what is configured in the user's environment):**
+- IDE-integration MCP tools (e.g. `mcp__ide__*`) for diagnostics and references
+- Issue-tracker MCP tools (e.g. `mcp__filigree__*`) for project context
+- Database / cloud / observability MCP tools as relevant
+
+Declare in your agent's frontmatter only the tools you actually use. Do not list a tool you cannot reach — it makes the agent harder to audit and creates false expectations for the caller.
 
 ---
 
@@ -298,20 +367,34 @@ When adding this protocol to an SME agent:
 │  1. FACT-FIND                                               │
 │     ├─ Read mentioned code/docs                             │
 │     ├─ Search for related patterns                          │
-│     ├─ Check relevant skills                                │
-│     ├─ Fetch external docs if needed                        │
-│     └─ Use domain MCP tools                                 │
+│     ├─ Check relevant skills (router skills are entry pts)  │
+│     ├─ Fetch external docs (WebFetch / WebSearch)           │
+│     ├─ Use available MCP tools                              │
+│     └─ Optionally dispatch subagents (Agent tool)           │
 │                                                             │
 │  2. ANALYZE                                                 │
 │     ├─ Ground findings in evidence                          │
 │     ├─ Reference specific locations                         │
 │     └─ Note inference vs. verification                      │
 │                                                             │
-│  3. OUTPUT (ALL SECTIONS REQUIRED)                          │
+│  3. OUTPUT (ALL FOUR SECTIONS REQUIRED)                     │
 │     ├─ Confidence Assessment (per-finding)                  │
 │     ├─ Risk Assessment (severity + mitigation)              │
 │     ├─ Information Gaps (what would help)                   │
 │     └─ Caveats & Follow-ups (before trusting)               │
+│     ┌ OPTIONAL                                              │
+│     ├─ Machine-readable JSON summary                        │
+│     └─ Subagent-dispatch notes                              │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Changelog
+
+- **1.1.0** (2026-05-05) — Additive refresh. Modernized tool examples (dropped `firecrawl` and generic `LSP` references; added `WebSearch`, `Agent`-tool subagent dispatch, MCP-server examples). Added §1.3 router-skill guidance, §1.6 subagent dispatch, §3.5 OPTIONAL machine-readable JSON summary, §3.6 OPTIONAL subagent-dispatch context, and a Rust anti-pattern example. **The four required output sections (§3.1–§3.4) and confidence/risk vocabulary are unchanged from 1.0.x — downstream agents need no edits.**
+- **1.0.1** — Minor edits (no behavioral change).
+- **1.0.0** — Initial published protocol.
+
+**Last reviewed:** 2026-05-05
