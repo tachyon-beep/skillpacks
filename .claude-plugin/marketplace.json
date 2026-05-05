@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, solution architecture, game development, security, documentation, site design, and UX skills for Claude Code - 32 complete skillpacks with 193+ TDD-validated skills",
-    "version": "3.11.0",
+    "version": "3.12.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -251,6 +251,35 @@
         "release-plz",
         "mdbook",
         "justfile"
+      ],
+      "category": "development"
+    },
+    {
+      "name": "axiom-pyo3-interop",
+      "source": "./plugins/axiom-pyo3-interop",
+      "description": "Production-grade Python ↔ Rust interop via PyO3 — the FFI-boundary discipline, not single-crate Rust nor pure-Python work. v0.1.0 scaffold: router + 13 sheets, 3 commands, 1 agent. Covers PyO3 fundamentals (`Bound<'py, T>`, GIL tokens, `#[pymodule]` / `#[pyclass]`), abi3 vs native and the wheel matrix, maturin inside a Cargo workspace, GIL release patterns, batched FFI to amortise crossing cost, zero-copy NumPy via the buffer protocol, Gymnasium environments backed by Rust, error mapping with traceback fidelity, lifecycle and teardown at interpreter shutdown, async across the boundary (`pyo3-async-runtimes`, tokio + asyncio), packaging and wheels (cibuildwheel, abi3, manylinux), debugging boundary panics / segfaults / GIL deadlocks, and the cost-of-crossing performance model. Commands: /scaffold-pyo3-crate, /profile-ffi-boundary, /audit-gil-discipline. Agent: pyo3-reviewer (SME Agent Protocol; sweeps all 13 sheets + 13 boundary anti-patterns). Sibling to `axiom-rust-engineering` (single-crate Rust) and `axiom-rust-workspaces` (multi-crate Rust); composes with both.",
+      "keywords": [
+        "axiom",
+        "pyo3",
+        "python-rust-interop",
+        "ffi",
+        "maturin",
+        "abi3",
+        "gil",
+        "allow-threads",
+        "numpy-buffer-protocol",
+        "zero-copy",
+        "gymnasium",
+        "reinforcement-learning",
+        "pyo3-async-runtimes",
+        "cibuildwheel",
+        "manylinux",
+        "wheels",
+        "extension-module",
+        "boundary-crossing",
+        "pyclass",
+        "pyfunction",
+        "interpreter-teardown"
       ],
       "category": "development"
     },
