@@ -235,6 +235,11 @@ Security work often requires skills from other factions:
 
 **Load both factions when**: Documenting security decisions, writing security policies, explaining threats to stakeholders
 
+**Axiom (Audit Pipelines)**:
+- `axiom-audit-pipelines:using-audit-pipelines` (or `/audit-pipelines`) — When the system makes procedural decisions whose provenance must be defensible after the fact (rule firings, governor verdicts, automated approvals). This pack designs the *evidence* (canonical encoding, fingerprint chains, signed exports, decision provenance, retention reconciled with RTBF). Security architecture designs *system controls*; audit pipelines design *the log itself*. Cross-link: the audit-log threat model lives in the audit pack (`07-threat-model.md`); the system threat model lives here (`threat-modeling.md`). They reference each other rather than duplicate STRIDE tables.
+
+**Load both packs when**: A system has both regulatory compliance obligations and procedural decisions auditors will sample. Order: this pack first (system threat model + controls), then audit pipelines (decision-log specification, integrity scheme, replay capability) consuming the system threat model as input.
+
 ---
 
 ## Common Routing Patterns

@@ -1,0 +1,27 @@
+{
+  "name": "axiom-audit-pipelines",
+  "version": "1.0.0",
+  "description": "TDD-validated audit-grade decision pipelines: canonical encoding (RFC 8785 JCS), append-only decision logs, fingerprint chains (linked-hash and Merkle), HMAC and Ed25519 signed exports, immutable storage, decision provenance (inputs/ruleset/code closure), threat model for the log itself, retention reconciled with right-to-be-forgotten, partial replay, and performance budgets. 11 reference sheets, 3 commands, 2 agents — RED-GREEN-REFACTOR validated via 11 retrieval tests, router triage pressure test, and reviewer-agent gap-report pressure test.",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "axiom",
+    "audit",
+    "audit-trail",
+    "provenance",
+    "decision-log",
+    "fingerprint",
+    "merkle",
+    "hmac",
+    "rfc8785",
+    "jcs",
+    "canonical-json",
+    "compliance",
+    "evidence",
+    "tamper-evident"
+  ]
+}

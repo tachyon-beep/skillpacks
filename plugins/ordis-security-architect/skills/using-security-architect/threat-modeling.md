@@ -25,6 +25,7 @@ Load this skill when:
 - **Reviewing existing designs for completeness** (use security-architecture-review)
 - **Compliance mapping** (use compliance-awareness-and-mapping)
 - **Documenting threats after they're identified** (use documenting-threats-and-controls)
+- **Threat-modelling the audit log itself** (use `axiom-audit-pipelines:threat-model-for-audit-logs`). When a system has an audit pipeline, adversaries against the *evidence* — tamper, replay, time-shift, partial deletion, key compromise of audit-signing keys, audit-log subpoena, repudiation of signed entries — live in the audit pack's `07-threat-model.md`. This skill (`threat-modeling.md`) covers adversaries against the *system* whose decisions are being audited. Cross-link the two; do not duplicate STRIDE tables across them.
 
 This skill is for IDENTIFYING threats systematically. Once threats are identified, route to appropriate skills for designing controls, implementing patterns, or documenting decisions.
 
