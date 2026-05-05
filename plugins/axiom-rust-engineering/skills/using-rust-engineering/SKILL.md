@@ -23,6 +23,8 @@ Load this skill when:
 
 **Don't use for**: Non-Rust languages, general systems theory (not Rust-specific), deployment infrastructure (not Rust-specific), algorithm selection (not language-specific)
 
+**Workspace-scope concerns**: For multi-crate workspaces (`[workspace.dependencies]`, workspace-scope `clippy.toml`/`deny.toml`, public-vs-internal crate partition, version drift across the workspace, the resolver-2/3 choice, workspace anti-patterns), load **`/rust-workspaces`** (the `axiom-rust-workspaces` pack). This pack is single-crate-shaped; that pack composes these concerns at workspace scale.
+
 ---
 
 ## How to Access Reference Sheets
@@ -152,6 +154,34 @@ When you see a link like `[systematic-delinting.md](systematic-delinting.md)`, r
 - "Setting up a monorepo with shared library crates"
 - "How do I enable a feature only in tests?"
 - "cargo build fails after adding a C dependency"
+
+**Note**: This pack's project-structure sheet is **single-crate-shaped**. For workspace-scope concerns (multi-crate composition, `[workspace.dependencies]`, workspace-scope `clippy.toml` / `deny.toml`, public-vs-internal crate boundaries, version drift across the workspace) load **`/rust-workspaces`** (the `axiom-rust-workspaces` pack) instead.
+
+---
+
+### Workspace-Scope Concerns
+
+**Symptoms**:
+- "Two crates in our workspace pin the same dep at different versions"
+- "`cargo build` and `cargo build -p some-crate` produce different binaries"
+- "Should we be on resolver 2 or 3?"
+- "How do we declare lints once for the whole workspace?"
+- "Where does `deny.toml` live in a workspace?"
+- "Should this be a separate crate, or stay a module?"
+- "An internal crate accidentally got published to crates.io"
+- "We have ten crates and each has its own clippy config — how do we consolidate?"
+- "Can a public crate `pub use` a type from an internal crate?"
+- "We have a `[workspace]` block with one member — is that fine?"
+
+**Route to**: **`/rust-workspaces`** (the `axiom-rust-workspaces` pack — separate skill, different pack)
+
+**Why**: This pack's sheets assume one crate's perspective. Workspace-scope decisions (structure, dep unification under the resolver, workspace-wide lint/deny policy, publish/internal partition, anti-pattern sweeps) are a different axis and live in `axiom-rust-workspaces`. Each crate in a workspace passes *this* pack's bar; the workspace as a whole passes the workspaces pack's gate.
+
+**Example queries**:
+- "Set up a new multi-crate Rust project from scratch"
+- "We're splitting our single crate into a workspace — what's the structure?"
+- "Audit our existing workspace for drift and accidental publishing"
+- "Decide which of our crates should be public on crates.io"
 
 ---
 

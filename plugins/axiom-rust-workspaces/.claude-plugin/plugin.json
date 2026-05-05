@@ -1,0 +1,34 @@
+{
+  "name": "axiom-rust-workspaces",
+  "version": "1.0.0",
+  "description": "Rust at workspace scope — multi-crate composition, not single-crate engineering. v1.0.0 marks API stability: router + 13 sheets, 3 commands, 1 agent. Architectural spine — workspace structure (layered vs feature-grouped vs domain-grouped), `[workspace.dependencies]` + version unification under explicit resolver-2/3 with the feature-graph implications, `[workspace.lints]` + workspace-scope `clippy.toml` with override discipline, workspace-scope `deny.toml` (advisories, licences, bans, sources) with auditable waiver lifecycle, public-vs-internal crate boundaries with the internal-traits-crate and sealed-trait patterns, and the workspace anti-pattern refusal list. Operational depth — feature-unification gotchas (the seven cases the headline rule misleads), Miri-on-workspace-subset (arena-crate isolation; nightly toolchain split), test organisation (per-crate vs workspace integration tests; fixtures crate; cargo nextest), documentation architecture (rustdoc + mdbook 'book sits next to the crates' pattern), release flow (synchronised vs independent versioning; cargo-release vs release-plz; publish ordering), task-runner patterns (justfile as recommended default; CI symmetry), workspace-scope coverage (cargo-llvm-cov; per-crate thresholds). Three commands — `/scaffold-workspace`, `/audit-workspace-deps`, `/validate-workspace-config`. One agent — `workspace-reviewer` (sweeps the workspace against all 13 sheets and 10 anti-patterns; SME Agent Protocol). Sibling to `axiom-rust-engineering` — that pack is single-crate-shaped; this pack composes those concerns at workspace scale.",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "axiom",
+    "rust",
+    "cargo-workspace",
+    "multi-crate",
+    "workspace-dependencies",
+    "workspace-lints",
+    "deny-toml",
+    "clippy-toml",
+    "resolver-2",
+    "feature-unification",
+    "internal-traits-crate",
+    "crate-visibility",
+    "version-drift",
+    "workspace-hygiene",
+    "miri",
+    "cargo-nextest",
+    "cargo-llvm-cov",
+    "cargo-release",
+    "release-plz",
+    "mdbook",
+    "justfile"
+  ]
+}

@@ -226,6 +226,35 @@
       "category": "development"
     },
     {
+      "name": "axiom-rust-workspaces",
+      "source": "./plugins/axiom-rust-workspaces",
+      "description": "Rust at workspace scope — multi-crate composition, not single-crate engineering. v1.0.0 stable: router + 13 sheets, 3 commands, 1 agent. Architectural spine: workspace structure (layered / feature-grouped / domain-grouped), `[workspace.dependencies]` + resolver-2/3 with feature-graph semantics, `[workspace.lints]` + workspace-scope `clippy.toml`, workspace-scope `deny.toml` with waiver lifecycle, public-vs-internal crate boundaries with the internal-traits-crate / sealed-trait patterns, and the 10-pattern anti-pattern refusal list. Operational depth: feature-unification gotchas (the seven cases the headline rule misleads), Miri-on-subset (arena-crate isolation; nightly toolchain split), test organisation (per-crate vs workspace integration tests; fixtures crate; nextest), documentation architecture (rustdoc + mdbook 'book sits next to the crates'), release flow (synchronised vs independent versioning; cargo-release / release-plz; publish ordering), task-runner patterns (justfile + CI symmetry), workspace-scope coverage (cargo-llvm-cov + per-crate thresholds). Commands: /scaffold-workspace, /audit-workspace-deps, /validate-workspace-config. Agent: workspace-reviewer (SME Agent Protocol; sweeps all 13 sheets + 10 anti-patterns). Sibling to `axiom-rust-engineering` — that pack is single-crate-shaped; this pack composes those concerns at workspace scale.",
+      "keywords": [
+        "axiom",
+        "rust",
+        "cargo-workspace",
+        "multi-crate",
+        "workspace-dependencies",
+        "workspace-lints",
+        "deny-toml",
+        "clippy-toml",
+        "resolver-2",
+        "feature-unification",
+        "internal-traits-crate",
+        "crate-visibility",
+        "version-drift",
+        "workspace-hygiene",
+        "miri",
+        "cargo-nextest",
+        "cargo-llvm-cov",
+        "cargo-release",
+        "release-plz",
+        "mdbook",
+        "justfile"
+      ],
+      "category": "development"
+    },
+    {
       "name": "bravos-simulation-tactics",
       "source": "./plugins/bravos-simulation-tactics",
       "description": "Game simulation implementation patterns and tactics - 11 skills",
