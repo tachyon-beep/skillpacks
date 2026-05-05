@@ -3,967 +3,504 @@
 
 ## Context
 
-You're considering fine-tuning an LLM or debugging a fine-tuning process. Common mistakes:
-- **Fine-tuning when prompts would work** (unnecessary cost/time)
-- **Full fine-tuning instead of LoRA** (100× less efficient)
-- **Poor dataset quality** (garbage in, garbage out)
-- **Wrong hyperparameters** (catastrophic forgetting)
-- **No validation strategy** (overfitting undetected)
+You're considering fine-tuning an LLM, or debugging one already in flight. Common mistakes:
+- **Fine-tuning when prompts (or RAG, or a stronger model) would work** — the most common and most expensive mistake.
+- **Full fine-tuning when LoRA/QLoRA would match it** — a 100× cost premium for a few percent.
+- **Poor data quality** — garbage in, garbage out, regardless of method.
+- **Wrong learning rate** — easily 100× off; the dominant cause of catastrophic forgetting.
+- **Stopping at SFT when a preference step would help** — or jumping straight to RLHF when SFT alone would have been fine.
+- **Picking the algorithm by hype, not by fit** (DPO vs. KTO vs. GRPO are not interchangeable).
 
-**This skill provides effective fine-tuning strategies: when to fine-tune, efficient methods (LoRA), data quality, hyperparameters, and evaluation.**
+**This skill provides decision criteria for when (and what) to fine-tune, the modern preference-tuning lineage (PPO → DPO → IPO/KTO/SimPO/ORPO → GRPO), the LoRA family (LoRA, QLoRA, DoRA, rsLoRA, LoftQ, LongLoRA), and the practical stacks (TRL, Axolotl, Unsloth, LLaMA-Factory).**
+
+This sheet covers **fine-tuning strategy and method choice**. Training-dynamics specifics (FSDP2, FP8, optimizer-state sharding, learning-rate transfer via muP) live in `yzmir-training-optimization` — cross-ref, don't duplicate.
 
 
-## Decision Tree: Prompt Engineering vs Fine-Tuning
+## Decision Tree: Don't Fine-Tune If You Don't Have To
 
-**Start with prompt engineering. Fine-tuning is last resort.**
+The order of operations has not changed; the threshold for "good enough without fine-tuning" has risen sharply with frontier models.
 
-### Step 1: Try Prompt Engineering
+### Step 1: Try a stronger prompt with a stronger model
+
+```
+- Use a frontier instruction-tuned model in its highest-capability tier.
+- System message + 3-8 few-shot examples + clear output schema.
+- Temperature 0 (or low) for consistency; chain-of-thought or structured
+  output schema where appropriate.
+```
+
+If quality clears your bar (commonly ≥ 90% of human-rated examples) → **stop**. You don't need fine-tuning.
+
+### Step 2: Add RAG, reasoning, or tool use
+
+If the failure mode is "model doesn't know X," the answer is almost always RAG, not fine-tuning. See `rag-architecture-patterns.md`.
+
+If the failure mode is "model doesn't think hard enough," see `reasoning-models.md` (extended thinking, reasoning-tier models).
+
+If it's "model can't act on the world," see `agentic-patterns-and-mcp.md`.
+
+### Step 3: Consider fine-tuning
+
+Fine-tune when:
+- ✅ Prompts demonstrably fail after honest iteration.
+- ✅ You have ≥ 1,000 high-quality examples (or can build them).
+- ✅ You need consistent behavior that prompts cannot deliver.
+- ✅ You need to reduce per-call latency / cost (shorter prompts → cheaper inference, or distill to a smaller model).
+- ✅ You need to teach a capability or domain pattern not in the base model.
+
+Don't fine-tune for:
+- ❌ Tone or style (use system prompt + examples).
+- ❌ Output formatting (use structured-output / JSON schema).
+- ❌ Very small datasets (< 100 examples).
+- ❌ Recent or changing facts (use RAG).
+- ❌ Quick experiments (prompts iterate in minutes).
+
+
+## What Kind of Fine-Tuning Do You Actually Need?
+
+Three distinct things get called "fine-tuning"; conflating them is half the field's confusion.
+
+| Goal | Method family | When |
+|------|---------------|------|
+| Teach a format, domain, or new task | **SFT** (supervised) on instruction/response pairs | Most "fine-tuning" requests |
+| Align outputs with human (or AI) preferences | **Preference tuning** (DPO, IPO, KTO, SimPO, ORPO) on preference pairs | After SFT, when ranked-pairs data exists |
+| Optimize against a reward signal (reasoning, tool success, evals) | **Online RL** (PPO, GRPO) | Reasoning models, tool-use agents, when reward is computable |
+
+The standard modern recipe for an instruction-following model: SFT → DPO (or SimPO/ORPO). For a reasoning model: SFT → GRPO with verifiable rewards. For frontier alignment (harmlessness, helpfulness): SFT → preference tuning, often with RLAIF / Constitutional AI.
+
+
+## Preference-Tuning Lineage
+
+### PPO + RLHF — InstructGPT (the predecessor)
+
+Ouyang et al., 2022 — <https://arxiv.org/abs/2203.02155>. Three stages:
+1. **SFT** on demonstrations.
+2. **Reward model** trained on human pairwise preferences.
+3. **PPO** to maximize reward while a KL penalty pins the policy near the SFT model.
+
+This is what trained ChatGPT. It works, but it's complex (four models in memory: policy, reference, reward, value), unstable, and hyperparameter-sensitive. Almost no one runs vanilla PPO+RM-RLHF in 2026 outside frontier labs and reasoning training (where it morphed into GRPO).
+
+### DPO — the new default
+
+Rafailov et al., NeurIPS 2023 — <https://arxiv.org/abs/2305.18290>. Direct Preference Optimization shows that the constrained-reward problem RLHF solves has a closed-form optimum, so you can skip the reward model and PPO entirely. You train directly on preference pairs `(prompt, chosen, rejected)` with a contrastive loss against a frozen reference model.
+
+DPO is now the standard preference-tuning algorithm: stable, fits in standard SFT infrastructure, no sampling rollouts, no value model. Use TRL's `DPOTrainer`.
+
+### Variants worth knowing (each fixes a specific DPO weakness)
+
+| Method | Citation | One-liner |
+|--------|----------|-----------|
+| **IPO** | Azar et al., AISTATS 2024 — <https://arxiv.org/abs/2310.12036> | DPO can over-fit on near-deterministic preferences; IPO replaces DPO's logit with identity, regularizing better. Use when preference data is noisy or has many ties. |
+| **KTO** | Ethayarajh et al., ICML 2024 — <https://arxiv.org/abs/2402.01306> | Drops the *pairwise* requirement: needs only a binary "good / bad" label per response, using Kahneman–Tversky prospect-theory utility. Use when you have thumbs-up/down logs but no clean pairs. |
+| **SimPO** | Meng et al., NeurIPS 2024 — <https://arxiv.org/abs/2405.14734> | **Reference-free** DPO variant; uses average log-prob per token as the implicit reward and adds a target margin. Saves the reference-model memory + forward pass; reported to outperform DPO on AlpacaEval 2 / Arena-Hard. |
+| **ORPO** | Hong et al., EMNLP 2024 — <https://arxiv.org/abs/2403.07691> | **Monolithic**: combines SFT and preference signal in a single loss via an odds-ratio term; no separate SFT phase, no reference model. Use when you want one training run instead of two. |
+
+**Practical decision matrix:**
+
+```
+Have clean pairwise preferences, want the safe default?         → DPO
+Have only binary good/bad labels (thumbs up/down logs)?         → KTO
+GPU memory tight or want to skip reference-model forward pass?  → SimPO
+Want SFT + preference in one training run?                      → ORPO
+Preferences are noisy or ties are common?                       → IPO
+```
+
+All of these are implemented in [TRL](https://huggingface.co/docs/trl) under their respective trainers (`DPOTrainer`, `KTOTrainer`, `ORPOTrainer`, `SimPO` via DPOTrainer with reference-free flags), in [Axolotl](https://github.com/axolotl-ai-cloud/axolotl), and in [Unsloth](https://github.com/unslothai/unsloth).
+
+### GRPO — the algorithm behind reasoning-model RL
+
+Shao et al., DeepSeekMath, 2024 — <https://arxiv.org/abs/2402.03300>. Group Relative Policy Optimization is the on-policy RL algorithm that powers DeepSeek-R1 and most modern reasoning RL stacks.
+
+GRPO drops PPO's value/critic model. For each prompt, sample a *group* of G outputs, score each with a (potentially programmatic) reward, and use the **group's normalized rewards** as advantages — the baseline is the group mean. This makes RL fine-tuning practical without training a separate value head, which roughly halves memory footprint vs. PPO.
+
+GRPO shines when the reward is **verifiable** (math answer correctness, code execution, tool-call success) — these are exactly the regimes driving the reasoning-model wave. Implementations: TRL `GRPOTrainer`, Unsloth (single-GPU GRPO), Axolotl (production GRPO).
 
 ```python
-# System message + few-shot examples
-system = """
-You are a {role} with {characteristics}.
-{guidelines}
-"""
+# Sketch of TRL GRPOTrainer usage; check current TRL docs for exact arguments.
+from trl import GRPOConfig, GRPOTrainer
 
-few_shot = [
-    # 3-5 examples of desired behavior
-]
+def reward_correct_answer(prompts, completions, **_):
+    # Returns a list[float] — one reward per completion.
+    return [1.0 if check_answer(c) else 0.0 for c in completions]
 
-# Test quality
-quality = evaluate(system, few_shot, test_set)
+trainer = GRPOTrainer(
+    model="Qwen/Qwen2.5-7B-Instruct",
+    reward_funcs=[reward_correct_answer],
+    args=GRPOConfig(
+        num_generations=8,           # group size G
+        learning_rate=5e-6,
+        per_device_train_batch_size=4,
+        gradient_accumulation_steps=4,
+        beta=0.04,                   # KL coefficient
+    ),
+    train_dataset=ds,
+)
+trainer.train()
 ```
 
-**If quality ≥ 90%:** ✅ STOP. Use prompts (no fine-tuning needed)
+When to reach for GRPO: reasoning training, tool-use agents, anywhere you can write a verifiable reward function. Cross-ref `yzmir-training-optimization` for the training-dynamics knobs (KL schedule, group size, reward shaping) and `reasoning-models.md` (this campaign) for the reasoning-tier model context.
 
-**If quality < 90%:** Continue to Step 2
+### Constitutional AI / RLAIF
 
-### Step 2: Optimize Prompts
+Bai et al., 2022 — <https://arxiv.org/abs/2212.08073>. Replace human preference labelers with an AI judge guided by a written constitution (a list of principles). The model self-critiques and revises during SFT, then RLAIF does preference training using AI-generated preferences. Used in production at Anthropic and increasingly elsewhere; useful when human labeling is the bottleneck or coverage of edge cases is impractical.
 
-- Add more examples (5-10)
-- Add chain-of-thought
-- Specify output format more clearly
-- Try different system messages
-- Use temperature=0 for consistency
-
-**If quality ≥ 90%:** ✅ STOP. Use optimized prompts
-
-**If quality < 90%:** Continue to Step 3
-
-### Step 3: Consider Fine-Tuning
-
-**Fine-tune when:**
-
-✅ **Prompts fail** (quality < 90% after optimization)
-✅ **Have 1000+ examples** (minimum for meaningful fine-tuning)
-✅ **Need consistency** (can't rely on prompt variations)
-✅ **Reduce latency** (shorter prompts → faster inference)
-✅ **Teach new capability** (not in base model)
-
-**Don't fine-tune for:**
-
-❌ **Tone/style matching** (use system message)
-❌ **Output formatting** (use format specification in prompt)
-❌ **Few examples** (< 100 examples insufficient)
-❌ **Quick experiments** (prompts iterate faster)
-❌ **Recent information** (use RAG, not fine-tuning)
+The technique generalizes: any time you have a stronger model that can rank outputs more cheaply than humans, RLAIF is on the table. DPO/SimPO/ORPO over AI-judged preferences is now common.
 
 
-## When to Fine-Tune: Detailed Criteria
+## When to use what — decision matrix
 
-### Criterion 1: Task Complexity
+| Situation | SFT alone | SFT + DPO/SimPO/ORPO | SFT + GRPO | RLHF (PPO+RM) |
+|-----------|-----------|----------------------|------------|---------------|
+| Format / schema / domain task, 1k–10k examples | ✅ | optional | — | — |
+| Want preference alignment, have pair data | — | ✅ | — | rare |
+| Reasoning, math, code, verifiable reward | start with SFT | optional | ✅ | rare |
+| Frontier helpfulness/harmlessness alignment | — | ✅ (often with RLAIF) | sometimes | ✅ (frontier labs) |
+| Budget is small, single-GPU | ✅ | ✅ (Unsloth) | ✅ (Unsloth GRPO) | ❌ |
 
-**Simple tasks (prompt engineering):**
-- Classification (sentiment, category)
-- Extraction (entities, dates, names)
-- Formatting (JSON, CSV conversion)
-- Tone matching (company voice)
-
-**Complex tasks (consider fine-tuning):**
-- Multi-step reasoning (not in base model)
-- Domain-specific language (medical, legal)
-- Consistent complex behavior (100+ edge cases)
-- New capabilities (teach entirely new skill)
-
-### Criterion 2: Dataset Size
-
-```
-< 100 examples: Prompts only (insufficient for fine-tuning)
-100-1000: Prompts preferred (fine-tuning risky - overfitting)
-1000-10k: Fine-tuning viable if prompts fail
-> 10k: Fine-tuning effective
-```
-
-### Criterion 3: Cost-Benefit
-
-**Prompt engineering:**
-- Cost: $0 (just dev time)
-- Time: Minutes to hours (fast iteration)
-- Maintenance: Easy (just update prompt)
-
-**Fine-tuning:**
-- Cost: $100-1000+ (compute + data prep)
-- Time: Days to weeks (data prep + training + eval)
-- Maintenance: Hard (need retraining for updates)
-
-**ROI calculation:**
-```python
-# Prompt engineering cost
-prompt_dev_hours = 4
-hourly_rate = 100
-prompt_cost = 4 * 100 = $400
-
-# Fine-tuning cost
-data_prep_hours = 40
-training_cost = 500
-total_ft_cost = 40 * 100 + 500 = $4,500
-
-# Cost ratio: Fine-tuning is 11× more expensive
-# Only worth it if quality improvement > 10%
-```
-
-### Criterion 4: Performance Requirements
-
-**Quality:**
-- Need 90-95%: Prompts usually sufficient
-- Need 95-98%: Fine-tuning may help
-- Need 98%+: Fine-tuning + careful data curation
-
-**Latency:**
-- > 1 second acceptable: Prompts fine (long prompts OK)
-- 200-1000ms: Fine-tuning may help (reduce prompt size)
-- < 200ms: Fine-tuning + optimization required
-
-**Consistency:**
-- Variable outputs acceptable: Prompts OK (temperature > 0)
-- High consistency needed: Prompts (temperature=0) or fine-tuning
-- Perfect consistency: Fine-tuning + validation
+**Honest "when not to bother fine-tuning at all":**
+- Your data has < 1,000 examples and you haven't tried 8-shot prompting on the strongest model.
+- You haven't tried RAG and the problem is "the model doesn't know X."
+- You're trying to fix tone, voice, or output formatting (system prompt + structured output is the answer).
+- Your eval is "vibes" — without a measurable target you can't tell if FT helped.
 
 
-## Fine-Tuning Methods
+## LoRA Family — Modern PEFT
 
-### 1. Full Fine-Tuning
+Full fine-tuning rewrites every weight; **PEFT** (Parameter-Efficient Fine-Tuning) freezes the base and learns small adapters. This is the right default for ~99% of fine-tuning, including all the preference and RL methods above.
 
-**Updates all model parameters.**
+### LoRA (the foundation)
 
-**Pros:**
-- Maximum flexibility (can change any behavior)
-- Best quality (when you have massive data)
+Hu et al., ICLR 2022 — <https://arxiv.org/abs/2106.09685>. For a frozen weight `W ∈ R^{d×k}`, learn `ΔW = B A` with `A ∈ R^{r×k}, B ∈ R^{d×r}`, `r << min(d, k)`. Train only `A, B`. Memory and compute drop by ~100×; quality is usually within a couple percent of full FT.
 
-**Cons:**
-- Expensive (7B model = 28GB memory for weights alone)
-- Slow (hours to days)
-- Risk of catastrophic forgetting
-- Hard to merge multiple fine-tunes
-
-**When to use:**
-- Massive dataset (100k+ examples)
-- Fundamental behavior change needed
-- Have large compute resources (multi-GPU)
-
-**Memory requirements:**
-```python
-# 7B parameter model (FP32)
-weights = 7B * 4 bytes = 28 GB
-gradients = 28 GB
-optimizer_states = 56 GB (Adam: 2× weights)
-activations = ~8 GB (batch_size=8)
-total = 120 GB  # Need multi-GPU!
-```
-
-### 2. LoRA (Low-Rank Adaptation)
-
-**Freezes base model, trains small adapter matrices.**
-
-**How it works:**
-```
-Original linear layer: W (d × k)
-LoRA: W + (A × B)
-  where A (d × r), B (r × k), r << d,k
-
-Example:
-W: 4096 × 4096 = 16.7M parameters
-A: 4096 × 8 = 32K parameters
-B: 8 × 4096 = 32K parameters
-A + B = 64K parameters (0.4% of original!)
-```
-
-**Pros:**
-- Extremely efficient (1% of parameters)
-- Fast training (10× faster than full FT)
-- Low memory (fits single GPU)
-- Easy to merge multiple LoRAs
-- No catastrophic forgetting (base model frozen)
-
-**Cons:**
-- Slightly lower capacity than full FT (99% quality usually)
-- Need to keep base model + adapters
-
-**When to use:**
-- 99% of fine-tuning cases
-- Limited compute (single GPU)
-- Fast iteration needed
-- Multiple tasks (train separate LoRAs, swap as needed)
-
-**Configuration:**
 ```python
 from peft import LoraConfig, get_peft_model
 
-config = LoraConfig(
-    r=8,  # Rank (4-16 typical, higher = more capacity)
-    lora_alpha=32,  # Scaling (usually 2× rank)
-    target_modules=["q_proj", "v_proj"],  # Which layers
+cfg = LoraConfig(
+    r=16,                  # 8-32 typical; higher with rsLoRA, see below
+    lora_alpha=32,         # commonly 2*r
+    target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
+                    "gate_proj", "up_proj", "down_proj"],  # all attention + MLP
     lora_dropout=0.05,
     bias="none",
-    task_type="CAUSAL_LM"
+    task_type="CAUSAL_LM",
 )
-
-model = get_peft_model(base_model, config)
-print(model.print_trainable_parameters())
-# trainable params: 8.4M || all params: 7B || trainable%: 0.12%
+model = get_peft_model(base, cfg)
+model.print_trainable_parameters()
 ```
 
-**Rank selection:**
-```
-r=4: Minimal (fast, low capacity) - simple tasks
-r=8: Standard (balanced) - most tasks
-r=16: High capacity (slower, better quality) - complex tasks
-r=32+: Approaching full FT quality (diminishing returns)
+**Rank guidelines (vanilla LoRA):**
+- `r=4–8`: small task, simple format/style adjustments.
+- `r=16`: default for most domain SFT.
+- `r=32–64`: complex tasks, large datasets — but see rsLoRA below before going high.
 
-Start with r=8, increase only if quality insufficient
-```
+**Target modules:** target attention + MLP projections (`q,k,v,o,gate,up,down`). Targeting only `q,v` (the original LoRA paper's choice) leaves quality on the table on modern LLMs.
 
-### 3. QLoRA (Quantized LoRA)
+### QLoRA — the cost-saver
 
-**LoRA + 4-bit quantization of base model.**
+Dettmers et al., NeurIPS 2023 — <https://arxiv.org/abs/2305.14314>. LoRA + 4-bit NF4 quantization of the frozen base. Same quality as LoRA in the paper; ~4× less memory, lets you fit a 70B-class model on a single 48GB GPU and a small (7-8B) model on 16GB.
 
-**Pros:**
-- Extremely memory efficient (4× less than LoRA)
-- 7B model fits on 16GB GPU
-- Same quality as LoRA
-
-**Cons:**
-- Slower than LoRA (quantization overhead)
-- More complex setup
-
-**When to use:**
-- Limited GPU memory (< 24GB)
-- Large models on consumer GPUs
-- Cost optimization (cheaper GPUs)
-
-**Setup:**
 ```python
-from transformers import BitsAndBytesConfig
+from transformers import BitsAndBytesConfig, AutoModelForCausalLM
+import torch
 
-bnb_config = BitsAndBytesConfig(
+bnb = BitsAndBytesConfig(
     load_in_4bit=True,
     bnb_4bit_quant_type="nf4",
     bnb_4bit_compute_dtype=torch.bfloat16,
     bnb_4bit_use_double_quant=True,
 )
-
 model = AutoModelForCausalLM.from_pretrained(
-    "meta-llama/Llama-2-7b-hf",
-    quantization_config=bnb_config,
-    device_map="auto"
+    "meta-llama/Meta-Llama-3.1-8B",  # or any current open base
+    quantization_config=bnb,
+    device_map="auto",
 )
-
-# Then add LoRA as usual
 model = get_peft_model(model, lora_config)
 ```
 
-**Memory comparison:**
-```
-Method         | 7B Model | 13B Model | 70B Model
----------------|----------|-----------|----------
-Full FT        | 120 GB   | 200 GB    | 1000 GB
-LoRA           | 40 GB    | 60 GB     | 300 GB
-QLoRA          | 12 GB    | 20 GB     | 80 GB
-```
+**Memory comparison (rough, bfloat16 base, AdamW optimizer):**
 
-### Method Selection:
+| Method | 7-8B model | 70B model | 405B model |
+|--------|-----------|-----------|------------|
+| Full FT (FP16, AdamW) | ~120 GB | ~1 TB | ~6 TB |
+| LoRA | ~28 GB | ~180 GB | ~900 GB |
+| QLoRA | ~10–14 GB | ~48 GB | ~240 GB |
 
-```python
-if gpu_memory < 24:
-    use_qlora()
-elif gpu_memory < 80:
-    use_lora()
-elif have_massive_data and multi_gpu_cluster:
-    use_full_finetuning()
-else:
-    use_lora()  # Default choice
-```
+These are coarse capability tiers — exact numbers depend on sequence length, batch size, optimizer, gradient checkpointing, and ZeRO/FSDP sharding. For multi-GPU training detail, cross-ref `yzmir-training-optimization`.
+
+### LoRA-family advances
+
+| Method | Citation | What it gives you |
+|--------|----------|-------------------|
+| **DoRA** | Liu et al., ICML 2024 (Oral) — <https://arxiv.org/abs/2402.09353> | Decomposes pretrained weight into magnitude + direction; LoRA updates only the direction. Consistently beats LoRA at the same rank with no extra inference cost. Supported in PEFT (`use_dora=True`). Use when you have budget for a slightly-slower-to-train run and want LoRA-quality closer to full FT. |
+| **rsLoRA** | Kalajdzievski, 2023 — <https://arxiv.org/abs/2312.03732> | Shows the standard `α/r` scaling stunts learning at high rank; replacing with `α/√r` ("rank-stabilized") unlocks high-rank LoRA. Use when you want to push `r` to 64+ for complex tasks. PEFT supports it via `use_rslora=True`. |
+| **LoftQ** | Li et al., ICLR 2024 — <https://arxiv.org/abs/2310.08659> | Quantization-aware *initialization* for QLoRA: jointly chooses 4-bit weights and LoRA factors so their sum approximates the FP16 weight. Closes much of QLoRA's small quality gap to LoRA. Use when QLoRA is underperforming LoRA on your eval. |
+| **LongLoRA** | Chen et al., ICLR 2024 — <https://arxiv.org/abs/2309.12307> | Long-context LoRA via shifted-sparse attention during training (S²-Attn) plus tuning of embeddings and norms. Extends Llama-2 7B from 4k → 100k context with LoRA-style cost. Use when extending context length, not when fine-tuning at the base context. |
+
+**Default recommendation in 2026:** **vanilla LoRA + QLoRA is still the right starting point**. Reach for DoRA when you want a quality bump at the same rank, rsLoRA when going to high rank, LoftQ when you specifically need to close a QLoRA-vs-LoRA gap, and LongLoRA when you're extending context.
+
+### Full fine-tuning
+
+Still has its place: you have ≥ 100k high-quality examples, a multi-GPU cluster, and you need behavioral changes that adapters can't fully capture (deep distribution shift, e.g., a new modality token, a different tokenizer's coverage). For everything else, PEFT.
+
+
+## Modern Stacks
+
+| Stack | Repo | When to use it |
+|-------|------|----------------|
+| **TRL** (Hugging Face) | <https://github.com/huggingface/trl> | The reference implementation of every preference and RL trainer (SFT, DPO, IPO, KTO, ORPO, GRPO, PPO, RLOO). Use when you need the latest algorithm or a custom reward function. |
+| **Axolotl** | <https://github.com/axolotl-ai-cloud/axolotl> | YAML-config-driven, production-leaning, multi-GPU first-class. Supports SFT/DPO/ORPO/GRPO and quantization-aware training. Use for reproducible production fine-tuning pipelines. |
+| **Unsloth** | <https://github.com/unslothai/unsloth> | Hand-tuned single-GPU LoRA/QLoRA with custom Triton kernels. ~2× faster, ~50% less memory than baseline at time of writing; supports DPO and GRPO. Use when you have one GPU and need it to count. |
+| **LLaMA-Factory** | <https://github.com/hiyouga/LLaMA-Factory> | Web UI + CLI, 100+ supported model families, zero-code workflows. Use for fast prototyping and for teams without ML infra engineers. |
+
+Hardware-side, **FlashAttention-3** (Shah, Dao, et al., NeurIPS 2024 — <https://arxiv.org/abs/2407.08608>) gives a 1.5–2× speedup on H100 over FA2, with FP8 support. Most of the stacks above pick it up automatically when available. For attention variants beyond FA, see `yzmir-pytorch-engineering` (FlexAttention).
 
 
 ## Dataset Preparation
 
-**Quality > Quantity. 1,000 clean examples > 10,000 noisy examples.**
+**Quality > quantity.** This has not changed and will not change. 1,000 clean, diverse, domain-representative examples beat 50,000 noisy ones almost every time. The most reliable single intervention available to most fine-tuners is "spend more time cleaning data."
 
-### 1. Data Collection
+### Sources
 
-**Good sources:**
-- Human-labeled data (gold standard)
-- Curated conversations (high-quality)
-- Expert-written examples
-- Validated user interactions
+Good: human-labeled, expert-written, validated production logs, frontier-model-distilled with human review.
 
-**Bad sources:**
-- Raw logs (errors, incomplete, noise)
-- Scraped data (quality varies wildly)
-- Automated generation (may have artifacts)
-- Untested user inputs (edge cases, adversarial)
+Bad: raw logs without filtering, scraped without quality control, automated generation without validation, anything containing PII you don't have rights to.
 
-### 2. Data Cleaning
+### Cleaning checklist
 
 ```python
-def clean_dataset(raw_data):
-    clean = []
-
-    for example in raw_data:
-        # Filter 1: Remove errors
-        if any(err in example for err in ['error', 'exception', 'failed']):
-            continue
-
-        # Filter 2: Length checks
-        if len(example['input']) < 10 or len(example['output']) < 10:
-            continue  # Too short
-        if len(example['input']) > 2000 or len(example['output']) > 2000:
-            continue  # Too long (may be malformed)
-
-        # Filter 3: Completeness
-        if not example['output'].strip().endswith(('.', '!', '?')):
-            continue  # Incomplete response
-
-        # Filter 4: Language check
-        if not is_valid_language(example['output']):
-            continue  # Gibberish or wrong language
-
-        # Filter 5: Duplicates
-        if is_duplicate(example, clean):
-            continue
-
-        clean.append(example)
-
-    return clean
-
-cleaned = clean_dataset(raw_data)
-print(f"Filtered: {len(raw_data)} → {len(cleaned)}")
-# Example: 10,000 → 3,000 (but high quality!)
+def clean_example(ex: dict) -> bool:
+    if len(ex["input"]) < 10 or len(ex["output"]) < 10:        return False
+    if len(ex["input"]) > 8000 or len(ex["output"]) > 8000:    return False
+    if any(bad in ex["output"].lower()
+           for bad in ["error", "exception", "failed to"]):    return False
+    if ex["output"] == ex["input"]:                            return False
+    if not ex["output"].strip().endswith((".", "!", "?", "}", "]", ")")):
+        return False
+    return True
 ```
 
-### 3. Manual Validation
+Then **always spot-check 100+ random examples by hand**. There is no substitute. Watch for: copy-paste artifacts, leaked system prompts, format inconsistencies, label errors, stale references.
 
-**Critical step: Spot check 100+ random examples.**
+### Dataset format
 
-```python
-import random
+OpenAI / Anthropic chat format (`[{role, content}, …]`) is now the de facto standard. Hugging Face `datasets` + a `tokenizer.apply_chat_template` call handles the conversion to whatever the base model expects.
 
-sample = random.sample(cleaned, min(100, len(cleaned)))
-
-for i, ex in enumerate(sample):
-    print(f"\n--- Example {i+1}/100 ---")
-    print(f"Input: {ex['input']}")
-    print(f"Output: {ex['output']}")
-
-    response = input("Quality (good/bad/skip)? ")
-    if response == 'bad':
-        # Investigate pattern, add filtering rule
-        print("Why bad?")
-        reason = input()
-        # Update filtering logic
-```
-
-**What to check:**
-- ☐ Output is correct and complete
-- ☐ Output matches desired format/style
-- ☐ No errors or hallucinations
-- ☐ Appropriate length
-- ☐ Natural language (not robotic)
-- ☐ Consistent with other examples
-
-### 4. Dataset Format
-
-**OpenAI format (for GPT fine-tuning):**
-```json
-{
-  "messages": [
-    {"role": "system", "content": "You are a helpful assistant."},
-    {"role": "user", "content": "What is the capital of France?"},
-    {"role": "assistant", "content": "The capital of France is Paris."}
-  ]
-}
-```
-
-**Hugging Face format:**
 ```python
 from datasets import Dataset
 
-data = {
-    'input': ["question 1", "question 2", ...],
-    'output': ["answer 1", "answer 2", ...]
+def to_messages(ex):
+    return {"messages": [
+        {"role": "system",    "content": ex["system"]},
+        {"role": "user",      "content": ex["input"]},
+        {"role": "assistant", "content": ex["output"]},
+    ]}
+
+ds = Dataset.from_list(records).map(to_messages)
+```
+
+For preference data (DPO/IPO/SimPO/ORPO):
+
+```python
+preference_record = {
+    "prompt":   "...",
+    "chosen":   "...",
+    "rejected": "...",
 }
-
-dataset = Dataset.from_dict(data)
 ```
 
-### 5. Train/Val/Test Split
+For KTO, just `(prompt, completion, label: bool)`.
 
-```python
-from sklearn.model_selection import train_test_split
+For GRPO, `(prompt,)` only — completions are sampled by the trainer; rewards are computed by your reward function.
 
-# 70% train, 15% val, 15% test
-train, temp = train_test_split(data, test_size=0.3, random_state=42)
-val, test = train_test_split(temp, test_size=0.5, random_state=42)
+### Splits
 
-print(f"Train: {len(train)}, Val: {len(val)}, Test: {len(test)}")
-# Example: Train: 2100, Val: 450, Test: 450
-
-# Stratified split for imbalanced data
-train, temp = train_test_split(
-    data, test_size=0.3, stratify=data['label'], random_state=42
-)
-```
-
-**Split guidelines:**
-- Minimum validation: 100 examples
-- Minimum test: 100 examples
-- Large datasets (> 10k): 80/10/10 split
-- Small datasets (< 5k): 70/15/15 split
-
-### 6. Data Augmentation (Optional)
-
-**When you need more data:**
-
-```python
-# Paraphrasing
-"What's the weather?" → "How's the weather today?"
-
-# Back-translation
-English → French → English (introduces variation)
-
-# Synthetic generation (use carefully!)
-few_shot_examples = [...]
-new_examples = llm.generate(
-    f"Generate 10 examples similar to: {few_shot_examples}"
-)
-# ALWAYS manually validate synthetic data!
-```
-
-**Warning:** Synthetic data can introduce artifacts. Always validate!
+70/15/15 for small datasets (< 5k), 80/10/10 for larger. Hold the test set out — never tune on it. For preference data, split by *prompt* not by individual pair, to avoid leakage.
 
 
 ## Hyperparameters
 
-### Learning Rate
+### Learning rate — the one that actually matters
 
-**Most critical hyperparameter.**
+The single most important knob. **Fine-tuning learning rates are 100–1000× smaller than pre-training rates.** Order of magnitude is the dominant signal; the second decimal place is noise.
 
-```python
-# Pre-training LR: 1e-3 to 3e-4
-# Fine-tuning LR: 100-1000× smaller!
+| Method | Typical LR (capability tier-aware) |
+|--------|------------------------------------|
+| SFT, full FT | ~ 1/100 of the model's pre-training LR |
+| LoRA / QLoRA SFT | 1e-4 to 5e-5 (LoRA can take higher LR than full FT — adapters are small) |
+| DPO / SimPO / ORPO | 5e-7 to 5e-6 (much lower than SFT — preference loss is tiny) |
+| KTO | 5e-7 to 5e-6 |
+| GRPO / PPO | 5e-7 to 5e-6 |
 
-training_args = TrainingArguments(
-    learning_rate=1e-5,  # Start here for 7B models
-    # Or even more conservative:
-    learning_rate=1e-6,  # For larger models or small datasets
-)
-```
+For exact base-model-LR transfer, see **muP / mu-Transfer** (Yang et al., NeurIPS 2021 — <https://arxiv.org/abs/2203.03466>) — it lets you tune at small scale and transfer the LR to large. Cross-ref `yzmir-training-optimization` for the full muP / muTransfer recipe.
 
-**Guidelines:**
-```
-Model size     | Pre-train LR | Fine-tune LR
----------------|--------------|-------------
-1B params      | 3e-4         | 3e-5 to 1e-5
-7B params      | 3e-4         | 1e-5 to 1e-6
-13B params     | 2e-4         | 5e-6 to 1e-6
-70B+ params    | 1e-4         | 1e-6 to 1e-7
+**Symptoms of wrong LR:**
+- Loss oscillates / spikes / NaN → LR too high.
+- Loss barely moves → LR too low or schedule wrong.
+- Catastrophic forgetting (model forgets general capability) → LR too high or too many epochs (these often coincide).
 
-Rule: Fine-tune LR ≈ Pre-train LR / 100
-```
+### Schedule
 
-**LR scheduling:**
-```python
-from transformers import get_linear_schedule_with_warmup
-
-optimizer = AdamW(model.parameters(), lr=1e-5)
-scheduler = get_linear_schedule_with_warmup(
-    optimizer,
-    num_warmup_steps=100,  # Gradual LR increase (10% of training)
-    num_training_steps=total_steps
-)
-```
-
-**Signs of wrong LR:**
-
-Too high (LR > 1e-4):
-- Training loss oscillates wildly
-- Model generates gibberish
-- Catastrophic forgetting (fails on general tasks)
-
-Too low (LR < 1e-7):
-- Training loss barely decreases
-- Model doesn't adapt to new data
-- Very slow convergence
+Cosine decay with 3–10% warmup is the standard default. Linear is fine for short runs. Constant-with-warmup is sometimes used in DPO.
 
 ### Epochs
 
-```python
-training_args = TrainingArguments(
-    num_train_epochs=3,  # Standard: 3-5 epochs
-)
-```
+| Dataset size | Epochs (SFT) |
+|--------------|--------------|
+| < 1k | 3–5 |
+| 1k–10k | 2–3 |
+| 10k–100k | 1–2 |
+| > 100k | 1 (or fewer) |
 
-**Guidelines:**
-```
-Dataset size | Epochs
--------------|-------
-< 1k         | 5-10 (more passes needed)
-1k-5k        | 3-5 (standard)
-5k-10k       | 2-3
-> 10k        | 1-2 (large dataset, fewer passes)
+For DPO/SimPO/ORPO: 1–3 epochs over preference pairs is plenty; more usually overfits.
 
-Rule: Smaller dataset → more epochs (but watch for overfitting!)
-```
+For GRPO: train for *steps*, not epochs — monitor reward and KL divergence and stop when reward plateaus or KL blows up.
 
-**Too many epochs:**
-- Training loss → 0 but val loss increases (overfitting)
-- Model memorizes training data
-- Catastrophic forgetting
+### Batch size, gradient accumulation, weight decay
 
-**Too few epochs:**
-- Model hasn't fully adapted
-- Training and val loss still decreasing
+Effective batch sizes of 64–256 are typical for SFT, 16–64 for preference tuning, 32–128 (groups × batch) for GRPO. Use gradient accumulation aggressively when memory is tight. Weight decay 0.01–0.1; use lower with LoRA (the adapters are already a regularizer of sorts).
 
-### Batch Size
+For deeper training-dynamics tuning (gradient clipping, optimizer choice — Lion vs. AdamW vs. AdamW-8bit, FP8 mixed precision, FSDP2 sharding, sequence packing), see `yzmir-training-optimization`. This sheet stops at "what value, roughly."
+
+
+## Training Skeleton (TRL SFT + DPO)
 
 ```python
-training_args = TrainingArguments(
-    per_device_train_batch_size=8,  # Depends on GPU memory
-    gradient_accumulation_steps=4,   # Effective batch = 8 × 4 = 32
-)
-```
+from trl import SFTTrainer, SFTConfig, DPOTrainer, DPOConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import LoraConfig
 
-**Guidelines:**
-```
-GPU Memory | Batch Size (7B model)
------------|----------------------
-16 GB      | 1-2 (use gradient accumulation!)
-24 GB      | 2-4
-40 GB      | 4-8
-80 GB      | 8-16
+base = "meta-llama/Meta-Llama-3.1-8B"
+tok  = AutoTokenizer.from_pretrained(base)
+model = AutoModelForCausalLM.from_pretrained(base, torch_dtype="bfloat16")
 
-Effective batch size (with accumulation): 16-64 typical
-```
-
-**Gradient accumulation:**
-```python
-# Simulate batch_size=32 with only 8 examples fitting in memory:
-per_device_train_batch_size=8
-gradient_accumulation_steps=4
-# Effective batch = 8 × 4 = 32
-```
-
-### Weight Decay
-
-```python
-training_args = TrainingArguments(
-    weight_decay=0.01,  # L2 regularization (prevent overfitting)
-)
-```
-
-**Guidelines:**
-- Standard: 0.01
-- Strong regularization: 0.1 (small dataset, high overfitting risk)
-- Light regularization: 0.001 (large dataset)
-
-### Warmup
-
-```python
-training_args = TrainingArguments(
-    warmup_steps=100,  # Or warmup_ratio=0.1 (10% of training)
-)
-```
-
-**Why warmup:**
-- Prevents initial instability (large gradients early)
-- Gradual LR increase: 0 → target_LR over warmup steps
-
-**Guidelines:**
-- Warmup: 5-10% of total training steps
-- Longer warmup for larger models
-
-
-## Training
-
-### Basic Training Loop
-
-```python
-from transformers import Trainer, TrainingArguments
-
-training_args = TrainingArguments(
-    output_dir="./results",
-
-    # Hyperparameters
-    learning_rate=1e-5,
-    num_train_epochs=3,
-    per_device_train_batch_size=8,
-    gradient_accumulation_steps=4,
-    weight_decay=0.01,
-    warmup_steps=100,
-
-    # Evaluation
-    evaluation_strategy="steps",
-    eval_steps=100,
-    save_strategy="steps",
-    save_steps=100,
-    load_best_model_at_end=True,
-    metric_for_best_model="eval_loss",
-
-    # Logging
-    logging_steps=10,
-    logging_dir="./logs",
-
-    # Optimization
-    fp16=True,  # Mixed precision (faster, less memory)
-    gradient_checkpointing=True,  # Trade compute for memory
+lora = LoraConfig(
+    r=16, lora_alpha=32, lora_dropout=0.05, bias="none",
+    target_modules=["q_proj","k_proj","v_proj","o_proj",
+                    "gate_proj","up_proj","down_proj"],
+    task_type="CAUSAL_LM", use_rslora=True,
 )
 
-trainer = Trainer(
-    model=model,
-    args=training_args,
-    train_dataset=train_dataset,
-    eval_dataset=val_dataset,
-    tokenizer=tokenizer,
+# Stage 1 — SFT
+sft = SFTTrainer(
+    model=model, peft_config=lora, tokenizer=tok,
+    train_dataset=sft_train, eval_dataset=sft_val,
+    args=SFTConfig(
+        output_dir="ckpt-sft",
+        learning_rate=2e-4,
+        num_train_epochs=2,
+        per_device_train_batch_size=4,
+        gradient_accumulation_steps=8,
+        warmup_ratio=0.05,
+        bf16=True,
+        gradient_checkpointing=True,
+        logging_steps=10,
+        eval_strategy="steps", eval_steps=200,
+    ),
 )
+sft.train()
 
-trainer.train()
-```
-
-### Monitoring Training
-
-**Key metrics to watch:**
-
-```python
-# 1. Training loss (should decrease steadily)
-# 2. Validation loss (should decrease, then plateau)
-# 3. Validation metrics (accuracy, F1, BLEU, etc.)
-
-# Warning signs:
-# - Train loss → 0 but val loss increasing: Overfitting
-# - Train loss oscillating: LR too high
-# - Train loss not decreasing: LR too low or data issues
-```
-
-**Logging:**
-```python
-import wandb
-
-wandb.init(project="fine-tuning")
-
-training_args = TrainingArguments(
-    report_to="wandb",  # Log to Weights & Biases
-    logging_steps=10,
+# Stage 2 — DPO on preference pairs (chosen / rejected)
+dpo = DPOTrainer(
+    model="ckpt-sft",                # SFT checkpoint as starting policy
+    ref_model=None,                  # TRL infers a frozen ref from policy
+    tokenizer=tok,
+    train_dataset=pref_train,
+    args=DPOConfig(
+        output_dir="ckpt-dpo",
+        learning_rate=5e-7,
+        num_train_epochs=1,
+        per_device_train_batch_size=2,
+        gradient_accumulation_steps=8,
+        beta=0.1,                    # DPO temperature; 0.1 is the canonical default
+        bf16=True,
+        gradient_checkpointing=True,
+    ),
 )
+dpo.train()
 ```
 
-### Early Stopping
-
-```python
-from transformers import EarlyStoppingCallback
-
-trainer = Trainer(
-    ...
-    callbacks=[EarlyStoppingCallback(
-        early_stopping_patience=3,  # Stop if no improvement for 3 evals
-        early_stopping_threshold=0.01,  # Minimum improvement
-    )]
-)
-```
-
-**Why early stopping:**
-- Prevents overfitting (stops before val loss increases)
-- Saves compute (don't train unnecessary epochs)
-- Automatically finds optimal epoch count
+For SimPO, set `loss_type="simpo"` in `DPOConfig` and use a target reward margin. For ORPO, swap to `ORPOTrainer` and skip the SFT stage. Always validate on a held-out preference set during DPO; reward hacking on the eval set is real.
 
 
 ## Evaluation
 
-### 1. Validation During Training
+### During training
 
-```python
-def compute_metrics(eval_pred):
-    predictions, labels = eval_pred
+- **Loss curves** (train + val): healthy curves are monotonically decreasing then plateau.
+- **Held-out task metrics**: accuracy, F1, BLEU, ROUGE, exact-match — pick what fits the task.
+- **Catastrophic-forgetting probe**: a fixed set of 50–200 general-knowledge / safety prompts evaluated every N steps. If the model loses general capability, drop the LR or stop earlier.
 
-    # Decode predictions
-    decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
-    decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
+### After training
 
-    # Compute metrics
-    from sklearn.metrics import accuracy_score, f1_score
-    accuracy = accuracy_score(decoded_labels, decoded_preds)
-    f1 = f1_score(decoded_labels, decoded_preds, average='weighted')
+- **Test-set metrics** (run once at the end).
+- **Pairwise human or LLM-judge evaluation** vs. the base model (or vs. SFT, when evaluating preference tuning).
+- **Adversarial / safety eval** if it's a deployed model — cross-ref `ordis-security-architect` for prompt-injection and jailbreak harnesses.
+- **Production A/B** before full rollout.
 
-    return {'accuracy': accuracy, 'f1': f1}
+For preference-tuned models, **AlpacaEval 2** and **Arena-Hard** are the de-facto open benchmarks; for reasoning RL, MATH/GSM8K/code-execution rewards. Always report against the SFT baseline, not just the base model.
 
-trainer = Trainer(
-    ...
-    compute_metrics=compute_metrics,
-)
-```
 
-### 2. Test Set Evaluation (Final)
+## Common Issues
 
-```python
-# After training completes, evaluate on held-out test set ONCE
-test_results = trainer.evaluate(test_dataset)
+| Symptom | Likely cause | Fix |
+|---------|--------------|-----|
+| Loss → 0, val loss rising | Overfitting | Fewer epochs, more regularization, more data, LoRA instead of full FT. |
+| Model "forgets" general knowledge | Catastrophic forgetting (LR too high, too many epochs) | Drop LR 10×; use LoRA; add 5-15% general-purpose mix into SFT data. |
+| DPO model becomes incoherent or repeats | DPO over-optimization, β too low, bad preference data | Raise β (0.1 → 0.3), shorter training, better preference pairs, switch to IPO. |
+| GRPO reward goes up but quality drops | Reward hacking | Tighten reward function, add KL penalty, evaluate on held-out distribution. |
+| OOM on 7-8B model with single 24GB GPU | FP16 full FT or unbatched generation | QLoRA, gradient checkpointing, sequence packing, `bf16`, smaller batch + accumulation. |
+| QLoRA significantly worse than LoRA on this task | Quantization-init mismatch | Try LoftQ initialization. |
+| LoRA at high rank stops improving | Standard `α/r` scaling stunts large `r` | Switch to rsLoRA (`use_rslora=True`). |
+| Need 32k+ context but base is 4k | Context extension required | LongLoRA (S²-Attn + tuned embeddings/norms), or use a base with native long context. |
 
-print(f"Test accuracy: {test_results['accuracy']:.2%}")
-print(f"Test F1: {test_results['f1']:.2%}")
-```
 
-### 3. Qualitative Evaluation
+## Best Practices Checklist
 
-**Critical: Manually test on real examples!**
+Before:
+1. Try the strongest model with the strongest prompt. Honestly.
+2. Try RAG if the gap is "doesn't know X."
+3. Have ≥ 1,000 clean, manually-spot-checked examples.
+4. Define the success metric and the failure-mode probe before you train.
 
-```python
-def test_model(model, tokenizer, test_examples):
-    for ex in test_examples:
-        prompt = ex['input']
-        expected = ex['output']
+During:
+5. LoRA / QLoRA by default; full FT only with explicit justification.
+6. SFT learning rate ~ pre-train LR / 100; preference-tuning LR 10–100× lower than SFT.
+7. Track loss, eval metric, and a forgetting probe on the same dashboard.
+8. Cosine schedule, 3–10% warmup, early stopping on val metric.
 
-        # Generate
-        inputs = tokenizer(prompt, return_tensors="pt")
-        outputs = model.generate(**inputs, max_length=100)
-        generated = tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-        print(f"Input: {prompt}")
-        print(f"Expected: {expected}")
-        print(f"Generated: {generated}")
-        print(f"Match: {'✓' if generated == expected else '✗'}")
-        print("-" * 80)
-
-# Test on 20-50 examples (including edge cases)
-test_model(model, tokenizer, test_examples)
-```
-
-### 4. A/B Testing (Production)
-
-```python
-# Route 50% traffic to base model, 50% to fine-tuned
-import random
-
-def get_model():
-    if random.random() < 0.5:
-        return base_model
-    else:
-        return finetuned_model
-
-# Measure:
-# - User satisfaction (thumbs up/down)
-# - Task success rate
-# - Response time
-# - Cost per request
-
-# After 1000+ requests, analyze results
-```
-
-### 5. Catastrophic Forgetting Check
-
-**Critical: Ensure fine-tuning didn't break base capabilities!**
-
-```python
-# Test on general knowledge tasks
-general_tasks = [
-    "What is the capital of France?",  # Basic knowledge
-    "Translate to Spanish: Hello",    # Translation
-    "2 + 2 = ?",                       # Basic math
-    "Who wrote Hamlet?",               # Literature
-]
-
-for task in general_tasks:
-    before = base_model.generate(task)
-    after = finetuned_model.generate(task)
-
-    print(f"Task: {task}")
-    print(f"Before: {before}")
-    print(f"After: {after}")
-    print(f"Preserved: {'✓' if before == after else '✗'}")
-```
-
-
-## Common Issues and Solutions
-
-### Issue 1: Overfitting
-
-**Symptoms:**
-- Train loss → 0, val loss increases
-- Perfect on training data, poor on test data
-
-**Solutions:**
-```python
-# 1. Reduce epochs
-num_train_epochs=3  # Instead of 10
-
-# 2. Increase regularization
-weight_decay=0.1  # Instead of 0.01
-
-# 3. Early stopping
-early_stopping_patience=3
-
-# 4. Collect more data
-# 5. Data augmentation
-
-# 6. Use LoRA (less prone to overfitting than full FT)
-```
-
-### Issue 2: Catastrophic Forgetting
-
-**Symptoms:**
-- Fine-tuned model fails on general tasks
-- Lost pre-trained knowledge
-
-**Solutions:**
-```python
-# 1. Lower learning rate (most important!)
-learning_rate=1e-6  # Instead of 1e-4
-
-# 2. Fewer epochs
-num_train_epochs=2  # Instead of 10
-
-# 3. Use LoRA (base model frozen, can't forget)
-
-# 4. Add general examples to training set (10-20% general data)
-```
-
-### Issue 3: Poor Quality
-
-**Symptoms:**
-- Model output is low quality (incorrect, incoherent)
-
-**Solutions:**
-```python
-# 1. Check dataset quality (most common cause!)
-# - Manual validation
-# - Remove noise
-# - Fix labels
-
-# 2. Increase model size
-# - 7B → 13B → 70B
-
-# 3. Increase training data
-# - Need 1000+ high-quality examples
-
-# 4. Adjust hyperparameters
-# - Try higher LR (1e-5 → 3e-5) if underfit
-# - Train longer (3 → 5 epochs)
-
-# 5. Check if base model has capability
-# - If base model can't do task, fine-tuning won't help
-```
-
-### Issue 4: Slow Training
-
-**Symptoms:**
-- Training takes days/weeks
-
-**Solutions:**
-```python
-# 1. Use LoRA (10× faster than full FT)
-
-# 2. Mixed precision
-fp16=True  # 2× faster
-
-# 3. Gradient checkpointing (trade speed for memory)
-gradient_checkpointing=True
-
-# 4. Smaller batch size + gradient accumulation
-per_device_train_batch_size=2
-gradient_accumulation_steps=16
-
-# 5. Use multiple GPUs
-# 6. Use faster GPU (A100 > V100 > T4)
-```
-
-### Issue 5: Out of Memory
-
-**Symptoms:**
-- CUDA out of memory error
-
-**Solutions:**
-```python
-# 1. Use QLoRA (4× less memory)
-
-# 2. Reduce batch size
-per_device_train_batch_size=1
-gradient_accumulation_steps=32
-
-# 3. Gradient checkpointing
-gradient_checkpointing=True
-
-# 4. Use smaller model
-# 7B → 3B → 1B
-
-# 5. Reduce sequence length
-max_seq_length=512  # Instead of 2048
-```
-
-
-## Best Practices Summary
-
-### Before Fine-Tuning:
-
-1. ☐ Try prompt engineering first (90% of cases, prompts work!)
-2. ☐ Have 1000+ high-quality examples
-3. ☐ Clean and validate dataset (quality > quantity)
-4. ☐ Create train/val/test split (70/15/15)
-5. ☐ Define success metrics (what does "good" mean?)
-
-### During Fine-Tuning:
-
-6. ☐ Use LoRA (unless specific reason for full FT)
-7. ☐ Set tiny learning rate (1e-5 to 1e-6 for 7B models)
-8. ☐ Train for 3-5 epochs (not 50!)
-9. ☐ Monitor val loss (stop when it stops improving)
-10. ☐ Log everything (wandb, tensorboard)
-
-### After Fine-Tuning:
-
-11. ☐ Evaluate on test set (quantitative metrics)
-12. ☐ Manual testing (qualitative, 20-50 examples)
-13. ☐ Check for catastrophic forgetting (general tasks)
-14. ☐ A/B test in production (before full rollout)
-15. ☐ Document hyperparameters (for reproducibility)
+After:
+9. Test-set evaluation, pairwise LLM-judge vs. baseline, forgetting probe, adversarial eval.
+10. Document everything (data version, model commit, hyperparameters, eval results) — fine-tuning runs that aren't reproducible are uneconomic to maintain.
 
 
 ## Quick Reference
 
-| Task | Method | Dataset | LR | Epochs |
-|------|--------|---------|----|----|
-| Tone matching | Prompts | N/A | N/A | N/A |
-| Simple classification | Prompts | N/A | N/A | N/A |
-| Complex domain task | LoRA | 1k-10k | 1e-5 | 3-5 |
-| Fundamental change | Full FT | 100k+ | 1e-5 | 1-3 |
-| Limited GPU | QLoRA | 1k-10k | 1e-5 | 3-5 |
-
-**Default recommendation:** Try prompts first. If that fails, use LoRA with LR=1e-5, epochs=3, and high-quality dataset.
+| You want to… | Use |
+|--------------|-----|
+| Make the model follow a format / domain | SFT (LoRA), 1k–10k examples, LR ~2e-4 |
+| Align with human preferences (have pair data) | SFT + DPO, β=0.1, LR ~5e-7 |
+| Same, GPU-tight | SFT + SimPO (reference-free) |
+| Same, in one training run | ORPO |
+| Have only thumbs-up/thumbs-down logs | KTO |
+| Train a reasoning model with verifiable reward | SFT + GRPO, group size 4–16 |
+| Single GPU, fast iteration | Unsloth + QLoRA |
+| Production-grade reproducible pipeline | Axolotl + YAML configs |
+| Frontier algorithm, latest paper | TRL |
+| Web UI, no code | LLaMA-Factory |
 
 
 ## Summary
 
-**Core principles:**
+1. **Don't fine-tune unless prompts and RAG have honestly failed.**
+2. **Three things are called fine-tuning**: SFT (teach), preference tuning (align), RL (optimize against reward). Pick the right one.
+3. **DPO is the preference-tuning default**; reach for IPO (noisy data), KTO (binary labels), SimPO (no ref model), ORPO (one-shot SFT+pref) when their constraints fit.
+4. **GRPO is the algorithm for verifiable-reward RL** — reasoning, code, tool use.
+5. **LoRA + QLoRA is the right default**; DoRA, rsLoRA, LoftQ, and LongLoRA are targeted improvements, not the default.
+6. **Data quality dominates**. So does learning rate. Most of the rest is engineering.
+7. **Evaluate honestly**, including a forgetting probe and an adversarial probe. A model that wins your eval but loses general capability is not an improvement.
 
-1. **Prompt engineering first**: 90% of tasks don't need fine-tuning
-2. **LoRA by default**: 100× more efficient than full fine-tuning, same quality
-3. **Data quality matters**: 1,000 clean examples > 10,000 noisy examples
-4. **Tiny learning rate**: Fine-tune LR = Pre-train LR / 100 to / 1000
-5. **Validation essential**: Train/val/test split + early stopping + catastrophic forgetting check
+Cross-references: `yzmir-training-optimization` (FSDP2, FP8, optimizer, muP, gradient diagnostics), `yzmir-pytorch-engineering` (FlashAttention/FlexAttention, OOM debugging), `yzmir-ml-production` (serving the fine-tuned model), `ordis-security-architect` (adversarial / jailbreak eval), `reasoning-models.md` (this campaign — reasoning-tier model context for GRPO).
 
-**Decision tree:**
-1. Try prompts (system message + few-shot)
-2. If quality < 90%, optimize prompts
-3. If still < 90% and have 1000+ examples, consider fine-tuning
-4. Use LoRA (default), QLoRA (limited GPU), or full FT (rare)
-5. Set LR = 1e-5, epochs = 3-5, monitor val loss
-6. Evaluate on test set + manual testing + general tasks
+---
 
-**Key insight**: Fine-tuning is powerful but expensive and slow. Start with prompts, fine-tune only when prompts demonstrably fail and you have high-quality data.
+*Model lineup current as of 2026-05; revisit quarterly.*

@@ -4,51 +4,81 @@
 ## When to Use This Skill
 
 Use this skill when:
-- Processing documents longer than model context limit
+- Processing documents longer than the chosen model's effective context
 - Building multi-turn conversational agents
 - Implementing RAG systems with retrieved context
 - Handling user inputs of unknown length
 - Managing long-running conversations (customer support, assistants)
 - Optimizing cost and latency for context-heavy applications
 
-**When NOT to use:** Short, fixed-length inputs guaranteed to fit in context (e.g., tweet classification, short form filling).
+**When NOT to use:** Short, fixed-length inputs that obviously fit (tweet classification, single-line form filling).
 
 ## Core Principle
 
-**Context is finite. Managing it is mandatory.**
+**Context is finite, and "long context" is not a free pass.**
 
-LLM context windows have hard limits:
-- GPT-3.5-turbo: 4k tokens (~3k words)
-- GPT-3.5-turbo-16k: 16k tokens (~12k words)
-- GPT-4: 8k tokens (~6k words)
-- GPT-4-turbo: 128k tokens (~96k words)
-- Claude 3 Sonnet: 200k tokens (~150k words)
+Modern frontier-general models default to 128k-200k context. Some now claim 1M+. But two things remain true:
 
-Exceeding these limits = API crash. No graceful degradation. Token counting and management are not optional.
+1. **Hard limits still bite.** Going over the model's max-tokens limit is a hard error, not a soft degradation.
+2. **Long-context recall is imperfect.** Even at 1M tokens, retrieval accuracy degrades with depth. RULER and similar benchmarks consistently show that effective context is well below claimed context. See "lost in the middle" and the RULER discussion below.
 
-**Formula:** Token counting (prevent overflow) + Budgeting (allocate efficiently) + Management strategy (truncation/chunking/summarization) = Robust context handling.
+Token counting, budgeting, and active context management are still mandatory. **The right defaults have shifted from "chunk aggressively into 4k" to "consider whether long context, prompt caching, or chunking is the best move for this workload."**
+
+## Capability Tiers and Context (Vocabulary)
+
+This pack uses capability tiers; never hardcode model IDs.
+
+| Tier | Typical context | Notes |
+|------|-----------------|-------|
+| **frontier-reasoning** | 128k-200k+ | Some variants offer 1M+ via beta or special endpoints. Reasoning models *spend output tokens* on hidden thinking — your output budget needs to be large. |
+| **frontier-general** | 128k-200k (most), 1M+ on select models | Today's default for production. Both Anthropic and Google offer 1M-context tiers; check provider docs for the current ID and any beta-flag requirements. |
+| **fast-cheap** | 32k-200k | Smaller frontier-class models often inherit the same long context. |
+| **on-device** | 8k-128k | Open-weights models vary widely; small/older models still cap at 8-32k. |
+
+**Always check the provider's model card for the current limit.** Treat the number you read in code as a runtime config value, not a constant.
+
+## Context-Length Tiers (Workload Framework)
+
+| Workload | Typical context need | Recommendation |
+|----------|---------------------|----------------|
+| **Short** | 8k-32k | Most chat, classification, extraction. Any tier works. Smallest, cheapest model that meets quality wins. |
+| **Standard** | 32k-200k | The default for "feed me a moderate document and ask questions." Frontier-general handles natively; no chunking needed below ~150k. |
+| **Long** | 200k-1M+ | Whole-codebase comprehension, large-document Q&A, long agent traces. Use a 1M-context model **only if** you've measured that recall is acceptable for your workload. Otherwise, chunk + retrieve. |
+| **Extreme** | >1M | Almost always wrong. Chunking + RAG + summary memory is more reliable than relying on raw context recall at extreme lengths. |
+
+### When Long Context Is the Right Move
+
+- The task genuinely needs *cross-document* reasoning (compare across many sources, find relationships).
+- Document is dense and chunking breaks meaning (legal filings, contracts, code with deep dependencies).
+- You can prompt-cache the long prefix so repeated queries are cheap.
+
+### When Chunking + Retrieval Is Still Right
+
+- You have many documents, only a few relevant per query.
+- You can build good embeddings + reranking.
+- You need provenance/citations tied to chunks.
+- Costs at long-context scale are prohibitive (input tokens add up fast even with caching).
 
 ## Context Management Framework
 
 ```
 ┌──────────────────────────────────────────────────┐
 │          1. Count Tokens                         │
-│  tiktoken, model-specific encoding               │
+│  tiktoken / Anthropic count_tokens / SentencePiece│
 └────────────┬─────────────────────────────────────┘
              │
              ▼
 ┌──────────────────────────────────────────────────┐
-│          2. Check Against Limits                 │
-│  Model-specific context windows                  │
+│          2. Check Against Provider Limits        │
+│  Look up current limit; treat as config          │
 └────────────┬─────────────────────────────────────┘
              │
              ▼
 ┌──────────────────────────────────────────────────┐
 │          3. Token Budget Allocation              │
-│  System + Context + Query + Output               │
+│  System + Tools + Context + Query + Output       │
 └────────────┬─────────────────────────────────────┘
              │
-             ▼
         ┌────┴────┐
         │ Fits?   │
         └────┬────┘
@@ -56,12 +86,12 @@ Exceeding these limits = API crash. No graceful degradation. Token counting and 
       │ Yes         │ No
       ▼             ▼
  ┌─────────┐   ┌─────────────────────┐
- │ Proceed │   │ Choose Strategy:     │
- └─────────┘   │ • Chunking           │
-               │ • Truncation         │
-               │ • Summarization      │
-               │ • Larger model       │
-               │ • Compression        │
+ │ Proceed │   │ Strategy menu:      │
+ │ + cache │   │ • Chunk + retrieve  │
+ │ static  │   │ • Compress / sumzn │
+ │ prefix  │   │ • Sub-agent isolat'n│
+ └─────────┘   │ • Long-context tier │
+               │ • Hybrid            │
                └─────────┬───────────┘
                          │
                          ▼
@@ -72,1154 +102,411 @@ Exceeding these limits = API crash. No graceful degradation. Token counting and 
 
 ## Part 1: Token Counting
 
-### Why Token Counting Matters
-
 LLMs tokenize text (not characters or words). Token counts vary by:
+
 - Language (English ~4 chars/token, Chinese ~2 chars/token)
 - Content (code ~3 chars/token, prose ~4.5 chars/token)
-- Model (different tokenizers)
+- Tokenizer (cl100k vs o200k vs SentencePiece vs BPE variants)
 
-**Character/word counts are unreliable estimates.**
+**Character / word counts are unreliable estimates.**
 
-### Tiktoken: OpenAI's Tokenizer
+### tiktoken (OpenAI Tokenizers)
 
-**Installation:**
 ```bash
 pip install tiktoken
 ```
 
-**Basic Usage:**
-
 ```python
 import tiktoken
 
-def count_tokens(text, model="gpt-3.5-turbo"):
-    """
-    Count tokens for given text and model.
+def count_tokens(text: str, encoding_name: str = "o200k_base") -> int:
+    """Count tokens for OpenAI/Azure-OpenAI models.
 
-    Args:
-        text: String to tokenize
-        model: Model name (determines tokenizer)
-
-    Returns:
-        Number of tokens
+    o200k_base — current GPT-4o family and successors.
+    cl100k_base — GPT-4 / GPT-3.5 era.
+    Fall back to o200k for unknown modern models.
     """
     try:
-        encoding = tiktoken.encoding_for_model(model)
-    except KeyError:
-        # Fallback for unknown models
-        encoding = tiktoken.get_encoding("cl100k_base")  # GPT-4/3.5-turbo
-
-    return len(encoding.encode(text))
-
-# Examples
-text = "Hello, how are you today?"
-print(f"Tokens: {count_tokens(text)}")  # Output: 7 tokens
-
-document = "Large document with 10,000 words..."
-tokens = count_tokens(document, model="gpt-4")
-print(f"Document tokens: {tokens:,}")  # Output: Document tokens: 13,421
+        enc = tiktoken.get_encoding(encoding_name)
+    except Exception:
+        enc = tiktoken.get_encoding("o200k_base")
+    return len(enc.encode(text))
 ```
 
-**Encoding Types by Model:**
+For chat-message overhead (role tokens, separators), the exact accounting varies by model — use the SDK's `usage` field after a call to ground-truth your local counter, then cache the offset.
 
-| Model | Encoding | Notes |
-|-------|----------|-------|
-| gpt-3.5-turbo | cl100k_base | Default for GPT-3.5/4 |
-| gpt-4 | cl100k_base | Same as GPT-3.5 |
-| gpt-4-turbo | cl100k_base | Same as GPT-3.5 |
-| text-davinci-003 | p50k_base | Legacy GPT-3 |
-| code-davinci-002 | p50k_base | Codex |
+### Anthropic and Other Providers
 
-**Counting Chat Messages:**
+Anthropic exposes `client.messages.count_tokens(...)` for accurate Claude tokenization (different from cl100k/o200k). Google AI SDK exposes `count_tokens` similarly. For open-weights models, use the model's own tokenizer (`AutoTokenizer.from_pretrained(...)` from `transformers`).
+
+**Don't use the wrong tokenizer.** Counting Claude prompts with tiktoken under-counts by 5-15% on average — enough to cause hard 400 errors near the boundary.
+
+### Quick Approximation (Dashboards Only)
 
 ```python
-def count_message_tokens(messages, model="gpt-3.5-turbo"):
-    """
-    Count tokens in chat completion messages.
-
-    Chat format adds overhead: role names, formatting tokens.
-    """
-    encoding = tiktoken.encoding_for_model(model)
-    tokens = 0
-
-    # Message formatting overhead (varies by model)
-    tokens_per_message = 3  # Every message: <|im_start|>role\n, <|im_end|>\n
-    tokens_per_name = 1  # If name field present
-
-    for message in messages:
-        tokens += tokens_per_message
-        for key, value in message.items():
-            tokens += len(encoding.encode(value))
-            if key == "name":
-                tokens += tokens_per_name
-
-    tokens += 3  # Every reply starts with assistant message
-
-    return tokens
-
-# Example
-messages = [
-    {"role": "system", "content": "You are a helpful assistant."},
-    {"role": "user", "content": "Tell me about Python."},
-    {"role": "assistant", "content": "Python is a high-level programming language..."}
-]
-
-total_tokens = count_message_tokens(messages)
-print(f"Total tokens: {total_tokens}")
-```
-
-**Token Estimation (Quick Approximation):**
-
-```python
-def estimate_tokens(text):
-    """
-    Quick estimation: ~4 characters per token for English prose.
-
-    Not accurate for API calls! Use tiktoken for production.
-    Useful for rough checks and dashboards.
-    """
+def estimate_tokens(text: str) -> int:
+    """Rough estimate: ~4 chars/token for English prose. NOT for API calls."""
     return len(text) // 4
-
-# Example
-text = "This is a sample text for estimation."
-estimated = estimate_tokens(text)
-actual = count_tokens(text)
-print(f"Estimated: {estimated}, Actual: {actual}")
-# Output: Estimated: 9, Actual: 10 (close but not exact)
 ```
 
+## Part 2: Provider Limits and Budgeting
 
-## Part 2: Model Context Limits and Budgeting
+### Don't Hardcode Limits
 
-### Context Window Sizes
+Provider context limits change. Even between dot-versions of the same model family, max-tokens often shifts. Treat the limit as runtime config:
 
 ```python
-MODEL_LIMITS = {
-    # OpenAI GPT-3.5
-    "gpt-3.5-turbo": 4_096,
-    "gpt-3.5-turbo-16k": 16_384,
+import os
+from dataclasses import dataclass
 
-    # OpenAI GPT-4
-    "gpt-4": 8_192,
-    "gpt-4-32k": 32_768,
-    "gpt-4-turbo": 128_000,
-    "gpt-4-turbo-2024-04-09": 128_000,
+@dataclass(frozen=True)
+class ModelConfig:
+    """Resolved at startup from config/env, not baked into code."""
+    model_id: str
+    tier: str                    # frontier-reasoning | frontier-general | fast-cheap | on-device
+    max_context_tokens: int      # full window (input + output)
+    max_output_tokens: int       # provider-imposed cap on a single response
 
-    # Anthropic Claude
-    "claude-3-opus": 200_000,
-    "claude-3-sonnet": 200_000,
-    "claude-3-haiku": 200_000,
+def load_model_config(tier: str) -> ModelConfig:
+    """Look up model id and limits for a tier from config/env.
 
-    # Open source
-    "llama-2-7b": 4_096,
-    "llama-2-13b": 4_096,
-    "llama-2-70b": 4_096,
-    "mistral-7b": 8_192,
-    "mixtral-8x7b": 32_768,
-}
-
-def get_context_limit(model):
-    """Get context window size for model."""
-    return MODEL_LIMITS.get(model, 4_096)  # Default: 4k
+    Always cross-check the limit against the provider's current docs.
+    """
+    return ModelConfig(
+        model_id=os.environ[f"MODEL_{tier.upper().replace('-', '_')}_ID"],
+        tier=tier,
+        max_context_tokens=int(os.environ[f"MODEL_{tier.upper().replace('-', '_')}_CTX"]),
+        max_output_tokens=int(os.environ[f"MODEL_{tier.upper().replace('-', '_')}_OUT"]),
+    )
 ```
 
 ### Token Budget Allocation
 
-For systems with multiple components (RAG, chat with history), allocate tokens:
-
 ```python
-def calculate_token_budget(
-    model="gpt-3.5-turbo",
-    system_message_tokens=None,
-    query_tokens=None,
-    output_tokens=500,
-    safety_margin=50
-):
-    """
-    Calculate remaining budget for context (e.g., retrieved documents).
+@dataclass
+class TokenBudget:
+    total: int
+    system: int
+    tools: int
+    history: int
+    retrieved_context: int
+    query: int
+    reserved_output: int
+    safety_margin: int
 
-    Args:
-        model: LLM model name
-        system_message_tokens: Tokens in system message (if known)
-        query_tokens: Tokens in user query (if known)
-        output_tokens: Reserved tokens for model output
-        safety_margin: Extra buffer to prevent edge cases
+    def overflow(self) -> int:
+        consumed = (
+            self.system + self.tools + self.history + self.retrieved_context
+            + self.query + self.reserved_output + self.safety_margin
+        )
+        return max(0, consumed - self.total)
 
-    Returns:
-        Available tokens for context
-    """
-    total_limit = MODEL_LIMITS[model]
+    def context_room(self) -> int:
+        return (
+            self.total - self.system - self.tools - self.history - self.query
+            - self.reserved_output - self.safety_margin
+        )
 
-    # Reserve tokens
-    reserved = (
-        (system_message_tokens or 100) +  # System message (estimate if unknown)
-        (query_tokens or 100) +           # User query (estimate if unknown)
-        output_tokens +                   # Model response
-        safety_margin                     # Safety buffer
+def build_budget(cfg: ModelConfig, system_tokens: int, tool_tokens: int,
+                 history_tokens: int, query_tokens: int,
+                 reserved_output: int, safety_margin: int = 200) -> TokenBudget:
+    return TokenBudget(
+        total=cfg.max_context_tokens,
+        system=system_tokens,
+        tools=tool_tokens,
+        history=history_tokens,
+        retrieved_context=0,  # caller fills this from .context_room()
+        query=query_tokens,
+        reserved_output=min(reserved_output, cfg.max_output_tokens),
+        safety_margin=safety_margin,
     )
-
-    context_budget = total_limit - reserved
-
-    return {
-        'total_limit': total_limit,
-        'context_budget': context_budget,
-        'reserved_system': system_message_tokens or 100,
-        'reserved_query': query_tokens or 100,
-        'reserved_output': output_tokens,
-        'safety_margin': safety_margin
-    }
-
-# Example
-budget = calculate_token_budget(
-    model="gpt-3.5-turbo",
-    system_message_tokens=50,
-    query_tokens=20,
-    output_tokens=500
-)
-
-print(f"Total limit: {budget['total_limit']:,}")
-print(f"Context budget: {budget['context_budget']:,}")
-# Output:
-# Total limit: 4,096
-# Context budget: 3,376 (can use for retrieved docs, chat history, etc.)
 ```
 
-**RAG Token Budgeting:**
-
-```python
-def budget_for_rag(
-    query,
-    system_message="You are a helpful assistant. Answer using the provided context.",
-    model="gpt-3.5-turbo",
-    output_tokens=500
-):
-    """Calculate available tokens for retrieved documents in RAG."""
-    system_tokens = count_tokens(system_message, model)
-    query_tokens = count_tokens(query, model)
-
-    budget = calculate_token_budget(
-        model=model,
-        system_message_tokens=system_tokens,
-        query_tokens=query_tokens,
-        output_tokens=output_tokens
-    )
-
-    return budget['context_budget']
-
-# Example
-query = "What is the company's return policy for defective products?"
-available_tokens = budget_for_rag(query, model="gpt-3.5-turbo")
-print(f"Available tokens for retrieved documents: {available_tokens}")
-# Output: Available tokens for retrieved documents: 3,376
-
-# This means we can retrieve ~3,376 tokens worth of documents
-# At ~500 tokens/chunk, that's 6-7 document chunks
-```
-
+For reasoning models, set `reserved_output` generously — extended thinking can consume thousands of tokens before the visible answer starts.
 
 ## Part 3: Chunking Strategies
 
-When document exceeds context limit, split into chunks and process separately.
+When the workload genuinely needs more than the model can hold (or recall reliably), chunk and retrieve.
 
 ### Fixed-Size Chunking
 
-**Simple approach:** Split into equal-sized chunks.
-
 ```python
-def chunk_by_tokens(text, chunk_size=1000, overlap=200, model="gpt-3.5-turbo"):
-    """
-    Split text into fixed-size token chunks with overlap.
+import tiktoken
 
-    Args:
-        text: Text to chunk
-        chunk_size: Target tokens per chunk
-        overlap: Overlapping tokens between chunks (for continuity)
-        model: Model for tokenization
-
-    Returns:
-        List of text chunks
-    """
-    encoding = tiktoken.encoding_for_model(model)
-    tokens = encoding.encode(text)
-
-    chunks = []
+def chunk_by_tokens(text: str, chunk_size: int = 1000, overlap: int = 200,
+                    encoding_name: str = "o200k_base") -> list[str]:
+    enc = tiktoken.get_encoding(encoding_name)
+    tokens = enc.encode(text)
+    chunks: list[str] = []
     start = 0
-
     while start < len(tokens):
-        end = start + chunk_size
-        chunk_tokens = tokens[start:end]
-        chunk_text = encoding.decode(chunk_tokens)
-        chunks.append(chunk_text)
-
-        start += chunk_size - overlap  # Overlap for continuity
-
+        end = min(start + chunk_size, len(tokens))
+        chunks.append(enc.decode(tokens[start:end]))
+        if end == len(tokens):
+            break
+        start += chunk_size - overlap
     return chunks
-
-# Example
-document = "Very long document with 10,000 tokens..." * 1000
-chunks = chunk_by_tokens(document, chunk_size=1000, overlap=200)
-print(f"Split into {len(chunks)} chunks")
-for i, chunk in enumerate(chunks[:3]):
-    print(f"Chunk {i+1}: {count_tokens(chunk)} tokens")
 ```
 
-**Pros:**
-- Simple, predictable chunk sizes
-- Works for any text
-
-**Cons:**
-- May split mid-sentence, mid-paragraph (poor semantic boundaries)
-- Overlap creates redundancy
-- No awareness of document structure
+Simple, predictable, but oblivious to structure. Acceptable for homogeneous prose; bad for code, tables, conversations.
 
 ### Semantic Chunking
 
-**Better approach:** Split at semantic boundaries (paragraphs, sections).
+Split at structure boundaries first (headings, paragraphs, sentences), falling back to character split only when a unit is itself too large. LangChain's `RecursiveCharacterTextSplitter` is the canonical implementation; equivalents exist in LlamaIndex and Haystack.
 
 ```python
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-def chunk_semantically(text, chunk_size=1000, overlap=200):
-    """
-    Split text at semantic boundaries (paragraphs, sentences).
-
-    Uses LangChain's RecursiveCharacterTextSplitter which tries:
-    1. Split by paragraphs (\n\n)
-    2. If chunk still too large, split by sentences (. )
-    3. If sentence still too large, split by words
-    4. Last resort: split by characters
-    """
+def chunk_semantically(text: str, chunk_size: int = 1000, overlap: int = 100,
+                       length_fn=None) -> list[str]:
+    """Split at semantic boundaries with token-aware sizing."""
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=chunk_size * 4,  # Approximate: 4 chars/token
-        chunk_overlap=overlap * 4,
-        separators=["\n\n", "\n", ". ", " ", ""],  # Priority order
-        length_function=lambda text: count_tokens(text)  # Use actual token count
+        chunk_size=chunk_size,
+        chunk_overlap=overlap,
+        separators=["\n## ", "\n### ", "\n\n", "\n", ". ", " ", ""],
+        length_function=length_fn or (lambda s: len(s) // 4),
     )
-
-    chunks = splitter.split_text(text)
-    return chunks
-
-# Example
-document = """
-# Introduction
-
-This is the introduction to the document.
-It contains several paragraphs of introductory material.
-
-## Methods
-
-The methods section describes the experimental procedure.
-We used a randomized controlled trial with 100 participants.
-
-## Results
-
-The results show significant improvements in...
-"""
-
-chunks = chunk_semantically(document, chunk_size=500, overlap=50)
-for i, chunk in enumerate(chunks):
-    print(f"Chunk {i+1} ({count_tokens(chunk)} tokens):\n{chunk[:100]}...\n")
+    return splitter.split_text(text)
 ```
 
-**Pros:**
-- Respects semantic boundaries (complete paragraphs, sentences)
-- Better context preservation
-- More readable chunks
+For **code**, use a syntax-aware splitter (tree-sitter-based) so chunks respect function and class boundaries.
 
-**Cons:**
-- Chunk sizes vary (some may be too large)
-- More complex implementation
+### Hierarchical Summarization (Map-Reduce)
 
-### Hierarchical Chunking (Map-Reduce)
+For whole-document summarization:
 
-**Best for summarization:** Summarize chunks, then summarize summaries.
+1. Chunk → summarize each chunk (map).
+2. Concatenate summaries → summarize the concatenation (reduce).
+3. Iterate if the reduce step still overflows.
 
-```python
-def hierarchical_summarization(document, chunk_size=3000, model="gpt-3.5-turbo"):
-    """
-    Summarize long document using map-reduce approach.
+This works, but **prefer cached long-context inference** when the workload is "ask many questions about one big document." Map-reduce loses information at every reduce step; long context with prompt caching preserves the document and is cheaper after cache warm-up.
 
-    1. Split document into chunks (MAP)
-    2. Summarize each chunk individually
-    3. Combine chunk summaries (REDUCE)
-    4. Generate final summary from combined summaries
-    """
-    import openai
+## Part 4: Lost-in-the-Middle and the RULER Reality Check
 
-    # Step 1: Chunk document
-    chunks = chunk_semantically(document, chunk_size=chunk_size)
-    print(f"Split into {len(chunks)} chunks")
+Liu et al. (2023), "Lost in the Middle: How Language Models Use Long Contexts" ([arXiv:2307.03172](https://arxiv.org/abs/2307.03172)), showed that even strong models retrieve most reliably from context start and end, with a noticeable accuracy dip in the middle.
 
-    # Step 2: Summarize each chunk (MAP)
-    chunk_summaries = []
-    for i, chunk in enumerate(chunks):
-        response = openai.ChatCompletion.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": "Summarize the following text concisely."},
-                {"role": "user", "content": chunk}
-            ],
-            temperature=0
-        )
-        summary = response.choices[0].message.content
-        chunk_summaries.append(summary)
-        print(f"Chunk {i+1} summary: {summary[:100]}...")
+**This has not been fully solved by 2026.** Subsequent work confirms the pattern persists at long lengths:
 
-    # Step 3: Combine summaries (REDUCE)
-    combined_summaries = "\n\n".join(chunk_summaries)
+- **RULER** (Hsieh et al., 2024) — synthetic benchmark with multi-needle retrieval, multi-hop tracing, and aggregation tasks across configurable context lengths. Across 17 long-context models evaluated, almost all show large performance drops as context grows; only ~half maintain acceptable performance at 32k despite advertising much longer windows. [arXiv:2404.06654](https://arxiv.org/abs/2404.06654) / [github.com/NVIDIA/RULER](https://github.com/NVIDIA/RULER).
+- **Needle-in-a-Haystack variants** — gkamradt's original NIAH ([github.com/gkamradt/LLMTest_NeedleInAHaystack](https://github.com/gkamradt/LLMTest_NeedleInAHaystack)) is now considered a *floor* for long-context capability, not a ceiling. Models that ace single-needle NIAH frequently fail on multi-needle, multi-hop, or aggregation variants at the same length.
 
-    # Step 4: Generate final summary
-    final_response = openai.ChatCompletion.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": "Synthesize the following summaries into a comprehensive final summary."},
-            {"role": "user", "content": combined_summaries}
-        ],
-        temperature=0
-    )
+**Implication:** A model claiming 1M-token context does not guarantee that information at depth 800k is reliably accessible. Always:
 
-    final_summary = final_response.choices[0].message.content
-    return final_summary
+1. Run a recall sanity check on your actual workload before committing to a long-context-only design.
+2. Place critical information at the top or bottom of the context, not buried.
+3. Use RAG with explicit retrieval whenever the answer depends on finding specific facts in a long corpus.
 
-# Example
-long_document = "Research paper with 50,000 tokens..." * 100
-summary = hierarchical_summarization(long_document, chunk_size=3000)
-print(f"Final summary:\n{summary}")
-```
+## Part 5: Intelligent Truncation
 
-**Pros:**
-- Handles arbitrarily long documents
-- Preserves information across entire document
-- Parallelizable (summarize chunks concurrently)
+When chunking is wrong (single-pass QA, conversation tail), truncate strategically.
 
-**Cons:**
-- More API calls (higher cost)
-- Information loss in successive summarizations
-- Slower than single-pass
-
-
-## Part 4: Intelligent Truncation Strategies
-
-When chunking isn't appropriate (e.g., single-pass QA), truncate intelligently.
-
-### Strategy 1: Truncate from Middle (Preserve Intro + Conclusion)
+### Truncate Middle (Preserve Intro + Conclusion)
 
 ```python
-def truncate_middle(text, max_tokens=3500, model="gpt-3.5-turbo"):
-    """
-    Keep beginning and end, truncate middle.
-
-    Useful for documents with important intro (context) and conclusion (findings).
-    """
-    encoding = tiktoken.encoding_for_model(model)
-    tokens = encoding.encode(text)
-
-    if len(tokens) <= max_tokens:
-        return text  # Fits, no truncation needed
-
-    # Allocate: 40% beginning, 40% end, 20% lost in middle
-    keep_start = int(max_tokens * 0.4)
-    keep_end = int(max_tokens * 0.4)
-
-    start_tokens = tokens[:keep_start]
-    end_tokens = tokens[-keep_end:]
-
-    # Add marker showing truncation
-    truncation_marker = encoding.encode("\n\n[... middle section truncated ...]\n\n")
-
-    truncated_tokens = start_tokens + truncation_marker + end_tokens
-    return encoding.decode(truncated_tokens)
-
-# Example
-document = """
-Introduction: This paper presents a new approach to X.
-Our hypothesis is that Y improves performance by 30%.
-
-[... 10,000 tokens of methods, experiments, detailed results ...]
-
-Conclusion: We demonstrated that Y improves performance by 31%,
-confirming our hypothesis. Future work will explore Z.
-"""
-
-truncated = truncate_middle(document, max_tokens=500)
-print(truncated)
-# Output:
-# Introduction: This paper presents...
-# [... middle section truncated ...]
-# Conclusion: We demonstrated that Y improves...
-```
-
-### Strategy 2: Truncate from Beginning (Keep Recent Context)
-
-```python
-def truncate_from_start(text, max_tokens=3500, model="gpt-3.5-turbo"):
-    """
-    Keep end, discard beginning.
-
-    Useful for logs, conversations where recent context is most important.
-    """
-    encoding = tiktoken.encoding_for_model(model)
-    tokens = encoding.encode(text)
-
+def truncate_middle(text: str, max_tokens: int, encoding_name: str = "o200k_base") -> str:
+    enc = tiktoken.get_encoding(encoding_name)
+    tokens = enc.encode(text)
     if len(tokens) <= max_tokens:
         return text
-
-    # Keep last N tokens
-    truncated_tokens = tokens[-max_tokens:]
-    return encoding.decode(truncated_tokens)
-
-# Example: Chat logs
-conversation = """
-[Turn 1 - 2 hours ago] User: How do I reset my password?
-[Turn 2] Bot: Go to Settings > Security > Reset Password.
-[... 50 turns ...]
-[Turn 51 - just now] User: What was that password reset link again?
-"""
-
-truncated = truncate_from_start(conversation, max_tokens=200)
-print(truncated)
-# Output: [Turn 48] ... [Turn 51 - just now] User: What was that password reset link again?
+    keep_start = int(max_tokens * 0.4)
+    keep_end = int(max_tokens * 0.4)
+    marker = enc.encode("\n\n[... middle truncated ...]\n\n")
+    return enc.decode(tokens[:keep_start] + marker + tokens[-keep_end:])
 ```
 
-### Strategy 3: Extractive Truncation (Keep Most Relevant)
+Works well for documents with strong intro/conclusion structure (papers, RFCs, executive summaries).
+
+### Truncate Beginning (Recent-Wins)
 
 ```python
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
-
-def extractive_truncation(document, query, max_tokens=3000, model="gpt-3.5-turbo"):
-    """
-    Keep sentences most relevant to query.
-
-    Uses TF-IDF similarity to rank sentences by relevance to query.
-    """
-    # Split into sentences
-    sentences = document.split('. ')
-
-    # Calculate TF-IDF similarity to query
-    vectorizer = TfidfVectorizer()
-    vectors = vectorizer.fit_transform([query] + sentences)
-    query_vec = vectors[0]
-    sentence_vecs = vectors[1:]
-
-    # Similarity scores
-    similarities = cosine_similarity(query_vec, sentence_vecs)[0]
-
-    # Rank sentences by similarity
-    ranked_indices = np.argsort(similarities)[::-1]
-
-    # Select sentences until token budget exhausted
-    selected_sentences = []
-    token_count = 0
-    encoding = tiktoken.encoding_for_model(model)
-
-    for idx in ranked_indices:
-        sentence = sentences[idx] + '. '
-        sentence_tokens = len(encoding.encode(sentence))
-
-        if token_count + sentence_tokens <= max_tokens:
-            selected_sentences.append((idx, sentence))
-            token_count += sentence_tokens
-        else:
-            break
-
-    # Sort selected sentences by original order (maintain flow)
-    selected_sentences.sort(key=lambda x: x[0])
-
-    return ''.join([sent for _, sent in selected_sentences])
-
-# Example
-document = """
-The company was founded in 1995 in Seattle.
-Our return policy allows returns within 30 days of purchase.
-Products must be in original condition with tags attached.
-Refunds are processed within 5-7 business days.
-We offer free shipping on orders over $50.
-The company has 500 employees worldwide.
-"""
-
-query = "What is the return policy?"
-
-truncated = extractive_truncation(document, query, max_tokens=150)
-print(truncated)
-# Output: Our return policy allows returns within 30 days. Products must be in original condition. Refunds processed within 5-7 days.
+def truncate_from_start(text: str, max_tokens: int, encoding_name: str = "o200k_base") -> str:
+    enc = tiktoken.get_encoding(encoding_name)
+    tokens = enc.encode(text)
+    return text if len(tokens) <= max_tokens else enc.decode(tokens[-max_tokens:])
 ```
 
+Right answer for chat logs and event streams where recency dominates relevance.
 
-## Part 5: Conversation Context Management
+### Extractive Truncation (Relevance-Wins)
 
-Multi-turn conversations require active context management to prevent unbounded growth.
+Score sentences by similarity to the query (TF-IDF, BM25, or embedding cosine), keep top-k within budget, restore original order before sending. Works well as a cheap pre-filter ahead of an LLM call.
 
-### Strategy 1: Sliding Window
+## Part 6: Conversation Context Management
 
-**Keep last N turns.**
+### Sliding Window
+
+Keep the last N user/assistant pairs plus the system message.
 
 ```python
-class SlidingWindowChatbot:
-    def __init__(self, model="gpt-3.5-turbo", max_history=10):
-        """
-        Chatbot with sliding window context.
+class SlidingWindowChat:
+    def __init__(self, model_id: str, system: str, max_turns: int = 10):
+        self.model_id = model_id
+        self.system = {"role": "system", "content": system}
+        self.max_turns = max_turns
+        self.messages: list[dict] = [self.system]
 
-        Args:
-            model: LLM model
-            max_history: Maximum conversation turns to keep (user+assistant pairs)
-        """
-        self.model = model
-        self.max_history = max_history
-        self.system_message = {"role": "system", "content": "You are a helpful assistant."}
-        self.messages = [self.system_message]
+    def add_user(self, content: str) -> None:
+        self.messages.append({"role": "user", "content": content})
+        # Keep system + last (max_turns * 2) turns
+        keep_n = self.max_turns * 2
+        if len(self.messages) > keep_n + 1:
+            self.messages = [self.system] + self.messages[-keep_n:]
 
-    def chat(self, user_message):
-        """Add message, generate response, manage context."""
-        import openai
-
-        # Add user message
-        self.messages.append({"role": "user", "content": user_message})
-
-        # Apply sliding window (keep system + last N*2 messages)
-        if len(self.messages) > (self.max_history * 2 + 1):  # +1 for system message
-            self.messages = [self.system_message] + self.messages[-(self.max_history * 2):]
-
-        # Generate response
-        response = openai.ChatCompletion.create(
-            model=self.model,
-            messages=self.messages
-        )
-
-        assistant_message = response.choices[0].message.content
-        self.messages.append({"role": "assistant", "content": assistant_message})
-
-        return assistant_message
-
-# Example
-bot = SlidingWindowChatbot(max_history=5)  # Keep last 5 turns
-
-for turn in range(20):
-    user_msg = input("You: ")
-    response = bot.chat(user_msg)
-    print(f"Bot: {response}")
-
-    # Context automatically managed: always ≤ 11 messages (1 system + 5*2 user/assistant)
+    def add_assistant(self, content: str) -> None:
+        self.messages.append({"role": "assistant", "content": content})
 ```
 
-**Pros:**
-- Simple, predictable
-- Constant memory/cost
-- Recent context preserved
+Predictable cost, drops old context.
 
-**Cons:**
-- Loses old context (user may reference earlier conversation)
-- Fixed window may be too small or too large
+### Token-Based Truncation
 
-### Strategy 2: Token-Based Truncation
+Same idea but with a token budget instead of a turn count — prevents long messages from exploding the window.
 
-**Keep messages until token budget exhausted.**
+### Summarization + Sliding Window (Hybrid)
+
+When the conversation crosses a threshold, summarize old turns into a compact "memory" message and keep the most recent turns verbatim. Cross-ref `agentic-patterns-and-mcp.md` for sub-agent context isolation, which extends this idea: hand off old context to a sub-agent that returns a structured summary, then continue in the parent with a fresh window.
+
+## Part 7: RAG Context Budgeting
 
 ```python
-class TokenBudgetChatbot:
-    def __init__(self, model="gpt-3.5-turbo", max_tokens=3000):
-        """
-        Chatbot with token-based context management.
-
-        Keeps messages until token budget exhausted (newest to oldest).
-        """
-        self.model = model
-        self.max_tokens = max_tokens
-        self.system_message = {"role": "system", "content": "You are a helpful assistant."}
-        self.messages = [self.system_message]
-
-    def chat(self, user_message):
-        import openai
-
-        # Add user message
-        self.messages.append({"role": "user", "content": user_message})
-
-        # Token management: keep system + recent messages within budget
-        total_tokens = count_message_tokens(self.messages, self.model)
-
-        while total_tokens > self.max_tokens and len(self.messages) > 2:
-            # Remove oldest message (after system message)
-            removed = self.messages.pop(1)
-            total_tokens = count_message_tokens(self.messages, self.model)
-
-        # Generate response
-        response = openai.ChatCompletion.create(
-            model=self.model,
-            messages=self.messages
-        )
-
-        assistant_message = response.choices[0].message.content
-        self.messages.append({"role": "assistant", "content": assistant_message})
-
-        return assistant_message
-
-# Example
-bot = TokenBudgetChatbot(max_tokens=2000)
-
-for turn in range(20):
-    user_msg = input("You: ")
-    response = bot.chat(user_msg)
-    print(f"Bot: {response}")
-    print(f"Context tokens: {count_message_tokens(bot.messages)}")
+def select_chunks_within_budget(
+    candidates: list[tuple[dict, float]],   # (chunk, relevance_score), pre-sorted desc
+    budget_tokens: int,
+    count_fn,
+) -> tuple[list[dict], int]:
+    selected: list[dict] = []
+    used = 0
+    for chunk, _score in candidates:
+        n = count_fn(chunk["content"])
+        if used + n > budget_tokens:
+            continue   # Try smaller chunks rather than stop at first overflow
+        selected.append(chunk)
+        used += n
+    return selected, used
 ```
 
-**Pros:**
-- Adaptive to message length (long messages = fewer kept, short messages = more kept)
-- Precise budget control
+Prefer **over-retrieve + rerank + budget-fit** over "top-k-by-similarity." The reranker (cross-encoder or LLM judge) reorders candidates by genuine relevance; the budget fitter then picks the densest set of useful chunks.
 
-**Cons:**
-- Removes from beginning (loses early context)
+For repeated retrieval against the same corpus, embed cache hits and reranker scores, not raw queries.
 
-### Strategy 3: Summarization + Sliding Window
+## Part 8: Prompt Caching as a First-Class Strategy
 
-**Best of both: Summarize old context, keep recent verbatim.**
+Prompt caching reframes the cost calculus for long-context workloads. With static prefixes — system prompts, tool definitions, retrieved corpora, full documents — marked cacheable, **subsequent calls pay roughly an order of magnitude less for the cached tokens** (Anthropic publishes ~10% of input price for cache reads at the time of writing; OpenAI and Google have analogous mechanisms with their own multipliers).
 
-```python
-class SummarizingChatbot:
-    def __init__(self, model="gpt-3.5-turbo", max_recent=5, summarize_threshold=10):
-        """
-        Chatbot with summarization + sliding window.
+Implications for context strategy:
 
-        When conversation exceeds threshold, summarize old turns and keep recent verbatim.
+- **Long context becomes cheaper** when many queries share the same long prefix. A 200k-token document you query 50 times with caching is dramatically less expensive than naively re-sending it each call.
+- **Chunking is no longer the obvious cost win** for "many questions, one document" workloads — long-context + caching often beats chunk + retrieve on cost *and* quality.
+- **Order matters.** Cacheable static content goes at the start; volatile content (the user's current query) at the end. Any change to the cached prefix invalidates the cache.
 
-        Args:
-            model: LLM model
-            max_recent: Recent turns to keep verbatim
-            summarize_threshold: Turns before summarizing old context
-        """
-        self.model = model
-        self.max_recent = max_recent
-        self.summarize_threshold = summarize_threshold
-        self.system_message = {"role": "system", "content": "You are a helpful assistant."}
-        self.messages = [self.system_message]
-        self.summary = None  # Stores summary of old context
+This sheet sketches the implication; the full design pattern — breakpoint placement, multi-segment caches, TTL selection, cross-provider differences, cache-key hygiene — is in `context-engineering-and-prompt-caching.md`. Treat that sheet as required reading before designing a long-context system.
 
-    def summarize_old_context(self):
-        """Summarize older messages (beyond recent window)."""
-        import openai
+## Part 9: Compression Strategies
 
-        # Messages to summarize: after system, before recent window
-        num_messages = len(self.messages) - 1  # Exclude system message
-        if num_messages <= self.summarize_threshold:
-            return  # Not enough history yet
+When you cannot afford the long-context bill *and* chunking is awkward, compress.
 
-        # Split: old (to summarize) vs recent (keep verbatim)
-        old_messages = self.messages[1:-(self.max_recent*2)]  # Exclude system + recent
+- **Summarization** — replace old turns or full documents with model-generated summaries. Quality varies; use for memory of "what happened" rather than "exact facts."
+- **Key-value extraction** — extract structured fields from a long source (entities, dates, decisions, action items) and pass the structured form forward. More faithful than free-form summary for facts.
+- **Hierarchical summary** — chunk → per-chunk summary → meta-summary, retaining the per-chunk layer for retrieval. Lets you navigate from a top-level view to source detail.
+- **Sub-agent context isolation** — spawn a sub-agent with its own fresh context window to handle a bounded subtask, return only its result to the parent. The parent's context never sees the sub-agent's working memory. Cross-ref `agentic-patterns-and-mcp.md`.
 
-        if not old_messages:
-            return
+Compression is lossy by definition. Validate that downstream tasks still work on the compressed representation before committing.
 
-        # Format for summarization
-        conversation_text = "\n".join([
-            f"{msg['role']}: {msg['content']}" for msg in old_messages
-        ])
+## Part 10: Cost and Latency Effects (Relative Framing)
 
-        # Generate summary
-        response = openai.ChatCompletion.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": "Summarize the following conversation concisely, capturing key information, user goals, and important context."},
-                {"role": "user", "content": conversation_text}
-            ],
-            temperature=0
-        )
+Provider prices change. Frame trade-offs in *ratios*, not dollars:
 
-        self.summary = response.choices[0].message.content
+- **Long context is roughly proportional in cost to its token count.** Doubling the context roughly doubles the input bill (modulo caching).
+- **Cached input ≈ 10% of normal input price** on Anthropic; comparable order on other providers. Verify current numbers in provider docs.
+- **Latency scales with prompt length.** First-token-latency grows approximately with input length on most engines (prefill cost). Cached prefixes dramatically cut prefill time as well as bill.
+- **Output tokens are typically 3-5× the price of input tokens.** Be especially careful with reasoning models that consume output budget on hidden thinking.
 
-        # Update messages: system + summary + recent
-        recent_messages = self.messages[-(self.max_recent*2):]
-        summary_message = {
-            "role": "system",
-            "content": f"Previous conversation summary: {self.summary}"
-        }
+Cost-optimization heuristics:
 
-        self.messages = [self.system_message, summary_message] + recent_messages
+1. **Cache** every static prefix. This is the single biggest lever.
+2. **Right-size the tier.** Use fast-cheap for routing/extraction even inside a frontier-general-led pipeline.
+3. **Cap output**. Reserve only what you need; large `max_tokens` is rarely used but always priced.
+4. **Reuse retrieval**. Cache embeddings; cache reranker scores; cache the final selected chunks if the query pattern repeats.
 
-    def chat(self, user_message):
-        import openai
-
-        # Add user message
-        self.messages.append({"role": "user", "content": user_message})
-
-        # Check if summarization needed
-        num_turns = (len(self.messages) - 1) // 2  # Exclude system message
-        if num_turns >= self.summarize_threshold:
-            self.summarize_old_context()
-
-        # Generate response
-        response = openai.ChatCompletion.create(
-            model=self.model,
-            messages=self.messages
-        )
-
-        assistant_message = response.choices[0].message.content
-        self.messages.append({"role": "assistant", "content": assistant_message})
-
-        return assistant_message
-
-# Example
-bot = SummarizingChatbot(max_recent=5, summarize_threshold=10)
-
-# Long conversation
-for turn in range(25):
-    user_msg = input("You: ")
-    response = bot.chat(user_msg)
-    print(f"Bot: {response}")
-
-    # After turn 10, old context (turns 1-5) summarized, turns 6-10+ kept verbatim
-```
-
-**Pros:**
-- Preserves full conversation history (in summary form)
-- Recent context verbatim (maintains fluency)
-- Bounded token usage
-
-**Cons:**
-- Extra API call for summarization (cost)
-- Information loss in summary
-- More complex
-
-
-## Part 6: RAG Context Management
-
-RAG systems retrieve documents and include in context. Token budgeting is critical.
-
-### Dynamic Document Retrieval (Budget-Aware)
+## Part 11: Complete Example — Managed RAG
 
 ```python
-def retrieve_with_token_budget(
-    query,
-    documents,
-    embeddings,
-    model="gpt-3.5-turbo",
-    output_tokens=500,
-    max_docs=20
-):
-    """
-    Retrieve documents dynamically based on token budget.
+import os
+from dataclasses import dataclass
 
-    Args:
-        query: User query
-        documents: List of document dicts [{"id": ..., "content": ...}, ...]
-        embeddings: Pre-computed document embeddings
-        model: LLM model
-        output_tokens: Reserved for output
-        max_docs: Maximum documents to consider
-
-    Returns:
-        Selected documents within token budget
-    """
-    from sentence_transformers import SentenceTransformer, util
-
-    # Calculate available token budget
-    available_tokens = budget_for_rag(query, model=model, output_tokens=output_tokens)
-
-    # Retrieve top-k relevant documents (semantic search)
-    query_embedding = SentenceTransformer('all-MiniLM-L6-v2').encode(query)
-    similarities = util.cos_sim(query_embedding, embeddings)[0]
-    top_indices = similarities.argsort(descending=True)[:max_docs]
-
-    # Select documents until budget exhausted
-    selected_docs = []
-    token_count = 0
-
-    for idx in top_indices:
-        doc = documents[idx]
-        doc_tokens = count_tokens(doc['content'], model)
-
-        if token_count + doc_tokens <= available_tokens:
-            selected_docs.append(doc)
-            token_count += doc_tokens
-        else:
-            # Budget exhausted
-            break
-
-    return selected_docs, token_count
-
-# Example
-query = "What is our return policy?"
-documents = [
-    {"id": 1, "content": "Our return policy allows returns within 30 days..."},
-    {"id": 2, "content": "Shipping is free on orders over $50..."},
-    # ... 100 more documents
-]
-
-selected, tokens_used = retrieve_with_token_budget(
-    query, documents, embeddings, model="gpt-3.5-turbo"
-)
-
-print(f"Selected {len(selected)} documents using {tokens_used} tokens")
-# Output: Selected 7 documents using 3,280 tokens (within budget)
-```
-
-### Chunk Re-Ranking with Token Budget
-
-```python
-def rerank_and_budget(query, chunks, model="gpt-3.5-turbo", max_tokens=3000):
-    """
-    Over-retrieve, re-rank, then select top chunks within token budget.
-
-    1. Retrieve k=20 candidates (coarse retrieval)
-    2. Re-rank with cross-encoder (fine-grained scoring)
-    3. Select top chunks until budget exhausted
-    """
-    from sentence_transformers import CrossEncoder
-
-    # Re-rank with cross-encoder
-    cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
-    pairs = [[query, chunk['content']] for chunk in chunks]
-    scores = cross_encoder.predict(pairs)
-
-    # Sort by relevance
-    ranked_chunks = sorted(
-        zip(chunks, scores),
-        key=lambda x: x[1],
-        reverse=True
-    )
-
-    # Select until budget exhausted
-    selected_chunks = []
-    token_count = 0
-
-    for chunk, score in ranked_chunks:
-        chunk_tokens = count_tokens(chunk['content'], model)
-
-        if token_count + chunk_tokens <= max_tokens:
-            selected_chunks.append((chunk, score))
-            token_count += chunk_tokens
-        else:
-            break
-
-    return selected_chunks, token_count
-
-# Example
-chunks = [
-    {"id": 1, "content": "Return policy: 30 days with receipt..."},
-    {"id": 2, "content": "Shipping: Free over $50..."},
-    # ... 18 more chunks
-]
-
-selected, tokens = rerank_and_budget(query, chunks, max_tokens=3000)
-print(f"Selected {len(selected)} chunks, {tokens} tokens")
-```
-
-
-## Part 7: Cost and Performance Optimization
-
-Context management affects cost and latency.
-
-### Cost Optimization
-
-```python
-def calculate_cost(tokens, model="gpt-3.5-turbo"):
-    """
-    Calculate API cost based on token count.
-
-    Pricing (as of 2024):
-    - GPT-3.5-turbo: $0.002 per 1k tokens (input + output)
-    - GPT-4: $0.03 per 1k input, $0.06 per 1k output
-    - GPT-4-turbo: $0.01 per 1k input, $0.03 per 1k output
-    """
-    pricing = {
-        "gpt-3.5-turbo": {"input": 0.0015, "output": 0.002},
-        "gpt-3.5-turbo-16k": {"input": 0.003, "output": 0.004},
-        "gpt-4": {"input": 0.03, "output": 0.06},
-        "gpt-4-turbo": {"input": 0.01, "output": 0.03},
-    }
-
-    rates = pricing.get(model, {"input": 0.002, "output": 0.002})
-    input_cost = (tokens / 1000) * rates["input"]
-
-    return input_cost
-
-# Example: Cost comparison
-conversation_tokens = 3500
-print(f"GPT-3.5: ${calculate_cost(conversation_tokens, 'gpt-3.5-turbo'):.4f}")
-print(f"GPT-4: ${calculate_cost(conversation_tokens, 'gpt-4'):.4f}")
-# Output:
-# GPT-3.5: $0.0053
-# GPT-4: $0.1050 (20× more expensive!)
-```
-
-**Cost optimization strategies:**
-1. **Compression:** Summarize old context (reduce tokens)
-2. **Smaller model:** Use GPT-3.5 instead of GPT-4 when possible
-3. **Efficient retrieval:** Retrieve fewer, more relevant docs
-4. **Caching:** Cache embeddings, avoid re-encoding
-
-### Latency Optimization
-
-```python
-# Latency increases with context length
-import time
-
-def measure_latency(context_tokens, model="gpt-3.5-turbo"):
-    """
-    Rough latency estimates (actual varies by API load).
-
-    Latency = Fixed overhead + (tokens × per-token time)
-    """
-    fixed_overhead_ms = 500  # API call, network
-    time_per_token_ms = {
-        "gpt-3.5-turbo": 0.3,  # ~300ms per 1k tokens
-        "gpt-4": 1.0,          # ~1s per 1k tokens (slower)
-    }
-
-    per_token = time_per_token_ms.get(model, 0.5)
-    latency_ms = fixed_overhead_ms + (context_tokens * per_token)
-
-    return latency_ms
-
-# Example
-for tokens in [500, 2000, 5000, 10000]:
-    latency = measure_latency(tokens, "gpt-3.5-turbo")
-    print(f"{tokens:,} tokens: {latency:.0f}ms ({latency/1000:.1f}s)")
-# Output:
-# 500 tokens: 650ms (0.7s)
-# 2,000 tokens: 1,100ms (1.1s)
-# 5,000 tokens: 2,000ms (2.0s)
-# 10,000 tokens: 3,500ms (3.5s)
-```
-
-**Latency optimization strategies:**
-1. **Reduce context:** Keep only essential information
-2. **Parallel processing:** Process chunks concurrently (map-reduce)
-3. **Streaming:** Stream responses for perceived latency reduction
-4. **Caching:** Cache frequent queries
-
-
-## Part 8: Complete Implementation Example
-
-**RAG System with Full Context Management:**
-
-```python
-import openai
-import tiktoken
-from sentence_transformers import SentenceTransformer, util
+@dataclass
+class RAGResult:
+    answer: str
+    chunks_used: int
+    context_tokens: int
+    output_tokens: int
+    cache_hit: bool
 
 class ManagedRAGSystem:
-    def __init__(
-        self,
-        model="gpt-3.5-turbo",
-        embedding_model="all-MiniLM-L6-v2",
-        max_docs=20,
-        output_tokens=500
-    ):
-        self.model = model
-        self.embedding_model = SentenceTransformer(embedding_model)
-        self.max_docs = max_docs
-        self.output_tokens = output_tokens
+    def __init__(self, tier: str = "frontier-general", reserved_output: int = 800):
+        self.cfg = load_model_config(tier)
+        self.reserved_output = reserved_output
 
-    def query(self, question, documents):
-        """
-        Query RAG system with full context management.
-
-        Steps:
-        1. Calculate token budget
-        2. Retrieve relevant documents within budget
-        3. Build context
-        4. Generate response
-        5. Return response with metadata
-        """
-        # Step 1: Calculate token budget
-        system_message = "Answer the question using only the provided context."
-        budget = calculate_token_budget(
-            model=self.model,
-            system_message_tokens=count_tokens(system_message),
-            query_tokens=count_tokens(question),
-            output_tokens=self.output_tokens
+    def query(self, question: str, retrieved_chunks: list[dict],
+              system_prompt: str, count_fn) -> RAGResult:
+        # 1. Compute budget
+        budget = build_budget(
+            cfg=self.cfg,
+            system_tokens=count_fn(system_prompt),
+            tool_tokens=0,
+            history_tokens=0,
+            query_tokens=count_fn(question),
+            reserved_output=self.reserved_output,
         )
-        context_budget = budget['context_budget']
+        room = budget.context_room()
 
-        # Step 2: Retrieve documents within budget
-        query_embedding = self.embedding_model.encode(question)
-        doc_embeddings = self.embedding_model.encode([doc['content'] for doc in documents])
-        similarities = util.cos_sim(query_embedding, doc_embeddings)[0]
-        top_indices = similarities.argsort(descending=True)[:self.max_docs]
+        # 2. Fit retrieved chunks into the room
+        ranked = sorted(retrieved_chunks, key=lambda c: c["score"], reverse=True)
+        selected, used = select_chunks_within_budget(
+            [(c, c["score"]) for c in ranked], room, count_fn
+        )
+        context = "\n\n---\n\n".join(c["content"] for c in selected)
 
-        selected_docs = []
-        token_count = 0
+        # 3. Call the model with the static prefix marked cacheable
+        #    (system + tools + retrieved context = cacheable; query = volatile)
+        #    See context-engineering-and-prompt-caching.md for full pattern.
+        answer, output_tokens, cache_hit = self._call(system_prompt, context, question)
 
-        for idx in top_indices:
-            doc = documents[idx]
-            doc_tokens = count_tokens(doc['content'], self.model)
-
-            if token_count + doc_tokens <= context_budget:
-                selected_docs.append(doc)
-                token_count += doc_tokens
-            else:
-                break
-
-        # Step 3: Build context
-        context = "\n\n".join([doc['content'] for doc in selected_docs])
-
-        # Step 4: Generate response
-        messages = [
-            {"role": "system", "content": system_message},
-            {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {question}"}
-        ]
-
-        response = openai.ChatCompletion.create(
-            model=self.model,
-            messages=messages,
-            temperature=0
+        return RAGResult(
+            answer=answer,
+            chunks_used=len(selected),
+            context_tokens=used,
+            output_tokens=output_tokens,
+            cache_hit=cache_hit,
         )
 
-        answer = response.choices[0].message.content
-
-        # Step 5: Return with metadata
-        return {
-            'answer': answer,
-            'num_docs_retrieved': len(selected_docs),
-            'context_tokens': token_count,
-            'total_tokens': response.usage.total_tokens,
-            'cost': calculate_cost(response.usage.total_tokens, self.model)
-        }
-
-# Example usage
-rag = ManagedRAGSystem(model="gpt-3.5-turbo")
-
-documents = [
-    {"id": 1, "content": "Our return policy allows returns within 30 days of purchase with receipt."},
-    {"id": 2, "content": "Refunds are processed within 5-7 business days."},
-    # ... more documents
-]
-
-result = rag.query("What is the return policy?", documents)
-
-print(f"Answer: {result['answer']}")
-print(f"Retrieved: {result['num_docs_retrieved']} documents")
-print(f"Context tokens: {result['context_tokens']}")
-print(f"Total tokens: {result['total_tokens']}")
-print(f"Cost: ${result['cost']:.4f}")
+    def _call(self, system: str, context: str, question: str) -> tuple[str, int, bool]:
+        # Provider-specific call wired in your client layer.
+        raise NotImplementedError
 ```
-
 
 ## Summary
 
-**Context window management is mandatory for production LLM systems.**
+**Context window management is mandatory; long context is not a bypass.**
 
-**Core strategies:**
-1. **Token counting:** Always count tokens before API calls (tiktoken)
-2. **Budgeting:** Allocate tokens to system, context, query, output
-3. **Chunking:** Fixed-size, semantic, or hierarchical for long documents
-4. **Truncation:** Middle-out, extractive, or structure-aware
-5. **Conversation management:** Sliding window, token-based, or summarization
-6. **RAG budgeting:** Dynamic retrieval, re-ranking with budget constraints
+1. **Count tokens** with the right tokenizer for the provider; treat counts as ground truth.
+2. **Look up limits dynamically**; never hardcode. Capability tiers, not model IDs.
+3. **Frame the workload** by context tier: short / standard / long / extreme — pick the strategy that fits.
+4. **Budget** every component: system, tools, history, context, query, output, safety margin.
+5. **Chunk + retrieve when many questions ↔ many documents**; **long context + cache when many questions ↔ one big document**.
+6. **Trust RULER, not NIAH headlines.** Validate recall on your workload before relying on long context.
+7. **Truncate strategically** (middle / start / extractive) when overflow is unavoidable.
+8. **Manage conversations** with sliding window, token budget, or summarization + recent.
+9. **Compress** with summarization, KV extraction, hierarchical summary, or sub-agent isolation.
+10. **Cache** every stable prefix. The full pattern is in `context-engineering-and-prompt-caching.md`.
 
-**Optimization:**
-- Cost: Compression, smaller models, efficient retrieval
-- Latency: Reduce context, parallel processing, streaming
+**Cross-references:**
+- `context-engineering-and-prompt-caching.md` — prompt caching design depth.
+- `agentic-patterns-and-mcp.md` — sub-agent context isolation.
+- `reasoning-models.md` — output-token planning for thinking models.
+- `llm-inference-optimization.md` — serving stack and cost-latency-quality trade-offs.
+- `yzmir-ml-production` — RAG ops, embedding pipelines, retrieval evaluation.
 
-**Implementation checklist:**
-1. ✓ Count tokens with tiktoken (not character/word counts)
-2. ✓ Check against model-specific limits
-3. ✓ Allocate token budget for multi-component systems
-4. ✓ Choose appropriate strategy (chunking, truncation, summarization)
-5. ✓ Manage conversation context proactively
-6. ✓ Monitor token usage, cost, and latency
-7. ✓ Test with realistic data (long documents, long conversations)
+---
 
-Context is finite. Manage it deliberately, or face crashes, quality degradation, and cost overruns.
+*Model lineup current as of 2026-05; revisit quarterly.*

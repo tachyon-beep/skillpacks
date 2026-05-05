@@ -10,6 +10,7 @@ Use this skill when:
 - Improving throughput for batch processing
 - Enhancing user experience with streaming
 - Balancing cost, latency, and quality trade-offs
+- Choosing or tuning a self-hosted serving stack
 
 **When NOT to use:** Prototyping or single-query experiments where optimization is premature.
 
@@ -18,13 +19,26 @@ Use this skill when:
 **Performance is not automatic. Optimization is systematic.**
 
 Without optimization:
-- Sequential processing: 16 minutes for 1000 documents (0.06 requests/sec)
-- No caching: 60% wasted cost on repeated queries
-- Wrong model: 10× expensive for same quality
-- No streaming: 40% bounce rate on long generations
-- Single-objective: Poor cost-latency-quality trade-offs
+- Sequential processing leaves throughput on the table
+- No caching wastes spend on repeated queries
+- Wrong tier of model is 5-20× too expensive for the same quality
+- No streaming hurts perceived latency on long generations
+- Single-objective tuning produces poor cost-latency-quality trade-offs
 
-**Formula:** Parallelization (10× throughput) + Caching (60% cost savings) + Model routing (balanced cost-quality) + Streaming (better UX) + Multi-objective optimization (Pareto optimal) = Production-ready performance.
+**Formula:** Parallelization + Caching (answer + prompt) + Capability-tier routing + Streaming + Right serving stack + Multi-objective trade-off analysis = Production-grade performance.
+
+## Capability Tiers (Vocabulary)
+
+This sheet, and the sister sheets in this pack, refer to four capability tiers rather than specific model IDs:
+
+| Tier | Profile | Typical use |
+|------|---------|-------------|
+| **frontier-reasoning** | Deep multi-step reasoning, tool use, agentic planning. Highest cost per token, highest output-token consumption (extended thinking). | Math/science, complex coding, multi-step agents, hard refactors. See `reasoning-models.md`. |
+| **frontier-general** | Strong general intelligence with 128k-200k context as a baseline. Mid-high cost. | Most production chat/RAG/extraction; default for "quality matters". |
+| **fast-cheap** | Smaller frontier-class models tuned for low latency / low cost. | Classification, extraction, routing, summarization, high-QPS chat. |
+| **on-device** | Open-weights models (~1-30B) running locally or behind your own GPU/CPU stack. | Privacy, air-gapped, edge, cost floor for very high volume. |
+
+**Never hardcode model IDs in long-lived code.** Provider lineups change quarterly. Look up the current ID for each tier from the provider's docs (Anthropic model card, OpenAI models page, Google AI Studio, Meta/Mistral/Qwen releases) and inject via config.
 
 ## Optimization Framework
 
@@ -43,7 +57,7 @@ Without optimization:
                ▼
 ┌─────────────────────────────────────────┐
 │      3. Apply Optimizations             │
-│  Parallelization → Caching → Routing    │
+│  Parallel → Cache → Route → Serve       │
 └──────────────┬──────────────────────────┘
                │
                ▼
@@ -63,970 +77,565 @@ Without optimization:
 
 ### Async/Await for Concurrent Requests
 
-**Problem:** Sequential API calls are slow (1 request/sec).
+**Problem:** Sequential API calls underutilize the network and the provider's batched scheduler.
 
-**Solution:** Concurrent requests with async/await (10-20 requests/sec).
+**Solution:** Concurrent requests with async/await + a semaphore for rate limiting.
 
 ```python
 import asyncio
-import openai
-from typing import List
+from openai import AsyncOpenAI
 
-async def classify_async(text: str, semaphore: asyncio.Semaphore) -> str:
-    """
-    Classify text asynchronously with rate limiting.
+client = AsyncOpenAI()
 
-    Args:
-        text: Text to classify
-        semaphore: Limits concurrent requests
-
-    Returns:
-        Classification result
-    """
+async def classify_async(text: str, semaphore: asyncio.Semaphore, model: str) -> str:
+    """Classify text asynchronously with rate limiting (openai>=1.0 SDK)."""
     async with semaphore:
-        response = await openai.ChatCompletion.acreate(
-            model="gpt-3.5-turbo",
+        response = await client.chat.completions.create(
+            model=model,  # Inject from config: a fast-cheap tier model
             messages=[
                 {"role": "system", "content": "Classify sentiment: positive/negative/neutral"},
-                {"role": "user", "content": text}
-            ]
+                {"role": "user", "content": text},
+            ],
         )
         return response.choices[0].message.content
 
-async def classify_batch_parallel(
-    texts: List[str],
-    concurrency: int = 10
-) -> List[str]:
-    """
-    Classify multiple texts in parallel.
-
-    Args:
-        texts: List of texts to classify
-        concurrency: Maximum concurrent requests (default 10)
-
-    Returns:
-        List of classification results
-    """
+async def classify_batch_parallel(texts: list[str], model: str, concurrency: int = 10) -> list[str]:
     semaphore = asyncio.Semaphore(concurrency)
-
-    tasks = [classify_async(text, semaphore) for text in texts]
-    results = await asyncio.gather(*tasks)
-
-    return results
-
-# Example usage
-texts = ["Great product!", "Terrible service.", "It's okay."] * 333  # 1000 texts
-
-# Sequential: 1000 requests × 1 second = 1000 seconds (16.7 minutes)
-# Parallel (concurrency=10): 1000 requests / 10 = 100 seconds (1.7 minutes) - 10× FASTER!
-
-results = asyncio.run(classify_batch_parallel(texts, concurrency=10))
-print(f"Classified {len(results)} texts")
+    tasks = [classify_async(t, semaphore, model) for t in texts]
+    return await asyncio.gather(*tasks)
 ```
 
-**Performance comparison:**
+Concurrency turns wall-clock latency into throughput at the same per-request cost. Tune the semaphore against the provider's published RPM/TPM limits and back off on 429s.
 
-| Approach | Time | Throughput | Cost |
-|----------|------|------------|------|
-| Sequential | 1000s (16.7 min) | 1 req/sec | $2.00 |
-| Parallel (10) | 100s (1.7 min) | 10 req/sec | $2.00 (same!) |
-| Parallel (20) | 50s (0.8 min) | 20 req/sec | $2.00 (same!) |
+### Provider Batch APIs (Offline)
 
-**Key insight:** Parallelization is **free performance**. Same cost, 10-20× faster.
-
-### OpenAI Batch API (Offline Processing)
-
-**Problem:** Real-time API is expensive for large batch jobs.
-
-**Solution:** Batch API (50% cheaper, 24-hour completion window).
+For offline workloads (nightly classification, eval grading, embeddings backfill), use the provider's Batch API. Both OpenAI and Anthropic offer ~50% discount on batch with 24-hour SLAs (verify current discount in provider docs; the headline number is the right order of magnitude but providers do change it).
 
 ```python
-import openai
-import jsonlines
-import time
+# OpenAI Batch (openai>=1.0)
+from openai import OpenAI
+import json
 
-def create_batch_job(texts: List[str], output_file: str = "batch_results.jsonl"):
-    """
-    Submit batch job for offline processing (50% cost reduction).
+client = OpenAI()
 
-    Args:
-        texts: List of texts to process
-        output_file: File to save results
-
-    Returns:
-        Batch job ID
-    """
-    # Step 1: Create batch input file (JSONL format)
-    batch_input = []
+# Build a JSONL file of requests
+with open("batch_input.jsonl", "w") as f:
     for i, text in enumerate(texts):
-        batch_input.append({
-            "custom_id": f"request-{i}",
+        f.write(json.dumps({
+            "custom_id": f"req-{i}",
             "method": "POST",
             "url": "/v1/chat/completions",
             "body": {
-                "model": "gpt-3.5-turbo",
+                "model": model_id_from_config,  # capability-tier lookup
                 "messages": [
-                    {"role": "system", "content": "Classify sentiment: positive/negative/neutral"},
-                    {"role": "user", "content": text}
-                ]
-            }
-        })
+                    {"role": "system", "content": "Classify sentiment."},
+                    {"role": "user", "content": text},
+                ],
+            },
+        }) + "\n")
 
-    # Write to file
-    with jsonlines.open("batch_input.jsonl", "w") as writer:
-        writer.write_all(batch_input)
-
-    # Step 2: Upload file
-    with open("batch_input.jsonl", "rb") as f:
-        file_response = openai.File.create(file=f, purpose="batch")
-
-    # Step 3: Create batch job
-    batch_job = openai.Batch.create(
-        input_file_id=file_response.id,
-        endpoint="/v1/chat/completions",
-        completion_window="24h"  # Complete within 24 hours
-    )
-
-    print(f"Batch job created: {batch_job.id}")
-    print(f"Status: {batch_job.status}")
-
-    return batch_job.id
-
-def check_batch_status(batch_id: str):
-    """Check batch job status."""
-    batch = openai.Batch.retrieve(batch_id)
-
-    print(f"Status: {batch.status}")
-    print(f"Completed: {batch.request_counts.completed}/{batch.request_counts.total}")
-
-    if batch.status == "completed":
-        # Download results
-        result_file_id = batch.output_file_id
-        result = openai.File.download(result_file_id)
-
-        with open("batch_results.jsonl", "wb") as f:
-            f.write(result)
-
-        print(f"Results saved to batch_results.jsonl")
-
-    return batch.status
-
-# Example usage
-texts = ["Great product!"] * 10000  # 10,000 texts
-
-# Submit batch job
-batch_id = create_batch_job(texts)
-
-# Check status (poll every 10 minutes)
-while True:
-    status = check_batch_status(batch_id)
-    if status == "completed":
-        break
-    time.sleep(600)  # Check every 10 minutes
-
-# Cost: $10 (batch API) vs $20 (real-time API) = 50% savings!
+batch_file = client.files.create(file=open("batch_input.jsonl", "rb"), purpose="batch")
+batch_job = client.batches.create(
+    input_file_id=batch_file.id,
+    endpoint="/v1/chat/completions",
+    completion_window="24h",
+)
 ```
 
-**When to use Batch API:**
-
-| Use Case | Real-time API | Batch API |
-|----------|--------------|-----------|
-| User-facing chat | ✓ (latency critical) | ✗ |
-| Document classification (10k docs) | ✗ (expensive) | ✓ (50% cheaper) |
-| Nightly data processing | ✗ | ✓ |
-| A/B test evaluation | ✗ | ✓ |
-| Real-time search | ✓ | ✗ |
-
+| Use Case | Real-time | Batch |
+|----------|-----------|-------|
+| User-facing chat | Yes | No |
+| Document classification (10k+ docs) | No (expensive) | Yes (50% off) |
+| Nightly eval / grading | No | Yes |
+| Embeddings backfill | No | Yes |
 
 ## Part 2: Caching
 
 ### Answer Caching (Repeated Queries)
 
-**Problem:** 60-70% of queries are repeated (FAQs, common questions).
-
-**Solution:** Cache answers for identical queries (60% cost reduction).
+For FAQs and templated queries, a simple key-value cache eliminates repeat work.
 
 ```python
 import hashlib
-import json
 from typing import Optional
 
 class AnswerCache:
     def __init__(self):
-        self.cache = {}  # In-memory cache (use Redis for production)
+        self.cache: dict[str, str] = {}
 
-    def _cache_key(self, query: str, model: str = "gpt-3.5-turbo") -> str:
-        """Generate cache key from query and model."""
-        # Normalize query (lowercase, strip whitespace)
-        normalized = query.lower().strip()
+    def _key(self, query: str, model: str) -> str:
+        return hashlib.sha256(f"{model}:{query.lower().strip()}".encode()).hexdigest()
 
-        # Hash for consistent key
-        key_data = f"{model}:{normalized}"
-        return hashlib.md5(key_data.encode()).hexdigest()
+    def get(self, query: str, model: str) -> Optional[str]:
+        return self.cache.get(self._key(query, model))
 
-    def get(self, query: str, model: str = "gpt-3.5-turbo") -> Optional[str]:
-        """Get cached answer if exists."""
-        key = self._cache_key(query, model)
-        return self.cache.get(key)
-
-    def set(self, query: str, answer: str, model: str = "gpt-3.5-turbo"):
-        """Cache answer for query."""
-        key = self._cache_key(query, model)
-        self.cache[key] = answer
-
-    def stats(self):
-        """Get cache statistics."""
-        return {
-            "cache_size": len(self.cache),
-            "memory_bytes": sum(len(v.encode()) for v in self.cache.values())
-        }
-
-def answer_with_cache(
-    query: str,
-    cache: AnswerCache,
-    model: str = "gpt-3.5-turbo"
-) -> tuple[str, bool]:
-    """
-    Answer query with caching.
-
-    Returns:
-        (answer, cache_hit)
-    """
-    # Check cache
-    cached_answer = cache.get(query, model)
-    if cached_answer:
-        return cached_answer, True  # Cache hit!
-
-    # Cache miss: Generate answer
-    response = openai.ChatCompletion.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": "Answer the question concisely."},
-            {"role": "user", "content": query}
-        ]
-    )
-
-    answer = response.choices[0].message.content
-
-    # Cache for future queries
-    cache.set(query, answer, model)
-
-    return answer, False
-
-# Example usage
-cache = AnswerCache()
-
-queries = [
-    "What is your return policy?",
-    "How do I track my order?",
-    "What is your return policy?",  # Repeated!
-    "Do you offer international shipping?",
-    "What is your return policy?",  # Repeated again!
-]
-
-cache_hits = 0
-cache_misses = 0
-
-for query in queries:
-    answer, is_cache_hit = answer_with_cache(query, cache)
-
-    if is_cache_hit:
-        cache_hits += 1
-        print(f"[CACHE HIT] {query}")
-    else:
-        cache_misses += 1
-        print(f"[CACHE MISS] {query}")
-
-    print(f"Answer: {answer}\n")
-
-print(f"Cache hits: {cache_hits}/{len(queries)} ({cache_hits/len(queries)*100:.1f}%)")
-print(f"Cost savings: {cache_hits/len(queries)*100:.1f}%")
-
-# Output:
-# [CACHE MISS] What is your return policy?
-# [CACHE MISS] How do I track my order?
-# [CACHE HIT] What is your return policy?
-# [CACHE MISS] Do you offer international shipping?
-# [CACHE HIT] What is your return policy?
-# Cache hits: 2/5 (40%)
-# Cost savings: 40%
+    def set(self, query: str, answer: str, model: str) -> None:
+        self.cache[self._key(query, model)] = answer
 ```
 
-**Production caching with Redis:**
-
-```python
-import redis
-import json
-
-class RedisAnswerCache:
-    def __init__(self, redis_url: str = "redis://localhost:6379"):
-        self.redis_client = redis.from_url(redis_url)
-        self.ttl = 86400  # 24 hours
-
-    def _cache_key(self, query: str, model: str) -> str:
-        normalized = query.lower().strip()
-        return f"answer:{model}:{hashlib.md5(normalized.encode()).hexdigest()}"
-
-    def get(self, query: str, model: str = "gpt-3.5-turbo") -> Optional[str]:
-        key = self._cache_key(query, model)
-        cached = self.redis_client.get(key)
-        return cached.decode() if cached else None
-
-    def set(self, query: str, answer: str, model: str = "gpt-3.5-turbo"):
-        key = self._cache_key(query, model)
-        self.redis_client.setex(key, self.ttl, answer)
-
-    def stats(self):
-        return {
-            "cache_size": self.redis_client.dbsize(),
-            "memory_usage": self.redis_client.info("memory")["used_memory_human"]
-        }
-```
+In production, back this with Redis (or a CDN edge cache) and add a TTL. Hit rates of 30-70% are typical for support bots and templated assistants.
 
 ### Prompt Caching (Static Context)
 
-**Problem:** RAG sends same context repeatedly (expensive).
-
-**Solution:** Anthropic prompt caching (90% cost reduction for static context).
+Most providers now offer prompt caching: a marked prefix is stored server-side and reused at a fraction of the input price on subsequent calls. **Cache reads are typically ~10% of the normal input price** (Anthropic's published rate at time of writing); cache writes are typically modestly more expensive than uncached input. Check the provider's pricing page for the current multiplier.
 
 ```python
 import anthropic
 
-def rag_with_prompt_caching(
-    query: str,
-    context: str,  # Static context (knowledge base)
-    model: str = "claude-3-sonnet-20240229"
-):
-    """
-    RAG with prompt caching for static context.
+client = anthropic.Anthropic()
 
-    First query: Full cost (e.g., $0.01)
-    Subsequent queries: 90% discount on cached context (e.g., $0.001)
-    """
-    client = anthropic.Anthropic()
-
+def rag_with_prompt_caching(query: str, context: str, model: str) -> str:
+    """Mark static context as cacheable. First call writes the cache; subsequent
+    calls within the cache TTL read at the discounted rate."""
     response = client.messages.create(
-        model=model,
+        model=model,  # frontier-general or frontier-reasoning per task
         max_tokens=500,
         system=[
-            {
-                "type": "text",
-                "text": "Answer questions using only the provided context.",
-            },
+            {"type": "text", "text": "Answer questions using only the provided context."},
             {
                 "type": "text",
                 "text": f"Context:\n{context}",
-                "cache_control": {"type": "ephemeral"}  # Cache this!
-            }
+                "cache_control": {"type": "ephemeral"},
+            },
         ],
-        messages=[
-            {"role": "user", "content": query}
-        ]
+        messages=[{"role": "user", "content": query}],
     )
-
     return response.content[0].text
-
-# Example
-knowledge_base = """
-[Large knowledge base with 50,000 tokens of product info, policies, FAQs...]
-"""
-
-# Query 1: Full cost (write context to cache)
-answer1 = rag_with_prompt_caching("What is your return policy?", knowledge_base)
-# Cost: Input (50k tokens × $0.003/1k) + Cache write (50k × $0.00375/1k) = $0.34
-
-# Query 2-100: 90% discount on cached context!
-answer2 = rag_with_prompt_caching("How do I track my order?", knowledge_base)
-# Cost: Cached input (50k × $0.0003/1k) + Query (20 tokens × $0.003/1k) = $0.015 + $0.00006 = $0.015
-
-# Savings: Query 2-100 cost $0.015 vs $0.34 = 95.6% reduction per query!
 ```
 
-**When prompt caching is effective:**
+When prompt caching pays:
 
-| Scenario | Static Context | Dynamic Content | Cache Savings |
-|----------|----------------|-----------------|---------------|
-| RAG with knowledge base | 50k tokens (policies, products) | Query (20 tokens) | 95%+ |
-| Multi-turn chat with instructions | 1k tokens (system message) | Conversation (varying) | 60-80% |
-| Document analysis | 10k tokens (document) | Multiple questions | 90%+ |
-| Code review with context | 5k tokens (codebase) | Review comments | 85%+ |
+| Scenario | What's cacheable | Effective discount on prefix |
+|----------|------------------|------------------------------|
+| RAG with stable knowledge base | 50k+ tokens of policies/products | Large — most input is cached |
+| Multi-turn agent with long system prompt + tools | 5-20k tokens of instructions/tool defs | Large after first turn |
+| Document Q&A | 10k+ token document | Large across multiple questions |
+| One-shot, no repetition | None | Caching is net-negative (write cost without read benefit) |
 
+**Cross-ref:** `context-engineering-and-prompt-caching.md` covers cache-key design, TTL selection, cache-segment ordering, breakpoint placement, and cross-provider differences in depth.
 
-## Part 3: Model Routing
+## Part 3: Capability-Tier Routing
 
-### Task-Based Model Selection
+### Task-Based Tier Selection
 
-**Problem:** Using GPT-4 for everything is 10× expensive.
+**Problem:** Using a frontier-reasoning model for simple classification is 10-30× the cost for indistinguishable quality.
 
-**Solution:** Route by task complexity (GPT-3.5 for simple, GPT-4 for complex).
+**Solution:** Route by task type, complexity, and reasoning need to a capability tier; resolve the tier to a current model ID via config.
 
 ```python
 from enum import Enum
-from typing import Dict
+from dataclasses import dataclass
 
 class TaskType(Enum):
     CLASSIFICATION = "classification"
     EXTRACTION = "extraction"
     SUMMARIZATION = "summarization"
     TRANSLATION = "translation"
-    REASONING = "reasoning"
+    REASONING = "reasoning"           # multi-step logic, math, planning
     CREATIVE = "creative"
     CODE_GENERATION = "code_generation"
+    AGENTIC = "agentic"               # tool use, multi-turn planning
 
-class ModelRouter:
-    """Route queries to appropriate model based on task complexity."""
+class Tier(Enum):
+    FRONTIER_REASONING = "frontier-reasoning"
+    FRONTIER_GENERAL = "frontier-general"
+    FAST_CHEAP = "fast-cheap"
+    ON_DEVICE = "on-device"
 
-    # Model configurations
-    MODELS = {
-        "gpt-3.5-turbo": {
-            "cost_per_1k_input": 0.0015,
-            "cost_per_1k_output": 0.002,
-            "latency_factor": 1.0,  # Baseline
-            "quality_score": 0.85
-        },
-        "gpt-4": {
-            "cost_per_1k_input": 0.03,
-            "cost_per_1k_output": 0.06,
-            "latency_factor": 2.5,
-            "quality_score": 0.95
-        },
-        "gpt-4-turbo": {
-            "cost_per_1k_input": 0.01,
-            "cost_per_1k_output": 0.03,
-            "latency_factor": 1.5,
-            "quality_score": 0.94
-        }
-    }
+@dataclass(frozen=True)
+class RouteRequest:
+    task: TaskType
+    complexity: str = "medium"   # "low" | "medium" | "high"
+    latency_budget_ms: int = 5000
+    output_token_budget: int = 500
+    needs_reasoning: bool = False
+    privacy_sensitive: bool = False
 
-    # Task → Model mapping
-    TASK_ROUTING = {
-        TaskType.CLASSIFICATION: "gpt-3.5-turbo",  # Simple task
-        TaskType.EXTRACTION: "gpt-3.5-turbo",
-        TaskType.SUMMARIZATION: "gpt-3.5-turbo",
-        TaskType.TRANSLATION: "gpt-3.5-turbo",
-        TaskType.REASONING: "gpt-4",  # Complex reasoning
-        TaskType.CREATIVE: "gpt-4",  # Better creativity
-        TaskType.CODE_GENERATION: "gpt-4"  # Better coding
+class TierRouter:
+    """Resolve a task to a capability tier. Model IDs come from config, not code."""
+
+    DEFAULT_TIER: dict[TaskType, Tier] = {
+        TaskType.CLASSIFICATION: Tier.FAST_CHEAP,
+        TaskType.EXTRACTION: Tier.FAST_CHEAP,
+        TaskType.SUMMARIZATION: Tier.FAST_CHEAP,
+        TaskType.TRANSLATION: Tier.FAST_CHEAP,
+        TaskType.CREATIVE: Tier.FRONTIER_GENERAL,
+        TaskType.CODE_GENERATION: Tier.FRONTIER_GENERAL,
+        TaskType.REASONING: Tier.FRONTIER_REASONING,
+        TaskType.AGENTIC: Tier.FRONTIER_GENERAL,
     }
 
     @classmethod
-    def route(cls, task_type: TaskType, complexity: str = "medium") -> str:
-        """
-        Route to appropriate model.
+    def route(cls, req: RouteRequest) -> Tier:
+        # Privacy override: pin to local
+        if req.privacy_sensitive:
+            return Tier.ON_DEVICE
 
-        Args:
-            task_type: Type of task
-            complexity: "low", "medium", "high"
+        tier = cls.DEFAULT_TIER[req.task]
 
-        Returns:
-            Model name
-        """
-        base_model = cls.TASK_ROUTING[task_type]
+        # Escalate on high complexity or explicit reasoning need
+        if req.needs_reasoning or req.complexity == "high":
+            if tier == Tier.FAST_CHEAP:
+                tier = Tier.FRONTIER_GENERAL
+            elif tier == Tier.FRONTIER_GENERAL and req.needs_reasoning:
+                tier = Tier.FRONTIER_REASONING
 
-        # Override for high complexity
-        if complexity == "high" and base_model == "gpt-3.5-turbo":
-            return "gpt-4-turbo"  # Upgrade for complex variants
+        # Latency override: reasoning tier blows latency budgets due to thinking tokens
+        if req.latency_budget_ms < 2000 and tier == Tier.FRONTIER_REASONING:
+            tier = Tier.FRONTIER_GENERAL  # Accept some quality loss for SLA
 
-        return base_model
+        # Output volume override: huge outputs on the reasoning tier are expensive;
+        # prefer general unless reasoning is genuinely required
+        if req.output_token_budget > 4000 and tier == Tier.FRONTIER_REASONING and not req.needs_reasoning:
+            tier = Tier.FRONTIER_GENERAL
 
-    @classmethod
-    def calculate_cost(cls, model: str, input_tokens: int, output_tokens: int) -> float:
-        """Calculate cost for model."""
-        config = cls.MODELS[model]
-        input_cost = (input_tokens / 1000) * config["cost_per_1k_input"]
-        output_cost = (output_tokens / 1000) * config["cost_per_1k_output"]
-        return input_cost + output_cost
+        return tier
 
-    @classmethod
-    def compare_models(cls, task_type: TaskType, input_tokens: int = 500, output_tokens: int = 200):
-        """Compare models for a task."""
-        print(f"\nTask: {task_type.value}")
-        print(f"Input: {input_tokens} tokens, Output: {output_tokens} tokens\n")
-
-        for model_name, config in cls.MODELS.items():
-            cost = cls.calculate_cost(model_name, input_tokens, output_tokens)
-            quality = config["quality_score"]
-            latency = config["latency_factor"]
-
-            print(f"{model_name}:")
-            print(f"  Cost: ${cost:.4f}")
-            print(f"  Quality: {quality:.0%}")
-            print(f"  Latency: {latency:.1f}× baseline")
-            print(f"  Cost per quality point: ${cost/quality:.4f}\n")
-
-# Example usage
-router = ModelRouter()
-
-# Classification task
-model = router.route(TaskType.CLASSIFICATION, complexity="low")
-print(f"Classification → {model}")  # gpt-3.5-turbo
-
-# Complex reasoning task
-model = router.route(TaskType.REASONING, complexity="high")
-print(f"Complex reasoning → {model}")  # gpt-4
-
-# Compare costs
-router.compare_models(TaskType.CLASSIFICATION, input_tokens=500, output_tokens=200)
-# Output:
-# gpt-3.5-turbo: $0.0015 (Cost per quality: $0.0018)
-# gpt-4: $0.0270 (Cost per quality: $0.0284) - 18× more expensive!
-# Recommendation: Use GPT-3.5 for classification (18× cheaper, acceptable quality)
+# Usage: resolve to a current model ID via your config layer
+MODEL_FOR_TIER = {
+    Tier.FRONTIER_REASONING: os.getenv("MODEL_FRONTIER_REASONING"),
+    Tier.FRONTIER_GENERAL: os.getenv("MODEL_FRONTIER_GENERAL"),
+    Tier.FAST_CHEAP: os.getenv("MODEL_FAST_CHEAP"),
+    Tier.ON_DEVICE: os.getenv("MODEL_ON_DEVICE"),
+}
 ```
 
-### Model Cascade (Try Cheap First)
+Decision criteria, in priority order:
 
-**Problem:** Don't know if task needs GPT-4 until you try.
+1. **Privacy / data residency** — forces on-device.
+2. **Reasoning need** — multi-step logic, math, code planning → frontier-reasoning. See `reasoning-models.md` for when reasoning models actually help vs. hurt.
+3. **Output-token volume** — extended-thinking models burn output tokens on hidden reasoning; for high-volume bulk output, prefer frontier-general.
+4. **Latency budget** — reasoning models have minimum latency floors (often several seconds) regardless of prompt size.
+5. **Cost budget** — at high QPS, fast-cheap is the only tier that pencils out for non-reasoning tasks.
+6. **Task complexity** — escalate one tier on high complexity.
 
-**Solution:** Try GPT-3.5, escalate to GPT-4 if unsatisfied.
+### Tier Cascade (Try Cheap First)
+
+For workloads where most queries are easy but a tail is hard, try fast-cheap first and escalate on a quality signal (low judge score, parsing failure, model-emitted "I'm not sure").
 
 ```python
-def cascade_generation(
-    prompt: str,
-    quality_threshold: float = 0.8,
-    max_attempts: int = 2
-) -> tuple[str, str, float]:
-    """
-    Try cheaper model first, escalate if quality insufficient.
-
-    Args:
-        prompt: User prompt
-        quality_threshold: Minimum quality score (0-1)
-        max_attempts: Max escalation attempts
-
-    Returns:
-        (response, model_used, estimated_quality)
-    """
-    models = ["gpt-3.5-turbo", "gpt-4-turbo", "gpt-4"]
-
-    for i, model in enumerate(models[:max_attempts]):
-        response = openai.ChatCompletion.create(
-            model=model,
-            messages=[{"role": "user", "content": prompt}]
-        )
-
-        result = response.choices[0].message.content
-
-        # Estimate quality (simplified - use LLM-as-judge in production)
-        quality = estimate_quality(result, prompt)
-
-        if quality >= quality_threshold:
-            print(f"✓ {model} met quality threshold ({quality:.2f} >= {quality_threshold})")
-            return result, model, quality
-        else:
-            print(f"✗ {model} below threshold ({quality:.2f} < {quality_threshold}), escalating...")
-
-    # Return best attempt even if below threshold
-    return result, models[max_attempts-1], quality
-
-def estimate_quality(response: str, prompt: str) -> float:
-    """
-    Estimate quality score (0-1).
-
-    Production: Use LLM-as-judge or other quality metrics.
-    """
-    # Simplified heuristic
-    if len(response) < 20:
-        return 0.3  # Too short
-    elif len(response) > 500:
-        return 0.9  # Detailed
-    else:
-        return 0.7  # Moderate
-
-# Example
-prompt = "Explain quantum entanglement in simple terms."
-
-result, model, quality = cascade_generation(prompt, quality_threshold=0.8)
-
-print(f"\nFinal result:")
-print(f"Model: {model}")
-print(f"Quality: {quality:.2f}")
-print(f"Response: {result[:200]}...")
-
-# Average case: GPT-3.5 suffices (90% of queries)
-# Cost: $0.002 per query
-
-# Complex case: Escalate to GPT-4 (10% of queries)
-# Cost: $0.002 (GPT-3.5 attempt) + $0.030 (GPT-4) = $0.032
-
-# Overall cost: 0.9 × $0.002 + 0.1 × $0.032 = $0.0018 + $0.0032 = $0.005
-# vs Always GPT-4: $0.030
-# Savings: 83%!
+def cascade_generation(prompt: str, judge_fn, threshold: float = 0.8) -> tuple[str, Tier]:
+    """Try fast-cheap → frontier-general → frontier-reasoning, escalating only on need."""
+    for tier in [Tier.FAST_CHEAP, Tier.FRONTIER_GENERAL, Tier.FRONTIER_REASONING]:
+        result = call_model(MODEL_FOR_TIER[tier], prompt)
+        if judge_fn(result, prompt) >= threshold:
+            return result, tier
+    return result, Tier.FRONTIER_REASONING
 ```
 
+If only ~10% of queries escalate, average cost stays close to fast-cheap while tail-quality reaches frontier-reasoning.
 
 ## Part 4: Streaming
 
-### Streaming for Long-Form Generation
-
-**Problem:** 20-second wait for full article (40% bounce rate).
-
-**Solution:** Stream tokens as generated (perceived latency: 0.5s).
+Token streaming converts a long generation wait into a smooth perceived experience. First-token latency replaces full-response latency as the user-visible metric.
 
 ```python
-import openai
+from openai import OpenAI
 
-def generate_streaming(prompt: str, model: str = "gpt-4"):
-    """
-    Generate response with streaming.
+client = OpenAI()
 
-    Benefits:
-    - First token in 0.5s (vs 20s wait)
-    - User sees progress (engagement)
-    - Can cancel early if needed
-    """
-    response = openai.ChatCompletion.create(
+def stream_response(prompt: str, model: str):
+    stream = client.chat.completions.create(
         model=model,
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=2000,
-        stream=True  # Enable streaming
+        stream=True,
     )
-
-    full_response = ""
-
-    for chunk in response:
-        if chunk.choices[0].delta.get("content"):
-            token = chunk.choices[0].delta.content
-            full_response += token
-            print(token, end="", flush=True)  # Display immediately
-
-    print()  # Newline
-    return full_response
-
-# Example
-prompt = "Write a detailed article about the history of artificial intelligence."
-
-# Without streaming: Wait 20s, then see full article
-# With streaming: See first words in 0.5s, smooth streaming for 20s
-article = generate_streaming(prompt)
-
-# User experience improvement:
-# - Perceived latency: 20s → 0.5s (40× better!)
-# - Bounce rate: 40% → 5% (35pp improvement!)
-# - Satisfaction: 3.2/5 → 4.3/5 (+1.1 points!)
+    for chunk in stream:
+        delta = chunk.choices[0].delta.content
+        if delta:
+            yield delta
 ```
 
-### Streaming in Web Applications
+For web apps, expose this via Server-Sent Events (SSE) or HTTP/2 streaming; mobile clients can use the OpenAI/Anthropic SDK's native iterator. Stream both for chat UX and for long-form generation (articles, code, plans).
 
-**Flask with Server-Sent Events (SSE):**
+## Part 5: Serving Stack (Self-Hosted Inference)
+
+When you run open-weights models yourself, the serving stack determines throughput, latency-under-load, and which optimizations are even available. The major engines:
+
+### vLLM
+
+**When to use:** Default first choice for a self-hosted production server on NVIDIA GPUs (and increasingly AMD MI300/Intel/TPU). Broadest model coverage of any high-perf engine.
+
+**Headline feature:** **PagedAttention** — manages the KV cache as fixed-size pages with an OS-style page table, eliminating fragmentation and enabling KV-cache sharing across requests. Introduced in Kwon et al., "Efficient Memory Management for Large Language Model Serving with PagedAttention," SOSP 2023 ([arXiv:2309.06180](https://arxiv.org/abs/2309.06180)).
+
+**Key knobs:** `--gpu-memory-utilization`, `--max-num-batched-tokens`, `--max-model-len`, `--enable-prefix-caching`, tensor / pipeline parallelism via `--tensor-parallel-size`.
+
+**Hardware:** NVIDIA (primary), AMD ROCm, Intel Gaudi/XPU, AWS Neuron, TPU (varying maturity).
+
+**Repo:** [github.com/vllm-project/vllm](https://github.com/vllm-project/vllm).
+
+### SGLang
+
+**When to use:** Workloads with heavy shared-prefix reuse — agent frameworks where many requests share the same long system prompt and tool definitions, structured-output workloads, multi-turn conversations.
+
+**Headline feature:** **RadixAttention** — KV cache is stored in a radix tree keyed on token sequence; any prefix shared across requests is cached and reused automatically (LRU-evicted). Strong gains on prefix-heavy traffic; minimal benefit on all-unique prompts. Zheng et al., "SGLang: Efficient Execution of Structured Language Model Programs" ([arXiv:2312.07104](https://arxiv.org/abs/2312.07104)).
+
+**Key knobs:** `--mem-fraction-static`, `--max-running-requests`, schedule policy, structured-output backends (XGrammar/outlines).
+
+**Hardware:** NVIDIA, AMD.
+
+**Repo:** [github.com/sgl-project/sglang](https://github.com/sgl-project/sglang).
+
+### TensorRT-LLM
+
+**When to use:** Maximum throughput on NVIDIA H100/H200/B200 in a stable production deployment where you can pay the build-time cost and accept narrower model support.
+
+**Headline feature:** Ahead-of-time engine compilation with kernel fusion, FP8/INT4/INT8 quantization, in-flight batching, speculative decoding (Medusa, EAGLE, draft-target), and custom CUDA kernels per architecture. Per published H100 benchmarks, TensorRT-LLM typically leads vLLM at high concurrency once compiled.
+
+**Key knobs:** Engine build flags (precision, max batch, max input/output, KV-cache reuse), runtime `kv_cache_free_gpu_memory_fraction`, parallelism config.
+
+**Hardware:** NVIDIA only (H100/H200/B200 sweet spot; A100 supported).
+
+**Docs:** [nvidia.github.io/TensorRT-LLM](https://nvidia.github.io/TensorRT-LLM/).
+
+### TGI (Text Generation Inference)
+
+**When to use:** Hugging Face ecosystem integration, Inference Endpoints, multi-backend deployments where you want one frontend that can swap between TRT-LLM, vLLM, or llama.cpp behind a stable API.
+
+**Headline feature:** Production-grade Rust/Python server with continuous batching, tensor parallelism, and a multi-backend architecture letting you route workloads to vLLM/TRT-LLM/llama.cpp without changing client code. See HF's "Introducing multi-backends for Text Generation Inference" announcement.
+
+**Key knobs:** `--backend`, `--max-batch-prefill-tokens`, `--max-input-tokens`, `--max-total-tokens`, quantization flags.
+
+**Hardware:** NVIDIA, AMD ROCm, Intel, AWS Inferentia/Trainium.
+
+**Repo:** [github.com/huggingface/text-generation-inference](https://github.com/huggingface/text-generation-inference).
+
+### llama.cpp
+
+**When to use:** CPU-only or hybrid CPU+GPU inference; Apple Silicon (Metal); edge devices; absolute portability; the GGUF model ecosystem.
+
+**Headline feature:** **GGUF format + k-quants** — hierarchical affine quantization (Q2_K through Q8_0) with block-level scale/min metadata, enabling 2-8 bit quantization with graceful quality degradation. CPU+GPU split (`-ngl` layers offloaded to GPU) is unique in the ecosystem.
+
+**Key knobs:** `-ngl` (GPU layers), `-c` (context), `-t` (threads), quantization variant (Q4_K_M is the common sweet spot), `--mmap`.
+
+**Hardware:** CPU (x86, ARM), NVIDIA, AMD, Apple Metal, Vulkan.
+
+**Repo:** [github.com/ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp).
+
+### ExLlamaV2
+
+**When to use:** Single-GPU or small-multi-GPU consumer/prosumer setups (4090, 5090, A6000) running quantized open-weights models with maximum throughput-per-VRAM.
+
+**Headline feature:** **EXL2 quantization format** — mixed-precision per-layer (different bits per tensor based on sensitivity), tightly integrated CUDA kernels, very low memory overhead. Strongest single-user throughput on consumer GPUs in its class.
+
+**Key knobs:** Quantization bpw (bits-per-weight), `max_seq_len`, batch size (small batches are its strength).
+
+**Hardware:** NVIDIA (consumer + datacenter), AMD ROCm.
+
+**Repo:** [github.com/turboderp-org/exllamav2](https://github.com/turboderp-org/exllamav2).
+
+### MLC-LLM
+
+**When to use:** Cross-platform client-side deployment — browser (WebGPU), iOS, Android, embedded — where you cannot assume server inference. Universal compilation via Apache TVM.
+
+**Headline feature:** TVM-based compilation pipeline targets every major runtime (CUDA, Metal, Vulkan, WebGPU, OpenCL) from a single source. The only mainstream stack with first-class WebGPU and mobile support.
+
+**Key knobs:** Target runtime, quantization mode (q4f16_1 is common), KV-cache config.
+
+**Hardware:** Everything. Literally.
+
+**Repo:** [github.com/mlc-ai/mlc-llm](https://github.com/mlc-ai/mlc-llm).
+
+### Picking a Stack
+
+| You need… | Pick |
+|-----------|------|
+| Fastest path to production on NVIDIA, broad model support | **vLLM** |
+| Heavy shared-prefix workloads (agents, structured output) | **SGLang** |
+| Absolute peak NVIDIA throughput, willing to compile | **TensorRT-LLM** |
+| HF ecosystem, multi-backend abstraction | **TGI** |
+| CPU / Apple Silicon / edge / GGUF | **llama.cpp** |
+| Maxing a single consumer GPU on quantized models | **ExLlamaV2** |
+| Browser / mobile / cross-platform client | **MLC-LLM** |
+
+**Cross-ref:** `yzmir-ml-production` (`optimize-inference`, `deploy-model`) covers ops-level concerns — autoscaling, rolling deploys, GPU scheduling, multi-tenant SLOs — in depth. This sheet covers stack selection and inference-time techniques.
+
+## Part 6: Continuous (In-Flight) Batching
+
+**Static batching** locks the GPU to a fixed batch until the slowest sequence finishes — short requests sit idle waiting for long ones.
+
+**Dynamic batching** groups requests that arrive close in time but still runs them as a single locked unit until completion.
+
+**Continuous batching** (also called "in-flight batching", "iteration-level scheduling") evaluates the queue *after every forward pass*. As soon as a sequence finishes, its slot is filled by a waiting request on the next iteration. Combined with PagedAttention's paged KV cache, this drives 2-10× throughput improvements over static batching at the same latency. Popularized by vLLM and now standard in TensorRT-LLM ("in-flight batching"), TGI, and SGLang. See the PagedAttention paper ([arXiv:2309.06180](https://arxiv.org/abs/2309.06180)) for the foundational treatment.
+
+You don't typically configure continuous batching directly — picking a modern serving engine gives it to you. What you tune are the knobs that govern how aggressively the scheduler packs the batch (`--max-num-batched-tokens`, `--max-num-seqs` in vLLM; equivalents in other engines).
+
+## Part 7: Speculative Decoding
+
+Speculative decoding accelerates autoregressive generation by guessing several tokens ahead with a cheap process and verifying them with the target model in parallel. Verified prefixes are accepted; the first rejection rolls back to standard generation. Throughput gains of 2-3× are common; quality is mathematically identical to the target model's distribution under standard speculative-sampling acceptance rules.
+
+### Draft-Target (Classic)
+
+A small draft model proposes K tokens; the large target model scores them in one forward pass and accepts the longest valid prefix. Choose a draft model that's much smaller than the target but trained on similar data (e.g., a 1B draft for a 70B target from the same family).
+
+**When to use:** When a small same-family model is available; simplest to deploy.
+**Trade-off:** Draft quality matters — too dissimilar a draft = low acceptance rate = no speedup.
+
+### Medusa
+
+**Pattern:** Add multiple small "heads" on top of the target model, each predicting a future position (head k predicts token at position +k). At inference, all heads predict in parallel; the target verifies them in tree-attention mode. No separate draft model needed. Cai et al., "Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads," [arXiv:2401.10774](https://arxiv.org/abs/2401.10774).
+
+**When to use:** You can fine-tune extra heads on the target; want to avoid running a second model.
+**Trade-off:** Heads must be trained; modest VRAM overhead.
+
+### EAGLE / EAGLE-2 / EAGLE-3
+
+**Pattern:** Draft is performed at the *feature* level (penultimate hidden state) rather than the token level, then projected through the target's LM head — better acceptance than naive draft-target at similar cost. EAGLE-2 adds a context-dependent dynamic draft tree; EAGLE-3 removes a feature-prediction objective that was hurting larger models. Reported ~3-6× speedups on standard benchmarks. Li et al., "EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty," [arXiv:2401.15077](https://arxiv.org/abs/2401.15077); EAGLE-2 [arXiv:2406.16858](https://arxiv.org/abs/2406.16858); EAGLE-3 [arXiv:2503.01840](https://arxiv.org/abs/2503.01840).
+
+**When to use:** You want the highest published acceptance rates and can train an EAGLE head against your target. Now natively supported by vLLM, SGLang, and TensorRT-LLM.
+**Trade-off:** Training the EAGLE module requires target-model logits/features.
+
+### Decision Criteria
+
+| Situation | Method |
+|-----------|--------|
+| Small same-family draft model already exists | Draft-target |
+| Cannot run a second model; can fine-tune | Medusa |
+| Want best published acceptance, can train | EAGLE-2/3 |
+| Latency-sensitive serving on TRT-LLM/vLLM | Whatever the engine has built in |
+
+If your serving engine ships with one of these enabled, that's almost always the right starting point.
+
+## Part 8: Quantization for Inference (Naming Only — See ML-Production)
+
+For LLM inference specifically, the relevant formats:
+
+- **AWQ (Activation-aware Weight Quantization)** — protects the ~1% most salient weights based on activation statistics; very fast quantization, no backprop. Strong default for 4-bit weight-only on GPU. Lin et al., [arXiv:2306.00978](https://arxiv.org/abs/2306.00978).
+- **GPTQ** — second-order, layer-by-layer post-training quantization; widely supported. Frantar et al., [arXiv:2210.17323](https://arxiv.org/abs/2210.17323).
+- **FP8** — NVIDIA H100/H200 native 8-bit float. Near-BF16 quality at half the memory and bandwidth; often the best speed/quality combo on H100+ in TensorRT-LLM and vLLM.
+- **GGUF k-quants** — llama.cpp's hierarchical affine quantizer (Q2_K through Q8_0). Q4_K_M is the everyday sweet spot for CPU/edge.
+
+When to use what, in inference terms:
+
+| Setup | Quantization choice |
+|-------|---------------------|
+| H100/H200/B200 production serving | FP8 (TensorRT-LLM or vLLM) |
+| A100/L40S serving, open-weights | AWQ-int4 or GPTQ-int4 in vLLM/SGLang |
+| Consumer GPU single-user | EXL2 (ExLlamaV2) or AWQ |
+| CPU / Mac / edge | GGUF Q4_K_M (llama.cpp) |
+| Quality-first, willing to spend VRAM | BF16 or FP8 (no INT4) |
+
+**Cross-ref:** `yzmir-ml-production` covers quantization ops in depth — calibration data selection, accuracy-vs-throughput sweeps, mixed-precision strategies, INT4 vs INT8 vs FP8 trade-offs, and validation methodology.
+
+## Part 9: Cost-Latency-Quality Trade-offs
+
+### Multi-Objective (Pareto) Analysis
 
 ```python
-from flask import Flask, Response, request
-import openai
+from dataclasses import dataclass
 
-app = Flask(__name__)
+@dataclass(frozen=True)
+class Option:
+    name: str
+    latency_p95_s: float
+    relative_cost: float    # arbitrary unit; compare options to each other
+    quality: float          # 0-1
 
-@app.route('/generate', methods=['POST'])
-def generate_stream():
-    """Stream generation results to frontend."""
-    prompt = request.json.get('prompt')
-
-    def event_stream():
-        """Generator for SSE."""
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[{"role": "user", "content": prompt}],
-            stream=True
+    def dominates(self, other: "Option") -> bool:
+        better_or_equal = (
+            self.latency_p95_s <= other.latency_p95_s
+            and self.relative_cost <= other.relative_cost
+            and self.quality >= other.quality
         )
-
-        for chunk in response:
-            if chunk.choices[0].delta.get("content"):
-                token = chunk.choices[0].delta.content
-                # SSE format: "data: {content}\n\n"
-                yield f"data: {token}\n\n"
-
-        # Signal completion
-        yield "data: [DONE]\n\n"
-
-    return Response(event_stream(), mimetype="text/event-stream")
-
-# Frontend (JavaScript):
-"""
-const eventSource = new EventSource('/generate', {
-    method: 'POST',
-    body: JSON.stringify({prompt: userPrompt})
-});
-
-eventSource.onmessage = (event) => {
-    if (event.data === '[DONE]') {
-        eventSource.close();
-    } else {
-        // Append token to display
-        document.getElementById('output').innerText += event.data;
-    }
-};
-"""
-```
-
-
-## Part 5: Cost-Latency-Quality Trade-offs
-
-### Multi-Objective Optimization
-
-**Problem:** Optimizing single objective (cost OR latency) leads to poor trade-offs.
-
-**Solution:** Pareto analysis to find balanced solutions.
-
-```python
-import numpy as np
-from typing import List, Dict
-
-class OptimizationOption:
-    def __init__(
-        self,
-        name: str,
-        latency_p95: float,  # seconds
-        cost_per_1k: float,  # dollars
-        quality_score: float  # 0-1
-    ):
-        self.name = name
-        self.latency_p95 = latency_p95
-        self.cost_per_1k = cost_per_1k
-        self.quality_score = quality_score
-
-    def dominates(self, other: 'OptimizationOption') -> bool:
-        """Check if this option dominates another (Pareto dominance)."""
-        # Dominate if: better or equal in all dimensions, strictly better in at least one
-        better_latency = self.latency_p95 <= other.latency_p95
-        better_cost = self.cost_per_1k <= other.cost_per_1k
-        better_quality = self.quality_score >= other.quality_score
-
         strictly_better = (
-            self.latency_p95 < other.latency_p95 or
-            self.cost_per_1k < other.cost_per_1k or
-            self.quality_score > other.quality_score
+            self.latency_p95_s < other.latency_p95_s
+            or self.relative_cost < other.relative_cost
+            or self.quality > other.quality
         )
+        return better_or_equal and strictly_better
 
-        return better_latency and better_cost and better_quality and strictly_better
-
-    def __repr__(self):
-        return f"{self.name}: {self.latency_p95:.2f}s, ${self.cost_per_1k:.3f}/1k, {self.quality_score:.2f} quality"
-
-def find_pareto_optimal(options: List[OptimizationOption]) -> List[OptimizationOption]:
-    """Find Pareto optimal solutions (non-dominated options)."""
-    pareto_optimal = []
-
-    for option in options:
-        is_dominated = False
-        for other in options:
-            if other.dominates(option):
-                is_dominated = True
-                break
-
-        if not is_dominated:
-            pareto_optimal.append(option)
-
-    return pareto_optimal
-
-# Example: RAG chatbot optimization
-options = [
-    OptimizationOption("GPT-4, no caching", latency_p95=2.5, cost_per_1k=10.0, quality_score=0.92),
-    OptimizationOption("GPT-3.5, no caching", latency_p95=0.8, cost_per_1k=2.0, quality_score=0.78),
-    OptimizationOption("GPT-3.5 + caching", latency_p95=0.6, cost_per_1k=1.2, quality_score=0.78),
-    OptimizationOption("GPT-3.5 + caching + prompt eng", latency_p95=0.7, cost_per_1k=1.3, quality_score=0.85),
-    OptimizationOption("GPT-4 + caching", latency_p95=2.0, cost_per_1k=6.0, quality_score=0.92),
-    OptimizationOption("GPT-4-turbo + caching", latency_p95=1.2, cost_per_1k=4.0, quality_score=0.90),
-]
-
-# Find Pareto optimal
-pareto = find_pareto_optimal(options)
-
-print("Pareto Optimal Solutions:")
-for opt in pareto:
-    print(f"  {opt}")
-
-# Output:
-# Pareto Optimal Solutions:
-#   GPT-3.5 + caching + prompt eng: 0.70s, $1.300/1k, 0.85 quality
-#   GPT-4-turbo + caching: 1.20s, $4.000/1k, 0.90 quality
-#   GPT-4 + caching: 2.00s, $6.000/1k, 0.92 quality
-
-# Interpretation:
-# - If budget-conscious: GPT-3.5 + caching + prompt eng ($1.30/1k, 0.85 quality)
-# - If quality-critical: GPT-4-turbo + caching ($4/1k, 0.90 quality, faster than GPT-4)
-# - If maximum quality needed: GPT-4 + caching ($6/1k, 0.92 quality)
+def pareto_frontier(options: list[Option]) -> list[Option]:
+    return [o for o in options if not any(other.dominates(o) for other in options)]
 ```
+
+Use **relative-cost** units (multiples of your fast-cheap baseline) rather than dollar values — provider pricing changes, but cost ratios between tiers move slowly.
 
 ### Requirements-Based Selection
 
 ```python
-def select_optimal_solution(
-    options: List[OptimizationOption],
-    max_latency: float = None,
-    max_cost: float = None,
-    min_quality: float = None
-) -> OptimizationOption:
-    """
-    Select optimal solution given constraints.
-
-    Args:
-        options: Available options
-        max_latency: Maximum acceptable latency (seconds)
-        max_cost: Maximum cost per 1k queries (dollars)
-        min_quality: Minimum quality score (0-1)
-
-    Returns:
-        Best option meeting all constraints
-    """
-    # Filter options meeting constraints
-    feasible = []
-    for opt in options:
-        meets_latency = max_latency is None or opt.latency_p95 <= max_latency
-        meets_cost = max_cost is None or opt.cost_per_1k <= max_cost
-        meets_quality = min_quality is None or opt.quality_score >= min_quality
-
-        if meets_latency and meets_cost and meets_quality:
-            feasible.append(opt)
-
+def select(options: list[Option], max_latency: float, max_cost: float, min_quality: float) -> Option:
+    feasible = [
+        o for o in options
+        if o.latency_p95_s <= max_latency and o.relative_cost <= max_cost and o.quality >= min_quality
+    ]
     if not feasible:
-        raise ValueError("No solution meets all constraints")
-
-    # Among feasible, select best cost-quality trade-off
-    best = min(feasible, key=lambda opt: opt.cost_per_1k / opt.quality_score)
-
-    return best
-
-# Example: Requirements
-requirements = {
-    "max_latency": 1.0,  # Must respond within 1 second
-    "max_cost": 5.0,     # Budget: $5 per 1k queries
-    "min_quality": 0.85  # Minimum 85% quality
-}
-
-selected = select_optimal_solution(
-    options,
-    max_latency=requirements["max_latency"],
-    max_cost=requirements["max_cost"],
-    min_quality=requirements["min_quality"]
-)
-
-print(f"Selected solution: {selected}")
-# Output: GPT-3.5 + caching + prompt eng: 0.70s, $1.300/1k, 0.85 quality
-# (Meets all constraints, most cost-effective)
+        raise ValueError("No option meets all constraints")
+    return min(feasible, key=lambda o: o.relative_cost / o.quality)
 ```
 
-
-## Part 6: Production Monitoring
-
-### Performance Metrics Tracking
+## Part 10: Production Monitoring
 
 ```python
-import time
-from dataclasses import dataclass
-from typing import List
+from dataclasses import dataclass, field
+from collections import deque
 import numpy as np
 
 @dataclass
 class QueryMetrics:
-    """Metrics for a single query."""
     latency_ms: float
     input_tokens: int
     output_tokens: int
-    cost: float
+    cached_input_tokens: int
+    relative_cost: float
     cache_hit: bool
-    model: str
+    tier: str
+    model_id: str
 
 class PerformanceMonitor:
-    """Track and analyze performance metrics."""
+    def __init__(self, window: int = 10000):
+        self.metrics: deque[QueryMetrics] = deque(maxlen=window)
 
-    def __init__(self):
-        self.metrics: List[QueryMetrics] = []
+    def log(self, m: QueryMetrics) -> None:
+        self.metrics.append(m)
 
-    def log_query(
-        self,
-        latency_ms: float,
-        input_tokens: int,
-        output_tokens: int,
-        cost: float,
-        cache_hit: bool,
-        model: str
-    ):
-        """Log query metrics."""
-        self.metrics.append(QueryMetrics(
-            latency_ms=latency_ms,
-            input_tokens=input_tokens,
-            output_tokens=output_tokens,
-            cost=cost,
-            cache_hit=cache_hit,
-            model=model
-        ))
-
-    def summary(self) -> Dict:
-        """Generate summary statistics."""
+    def summary(self) -> dict:
         if not self.metrics:
             return {}
-
-        latencies = [m.latency_ms for m in self.metrics]
-        costs = [m.cost for m in self.metrics]
-        cache_hits = [m.cache_hit for m in self.metrics]
-
+        lat = [m.latency_ms for m in self.metrics]
         return {
-            "total_queries": len(self.metrics),
-            "latency_p50": np.percentile(latencies, 50),
-            "latency_p95": np.percentile(latencies, 95),
-            "latency_p99": np.percentile(latencies, 99),
-            "avg_cost": np.mean(costs),
-            "total_cost": np.sum(costs),
-            "cache_hit_rate": np.mean(cache_hits) * 100,
-            "queries_per_model": self._count_by_model()
+            "n": len(self.metrics),
+            "p50_ms": float(np.percentile(lat, 50)),
+            "p95_ms": float(np.percentile(lat, 95)),
+            "p99_ms": float(np.percentile(lat, 99)),
+            "cache_hit_rate": float(np.mean([m.cache_hit for m in self.metrics])),
+            "cache_token_share": float(
+                sum(m.cached_input_tokens for m in self.metrics)
+                / max(1, sum(m.input_tokens for m in self.metrics))
+            ),
+            "by_tier": self._by("tier"),
+            "by_model": self._by("model_id"),
         }
 
-    def _count_by_model(self) -> Dict[str, int]:
-        """Count queries by model."""
-        counts = {}
+    def _by(self, attr: str) -> dict[str, int]:
+        out: dict[str, int] = {}
         for m in self.metrics:
-            counts[m.model] = counts.get(m.model, 0) + 1
-        return counts
-
-# Example usage
-monitor = PerformanceMonitor()
-
-# Simulate queries
-for i in range(1000):
-    cache_hit = np.random.random() < 0.6  # 60% cache hit rate
-    latency = 100 if cache_hit else 800  # Cache: 100ms, API: 800ms
-    cost = 0 if cache_hit else 0.002
-
-    monitor.log_query(
-        latency_ms=latency,
-        input_tokens=500,
-        output_tokens=200,
-        cost=cost,
-        cache_hit=cache_hit,
-        model="gpt-3.5-turbo"
-    )
-
-# Generate summary
-summary = monitor.summary()
-
-print("Performance Summary:")
-print(f"  Total queries: {summary['total_queries']}")
-print(f"  Latency P50: {summary['latency_p50']:.0f}ms")
-print(f"  Latency P95: {summary['latency_p95']:.0f}ms")
-print(f"  Avg cost: ${summary['avg_cost']:.4f}")
-print(f"  Total cost: ${summary['total_cost']:.2f}")
-print(f"  Cache hit rate: {summary['cache_hit_rate']:.1f}%")
+            k = getattr(m, attr)
+            out[k] = out.get(k, 0) + 1
+        return out
 ```
 
+Track per-tier latency/cost so a router change is auditable. Watch `cache_token_share` — if it drops, your prompt structure has drifted (a cache key changed) and your costs will jump.
 
 ## Summary
 
-**Inference optimization is systematic, not ad-hoc.**
+**Inference optimization is systematic.**
 
-**Core techniques:**
-1. **Parallelization:** Async/await (10× throughput), Batch API (50% cheaper)
-2. **Caching:** Answer caching (60% savings), Prompt caching (90% savings)
-3. **Model routing:** GPT-3.5 for simple tasks (10× cheaper), GPT-4 for complex
-4. **Streaming:** First token in 0.5s (vs 20s wait), 35pp better completion rate
-5. **Multi-objective:** Pareto analysis (balance cost-latency-quality)
+1. **Parallelize** with async/await and a semaphore; use Batch APIs for offline.
+2. **Cache** answers (hot keys) and prompts (static prefixes — see `context-engineering-and-prompt-caching.md`).
+3. **Route by capability tier** (frontier-reasoning / frontier-general / fast-cheap / on-device); never hardcode model IDs; resolve via config.
+4. **Stream** long generations.
+5. **Pick the right serving stack** for self-hosted: vLLM (default), SGLang (prefix reuse), TensorRT-LLM (peak NVIDIA), TGI (HF ecosystem), llama.cpp (CPU/edge), ExLlamaV2 (single GPU), MLC-LLM (cross-platform).
+6. **Use continuous batching, speculative decoding, and quantization** as supported by your stack — these are 2-10× multipliers, not optional polish.
+7. **Pareto** the cost-latency-quality space; select against explicit constraints.
+8. **Monitor** per-tier metrics and cache-hit rates in production.
 
-**Checklist:**
-1. ✓ Measure baseline (latency, cost, quality)
-2. ✓ Set requirements (acceptable latency, budget, quality threshold)
-3. ✓ Parallelize batch processing (10× throughput)
-4. ✓ Implement caching (60-90% cost savings)
-5. ✓ Route by task complexity (10× cost savings)
-6. ✓ Stream long responses (better UX)
-7. ✓ Analyze cost-latency-quality trade-offs (Pareto optimal)
-8. ✓ Monitor production metrics (track improvements)
+**Cross-references:**
+- `yzmir-ml-production` — serving stack ops, autoscaling, quantization ops detail.
+- `context-engineering-and-prompt-caching.md` — prompt caching design depth.
+- `reasoning-models.md` — when frontier-reasoning actually helps.
+- `agentic-patterns-and-mcp.md` — agentic workloads (heavy prefix reuse → SGLang).
+- `ordis-security-architect` — LLM threat modeling for serving infrastructure.
 
-Production-ready performance requires deliberate optimization across multiple dimensions.
+---
+
+*Model lineup current as of 2026-05; revisit quarterly.*

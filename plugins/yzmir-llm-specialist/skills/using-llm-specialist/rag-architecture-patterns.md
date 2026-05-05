@@ -5,21 +5,22 @@
 
 You're building a RAG (Retrieval-Augmented Generation) system to give LLMs access to external knowledge. Common mistakes:
 - **No chunking strategy** (full docs → overflow, poor precision)
-- **Poor retrieval** (cosine similarity alone → misses exact matches)
+- **Naive dense-only retrieval** (cosine similarity alone → misses exact matches, IDs, rare terms)
 - **No re-ranking** (irrelevant results prioritized)
 - **No evaluation** (can't measure or optimize quality)
-- **Context overflow** (too many chunks → cost, latency, 'lost in middle')
+- **Context overflow** (too many chunks → cost, latency, "lost in the middle")
+- **Treating every problem as a RAG problem** (when long-context + caching, or fine-tuning, or just a better prompt would dominate)
 
-**This skill provides effective RAG architecture: chunking, hybrid search, re-ranking, evaluation, and complete pipeline design.**
+**This skill provides effective RAG architecture: chunking, contextual retrieval, hybrid search with RRF, cross-encoder and late-interaction re-ranking, agentic patterns, evaluation, and the long-context-vs-RAG trade-off.**
 
 
 ## What is RAG?
 
 **RAG = Retrieval-Augmented Generation**
 
-**Problem:** LLMs have knowledge cutoffs and can't access private/recent data.
+**Problem:** LLMs have knowledge cutoffs and cannot access private, post-training, or rapidly-changing data.
 
-**Solution:** Retrieve relevant information, inject into prompt, generate answer.
+**Solution:** Retrieve relevant evidence, inject into the prompt, generate the answer with citations.
 
 ```python
 # Without RAG:
@@ -28,1141 +29,545 @@ answer = llm("What is our return policy?")
 
 # With RAG:
 relevant_docs = retrieval_system.search("return policy")
-context = '\n'.join(relevant_docs)
-prompt = f"Context: {context}\n\nQuestion: What is our return policy?\nAnswer:"
+context = "\n".join(relevant_docs)
+prompt = f"Context:\n{context}\n\nQuestion: What is our return policy?\nAnswer:"
 answer = llm(prompt)
-# LLM: "Our return policy allows returns within 30 days..." (from retrieved docs)
 ```
 
-**When to use RAG:**
-- ✅ Private data (company docs, internal knowledge base)
-- ✅ Recent data (news, updates since LLM training cutoff)
-- ✅ Large knowledge base (can't fit in prompt/fine-tuning)
-- ✅ Need citations (retrieval provides source documents)
-- ✅ Changing information (update docs, not model)
 
-**When NOT to use RAG:**
-- ❌ General knowledge (already in LLM)
-- ❌ Small knowledge base (< 100 docs → few-shot examples in prompt)
-- ❌ Reasoning tasks (RAG provides facts, not reasoning)
+## Should You Use RAG? (Decision Tree)
+
+Before designing a pipeline, decide whether RAG is the right tool. The answer changed materially once frontier models gained 200k–1M-token context windows and prompt caching.
+
+```
+1. Is the corpus small (< ~200k tokens) AND mostly static?
+   YES → Skip RAG. Stuff the corpus into context with prompt caching.
+         (See context-engineering-and-prompt-caching.md.)
+   NO  → Continue.
+
+2. Is the corpus large (millions+ tokens), updated frequently,
+   or do you need per-query citations / audit trails?
+   YES → RAG (likely with hybrid + reranker).
+   NO  → Continue.
+
+3. Is the task pure reasoning, style, or general knowledge?
+   YES → RAG won't help. Use a stronger model, fine-tune,
+         or improve prompts.
+   NO  → Continue.
+
+4. Do queries hit a small recurring slice of a large corpus?
+   YES → Long-context with prompt caching for the hot slice +
+         RAG for the rest is often best.
+   NO  → Pure RAG.
+```
+
+**When long context beats RAG:**
+- Corpus fits in the model's window with caching.
+- Queries are diverse and unpredictable (any chunk could matter).
+- You need cross-document synthesis the retriever would shred.
+- You don't need explicit citations.
+
+**When RAG still wins:**
+- Corpus is huge (10M–10B tokens) or constantly changing.
+- You must cite specific sources for every claim.
+- You need access control / per-tenant filtering at retrieval time.
+- Cost matters: RAG sends ~5k tokens of context, long-context sends ~500k.
+- Auditability is a hard requirement (regulated industries).
+
+Cross-references: `context-engineering-and-prompt-caching.md` for prompt-cache mechanics, `context-window-management.md` for stuffing strategies, and `agentic-patterns-and-mcp.md` for tool-call retrieval.
 
 
-## RAG Architecture Overview
+## RAG Pipeline Anatomy
 
 ```
 User Query
-    ↓
-1. Query Processing (optional: expansion, rewriting)
-    ↓
-2. Retrieval (dense + sparse hybrid search)
-    ↓
-3. Re-ranking (refine top results)
-    ↓
-4. Context Selection (top-k chunks)
-    ↓
-5. Prompt Construction (inject context)
-    ↓
-6. LLM Generation
-    ↓
-Answer (with citations)
+    │
+    ▼
+1. Query Processing      (rewrite, expand, decompose, HyDE)
+    │
+    ▼
+2. Hybrid Retrieval      (dense + sparse, fused with RRF)
+    │
+    ▼
+3. Re-ranking            (cross-encoder or late-interaction)
+    │
+    ▼
+4. Context Selection     (token-budget-aware, lost-in-middle aware)
+    │
+    ▼
+5. Prompt Construction   (citations, metadata, system rules)
+    │
+    ▼
+6. LLM Generation        (with optional grounded-answer verification)
+    │
+    ▼
+Answer (+ citations + provenance)
 ```
+
+The five evergreen invariants — chunk, embed, retrieve, rerank, generate — have not changed. Almost everything else has, especially in the last 18 months.
 
 
 ## Component 1: Document Processing & Chunking
 
-### Why Chunking?
+### Why chunk?
 
-**Problem:** Documents are long (10k-100k tokens), embeddings and LLMs have limits.
+Embedding models and LLMs have token limits, retrieval precision is higher per-chunk than per-document, and citations need granularity. Chunks of 300–800 tokens with 10–20% overlap remain the practical default.
 
-**Solution:** Split documents into chunks (500-1000 tokens each).
+### Strategies
 
-### Chunking Strategies
-
-**1. Fixed-size chunking (simple, works for most cases):**
+**1. Recursive character splitting** (LangChain default — still the right starting point):
 
 ```python
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1000,  # Characters (roughly 750 tokens)
-    chunk_overlap=200,  # Overlap for continuity
-    separators=["\n\n", "\n", ". ", " ", ""]  # Try these in order
+    chunk_size=800,
+    chunk_overlap=120,
+    separators=["\n\n", "\n", ". ", " ", ""],  # try semantic first
 )
-
 chunks = splitter.split_text(document)
 ```
 
-**Parameters:**
-- `chunk_size`: 500-1000 tokens typical (600-1500 characters)
-- `chunk_overlap`: 10-20% of chunk_size (continuity between chunks)
-- `separators`: Try semantic boundaries first (paragraphs > sentences > words)
+**2. Semantic / structure-aware chunking** — split on Markdown headers, code-block boundaries, sentence embeddings (LlamaIndex `SemanticSplitterNodeParser`, LangChain `MarkdownHeaderTextSplitter`).
 
-**2. Semantic chunking (preserves meaning):**
+**3. Layout-aware chunking for PDFs** — use a parser that preserves tables, figures, and page boundaries (Unstructured, LlamaParse, Docling, Marker). Garbage-in still dominates retrieval failures; bad PDF extraction is the #1 cause.
 
-```python
-def semantic_chunking(text, max_chunk_size=1000):
-    # Split on semantic boundaries
-    sections = text.split('\n\n## ')  # Markdown headers
-
-    chunks = []
-    current_chunk = []
-    current_size = 0
-
-    for section in sections:
-        section_size = len(section)
-
-        if current_size + section_size <= max_chunk_size:
-            current_chunk.append(section)
-            current_size += section_size
-        else:
-            # Flush current chunk
-            if current_chunk:
-                chunks.append('\n\n'.join(current_chunk))
-            current_chunk = [section]
-            current_size = section_size
-
-    # Flush remaining
-    if current_chunk:
-        chunks.append('\n\n'.join(current_chunk))
-
-    return chunks
-```
-
-**Benefits:** Preserves topic boundaries, more coherent chunks.
-
-**3. Recursive chunking (LangChain default):**
+### Always preserve metadata
 
 ```python
-# Try splitting on larger boundaries first, fallback to smaller
-separators = [
-    "\n\n",  # Paragraphs (try first)
-    "\n",    # Lines
-    ". ",    # Sentences
-    " ",     # Words
-    ""       # Characters (last resort)
-]
-
-# For each separator:
-# - If chunk fits: Done
-# - If chunk too large: Try next separator
-# Result: Largest semantic unit that fits in chunk_size
+chunk_record = {
+    "text": chunk,
+    "metadata": {
+        "source": "policy.pdf",
+        "page": 42,
+        "section": "Returns",
+        "doc_id": "policy-v3.2",
+        "chunk_id": "policy-v3.2#42-3",
+    },
+}
 ```
 
-**Best for:** Mixed documents (code + prose, structured + unstructured).
-
-### Chunking Best Practices
-
-**Metadata preservation:**
-```python
-chunks = []
-for page_num, page_text in enumerate(pdf_pages):
-    page_chunks = splitter.split_text(page_text)
-
-    for chunk_idx, chunk in enumerate(page_chunks):
-        chunks.append({
-            'text': chunk,
-            'metadata': {
-                'source': 'document.pdf',
-                'page': page_num,
-                'chunk_id': f"{page_num}_{chunk_idx}"
-            }
-        })
-
-# Later: Cite sources in answer
-# "According to page 42 of document.pdf..."
-```
-
-**Overlap for continuity:**
-```python
-# Without overlap: Sentence split across chunks (loss of context)
-chunk1 = "...the process is simple. First,"
-chunk2 = "you need to configure the settings..."
-
-# With overlap (200 chars):
-chunk1 = "...the process is simple. First, you need to configure"
-chunk2 = "First, you need to configure the settings..."
-# Overlap preserves context!
-```
-
-**Chunk size guidelines:**
-```
-Embedding model limit | Chunk size
-----------------------|------------
-512 tokens           | 400 tokens (leave room for overlap)
-1024 tokens          | 800 tokens
-2048 tokens          | 1500 tokens
-
-Typical: 500-1000 tokens per chunk (balance precision vs context)
-```
+You will need this for citations, filtering, and incremental re-indexing.
 
 
-## Component 2: Embeddings
+## Component 2: Contextual Retrieval (Anthropic, 2024)
 
-### What are Embeddings?
+The single biggest free win in retrieval quality since this sheet was first written: **prepend a short LLM-generated context blurb to each chunk before you embed it and before you index it for BM25.** Anthropic reported a 49% reduction in top-20 retrieval failures (5.7% → 2.9%) from contextual embeddings + contextual BM25, and 67% when combined with reranking.
 
-**Vector representation of text capturing semantic meaning.**
+The technique is simple. For each chunk, ask a cheap, prompt-cached LLM call:
+
+> "Here is the whole document. Here is one chunk from it. In one or two sentences, situate this chunk within the document so it is interpretable on its own."
+
+Prepend that 50–100-token blurb to the chunk text, then embed and BM25-index the concatenation. The original chunk is what you return for generation; the contextualized version is what you index.
 
 ```python
-text = "What is the return policy?"
-embedding = embedding_model.encode(text)
-# embedding: [0.234, -0.123, 0.891, ...] (384-1536 dimensions)
-
-# Similar texts have similar embeddings (high cosine similarity)
-query_emb = embed("return policy")
-doc1_emb = embed("Returns accepted within 30 days")  # High similarity
-doc2_emb = embed("Product specifications")  # Low similarity
-```
-
-### Embedding Models
-
-**Popular models:**
-
-```python
-# 1. OpenAI embeddings (API-based)
-from langchain.embeddings import OpenAIEmbeddings
-embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-# Dimensions: 1536, Cost: $0.02 per 1M tokens
-
-# 2. Sentence Transformers (open-source, local)
-from sentence_transformers import SentenceTransformer
-embeddings = SentenceTransformer('all-MiniLM-L6-v2')
-# Dimensions: 384, Cost: $0 (local), Fast
-
-# 3. Domain-specific
-embeddings = SentenceTransformer('allenai-specter')  # Scientific papers
-embeddings = SentenceTransformer('msmarco-distilbert-base-v4')  # Search/QA
-```
-
-**Selection criteria:**
-
-| Model | Dimensions | Speed | Quality | Cost | Use Case |
-|-------|------------|-------|---------|------|----------|
-| OpenAI text-3-small | 1536 | Medium | Very Good | $0.02/1M | General (API) |
-| OpenAI text-3-large | 3072 | Slow | Excellent | $0.13/1M | High quality |
-| all-MiniLM-L6-v2 | 384 | Fast | Good | $0 | General (local) |
-| all-mpnet-base-v2 | 768 | Medium | Very Good | $0 | General (local) |
-| msmarco-* | 768 | Medium | Excellent | $0 | Search/QA |
-
-**Evaluation:**
-```python
-# Test on your domain!
-from sentence_transformers import util
-
-query = "What is the return policy?"
-docs = ["Returns within 30 days", "Shipping takes 5-7 days", "Product warranty"]
-
-for model_name in ['all-MiniLM-L6-v2', 'all-mpnet-base-v2', 'msmarco-distilbert-base-v4']:
-    model = SentenceTransformer(model_name)
-
-    query_emb = model.encode(query)
-    doc_embs = model.encode(docs)
-
-    similarities = util.cos_sim(query_emb, doc_embs)[0]
-    print(f"{model_name}: {similarities}")
-
-# Pick model with highest similarity for relevant doc
-```
-
-
-## Component 3: Vector Databases
-
-**Store and retrieve embeddings efficiently.**
-
-### Popular Vector DBs:
-
-```python
-# 1. Chroma (simple, local)
-from langchain.vectorstores import Chroma
-vectorstore = Chroma.from_texts(chunks, embeddings)
-
-# 2. Pinecone (managed, scalable)
-import pinecone
-pinecone.init(api_key="...", environment="...")
-vectorstore = Pinecone.from_texts(chunks, embeddings, index_name="my-index")
-
-# 3. Weaviate (open-source, scalable)
-from langchain.vectorstores import Weaviate
-vectorstore = Weaviate.from_texts(chunks, embeddings)
-
-# 4. FAISS (Facebook, local, fast)
-from langchain.vectorstores import FAISS
-vectorstore = FAISS.from_texts(chunks, embeddings)
-```
-
-### Vector DB Selection:
-
-| Database | Type | Scale | Cost | Hosting | Best For |
-|----------|------|-------|------|---------|----------|
-| Chroma | Local | Small (< 1M) | $0 | Self | Development |
-| FAISS | Local | Medium (< 10M) | $0 | Self | Production (self-hosted) |
-| Pinecone | Cloud | Large (billions) | $70+/mo | Managed | Production (managed) |
-| Weaviate | Both | Large | $0-$200/mo | Both | Production (flexible) |
-
-### Similarity Search:
-
-```python
-# Basic similarity search
-query = "What is the return policy?"
-results = vectorstore.similarity_search(query, k=5)
-# Returns: Top 5 most similar chunks
-
-# With scores
-results = vectorstore.similarity_search_with_score(query, k=5)
-# Returns: [(chunk, similarity_score), ...]
-# similarity_score: 0.0-1.0 (higher = more similar)
-
-# With threshold
-results = vectorstore.similarity_search_with_score(query, k=10)
-filtered = [(chunk, score) for chunk, score in results if score > 0.7]
-# Only keep highly similar results
-```
-
-
-## Component 4: Retrieval Strategies
-
-### 1. Dense Retrieval (Semantic)
-
-**Uses embeddings (what we've discussed).**
-
-```python
-query_embedding = embedding_model.encode(query)
-# Find docs with embeddings most similar to query_embedding
-results = vectorstore.similarity_search(query, k=10)
-```
-
-**Pros:**
-- ✅ Semantic similarity (understands meaning, not just keywords)
-- ✅ Handles synonyms, paraphrasing
-
-**Cons:**
-- ❌ Misses exact keyword matches
-- ❌ Can confuse similar-sounding but different concepts
-
-### 2. Sparse Retrieval (Keyword)
-
-**Classic information retrieval (BM25, TF-IDF).**
-
-```python
-from langchain.retrievers import BM25Retriever
-
-# BM25: Keyword-based ranking
-bm25_retriever = BM25Retriever.from_texts(chunks)
-results = bm25_retriever.get_relevant_documents(query)
-```
-
-**How BM25 works:**
-```
-Score(query, doc) = sum over query terms of:
-  IDF(term) * (TF(term) * (k1 + 1)) / (TF(term) + k1 * (1 - b + b * doc_length / avg_doc_length))
-
-Where:
-- TF = term frequency (how often term appears in doc)
-- IDF = inverse document frequency (rarity of term)
-- k1, b = tuning parameters
-```
-
-**Pros:**
-- ✅ Exact keyword matches (important for IDs, SKUs, technical terms)
-- ✅ Fast (no neural network)
-- ✅ Explainable (can see which keywords matched)
-
-**Cons:**
-- ❌ No semantic understanding (misses synonyms, paraphrasing)
-- ❌ Sensitive to exact wording
-
-### 3. Hybrid Retrieval (Dense + Sparse)
-
-**Combine both for best results!**
-
-```python
-from langchain.retrievers import EnsembleRetriever
-
-# Dense retriever (semantic)
-dense_retriever = vectorstore.as_retriever(search_kwargs={'k': 20})
-
-# Sparse retriever (keyword)
-sparse_retriever = BM25Retriever.from_texts(chunks)
-
-# Ensemble (hybrid)
-hybrid_retriever = EnsembleRetriever(
-    retrievers=[dense_retriever, sparse_retriever],
-    weights=[0.5, 0.5]  # Equal weight (tune based on evaluation)
-)
-
-results = hybrid_retriever.get_relevant_documents(query)
-```
-
-**When hybrid helps:**
-
-```python
-# Query: "What is the SKU for product ABC-123?"
-
-# Dense only:
-# - Might retrieve: "product catalog", "product specifications"
-# - Misses: Exact SKU "ABC-123" (keyword)
-
-# Sparse only:
-# - Retrieves: "ABC-123" (keyword match)
-# - Misses: Semantically similar products
-
-# Hybrid:
-# - Retrieves: Exact SKU + related products
-# - Best of both worlds!
-```
-
-**Weight tuning:**
-```python
-# Evaluate different weights
-for dense_weight in [0.3, 0.5, 0.7]:
-    sparse_weight = 1 - dense_weight
-
-    retriever = EnsembleRetriever(
-        retrievers=[dense_retriever, sparse_retriever],
-        weights=[dense_weight, sparse_weight]
+# Pseudocode — exact API surface depends on your provider SDK.
+def contextualize_chunk(full_doc: str, chunk: str, llm) -> str:
+    prompt = (
+        "<document>\n" + full_doc + "\n</document>\n"
+        "Here is a chunk we want to situate within the whole document:\n"
+        "<chunk>\n" + chunk + "\n</chunk>\n"
+        "Give a short context (1-2 sentences) that situates this chunk "
+        "within the document for retrieval. Answer only with the context."
     )
+    return llm.complete(prompt, max_tokens=120)
 
-    mrr = evaluate_retrieval(retriever, test_set)
-    print(f"Dense:{dense_weight}, Sparse:{sparse_weight} → MRR:{mrr:.3f}")
-
-# Example output:
-# Dense:0.3, Sparse:0.7 → MRR:0.65
-# Dense:0.5, Sparse:0.5 → MRR:0.72  # Best!
-# Dense:0.7, Sparse:0.3 → MRR:0.68
+# Index the contextualized version; serve the original chunk to the LLM.
+indexed_text = contextualize_chunk(doc, chunk, llm) + "\n\n" + chunk
 ```
 
+Use **prompt caching** on the document portion — every chunk in a document reuses the same `<document>` prefix. Without caching this is too expensive; with caching it's roughly free.
 
-## Component 5: Re-Ranking
+Reference: Anthropic, "Introducing Contextual Retrieval," September 2024 — <https://www.anthropic.com/news/contextual-retrieval>.
 
-**Refine coarse retrieval ranking with cross-encoder.**
 
-### Why Re-Ranking?
+## Component 3: Embeddings — Modern Lineup
 
-```
-Retrieval (bi-encoder):
-- Encodes query and docs separately
-- Fast: O(1) for pre-computed doc embeddings
-- Coarse: Single similarity score
+Hardcoded model IDs date instantly; treat the table as **capability tiers** and check provider docs for the current best name. As of 2026-05, the practical landscape is:
 
-Re-ranking (cross-encoder):
-- Jointly encodes query + doc
-- Slow: O(n) for n docs (must process each pair)
-- Precise: Sees query-doc interactions
-```
+| Tier | Representative models | Dimensions | Why it lives here |
+|------|----------------------|-----------|--------------------|
+| Frontier proprietary | Voyage 3 / 3-large; Cohere Embed v3 / v4 (multilingual); OpenAI text-embedding-3-large | 1024–3072, MRL-truncatable on Voyage | Top of MTEB, strong on out-of-domain text, multilingual |
+| Strong open-source | BGE-M3; Jina embeddings v3; Nomic Embed v1.5; mxbai-embed-large | 768–1024 (Jina + Nomic MRL-truncatable) | Self-hosted, multilingual, multi-functional (dense+sparse+colbert in BGE-M3) |
+| Lightweight | all-MiniLM-L6-v2; bge-small | 384 | Edge / mobile / cheap baseline |
+| Domain-specific | SPECTER2 (academic); CodeBERT/UniXcoder (code); medical/legal variants | varies | Out-perform general models on their domain |
 
-**Pipeline:**
-```
-1. Retrieval: Get top 20-50 (fast, broad)
-2. Re-ranking: Refine to top 5-10 (slow, precise)
-```
+Verify before adopting:
+- Voyage: <https://docs.voyageai.com/docs/embeddings>, <https://blog.voyageai.com/2025/01/07/voyage-3-large/>
+- Cohere Embed v3: <https://docs.cohere.com/docs/cohere-embed>
+- Jina v3: <https://jina.ai/models/jina-embeddings-v3/>, paper <https://arxiv.org/abs/2409.10173>
+- Nomic v1.5: <https://huggingface.co/nomic-ai/nomic-embed-text-v1.5>
+- BGE-M3: paper <https://arxiv.org/abs/2402.03216>, <https://huggingface.co/BAAI/bge-m3>
+- OpenAI text-embedding-3-large: <https://platform.openai.com/docs/guides/embeddings>
 
-### Implementation:
+**Always benchmark on your own data**. MTEB rankings are a starting point, not an answer; relative ordering on a domain-specific eval set frequently disagrees.
 
 ```python
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
-import torch
+# Direct provider SDK is now preferred over LangChain wrappers for embeddings,
+# both for clarity and to avoid integration drift.
+import voyageai
 
-# Load cross-encoder for re-ranking
-model = AutoModelForSequenceClassification.from_pretrained(
-    'cross-encoder/ms-marco-MiniLM-L-6-v2'
+vo = voyageai.Client()
+embeddings = vo.embed(
+    texts=chunks,
+    model="voyage-3-large",
+    input_type="document",        # use "query" at retrieval time
+    output_dimension=1024,        # MRL truncation
+).embeddings
+```
+
+### Matryoshka embeddings (MRL)
+
+Matryoshka Representation Learning (Kusupati et al., NeurIPS 2022 — <https://arxiv.org/abs/2205.13147>) trains a single embedding so that **truncating it to a smaller dimension still gives a useful representation**. Voyage 3-large, Jina v3, Nomic v1.5, OpenAI text-embedding-3, and Gemini Embedding all expose this.
+
+Practical effect: store full-dimension vectors once, run cheap-and-fast similarity at 256-d for first-stage retrieval, and re-score with full-dimension on the top-100. You get most of the recall at a fraction of the storage and latency.
+
+```python
+# Voyage exposes output_dimension directly. Other providers expose a `dimensions`
+# parameter (OpenAI text-embedding-3) or accept post-hoc np.array slicing
+# (Nomic, Jina) — confirm in current docs.
+small = vo.embed(query, model="voyage-3-large", output_dimension=256).embeddings[0]
+```
+
+Binary or int8 quantization (Voyage, Cohere, Jina all support this) compounds the savings — Voyage reports binary 512-d outperforming float-3072-d on some benchmarks at 200× less storage. Verify on your data.
+
+
+## Component 4: Vector Stores
+
+The vector-DB market keeps churning. The decision axes have not:
+
+| Need | Reasonable choices (verify current state) |
+|------|------------------------------------------|
+| Local dev / < 1M chunks | Chroma, LanceDB, FAISS, DuckDB-VSS |
+| Self-hosted production | Qdrant, Weaviate, Milvus, pgvector / pgvector-rs |
+| Managed / serverless | Pinecone, Turbopuffer, Vespa Cloud, MongoDB Atlas Vector Search, Cohere/Voyage hosted, Azure AI Search, Vertex AI Vector Search |
+| Hybrid (BM25 + vector) first-class | Vespa, Weaviate, Elasticsearch, OpenSearch, Qdrant (sparse vectors), Turbopuffer |
+| Multi-vector / late interaction | Vespa, Qdrant (multi-vector), Weaviate (ColBERT-style), LlamaIndex + ColBERT |
+
+```python
+# Modern langchain imports (langchain >= 0.1; community split):
+from langchain_community.vectorstores import Chroma, FAISS
+from langchain_qdrant import QdrantVectorStore
+from langchain_postgres import PGVector       # pgvector now lives here
+# OLD (broken since langchain 0.1):
+# from langchain.vectorstores import Chroma   # do not use
+```
+
+For anything serious, prefer the provider SDK directly (Qdrant client, Pinecone client, etc.). LangChain wrappers are useful for prototypes; they often lag the provider's newest features (sparse vectors, multi-vector, payload filtering DSL).
+
+
+## Component 5: Retrieval Strategies
+
+### Dense retrieval
+
+Cosine similarity on embeddings. Strong on semantic matches, weak on exact strings, IDs, rare terminology, and out-of-vocabulary product codes.
+
+### Sparse retrieval
+
+**BM25** (Robertson 1995) is still the right baseline. It catches the exact-match cases dense retrieval misses, has zero training cost, and is interpretable. Production engines (Elasticsearch, OpenSearch, Lucene-backed Vespa) ship it tuned.
+
+**SPLADE** (Formal et al., SIGIR 2021/2022 — <https://arxiv.org/abs/2107.05720>, v2 <https://arxiv.org/abs/2109.10086>) is the modern sparse-neural option: a BERT MLM head produces sparse term-weighted expansions, indexed in an inverted index like BM25 but with learned semantics. Use SPLADE when you need lexical-style retrieval with neural recall and your engine supports sparse vectors (Qdrant, Vespa, Pinecone sparse-dense).
+
+**BGE-M3** is unique in producing dense, sparse, and ColBERT-style multi-vector outputs from a single model — convenient when you don't want to run three encoders.
+
+### Hybrid retrieval with Reciprocal Rank Fusion
+
+Combining dense and sparse is now table stakes. The fusion method that has held up since 2009 is **RRF (Reciprocal Rank Fusion)** — Cormack, Clarke & Büttcher, SIGIR 2009 — <https://dl.acm.org/doi/10.1145/1571941.1572114>:
+
+```
+RRF_score(d) = Σ_i  1 / (k + rank_i(d))      typically k = 60
+```
+
+It's ranking-only (no score calibration needed across heterogeneous retrievers), and it consistently beats CombSUM/CombMNZ/Condorcet in the original paper and in practice. Most modern engines (Elastic, Vespa, Weaviate, Qdrant, OpenSearch) ship RRF natively.
+
+```python
+# Manual RRF if your store doesn't expose it:
+def rrf(rank_lists: list[list[str]], k: int = 60, top_k: int = 20) -> list[str]:
+    scores: dict[str, float] = {}
+    for ranks in rank_lists:
+        for r, doc_id in enumerate(ranks):
+            scores[doc_id] = scores.get(doc_id, 0.0) + 1.0 / (k + r + 1)
+    return [d for d, _ in sorted(scores.items(), key=lambda x: -x[1])[:top_k]]
+```
+
+When you do want weighted score fusion (e.g. you have well-calibrated scores from a learned ranker), normalize per-retriever first; RRF is the safer default.
+
+### Late interaction: ColBERT and ColPali
+
+Single-vector embeddings collapse a chunk to one point. **Late interaction** keeps a vector per token and scores via MaxSim across all query-token / doc-token pairs at retrieval time. ColBERTv2 (Santhanam et al., NAACL 2022 — <https://arxiv.org/abs/2112.01488>) made this practical with residual compression.
+
+**ColPali / ColQwen** (Faysse et al., 2024 — <https://arxiv.org/abs/2407.01449>) extends late interaction to **visual document retrieval**: feed page images directly to a vision-language model (PaliGemma-3B / Qwen2-VL), produce multi-vector page embeddings, and skip OCR entirely. On the ViDoRe benchmark this beats text-extraction pipelines on slide decks, financial PDFs, and any doc where layout carries meaning. Use ColPali / ColQwen when:
+- Documents are visually complex (tables, figures, multi-column layouts).
+- OCR pipelines are dropping signal.
+- You can afford the larger storage footprint of multi-vector indexes.
+
+ColBERT-style indexes are supported in PLAID, Vespa, Qdrant (multi-vector), and the `colbert-ai` / RAGatouille libraries.
+
+### HyDE — Hypothetical Document Embeddings
+
+Gao et al., 2022 — <https://arxiv.org/abs/2212.10496>. Use a cheap LLM to generate a hypothetical answer to the query, then retrieve docs similar to the *answer* rather than the *question*. Helps when queries are short and answers are long. Cheap, no training needed, occasionally a big win.
+
+
+## Component 6: Re-ranking — Modern Models
+
+Bi-encoders (what your vector store uses) are fast but coarse. **Cross-encoders** read query and document jointly and score them, at the cost of one model call per (query, doc) pair. Standard pipeline: retrieve k=50–200 with hybrid, rerank to k=5–10 with a cross-encoder.
+
+| Reranker | Provider / paper | Notes |
+|----------|------------------|-------|
+| Cohere Rerank 3.5 | Hosted API — <https://docs.cohere.com/docs/rerank>, <https://cohere.com/blog/rerank-3pt5> | 4096-token context, multilingual, SOTA on BEIR class benchmarks at release |
+| Voyage rerank-2 / 2.5 | <https://docs.voyageai.com/docs/reranker>, <https://blog.voyageai.com/2024/09/30/rerank-2/>, <https://blog.voyageai.com/2025/08/11/rerank-2-5/> | 16k context (rerank-2), instruction-following (2.5) |
+| Jina reranker v2 | <https://jina.ai/reranker/> | Multilingual, fast |
+| BGE-reranker-v2-m3 | <https://huggingface.co/BAAI/bge-reranker-v2-m3> | Open-source, multilingual, strong |
+| ms-marco-MiniLM (legacy) | <https://huggingface.co/cross-encoder> | Tiny, fast, weaker than the above; OK as a baseline |
+
+**Default recommendation in 2026:** start with a hosted reranker (Cohere Rerank 3.5 or Voyage rerank-2.5) for quality, drop to BGE-reranker-v2-m3 self-hosted if you need on-prem, fall back to ms-marco-MiniLM only when latency budget is sub-50ms and quality is secondary.
+
+```python
+import cohere
+co = cohere.Client()
+
+def rerank(query: str, docs: list[str], top_n: int = 5) -> list[tuple[str, float]]:
+    res = co.rerank(model="rerank-v3.5", query=query, documents=docs, top_n=top_n)
+    return [(docs[r.index], r.relevance_score) for r in res.results]
+```
+
+
+## Component 7: Query Processing
+
+### Query rewriting and decomposition
+
+Use a cheap LLM to rewrite ambiguous queries, decompose multi-hop questions into sub-queries, or strip conversational fluff before retrieval. Decomposition is essentially mandatory for multi-hop QA — the retriever cannot find a single chunk that answers a query whose answer requires joining three.
+
+### Query expansion
+
+Generate paraphrases or related terms with an LLM, retrieve for each, fuse with RRF. Useful when query vocabulary diverges from corpus vocabulary.
+
+### HyDE
+
+See Component 5. Particularly useful for short keyword-style queries against long-form docs.
+
+
+## Component 8: Agentic and Multi-Hop RAG
+
+Single-shot retrieve-then-generate fails when:
+- Initial retrieval is wrong and the model hallucinates from bad context.
+- The question requires multi-hop reasoning across documents.
+- The corpus genuinely doesn't have the answer and the model should say so.
+
+### Corrective RAG (CRAG)
+
+Yan et al., 2024 — <https://arxiv.org/abs/2401.15884>. A lightweight retrieval evaluator (a 0.77B classifier in the paper) scores retrieved chunks. If confidence is high, use them. If low, fall back to web search. If ambiguous, decompose-recompose. Buys you robustness against bad retrieval at modest cost.
+
+### Self-RAG
+
+Asai et al., ICLR 2024 — <https://arxiv.org/abs/2310.11511>. Train (or prompt) the LLM to emit reflection tokens that decide when to retrieve, what to retrieve, and how to critique retrieved evidence. The critique is per-passage and per-claim, which improves citation accuracy on long-form generation.
+
+### GraphRAG
+
+Edge et al., Microsoft Research, 2024 — <https://arxiv.org/abs/2404.16130>, <https://microsoft.github.io/graphrag/>. Build a knowledge graph from the corpus with an LLM, run hierarchical Leiden community detection, summarize each community bottom-up. At query time, route global ("what are the major themes?") questions through community summaries and local ("what does paragraph 3 say?") questions through standard chunk retrieval. Strong on **sensemaking** queries that vanilla RAG handles poorly.
+
+### Agentic / tool-call RAG
+
+The current production frontier: the LLM is given retrieval as a tool, and decides when, what, and how often to call it within a single turn. This composes naturally with MCP-served retrieval tools, multi-step plans, and self-correction. Cross-ref `agentic-patterns-and-mcp.md` for the protocol-level details and tool-design patterns.
+
+```python
+# Sketch — actual tool call surface depends on your harness.
+tools = [
+    {"name": "search_docs", "description": "Search internal corpus.",
+     "input_schema": {"query": "string", "k": "integer"}},
+    {"name": "fetch_doc",   "description": "Fetch full doc by id.",
+     "input_schema": {"doc_id": "string"}},
+]
+# The agent loop runs: model → tool_use → tool_result → model → ...
+# until the model emits a final answer with citations.
+```
+
+
+## Component 9: Context Selection and the Lost-in-the-Middle Problem
+
+Liu et al., 2023 — <https://arxiv.org/abs/2307.03172> — showed LLMs systematically attend to the start and end of long contexts and miss the middle. Even on modern long-context models the effect persists, just with a higher ceiling. Two consequences:
+
+1. **Don't dump all 50 retrieved chunks** into the prompt. Cap at 5–10 reranked chunks (~3–8k tokens) unless you have evidence more helps.
+2. **Order matters.** Place the most relevant chunk first or last; "second-most-relevant first, most-relevant last" is a reasonable heuristic.
+
+```python
+def order_for_lost_in_middle(reranked: list[Doc]) -> list[Doc]:
+    if len(reranked) <= 2:
+        return reranked
+    # Put the most relevant at the end (LLMs often weight the recency edge harder).
+    head, *middle, tail = reranked
+    return [head, *reversed(middle), tail]
+```
+
+**Contextual compression** — feeding each chunk through an extractive LLM step that keeps only sentences relevant to the query — pays off when chunks are long and the retriever returns dense matches. LangChain ships `ContextualCompressionRetriever` for this; LlamaIndex has equivalent post-processors.
+
+
+## Component 10: Prompt Construction
+
+Always:
+1. Tell the model to answer only from the context, and to say "I don't know" otherwise.
+2. Include source IDs and instruct citation.
+3. Include relevant metadata (doc title, section, date) — it helps the model assess source quality and trust.
+
+```python
+context_block = "\n\n".join(
+    f"[{i+1}] ({c.metadata['source']}, p.{c.metadata['page']})\n{c.text}"
+    for i, c in enumerate(retrieved)
 )
-tokenizer = AutoTokenizer.from_pretrained('cross-encoder/ms-marco-MiniLM-L-6-v2')
+prompt = (
+    "Answer the question using only the context below. "
+    "Cite sources as [1], [2], etc. If the answer is not present, say "
+    "'I don't have enough information.'\n\n"
+    f"Context:\n{context_block}\n\nQuestion: {query}\n\nAnswer:"
+)
+```
 
-def rerank(query, retrieved_docs, top_k=5):
-    # Score each doc with cross-encoder
+For high-stakes deployments, follow generation with a **groundedness check**: a second LLM call (or a fine-tuned NLI model) that verifies each generated sentence is entailed by the cited chunks. RAGAS, TruLens, and DeepEval all ship this.
+
+
+## Evaluation
+
+### Retrieval metrics
+
+The math hasn't changed: **MRR**, **Recall@k**, **Precision@k**, **NDCG@k**, plus the binary "did the gold chunk appear in the top-20" used by the contextual-retrieval paper.
+
+```python
+import numpy as np
+
+def mrr(results: list[list[str]], gold: list[set[str]]) -> float:
     scores = []
-    for doc in retrieved_docs:
-        inputs = tokenizer(query, doc, return_tensors='pt', truncation=True, max_length=512)
-        with torch.no_grad():
-            score = model(**inputs).logits[0][0].item()
-        scores.append((doc, score))
-
-    # Sort by score (descending)
-    reranked = sorted(scores, key=lambda x: x[1], reverse=True)
-
-    # Return top-k
-    return [doc for doc, score in reranked[:top_k]]
-
-# Usage
-initial_results = vectorstore.similarity_search(query, k=20)  # Over-retrieve
-final_results = rerank(query, initial_results, top_k=5)  # Re-rank
-```
-
-### Re-Ranking Models:
-
-| Model | Size | Speed | Quality | Use Case |
-|-------|------|-------|---------|----------|
-| ms-marco-MiniLM-L-6-v2 | 80MB | Fast | Good | General |
-| ms-marco-MiniLM-L-12-v2 | 120MB | Medium | Very Good | Better quality |
-| cross-encoder/mmarco-mMiniLMv2-L12-H384-v1 | 120MB | Medium | Very Good | Multilingual |
-
-### Impact of Re-Ranking:
-
-```python
-# Without re-ranking:
-results = vectorstore.similarity_search(query, k=5)
-mrr = 0.55  # First relevant at rank ~2
-
-# With re-ranking:
-initial = vectorstore.similarity_search(query, k=20)
-results = rerank(query, initial, top_k=5)
-mrr = 0.82  # First relevant at rank ~1.2
-
-# Improvement: 27% better ranking!
-```
-
-
-## Component 6: Query Processing
-
-### Query Expansion
-
-**Expand query with synonyms, related terms.**
-
-```python
-def expand_query(query, llm):
-    prompt = f"""
-    Generate 3 alternative phrasings of this query:
-
-    Original: {query}
-
-    Alternatives (semantically similar):
-    1.
-    2.
-    3.
-    """
-
-    alternatives = llm(prompt)
-    # Retrieve using all variants, merge results
-    all_results = []
-    for alt_query in [query] + alternatives:
-        results = vectorstore.similarity_search(alt_query, k=10)
-        all_results.extend(results)
-
-    # Deduplicate and re-rank
-    unique_results = list(set(all_results))
-    return rerank(query, unique_results, top_k=5)
-```
-
-### Query Rewriting
-
-**Simplify or decompose complex queries.**
-
-```python
-def rewrite_query(query, llm):
-    # Complex query
-    if is_complex(query):
-        prompt = f"""
-        Break this complex query into simpler sub-queries:
-
-        Query: {query}
-
-        Sub-queries:
-        1.
-        2.
-        """
-        sub_queries = llm(prompt)
-
-        # Retrieve for each sub-query
-        all_results = []
-        for sub_q in sub_queries:
-            results = vectorstore.similarity_search(sub_q, k=5)
-            all_results.extend(results)
-
-        return all_results
-
-    return vectorstore.similarity_search(query, k=5)
-```
-
-### HyDE (Hypothetical Document Embeddings)
-
-**Generate hypothetical answer, retrieve similar docs.**
-
-```python
-def hyde_retrieval(query, llm, vectorstore):
-    # Generate hypothetical answer
-    prompt = f"Answer this question in detail: {query}"
-    hypothetical_answer = llm(prompt)
-
-    # Retrieve docs similar to hypothetical answer (not query)
-    results = vectorstore.similarity_search(hypothetical_answer, k=5)
-
-    return results
-
-# Why this works:
-# - Queries are short, sparse
-# - Answers are longer, richer
-# - Doc-to-doc similarity (answer vs docs) better than query-to-doc
-```
-
-
-## Component 7: Context Management
-
-### Context Budget
-
-```python
-max_context_tokens = 4000  # Budget for retrieved context
-
-selected_chunks = []
-total_tokens = 0
-
-for chunk in reranked_results:
-    chunk_tokens = count_tokens(chunk)
-
-    if total_tokens + chunk_tokens <= max_context_tokens:
-        selected_chunks.append(chunk)
-        total_tokens += chunk_tokens
-    else:
-        break  # Stop when budget exceeded
-
-# Result: Best chunks that fit in budget
-```
-
-### Lost in the Middle Problem
-
-**LLMs prioritize start and end of context, miss middle.**
-
-```python
-# Research finding: Place most important info at start or end
-
-def order_for_llm(chunks):
-    # Best chunks at start and end
-    if len(chunks) <= 2:
-        return chunks
-
-    # Put most relevant at positions 0 and -1
-    ordered = [chunks[0]]  # Most relevant (start)
-    ordered.extend(chunks[1:-1])  # Less relevant (middle)
-    ordered.append(chunks[-1])  # Second most relevant (end)
-
-    return ordered
-```
-
-### Contextual Compression
-
-**Filter retrieved chunks to most relevant sentences.**
-
-```python
-from langchain.retrievers import ContextualCompressionRetriever
-from langchain.retrievers.document_compressors import LLMChainExtractor
-
-# Compressor: Extract relevant sentences
-compressor = LLMChainExtractor.from_llm(llm)
-
-# Wrap retriever
-compression_retriever = ContextualCompressionRetriever(
-    base_compressor=compressor,
-    base_retriever=vectorstore.as_retriever()
-)
-
-# Retrieved chunks are automatically filtered to relevant parts
-compressed_docs = compression_retriever.get_relevant_documents(query)
-```
-
-
-## Component 8: Prompt Construction
-
-### Basic RAG Prompt:
-
-```python
-context = '\n\n'.join(retrieved_chunks)
-
-prompt = f"""
-Answer the question based on the context below. If the answer is not in the context, say "I don't have enough information to answer that."
-
-Context:
-{context}
-
-Question: {query}
-
-Answer:
-"""
-
-answer = llm(prompt)
-```
-
-### With Citations:
-
-```python
-context_with_ids = []
-for i, chunk in enumerate(retrieved_chunks):
-    context_with_ids.append(f"[{i+1}] {chunk['text']}")
-
-context = '\n\n'.join(context_with_ids)
-
-prompt = f"""
-Answer the question based on the context below. Cite sources using [number] format.
-
-Context:
-{context}
-
-Question: {query}
-
-Answer (with citations):
-"""
-
-answer = llm(prompt)
-# Output: "The return policy allows returns within 30 days [1]. Shipping takes 5-7 business days [3]."
-```
-
-### With Metadata:
-
-```python
-context_with_metadata = []
-for chunk in retrieved_chunks:
-    source = chunk['metadata']['source']
-    page = chunk['metadata']['page']
-    context_with_metadata.append(f"From {source} (page {page}):\n{chunk['text']}")
-
-context = '\n\n'.join(context_with_metadata)
-
-prompt = f"""
-Answer the question and cite your sources.
-
-Context:
-{context}
-
-Question: {query}
-
-Answer:
-"""
-```
-
-
-## Evaluation Metrics
-
-### Retrieval Metrics
-
-**1. Mean Reciprocal Rank (MRR):**
-
-```python
-def calculate_mrr(retrieval_results, relevant_docs):
-    """
-    MRR = average of (1 / rank of first relevant doc)
-
-    Example:
-    Query 1: First relevant at rank 2 → 1/2 = 0.5
-    Query 2: First relevant at rank 1 → 1/1 = 1.0
-    Query 3: No relevant docs → 0
-    MRR = (0.5 + 1.0 + 0) / 3 = 0.5
-    """
-    mrr_scores = []
-
-    for results, relevant in zip(retrieval_results, relevant_docs):
-        for i, result in enumerate(results):
-            if result in relevant:
-                mrr_scores.append(1 / (i + 1))
+    for ranks, relevant in zip(results, gold):
+        for i, doc in enumerate(ranks):
+            if doc in relevant:
+                scores.append(1 / (i + 1))
                 break
         else:
-            mrr_scores.append(0)  # No relevant found
+            scores.append(0.0)
+    return float(np.mean(scores))
 
-    return np.mean(mrr_scores)
-
-# Interpretation:
-# MRR = 1.0: First result always relevant (perfect!)
-# MRR = 0.5: First relevant at rank ~2 (good)
-# MRR = 0.3: First relevant at rank ~3-4 (okay)
-# MRR < 0.3: Poor retrieval (needs improvement)
+def recall_at_k(results, gold, k=5):
+    return float(np.mean([
+        len(set(r[:k]) & g) / max(len(g), 1)
+        for r, g in zip(results, gold)
+    ]))
 ```
 
-**2. Precision@k:**
+**NDCG** uses graded relevance and position discount; use scikit-learn's `ndcg_score` rather than rolling your own.
+
+**Targets** depend on the corpus, but as rough sanity bands: MRR > 0.7, Recall@10 > 0.85, NDCG@10 > 0.7.
+
+### End-to-end metrics
+
+For generation quality, prefer **LLM-as-judge** with a strong frontier model and a rubric, plus token-level F1 / EM where you have gold answers. Modern frameworks bundle the full pipeline:
+- **RAGAS** — <https://docs.ragas.io/> — faithfulness, answer relevancy, context precision/recall.
+- **TruLens** — <https://www.trulens.org/> — RAG triad, traceable evals.
+- **DeepEval** — <https://docs.confident-ai.com/> — pytest-style assertions.
+
+Run these in CI against a frozen eval set; that's how you catch regressions when you swap embeddings or prompts.
+
+
+## Complete Modern Pipeline (Reference Implementation)
 
 ```python
-def calculate_precision_at_k(retrieval_results, relevant_docs, k=5):
-    """
-    Precision@k = (# relevant docs in top-k) / k
+from __future__ import annotations
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import Qdrant
+from qdrant_client import QdrantClient
+import voyageai, cohere
 
-    Example:
-    Top 5 results: [relevant, irrelevant, relevant, irrelevant, irrelevant]
-    Precision@5 = 2/5 = 0.4
-    """
-    precision_scores = []
+class ModernRAG:
+    def __init__(self, docs: list[dict]):
+        self.vo = voyageai.Client()
+        self.co = cohere.Client()
+        self.qdrant = QdrantClient(":memory:")
 
-    for results, relevant in zip(retrieval_results, relevant_docs):
-        top_k = results[:k]
-        relevant_in_topk = len([r for r in top_k if r in relevant])
-        precision_scores.append(relevant_in_topk / k)
+        # 1. Chunk + contextualize (prompt-cache the document prefix in real code)
+        splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=120)
+        self.chunks = []
+        for doc in docs:
+            for piece in splitter.split_text(doc["text"]):
+                ctx = self._contextualize(doc["text"], piece)
+                self.chunks.append({
+                    "text": piece,                   # what we serve to the LLM
+                    "indexed_text": f"{ctx}\n\n{piece}",  # what we embed + BM25
+                    "metadata": doc["metadata"],
+                })
 
-    return np.mean(precision_scores)
+        # 2. Embed (Matryoshka-truncated to 1024 for speed; full-dim could be 2048)
+        embeddings = self.vo.embed(
+            texts=[c["indexed_text"] for c in self.chunks],
+            model="voyage-3-large",
+            input_type="document",
+            output_dimension=1024,
+        ).embeddings
 
-# Target: Precision@5 > 0.7 (70% of top-5 are relevant)
-```
+        # 3. Index dense + sparse (Qdrant supports both natively)
+        # ... omitted: collection creation with named dense + sparse vectors,
+        #              upsert chunks, build BM25 sparse vectors via fastembed.
 
-**3. Recall@k:**
+    def _contextualize(self, full: str, chunk: str) -> str:
+        # Cheap LLM call; in production, prompt-cache `full`.
+        return self.co.chat(message=(
+            f"<document>\n{full}\n</document>\n"
+            f"<chunk>\n{chunk}\n</chunk>\n"
+            "Give a 1-2 sentence context situating this chunk."
+        ), model="command-r-plus").text
 
-```python
-def calculate_recall_at_k(retrieval_results, relevant_docs, k=5):
-    """
-    Recall@k = (# relevant docs in top-k) / (total relevant docs)
+    def retrieve(self, query: str, k: int = 8) -> list[dict]:
+        q_dense = self.vo.embed(
+            texts=[query], model="voyage-3-large", input_type="query",
+            output_dimension=1024,
+        ).embeddings[0]
+        # Dense + sparse hybrid retrieval, fused server-side with RRF in Qdrant.
+        # ... omitted: hybrid query, returns ~50 candidates.
+        candidates = []  # placeholder
 
-    Example:
-    Total relevant: 5
-    Found in top-5: 2
-    Recall@5 = 2/5 = 0.4
-    """
-    recall_scores = []
-
-    for results, relevant in zip(retrieval_results, relevant_docs):
-        top_k = results[:k]
-        relevant_in_topk = len([r for r in top_k if r in relevant])
-        recall_scores.append(relevant_in_topk / len(relevant))
-
-    return np.mean(recall_scores)
-
-# Interpretation:
-# Recall@5 = 1.0: All relevant docs in top-5 (perfect!)
-# Recall@5 = 0.5: Half of relevant docs in top-5
-```
-
-**4. NDCG (Normalized Discounted Cumulative Gain):**
-
-```python
-def calculate_ndcg(retrieval_results, relevance_scores, k=5):
-    """
-    NDCG considers position and graded relevance (0, 1, 2, 3...)
-
-    DCG = sum of (relevance / log2(rank + 1))
-    NDCG = DCG / ideal_DCG (normalized to 0-1)
-    """
-    from sklearn.metrics import ndcg_score
-
-    # relevance_scores: 2D array of relevance (0-3) for each result
-    # Higher relevance = more relevant
-
-    ndcg = ndcg_score(relevance_scores, retrieval_results, k=k)
-    return ndcg
-
-# NDCG = 1.0: Perfect ranking
-# NDCG > 0.7: Good ranking
-# NDCG < 0.5: Poor ranking
-```
-
-### Generation Metrics
-
-**1. Exact Match:**
-
-```python
-def calculate_exact_match(predictions, ground_truth):
-    """Percentage of predictions that exactly match ground truth."""
-    matches = [pred == truth for pred, truth in zip(predictions, ground_truth)]
-    return np.mean(matches)
-```
-
-**2. F1 Score (token-level):**
-
-```python
-def calculate_f1(prediction, ground_truth):
-    """F1 score based on token overlap."""
-    pred_tokens = prediction.split()
-    truth_tokens = ground_truth.split()
-
-    common = set(pred_tokens) & set(truth_tokens)
-
-    if len(common) == 0:
-        return 0.0
-
-    precision = len(common) / len(pred_tokens)
-    recall = len(common) / len(truth_tokens)
-    f1 = 2 * precision * recall / (precision + recall)
-
-    return f1
-```
-
-**3. LLM-as-Judge:**
-
-```python
-def evaluate_with_llm(answer, ground_truth, llm):
-    """Use LLM to judge answer quality."""
-    prompt = f"""
-    Rate the quality of this answer on a scale of 1-5:
-    1 = Completely wrong
-    2 = Mostly wrong
-    3 = Partially correct
-    4 = Mostly correct
-    5 = Completely correct
-
-    Ground truth: {ground_truth}
-    Answer to evaluate: {answer}
-
-    Rating (1-5):
-    """
-
-    rating = llm(prompt)
-    return int(rating)
-```
-
-### End-to-End Evaluation
-
-```python
-def evaluate_rag_system(rag_system, test_set):
-    """
-    Complete evaluation: retrieval + generation
-    """
-    # Retrieval metrics
-    retrieval_results = []
-    relevant_docs = []
-
-    # Generation metrics
-    predictions = []
-    ground_truth = []
-
-    for test_case in test_set:
-        query = test_case['query']
-
-        # Retrieve
-        retrieved = rag_system.retrieve(query)
-        retrieval_results.append(retrieved)
-        relevant_docs.append(test_case['relevant_docs'])
-
-        # Generate
-        answer = rag_system.generate(query, retrieved)
-        predictions.append(answer)
-        ground_truth.append(test_case['expected_answer'])
-
-    # Calculate metrics
-    metrics = {
-        'retrieval_mrr': calculate_mrr(retrieval_results, relevant_docs),
-        'retrieval_precision@5': calculate_precision_at_k(retrieval_results, relevant_docs, k=5),
-        'generation_f1': np.mean([calculate_f1(p, t) for p, t in zip(predictions, ground_truth)]),
-        'generation_exact_match': calculate_exact_match(predictions, ground_truth),
-    }
-
-    return metrics
-```
-
-
-## Complete RAG Pipeline
-
-### Basic Implementation:
-
-```python
-from langchain.chains import RetrievalQA
-from langchain.llms import OpenAI
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import Chroma
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-
-# 1. Load documents
-documents = load_documents('docs/')
-
-# 2. Chunk documents
-splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-chunks = splitter.split_documents(documents)
-
-# 3. Create embeddings and vector store
-embeddings = OpenAIEmbeddings()
-vectorstore = Chroma.from_documents(chunks, embeddings)
-
-# 4. Create retrieval chain
-llm = OpenAI(temperature=0)
-qa_chain = RetrievalQA.from_chain_type(
-    llm=llm,
-    retriever=vectorstore.as_retriever(search_kwargs={'k': 5}),
-    return_source_documents=True
-)
-
-# 5. Query
-result = qa_chain({"query": "What is the return policy?"})
-answer = result['result']
-sources = result['source_documents']
-```
-
-### Advanced Implementation (Hybrid + Re-ranking):
-
-```python
-from langchain.retrievers import EnsembleRetriever, BM25Retriever
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
-
-class AdvancedRAG:
-    def __init__(self, documents):
-        # Chunk
-        splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-        self.chunks = splitter.split_documents(documents)
-
-        # Embeddings
-        self.embeddings = OpenAIEmbeddings()
-        self.vectorstore = Chroma.from_documents(self.chunks, self.embeddings)
-
-        # Hybrid retrieval
-        dense_retriever = self.vectorstore.as_retriever(search_kwargs={'k': 20})
-        sparse_retriever = BM25Retriever.from_documents(self.chunks)
-
-        self.retriever = EnsembleRetriever(
-            retrievers=[dense_retriever, sparse_retriever],
-            weights=[0.5, 0.5]
+        # Cross-encoder rerank to top-k
+        reranked = self.co.rerank(
+            model="rerank-v3.5",
+            query=query,
+            documents=[c["text"] for c in candidates],
+            top_n=k,
         )
+        return [candidates[r.index] for r in reranked.results]
 
-        # Re-ranker
-        self.rerank_model = AutoModelForSequenceClassification.from_pretrained(
-            'cross-encoder/ms-marco-MiniLM-L-6-v2'
+    def answer(self, query: str) -> dict:
+        retrieved = self.retrieve(query)
+        context = "\n\n".join(
+            f"[{i+1}] ({c['metadata']['source']})\n{c['text']}"
+            for i, c in enumerate(retrieved)
         )
-        self.rerank_tokenizer = AutoTokenizer.from_pretrained(
-            'cross-encoder/ms-marco-MiniLM-L-6-v2'
-        )
-
-        # LLM
-        self.llm = OpenAI(temperature=0)
-
-    def retrieve(self, query, k=5):
-        # Hybrid retrieval (over-retrieve)
-        initial_results = self.retriever.get_relevant_documents(query)[:20]
-
-        # Re-rank
-        scores = []
-        for doc in initial_results:
-            inputs = self.rerank_tokenizer(
-                query, doc.page_content,
-                return_tensors='pt',
-                truncation=True,
-                max_length=512
-            )
-            score = self.rerank_model(**inputs).logits[0][0].item()
-            scores.append((doc, score))
-
-        # Sort by score
-        reranked = sorted(scores, key=lambda x: x[1], reverse=True)
-
-        # Return top-k
-        return [doc for doc, score in reranked[:k]]
-
-    def generate(self, query, retrieved_docs):
-        # Build context
-        context = '\n\n'.join([f"[{i+1}] {doc.page_content}"
-                               for i, doc in enumerate(retrieved_docs)])
-
-        # Construct prompt
-        prompt = f"""
-        Answer the question based on the context below. Cite sources using [number].
-        If the answer is not in the context, say "I don't have enough information."
-
-        Context:
-        {context}
-
-        Question: {query}
-
-        Answer:
-        """
-
-        # Generate
-        answer = self.llm(prompt)
-
-        return answer, retrieved_docs
-
-    def query(self, query):
-        retrieved_docs = self.retrieve(query, k=5)
-        answer, sources = self.generate(query, retrieved_docs)
-
-        return {
-            'answer': answer,
-            'sources': sources
-        }
-
-# Usage
-rag = AdvancedRAG(documents)
-result = rag.query("What is the return policy?")
-print(result['answer'])
-print(f"Sources: {[doc.metadata for doc in result['sources']]}")
-```
-
-
-## Optimization Strategies
-
-### 1. Caching
-
-```python
-import functools
-
-@functools.lru_cache(maxsize=1000)
-def cached_retrieval(query):
-    """Cache retrieval results for common queries."""
-    return vectorstore.similarity_search(query, k=5)
-
-# Saves embedding + retrieval cost for repeated queries
-```
-
-### 2. Async Retrieval
-
-```python
-import asyncio
-
-async def async_retrieve(queries, vectorstore):
-    """Retrieve for multiple queries in parallel."""
-    tasks = [vectorstore.asimilarity_search(q, k=5) for q in queries]
-    results = await asyncio.gather(*tasks)
-    return results
-```
-
-### 3. Metadata Filtering
-
-```python
-# Filter by metadata before similarity search
-results = vectorstore.similarity_search(
-    query,
-    k=5,
-    filter={"source": "product_docs"}  # Only search product docs
-)
-
-# Faster (smaller search space) + more relevant (right domain)
-```
-
-### 4. Index Optimization
-
-```python
-# FAISS index optimization
-import faiss
-
-# 1. Train index on sample (faster search)
-quantizer = faiss.IndexFlatL2(embedding_dim)
-index = faiss.IndexIVFFlat(quantizer, embedding_dim, n_clusters)
-index.train(sample_embeddings)
-
-# 2. Set search parameters
-index.nprobe = 10  # Trade-off: accuracy vs speed
-
-# Result: 5-10× faster search with minimal quality loss
+        # ... call generation LLM with grounded-answer prompt ...
+        return {"answer": "...", "sources": retrieved}
 ```
 
 
 ## Common Pitfalls
 
-### Pitfall 1: No chunking
-**Problem:** Full docs → overflow, poor precision
-**Fix:** Chunk to 500-1000 tokens
-
-### Pitfall 2: Dense-only retrieval
-**Problem:** Misses exact keyword matches
-**Fix:** Hybrid search (dense + sparse)
-
-### Pitfall 3: No re-ranking
-**Problem:** Coarse ranking, wrong results prioritized
-**Fix:** Over-retrieve (k=20), re-rank to top-5
-
-### Pitfall 4: Too much context
-**Problem:** > 10k tokens → cost, latency, 'lost in middle'
-**Fix:** Top 5 chunks (5k tokens), optimize retrieval precision
-
-### Pitfall 5: No evaluation
-**Problem:** Can't measure or optimize
-**Fix:** Build test set, measure MRR, Precision@k
+| Pitfall | Symptom | Fix |
+|---------|---------|-----|
+| No contextualization of chunks | Retrieval recall plateaus around 90–95% | Add Anthropic-style contextual blurbs (see Component 2). |
+| Dense-only retrieval | Misses IDs, SKUs, rare terms | Hybrid + RRF. |
+| No reranker | Top-5 contains the gold chunk only ~60% of the time | Over-retrieve k=50, rerank to k=5 with Cohere/Voyage/BGE. |
+| Bad PDF extraction | Tables / figures missing from chunks | Switch to layout-aware parser; consider ColPali for visual docs. |
+| Stuffing 50 chunks into context | Costs spike, quality plateaus or regresses | Cap reranked context, order for lost-in-middle. |
+| RAG when long-context wins | Small corpus, complex synthesis, no citation requirement | Use prompt caching with full corpus; cross-ref `context-engineering-and-prompt-caching.md`. |
+| No eval harness | "Did this change make things better?" unanswerable | Frozen eval set + RAGAS/TruLens in CI. |
+| LangChain wrapper mismatch | `ImportError: cannot import name X from langchain.vectorstores` | Use `langchain_community.vectorstores` or the provider SDK. |
 
 
 ## Summary
 
-**Core principles:**
+1. **Decide if RAG is the right tool.** Long-context + caching wins on small static corpora; RAG wins on huge / fresh / auditable corpora.
+2. **Chunk well, then contextualize.** Anthropic's contextual retrieval is the highest-leverage no-cost improvement of the last two years.
+3. **Hybrid retrieval with RRF is the default.** Dense alone misses lexical, sparse alone misses semantic.
+4. **Rerank.** A modern cross-encoder (Cohere Rerank 3.5, Voyage rerank-2.5, BGE-reranker-v2-m3) is the difference between "demo" and "production."
+5. **Late interaction (ColBERT, ColPali) for visual / layout-rich docs.**
+6. **Agentic RAG (CRAG, Self-RAG, GraphRAG) for failure modes vanilla RAG can't handle** — bad retrieval, multi-hop, sensemaking.
+7. **Evaluate.** Frozen eval set, retrieval metrics, end-to-end LLM-judge, in CI.
 
-1. **Chunk documents**: 500-1000 tokens, semantic boundaries, overlap for continuity
-2. **Hybrid retrieval**: Dense (semantic) + Sparse (keyword) = best results
-3. **Re-rank**: Over-retrieve (k=20-50), refine to top-5 with cross-encoder
-4. **Evaluate systematically**: MRR, Precision@k, Recall@k, NDCG for retrieval; F1, Exact Match for generation
-5. **Keep context focused**: Top 5 chunks (~5k tokens), optimize retrieval not context size
+Cross-references: `yzmir-ml-production` for serving / inference cost, `ordis-security-architect` for prompt-injection hardening of retrieved content, `context-engineering-and-prompt-caching.md` and `reasoning-models.md` and `agentic-patterns-and-mcp.md` (this campaign) for adjacent decisions.
 
-**Pipeline:**
-```
-Documents → Chunk → Embed → Vector DB
-Query → Hybrid Retrieval (k=20) → Re-rank (k=5) → Context → LLM → Answer
-```
+---
 
-**Metrics targets:**
-- MRR > 0.7 (first relevant in top ~1.4)
-- Precision@5 > 0.7 (70% of top-5 relevant)
-- Generation F1 > 0.8 (80% token overlap)
-
-**Key insight:** RAG quality depends on retrieval precision. Optimize retrieval (chunking, hybrid search, re-ranking, evaluation) before adding context or changing LLMs.
+*Model lineup current as of 2026-05; revisit quarterly.*
