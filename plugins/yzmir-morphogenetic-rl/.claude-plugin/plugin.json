@@ -1,6 +1,6 @@
 {
   "name": "yzmir-morphogenetic-rl",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "RL-controlled neural-network morphogenesis - design controllers that decide WHEN and HOW to grow a network during training. Covers controller action/observation/reward design, governor/safety-gate discipline, rollback-as-RL-signal shaping, deterministic morphogenesis, ablation/evaluation under topology change. Companion to yzmir-dynamic-architectures (which covers HOW the growable network trains).",
   "author": {
     "name": "tachyon-beep",

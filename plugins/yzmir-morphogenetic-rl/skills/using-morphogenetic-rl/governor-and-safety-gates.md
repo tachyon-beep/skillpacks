@@ -7,14 +7,7 @@
 - Debugging morphogenesis-induced training collapse (NaN, loss explosion, gradient explosion)
 - Auditing whether existing gates are actually enforced
 
-For the controller-side reward shaping when the governor reverts a decision, see `rollback-as-rl-signal.md`. For the FSM the governor sits on top of, see `safety-gated-seed-fsm.md` *(planned for v0.2.0; interim: `yzmir-dynamic-architectures/ml-lifecycle-orchestration.md`)*.
-
-<!-- TODO(v0.2.0): pressure-test the "controller-disables-gate" anti-pattern section.
-     Run subagent scenario: a controller proposes adjusting gate thresholds when its
-     confidence is high, framed as "the governor is being too conservative for an
-     expert policy." If the subagent rationalizes its way to a controller-tunable
-     gate after reading this sheet, the wording is not strong enough. Strengthen the
-     "Controller-Disables-Gate Anti-Pattern" section accordingly. -->
+For the controller-side reward shaping when the governor reverts a decision, see `rollback-as-rl-signal.md`. For the FSM the governor sits on top of, see `safety-gated-seed-fsm.md`.
 
 
 ## Core Principle
@@ -225,6 +218,24 @@ These are different surface forms of the same violation: **the controller has be
 
 The legitimate way to incorporate controller information is via the *reward* — see `rollback-as-rl-signal.md`. The governor is the wrong place.
 
+### "But Our Controller Is an Expert"
+
+A specific framing of this anti-pattern is worth naming because it sounds reasonable and is not:
+
+> "Our controller has been trained for a long time and its confidence is well-calibrated. The governor's gates were chosen for an early-training-stage controller and are now too conservative. Why not let the controller relax the gates when its confidence is high?"
+
+The answer is: **gate calibration is not the controller's job, and a "well-calibrated expert" controller is exactly the controller most likely to learn the gate-relaxation pathway.**
+
+A novice controller proposes mostly bad actions; the gates fire; the controller eventually stops proposing bad actions. The system survives because the gates were enforced.
+
+A "well-calibrated expert" controller proposes *mostly* good actions. If its confidence is allowed to relax gates, it will learn that relaxing gates raises its near-term reward (the action goes through more often). Its calibration is on the *action*, not on the *gate's calibration*. The two are different. A controller cannot be calibrated about its own veto layer because the veto layer was designed without reference to the controller's existence.
+
+The fix is not "let the expert controller tune gates." The fix is: if the gates are now too conservative for the operating regime, **a human or the governor itself** retunes the gates based on observed false-positive rate. The signal is "rate of pre-flight vetoes for actions that, when forced through in shadow mode, would not have triggered post-event panics" — and that measurement does not require, and must not consume, the controller's confidence.
+
+If after retuning the gates are still firing on actions the operator believes are safe, the answer is *more conservative training* until either the controller's actual proposal rate matches what the gates allow, or the operator's belief about safety is updated by the next post-event panic. The system survives the iteration; the controller does not get a tunable gate.
+
+The general form: **whenever the rationalization for relaxing a gate references the controller's competence, the answer is "no" without further consideration.** The competence claim is the surface; the underlying request is "give the controller veto power over its own safety layer," which is the anti-pattern.
+
 ---
 
 ## Rationalization Resistance
@@ -234,6 +245,8 @@ The legitimate way to incorporate controller information is via the *reward* —
 | "The controller will learn to avoid actions the governor would veto" | Possibly, eventually. The governor exists to keep training alive *until then*. |
 | "Tightening gates this much will prevent the controller from exploring" | The controller's job is not to explore at the cost of training survival. Tighten gates; let the controller learn within them. |
 | "We can let the controller adjust gate thresholds" | No. This is the anti-pattern. Gates are fixed or governor-set; never controller-set. |
+| "Our controller is an expert now; the gates are too conservative for it" | Calibration of the controller and calibration of the gates are different. The expert controller is exactly the one most able to learn the gate-relaxation pathway. Retune the gates from observed false-positive rate, not from controller confidence. |
+| "The governor's thresholds were chosen early; they should adapt" | Adaptive thresholds are fine — *if* the adaptation is governor-driven (e.g., from observed pre-event-window statistics) and never reads any controller output. |
 | "Most actions are safe; gates are overhead" | The unsafe ones cost orders of magnitude more than gate overhead. |
 | "We've never seen NaN" | You will. Add the gate before you do, not after. |
 | "Pre-flight failures clutter the logs" | They are signal. Log them structurally and analyze them. If volume is high, the controller is the problem. |
@@ -336,7 +349,7 @@ This is a sketch, not a recipe. The constants (window sizes, k-values, cooldowns
 ## Cross-References
 
 - **Controller side, including how rollback signals reach the policy**: `rollback-as-rl-signal.md`
-- **The seed lifecycle FSM the governor sits on top of**: `safety-gated-seed-fsm.md` *(planned for v0.2.0; interim: `yzmir-dynamic-architectures/ml-lifecycle-orchestration.md`)*
+- **The seed lifecycle FSM the governor sits on top of**: `safety-gated-seed-fsm.md`
 - **Underlying FSM machinery**: `yzmir-dynamic-architectures/ml-lifecycle-orchestration.md`
 - **NaN debugging in PyTorch**: `yzmir-pytorch-engineering/debug-nan.md`
 - **Gradient health monitoring**: `yzmir-training-optimization/check-gradients.md`

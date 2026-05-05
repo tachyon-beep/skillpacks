@@ -17,7 +17,7 @@ Invoke this meta-skill when you encounter:
 - **Evaluation Under Topology Change**: Comparing checkpoints whose architectures differ
 - **Morphogenetic Pathology**: Networks that grow themselves into worse states
 
-This is the **entry point** for RL-controlled morphogenesis. It routes to 8 novel reference sheets plus 2 bridge sheets that link back to its sibling pack `yzmir-dynamic-architectures`.
+This is the **entry point** for RL-controlled morphogenesis. It routes to 8 novel reference sheets plus 2 bridge sheets that link back to its sibling pack `yzmir-dynamic-architectures`. All ten are shipped.
 
 ## How to Access Reference Sheets
 
@@ -77,35 +77,21 @@ Key tensions:
 
 ## The Morphogenetic-RL Skills
 
-**Available in v0.1.0:**
+**Novel sheets** (the eight original disciplines this pack defines):
 
 1. **rl-controller-for-morphogenesis** - Action space, observation space, reward shaping for growth policies
 2. **governor-and-safety-gates** - The non-policy veto: panic detection, NaN/Inf gates, loss-history windowing, rollback triggers
 3. **rollback-as-rl-signal** - PPO/policy-gradient punishment shaping when the governor undoes a controller decision
+4. **multi-seed-coordination-rl** - Ordering, slot contention, credit assignment across simultaneous structural decisions
+5. **deterministic-morphogenesis** - Reproducing runs across topology changes; RNG seed discipline for grafting; replay logs
+6. **growth-telemetry-and-ablation** - Schemas that survive topology change; ablation-friendly two-table design
+7. **evaluation-under-topology-change** - Fair comparison across checkpoints with different shapes; the required baselines
+8. **when-not-to-grow** - Failure modes where morphogenesis hurts; the off-switch baseline; the discipline of stopping
 
-**Roadmap (planned for v0.2.0+ — not yet written):**
+**Bridge sheets** (link to sibling pack `yzmir-dynamic-architectures`):
 
-These sheets are part of the pack's intended scope. The router below describes them so the architecture is visible, but the files do not yet exist. Treat any reference to them in this skill as a forward declaration.
-
-- *multi-seed-coordination-rl* - Ordering, competition, and credit assignment across simultaneous structural decisions
-- *deterministic-morphogenesis* - Reproducing runs across topology changes; RNG seed discipline for grafting; replay budgets
-- *growth-telemetry-and-ablation* - What to log so ablations remain valid after the network's shape changes
-- *evaluation-under-topology-change* - Fair comparison across checkpoints with different shapes
-- *when-not-to-grow* - Failure modes where morphogenesis hurts; signs the controller should be off
-- *safety-gated-seed-fsm* - Bridge sheet: lifecycle FSM with governor veto, defers to `dynamic-architectures/ml-lifecycle-orchestration`
-- *rl-driven-alpha-blending* - Bridge sheet: learned alpha output, defers to `dynamic-architectures/gradient-isolation-techniques`
-
-For the planned-but-not-yet-written topics, route to the closest cross-pack source:
-
-| Planned topic | Interim source |
-|---------------|----------------|
-| Multi-seed coordination | `yzmir-deep-rl/multi-agent-rl.md` |
-| Determinism patterns | `yzmir-simulation-foundations/check-determinism` |
-| Growth telemetry | `yzmir-ml-production` (general telemetry) |
-| Evaluation fairness | `yzmir-deep-rl/rl-evaluation.md` |
-| When not to use a technique | Apply general `when-not-to-X` discipline manually |
-| Seed FSM mechanics | `yzmir-dynamic-architectures/ml-lifecycle-orchestration.md` |
-| Alpha blending mechanics | `yzmir-dynamic-architectures/gradient-isolation-techniques.md` |
+- **safety-gated-seed-fsm** - How governor verdicts integrate with the seed lifecycle FSM; defers FSM mechanics to `dynamic-architectures/ml-lifecycle-orchestration`
+- **rl-driven-alpha-blending** - α as a learned controller output rather than a fixed schedule; defers blending mechanics to `dynamic-architectures/gradient-isolation-techniques`
 
 ---
 
@@ -130,13 +116,13 @@ For the planned-but-not-yet-written topics, route to the closest cross-pack sour
 | "Policy is learning to game the gates" | governor-and-safety-gates |
 | "How do I shape reward when the governor reverts a decision?" | rollback-as-rl-signal |
 | "PPO is ignoring rollback events because they're rare" | rollback-as-rl-signal |
-| "Two seeds want the same slot — who wins?" | *(planned: multi-seed-coordination-rl)* — interim: `yzmir-deep-rl/multi-agent-rl` |
-| "Same seed, same data, different grow events on rerun" | *(planned: deterministic-morphogenesis)* — interim: `yzmir-simulation-foundations/check-determinism` |
-| "Logged metrics break when shape changes" | *(planned: growth-telemetry-and-ablation)* |
-| "How do I compare a 4M-param checkpoint to a 4.3M-param checkpoint?" | *(planned: evaluation-under-topology-change)* — interim: `yzmir-deep-rl/rl-evaluation` |
-| "Tried morphogenesis, it made things worse" | *(planned: when-not-to-grow)* |
-| "My seed lifecycle FSM needs safety overrides" | *(planned: safety-gated-seed-fsm)* — interim: `yzmir-dynamic-architectures/ml-lifecycle-orchestration` |
-| "Controller should learn α, not have it scheduled" | *(planned: rl-driven-alpha-blending)* — interim: `yzmir-dynamic-architectures/gradient-isolation-techniques` |
+| "Two seeds want the same slot — who wins?" | multi-seed-coordination-rl |
+| "Same seed, same data, different grow events on rerun" | deterministic-morphogenesis |
+| "Logged metrics break when shape changes" | growth-telemetry-and-ablation |
+| "How do I compare a 4M-param checkpoint to a 4.3M-param checkpoint?" | evaluation-under-topology-change |
+| "Tried morphogenesis, it made things worse" | when-not-to-grow |
+| "My seed lifecycle FSM needs safety overrides" | safety-gated-seed-fsm |
+| "Controller should learn α, not have it scheduled" | rl-driven-alpha-blending |
 | "Set up the seed lifecycle FSM itself" | → yzmir-dynamic-architectures/ml-lifecycle-orchestration |
 | "Implement gradient detach/freezing for the new module" | → yzmir-dynamic-architectures/gradient-isolation-techniques |
 | "Pick a PPO/SAC implementation" | → yzmir-deep-rl/policy-gradient-methods |
@@ -220,17 +206,85 @@ For the planned-but-not-yet-written topics, route to the closest cross-pack sour
 
 ---
 
-### Steps 5–10: Planned Sheets (v0.2.0+)
+### Step 5: Multi-Seed Coordination
 
-The remaining concerns in this pack's scope are **not yet written**. They are listed here so the architectural boundary is documented; for each one, an interim cross-pack source covers the closest available material.
+**Symptoms:**
 
-- **Multi-seed coordination** (slot contention, credit assignment across simultaneous decisions, cooperative vs competitive seeds) — interim: `yzmir-deep-rl/multi-agent-rl.md`
-- **Deterministic morphogenesis** (RNG discipline across grow events, multi-rank sync, replay logs) — interim: `yzmir-simulation-foundations/check-determinism`
-- **Growth telemetry and ablation** (topology-aware logging, ablation-friendly schemas, governor decision logs) — interim: general telemetry guidance, `yzmir-ml-production`
-- **Evaluation under topology change** (parameter-count-equalized baselines, per-FLOP normalization, controller-skill vs raw-scaling attribution) — interim: `yzmir-deep-rl/rl-evaluation.md`
-- **When not to grow** (failure modes, off-switch baseline, growth-as-procrastination anti-pattern) — interim: apply general `when-not-to-X` discipline manually
-- **Safety-gated seed FSM** (lifecycle FSM with governor veto layer) — interim: `yzmir-dynamic-architectures/ml-lifecycle-orchestration.md`
-- **RL-driven alpha blending** (alpha as a controller output rather than schedule) — interim: `yzmir-dynamic-architectures/gradient-isolation-techniques.md`
+- K candidate slots; controller may want to grow several at once
+- Two seeds want the same parameter budget or are mutually exclusive
+- Credit assignment is unclear because multiple actions fired in one step
+- Considering K independent policies vs one factored controller
+
+**Route to:** [multi-seed-coordination-rl.md](multi-seed-coordination-rl.md)
+
+**Covers:** factored joint actions, deterministic tie-breaks, credit assignment via counterfactual replay, single-policy vs multi-agent framing, the "everyone grows at once" failure, governor pre-flight across simultaneous proposals, cross-slot hysteresis.
+
+---
+
+### Step 6: Deterministic Morphogenesis
+
+**Symptoms:**
+
+- Same seed, same data produce different topologies on rerun
+- A failure happened once and cannot be reproduced for debugging
+- Ranks disagree about whether/where to grow in distributed training
+- Adding a replay log for offline analysis
+
+**Route to:** [deterministic-morphogenesis.md](deterministic-morphogenesis.md)
+
+**Covers:** separate RNG streams, per-event sub-streams, replay log fields, multi-rank decision broadcast, validating determinism in CI, locating divergence.
+
+---
+
+### Step 7: Growth Telemetry and Ablation
+
+**Symptoms:**
+
+- Logs break when growth events fire (column counts change, dashboards crash)
+- Cannot attribute a result to a specific controller decision
+- Cross-run ablation queries require column reconciliation
+
+**Route to:** [growth-telemetry-and-ablation.md](growth-telemetry-and-ablation.md)
+
+**Covers:** the two-table (step + event) design, sidecar tables for per-module stats, structured action payloads, watch-window resolution, schema additivity across topology change.
+
+---
+
+### Step 8: Evaluation Under Topology Change
+
+**Symptoms:**
+
+- Comparing two morphogenetic runs whose final architectures differ
+- Reporting "morphogenesis improves performance" and unsure how much is the controller vs raw scaling
+- Setting up a research substrate where architecture is itself a variable
+
+**Route to:** [evaluation-under-topology-change.md](evaluation-under-topology-change.md)
+
+**Covers:** the four required baselines (off-switch, static-initial, static-final, fixed-schedule), per-FLOP / per-param normalization, multi-seed discipline, controller-skill-vs-raw-scaling attribution, common reporting pitfalls.
+
+---
+
+### Step 9: When Not to Grow
+
+**Symptoms:**
+
+- Considering morphogenesis for a new problem and unsure whether it is the right tool
+- A morphogenetic system is in production and you suspect it is doing nothing useful — or harm
+- Losing to a static baseline despite ending with more parameters
+- Sunk-cost reasoning entering the conversation
+
+**Route to:** [when-not-to-grow.md](when-not-to-grow.md)
+
+**Covers:** the off-switch principle, six failure modes where morphogenesis hurts, domains where static architecture wins, the decision procedure before/after running, how to walk it back if morphogenesis is in your system but should not be.
+
+---
+
+### Step 10: Bridge Sheets to `yzmir-dynamic-architectures`
+
+Two short sheets bridge to the sibling pack:
+
+- **[safety-gated-seed-fsm.md](safety-gated-seed-fsm.md)** — how governor verdicts integrate with the seed lifecycle FSM. Defers FSM mechanics to `dynamic-architectures/ml-lifecycle-orchestration`.
+- **[rl-driven-alpha-blending.md](rl-driven-alpha-blending.md)** — making α a controller output rather than a fixed schedule. Defers blending mechanics to `dynamic-architectures/gradient-isolation-techniques`.
 
 ---
 
@@ -240,26 +294,29 @@ The remaining concerns in this pack's scope are **not yet written**. They are li
 
 **Need:** Stand up a new RL-controlled morphogenetic system from scratch.
 
-**Routing sequence (v0.1.0):**
-1. **rl-controller-for-morphogenesis** - Define action / observation / reward
-2. **governor-and-safety-gates** - Wrap the controller in a veto layer
-3. **rollback-as-rl-signal** - Wire governor decisions back into PPO
+**Routing sequence:**
+1. **deterministic-morphogenesis** - RNG streams, replay log, before any other infrastructure
+2. **growth-telemetry-and-ablation** - Two-table schemas before any other logging
+3. **rl-controller-for-morphogenesis** - Define action / observation / reward
+4. **governor-and-safety-gates** - Wrap the controller in a veto layer
+5. **rollback-as-rl-signal** - Wire governor decisions back into PPO
+6. **evaluation-under-topology-change** - Plan the four baselines before running anything
 
 Then for the host-side:
 - → `dynamic-architectures/ml-lifecycle-orchestration` (FSM)
 - → `dynamic-architectures/gradient-isolation-techniques` (training mechanics)
-
-For *deterministic morphogenesis*, *growth telemetry*, *evaluation under topology change* — see the planned-sheets list above; use the listed interim sources until v0.2.0.
 
 ### Scenario: Existing Controller Is Misbehaving
 
 **Need:** Triage a controller that grows the network into worse states.
 
 **Routing sequence:**
-1. **governor-and-safety-gates** - Are gates wired up at all?
-2. **rl-controller-for-morphogenesis** - Audit reward shape
-3. **rollback-as-rl-signal** - Are rollbacks reaching the policy?
-4. *Sanity-check the premise (when-not-to-grow)* — planned; in the interim, ask "would the static baseline of equivalent capacity perform as well?"
+1. **deterministic-morphogenesis** - Is the run reproducible at all?
+2. **growth-telemetry-and-ablation** - Are the schemas intact?
+3. **governor-and-safety-gates** - Are gates wired up; are panic rules complete?
+4. **when-not-to-grow** - Has the off-switch baseline been run?
+5. **rl-controller-for-morphogenesis** - Audit reward shape
+6. **rollback-as-rl-signal** - Are rollbacks reaching the policy?
 
 ### Scenario: Controller Has Plateaued, Won't Explore
 
@@ -268,16 +325,36 @@ For *deterministic morphogenesis*, *growth telemetry*, *evaluation under topolog
 **Routing sequence:**
 1. **rollback-as-rl-signal** - Probably asymmetric reward → conservative collapse
 2. **rl-controller-for-morphogenesis** - Reward shaping audit
-3. → `yzmir-deep-rl/exploration-strategies` for general exploration deficit
+3. **when-not-to-grow** - Confirm the conservative-collapse failure mode (Failure Mode 6)
+4. → `yzmir-deep-rl/exploration-strategies` for general exploration deficit
 
 ### Scenario: Ablation Setup for a Research Substrate
 
 **Need:** Design ablations across reward modes, gate policies, slot counts.
 
-This scenario depends on planned sheets (telemetry, determinism, evaluation). Until v0.2.0, fall back to:
-1. → `yzmir-ml-production` for general telemetry patterns
-2. → `yzmir-simulation-foundations/check-determinism` for reproducibility
-3. → `yzmir-deep-rl/rl-evaluation` for comparison protocols
+**Routing sequence:**
+1. **growth-telemetry-and-ablation** - Schemas first; everything downstream depends on them
+2. **deterministic-morphogenesis** - Replay log; counterfactual replay capability
+3. **evaluation-under-topology-change** - The four required baselines and how to compare
+4. **multi-seed-coordination-rl** - If the experiment has K-slot decisions
+
+### Scenario: Multi-Slot System Blowing Through Parameter Budget
+
+**Need:** Controller is firing too many actions at once.
+
+**Routing sequence:**
+1. **multi-seed-coordination-rl** - The "everyone grows at once" failure mode
+2. **governor-and-safety-gates** - Multi-action pre-flight, priority veto
+3. **rl-controller-for-morphogenesis** - Factored joint action space audit
+
+### Scenario: Reporting a Result
+
+**Need:** Write up a morphogenetic experiment for a paper or internal report.
+
+**Routing sequence:**
+1. **when-not-to-grow** - Is the off-switch baseline run? If not, stop.
+2. **evaluation-under-topology-change** - Are all four baselines run? Multi-seed?
+3. **growth-telemetry-and-ablation** - Are schemas additive across the runs being compared?
 
 ---
 
@@ -367,38 +444,42 @@ Watch for these signs of an unsafe morphogenetic system:
 START: Morphogenetic-RL problem
 
 ├─ Designing the controller from scratch?
-│  └─ → rl-controller-for-morphogenesis
-│     → then governor-and-safety-gates
-│     → then rollback-as-rl-signal
+│  └─ → deterministic-morphogenesis (foundation)
+│     → growth-telemetry-and-ablation (foundation)
+│     → rl-controller-for-morphogenesis
+│     → governor-and-safety-gates
+│     → rollback-as-rl-signal
+│     → evaluation-under-topology-change (plan the baselines)
 
 ├─ Controller takes catastrophic actions?
 │  └─ → governor-and-safety-gates
 
 ├─ Controller has stopped exploring / always-rollback?
 │  └─ → rollback-as-rl-signal
-│     → then rl-controller-for-morphogenesis (reward audit)
+│     → rl-controller-for-morphogenesis (reward audit)
+│     → when-not-to-grow (confirm Failure Mode 6: conservative collapse)
 
 ├─ Multiple seeds want the same slot?
-│  └─ (v0.2: multi-seed-coordination-rl) — interim → yzmir-deep-rl/multi-agent-rl
+│  └─ → multi-seed-coordination-rl
 
 ├─ Cannot reproduce a topology / controller decision?
-│  └─ (v0.2: deterministic-morphogenesis) — interim → yzmir-simulation-foundations/check-determinism
+│  └─ → deterministic-morphogenesis
 
 ├─ Logged metrics break across grow events?
-│  └─ (v0.2: growth-telemetry-and-ablation)
+│  └─ → growth-telemetry-and-ablation
 
 ├─ Comparing checkpoints with different shapes?
-│  └─ (v0.2: evaluation-under-topology-change) — interim → yzmir-deep-rl/rl-evaluation
+│  └─ → evaluation-under-topology-change
 
-├─ Morphogenesis is making things worse?
-│  └─ (v0.2: when-not-to-grow)
+├─ Morphogenesis is making things worse — or doing nothing?
+│  └─ → when-not-to-grow
 
 ├─ FSM design with safety overrides?
-│  └─ (v0.2: safety-gated-seed-fsm)
+│  └─ → safety-gated-seed-fsm
 │     (then → dynamic-architectures/ml-lifecycle-orchestration)
 
 └─ Alpha as a learned controller output?
-   └─ (v0.2: rl-driven-alpha-blending)
+   └─ → rl-driven-alpha-blending
       (then → dynamic-architectures/gradient-isolation-techniques)
 ```
 
@@ -408,16 +489,24 @@ START: Morphogenetic-RL problem
 
 After routing, load the appropriate reference sheet:
 
-1. [rl-controller-for-morphogenesis.md](rl-controller-for-morphogenesis.md) - Action / observation / reward design
-2. [governor-and-safety-gates.md](governor-and-safety-gates.md) - Veto layer outside the policy
-3. [rollback-as-rl-signal.md](rollback-as-rl-signal.md) - Wiring governor decisions into PPO/SAC training
+**Foundations** (read first when starting greenfield):
 
-**Planned for v0.2.0** (file does not exist yet; see "Roadmap" section above):
+1. [deterministic-morphogenesis.md](deterministic-morphogenesis.md) - Separate RNG streams, replay logs, multi-rank sync, validating determinism
+2. [growth-telemetry-and-ablation.md](growth-telemetry-and-ablation.md) - Two-table design that survives topology change
 
-- *multi-seed-coordination-rl.md* - Multi-action / multi-controller arbitration
-- *deterministic-morphogenesis.md* - Reproducibility across topology change
-- *growth-telemetry-and-ablation.md* - Logging and ablation infrastructure
-- *evaluation-under-topology-change.md* - Fair comparison across shapes
-- *when-not-to-grow.md* - Failure modes and the off switch
-- *safety-gated-seed-fsm.md* - Lifecycle FSM bridge sheet
-- *rl-driven-alpha-blending.md* - Learned-alpha bridge sheet
+**Controller and governor:**
+
+3. [rl-controller-for-morphogenesis.md](rl-controller-for-morphogenesis.md) - Action / observation / reward design
+4. [governor-and-safety-gates.md](governor-and-safety-gates.md) - Veto layer outside the policy
+5. [rollback-as-rl-signal.md](rollback-as-rl-signal.md) - Wiring governor decisions into PPO/SAC training
+
+**Coordination and evaluation:**
+
+6. [multi-seed-coordination-rl.md](multi-seed-coordination-rl.md) - Slot contention, simultaneous actions, credit assignment
+7. [evaluation-under-topology-change.md](evaluation-under-topology-change.md) - The four required baselines, multi-seed reporting
+8. [when-not-to-grow.md](when-not-to-grow.md) - Off-switch baseline, failure modes, the discipline of stopping
+
+**Bridges to `yzmir-dynamic-architectures`:**
+
+9. [safety-gated-seed-fsm.md](safety-gated-seed-fsm.md) - Governor verdicts as FSM transitions
+10. [rl-driven-alpha-blending.md](rl-driven-alpha-blending.md) - α as a learned controller output

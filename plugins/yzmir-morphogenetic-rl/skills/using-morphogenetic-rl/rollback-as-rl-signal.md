@@ -299,4 +299,4 @@ Trade-off: the replay buffer accumulates `(state, action, next_state)` tuples wh
 - **PPO implementation**: `yzmir-deep-rl/policy-gradient-methods.md`
 - **Prioritized replay (for off-policy variant)**: `yzmir-deep-rl/value-based-methods.md`
 - **Exploration deficit diagnostics**: `yzmir-deep-rl/exploration-strategies.md`
-- **Multi-action coordination during watch**: `multi-seed-coordination-rl.md` *(planned for v0.2.0)*
+- **Multi-action coordination during watch**: `multi-seed-coordination-rl.md`

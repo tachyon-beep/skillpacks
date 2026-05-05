@@ -61,7 +61,7 @@ Without an explicit no-op, the policy is forced to mutate every step. Implicit n
 | Per-step action | Short horizons, sparse rewards, controller must learn to wait |
 | Per-N-step action | Reduces controller decision burden, gives host trainer settling time between actions |
 | Event-triggered | Controller only acts when an external trigger fires (loss plateau, gradient norm threshold) |
-| Hierarchical | Two policies: one decides *whether* to act, one decides *what* — see `multi-seed-coordination-rl.md` *(planned for v0.2.0)*; interim: `yzmir-deep-rl/multi-agent-rl` |
+| Hierarchical | Two policies: one decides *whether* to act, one decides *what* — see `multi-seed-coordination-rl.md` |
 
 Default to **per-N-step** with N tied to host trainer's natural settling period (e.g., one epoch, one validation cycle). Per-step actions interact poorly with the governor's hysteresis logic.
 
@@ -257,7 +257,7 @@ The controller's job has long-range temporal structure (a grow event affects los
 - **Governor / safety gates**: `governor-and-safety-gates.md`
 - **General reward shaping technique**: `yzmir-deep-rl/reward-shaping-engineering.md`
 - **General PPO/SAC implementation**: `yzmir-deep-rl/policy-gradient-methods.md`, `yzmir-deep-rl/actor-critic-methods.md`
-- **Multi-action arbitration**: `multi-seed-coordination-rl.md` *(planned for v0.2.0; interim: `yzmir-deep-rl/multi-agent-rl`)*
+- **Multi-action arbitration**: `multi-seed-coordination-rl.md`
 - **Counterfactual evaluation technique**: `yzmir-deep-rl/counterfactual-reasoning.md`
 - **Host trainer FSM**: `yzmir-dynamic-architectures/ml-lifecycle-orchestration.md`
 - **Gradient-isolation mechanics**: `yzmir-dynamic-architectures/gradient-isolation-techniques.md`
