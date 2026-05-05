@@ -377,9 +377,9 @@ Color conveys semantic meaning (red = error, green = success), sets emotional to
    - Blue = information, trust
 
 2. **Does text meet contrast ratios?**
-   - WCAG AA: 4.5:1 for normal text, 3:1 for large text (18px+ or 14px+ bold)
-   - WCAG AAA: 7:1 for normal text, 4.5:1 for large text
-   - Use tools: WebAIM Contrast Checker, Stark, Figma plugins
+   - WCAG 2.2 AA: 4.5:1 for normal text, 3:1 for large text (18px+ or 14px+ bold)
+   - WCAG 2.2 AAA: 7:1 for normal text, 4.5:1 for large text
+   - Use tools: WebAIM Contrast Checker, axe DevTools, Stark (Figma/Sketch/web), Chrome DevTools color picker (built-in)
 
 3. **Is design colorblind-safe?**
    - Don't rely on color alone (use icons, labels, patterns)
@@ -982,7 +982,7 @@ Note where dimensions conflict:
 ## Related Skills
 
 **Core UX Skills**:
-- **lyra/ux-designer/accessibility-and-inclusive-design**: Color contrast, typography readability, visual accessibility requirements (WCAG 2.1 AA)
+- **lyra/ux-designer/accessibility-and-inclusive-design**: Color contrast, typography readability, visual accessibility requirements (WCAG 2.2 AA)
 - **lyra/ux-designer/interaction-design-patterns**: Visual feedback for interactions, button states, visual affordances
 - **lyra/ux-designer/ux-fundamentals**: Core principles (progressive disclosure, aesthetic & minimalist design, visual hierarchy concepts)
 

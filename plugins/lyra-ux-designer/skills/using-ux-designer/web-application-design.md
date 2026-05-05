@@ -172,7 +172,7 @@ Users come to web applications to work with data—view it, understand it, act o
   - Y-axis: Value (starts at 0 unless all values in narrow range)
   - Max 5 lines per chart (more = unreadable)
   - Legend with colors, or direct labels on lines
-  - Tooltips on hover: "Aug 15, 2024: 1,234 users"
+  - Tooltips on hover: "Mar 15, 2026: 1,234 users"
 
 **Bar Charts (Comparisons Between Categories):**
 - **Use for:** Comparing quantities across categories
@@ -232,7 +232,7 @@ Users come to web applications to work with data—view it, understand it, act o
 <div class="detail-view">
   <h3>Project Alpha</h3>
   <div class="metadata">
-    <p>Created: Aug 1, 2024</p>
+    <p>Created: Mar 15, 2026</p>
     <p>Owner: Jane Smith</p>
     <p>Budget: $50,000</p>
   </div>
@@ -282,7 +282,7 @@ Users come to web applications to work with data—view it, understand it, act o
 **CSV for Data Analysis:**
 - All rows or filtered/selected rows
 - All columns or visible columns only
-- Filename: "projects_export_2024-08-15.csv"
+- Filename: "projects_export_2026-03-15.csv"
 
 **PDF for Reports:**
 - Formatted for printing (headers, footers, page numbers)
@@ -1041,7 +1041,7 @@ table {
 <div class="card" data-id="123">
   <h3>Project Alpha</h3>
   <p>Status: <span class="badge">Active</span></p>
-  <p>Created: Aug 1, 2024</p>
+  <p>Created: Mar 15, 2026</p>
   <button>View Details</button>
 </div>
 
@@ -1050,7 +1050,7 @@ table {
   <tr>
     <td>Project Alpha</td>
     <td><span class="badge">Active</span></td>
-    <td>Aug 1, 2024</td>
+    <td>Mar 15, 2026</td>
     <td><button>View Details</button></td>
   </tr>
 </table>
@@ -1067,7 +1067,7 @@ table {
     <button class="expand-btn">▼</button>
   </div>
   <div class="row-details" hidden>
-    <p>Created: Aug 1, 2024</p>
+    <p>Created: Mar 15, 2026</p>
     <p>Owner: Jane Smith</p>
     <p>Budget: $50,000</p>
   </div>
@@ -1738,10 +1738,29 @@ Users scan web pages in an F-shaped pattern: horizontal scan at top, second hori
   <div class="result-item">
     <h3><a href="/projects/123">Project Alpha</a></h3>
     <p>Description with <mark>alpha</mark> highlighted...</p>
-    <span class="meta">Created Aug 1, 2024 • Owner: Jane Smith</span>
+    <span class="meta">Created Mar 15, 2026 • Owner: Jane Smith</span>
   </div>
 </div>
 ```
+
+
+## Modern Web Platform Primitives (2026 baseline)
+
+Use these natively-supported features instead of rebuilding them in JavaScript. Detailed examples and decision matrix live in [interaction-design-patterns.md](interaction-design-patterns.md#modern-web-platform-primitives) — the summary below is a reminder for web-app architects.
+
+| Feature                          | Replaces                                          | Baseline |
+| -------------------------------- | ------------------------------------------------- | -------- |
+| `<dialog>.showModal()`           | div-based modal patterns + manual focus trap      | 2022     |
+| Popover API + Anchor Positioning | JS-driven menus, tooltips, action sheets          | 2024     |
+| `inert`                          | manual `aria-hidden` + tabindex sweeps            | 2023     |
+| `:has()`                         | classList toggling for "container has descendant" | 2023     |
+| Container queries (`@container`) | viewport-only media queries for components        | 2023     |
+| View Transitions API             | manual FLIP / hand-rolled cross-fade              | 2024     |
+| `color-mix()` + `oklch()`        | hand-exported tint/shade palettes                 | 2023     |
+| `forced-colors` + system colors  | `-ms-high-contrast` legacy patterns               | 2022     |
+| `:focus-visible`                 | bare `:focus` (with stray mouse-click outlines)   | 2022     |
+
+**Web-app implication:** dashboards, modals, command palettes, side-panels, and disclosure widgets in 2026 should default to platform primitives. Reach for a JS library (Radix, Headless UI, Reach UI) only when you specifically need cross-component composition that the platform doesn't yet provide. Validate browser-support claims against [caniuse.com](https://caniuse.com/) for the project's target matrix.
 
 
 ## Anti-Patterns
@@ -1971,7 +1990,7 @@ Users scan web pages in an F-shaped pattern: horizontal scan at top, second hori
 - Mobile-first CSS: Base styles mobile, enhance with media queries
 
 **Accessibility Standards:**
-- WCAG 2.1 AA: Keyboard navigation, focus indicators, 4.5:1 contrast
+- WCAG 2.2 AA: Keyboard navigation, `:focus-visible` indicators, 4.5:1 contrast, focus not obscured by sticky chrome (SC 2.4.11), 24×24 px pointer targets (SC 2.5.8), single-pointer alternatives to drag interactions (SC 2.5.7), accessible authentication that supports password managers (SC 3.3.8), Consistent Help (SC 3.2.6), Redundant Entry (SC 3.3.7)
 - ARIA: Proper roles, labels, live regions for dynamic content
 - Keyboard shortcuts: Document in accessible help panel
 

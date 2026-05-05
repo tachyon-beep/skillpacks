@@ -1055,7 +1055,7 @@ Interactions:
   - Backdrop click: Close modal
   - ESC key: Close modal
   - Focus trap: Tab cycles within modal
-  - Close button: Top-right, 32x32px minimum
+  - Close button: Top-right, ≥24×24 CSS px (WCAG 2.2 AA), 44×44 pt recommended
 
 Positioning:
   - Centered horizontally and vertically
@@ -1063,6 +1063,177 @@ Positioning:
   - Full-width minus 32px margin (mobile)
   - Scrollable if content exceeds viewport
 ```
+
+**Implementation: prefer the native `<dialog>` element.** It handles focus trap, ESC-to-close, backdrop, and the top-layer stacking automatically. Don't rebuild this with `div + role="dialog"` unless you have a specific reason.
+
+```html
+<dialog id="confirm-delete">
+  <form method="dialog">
+    <h2>Delete this file?</h2>
+    <p>This cannot be undone.</p>
+    <button value="cancel">Cancel</button>
+    <button value="confirm" class="danger">Delete</button>
+  </form>
+</dialog>
+
+<script>
+  const dlg = document.getElementById('confirm-delete');
+  document.querySelector('#delete-trigger').addEventListener('click', () => {
+    dlg.showModal();   // modal behaviour: focus trap, inert background, ESC closes
+  });
+  dlg.addEventListener('close', () => {
+    if (dlg.returnValue === 'confirm') performDelete();
+  });
+</script>
+
+<style>
+  /* The ::backdrop pseudo-element styles the modal scrim. */
+  dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+  dialog[open]     { animation: dlg-in 200ms ease-out; }
+  @keyframes dlg-in {
+    from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+</style>
+```
+
+`<dialog>.showModal()` is baseline since 2022 (Safari 15.4 / Chrome 37 / Firefox 98). For non-modal lightweight popovers (tooltips, menus, disclosure panels), prefer the **Popover API** (`popover` attribute) — see "Modern Web Platform Primitives" below.
+
+
+## Modern Web Platform Primitives
+
+These primitives became baseline-available between 2022 and 2024 and replace several patterns this skill previously taught with custom JS. Use them by default in new work.
+
+### `:focus-visible` — keyboard-only focus ring
+
+Stop using bare `:focus`; outlines on mouse clicks have been a complaint for two decades. `:focus-visible` only fires when the browser's heuristics say focus came from a keyboard / programmatic source.
+
+```css
+button:focus-visible {
+  outline: 2px solid #0066CC;
+  outline-offset: 2px;
+}
+button:focus:not(:focus-visible) { outline: none; }   /* mouse-click suppression */
+```
+Baseline since Safari 15.4 (March 2022).
+
+### `<dialog>` — native modal
+
+Covered above. Use `showModal()` (modal) or `show()` (non-modal). Replaces div-based modal patterns.
+
+### Popover API — declarative non-modal popovers
+
+For tooltips, menus, hint cards, action sheets — anything that floats above content but doesn't need the full modal contract.
+
+```html
+<button popovertarget="info-card">More info</button>
+<div id="info-card" popover>
+  <p>Helpful explanation here.</p>
+</div>
+```
+
+The browser handles light-dismiss (click outside / ESC), top-layer stacking, and accessibility tree wiring. Pair with **CSS Anchor Positioning** (`anchor-name` / `position-anchor`, baseline 2024 in Chromium / Safari 18; Firefox in progress) to position relative to the trigger without JS.
+
+Baseline since 2024 (Chrome 114, Safari 17, Firefox 125).
+
+### `inert` — disable a subtree
+
+When opening a non-`<dialog>` modal or showing a wizard step, mark sibling content `inert` so it can't be focused, clicked, or read by AT.
+
+```html
+<main inert>... background page content ...</main>
+<aside class="custom-modal">... active modal ...</aside>
+```
+
+`<dialog>.showModal()` applies `inert` to everything else automatically. Use `inert` directly when you can't use `<dialog>`.
+
+### `:has()` — parent / ancestor selector
+
+Style a container based on its descendants without JavaScript. Replaces a category of `classList.add` boilerplate.
+
+```css
+/* A card that contains an unread badge gets a left accent. */
+.card:has(.badge.unread) { border-left: 3px solid #0066CC; }
+
+/* A form whose submit button is disabled gets dim labels. */
+form:has(button[type=submit]:disabled) label { opacity: 0.6; }
+
+/* A figure that has a caption gets extra bottom margin. */
+figure:has(figcaption) { margin-bottom: 2rem; }
+```
+Baseline since Dec 2023 (all majors).
+
+### Container queries — `@container` and container units
+
+Components adapt to *their container*, not the viewport. Critical for a sidebar card that must layout differently when it's docked at 320 px vs floated at 800 px.
+
+```css
+.card-host { container-type: inline-size; container-name: card; }
+
+@container card (min-width: 480px) {
+  .card { display: grid; grid-template-columns: 1fr 2fr; }
+}
+
+/* Container-relative units: cqi (inline-size %), cqb, cqw, cqh, cqmin, cqmax. */
+.card h2 { font-size: clamp(1rem, 4cqi, 1.5rem); }
+```
+Baseline since Feb 2023.
+
+### View Transitions API — animate route / state changes
+
+Cross-fade or morph between DOM states without manual FLIP boilerplate. Same-document version is baseline in Chromium and Safari 18; cross-document version (for MPAs) shipped in Chromium 126.
+
+```js
+async function navigate(updateDOM) {
+  if (!document.startViewTransition) { updateDOM(); return; }
+  const transition = document.startViewTransition(updateDOM);
+  await transition.finished;
+}
+```
+```css
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 250ms; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+}
+```
+
+### `color-mix()` — programmatic color blending
+
+Build hover / disabled / focus states from a single brand color without exporting a 12-stop palette.
+
+```css
+:root { --brand: oklch(60% 0.18 250); }
+button             { background: var(--brand); }
+button:hover       { background: color-mix(in oklch, var(--brand) 88%, white); }
+button:disabled    { background: color-mix(in oklch, var(--brand) 50%, gray); }
+```
+Baseline since 2023 (all majors). Prefer the `oklch` / `oklab` color spaces over `srgb` for perceptually even mixing.
+
+### `forced-colors` — Windows High Contrast / Contrast Themes
+
+The correct primitive for Windows High Contrast and Win 11 Contrast Themes. The browser overrides author colors with the user's system palette; map UI colors to system color keywords (`ButtonFace`, `ButtonText`, `LinkText`, `Highlight`, `HighlightText`, `CanvasText`, `Canvas`).
+
+```css
+@media (forced-colors: active) {
+  button { background: ButtonFace; color: ButtonText; border: 1px solid ButtonBorder; }
+  .card  { border: 1px solid transparent; } /* preserves a paintable border */
+  .icon  { forced-color-adjust: none; }     /* keep custom SVG fills if essential */
+}
+```
+
+### Quick decision matrix
+
+| Need                          | Use                              | Baseline |
+| ----------------------------- | -------------------------------- | -------- |
+| Modal dialog                  | `<dialog>.showModal()`           | 2022     |
+| Tooltip / menu / hint card    | Popover API + Anchor Positioning | 2024     |
+| Disable a subtree             | `inert`                          | 2023     |
+| Parent-style on descendant    | `:has()`                         | 2023     |
+| Component-aware layout        | Container queries                | 2023     |
+| Animate route / state change  | View Transitions                 | 2024 (SPA), 2024 (MPA Chromium) |
+| Derived hover / disabled fill | `color-mix()`                    | 2023     |
+| Windows High Contrast         | `@media (forced-colors: active)` | 2022     |
+| Keyboard-only focus ring      | `:focus-visible`                 | 2022     |
 
 
 ## Red Flags & Anti-Patterns
@@ -1116,17 +1287,24 @@ Positioning:
 - iOS Human Interface Guidelines: Fast animations (<300ms)
 - Google Material: Ease-out for entrances, ease-in for exits
 
-**Touch Target Standards:**
-- Apple HIG: 44x44pt minimum
-- Material Design: 48x48dp minimum
-- WCAG 2.1 AA: 44x44px minimum (Level AAA: larger)
+**Touch / Pointer Target Standards:**
+- WCAG 2.2 SC 2.5.8 Target Size (Minimum) — **Level AA** floor: 24×24 CSS px, OR ≥24 px spacing, OR inline-in-text, OR user-agent default, OR essential
+- WCAG 2.2 SC 2.5.5 Target Size (Enhanced) — **Level AAA**: 44×44 CSS px
+- Apple HIG: 44×44 pt minimum (matches AAA)
+- Material Design: 48×48 dp minimum (exceeds AAA)
+- Practical rule: design to platform conventions (44/48); use the 24-px AA rule to evaluate dense controls (toolbars, table action columns, keyboard rows) where the spacing exception applies
 
-**Gesture Standards:**
+**Gesture and Drag Standards:**
 - iOS Human Interface Guidelines: Gestures chapter
 - Material Design: Gestures documentation
+- WCAG 2.2 SC 2.5.7 Dragging Movements (AA): all drag interactions need a single-pointer alternative (tap-tap, +/− buttons, keyboard, numeric input) unless dragging is essential
 - Platform conventions trump custom gestures
 
 **Accessibility Standards:**
-- WCAG 2.1 SC 2.5.5: Target Size (44x44px minimum, Level AAA)
-- WCAG 2.1 SC 2.2.4: Interruptions (users can control timing)
-- WCAG 2.1 SC 2.3.3: Animation from Interactions (can be disabled)
+- WCAG 2.2 SC 2.4.7 Focus Visible (AA): visible keyboard focus indicator
+- WCAG 2.2 SC 2.4.11 Focus Not Obscured (Minimum) (AA, NEW 2.2): focused element not entirely hidden by sticky UI
+- WCAG 2.2 SC 2.4.13 Focus Appearance (AAA, NEW 2.2): 2px thick, 3:1 contrast against adjacent
+- WCAG 2.2 SC 2.5.7 Dragging Movements (AA, NEW 2.2): single-pointer alternative for drag
+- WCAG 2.2 SC 2.5.8 Target Size (Minimum) (AA, NEW 2.2): 24×24 px
+- WCAG 2.2 SC 2.2.4: Interruptions (users can control timing)
+- WCAG 2.2 SC 2.3.3: Animation from Interactions (can be disabled)

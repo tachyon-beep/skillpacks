@@ -1843,7 +1843,7 @@ Step-by-step workflows for common game UI design scenarios.
 - **Game Accessibility Guidelines:** gameaccessibilityguidelines.com (free, comprehensive)
 - **Xbox Accessibility:** xbox.com/accessibility (guidelines, best practices)
 - **CVAA (US Law):** Advanced communications features must be accessible (multiplayer chat, menus)
-- **WCAG 2.1:** Apply to game UI text (contrast 4.5:1, resizable text)
+- **WCAG 2.2 AA:** Apply to game UI text (contrast 4.5:1, resizable text, 24-px target minimum, single-pointer alternatives for drag — relevant to radial menus, inventory drag-and-drop, map manipulation)
 
 **Books:**
 - **"The Design of Everyday Things"** by Don Norman (general design principles, affordances)

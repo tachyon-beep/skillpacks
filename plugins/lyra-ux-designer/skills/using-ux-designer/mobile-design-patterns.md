@@ -100,7 +100,7 @@ The human thumb reaches comfortably to the bottom and center of a mobile screen.
 
 **iOS Tab Bar (Bottom Navigation):**
 - **Position:** Fixed at bottom of screen
-- **Height:** 49pt (without safe area) or 83pt (with iPhone X+ safe area)
+- **Height:** 49pt content area + safe-area-inset-bottom (~83pt total on edge-to-edge displays). Use `safe-area-inset-bottom` (CSS) or `safeAreaInsets` (UIKit/SwiftUI) — the inset value, not a hardcoded constant; it varies by device and orientation.
 - **Items:** 3-5 tabs maximum (5 max per Apple HIG)
 - **Icon size:** 25x25pt (image assets at 1x, 2x, 3x)
 - **Label:** Optional but recommended (better clarity)
@@ -509,7 +509,7 @@ SF Pro (System Font):
 - System colors: Adapt to light/dark mode automatically
 - Tint color: Single accent color for interactive elements (default #007AFF)
 - Gray scale: #F2F2F7 (light gray) to #1C1C1E (dark gray)
-- Support both light and dark modes (required as of iOS 13)
+- Support both light and dark modes (table stakes since iOS 13; iOS 18 also supports tinted Home Screen icons via the `tintedIconColor` slot)
 
 **iOS Components:**
 
@@ -539,56 +539,82 @@ SF Pro (System Font):
 - Cancel: Separate at bottom
 
 **iOS Motion:**
-- Spring animations (UISpringTimingParameters)
+- Spring animations (UISpringTimingParameters / SwiftUI `.spring()` / `.bouncy`, `.smooth`, `.snappy` presets)
 - Natural, physics-based easing
 - Respects Reduce Motion accessibility setting
 - Duration: 200-300ms typical
 
-### Android Material Design
+#### iOS 16+ / 17 / 18 Platform Surfaces
 
-**Android Typography:**
+The iOS HIG since 2022 has expanded beyond "the app screen". Modern iOS UX assumes apps integrate with several ambient surfaces:
+
+**Dynamic Island (iPhone 14 Pro+, iOS 16+):**
+- Pill-shaped area around the front camera. Three sizes: compact (idle), expanded (long-press), minimal (background activity)
+- Powered by `ActivityKit` Live Activities — your app can publish a status the system can render in the Island and on the Lock Screen
+- Use cases: ride-share ETA, sports scores, timers, navigation directions, music now-playing, food delivery status
+- Design rules: SF Symbols + minimal text, no advertising, must reflect a real ongoing activity that started in-app
+
+**Live Activities (iOS 16.1+):**
+- Persistent notifications on the Lock Screen and in the Dynamic Island for time-sensitive ongoing events
+- Updated via push (ActivityKit push tokens) or in-app
+- Limit: ~8 hours, then system ends the activity. Design for graceful end-state.
+
+**Interactive Widgets (iOS 17+):**
+- Home Screen and Lock Screen widgets can now have `Button` and `Toggle` controls (App Intents)
+- Design implication: a widget is no longer just a glance — it's a one-tap action surface (toggle a smart-home device, mark a task done, start a timer)
+- Avoid hiding the primary in-widget action behind a deep app-launch flow
+
+**StandBy Mode (iOS 17+):**
+- Charging-on-side full-screen ambient view; widgets render large, glanceable
+- Design widgets so the primary information remains legible at >1 m viewing distance
+
+**Lock Screen widgets (iOS 16+) and Always-On Display (iPhone 14 Pro+):**
+- Three sizes: rectangular, circular, inline
+- Always-On dims content; verify your widget remains useful (and does not flicker / animate) in low-power render
+
+**Control Center (iOS 18):**
+- Third-party Controls API — apps can publish Controls into Control Center for one-tap actions
+- Treat as another interactive surface, not just an in-app feature
+
+**Practical implication:** when designing a 2026 iOS feature, ask "what's the Dynamic Island state, the Lock Screen Live Activity, the StandBy widget, and the Control Center action for this?" These are no longer optional polish; they're how iOS users now expect to interact with apps that have ongoing state. Apple's HIG (developer.apple.com/design/human-interface-guidelines/) is the authoritative reference for current sizing and behavior.
+
+### Android Material Design (Material 3 / Material You)
+
+> **Material version:** Material 3 (M3 / "Material You") is the current default — it has been the system style since Android 12 (2021) and is the default for new Compose / Jetpack apps. Material 2 is in maintenance only; design new work in M3 unless you must extend an existing M2 codebase. The reference site is `m3.material.io`.
+
+**Material 3 Typography (type scale):**
+
+The M3 type scale replaces the M2 H1–H6 / Subtitle / Body / Button hierarchy with a five-track scale × three sizes:
 
 ```
-Roboto (System Font):
-- H1: 96sp, Light, -1.5sp letter spacing
-- H2: 60sp, Light, -0.5sp letter spacing
-- H3: 48sp, Regular, 0sp letter spacing
-- H4: 34sp, Regular, 0.25sp letter spacing
-- H5: 24sp, Regular, 0sp letter spacing (Page titles)
-- H6: 20sp, Medium, 0.15sp letter spacing (Section headers)
-- Subtitle 1: 16sp, Regular, 0.15sp letter spacing
-- Subtitle 2: 14sp, Medium, 0.1sp letter spacing
-- Body 1: 16sp, Regular, 0.5sp letter spacing (Primary content)
-- Body 2: 14sp, Regular, 0.25sp letter spacing
-- Button: 14sp, Medium, 1.25sp letter spacing, ALL CAPS
-- Caption: 12sp, Regular, 0.4sp letter spacing (Meta info)
-- Overline: 10sp, Regular, 1.5sp letter spacing, ALL CAPS
+Display:   Large 57sp / Medium 45sp / Small 36sp     — hero, marquee
+Headline:  Large 32sp / Medium 28sp / Small 24sp     — page titles, top of regions
+Title:     Large 22sp / Medium 16sp / Small 14sp     — section headers, list items
+Body:      Large 16sp / Medium 14sp / Small 12sp     — paragraphs, descriptions
+Label:     Large 14sp / Medium 12sp / Small 11sp     — buttons, chips, tab labels
 ```
 
-**Note:** Android uses "sp" (scale-independent pixels) for text, which respects user font size settings.
+- **System font:** Roboto (default), or **Roboto Flex** (variable font, M3 reference). Roboto Flex exposes weight, width, and optical-size axes so the type scale can adapt to display size.
+- **No more `ALL CAPS` button text** — M3 uses sentence case for buttons; the `Button` style from M2 is retired.
+- **`sp` (scale-independent pixels)** still respects the user's font-size setting; never use `dp` or `px` for text.
+- **Letter-spacing tokens** are baked into each role (e.g., Label Large = 0.1sp); pull from the type-scale tokens, don't hand-tune.
 
-**Material Elevation System:**
+**Material 3 Elevation (tonal + shadow):**
 
-Material Design uses elevation (z-axis) to create hierarchy and show relationships:
+M3 simplifies the M2 dp scale into **six elevation levels (0–5)** and pairs each with a **surface tonal overlay** that uses the primary color, in addition to a shadow. The tonal layer is what gives M3 its layered, color-aware feel; in dark theme the overlay is what brightens elevated surfaces (M2 used a flat white overlay).
 
 ```
-Elevation (shadows):
-- 0dp: Flat on surface (text, backgrounds)
-- 1dp: Cards (resting state)
-- 2dp: Buttons (resting state), app bar (scrolled)
-- 4dp: App bar (resting state)
-- 6dp: FAB (resting state), snackbar
-- 8dp: Bottom navigation, drawer, modal side sheet
-- 9dp: FAB (pressed), dialog, time picker
-- 12dp: FAB (pressed, alternative spec)
-- 16dp: Navigation drawer (while opening)
-- 24dp: Modal bottom sheet
+Level 0 (0 dp):  Surface flat                — background
+Level 1 (1 dp):  Cards, switches             — resting low
+Level 2 (3 dp):  Top app bar (scrolled), chips
+Level 3 (6 dp):  FAB resting, snackbar, search bar
+Level 4 (8 dp):  Navigation drawer, side sheet
+Level 5 (12 dp): Pressed FAB, modal bottom sheet
 ```
 
-**Elevation creates shadows:**
-- Higher elevation = larger, softer shadow
-- Shadow color: rgba(0,0,0,0.14) for ambient, rgba(0,0,0,0.20) for key light
-- Elevation changes on interaction (press = +6dp to +12dp for FAB)
+- **Tonal layer formula:** `surfaceTint` (= `primary` by default) blended onto `surface` at increasing opacity per level (5%, 8%, 11%, 12%, 14%). Use the M3 `surfaceColorAtElevation` helper rather than hand-mixing.
+- **Shadows are subtler** in M3 than M2 (the tonal layer carries most of the lift cue).
+- **Pressed-state elevation change** is reduced — M3 prefers state-layer (12% overlay) over a big shadow jump.
 
 **Material Visual Patterns:**
 
@@ -599,12 +625,18 @@ Elevation (shadows):
 - Bottom sheets: 8dp corner radius (top corners only)
 - More pronounced than iOS (4-8dp vs 8-13pt)
 
-**Color:**
-- Primary color: Brand color for main UI elements
-- Secondary color: Accent color for FABs, highlights
-- Surface colors: White (light theme), #121212 (dark theme)
-- Error: #B00020 (Material red)
-- Background elevation: Lighter overlays on dark theme (8% white per elevation step)
+**Color (Material 3 / Material You):**
+M3 replaces the M2 primary/secondary pair with a **dynamic color** system: the user's wallpaper (Android 12+) seeds a tonal palette, which expands into role-based color slots. You design against roles, not raw hex.
+
+Core role pairs (each has a paired `on-` text color):
+- `primary` / `onPrimary`, `primaryContainer` / `onPrimaryContainer`
+- `secondary` / `onSecondary`, `secondaryContainer` / `onSecondaryContainer`
+- `tertiary` / `onTertiary`, `tertiaryContainer` / `onTertiaryContainer`
+- `error` / `onError`, `errorContainer` / `onErrorContainer`
+- `surface` / `onSurface`, `surfaceVariant` / `onSurfaceVariant`, plus `surfaceContainer{Low,High,Highest}`
+- `outline`, `outlineVariant` (separators, borders)
+
+Light and dark themes are derived from the same tonal palette automatically. Implication for designers: pick brand seed colors, let M3 generate the slots; do **not** hand-pick a "primary container" hex per theme. The Material Theme Builder (m3.material.io/theme-builder) is the canonical generator.
 
 **Ripple Effect:**
 - Touch feedback: Circular ripple emanating from touch point
@@ -690,7 +722,7 @@ Elevation (shadows):
 ### Supporting Both Light and Dark Modes
 
 **iOS:**
-- **Required:** All apps must support dark mode (iOS 13+)
+- **Required:** All apps must support dark mode (table stakes since iOS 13; iOS 18 adds a third "Tinted" variant for Home Screen icons that designers should also accommodate)
 - **System colors:** Use UIColor.label, .systemBackground, etc. (adapt automatically)
 - **Custom colors:** Define light and dark variants in asset catalog
 - **Test:** Switch in Settings → Developer → Dark Appearance
@@ -1013,7 +1045,8 @@ Web Mobile:
 **Why 44/48 Minimum?**
 - Average adult fingertip: 10mm (roughly 40-50px)
 - Allows for imprecision, reduces accidental taps
-- WCAG 2.1 Level AAA: 44x44px minimum
+- WCAG 2.2 SC 2.5.8 (AA, NEW 2.2): 24×24 CSS px is the *floor* for any pointer target
+- WCAG 2.2 SC 2.5.5 (AAA): 44×44 CSS px is the *recommended* size for primary actions, matching iOS HIG
 
 **Target Size Calculation:**
 
@@ -1606,15 +1639,18 @@ Desktop: > 1024px (multi-column, side nav)
 - **Updated regularly:** Check for latest iOS version guidelines
 
 **Android Material Design:**
-- **Official documentation:** https://m3.material.io/ (Material 3, latest)
-- **Key sections:** Foundations (layout, typography, color), Components (bottom nav, FAB, app bar), Motion
-- **Material 3 vs Material 2:** Material 3 is newest (dynamic color, updated components), but Material 2 still widely used
+- **Official documentation:** https://m3.material.io/ (Material 3 / Material You)
+- **Key sections:** Foundations (layout, typography, dynamic color, tonal palettes), Components (Navigation Bar replacing Bottom Navigation, FAB, top app bar variants, search bar, navigation rail), Motion (M3 motion tokens)
+- **Material version policy:** Design new work in Material 3. Material 2 has been in maintenance since 2021 and is for legacy codebases only — the M2 docs (`material.io/design`) are still online but no longer evolving.
+- **Theme generation:** Use the Material Theme Builder (`m3.material.io/theme-builder`) to derive a tonal palette from a brand seed; do not hand-pick `surfaceContainerHigh` hexes.
+- **Compose-first:** New Android UI work should use Jetpack Compose with the `androidx.compose.material3` library. The view-system M3 components (`com.google.android.material:material:1.11+`) cover legacy XML codebases.
 
-**Touch Target Standards:**
-- Apple HIG: 44x44pt minimum
-- Material Design: 48x48dp minimum
-- WCAG 2.1 Level AAA (SC 2.5.5): 44x44px minimum
-- Microsoft: 34x34px minimum (less strict)
+**Pointer / Touch Target Standards:**
+- WCAG 2.2 SC 2.5.8 (AA): ≥24×24 CSS px or ≥24 px spacing (the floor)
+- WCAG 2.2 SC 2.5.5 (AAA): ≥44×44 CSS px
+- Apple HIG: 44×44 pt minimum (matches AAA)
+- Material 3: 48×48 dp minimum (exceeds AAA)
+- Pragmatic rule: design to 44/48; the AA 24-px floor is for evaluating dense tabular controls and toolbars where the spacing exception applies
 
 **Platform-Specific Components:**
 - **iOS:** UITabBar, UINavigationBar, UISegmentedControl, UIActionSheet

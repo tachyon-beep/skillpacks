@@ -107,6 +107,24 @@ When you see a link like `[ux-fundamentals.md](ux-fundamentals.md)`, read the fi
 
 ### Specific UX Domains
 
+#### AI / LLM-Powered Interfaces
+
+**Symptoms**: "Chatbot UX", "AI assistant", "copilot", "agent", "RAG UI", "streaming output", "model output is wrong / overconfident", "citations", "tool-call confirmation"
+
+**Route to**: [ai-experience-patterns.md](ai-experience-patterns.md)
+
+**Add**:
+- [interaction-design-patterns.md](interaction-design-patterns.md) for streaming + modal patterns
+- [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md) for `aria-live` streaming + WCAG 2.2 SC 3.3.8 (don't gate AI behind cognitive auth tests)
+- Platform extension if surface is mobile / web / desktop
+
+**Examples**:
+- "Design a chat assistant with citations" → ai-experience-patterns + web-application-design
+- "Our agent silently sent the wrong refund" → ai-experience-patterns (Reversibility / preview-then-confirm)
+- "Users say the AI sounds too confident when it's wrong" → ai-experience-patterns (Calibration)
+
+---
+
 #### Visual Design Issues
 
 **Symptoms**: "Colors don't work", "Typography feels off", "Hierarchy unclear", "Layout cramped"
@@ -301,6 +319,7 @@ User Request
         ├─ Navigation → information-architecture
         ├─ Interaction → interaction-design-patterns
         ├─ Accessibility → accessibility-and-inclusive-design
+        ├─ AI / chatbot / agent / RAG / streaming → ai-experience-patterns
         └─ Research → user-research-and-validation
 ```
 
@@ -332,7 +351,7 @@ User Request
 **Focused expertise**: Load only what's needed for the task
 **Clear boundaries**: Each skill has distinct responsibility
 **Composable**: Combine skills for complex scenarios
-**Efficient**: Avoid loading all 11 skills at once
+**Efficient**: Avoid loading all 12 reference sheets at once
 **Explicit**: User sees which skills are active
 
 ---
@@ -351,6 +370,7 @@ After routing, load the appropriate specialist skill for detailed guidance:
 8. [web-application-design.md](web-application-design.md) - Responsive design, dashboards, data visualization, SaaS patterns, keyboard shortcuts
 9. [desktop-software-design.md](desktop-software-design.md) - Multi-window management, keyboard-first workflows, power-user features, workspace customization
 10. [game-ui-design.md](game-ui-design.md) - HUD design, diegetic UI, controller navigation, immersion vs visibility
+11. [ai-experience-patterns.md](ai-experience-patterns.md) - Conversational assistants, agent loops, RAG UIs, streaming output, citation/grounding, refusal UX, calibrated confidence, preview-then-confirm for tool actions
 
 **Cross-faction**:
 - `muna/technical-writer/*` - Documentation UX and microcopy

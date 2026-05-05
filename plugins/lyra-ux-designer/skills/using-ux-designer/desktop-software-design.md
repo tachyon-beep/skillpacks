@@ -1896,7 +1896,7 @@ Search Google for "[selection]"
 - Extensions: Plugin system, marketplace
 
 **Accessibility Standards:**
-- **WCAG 2.1 AA:** Keyboard navigation, focus indicators, contrast
+- **WCAG 2.2 AA:** Keyboard navigation, `:focus-visible` indicators, 4.5:1 contrast, focus not obscured by docked toolbars/floating panels (SC 2.4.11), accessible-authentication SCs (3.3.8) for any login/unlock flow
 - **Keyboard-first:** All actions accessible via keyboard
 - **Focus indicators:** Visible 2px outline, high contrast
 - **Screen readers:** ARIA labels, semantic structure

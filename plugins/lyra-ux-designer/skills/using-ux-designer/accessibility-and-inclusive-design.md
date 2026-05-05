@@ -67,7 +67,9 @@ Each dimension has specific WCAG criteria, testing methods, and patterns.
 - Is line length appropriate (45-75 characters)?
 - Are fonts clear and legible (avoid decorative for body)?
 
-#### WCAG 2.1 AA Requirements
+#### WCAG 2.2 AA Requirements
+
+> **Standard:** WCAG 2.2 (W3C Recommendation, October 2023). All 2.1 success criteria carry forward unchanged except 4.1.1 Parsing, which was removed as obsolete. WCAG 2.2 adds nine new success criteria — flagged inline below.
 
 **1.4.3 Contrast (Minimum) - Level AA:**
 - Normal text: 4.5:1 minimum
@@ -202,7 +204,7 @@ line-height: 1.5; (comfortable spacing) ✓
 - Are hover-only interactions avoided?
 - Can users pause/cancel actions (no irreversible quick gestures)?
 
-#### WCAG 2.1 AA Requirements
+#### WCAG 2.2 AA Requirements
 
 **2.1.1 Keyboard - Level A:**
 - All functionality available via keyboard interface
@@ -213,18 +215,37 @@ line-height: 1.5; (comfortable spacing) ✓
 **2.4.7 Focus Visible - Level AA:**
 - Keyboard focus indicator is visible
 
-**2.5.5 Target Size - Level AAA (Best Practice):**
-- Touch targets at least 44x44 CSS pixels (iOS guideline, WCAG AAA)
+**2.4.11 Focus Not Obscured (Minimum) - Level AA (NEW in 2.2):**
+- When a UI element receives keyboard focus, it is not entirely hidden by author-created content (sticky headers, cookie banners, chat widgets)
+
+**2.4.12 Focus Not Obscured (Enhanced) - Level AAA (NEW in 2.2):**
+- The focused element is not obscured by author-created content at all (no partial occlusion)
+
+**2.5.7 Dragging Movements - Level AA (NEW in 2.2):**
+- All drag operations have a single-pointer alternative (e.g., tap-tap, click-click, or button controls) — except where dragging is essential
+
+**2.5.8 Target Size (Minimum) - Level AA (NEW in 2.2):**
+- Pointer targets are at least **24×24 CSS pixels**, OR have at least 24 CSS px of spacing around them, OR are inline (within a sentence), OR are user-agent default, OR are essential. Note: this is the new AA floor; **44×44** remains the iOS HIG / WCAG 2.5.5 AAA / Android 48dp recommendation
+
+**2.5.5 Target Size (Enhanced) - Level AAA:**
+- Pointer targets at least 44×44 CSS pixels (carries forward from 2.1, kept at AAA)
 
 #### Patterns (Good)
 
-**Large Touch Targets:**
+**Touch / Pointer Target Sizes (WCAG 2.2 + platform):**
 ```
+WCAG 2.2 AA floor (SC 2.5.8):  24×24 CSS px (or ≥24 px spacing)
+WCAG 2.5.5 AAA / iOS HIG:      44×44 pt
+Android Material:              48×48 dp
+Recommended for primary actions: 48×48 px / 44×44 pt — well above the AA floor
+
 Buttons: min-height: 48px, min-width: 48px
-Icons: 44x44px clickable area (icon may be smaller, hit area large)
+Icons: 44×44 pt clickable area (icon glyph may be smaller, hit area large)
 Form inputs: height: 48px
-List items: min-height: 56dp (Android Material)
+List items: min-height: 56dp (Material 3)
 ```
+
+The 24×24 AA floor is a *minimum*, not a target — design to platform conventions (44/48) and use the AA rule to evaluate dense controls (toolbars, table actions) where the 24-px spacing exception applies.
 
 **Adequate Spacing:**
 ```
@@ -233,15 +254,29 @@ Padding inside buttons: 12px vertical, 24px horizontal
 Space between form fields: 16px minimum
 ```
 
-**Visible Focus Indicators:**
-```
-button:focus {
+**Visible Focus Indicators (modern: `:focus-visible`):**
+```css
+/* Modern best practice — outline only when keyboard focus is detected.
+   Avoids stray outlines on mouse clicks; restores them for keyboard nav. */
+button:focus-visible {
   outline: 2px solid #0066CC;
   outline-offset: 2px;
+  border-radius: 4px;
 }
 
-Do not: outline: none; (removes accessibility) ✗
+/* Suppress only the mouse-click outline; never strip keyboard focus. */
+button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* WCAG 2.2 SC 2.4.13 Focus Appearance (AAA) — at least 2px thick,
+   3:1 contrast against adjacent colors. Default browser outlines now meet this. */
+
+/* Anti-pattern: blanket outline removal */
+*:focus { outline: none; }   /* ✗ keyboard users lost */
 ```
+
+`:focus-visible` is baseline since 2022 (Safari 15.4) — use it; the bare `:focus` rule above is legacy guidance.
 
 **Keyboard Shortcuts:**
 ```
@@ -285,7 +320,9 @@ Minimum 8px spacing between interactive elements ✓
 ```
 *:focus { outline: none; } ✗
 Keyboard users can't see where they are
-Keep default or enhance: outline: 2px solid blue; ✓
+Use :focus-visible to restore for keyboard nav while suppressing mouse-click outlines:
+
+button:focus-visible { outline: 2px solid #0066CC; outline-offset: 2px; } ✓
 ```
 
 **Hover-Only Interactions:**
@@ -321,17 +358,30 @@ Provide button or keyboard shortcut alternative ✓
    - Can you escape modals/menus?
 
 **Touch Target Testing:**
-- Use browser DevTools to measure elements (should be 44x44px minimum)
+- Use browser DevTools to measure elements (≥24×24 CSS px is the WCAG 2.2 AA floor; ≥44×44 is the platform/AAA recommendation)
 - Test on actual mobile device (finger test)
 - Try tapping with thumb while holding phone (reachability)
 
+**Drag Alternative Testing (WCAG 2.2 SC 2.5.7):**
+- Identify any drag-only interaction (sortable lists, sliders, drawing, map pan)
+- Confirm a single-pointer alternative exists (tap-tap to move, +/− buttons, keyboard, numeric input)
+- Drag-essential cases (signature, draw paths) are exempt — document the exemption
+
+**Focus Obscuring Test (WCAG 2.2 SC 2.4.11):**
+- Tab through the page with sticky headers, cookie banners, chat widgets, sticky CTAs visible
+- Confirm focused element is never *entirely* hidden behind these
+- Use `scroll-margin-top` on focusable elements OR avoid sticky chrome over focused content
+
 **Motor Accessibility Checklist:**
-- [ ] All touch targets 44x44px minimum
+- [ ] Pointer targets meet WCAG 2.2 SC 2.5.8: ≥24×24 px or ≥24 px spacing (AA)
+- [ ] Primary actions ≥44×44 pt / 48×48 dp (platform conventions, WCAG AAA)
 - [ ] 8px spacing between interactive elements
 - [ ] Entire interface navigable via keyboard only
-- [ ] Focus indicators visible on all interactive elements
+- [ ] `:focus-visible` indicators visible on all interactive elements
+- [ ] Focused element never fully obscured by sticky chrome (SC 2.4.11)
 - [ ] Tab order is logical
 - [ ] No hover-only critical interactions
+- [ ] All drag operations have a single-pointer alternative (SC 2.5.7)
 - [ ] Keyboard shortcuts for common actions
 
 
@@ -365,7 +415,7 @@ Provide button or keyboard shortcut alternative ✓
 - Is there adequate white space (not overwhelming)?
 - Are animations purposeful (not distracting)?
 
-#### WCAG 2.1 AA Requirements
+#### WCAG 2.2 AA Requirements
 
 **3.1.5 Reading Level - Level AAA (Best Practice):**
 - Text does not require reading ability more advanced than lower secondary education
@@ -375,6 +425,9 @@ Provide button or keyboard shortcut alternative ✓
 
 **3.2.4 Consistent Identification - Level AA:**
 - Components with same functionality are identified consistently
+
+**3.2.6 Consistent Help - Level A (NEW in 2.2):**
+- If a "help" mechanism (contact details, contact form, FAQ link, chat widget) appears on multiple pages, it appears in the same relative order across those pages
 
 **3.3.1 Error Identification - Level A:**
 - Errors are identified and described to user in text
@@ -387,6 +440,15 @@ Provide button or keyboard shortcut alternative ✓
 
 **3.3.4 Error Prevention (Legal, Financial, Data) - Level AA:**
 - Submissions are reversible, checked, or confirmed
+
+**3.3.7 Redundant Entry - Level A (NEW in 2.2):**
+- Information entered earlier in a process is auto-populated or selectable in subsequent steps (don't ask users to re-type addresses, emails, etc.)
+
+**3.3.8 Accessible Authentication (Minimum) - Level AA (NEW in 2.2):**
+- No cognitive function test (memorize a password, solve a puzzle, transcribe characters) is required for any step in authentication, unless an alternative is provided OR the test is object recognition / personal-content recognition. Implication: support password managers, biometrics, magic links, OTP autofill — don't disable paste in password fields, don't use distorted-text CAPTCHA without alternative
+
+**3.3.9 Accessible Authentication (Enhanced) - Level AAA (NEW in 2.2):**
+- As 3.3.8, but the object/personal-content exemptions also do not apply
 
 #### Patterns (Good)
 
@@ -542,7 +604,7 @@ Consistent placement across all screens ✓
 - Are dynamic updates announced (aria-live)?
 - Are expanded/collapsed states indicated (aria-expanded)?
 
-#### WCAG 2.1 AA Requirements
+#### WCAG 2.2 AA Requirements
 
 **1.1.1 Non-text Content - Level A:**
 - Images have text alternatives
@@ -561,6 +623,8 @@ Consistent placement across all screens ✓
 
 **4.1.3 Status Messages - Level AA:**
 - Status messages can be programmatically determined and announced
+
+> **Removed in 2.2:** SC 4.1.1 Parsing was deprecated and removed — modern HTML parsers no longer fail on duplicate IDs / unclosed tags the way they did in 2008. Other A/AA criteria carry forward unchanged.
 
 #### Patterns (Good)
 
@@ -785,7 +849,7 @@ Focus moves to modal, traps within modal, returns on close ✓
 - Are users given 20 seconds warning minimum before timeout?
 - Can users save work if timeout occurs?
 
-#### WCAG 2.1 AA Requirements
+#### WCAG 2.2 AA Requirements
 
 **2.2.1 Timing Adjustable - Level A:**
 - User can turn off, adjust, or extend time limits (except real-time events)
@@ -943,20 +1007,39 @@ Pause on hover, manual controls, disable autoplay ✓
 
 #### Patterns (Good)
 
-**High Contrast Mode:**
+**High-Contrast and Forced-Colors Modes:**
 ```css
-@media (prefers-contrast: high) {
-  body {
-    background: #000000;
-    color: #FFFFFF;
-  }
-  a {
-    color: #FFFF00; /* Yellow on black */
-  }
+/* prefers-contrast — user wants higher contrast (any platform). */
+@media (prefers-contrast: more) {
+  body { background: #000; color: #fff; }
+  a    { color: #ff0; } /* Yellow on black */
 }
 
-System-level high contrast settings respected
+/* forced-colors — Windows High Contrast / Contrast Themes (Win 11),
+   browser-forced palette. The browser overrides author colors with the
+   user's system palette. Map to system color keywords; do NOT hardcode. */
+@media (forced-colors: active) {
+  button {
+    background-color: ButtonFace;
+    color: ButtonText;
+    border: 1px solid ButtonBorder;
+    forced-color-adjust: auto; /* default — let UA paint */
+  }
+
+  /* Preserve transparent borders so the OS palette can paint them. */
+  .card { border: 1px solid transparent; }
+
+  /* Restore SVG icon visibility (browser may strip fill/stroke). */
+  .icon { forced-color-adjust: none; }
+}
+
+/* prefers-color-scheme — light/dark theme respect. */
+@media (prefers-color-scheme: dark) {
+  :root { color-scheme: dark; --bg: #111; --fg: #eee; }
+}
 ```
+
+`prefers-contrast: high` was renamed to `prefers-contrast: more` in the spec. The `forced-colors` model superseded the old `-ms-high-contrast` and is the correct primitive for Windows High Contrast / Contrast Themes — it's what assistive-tech users actually run.
 
 **Dual Feedback (Visual + Audio):**
 ```
@@ -1136,7 +1219,9 @@ Responsive design (adapts to all screens) ✓
 4. Re-test after fixes
 
 
-## WCAG 2.1 AA Compliance Quick Reference
+## WCAG 2.2 AA Compliance Quick Reference
+
+WCAG 2.2 became a W3C Recommendation in October 2023 and is the current standard. It is backward-compatible with 2.1 (all 2.1 SCs carry forward, except SC 4.1.1 Parsing which was removed) and adds nine new criteria. The EU EN 301 549 v3.2.1 (2024) and the US Section 508 refresh both align to 2.2 as their reference.
 
 ### Level A (Must Have)
 
@@ -1145,8 +1230,10 @@ Responsive design (adapts to all screens) ✓
 **2.1.1** Keyboard - All functionality keyboard accessible
 **2.1.2** No Keyboard Trap - Can move focus away
 **2.4.1** Bypass Blocks - Skip links for navigation
+**3.2.6** Consistent Help (NEW 2.2) - Help mechanism in same relative order across pages
 **3.3.1** Error Identification - Errors described in text
 **3.3.2** Labels or Instructions - Form fields labeled
+**3.3.7** Redundant Entry (NEW 2.2) - Don't ask users to re-enter info entered earlier in a process
 
 ### Level AA (Should Have)
 
@@ -1155,18 +1242,29 @@ Responsive design (adapts to all screens) ✓
 **1.4.11** Non-text Contrast - 3:1 for UI components
 **2.4.6** Headings and Labels - Describe purpose
 **2.4.7** Focus Visible - Keyboard focus indicator visible
+**2.4.11** Focus Not Obscured (Minimum) (NEW 2.2) - Sticky headers / cookie banners must not entirely hide focused element
+**2.5.7** Dragging Movements (NEW 2.2) - Drag operations have a single-pointer alternative
+**2.5.8** Target Size (Minimum) (NEW 2.2) - 24×24 CSS px (or 24-px spacing) for pointer targets
 **3.2.3** Consistent Navigation - Same order across pages
 **3.2.4** Consistent Identification - Same function, same label
 **3.3.3** Error Suggestion - Suggestions for fixing errors
 **3.3.4** Error Prevention - Reversible, checked, or confirmed
+**3.3.8** Accessible Authentication (Minimum) (NEW 2.2) - No cognitive function test without alternative
 
 ### Level AAA (Nice to Have)
 
 **1.4.6** Contrast (Enhanced) - 7:1 for text, 4.5:1 for large text
-**2.5.5** Target Size - 44x44px touch targets
+**2.4.12** Focus Not Obscured (Enhanced) (NEW 2.2) - No partial obscuring of focused element
+**2.4.13** Focus Appearance (NEW 2.2) - 2px thick focus indicator, 3:1 contrast
+**2.5.5** Target Size (Enhanced) - 44×44 CSS px touch targets
 **3.1.5** Reading Level - Lower secondary education level
+**3.3.9** Accessible Authentication (Enhanced) (NEW 2.2) - No object/personal-content recognition exemption
 
-**Note**: WCAG AA is the legal standard in most jurisdictions. AAA is best practice.
+### Removed in 2.2
+
+**4.1.1** Parsing — deprecated and removed. Modern HTML parsers tolerate the issues this SC addressed.
+
+**Note**: WCAG 2.2 AA is the legal/contractual baseline in most jurisdictions (EU EN 301 549, UK Public Sector Bodies Accessibility Regulations, US Section 508 align to 2.2). AAA is best practice. WCAG 3.0 ("WCAG 3") is in active draft as a major revision but is not yet a recommendation — design to 2.2 today.
 
 
 ## Accessibility Tools Reference
@@ -1355,11 +1453,19 @@ Responsive design (adapts to all screens) ✓
 ## Further Resources
 
 **WCAG Guidelines:**
-- WCAG 2.1: https://www.w3.org/WAI/WCAG21/quickref/
-- WCAG 2.2 (latest): https://www.w3.org/WAI/WCAG22/quickref/
+- WCAG 2.2 (current standard, Oct 2023): https://www.w3.org/WAI/WCAG22/quickref/
+- WCAG 2.2 What's New: https://www.w3.org/WAI/standards-guidelines/wcag/new-in-22/
+- WCAG 2.1 (predecessor): https://www.w3.org/WAI/WCAG21/quickref/
+- WCAG 3.0 (in development, no normative status): https://www.w3.org/WAI/standards-guidelines/wcag/wcag3-intro/
+- EU EN 301 549 v3.2.1 (aligned to 2.2): https://www.etsi.org/standards
+- US Section 508: https://www.section508.gov/
 
-**Testing Tools:**
-- Axe DevTools: https://www.deque.com/axe/devtools/
+**Testing Tools (manual + automated):**
+- axe DevTools (browser extension): https://www.deque.com/axe/devtools/
+- axe-core in CI: `@axe-core/playwright`, `cypress-axe`, `jest-axe` — run accessibility checks in your test pipeline, not just in dev tools
+- Pa11y / pa11y-ci: https://pa11y.org/ — CLI-based scanner for CI
+- Storybook a11y addon: scan components in isolation
+- Accessibility Insights for Web (Microsoft): guided assessments + automated checks
 - WAVE: https://wave.webaim.org/
 - Lighthouse: Built into Chrome DevTools
 
@@ -1367,10 +1473,13 @@ Responsive design (adapts to all screens) ✓
 - NVDA (Windows): https://www.nvaccess.org/
 - JAWS (Windows): https://www.freedomscientific.com/
 - VoiceOver (macOS): Built-in (Cmd+F5)
+- Narrator (Windows 11): Built-in
+- TalkBack (Android), VoiceOver (iOS): Built-in mobile
 
 **Learning:**
 - WebAIM: https://webaim.org/ (excellent articles and guides)
 - A11y Project: https://www.a11yproject.com/ (community-driven resources)
 - Inclusive Components: https://inclusive-components.design/
+- Adrian Roselli's blog: https://adrianroselli.com/ (deep practical accessibility writing)
 
 **Remember**: Accessibility is not optional. It's a legal requirement in most jurisdictions and an ethical imperative. Design for everyone from the start - retrofitting accessibility is expensive and incomplete.

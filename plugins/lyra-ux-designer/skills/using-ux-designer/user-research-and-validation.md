@@ -831,7 +831,7 @@ Step 3: User needs to enter current password
 
 **Purpose**: Ensure design is accessible to people with disabilities
 
-**Standards: WCAG 2.1 Level AA** (minimum legal requirement)
+**Standards: WCAG 2.2 Level AA** (current W3C Recommendation since Oct 2023; the legal/contractual baseline under EU EN 301 549 v3.2.1, UK PSBAR, US Section 508 refresh)
 
 **Automated checks** (tools: Axe, Lighthouse, WAVE):
 - Color contrast (4.5:1 for text, 3:1 for UI elements)

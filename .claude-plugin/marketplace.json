@@ -193,7 +193,7 @@
     {
       "name": "lyra-ux-designer",
       "source": "./plugins/lyra-ux-designer",
-      "description": "UX design fundamentals - visual design, accessibility, interaction patterns - 11 skills",
+      "description": "UX design fundamentals - visual design, WCAG 2.2 accessibility, modern web platform primitives (dialog/popover/:has/container queries), iOS 17+ and Material 3 mobile, AI-experience patterns - 12 reference sheets",
       "keywords": [
         "lyra",
         "designer"

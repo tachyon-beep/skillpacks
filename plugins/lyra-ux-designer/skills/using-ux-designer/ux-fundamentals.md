@@ -598,9 +598,9 @@ Load this skill when:
 
 **Frameworks**:
 - Nielsen's 10 Usability Heuristics
-- WCAG 2.1 Guidelines (accessibility)
-- iOS Human Interface Guidelines
-- Material Design Guidelines
+- WCAG 2.2 Guidelines (accessibility — current W3C Recommendation since Oct 2023; WCAG 3.0 in development)
+- iOS Human Interface Guidelines (current: iOS 17/18 era — Dynamic Island, Live Activities, interactive widgets)
+- Material 3 / Material You Guidelines (Material 2 is end-of-life)
 
 **Practice**:
 - Critique existing interfaces (what works? what doesn't?)
