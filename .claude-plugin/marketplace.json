@@ -153,9 +153,33 @@
       "category": "development"
     },
     {
+      "name": "axiom-audit-pipelines",
+      "source": "./plugins/axiom-audit-pipelines",
+      "description": "TDD-validated audit-grade decision pipelines: canonical encoding (RFC 8785 JCS), append-only decision logs, fingerprint chains (linked-hash and Merkle), HMAC and Ed25519 signed exports, immutable storage, decision provenance (inputs/ruleset/code closure), threat model for the log itself, retention reconciled with right-to-be-forgotten, partial replay from trail, performance budgets. 11 reference sheets, 3 commands, 2 agents.",
+      "keywords": [
+        "axiom",
+        "audit",
+        "audit-trail",
+        "provenance",
+        "decision-log",
+        "fingerprint",
+        "merkle",
+        "hmac",
+        "ed25519",
+        "rfc8785",
+        "jcs",
+        "canonical-json",
+        "compliance",
+        "evidence",
+        "tamper-evident",
+        "tdd-validated"
+      ],
+      "category": "development"
+    },
+    {
       "name": "axiom-determinism-and-replay",
       "source": "./plugins/axiom-determinism-and-replay",
-      "description": "Architecture-level determinism and replay (router + 6 foundational sheets in v0.1.0) - seed governance, RNG isolation, snapshot strategy, divergence detection, replay infrastructure design, determinism-vs-reproducibility distinction; for RL substrates, multi-agent systems, and any simulation that must be re-run from inputs",
+      "description": "Architecture-level determinism and replay (router + 13 specialist sheets, 3 commands, 2 agents) - determinism-vs-reproducibility, seed governance, RNG isolation, snapshot strategy, divergence detection, replay infrastructure, concurrency strategies, floating-point policy, GPU determinism, external-effects substitution, canonical state encoding, property tests, and cost-of-determinism accounting; for RL substrates, multi-agent systems, multiplayer lockstep engines, and any simulation that must be re-run from inputs",
       "keywords": [
         "axiom",
         "determinism",
@@ -166,9 +190,38 @@
         "snapshot",
         "divergence",
         "rollback",
+        "lockstep",
+        "concurrency-determinism",
+        "floating-point-determinism",
+        "gpu-determinism",
+        "external-effects-substitution",
+        "canonical-encoding",
+        "property-tests",
         "rl-infrastructure",
         "simulation",
         "multi-agent"
+      ],
+      "category": "development"
+    },
+    {
+      "name": "axiom-static-analysis-engineering",
+      "source": "./plugins/axiom-static-analysis-engineering",
+      "description": "Building static analyzers as engines: AST visitation patterns, taint-lattice (abstract-domain) design with monotonicity and finite height, three-phase inference (variable → function → callgraph) with termination proofs, plugin architecture for rules, false-positive economics with auditable suppression lifecycle, and the static-vs-runtime boundary. v0.1.0 ships router + 6 foundational sheets; callgraph construction, cross-module flow, decorator-as-assertion, manifest-driven config, SARIF/CI, scaling, LLM-assisted explanation, plus 3 commands and 2 agents are scheduled for v0.2.0. Pattern pack — applies wherever you build an analyzer (linting, taint, contracts, governance, entity extraction).",
+      "keywords": [
+        "axiom",
+        "static-analysis",
+        "ast",
+        "abstract-interpretation",
+        "taint-analysis",
+        "dataflow",
+        "callgraph",
+        "linter",
+        "sarif",
+        "analyzer-engine",
+        "rule-engine",
+        "false-positive",
+        "ir-design",
+        "abstract-domain"
       ],
       "category": "development"
     },

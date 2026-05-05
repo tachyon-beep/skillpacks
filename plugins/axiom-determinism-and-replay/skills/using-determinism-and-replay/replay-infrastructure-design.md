@@ -207,7 +207,7 @@ For RL training replay, the ratio of recorded-to-replay throughput matters: a sy
 | Conflating read-only and branching APIs (one `step_with` for both) | Separate APIs; `branch()` required before `step_with`. |
 | Skipping rehydration validation | Every replay starts with a hash check; fail fast on mismatch. |
 | Replay cannot validate divergence (no compare-points emitted) | Compare-points emit during replay; mismatch with original = abort. |
-| External effects unaddressed (clock, IO, network) | Cap tier at S; design substitution in v0.2.0; document the cap. |
+| External effects unaddressed (clock, IO, network) | Route through the Effects layer per `external-effects-substitution.md` (`10-`); record in record mode, replay in replay mode. |
 | "Replay" that's actually re-run | Declare which; provide both as separate entry points if both are needed. |
 | Branching replay without per-branch RNG isolation | Branched draws affect the original. Each branch gets a fresh derived sub-seed or copies the RNG state at branch point. |
 | No lifecycle on long replay sessions | Resource pressure; OOM. Use context managers; limit concurrent branches. |
