@@ -151,15 +151,21 @@ Based on profiling results and target hardware, select appropriate optimization 
 
 ## GPU Optimization (NVIDIA CUDA)
 
-### Strategy 1: TensorRT (2-5x Speedup for CNNs/Transformers)
+### Strategy 1: TensorRT-LLM and TensorRT (2-5x Speedup)
 
-**When to use**:
-- NVIDIA GPU (T4, V100, A100, RTX series)
-- Model architecture supported (CNN, Transformer, RNN)
+**Capability tiers, not specific SKUs.** GPU classes referenced below: `cuda-tensor-core` (Volta-class and later, FP16 Tensor Cores), `cuda-fp8-hopper-class` (Hopper/Ada generation; FP8 Tensor Cores), `cuda-fp4-blackwell-class` (Blackwell generation; MXFP8/MXFP6/MXFP4/NVFP4 support). Match your hardware capabilities, do not hardcode model IDs.
+
+**For LLMs and large transformers, prefer TensorRT-LLM.** [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) is NVIDIA's purpose-built LLM inference path with custom attention/GEMM/MoE kernels, prefill-decode disaggregation, speculative decoding, and FP8/FP4 quantization (per [NVIDIA TensorRT-LLM docs](https://docs.nvidia.com/tensorrt-llm/index.html)). Cross-ref `yzmir-llm-specialist/llm-inference-optimization.md` for serving-side LLM tradeoffs.
+
+**For non-LLM models or specialized cases, use bare TensorRT.** Examples: production CNNs, classical encoder transformers (BERT-class), RNN inference, custom architectures. The bare TensorRT path covered below remains the right tool when you do not need autoregressive-decoding-aware optimizations.
+
+**When to use TensorRT (this section)**:
+- NVIDIA GPU with `cuda-tensor-core` capability or higher
+- Non-LLM model architecture (CNN, encoder transformer, RNN)
 - Inference-only workload (not training)
 - Want automatic optimization (fusion, precision, kernels)
 
-**Best for**: Production deployment on NVIDIA GPUs, predictable performance gains
+**Best for**: Production deployment of non-LLM models on NVIDIA GPUs, predictable performance gains
 
 ```python
 import torch
@@ -223,15 +229,17 @@ torch_tensorrt.logging.set_reportable_log_level(torch_tensorrt.logging.Level.War
 ```
 
 
-### Strategy 2: torch.compile() (PyTorch 2.0+ - Easy 1.5-2x Speedup)
+### Strategy 2: torch.compile() — Current PyTorch 2.x Default (1.5-2x Speedup)
+
+**Default first move on PyTorch 2.x.** Apply `torch.compile()` before reaching for TensorRT or framework-level rewrites. It is cheap to try, composes with FP16/FP8/AMP, and supports custom ops that TensorRT may not. Cross-ref `yzmir-pytorch-engineering` (`torch.compile` semantics, debugging, common pitfalls) for deeper coverage.
 
 **When to use**:
-- PyTorch 2.0+ available
+- PyTorch 2.x available (assume yes for new work)
 - Want easy optimization without complexity
 - Model has custom operations (TensorRT may not support)
 - Rapid prototyping (faster than TensorRT compilation)
 
-**Best for**: Quick wins, development iteration, custom models
+**Best for**: Default optimization pass, development iteration, custom models
 
 ```python
 import torch
@@ -320,6 +328,43 @@ def validate_fp16_accuracy(model, test_loader, tolerance=0.01):
         return False
     return True
 ```
+
+
+### Strategy 3b: FP8 (E4M3 / E5M2) on Hopper / Ada / Blackwell
+
+**When to use**: NVIDIA GPU with `cuda-fp8-hopper-class` capability or higher; transformer models (LLM training and inference); willing to use NVIDIA Transformer Engine for layer-level FP8 conversion.
+
+**Format details (per [NVIDIA Transformer Engine docs](https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/examples/fp8_primer.html))**:
+- **E4M3** — 1 sign bit, 4 exponent bits, 3 mantissa bits; range up to ±448. Best for forward activations and weights (needs precision more than range).
+- **E5M2** — 1 sign bit, 5 exponent bits, 2 mantissa bits; range up to ±57344. Best for backward gradients (needs range more than precision).
+
+**Library**: [NVIDIA TransformerEngine](https://github.com/NVIDIA/TransformerEngine) ("a library for accelerating Transformer models on NVIDIA GPUs, including using 8-bit and 4-bit floating point precision on Hopper, Ada and Blackwell GPUs"). Per the same docs, [TensorRT-LLM supports FP8 quantization on H100 and later](https://docs.nvidia.com/tensorrt-llm/index.html), "doubling performance and halving memory consumption compared to 16-bit floating point, with minimal impact on model accuracy."
+
+```python
+# Sketch — see Transformer Engine quickstart for full setup
+import transformer_engine.pytorch as te
+from transformer_engine.common.recipe import Format, DelayedScaling
+
+fp8_recipe = DelayedScaling(fp8_format=Format.HYBRID,  # E4M3 fwd, E5M2 bwd
+                            amax_history_len=16, amax_compute_algo="max")
+
+with te.fp8_autocast(enabled=True, fp8_recipe=fp8_recipe):
+    output = te_model(input_tensor.cuda())
+```
+
+**Validate accuracy carefully** — FP8 dynamic range is narrow; outlier handling and per-tensor scaling matter. Always benchmark task-quality regression before deploying.
+
+
+### Strategy 3c: MXFP4 / MXFP6 (Blackwell)
+
+**When to use**: NVIDIA GPU with `cuda-fp4-blackwell-class` capability; aggressive memory and bandwidth reduction for large model inference.
+
+**Format**: MX (Microscaling) formats per the [OCP Microscaling Formats (MX) Specification v1.0](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf), jointly standardized by AMD, Arm, Intel, Meta, Microsoft, NVIDIA, and Qualcomm. MX uses block-level scaling (group size 32, E8M0 shared scale) on top of a narrow element format:
+- **MXFP8** — block-scaled FP8 (E4M3 elements).
+- **MXFP6** — block-scaled FP6 (E3M2 or E2M3 elements).
+- **MXFP4** — block-scaled FP4 (E2M1 elements).
+
+NVIDIA Blackwell supports MXFP8/MXFP6/MXFP4; raw MXFP4 throughput is roughly double MXFP8 on Blackwell. Note that MXFP6 on Blackwell does not currently exceed MXFP8 raw throughput, so its primary benefit is memory footprint, not compute. For LLM training recipes that mix MX formats with FP8/BF16 master weights, see [Recipes for Pre-training LLMs with MXFP8](https://arxiv.org/abs/2506.08027). Validate task-quality before adopting MXFP4 for high-stakes workloads.
 
 
 ### Strategy 4: Batch Size Tuning
@@ -585,7 +630,7 @@ torch.onnx.export(
     dummy_input,
     "model.onnx",
     export_params=True,
-    opset_version=14,
+    opset_version=17,
     input_names=['input'],
     output_names=['output'],
     dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}
@@ -715,7 +760,11 @@ def find_optimal_cpu_batch(model, input_shape, max_batch=32):
 
 ```python
 import torch
-from torch.quantization import quantize_dynamic, quantize_static, get_default_qconfig
+# torch.quantization is deprecated; use torch.ao.quantization.
+# (Per https://docs.pytorch.org/docs/stable/quantization.html, eager-mode APIs
+# live under torch.ao.quantization, and are being further migrated to the
+# pytorch/ao project — track https://github.com/pytorch/ao if pinning future-proof code.)
+from torch.ao.quantization import quantize_dynamic, get_default_qconfig
 
 # Dynamic quantization (easiest, no calibration)
 model = load_model().eval()
@@ -886,6 +935,43 @@ for name, model in architectures:
 ```
 
 
+## Cloud Accelerators (AWS / GCP)
+
+### AWS Inferentia and Trainium (Neuron SDK)
+
+**When to use**: Workloads on AWS where price/performance vs NVIDIA GPU instances is the deciding factor. Inferentia is inference-optimized; Trainium is training-optimized but also serves inference.
+
+**Toolchain**: [AWS Neuron SDK](https://awsdocs-neuron.readthedocs-hosted.com/) — compiler, runtime, training/inference libraries, and developer tools. Native integration with PyTorch and JAX, plus integrations with Hugging Face (`optimum-neuron`), vLLM, and PyTorch Lightning. See repo: [aws-neuron/aws-neuron-sdk](https://github.com/aws-neuron/aws-neuron-sdk).
+
+**Key practical points**:
+- Compile-once-then-run model: Neuron compiler ahead-of-time compiles the graph for the target Inferentia/Trainium architecture. Plan for a build step.
+- Capability tier matches roughly to current-generation `cuda-tensor-core` for Inferentia2 and `cuda-fp16-amp`-class for Trainium; check current Neuron release notes for FP8/INT8 support before committing.
+- Best ROI: high-throughput LLM serving and high-volume batch inference where you can amortize the engineering cost of the Neuron toolchain.
+
+### GCP TPU
+
+**When to use**: Workloads on GCP, JAX/TF-native code, or PyTorch via `torch_xla`. TPUs excel at large dense and MoE transformer training/inference where you can fully use the systolic array.
+
+**Toolchain**: TPUs are programmed via XLA. PyTorch users go through [PyTorch/XLA](https://github.com/pytorch/xla); JAX users get TPU support natively. For inference, JetStream and MaxText (Google) are the current reference stacks.
+
+**Key practical points**:
+- Static-shape and ahead-of-time compilation matter even more than on GPU. Dynamic shapes trigger recompiles.
+- Pod topology (v5e/v5p/v6e generations) determines available memory and interconnect; pick the topology to match the model, not the other way around.
+
+### Apple Silicon (MLX) — On-Device
+
+**When to use**: On-device inference on Apple Silicon (M-series Macs, iPad, iPhone with Metal). Local LLMs, on-device fine-tuning experiments, edge prototyping where unified memory matters.
+
+**Library**: [MLX](https://github.com/ml-explore/mlx) — Apple's array framework for Apple Silicon, with NumPy/PyTorch-like APIs. Companion repos:
+- [mlx-lm](https://github.com/ml-explore/mlx-lm) — run/fine-tune LLMs on Apple Silicon.
+- [mlx-examples](https://github.com/ml-explore/mlx-examples) — Whisper, Stable Diffusion, LoRA, transformer LM training, etc.
+
+**Key practical points**:
+- Unified memory architecture eliminates host-device copies that dominate small CUDA workloads.
+- Quantized formats (4-bit, 8-bit) supported via `mlx-lm` for serving multi-billion-parameter LLMs locally.
+- Not a substitute for data-center GPUs — throughput for very large models is bandwidth-limited, not flops-limited.
+
+
 ## Hardware-Specific Decision Tree
 
 ### GPU (NVIDIA)
@@ -1052,11 +1138,18 @@ model.layer2.to('cuda:1')
 **Symptoms**: OOM errors, model barely fits in memory
 
 **Optimizations** (trade compute for memory):
-1. **Reduce precision**: FP16 (2x memory reduction) or INT8 (4x reduction)
+1. **Reduce precision**: FP16 (2x memory reduction) or INT8 (4x reduction); on Hopper/Ada use FP8, on Blackwell consider MXFP4/MXFP6
 2. **Reduce batch size**: Smaller batches use less memory
 3. **Gradient checkpointing**: (Training only) Recompute activations during backward
-4. **Model pruning**: Remove unnecessary parameters
+4. **Model pruning**: Remove unnecessary parameters (see `model-compression-techniques.md`)
 5. **Offload to CPU**: Store some layers/activations on CPU, transfer to GPU when needed
+6. **Reduce CUDA allocator fragmentation**: Set `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` before launching Python. PyTorch's expandable segments use CUDA Virtual Memory Management to grow/shrink virtual segments instead of fixed `cudaMalloc` blocks, reducing the "reserved-but-unallocated" gap that triggers OOM despite free memory. PyTorch's own OOM error messages now suggest this flag; see [PyTorch CUDA semantics docs](https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf).
+
+```bash
+# Set before launching Python — fragmentation remediation
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+python inference.py
+```
 
 ```python
 # Example: Reduce precision
@@ -1321,3 +1414,23 @@ You've succeeded when:
 **Batch Size Tuning**:
 - Dynamic Batching: https://github.com/pytorch/serve/blob/master/docs/batch_inference_with_ts.md
 - TorchServe Batching: https://pytorch.org/serve/batch_inference.html
+
+**FP8 / MX formats**:
+- NVIDIA Transformer Engine FP8 primer: https://docs.nvidia.com/deeplearning/transformer-engine/user-guide/examples/fp8_primer.html
+- NVIDIA TransformerEngine repo: https://github.com/NVIDIA/TransformerEngine
+- TensorRT-LLM: https://github.com/NVIDIA/TensorRT-LLM and https://docs.nvidia.com/tensorrt-llm/index.html
+- OCP Microscaling Formats (MX) Specification v1.0: https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf
+- Microscaling Data Formats for Deep Learning: https://arxiv.org/abs/2310.10537
+- Recipes for Pre-training LLMs with MXFP8: https://arxiv.org/abs/2506.08027
+
+**Cloud accelerators / on-device**:
+- AWS Neuron SDK: https://awsdocs-neuron.readthedocs-hosted.com/ and https://github.com/aws-neuron/aws-neuron-sdk
+- PyTorch/XLA (TPU): https://github.com/pytorch/xla
+- MLX (Apple Silicon): https://github.com/ml-explore/mlx and https://github.com/ml-explore/mlx-lm
+
+**Memory fragmentation**:
+- PyTorch CUDA memory management: https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf
+
+---
+
+*Tooling and APIs current as of 2026-05; revisit quarterly.*

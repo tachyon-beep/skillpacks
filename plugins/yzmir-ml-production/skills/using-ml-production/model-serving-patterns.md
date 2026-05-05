@@ -10,8 +10,11 @@ Use this skill when:
 - Containerizing models for consistent deployment
 - Implementing request batching for efficiency
 - Choosing between serving frameworks and protocols
+- Selecting an LLM serving stack (vLLM, SGLang, TensorRT-LLM, TGI, etc.)
 
 **When NOT to use:** Notebook prototyping, training jobs, or single-prediction scripts where serving infrastructure is premature.
+
+**For LLM-specific generation-quality and inference-optimization tradeoffs** (sampling, KV cache sizing, speculative-decoding hyperparameter tuning, prompt design): see `yzmir-llm-specialist/llm-inference-optimization.md`. This sheet owns the **serving-stack ops** view (which engine, what hardware, batching/caching/distribution mechanics); the LLM-specialist sheet owns the **generation-quality tuning** view. The cross-reference is bidirectional.
 
 ## Core Principle
 
@@ -23,57 +26,54 @@ Without proper serving infrastructure:
 - No batching (1 req/sec instead of 100 req/sec)
 - Not containerized (works on my machine syndrome)
 - Static batching when dynamic needed (underutilized GPU)
+- Generic web framework where an LLM-aware engine would give 5-10× more throughput
 
-**Formula:** Right framework (FastAPI vs TorchServe vs gRPC vs ONNX) + Request batching (dynamic > static) + Containerization (Docker + model) + Clear selection criteria = Production-ready serving.
+**Formula:** Right framework (FastAPI vs gRPC vs ONNX vs vLLM/SGLang/TensorRT-LLM) + Request batching (continuous > dynamic > static) + Containerization + Clear selection criteria = Production-ready serving.
 
 ## Serving Framework Decision Tree
 
 ```
 ┌────────────────────────────────────────┐
-│     What's your primary requirement?   │
+│   Are you serving an LLM?              │
 └──────────────┬─────────────────────────┘
                │
-       ┌───────┴───────┐
-       ▼               ▼
-   Flexibility    Batteries Included
-       │               │
-       ▼               ▼
-   FastAPI         TorchServe
-   (Custom)        (PyTorch)
-       │               │
-       │       ┌───────┴───────┐
-       │       ▼               ▼
-       │   Low Latency   Cross-Framework
-       │       │               │
-       │       ▼               ▼
-       │    gRPC         ONNX Runtime
-       │       │               │
-       └───────┴───────────────┘
-                   │
-                   ▼
-       ┌───────────────────────┐
-       │  Add Request Batching  │
-       │  Dynamic > Static      │
-       └───────────┬────────────┘
-                   │
-                   ▼
-       ┌───────────────────────┐
-       │   Containerize with    │
-       │   Docker + Dependencies│
-       └────────────────────────┘
+        ┌──────┴──────┐
+        ▼             ▼
+       YES            NO
+        │             │
+        ▼             ▼
+    LLM stack     General-purpose stack
+    (Part 8):     (Parts 1-4):
+    vLLM,         FastAPI / gRPC /
+    SGLang,       ONNX / Triton /
+    TensorRT-LLM, Ray Serve / BentoML
+    TGI, etc.
+                       │
+                       ▼
+               Add request batching
+               (Part 5: dynamic for non-LLM,
+                continuous for LLM)
+                       │
+                       ▼
+               Containerize (Part 6)
+                       │
+                       ▼
+               Pick framework (Part 7
+               selection matrix)
 ```
 
 ## Part 1: FastAPI for Custom Serving
 
-**When to use:** Need flexibility, custom preprocessing, or non-standard workflows.
+**When to use:** Need flexibility, custom preprocessing, or non-standard workflows. Good default for non-LLM models with simple request/response shapes.
 
 **Advantages:** Full control, easy debugging, Python ecosystem integration.
 **Disadvantages:** Manual optimization, no built-in model management.
 
-### Basic FastAPI Serving
+### Basic FastAPI Serving (modern lifespan API)
 
 ```python
 # serve_fastapi.py
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 import torch
@@ -81,24 +81,15 @@ import numpy as np
 from typing import List, Optional
 import logging
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Model Serving API", version="1.0.0")
 
 class PredictionRequest(BaseModel):
     """Request schema with validation."""
     inputs: List[List[float]] = Field(..., description="Input features as 2D array")
     return_probabilities: bool = Field(False, description="Return class probabilities")
 
-    class Config:
-        schema_extra = {
-            "example": {
-                "inputs": [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
-                "return_probabilities": True
-            }
-        }
 
 class PredictionResponse(BaseModel):
     """Response schema."""
@@ -106,9 +97,10 @@ class PredictionResponse(BaseModel):
     probabilities: Optional[List[List[float]]] = None
     latency_ms: float
 
+
 class ModelServer:
     """
-    Model server with lazy loading and caching.
+    Model server with explicit load and predict methods.
 
     WHY: Load model once at startup, reuse across requests.
     WHY: Avoids 5-10 second model loading per request.
@@ -120,45 +112,57 @@ class ModelServer:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def load_model(self):
-        """Load model on first request (lazy loading)."""
         if self.model is None:
             logger.info(f"Loading model from {self.model_path}...")
             self.model = torch.load(self.model_path, map_location=self.device)
-            self.model.eval()  # WHY: Disable dropout, batchnorm for inference
+            self.model.eval()
             logger.info("Model loaded successfully")
 
-    def predict(self, inputs: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-        """
-        Run inference.
+    def unload_model(self):
+        """Release GPU memory on shutdown."""
+        if self.model is not None:
+            del self.model
+            self.model = None
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
-        Args:
-            inputs: Input array (batch_size, features)
-
-        Returns:
-            (predictions, probabilities)
-        """
+    def predict(self, inputs: np.ndarray):
         self.load_model()
-
-        # Convert to tensor
         x = torch.tensor(inputs, dtype=torch.float32).to(self.device)
-
         # WHY: torch.no_grad() disables gradient computation for inference
-        # WHY: Reduces memory usage by 50% and speeds up by 2×
+        # WHY: Reduces memory usage by ~50% and speeds up by ~2×
         with torch.no_grad():
             logits = self.model(x)
             probabilities = torch.softmax(logits, dim=1)
             predictions = torch.argmax(probabilities, dim=1)
-
         return predictions.cpu().numpy(), probabilities.cpu().numpy()
 
-# Global model server instance
+
+# Single shared instance
 model_server = ModelServer(model_path="model.pth")
 
-@app.on_event("startup")
-async def startup_event():
-    """Load model at startup for faster first request."""
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Modern FastAPI startup/shutdown using a single async context manager.
+
+    WHY: FastAPI ≥0.93 deprecated @app.on_event("startup") /
+    @app.on_event("shutdown"). The lifespan handler runs setup before
+    `yield` and teardown after, with one shared scope (so resources
+    initialised at startup are visible to the shutdown branch).
+    See https://fastapi.tiangolo.com/advanced/events/
+    """
     model_server.load_model()
     logger.info("Server startup complete")
+    yield
+    # Shutdown
+    logger.info("Server shutting down")
+    model_server.unload_model()
+
+
+app = FastAPI(title="Model Serving API", version="1.0.0", lifespan=lifespan)
+
 
 @app.get("/health")
 async def health_check():
@@ -166,8 +170,9 @@ async def health_check():
     return {
         "status": "healthy",
         "model_loaded": model_server.model is not None,
-        "device": str(model_server.device)
+        "device": str(model_server.device),
     }
+
 
 @app.post("/predict", response_model=PredictionResponse)
 async def predict(request: PredictionRequest):
@@ -182,35 +187,30 @@ async def predict(request: PredictionRequest):
 
     try:
         inputs = np.array(request.inputs)
-
-        # Validate shape
         if inputs.ndim != 2:
             raise HTTPException(
                 status_code=400,
-                detail=f"Expected 2D array, got {inputs.ndim}D"
+                detail=f"Expected 2D array, got {inputs.ndim}D",
             )
 
         predictions, probabilities = model_server.predict(inputs)
-
         latency_ms = (time.time() - start_time) * 1000
 
-        response = PredictionResponse(
+        return PredictionResponse(
             predictions=predictions.tolist(),
             probabilities=probabilities.tolist() if request.return_probabilities else None,
-            latency_ms=latency_ms
+            latency_ms=latency_ms,
         )
-
-        logger.info(f"Predicted {len(predictions)} samples in {latency_ms:.2f}ms")
-        return response
 
     except Exception as e:
         logger.error(f"Prediction error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 # Run with: uvicorn serve_fastapi:app --host 0.0.0.0 --port 8000 --workers 4
 ```
 
-**Performance characteristics:**
+**Performance characteristics (rule-of-thumb, single worker, modern hardware):**
 
 | Metric | Value | Notes |
 |--------|-------|-------|
@@ -219,139 +219,119 @@ async def predict(request: PredictionRequest):
 | Throughput | 100-500 req/sec | Single worker |
 | Memory | 2-8GB | Model + runtime |
 
-### Advanced: Async FastAPI with Background Tasks
+### Advanced: Async FastAPI with Background Batching
 
 ```python
 # serve_fastapi_async.py
-from fastapi import FastAPI, BackgroundTasks
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
 from asyncio import Queue, create_task, sleep
 import asyncio
 from typing import Dict
 import uuid
+import numpy as np
 
-app = FastAPI()
 
 class AsyncBatchPredictor:
     """
     Async batch predictor with request queuing.
 
-    WHY: Collect multiple requests, predict as batch.
+    WHY: Collect multiple requests, predict as a batch.
     WHY: GPU utilization: 20% (1 req) → 80% (batch of 32).
     """
 
-    def __init__(self, model_server: ModelServer, batch_size: int = 32, wait_ms: int = 10):
+    def __init__(self, model_server: "ModelServer", batch_size: int = 32, wait_ms: int = 10):
         self.model_server = model_server
         self.batch_size = batch_size
         self.wait_ms = wait_ms
         self.queue: Queue = Queue()
         self.pending_requests: Dict[str, asyncio.Future] = {}
+        self._task: asyncio.Task | None = None
 
     async def start(self):
-        """Start background batch processing loop."""
-        create_task(self._batch_processing_loop())
+        self._task = create_task(self._batch_processing_loop())
+
+    async def stop(self):
+        if self._task is not None:
+            self._task.cancel()
 
     async def _batch_processing_loop(self):
-        """
-        Continuously collect and process batches.
-
-        WHY: Wait for batch_size OR timeout, then process.
-        WHY: Balances throughput (large batch) and latency (timeout).
-        """
         while True:
-            batch_requests = []
-            batch_ids = []
-
-            # Collect batch
+            batch_requests, batch_ids = [], []
             deadline = asyncio.get_event_loop().time() + (self.wait_ms / 1000)
 
             while len(batch_requests) < self.batch_size:
                 timeout = max(0, deadline - asyncio.get_event_loop().time())
-
                 try:
                     request_id, inputs = await asyncio.wait_for(
-                        self.queue.get(),
-                        timeout=timeout
+                        self.queue.get(), timeout=timeout
                     )
                     batch_requests.append(inputs)
                     batch_ids.append(request_id)
                 except asyncio.TimeoutError:
-                    break  # Timeout reached, process what we have
+                    break
 
             if not batch_requests:
-                await sleep(0.001)  # Brief sleep before next iteration
+                await sleep(0.001)
                 continue
 
-            # Process batch
             batch_array = np.array(batch_requests)
             predictions, probabilities = self.model_server.predict(batch_array)
 
-            # Return results to waiting requests
             for i, request_id in enumerate(batch_ids):
                 future = self.pending_requests.pop(request_id)
                 future.set_result((predictions[i], probabilities[i]))
 
-    async def predict_async(self, inputs: List[float]) -> tuple[int, np.ndarray]:
-        """
-        Add request to queue and await result.
-
-        WHY: Returns immediately if batch ready, waits if not.
-        WHY: Client doesn't know about batching (transparent).
-        """
+    async def predict_async(self, inputs):
         request_id = str(uuid.uuid4())
         future = asyncio.Future()
         self.pending_requests[request_id] = future
-
         await self.queue.put((request_id, inputs))
+        return await future
 
-        # Wait for batch processing to complete
-        prediction, probability = await future
-        return prediction, probability
 
-# Global async predictor
-async_predictor = None
+async_predictor: AsyncBatchPredictor | None = None
 
-@app.on_event("startup")
-async def startup():
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     global async_predictor
     model_server.load_model()
     async_predictor = AsyncBatchPredictor(model_server, batch_size=32, wait_ms=10)
     await async_predictor.start()
+    yield
+    await async_predictor.stop()
+    model_server.unload_model()
+
+
+app = FastAPI(lifespan=lifespan)
+
 
 @app.post("/predict_async")
 async def predict_async(request: PredictionRequest):
-    """
-    Async prediction with automatic batching.
-
-    WHY: 10× better GPU utilization than synchronous.
-    WHY: Same latency, much higher throughput.
-    """
-    # Single input for simplicity (extend for batch)
     inputs = request.inputs[0]
     prediction, probability = await async_predictor.predict_async(inputs)
-
-    return {
-        "prediction": int(prediction),
-        "probability": probability.tolist()
-    }
+    return {"prediction": int(prediction), "probability": probability.tolist()}
 ```
 
 **Performance improvement:**
 
 | Approach | Throughput | GPU Utilization | Latency P95 |
 |----------|-----------|-----------------|-------------|
-| Synchronous | 100 req/sec | 20% | 15ms |
-| Async batching | 1000 req/sec | 80% | 25ms |
+| Synchronous | ~100 req/sec | ~20% | ~15ms |
+| Async batching | ~1000 req/sec | ~80% | ~25ms |
 | Improvement | **10×** | **4×** | +10ms |
 
 
-## Part 2: TorchServe for PyTorch Models
+## Part 2: TorchServe (Legacy / Maintenance Mode)
 
-**When to use:** PyTorch models, want batteries-included solution with monitoring, metrics, and model management.
+**Status:** TorchServe entered limited maintenance in 2024 and the upstream `pytorch/serve` repository was archived in August 2025; there are no planned new features, bug fixes, or security patches ([upstream issue #3396](https://github.com/pytorch/serve/issues/3396)). For new work, prefer Ray Serve, BentoML, NVIDIA Triton Inference Server, or — for LLMs specifically — vLLM / SGLang / TensorRT-LLM (Part 8).
 
-**Advantages:** Built-in batching, model versioning, A/B testing, metrics.
-**Disadvantages:** PyTorch-only, less flexibility, steeper learning curve.
+**Migration urgency:** If you have an existing TorchServe deployment that works, you do not need to migrate immediately. Plan migration on your normal lifecycle cadence, prioritizing it ahead of any change that would require a CVE patch from upstream (which won't come).
 
-### Creating a TorchServe Handler
+The walkthrough below is preserved for teams maintaining existing TorchServe deployments.
+
+### Creating a TorchServe Handler (existing deployments)
 
 ```python
 # handler.py
@@ -362,160 +342,87 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class CustomClassifierHandler(BaseHandler):
     """
-    Custom TorchServe handler with preprocessing and batching.
+    Custom TorchServe handler with preprocessing and dynamic batching.
 
-    WHY: TorchServe provides: model versioning, A/B testing, metrics, monitoring.
-    WHY: Built-in dynamic batching (no custom code needed).
+    WHY: TorchServe provides model versioning, metrics, and built-in
+    dynamic batching. As of 2024-2025 the project is in maintenance
+    mode (see Part 2 header); this code is for keeping existing
+    deployments running.
     """
 
     def initialize(self, context):
-        """
-        Initialize handler (called once at startup).
-
-        Args:
-            context: TorchServe context with model artifacts
-        """
         self.manifest = context.manifest
         properties = context.system_properties
 
-        # Set device
         self.device = torch.device(
             "cuda:" + str(properties.get("gpu_id"))
             if torch.cuda.is_available()
             else "cpu"
         )
 
-        # Load model
         model_dir = properties.get("model_dir")
         serialized_file = self.manifest["model"]["serializedFile"]
         model_path = f"{model_dir}/{serialized_file}"
 
         self.model = torch.jit.load(model_path, map_location=self.device)
         self.model.eval()
-
         logger.info(f"Model loaded successfully on {self.device}")
 
-        # WHY: Initialize preprocessing parameters
         self.mean = torch.tensor([0.485, 0.456, 0.406]).to(self.device)
         self.std = torch.tensor([0.229, 0.224, 0.225]).to(self.device)
-
         self.initialized = True
 
     def preprocess(self, data):
-        """
-        Preprocess input data.
-
-        Args:
-            data: List of input requests
-
-        Returns:
-            Preprocessed tensor batch
-
-        WHY: TorchServe batches requests automatically.
-        WHY: This method receives multiple requests at once.
-        """
+        """TorchServe batches requests automatically; this method receives
+        a list of incoming requests as a single batch."""
         inputs = []
-
         for row in data:
-            # Get input from request (JSON or binary)
             input_data = row.get("data") or row.get("body")
-
-            # Parse and convert
             if isinstance(input_data, (bytes, bytearray)):
                 input_data = input_data.decode("utf-8")
-
-            # Convert to tensor
             tensor = torch.tensor(eval(input_data), dtype=torch.float32)
-
-            # Normalize
             tensor = (tensor - self.mean) / self.std
-
             inputs.append(tensor)
-
-        # Stack into batch
-        batch = torch.stack(inputs).to(self.device)
-        return batch
+        return torch.stack(inputs).to(self.device)
 
     def inference(self, batch):
-        """
-        Run inference on batch.
-
-        Args:
-            batch: Preprocessed batch tensor
-
-        Returns:
-            Model output
-
-        WHY: torch.no_grad() for inference (faster, less memory).
-        """
         with torch.no_grad():
-            output = self.model(batch)
-
-        return output
+            return self.model(batch)
 
     def postprocess(self, inference_output):
-        """
-        Postprocess inference output.
-
-        Args:
-            inference_output: Raw model output
-
-        Returns:
-            List of predictions (one per request in batch)
-
-        WHY: Convert tensors to JSON-serializable format.
-        WHY: Return predictions in same order as inputs.
-        """
-        # Apply softmax
         probabilities = F.softmax(inference_output, dim=1)
-
-        # Get predictions
         predictions = torch.argmax(probabilities, dim=1)
-
-        # Convert to list (one entry per request)
-        results = []
-        for i in range(len(predictions)):
-            results.append({
+        return [
+            {
                 "prediction": predictions[i].item(),
-                "probabilities": probabilities[i].tolist()
-            })
-
-        return results
+                "probabilities": probabilities[i].tolist(),
+            }
+            for i in range(len(predictions))
+        ]
 ```
 
-### TorchServe Configuration
+### TorchServe Configuration (existing deployments)
 
-```python
+```yaml
 # model_config.yaml
-# WHY: Configuration controls batching, workers, timeouts
-# WHY: Tune these for your latency/throughput requirements
-
-minWorkers: 2          # WHY: Minimum workers (always ready)
-maxWorkers: 4          # WHY: Maximum workers (scale up under load)
-batchSize: 32          # WHY: Maximum batch size (GPU utilization)
-maxBatchDelay: 10      # WHY: Max wait time for batch (ms)
-                       # WHY: Trade-off: larger batch (better GPU util) vs latency
-
-responseTimeout: 120   # WHY: Request timeout (seconds)
-                       # WHY: Prevent hung requests
-
-# Device assignment
-deviceType: "gpu"      # WHY: Use GPU if available
-deviceIds: [0]         # WHY: Specific GPU ID
-
-# Metrics
+minWorkers: 2
+maxWorkers: 4
+batchSize: 32          # Maximum batch size
+maxBatchDelay: 10      # Max wait time for batch (ms)
+responseTimeout: 120   # Request timeout (s)
+deviceType: "gpu"
+deviceIds: [0]
 metrics:
   enable: true
-  prometheus: true     # WHY: Export to Prometheus for monitoring
+  prometheus: true
 ```
 
-### Packaging and Serving
+### Packaging and Serving (existing deployments)
 
 ```bash
-# Package model for TorchServe
-# WHY: .mar file contains model + handler + config (portable)
 torch-model-archiver \
   --model-name classifier \
   --version 1.0 \
@@ -524,8 +431,6 @@ torch-model-archiver \
   --extra-files "model_config.yaml" \
   --export-path model_store/
 
-# Start TorchServe
-# WHY: Serves on 8080 (inference), 8081 (management), 8082 (metrics)
 torchserve \
   --start \
   --ncs \
@@ -533,38 +438,28 @@ torchserve \
   --models classifier.mar \
   --ts-config config.properties
 
-# Register model (if not auto-loaded)
-curl -X POST "http://localhost:8081/models?url=classifier.mar&batch_size=32&max_batch_delay=10"
-
-# Make prediction
 curl -X POST "http://localhost:8080/predictions/classifier" \
   -H "Content-Type: application/json" \
   -d '{"data": [[1.0, 2.0, 3.0]]}'
 
-# Get metrics (for monitoring)
 curl http://localhost:8082/metrics
-
-# Unregister model (for updates)
-curl -X DELETE "http://localhost:8081/models/classifier"
 ```
 
-**TorchServe advantages:**
+**For new deployments, evaluate (in this order of typical fit):**
 
-| Feature | Built-in? | Notes |
-|---------|-----------|-------|
-| Dynamic batching | ✓ | Automatic, configurable |
-| Model versioning | ✓ | A/B testing support |
-| Metrics/monitoring | ✓ | Prometheus integration |
-| Multi-model serving | ✓ | Multiple models per server |
-| GPU management | ✓ | Automatic device assignment |
-| Custom preprocessing | ✓ | Via handler |
+| Use case | Recommended replacement |
+|----------|------------------------|
+| PyTorch + want batteries-included serving | NVIDIA Triton Inference Server (PyTorch backend) |
+| PyTorch + multi-model orchestration | Ray Serve |
+| PyTorch + ergonomic packaging | BentoML |
+| LLM serving | vLLM / SGLang / TensorRT-LLM (see Part 8) |
 
 
 ## Part 3: gRPC for Low-Latency Serving
 
 **When to use:** Low latency critical (< 10ms), internal services, microservices architecture.
 
-**Advantages:** 3-5× faster than REST, binary protocol, streaming support.
+**Advantages:** 3-5× faster than REST, binary protocol (Protocol Buffers + HTTP/2), streaming support.
 **Disadvantages:** More complex, requires proto definitions, harder debugging.
 
 ### Protocol Definition
@@ -575,22 +470,14 @@ syntax = "proto3";
 
 package modelserving;
 
-// WHY: Define service contract in .proto file
-// WHY: Code generation for multiple languages (Python, Go, Java, etc.)
 service ModelService {
-  // Unary RPC (one request, one response)
   rpc Predict (PredictRequest) returns (PredictResponse);
-
-  // Server streaming (one request, stream responses)
   rpc PredictStream (PredictRequest) returns (stream PredictResponse);
-
-  // Bidirectional streaming (stream requests and responses)
   rpc PredictBidi (stream PredictRequest) returns (stream PredictResponse);
 }
 
 message PredictRequest {
-  // WHY: Repeated = array/list
-  repeated float features = 1;  // WHY: Input features
+  repeated float features = 1;
   bool return_probabilities = 2;
 }
 
@@ -600,7 +487,6 @@ message PredictResponse {
   float latency_ms = 3;
 }
 
-// Health check service (for load balancers)
 service Health {
   rpc Check (HealthCheckRequest) returns (HealthCheckResponse);
 }
@@ -630,11 +516,11 @@ import logging
 import torch
 import numpy as np
 
-# Generated from proto file (run: python -m grpc_tools.protoc ...)
 import model_service_pb2
 import model_service_pb2_grpc
 
 logger = logging.getLogger(__name__)
+
 
 class ModelServicer(model_service_pb2_grpc.ModelServiceServicer):
     """
@@ -651,39 +537,22 @@ class ModelServicer(model_service_pb2_grpc.ModelServiceServicer):
         logger.info(f"Model loaded on {self.device}")
 
     def Predict(self, request, context):
-        """
-        Unary RPC prediction.
-
-        WHY: Fastest for single predictions.
-        WHY: 3-5ms latency vs 10-15ms for REST.
-        """
         start_time = time.time()
-
         try:
-            # Convert proto repeated field to numpy
             features = np.array(request.features, dtype=np.float32)
-
-            # Reshape for model
             x = torch.tensor(features).unsqueeze(0).to(self.device)
-
-            # Inference
             with torch.no_grad():
                 logits = self.model(x)
                 probs = torch.softmax(logits, dim=1)
                 pred = torch.argmax(probs, dim=1)
 
             latency_ms = (time.time() - start_time) * 1000
-
-            # Build response
             response = model_service_pb2.PredictResponse(
                 prediction=int(pred.item()),
-                latency_ms=latency_ms
+                latency_ms=latency_ms,
             )
-
-            # WHY: Only include probabilities if requested (reduce bandwidth)
             if request.return_probabilities:
                 response.probabilities.extend(probs[0].cpu().tolist())
-
             return response
 
         except Exception as e:
@@ -693,154 +562,62 @@ class ModelServicer(model_service_pb2_grpc.ModelServiceServicer):
             return model_service_pb2.PredictResponse()
 
     def PredictStream(self, request, context):
-        """
-        Server streaming RPC.
-
-        WHY: Send multiple predictions over one connection.
-        WHY: Lower overhead for batch processing.
-        """
-        # Stream multiple predictions (example: time series)
-        for i in range(10):  # Simulate 10 predictions
-            response = self.Predict(request, context)
-            yield response
-            time.sleep(0.01)  # Simulate processing delay
+        for _ in range(10):
+            yield self.Predict(request, context)
+            time.sleep(0.01)
 
     def PredictBidi(self, request_iterator, context):
-        """
-        Bidirectional streaming RPC.
-
-        WHY: Real-time inference (send request, get response immediately).
-        WHY: Lowest latency for streaming use cases.
-        """
         for request in request_iterator:
-            response = self.Predict(request, context)
-            yield response
+            yield self.Predict(request, context)
+
 
 class HealthServicer(model_service_pb2_grpc.HealthServicer):
-    """Health check service for load balancers."""
-
     def Check(self, request, context):
-        # WHY: Load balancers need health checks to route traffic
         return model_service_pb2.HealthCheckResponse(
             status=model_service_pb2.HealthCheckResponse.SERVING
         )
 
-def serve():
-    """
-    Start gRPC server.
 
-    WHY: ThreadPoolExecutor for concurrent request handling.
-    WHY: max_workers controls concurrency (tune based on CPU cores).
-    """
+def serve():
     server = grpc.server(
         futures.ThreadPoolExecutor(max_workers=10),
         options=[
-            # WHY: These options optimize for low latency
-            ('grpc.max_send_message_length', 10 * 1024 * 1024),  # 10MB
+            ('grpc.max_send_message_length', 10 * 1024 * 1024),
             ('grpc.max_receive_message_length', 10 * 1024 * 1024),
-            ('grpc.so_reuseport', 1),  # WHY: Allows multiple servers on same port
-            ('grpc.use_local_subchannel_pool', 1)  # WHY: Better connection reuse
-        ]
+            ('grpc.so_reuseport', 1),
+            ('grpc.use_local_subchannel_pool', 1),
+        ],
     )
-
-    # Add services
     model_service_pb2_grpc.add_ModelServiceServicer_to_server(
         ModelServicer("model.pth"), server
     )
-    model_service_pb2_grpc.add_HealthServicer_to_server(
-        HealthServicer(), server
-    )
-
-    # Bind to port
+    model_service_pb2_grpc.add_HealthServicer_to_server(HealthServicer(), server)
     server.add_insecure_port('[::]:50051')
-
     server.start()
     logger.info("gRPC server started on port 50051")
-
     server.wait_for_termination()
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     serve()
 ```
 
-### gRPC Client
-
-```python
-# client_grpc.py
-import grpc
-import model_service_pb2
-import model_service_pb2_grpc
-import time
-
-def benchmark_grpc_vs_rest():
-    """
-    Benchmark gRPC vs REST latency.
-
-    WHY: gRPC is faster, but how much faster?
-    """
-    # gRPC client
-    channel = grpc.insecure_channel('localhost:50051')
-    stub = model_service_pb2_grpc.ModelServiceStub(channel)
-
-    # Warm up
-    request = model_service_pb2.PredictRequest(
-        features=[1.0, 2.0, 3.0],
-        return_probabilities=True
-    )
-    for _ in range(10):
-        stub.Predict(request)
-
-    # Benchmark
-    iterations = 1000
-    start = time.time()
-    for _ in range(iterations):
-        response = stub.Predict(request)
-    grpc_latency = ((time.time() - start) / iterations) * 1000
-
-    print(f"gRPC average latency: {grpc_latency:.2f}ms")
-
-    # Compare with REST (FastAPI)
-    import requests
-    rest_url = "http://localhost:8000/predict"
-
-    # Warm up
-    for _ in range(10):
-        requests.post(rest_url, json={"inputs": [[1.0, 2.0, 3.0]]})
-
-    # Benchmark
-    start = time.time()
-    for _ in range(iterations):
-        requests.post(rest_url, json={"inputs": [[1.0, 2.0, 3.0]]})
-    rest_latency = ((time.time() - start) / iterations) * 1000
-
-    print(f"REST average latency: {rest_latency:.2f}ms")
-    print(f"gRPC is {rest_latency/grpc_latency:.1f}× faster")
-
-    # Typical results:
-    # gRPC: 3-5ms
-    # REST: 10-15ms
-    # gRPC is 3-5× faster
-
-if __name__ == "__main__":
-    benchmark_grpc_vs_rest()
-```
-
-**gRPC vs REST comparison:**
+**gRPC vs REST comparison (rule-of-thumb):**
 
 | Metric | gRPC | REST | Advantage |
 |--------|------|------|-----------|
-| Latency | 3-5ms | 10-15ms | **gRPC 3× faster** |
-| Throughput | 10k req/sec | 3k req/sec | **gRPC 3× higher** |
+| Latency | 3-5ms | 10-15ms | gRPC 3× faster |
+| Throughput | ~10k req/sec | ~3k req/sec | gRPC 3× higher |
 | Payload size | Binary (smaller) | JSON (larger) | gRPC 30-50% smaller |
 | Debugging | Harder | Easier | REST |
-| Browser support | No (requires proxy) | Yes | REST |
-| Streaming | Native | Complex (SSE/WebSocket) | gRPC |
+| Browser support | No (requires gRPC-Web proxy) | Yes | REST |
+| Streaming | Native (server / client / bidi) | Complex (SSE/WebSocket) | gRPC |
 
 
 ## Part 4: ONNX Runtime for Cross-Framework Serving
 
-**When to use:** Need cross-framework support (PyTorch, TensorFlow, etc.), want maximum performance, or deploying to edge devices.
+**When to use:** Cross-framework support (PyTorch, TensorFlow, etc.), maximum CPU performance, edge devices.
 
 **Advantages:** Framework-agnostic, highly optimized, smaller deployment size.
 **Disadvantages:** Not all models convert easily, limited debugging.
@@ -852,46 +629,33 @@ if __name__ == "__main__":
 import torch
 import torch.onnx
 
-def convert_pytorch_to_onnx(model_path: str, output_path: str):
-    """
-    Convert PyTorch model to ONNX format.
 
-    WHY: ONNX is framework-agnostic (portable).
-    WHY: ONNX Runtime is 2-3× faster than native PyTorch inference.
-    WHY: Smaller deployment size (no PyTorch dependency).
-    """
-    # Load PyTorch model
+def convert_pytorch_to_onnx(model_path: str, output_path: str):
     model = torch.load(model_path)
     model.eval()
+    dummy_input = torch.randn(1, 3, 224, 224)
 
-    # Create dummy input (for tracing)
-    dummy_input = torch.randn(1, 3, 224, 224)  # Example: image
-
-    # Export to ONNX
     torch.onnx.export(
         model,
         dummy_input,
         output_path,
-        export_params=True,  # WHY: Include model weights
-        opset_version=17,    # WHY: Latest stable ONNX opset
-        do_constant_folding=True,  # WHY: Optimize constants at export time
+        export_params=True,
+        opset_version=17,         # WHY: Opset 17 is the modern stable target
+        do_constant_folding=True,
         input_names=['input'],
         output_names=['output'],
         dynamic_axes={
-            'input': {0: 'batch_size'},   # WHY: Support variable batch size
-            'output': {0: 'batch_size'}
-        }
+            'input': {0: 'batch_size'},
+            'output': {0: 'batch_size'},
+        },
     )
 
-    print(f"Model exported to {output_path}")
-
-    # Verify ONNX model
     import onnx
     onnx_model = onnx.load(output_path)
     onnx.checker.check_model(onnx_model)
-    print("ONNX model validation successful")
+    print(f"Model exported to {output_path}; ONNX validation OK")
 
-# Example usage
+
 convert_pytorch_to_onnx("model.pth", "model.onnx")
 ```
 
@@ -901,6 +665,7 @@ convert_pytorch_to_onnx("model.pth", "model.onnx")
 # serve_onnx.py
 import onnxruntime as ort
 import numpy as np
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List
@@ -908,170 +673,93 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
 
 class ONNXModelServer:
-    """
-    ONNX Runtime server with optimizations.
-
-    WHY: ONNX Runtime is 2-3× faster than PyTorch inference.
-    WHY: Smaller memory footprint (no PyTorch/TensorFlow).
-    WHY: Cross-platform (Windows, Linux, Mac, mobile, edge).
-    """
-
     def __init__(self, model_path: str):
         self.model_path = model_path
         self.session = None
 
     def load_model(self):
-        """Load ONNX model with optimizations."""
         if self.session is None:
-            # Set execution providers (GPU > CPU)
-            # WHY: Tries GPU first, falls back to CPU
-            providers = [
-                'CUDAExecutionProvider',  # NVIDIA GPU
-                'CPUExecutionProvider'     # CPU fallback
-            ]
-
-            # Session options for optimization
+            providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
             sess_options = ort.SessionOptions()
-
-            # WHY: Enable graph optimizations (fuse ops, constant folding)
-            sess_options.graph_optimization_level = (
-                ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-            )
-
-            # WHY: Intra-op parallelism (parallel ops within graph)
+            sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
             sess_options.intra_op_num_threads = 4
-
-            # WHY: Inter-op parallelism (parallel independent subgraphs)
             sess_options.inter_op_num_threads = 2
-
-            # WHY: Enable memory pattern optimization
             sess_options.enable_mem_pattern = True
-
-            # WHY: Enable CPU memory arena (reduces allocation overhead)
             sess_options.enable_cpu_mem_arena = True
-
             self.session = ort.InferenceSession(
-                self.model_path,
-                sess_options=sess_options,
-                providers=providers
+                self.model_path, sess_options=sess_options, providers=providers
             )
-
-            # Get input/output metadata
             self.input_name = self.session.get_inputs()[0].name
             self.output_name = self.session.get_outputs()[0].name
+            logger.info(f"ONNX model loaded; provider={self.session.get_providers()[0]}")
 
-            logger.info(f"ONNX model loaded: {self.model_path}")
-            logger.info(f"Execution provider: {self.session.get_providers()[0]}")
-
-    def predict(self, inputs: np.ndarray) -> np.ndarray:
-        """
-        Run ONNX inference.
-
-        WHY: ONNX Runtime automatically optimizes:
-        - Operator fusion (combine multiple ops)
-        - Constant folding (compute constants at load time)
-        - Memory reuse (reduce allocations)
-        """
+    def predict(self, inputs: np.ndarray):
         self.load_model()
-
-        # Run inference
         outputs = self.session.run(
             [self.output_name],
-            {self.input_name: inputs.astype(np.float32)}
+            {self.input_name: inputs.astype(np.float32)},
         )
-
         return outputs[0]
 
-    def benchmark_vs_pytorch(self, num_iterations: int = 1000):
-        """Compare ONNX vs PyTorch inference speed."""
-        import time
-        import torch
 
-        dummy_input = np.random.randn(1, 3, 224, 224).astype(np.float32)
-
-        # Warm up
-        for _ in range(10):
-            self.predict(dummy_input)
-
-        # Benchmark ONNX
-        start = time.time()
-        for _ in range(num_iterations):
-            self.predict(dummy_input)
-        onnx_time = (time.time() - start) / num_iterations * 1000
-
-        # Benchmark PyTorch
-        pytorch_model = torch.load(self.model_path.replace('.onnx', '.pth'))
-        pytorch_model.eval()
-
-        dummy_tensor = torch.from_numpy(dummy_input)
-
-        # Warm up
-        with torch.no_grad():
-            for _ in range(10):
-                pytorch_model(dummy_tensor)
-
-        # Benchmark
-        start = time.time()
-        with torch.no_grad():
-            for _ in range(num_iterations):
-                pytorch_model(dummy_tensor)
-        pytorch_time = (time.time() - start) / num_iterations * 1000
-
-        print(f"ONNX Runtime: {onnx_time:.2f}ms")
-        print(f"PyTorch: {pytorch_time:.2f}ms")
-        print(f"ONNX is {pytorch_time/onnx_time:.1f}× faster")
-
-        # Typical results:
-        # ONNX: 5-8ms
-        # PyTorch: 12-20ms
-        # ONNX is 2-3× faster
-
-# Global server
 onnx_server = ONNXModelServer("model.onnx")
 
-@app.on_event("startup")
-async def startup():
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     onnx_server.load_model()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
+
+
+class PredictionRequest(BaseModel):
+    inputs: List[List[float]]
+
 
 @app.post("/predict")
 async def predict(request: PredictionRequest):
-    """ONNX prediction endpoint."""
     inputs = np.array(request.inputs, dtype=np.float32)
     outputs = onnx_server.predict(inputs)
-
-    return {
-        "predictions": outputs.tolist()
-    }
+    return {"predictions": outputs.tolist()}
 ```
 
 **ONNX Runtime advantages:**
 
 | Feature | Benefit | Measurement |
 |---------|---------|-------------|
-| Speed | Optimized operators | 2-3× faster than native |
-| Size | No framework dependency | 10-50MB vs 500MB+ (PyTorch) |
-| Portability | Framework-agnostic | PyTorch/TF/etc → ONNX |
+| Speed | Optimized operators | 2-3× faster than naive PyTorch on CPU |
+| Size | No framework dependency | tens of MB vs hundreds (PyTorch wheel) |
+| Portability | Framework-agnostic | PyTorch / TF / JAX → ONNX |
 | Edge deployment | Lightweight runtime | Mobile, IoT, embedded |
 
 
 ## Part 5: Request Batching Patterns
 
-**Core principle:** Batch requests for GPU efficiency.
+**Core principle:** Batch requests for accelerator efficiency.
 
-**Why batching matters:**
+**Why batching matters (non-LLM):**
 - GPU utilization: 20% (single request) → 80% (batch of 32)
-- Throughput: 100 req/sec (unbatched) → 1000 req/sec (batched)
-- Cost: 10× reduction in GPU cost per request
+- Throughput: 100 req/sec → 1000 req/sec
+- Cost: roughly 10× reduction in $/req on GPU
 
-### Dynamic Batching (Adaptive)
+There are three batching regimes; pick the one that matches your model class:
+
+| Regime | What it is | Where it fits |
+|--------|------------|--------------|
+| **Static batching** | Wait until N requests arrive (or fixed window), then run | Offline batch jobs only — bad latency at low load |
+| **Dynamic batching** | Wait up to T ms or until N requests arrive, then run; configurable | Most non-LLM models (Triton, TorchServe, custom FastAPI) |
+| **Continuous batching (in-flight batching)** | Insert and evict requests at every decoding step; per-request lengths can differ | LLM serving — see 5.2 |
+
+### 5.1 Dynamic Batching (non-LLM)
 
 ```python
 # dynamic_batching.py
 import asyncio
-from asyncio import Queue, Lock
+from asyncio import Queue
 from typing import List, Tuple
 import numpy as np
 import time
@@ -1079,106 +767,54 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class DynamicBatcher:
     """
     Dynamic batching with adaptive timeout.
 
     WHY: Static batching waits for full batch (high latency at low load).
-    WHY: Dynamic batching adapts: full batch OR timeout (balanced).
-
-    Key parameters:
-    - max_batch_size: Maximum batch size (GPU memory limit)
-    - max_wait_ms: Maximum wait time (latency target)
-
-    Trade-off:
-    - Larger batch → better GPU utilization, higher throughput
-    - Shorter timeout → lower latency, worse GPU utilization
+    WHY: Dynamic batching adapts: full batch OR timeout.
     """
 
-    def __init__(
-        self,
-        model_server,
-        max_batch_size: int = 32,
-        max_wait_ms: int = 10
-    ):
+    def __init__(self, model_server, max_batch_size: int = 32, max_wait_ms: int = 10):
         self.model_server = model_server
         self.max_batch_size = max_batch_size
         self.max_wait_ms = max_wait_ms
-
         self.request_queue: Queue = Queue()
-        self.batch_lock = Lock()
-
-        self.stats = {
-            "total_requests": 0,
-            "total_batches": 0,
-            "avg_batch_size": 0,
-            "gpu_utilization": 0
-        }
+        self.stats = {"total_requests": 0, "total_batches": 0,
+                      "avg_batch_size": 0, "gpu_utilization": 0}
 
     async def start(self):
-        """Start batch processing loop."""
         asyncio.create_task(self._batch_loop())
 
     async def _batch_loop(self):
-        """
-        Main batching loop.
-
-        Algorithm:
-        1. Wait for first request
-        2. Start timeout timer
-        3. Collect requests until:
-           - Batch full (max_batch_size reached)
-           - OR timeout expired (max_wait_ms)
-        4. Process batch
-        5. Return results to waiting requests
-        """
         while True:
-            batch = []
-            futures = []
-
-            # Wait for first request (no timeout)
+            batch, futures = [], []
             request_data, future = await self.request_queue.get()
             batch.append(request_data)
             futures.append(future)
 
-            # Start deadline timer
             deadline = asyncio.get_event_loop().time() + (self.max_wait_ms / 1000)
-
-            # Collect additional requests until batch full or timeout
             while len(batch) < self.max_batch_size:
                 remaining_time = max(0, deadline - asyncio.get_event_loop().time())
-
                 try:
                     request_data, future = await asyncio.wait_for(
-                        self.request_queue.get(),
-                        timeout=remaining_time
+                        self.request_queue.get(), timeout=remaining_time
                     )
                     batch.append(request_data)
                     futures.append(future)
                 except asyncio.TimeoutError:
-                    # Timeout: process what we have
                     break
 
-            # Process batch
             await self._process_batch(batch, futures)
 
-    async def _process_batch(
-        self,
-        batch: List[np.ndarray],
-        futures: List[asyncio.Future]
-    ):
-        """Process batch and return results."""
+    async def _process_batch(self, batch: List[np.ndarray], futures: List[asyncio.Future]):
         batch_size = len(batch)
-
-        # Convert to batch array
         batch_array = np.array(batch)
-
-        # Run inference
         start_time = time.time()
         predictions, probabilities = self.model_server.predict(batch_array)
         inference_time = (time.time() - start_time) * 1000
 
-        # Update stats
         self.stats["total_requests"] += batch_size
         self.stats["total_batches"] += 1
         self.stats["avg_batch_size"] = (
@@ -1195,89 +831,53 @@ class DynamicBatcher:
             f"gpu_util={self.stats['gpu_utilization']:.1f}%"
         )
 
-        # Return results to waiting requests
         for i, future in enumerate(futures):
             if not future.done():
                 future.set_result((predictions[i], probabilities[i]))
 
     async def predict(self, inputs: np.ndarray) -> Tuple[int, np.ndarray]:
-        """
-        Add request to batch queue.
-
-        WHY: Transparent batching (caller doesn't see batching).
-        WHY: Returns when batch processed (might wait for other requests).
-        """
         future = asyncio.Future()
         await self.request_queue.put((inputs, future))
-
-        # Wait for batch to be processed
         prediction, probability = await future
         return prediction, probability
-
-    def get_stats(self):
-        """Get batching statistics."""
-        return self.stats
-
-# Example usage with load simulation
-async def simulate_load():
-    """
-    Simulate varying load to demonstrate dynamic batching.
-
-    WHY: Shows how batcher adapts to load:
-    - High load: Fills batches quickly (high GPU util)
-    - Low load: Processes smaller batches (low latency)
-    """
-    from serve_fastapi import ModelServer
-
-    model_server = ModelServer("model.pth")
-    model_server.load_model()
-
-    batcher = DynamicBatcher(
-        model_server,
-        max_batch_size=32,
-        max_wait_ms=10
-    )
-    await batcher.start()
-
-    # High load (32 concurrent requests)
-    print("Simulating HIGH LOAD (32 concurrent)...")
-    tasks = []
-    for i in range(32):
-        inputs = np.random.randn(10)
-        task = asyncio.create_task(batcher.predict(inputs))
-        tasks.append(task)
-
-    results = await asyncio.gather(*tasks)
-    print(f"High load results: {len(results)} predictions")
-    print(f"Stats: {batcher.get_stats()}")
-    # Expected: avg_batch_size ≈ 32, gpu_util ≈ 100%
-
-    await asyncio.sleep(0.1)  # Reset
-
-    # Low load (1 request at a time)
-    print("\nSimulating LOW LOAD (1 at a time)...")
-    for i in range(10):
-        inputs = np.random.randn(10)
-        result = await batcher.predict(inputs)
-        await asyncio.sleep(0.02)  # 20ms between requests
-
-    print(f"Stats: {batcher.get_stats()}")
-    # Expected: avg_batch_size ≈ 1-2, gpu_util ≈ 5-10%
-    # WHY: Timeout expires before batch fills (low latency maintained)
-
-if __name__ == "__main__":
-    asyncio.run(simulate_load())
 ```
 
-**Batching performance:**
+**Dynamic batching performance (rule-of-thumb):**
 
 | Load | Batch Size | GPU Util | Latency | Throughput |
 |------|-----------|----------|---------|------------|
-| High (100 req/sec) | 28-32 | 90% | 12ms | 1000 req/sec |
-| Medium (20 req/sec) | 8-12 | 35% | 11ms | 200 req/sec |
-| Low (5 req/sec) | 1-2 | 10% | 10ms | 50 req/sec |
+| High (100 req/sec) | 28-32 | ~90% | ~12ms | ~1000 req/sec |
+| Medium (20 req/sec) | 8-12 | ~35% | ~11ms | ~200 req/sec |
+| Low (5 req/sec) | 1-2 | ~10% | ~10ms | ~50 req/sec |
 
-**Key insight:** Dynamic batching adapts to load while maintaining latency target.
+### 5.2 Continuous Batching (LLM-specific)
+
+Dynamic batching is wrong for LLMs because LLM requests do not all finish at the same step. With dynamic batching, the batch stalls until the longest request finishes, wasting most of the accelerator.
+
+**Continuous batching** (also called **in-flight batching**) operates per **decoding step** rather than per **request**: at every token-generation step, finished sequences are evicted and new sequences are spliced in. This was popularized by Orca (OSDI 2022) and made memory-efficient by vLLM's PagedAttention (Kwon et al., SOSP 2023, [arXiv:2309.06180](https://arxiv.org/abs/2309.06180)).
+
+vLLM, SGLang, TensorRT-LLM, TGI, and LMDeploy all implement continuous batching natively. **You should not implement this yourself** for any modern LLM workload — use one of the engines in Part 8.
+
+### 5.3 Prefix Caching (engine-level KV-cache reuse)
+
+When two requests share a prefix (system prompt, few-shot examples, document context), the KV cache for that prefix can be computed once and reused, eliminating prefill cost on the shared portion.
+
+- **vLLM** has automatic prefix caching ([vLLM docs](https://docs.vllm.ai/en/latest/features/automatic_prefix_caching.html)).
+- **SGLang** generalizes this with **RadixAttention** (Zheng et al., [arXiv:2312.07104](https://arxiv.org/abs/2312.07104)), which keeps shared prefixes in a radix tree of KV-cache blocks and allows automatic reuse across arbitrarily-shaped request tree fan-outs (agents, branching, structured generation).
+- **TensorRT-LLM** supports KV-cache reuse with prefix matching.
+
+This is the **engine-layer** prefix cache — it sits inside the inference server and is invisible to the client. It is **not the same** as the application-layer / API-vendor prompt cache (Anthropic prompt caching, OpenAI prompt caching), which is configured by the API client to skip re-billing/re-processing of repeated prompt prefixes. For the application-layer story see `yzmir-llm-specialist/context-engineering-and-prompt-caching.md`. The two layers compose: an Anthropic-style cache hit avoids the request entirely; an engine-layer prefix cache hit reuses KV memory for requests that did reach the engine.
+
+### 5.4 Speculative Decoding (conceptual)
+
+Standard autoregressive decoding generates one token per forward pass. Speculative decoding produces several candidate tokens cheaply (with a smaller "draft" model or a head attached to the target model) and then verifies them with the full target model in a single pass. Verified tokens are accepted; rejected tokens fall back to the target model's output. Net effect: 1.5-3× speedup on memory-bandwidth-bound decode with no quality change (it is mathematically lossless when implemented correctly).
+
+Engine implementations:
+- **Medusa** ([Cai et al., 2024](https://arxiv.org/abs/2401.10774)) — adds extra decoding heads to the target model.
+- **EAGLE / EAGLE-2** ([Li et al., 2024](https://arxiv.org/abs/2401.15077)) — draft via a lightweight feature-level autoregressive head; tighter accept rate than vanilla draft-target.
+- **Draft-target** — separate small draft model, used by vLLM, TensorRT-LLM, TGI.
+
+For hyperparameter tuning (draft length, acceptance threshold, draft-target pairing): see `yzmir-llm-specialist/llm-inference-optimization.md`.
 
 
 ## Part 6: Containerization
@@ -1288,61 +888,44 @@ if __name__ == "__main__":
 - Reproducible builds (same dependencies, versions)
 - Isolated environment (no conflicts)
 - Portable deployment (dev, staging, prod identical)
-- Easy scaling (K8s, Docker Swarm)
+- Easy scaling (Kubernetes, Docker Swarm)
 
 ### Multi-Stage Docker Build
 
 ```dockerfile
 # Dockerfile
 # WHY: Multi-stage build reduces image size by 50-80%
-# WHY: Build stage has compilers, runtime stage only has runtime deps
 
 # ==================== Stage 1: Build ====================
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
-# WHY: Install build dependencies (needed for compilation)
 RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
+    gcc g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# WHY: Create virtual environment in builder stage
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# WHY: Copy only requirements first (layer caching)
-# WHY: If requirements.txt unchanged, this layer is cached
 COPY requirements.txt .
-
-# WHY: Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # ==================== Stage 2: Runtime ====================
 FROM python:3.11-slim
 
-# WHY: Copy only virtual environment from builder (not build tools)
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# WHY: Set working directory
 WORKDIR /app
-
-# WHY: Copy application code
 COPY serve_fastapi.py .
 COPY model.pth .
 
-# WHY: Non-root user for security
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
-# WHY: Expose port (documentation, not enforcement)
 EXPOSE 8000
-
-# WHY: Health check for container orchestration
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
 
-# WHY: Run with uvicorn (production ASGI server)
 CMD ["uvicorn", "serve_fastapi:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
 ```
 
@@ -1350,13 +933,9 @@ CMD ["uvicorn", "serve_fastapi:app", "--host", "0.0.0.0", "--port", "8000", "--w
 
 ```yaml
 # docker-compose.yml
-# WHY: Docker Compose for local development and testing
-# WHY: Defines multiple services (API, model, monitoring)
-
 version: '3.8'
 
 services:
-  # Model serving API
   model-api:
     build:
       context: .
@@ -1364,20 +943,16 @@ services:
     ports:
       - "8000:8000"
     environment:
-      # WHY: Environment variables for configuration
       - MODEL_PATH=/app/model.pth
       - LOG_LEVEL=INFO
     volumes:
-      # WHY: Mount model directory (for updates without rebuild)
       - ./models:/app/models:ro
     deploy:
       resources:
-        # WHY: Limit resources to prevent resource exhaustion
         limits:
           cpus: '2'
           memory: 4G
         reservations:
-          # WHY: Reserve GPU (requires nvidia-docker)
           devices:
             - driver: nvidia
               count: 1
@@ -1388,7 +963,6 @@ services:
       timeout: 10s
       retries: 3
 
-  # Redis for caching
   redis:
     image: redis:7-alpine
     ports:
@@ -1397,7 +971,6 @@ services:
       - redis-data:/data
     command: redis-server --appendonly yes
 
-  # Prometheus for metrics
   prometheus:
     image: prom/prometheus:latest
     ports:
@@ -1408,7 +981,6 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
 
-  # Grafana for visualization
   grafana:
     image: grafana/grafana:latest
     ports:
@@ -1424,215 +996,147 @@ volumes:
   grafana-data:
 ```
 
-### Build and Deploy
-
 ```bash
-# Build image
-# WHY: Tag with version for rollback capability
 docker build -t model-api:1.0.0 .
-
-# Run container
-docker run -d \
-  --name model-api \
-  -p 8000:8000 \
-  --gpus all \
-  model-api:1.0.0
-
-# Check logs
-docker logs -f model-api
-
-# Test API
-curl http://localhost:8000/health
-
-# Start all services with docker-compose
-docker-compose up -d
-
-# Scale API service (multiple instances)
-# WHY: Load balancer distributes traffic across instances
-docker-compose up -d --scale model-api=3
-
-# View logs
-docker-compose logs -f model-api
-
-# Stop all services
-docker-compose down
+docker run -d --name model-api -p 8000:8000 --gpus all model-api:1.0.0
+docker compose up -d
+docker compose up -d --scale model-api=3
 ```
 
-**Container image sizes:**
+**Container image sizes (illustrative):**
 
 | Stage | Size | Contents |
 |-------|------|----------|
-| Full build | 2.5 GB | Python + build tools + deps + model |
-| Multi-stage | 800 MB | Python + runtime deps + model |
-| Optimized | 400 MB | Minimal Python + deps + model |
-| Savings | **84%** | From 2.5 GB → 400 MB |
+| Full build | ~2.5 GB | Python + build tools + deps + model |
+| Multi-stage | ~800 MB | Python + runtime deps + model |
+| Optimized | ~400 MB | Minimal Python + deps + model |
 
 
-## Part 7: Framework Selection Guide
+## Part 7: General-Purpose Framework Selection (non-LLM)
 
 ### Decision Matrix
 
-```python
-# framework_selector.py
-from enum import Enum
-from typing import List
+| Scenario | Recommended | Why |
+|----------|-------------|-----|
+| Prototyping / custom logic | FastAPI | Fast iteration, easy debugging |
+| Multi-framework production (PyTorch/TF/ONNX) | NVIDIA Triton Inference Server | Multi-backend, dynamic batching, model versioning |
+| Multi-model orchestration / pipelines | Ray Serve | DAG composition, autoscaling, deployment graphs |
+| Ergonomic packaging + multi-engine | BentoML | Service abstraction, integrates with vLLM, Triton, etc. |
+| Internal microservice, low latency | gRPC | 3-5ms latency, binary protocol |
+| Multi-framework / edge | ONNX Runtime | Lightweight, optimized, portable |
+| Custom preprocessing | FastAPI | Full flexibility |
+| Real-time streaming | gRPC | Bidirectional streaming |
+| Existing PyTorch deployment | TorchServe (maintenance only) | Don't migrate just for the sake of it |
 
-class Requirement(Enum):
-    FLEXIBILITY = "flexibility"          # Custom preprocessing, business logic
-    BATTERIES_INCLUDED = "batteries"     # Minimal setup, built-in features
-    LOW_LATENCY = "low_latency"         # < 10ms target
-    CROSS_FRAMEWORK = "cross_framework"  # PyTorch + TensorFlow support
-    EDGE_DEPLOYMENT = "edge"            # Mobile, IoT, embedded
-    EASE_OF_DEBUG = "debug"             # Development experience
-    HIGH_THROUGHPUT = "throughput"      # > 1000 req/sec
+### Quick characteristics
 
-class Framework(Enum):
-    FASTAPI = "fastapi"
-    TORCHSERVE = "torchserve"
-    GRPC = "grpc"
-    ONNX = "onnx"
+| Framework | Strengths | Weaknesses | Status |
+|-----------|-----------|-----------|--------|
+| **FastAPI** | Flexibility, debugging, Python-native | Manual batching/metrics | Active |
+| **NVIDIA Triton Inference Server** | Multi-backend (PyTorch/TF/ONNX/TensorRT/Python), dynamic batching, ensemble, GPU sharing, prod-grade metrics | Heavier ops surface | Active |
+| **Ray Serve** | Multi-model graphs, autoscaling, fits Ray ecosystem | Cluster overhead for simple cases | Active |
+| **BentoML** | Pythonic packaging, multi-engine integration (vLLM, Triton, TGI) | Less raw performance than purpose-built engines | Active |
+| **gRPC (custom)** | Lowest network latency | Proto overhead, harder debugging | Active |
+| **ONNX Runtime (custom)** | Cross-framework, edge | Conversion can be tricky | Active |
+| **TorchServe** | Built-in batching, model versioning | Maintenance mode (Aug 2025) | Maintenance |
 
-# Framework capabilities (0-5 scale)
-FRAMEWORK_SCORES = {
-    Framework.FASTAPI: {
-        Requirement.FLEXIBILITY: 5,        # Full control
-        Requirement.BATTERIES_INCLUDED: 2, # Manual implementation
-        Requirement.LOW_LATENCY: 3,        # 10-20ms
-        Requirement.CROSS_FRAMEWORK: 4,    # Any Python model
-        Requirement.EDGE_DEPLOYMENT: 2,    # Heavyweight
-        Requirement.EASE_OF_DEBUG: 5,      # Excellent debugging
-        Requirement.HIGH_THROUGHPUT: 3     # 100-500 req/sec
-    },
-    Framework.TORCHSERVE: {
-        Requirement.FLEXIBILITY: 3,        # Customizable via handlers
-        Requirement.BATTERIES_INCLUDED: 5, # Everything built-in
-        Requirement.LOW_LATENCY: 4,        # 5-15ms
-        Requirement.CROSS_FRAMEWORK: 1,    # PyTorch only
-        Requirement.EDGE_DEPLOYMENT: 2,    # Heavyweight
-        Requirement.EASE_OF_DEBUG: 3,      # Learning curve
-        Requirement.HIGH_THROUGHPUT: 5     # 1000+ req/sec with batching
-    },
-    Framework.GRPC: {
-        Requirement.FLEXIBILITY: 4,        # Binary protocol, custom logic
-        Requirement.BATTERIES_INCLUDED: 2, # Manual implementation
-        Requirement.LOW_LATENCY: 5,        # 3-8ms
-        Requirement.CROSS_FRAMEWORK: 4,    # Any model
-        Requirement.EDGE_DEPLOYMENT: 3,    # Moderate size
-        Requirement.EASE_OF_DEBUG: 2,      # Binary protocol harder
-        Requirement.HIGH_THROUGHPUT: 5     # 1000+ req/sec
-    },
-    Framework.ONNX: {
-        Requirement.FLEXIBILITY: 3,        # Limited to ONNX ops
-        Requirement.BATTERIES_INCLUDED: 3, # Runtime provided
-        Requirement.LOW_LATENCY: 5,        # 2-6ms (optimized)
-        Requirement.CROSS_FRAMEWORK: 5,    # Any framework → ONNX
-        Requirement.EDGE_DEPLOYMENT: 5,    # Lightweight runtime
-        Requirement.EASE_OF_DEBUG: 2,      # Conversion can be tricky
-        Requirement.HIGH_THROUGHPUT: 4     # 500-1000 req/sec
-    }
-}
 
-def select_framework(
-    requirements: List[Requirement],
-    weights: List[float] = None
-) -> Framework:
-    """
-    Select best framework based on requirements.
+## Part 8: LLM Serving Stacks
 
-    Args:
-        requirements: List of requirements
-        weights: Importance weight for each requirement (0-1)
+LLMs change the serving question because:
+- Decode is memory-bandwidth bound, not compute bound — batching tokens, not requests, is what matters.
+- KV cache memory is the binding constraint, not weights.
+- Requests have varying lengths; per-step scheduling beats per-request scheduling.
+- The OpenAI-compatible HTTP surface (`/v1/chat/completions`, `/v1/completions`, function/tool calling) is now the de-facto contract clients expect.
 
-    Returns:
-        Best framework
-    """
-    if weights is None:
-        weights = [1.0] * len(requirements)
+The right tool depends on hardware and goals.
 
-    scores = {}
+### 8.1 Engine descriptions
 
-    for framework in Framework:
-        score = 0
-        for req, weight in zip(requirements, weights):
-            score += FRAMEWORK_SCORES[framework][req] * weight
-        scores[framework] = score
+**vLLM**
+Default open-source choice for self-hosted LLM serving. PagedAttention KV cache (Kwon et al., SOSP 2023, [arXiv:2309.06180](https://arxiv.org/abs/2309.06180)), continuous batching, automatic prefix caching, speculative decoding, tensor and pipeline parallelism, OpenAI-compatible API, broad hardware support (NVIDIA, AMD ROCm, Intel CPU/GPU, AWS Neuron, Google TPU). Best general default. ([Project](https://github.com/vllm-project/vllm))
 
-    best_framework = max(scores, key=scores.get)
+**SGLang**
+RadixAttention (Zheng et al., [arXiv:2312.07104](https://arxiv.org/abs/2312.07104)) — automatic KV-cache reuse over a radix tree of prefixes, which dominates on tree-shaped workloads (agent loops, branching, structured generation, RAG with shared system prompts). Compressed-FSM constrained decoding for fast structured output (JSON-schema, regex). Strong choice when many requests share prefixes or you need high-throughput structured output. ([Project](https://github.com/sgl-project/sglang))
 
-    print(f"\nFramework Selection:")
-    print(f"Requirements: {[r.value for r in requirements]}")
-    print(f"\nScores:")
-    for framework, score in sorted(scores.items(), key=lambda x: x[1], reverse=True):
-        print(f"  {framework.value}: {score:.1f}")
+**NVIDIA TensorRT-LLM**
+Highest single-GPU throughput on NVIDIA hardware (Hopper/Ada/Blackwell), with native FP8 and MXFP4 support, in-flight batching, kernel fusion, paged KV cache. Build process is heavier than vLLM (engines must be compiled per model + GPU + precision combination), but raw performance ceiling is highest on NVIDIA. ([Project](https://github.com/NVIDIA/TensorRT-LLM))
 
-    return best_framework
+**NVIDIA Triton Inference Server (with TensorRT-LLM backend)**
+Triton is the production server; the TensorRT-LLM backend gives Triton native LLM-aware batching and KV management. Pick this when you also serve non-LLM models (vision, embedding, ranking) from the same fleet and want one ops surface. ([Triton project](https://github.com/triton-inference-server/server))
 
-# Example use cases
-print("=" * 60)
-print("Use Case 1: Prototyping with flexibility")
-print("=" * 60)
-selected = select_framework([
-    Requirement.FLEXIBILITY,
-    Requirement.EASE_OF_DEBUG
-])
-print(f"\nRecommendation: {selected.value}")
-# Expected: FASTAPI
+**Hugging Face TGI (Text Generation Inference)**
+Production server from Hugging Face; tight integration with the Hub (any HF causal-LM checkpoint), continuous batching, speculative decoding, quantization integrations (AWQ/GPTQ/bitsandbytes/EETQ/FP8), broad hardware (NVIDIA, AMD ROCm, Intel Gaudi, AWS Inferentia). Easy default if your team is already in the HF ecosystem. ([Project](https://github.com/huggingface/text-generation-inference))
 
-print("\n" + "=" * 60)
-print("Use Case 2: Production PyTorch with minimal setup")
-print("=" * 60)
-selected = select_framework([
-    Requirement.BATTERIES_INCLUDED,
-    Requirement.HIGH_THROUGHPUT
-])
-print(f"\nRecommendation: {selected.value}")
-# Expected: TORCHSERVE
+**LMDeploy**
+InternLM team. TurboMind backend (NVIDIA, custom CUDA kernels) and PyTorch backend; strong support for the InternLM and Qwen model families; INT4/INT8/FP8 weight quant; image/video LLM support. Often best perf for InternLM/Qwen models specifically. ([Project](https://github.com/InternLM/lmdeploy))
 
-print("\n" + "=" * 60)
-print("Use Case 3: Low-latency microservice")
-print("=" * 60)
-selected = select_framework([
-    Requirement.LOW_LATENCY,
-    Requirement.HIGH_THROUGHPUT
-])
-print(f"\nRecommendation: {selected.value}")
-# Expected: GRPC or ONNX
+**Ray Serve**
+Not LLM-specialized; use it as a multi-model orchestration layer over vLLM or other engines. Natural fit when an LLM is one node in a larger graph (retriever → reranker → LLM → tool) and you need autoscaling. ([Project](https://docs.ray.io/en/latest/serve/index.html))
 
-print("\n" + "=" * 60)
-print("Use Case 4: Edge deployment (mobile/IoT)")
-print("=" * 60)
-selected = select_framework([
-    Requirement.EDGE_DEPLOYMENT,
-    Requirement.CROSS_FRAMEWORK,
-    Requirement.LOW_LATENCY
-])
-print(f"\nRecommendation: {selected.value}")
-# Expected: ONNX
+**BentoML (with vLLM / TGI / etc.)**
+Ergonomic packaging and deployment of services that wrap a serving engine. Best when you want a single artifact ("Bento") that pins a vLLM/TGI/TensorRT-LLM engine plus pre/post-processing and ships through your deploy pipeline. ([Project](https://github.com/bentoml/BentoML))
 
-print("\n" + "=" * 60)
-print("Use Case 5: Multi-framework ML platform")
-print("=" * 60)
-selected = select_framework([
-    Requirement.CROSS_FRAMEWORK,
-    Requirement.HIGH_THROUGHPUT,
-    Requirement.BATTERIES_INCLUDED
-])
-print(f"\nRecommendation: {selected.value}")
-# Expected: ONNX or TORCHSERVE (depending on weights)
-```
+**llama.cpp + ExLlamaV2**
+The CPU / laptop / Apple Silicon path. llama.cpp is the canonical engine for GGUF k-quants; ExLlamaV2 targets NVIDIA GPUs with very efficient INT4 (EXL2) kernels, popular on consumer hardware. Use these for local development, on-device, or when you don't have a server-class GPU. ([llama.cpp](https://github.com/ggml-org/llama.cpp), [ExLlamaV2](https://github.com/turboderp/exllamav2))
 
-### Quick Reference Guide
+**MLC-LLM**
+Universal deployment via TVM compilation: targets browsers (WebGPU), iOS, Android, Mac/Linux/Windows desktop, NVIDIA, AMD, Apple, Qualcomm. Use when you need a single model artifact that runs across mobile/web/desktop. ([Project](https://github.com/mlc-ai/mlc-llm))
 
-| Scenario | Framework | Why |
-|----------|-----------|-----|
-| **Prototyping** | FastAPI | Fast iteration, easy debugging |
-| **PyTorch production** | TorchServe | Built-in batching, metrics, management |
-| **Internal microservices** | gRPC | Lowest latency, high throughput |
-| **Multi-framework** | ONNX Runtime | Framework-agnostic, optimized |
-| **Edge/mobile** | ONNX Runtime | Lightweight, cross-platform |
-| **Custom preprocessing** | FastAPI | Full flexibility |
-| **High throughput batch** | TorchServe + batching | Dynamic batching built-in |
-| **Real-time streaming** | gRPC | Bidirectional streaming |
+### 8.2 LLM stack selection matrix
+
+| Goal / constraint | Recommended primary | Notes |
+|-------------------|--------------------|-------|
+| **Default self-hosted serving** | vLLM | Easiest path to OpenAI-API-compatible endpoint |
+| **Highest throughput on NVIDIA** | TensorRT-LLM (or Triton + TRT-LLM) | Build complexity is the cost |
+| **Many requests sharing system prompt / agent fan-out / structured output** | SGLang | RadixAttention + compressed-FSM decoding |
+| **One fleet, mixed LLM + non-LLM models** | Triton (+ TRT-LLM backend for LLMs) | Single ops surface |
+| **Tight HF Hub integration / "just point at a checkpoint"** | TGI | Best HF ecosystem fit |
+| **InternLM / Qwen models** | LMDeploy | TurboMind kernels are tuned for these |
+| **CPU / laptop / Apple Silicon** | llama.cpp | GGUF k-quants are the standard format |
+| **Consumer NVIDIA GPU, INT4** | ExLlamaV2 | EXL2 is very fast on a single 4090 |
+| **Mobile / browser / cross-platform** | MLC-LLM | One pipeline, many targets |
+| **Multi-model graph (retriever + reranker + LLM)** | Ray Serve over vLLM | Compose engines |
+| **Need ergonomic packaging + Ops** | BentoML wrapping vLLM/TGI | Ship a Bento |
+
+### 8.3 Decision-axis cross-cuts
+
+| Axis | vLLM | SGLang | TensorRT-LLM | TGI | LMDeploy | llama.cpp / EXL2 | MLC-LLM |
+|------|------|--------|---------------|-----|----------|------------------|---------|
+| Throughput-vs-latency emphasis | high throughput, balanced latency | high throughput on shared-prefix workloads | highest throughput on NVIDIA | balanced | balanced | latency on small hardware | balanced |
+| Single-GPU | yes | yes | yes | yes | yes | yes | yes |
+| Multi-GPU (TP/PP) | yes | yes | yes | yes | yes | partial (TP) | partial |
+| Distributed multi-node | yes (via Ray) | yes | yes | yes | partial | no | no |
+| OpenAI-compatible API | yes | yes | yes (via Triton + frontends) | yes | yes | yes (via project's server) | yes |
+| Hardware target | NVIDIA, AMD, Intel, TPU, Neuron | NVIDIA, AMD | NVIDIA only | NVIDIA, AMD, Gaudi, Inferentia | NVIDIA | CPU, NVIDIA, Apple, AMD | mobile, web, NVIDIA, Apple, AMD, Qualcomm |
+| Best quantization story | AWQ/GPTQ/FP8/bnb | AWQ/GPTQ/FP8 | FP8/INT4/MXFP4 (Blackwell) | AWQ/GPTQ/FP8/bnb | INT4/INT8/FP8 (turbomind) | GGUF k-quants / EXL2 | per-target |
+
+### 8.4 Cross-references
+
+- For LLM-side optimization decisions (which quantization for *this* model, KV-cache sizing, speculative-decoding hyperparameters, sampling): `yzmir-llm-specialist/llm-inference-optimization.md`.
+- For application-layer prompt caching (Anthropic prompt cache, OpenAI prompt cache): `yzmir-llm-specialist/context-engineering-and-prompt-caching.md`.
+- For agent / tool-use serving patterns and MCP integration: `yzmir-llm-specialist/agentic-patterns-and-mcp.md`.
+- For RAG architecture (retriever + reranker + LLM compositions you'd run behind Ray Serve): `yzmir-llm-specialist/rag-architecture-patterns.md`.
+
+
+## Part 9: Cloud Managed Inference Services
+
+When you don't want to operate the serving stack yourself.
+
+| Service | Notes |
+|---------|-------|
+| **AWS SageMaker real-time endpoints** | Managed model hosting, autoscaling, supports LMI (Large Model Inference) container with vLLM / TGI / TensorRT-LLM under the hood |
+| **AWS Inferentia / Trainium** (Inf2 / Trn2 instances) | Custom silicon; access via SageMaker, EC2, or EKS; supported by vLLM and TGI via Neuron SDK |
+| **GCP Vertex AI Prediction / Vertex AI Endpoints** | Managed online prediction; supports custom containers and pre-built model garden deployments |
+| **GCP Cloud TPU v5e/v5p inference** | TPU inference via JAX/PyTorch-XLA; vLLM has TPU support |
+| **Azure ML online endpoints** | Managed endpoints with autoscaling, blue/green deployments |
+| **Modal** | Serverless GPU; sub-second cold starts via image snapshots; ergonomic Python API |
+| **Replicate** | Hosted inference for community models; pay-per-second; OpenAI-style API |
+| **Together AI** | Hosted open-weight LLM inference with OpenAI-compatible API |
+| **Anyscale** | Managed Ray (and Ray Serve) for LLM and ML serving |
+| **Fireworks / DeepInfra / Lepton / RunPod / Cerebrium** | Other managed-inference providers; evaluate by latency, cost-per-million-tokens, and OpenAI-API compatibility |
+
+Use these as the inference layer when ops capacity is the binding constraint, and self-host (Parts 7-8) when sustained $/req or data residency is.
 
 
 ## Summary
@@ -1640,28 +1144,35 @@ print(f"\nRecommendation: {selected.value}")
 **Model serving is pattern matching, not one-size-fits-all.**
 
 **Core patterns:**
-1. **FastAPI:** Flexibility, custom logic, easy debugging
-2. **TorchServe:** PyTorch batteries-included, built-in batching
-3. **gRPC:** Low latency (3-5ms), high throughput, microservices
-4. **ONNX Runtime:** Cross-framework, optimized, edge deployment
-5. **Dynamic batching:** Adaptive batch size, balances latency and throughput
-6. **Containerization:** Reproducible, portable, scalable
+1. **FastAPI:** Flexibility, custom logic, easy debugging — modern lifespan API, not deprecated `on_event`.
+2. **gRPC:** Low latency (3-5ms), high throughput, microservices.
+3. **ONNX Runtime:** Cross-framework, optimized, edge deployment.
+4. **NVIDIA Triton / Ray Serve / BentoML:** Production multi-model serving — the contemporary replacement for TorchServe (which is in maintenance).
+5. **vLLM / SGLang / TensorRT-LLM / TGI / LMDeploy:** LLM-aware engines with continuous batching, paged/radix KV cache, prefix caching, speculative decoding.
+6. **Continuous batching for LLMs, dynamic batching for everything else.**
+7. **Containerization** for reproducibility.
 
 **Selection checklist:**
-- ✓ Identify primary requirement (flexibility, latency, throughput, etc.)
-- ✓ Match requirement to framework strengths
-- ✓ Consider deployment environment (cloud, edge, on-prem)
-- ✓ Evaluate trade-offs (development speed vs performance)
-- ✓ Implement batching if GPU-based (10× better utilization)
-- ✓ Containerize for reproducibility
-- ✓ Monitor metrics (latency, throughput, GPU util)
-- ✓ Iterate based on production data
+- [ ] Identify primary requirement (LLM vs not, latency, throughput, edge)
+- [ ] If LLM: pick from Part 8 by hardware and workload shape
+- [ ] If not LLM: pick from Part 7 by integration / ops constraints
+- [ ] Implement appropriate batching (continuous for LLMs, dynamic otherwise)
+- [ ] Containerize
+- [ ] Monitor (latency p50/p95/p99, throughput, GPU util, KV-cache hit rate for LLMs)
+- [ ] Cross-reference llm-specialist for LLM-side decisions
 
 **Anti-patterns to avoid:**
-- ✗ model.pkl in repo (dependency hell)
-- ✗ gRPC for simple REST use cases (over-engineering)
-- ✗ No batching with GPU (wasted 80% capacity)
-- ✗ Not containerized (deployment inconsistency)
-- ✗ Static batching (poor latency at low load)
+- model.pkl in repo (dependency hell)
+- Generic FastAPI for an LLM workload (you'll lose 5-10× throughput vs vLLM)
+- gRPC for simple REST use cases (over-engineering)
+- Dynamic batching for LLMs (continuous batching wins)
+- Implementing your own continuous batching (use vLLM/SGLang/TRT-LLM)
+- Using deprecated `@app.on_event("startup")` in new FastAPI code (use `lifespan`)
+- Picking TorchServe for new deployments (maintenance mode)
+- Static batching outside offline jobs
 
-Production-ready model serving requires matching infrastructure pattern to requirements.
+Production-ready model serving is matching the right engine to the workload, with the right batching/caching regime, on the right hardware.
+
+---
+
+Tooling and APIs current as of 2026-05; revisit quarterly.

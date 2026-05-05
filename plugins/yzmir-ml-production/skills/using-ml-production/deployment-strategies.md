@@ -3445,6 +3445,81 @@ Ongoing: Continuous monitoring
 10. ✓ Documentation and runbooks
 
 
+## Managed Inference Services: When to Use vs Self-Host
+
+The shadow → canary → A/B → 100% progression in this skill applies regardless of where the model runs. But the **infrastructure underneath** can be self-hosted (raw GPUs, your own Kubernetes), self-managed serving (Triton, TGI, vLLM you operate), or fully managed.
+
+**One-liners on the major managed options:**
+
+- **[Amazon SageMaker](https://docs.aws.amazon.com/sagemaker/)** — AWS-native managed training/inference; real-time, async, serverless, batch endpoints; deepest AWS integration.
+- **[Vertex AI Prediction](https://cloud.google.com/vertex-ai/docs/predictions/overview)** — GCP-native managed prediction; online and batch endpoints, managed traffic splitting and autoscaling.
+- **[Azure ML online endpoints](https://learn.microsoft.com/azure/machine-learning/concept-endpoints-online)** — Azure-native managed inference with built-in blue-green, traffic mirroring, and managed identity integration.
+- **[Modal](https://modal.com/docs)** — Python-first serverless GPU functions; fast cold start engineering, good fit for spiky inference.
+- **[Replicate](https://replicate.com/docs)** — managed model hosting, primarily LLM/diffusion; per-second billing; good fit for prototyping or low-volume production.
+- **[Together AI](https://docs.together.ai/)** — managed open-weight LLM inference at low per-token prices; strong fit when you can use shared multi-tenant endpoints.
+- **[Anyscale](https://www.anyscale.com/)** — managed Ray and Ray Serve; useful when you want continuous batching and Ray's serving primitives without operating Kubernetes.
+- **[AWS Inferentia / Trainium](https://aws.amazon.com/ai/machine-learning/inferentia/)** — AWS custom accelerators via the [Neuron SDK](https://awsdocs-neuron.readthedocs-hosted.com/); price/performance lever within AWS.
+- **[GCP TPU](https://cloud.google.com/tpu)** — Google custom accelerators via JAX or PyTorch/XLA; price/performance lever within GCP for transformer workloads.
+- **[KServe](https://kserve.github.io/website/)** / **[Ray Serve](https://docs.ray.io/en/latest/serve/index.html)** / **[BentoCloud](https://www.bentoml.com/cloud)** — three middle-ground stacks with autoscaling, scale-to-zero, and traffic management; see `scaling-and-load-balancing.md` for autoscaling-specific notes.
+
+**When managed beats self-host:**
+- Small team without a dedicated ML platform/infra group.
+- Spiky or unpredictable traffic where reserved GPU capacity is wasteful.
+- Need fast time-to-production for a single model rather than a fleet.
+- Multi-tenant model menu where shared inference (Together/Replicate-style) is acceptable.
+
+**When self-host beats managed:**
+- Single-digit-percentage cost wins on millions of QPS make engineering investment worthwhile.
+- Proprietary/regulated data that cannot leave your VPC.
+- Custom serving stack (custom kernels, paged attention variants, speculative decoding) not supported by the managed provider.
+- Fleet of dozens-to-hundreds of models where managed per-endpoint costs dominate.
+
+The deployment patterns in this sheet (canary, shadow, A/B, blue-green) translate to all of these — managed services typically expose traffic-splitting primitives that make canary and blue-green easier, not harder. Verify the provider's specific support for shadow / mirrored traffic before committing.
+
+
+## LLM-Specific Rollout Considerations
+
+For LLM and agentic systems, "deployment" is no longer just "ship a new model checkpoint." Three additional artifacts can shift production behavior, and **each needs the same shadow → canary → A/B → 100% progression** as a model checkpoint:
+
+### Treat Prompts as Code
+
+A single edit to a system prompt can change behavior across **every user, every session**, instantly. Prompt changes have the same blast radius as a model swap, sometimes larger. Apply:
+
+- **Version-controlled prompt registry** (text files in git, or a managed prompt store).
+- **Canary rollout**: route the new prompt to 1% → 10% → 50% → 100% with the same metrics gates as a checkpoint rollout (task-quality eval pass-rate, refusal rate, hallucination rate, p95 output-tokens, cost-per-request).
+- **Reproducibility**: log the exact prompt version with every request so post-incident triage can correlate behavior to prompt revisions.
+
+Cross-ref `yzmir-llm-specialist/prompt-engineering-patterns.md` and `yzmir-llm-specialist/context-engineering-and-prompt-caching.md` for prompt-construction discipline (prefix caching breaks if prompts change uncontrollably).
+
+### Roll Out RAG Index Versions
+
+When you rebuild the retrieval index (new embedding model, new chunking strategy, new corpus), the model output distribution shifts even if the model itself is unchanged. Treat index swaps as model deployments:
+
+- **Shadow** the new index against production traffic — generate retrievals from both, compare retrieval-quality metrics (recall@k, citation accuracy) and downstream answer quality.
+- **Dual-write during transition**: new index ingests in parallel before becoming primary, so rollback is instant.
+- **Per-tenant or per-route canary**: limit blast radius to a percentage of traffic, not a percentage of the index.
+
+Cross-ref `yzmir-llm-specialist/rag-architecture-patterns.md`.
+
+### Roll Out Fine-Tune Checkpoints
+
+Fine-tune checkpoints (SFT, DPO, RLHF) are model deployments and follow the standard progression. Specific watch-outs:
+
+- **Eval suite must include capabilities the base model had**: regression on general capability is the single most common fine-tune failure. Run a held-out general benchmark every rollout.
+- **Compare against the previous checkpoint, not the base model.** Drift accumulates across fine-tune generations; the relevant question is "is this checkpoint better than what's in production?" not "is it better than the base?"
+- **Cross-ref `yzmir-llm-specialist/llm-finetuning-strategies.md`** for fine-tune methodology and eval design.
+
+### Prompt-Injection / Jailbreak Canary Monitoring
+
+A new model version (or a new prompt, or a new RAG index) **may be more vulnerable to prompt injection or jailbreaks than the version it replaces**, even when general benchmarks improve. Bake adversarial monitoring into the rollout, not just into pre-deployment eval:
+
+- Run a fixed **adversarial probe set** (prompt-injection attempts, role-play jailbreaks, instruction-extraction attempts) against the canary at each rollout stage. Block promotion if attack-success-rate regresses against the production baseline.
+- Monitor **production traffic for live attacks**: rate of suspected prompt-injection attempts, rate of policy-violation outputs, rate of tool-call attempts to non-allowlisted tools.
+- Hold a **rollback trigger on safety regression** — even if accuracy/cost/latency are all green.
+
+Cross-ref `yzmir-llm-specialist/llm-safety-alignment.md` for adversarial-eval design and `ordis-security-architect` (specifically `using-security-architect`) for boundary controls and the `design-controls` skill for layered defense at trust boundaries.
+
+
 ## Final Recommendations
 
 **For AI Model Deployment:**
@@ -3480,3 +3555,7 @@ Ongoing: Continuous monitoring
 Deployment is not just pushing code—it's a systematic process of validation, monitoring, and risk mitigation. The patterns in this skill (A/B testing, canary deployments, shadow mode, blue-green with feature flags) provide the infrastructure for safe, confident deployments.
 
 Master these patterns, avoid the anti-patterns, and you'll deploy AI models to production with confidence and safety.
+
+---
+
+*Tooling and APIs current as of 2026-05; revisit quarterly.*

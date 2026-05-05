@@ -2792,6 +2792,51 @@ class MultiTenantIsolationTest:
 # 10. Multi-tenant isolation
 ```
 
+## Part 4: LLM-Specific Scaling Considerations
+
+The patterns above (HPA, least-connections, consistent hash, autoscaling on GPU/queue depth) are necessary but not sufficient for autoregressive LLM workloads. LLMs break three assumptions baked into traditional inference scaling: response time is variable per request, replicas are not interchangeable units of capacity, and traffic shape interacts with the scheduler.
+
+### LLM Traffic Shape: Long-Tail Output Lengths
+
+For a fixed-output classifier, P95 latency is roughly P95(compute time) — bounded by hardware. For an LLM, **per-request latency is bounded by the output token count, which is a runtime property of the request**, not the model. A request that emits 50 tokens and a request that emits 4000 tokens go through the same replica with the same priority; the second blocks the queue for ~80x longer.
+
+Consequences for capacity planning and SLOs:
+
+- **Per-token latency (TBT/TPOT)** and **time-to-first-token (TTFT)** are the meaningful SLOs, not end-to-end latency. End-to-end is a function of output length the user controls.
+- **P95/P99 of total latency is dominated by output-length distribution.** A 100x change in output-length tail can shift end-to-end P99 with no change in model, hardware, or load.
+- **Queue time matters more than for traditional inference** because new requests wait behind in-flight long-output requests on the same replica.
+- **Mixing short and long requests is a key tradeoff.** Strict separation (route short to one pool, long to another) wastes capacity; full mixing exposes short requests to head-of-line blocking. **Chunked prefill** (interleaving prefill chunks of new requests with decode steps of in-flight requests) is the dominant compromise — it caps the latency penalty short requests pay behind long requests.
+
+Cross-ref `yzmir-llm-specialist/llm-inference-optimization.md` for prefill/decode disaggregation, speculative decoding, and KV-cache budgeting strategies that change the shape of the latency distribution.
+
+### Continuous Batching (Conceptual)
+
+Static batching — collect N requests, run forward, return all N — is wrong for LLMs. Requests in the batch finish at different decode steps; the slowest dictates batch latency. **Continuous batching** (also called iteration-level scheduling) instead schedules at the granularity of a single decode iteration: at every step, completed sequences leave the batch and waiting sequences are admitted, so GPU utilization stays high without forcing requests to wait for batch boundaries.
+
+This is the design at the heart of [vLLM](https://github.com/vllm-project/vllm) and the **PagedAttention** paper ([Kwon et al., SOSP 2023](https://arxiv.org/abs/2309.06180)) — PagedAttention manages the KV cache as virtual-memory-style pages so the scheduler can cheaply admit, evict, and resume sequences without contiguous-allocation constraints. Reported throughput improvements are 2-4x over non-paged systems at equivalent latency.
+
+For a load balancer, the practical implication is: **a "replica" is no longer a fixed-capacity unit.** Effective capacity at any moment depends on (a) the number of in-flight sequences in the continuous batch, (b) per-sequence output-token budgets, and (c) KV-cache memory pressure. Use queue depth, KV-cache utilization, and time-to-first-token directly as scaling signals — not raw GPU utilization, which can read 100% on a replica that is two requests away from OOM.
+
+Full coverage of continuous batching, prefill scheduling, and KV-cache-aware admission control belongs in `model-serving-patterns.md`. This sheet only owns the load-balancer and autoscaler-level implications.
+
+### Autoscaling Challenges Specific to LLMs
+
+LLM replicas violate two implicit assumptions of traditional autoscalers:
+
+1. **Cold start is slow.** Loading a quantized 70B-parameter model and warming KV-cache allocator pools takes seconds-to-minutes, not milliseconds. Reactive autoscaling on request rate alone produces SLO violations because by the time a new replica is ready, the spike is already a queue. Mitigations:
+   - **Pre-warm replicas** (always-on baseline + fractional headroom).
+   - **Predictive scaling** based on traffic patterns rather than reactive thresholds.
+   - **Scale-to-zero only for non-latency-critical workloads** (per [KServe](https://kserve.github.io/website/) and [Ray Serve](https://docs.ray.io/en/latest/serve/index.html), scale-to-zero is supported but introduces cold-start latency on first request).
+2. **GPU-memory granularity is coarse.** You cannot scale to 0.5 GPU. The scaling unit is a whole accelerator (or a fixed slice on MIG-capable hardware). This makes "fine-grained" autoscaling impossible — you scale in integer accelerator counts, and the autoscaler must reason about that.
+
+**Managed-options pointers** (one line each — see `deployment-strategies.md` for full coverage):
+- **[KServe](https://kserve.github.io/website/)** — Kubernetes-native; integrates with Knative for request- and concurrency-based autoscaling and scale-to-zero.
+- **[Ray Serve](https://docs.ray.io/en/latest/serve/index.html)** — Python-native; supports `num_replicas="auto"`, custom autoscaling driven by domain metrics, and built-in LLM serving primitives ([Ray Serve LLM docs](https://docs.ray.io/en/latest/serve/llm/index.html)).
+- **[BentoCloud](https://www.bentoml.com/cloud)** — managed BentoML platform; targets ML-team workflows with built-in autoscaling and image-based deployment.
+
+Cross-ref `yzmir-llm-specialist/llm-inference-optimization.md` for caching/parallelization strategies that reduce the per-request work the autoscaler has to provision for.
+
+
 ## Summary
 
 This skill provides complete scaling and load balancing patterns for LLM serving:
@@ -2821,3 +2866,7 @@ This skill provides complete scaling and load balancing patterns for LLM serving
 - Cost: 60-70% reduction (spot + autoscaling)
 - Scalability: Handle 100× traffic variation
 - Reliability: Automatic failover and recovery
+
+---
+
+*Tooling and APIs current as of 2026-05; revisit quarterly.*

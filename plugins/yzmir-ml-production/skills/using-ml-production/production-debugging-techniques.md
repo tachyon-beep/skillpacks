@@ -3313,6 +3313,86 @@ print(json.dumps(investigation, indent=2))
 Without systematic debugging, you fight the same fires repeatedly. With systematic debugging, you prevent fires from starting.
 
 
+## Part 10: LLM-Specific Debugging
+
+The methodology in Parts 1-9 (systematic debugging, profiling, logging, error analysis, post-mortems, forensics) applies unchanged to LLM systems. This part adds the symptom-to-cause patterns that are specific to autoregressive generation, structured outputs, and agentic tool use.
+
+### Token-Stream Inspection (Cutoff and Truncation)
+
+**Symptom**: Output appears truncated mid-sentence, mid-JSON, or mid-tool-call.
+
+**Decision flow**:
+1. **Check the finish reason on the response** (every major LLM API exposes one — `stop`, `length`, `tool_calls`, `content_filter`, etc.). `length` means you hit `max_tokens`; raise the cap or stream and re-prompt for continuation.
+2. **Check input + output token counts** against the model's context window. Cutoff at the limit looks like generation truncation but is actually input crowding out output.
+3. **Inspect the raw token stream**, not the assembled string. Streaming tokens reveal whether the model emitted an EOS token (legitimate stop), was cut by a safety filter (sudden stop with no EOS), or was killed by infrastructure (network truncation — final SSE event missing).
+4. **Stop sequences**: a misconfigured stop sequence (`"\n"` on a model that uses newlines structurally, `"}"` on JSON-emitting models) silently truncates. Audit the stop list every time a "weird truncation" bug appears.
+
+### Structured-Output Schema Violations
+
+**Symptom**: Model is supposed to emit JSON / Pydantic / function-call args matching a schema, but parser fails or schema validation rejects.
+
+**Triage in order**:
+1. **Was structured-output mode actually enabled** (JSON mode, response-schema, tool-call schema)? Verify in the request, not in your client wrapper.
+2. **Capture the raw response that failed**, including any partial content. Schema-violation logs that only record "validation failed" are useless.
+3. **Common patterns**:
+   - **Trailing prose** ("Here is the JSON: { ... }") — model added a preamble despite JSON mode. Tighten the system prompt or use a stricter mode.
+   - **Markdown fencing** (` ```json ... ``` `) — common with weaker models; strip in post-processing or escalate model tier.
+   - **Required field missing** — usually a prompt-clarity issue, not a model failure. Check the prompt explicitly enumerates required fields with examples.
+   - **Wrong primitive type** (string for number, etc.) — under-specified schema descriptions; add type hints in field descriptions.
+4. **Add a schema-violation rate metric** to production monitoring. A regression in this rate after a model or prompt change is a deployment-quality signal.
+
+### Tool-Call Debugging in Agentic Systems
+
+**Symptom**: Agent calls the wrong tool, calls a tool with wrong arguments, loops on the same tool, or fails to call a tool when it should.
+
+**Cross-ref `yzmir-llm-specialist/agentic-patterns-and-mcp.md`** for tool-design discipline. From a debugging-in-production perspective:
+
+1. **Log the full tool-call decision chain**: which tools were available, what the model emitted, what the dispatcher actually invoked, what the tool returned, what the model did with the result. Truncate nothing — agentic bugs hide in the round-trip.
+2. **Loop detection**: count consecutive identical tool calls per session. A repeating call with identical args is almost always a stuck-state bug; bound it explicitly with a max-iterations guard.
+3. **Wrong-tool selection**: usually a tool-description issue (descriptions overlap, are vague, or leak implementation details). Treat tool-description text as code subject to the same canary-rollout discipline as system prompts.
+4. **Argument-shape failures**: dispatchers should validate args before invoking; log validation failures separately from tool-execution failures.
+5. **Tool latency regressions**: a slow tool blocks the agent's whole loop. Track p95 tool latency per tool, separately from end-to-end agent latency.
+
+### Hallucination Triage Workflow (RAG vs Generation)
+
+**Symptom**: Model produces confidently wrong factual claims.
+
+The right first question is **"is this a retrieval-quality issue or a generation-quality issue?"** because the fixes are completely different.
+
+**Decision tree**:
+1. **Inspect retrieved context for the failing query.** Did retrieval surface the correct source documents?
+   - **No → retrieval problem.** Triage in the order: chunking strategy, embedding model match to query distribution, re-ranker quality, top-k budget, query rewriting, index freshness. Cross-ref `yzmir-llm-specialist/rag-architecture-patterns.md`.
+   - **Yes → generation problem.** Continue.
+2. **Did the model use the retrieved context?** Check the citation/grounding signals in the output. If the model ignored retrieved evidence, the prompt is failing to enforce grounding (or context-bloat is pushing relevant context out of attention — see below).
+3. **Is the model confabulating around true context?** This is generation-side hallucination — the retrieval was correct but the model generated false additional claims. Mitigate with stricter grounding prompts, lower temperature, or model-tier escalation.
+4. **Reproduce in isolation** before changing anything. A hallucination bug fixed by an unrelated prompt change is a coincidence, not a fix.
+
+### Cost-Spike Debugging (Often Context Bloat)
+
+**Symptom**: Per-request cost or per-session cost has spiked, often 5-50x without a corresponding traffic change.
+
+Most LLM cost spikes are not "more requests" — they are **bigger requests**. Triage:
+
+1. **Plot p50, p95, p99 of input tokens per request, broken out by route/feature.** A regression in the input-token tail almost always identifies the bug.
+2. **Common context-bloat causes**:
+   - **Conversation history with no truncation** — sessions accumulate forever.
+   - **RAG over-retrieval** — a chunking change emitted bigger chunks, or top-k was raised without a token-budget guard.
+   - **Tool-result accumulation** — agent loops embed every prior tool result back into context.
+   - **Lost prefix-cache** — a system prompt edit invalidated the prompt cache; cost spikes correlate with the deploy timestamp. See `yzmir-llm-specialist/context-engineering-and-prompt-caching.md`.
+3. **Output-token spikes are rarer but show up as latency spikes too** — they imply the model is generating longer responses than expected (often because instructions were loosened, or temperature was raised).
+4. **Fixed-budget guards in code, not just in prompts.** A "please be concise" instruction is not a control; a `max_tokens` cap is.
+
+### Jailbreak / Prompt-Injection Detection in Production
+
+**Symptom**: Suspected adversarial inputs reaching the model — refusals are bypassed, model emits content that violates policy, or the system instructions appear leaked.
+
+1. **Pattern-match for known attack shapes** in inputs: instruction-override prefixes ("ignore previous instructions"), role-reset attempts, encoded payloads (base64, leetspeak), embedded delimiters that mimic system-prompt structure. None of these are sufficient on their own — they are **signals** worth alerting on.
+2. **Monitor refusal-bypass rate** — fraction of policy-relevant inputs the model failed to refuse, sampled against an internal eval set replayed daily.
+3. **Monitor system-prompt-leak rate** — fraction of outputs containing substring matches against your system prompt.
+4. **Tool-call abuse** — agent calling tools the user shouldn't be able to invoke, with arguments that suggest attempted exploitation. Audit per-tool authorization at dispatch, not per-session.
+5. **Treat detected attacks as security incidents**, not engineering bugs. Cross-ref `yzmir-llm-specialist/llm-safety-alignment.md` for adversarial-eval and `ordis-security-architect` (`using-security-architect`, `design-controls`, `threat-model`) for incident response, defense-in-depth, and threat modeling.
+
+
 ## REFACTOR Phase: Pressure Tests
 
 ### Pressure Test 1: Random Changes Without Investigation
@@ -3464,3 +3544,7 @@ Without systematic debugging, you fight the same fires repeatedly. With systemat
 - ✅ Add error cases to training data or add validation
 
 **Failure mode:** Ignores high-confidence errors because "overall accuracy is fine."
+
+---
+
+*Tooling and APIs current as of 2026-05; revisit quarterly.*

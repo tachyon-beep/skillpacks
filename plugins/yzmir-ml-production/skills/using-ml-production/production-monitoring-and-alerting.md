@@ -3,9 +3,9 @@
 
 ## Overview
 
-Comprehensive production monitoring and alerting for ML systems. Implements performance metrics (RED), model quality tracking, drift detection, dashboard design, alert rules, and SLAs/SLOs.
+Comprehensive production monitoring and alerting for ML systems. Implements performance metrics (RED), model quality tracking, drift detection, dashboard design, alert rules, and SLAs/SLOs. Extends to LLM-specific observability for systems that serve generative models, RAG pipelines, and agentic workloads.
 
-**Core Principle**: You can't improve what you don't measure. Monitoring is non-negotiable for production ML - deploy with observability or don't deploy.
+**Core Principle**: You can't improve what you don't measure. Monitoring is non-negotiable for production ML — deploy with observability or don't deploy.
 
 ## Section 1: Performance Metrics (RED Metrics)
 
@@ -82,24 +82,19 @@ def monitor_ml_endpoint(model_name: str, endpoint: str):
 
         return wrapper
     return decorator
-
-# Usage example
-@monitor_ml_endpoint(model_name="sentiment_classifier", endpoint="/predict")
-def predict_sentiment(text: str):
-    result = model.predict(text)
-    return result
 ```
+
+The `prometheus_client` Python library exposes these metric primitives over an HTTP scrape endpoint that Prometheus pulls on its `scrape_interval`. See <https://prometheus.github.io/client_python/> and the Prometheus data-model docs at <https://prometheus.io/docs/concepts/data_model/>.
 
 ### Latency Percentiles (P50, P95, P99)
 
 ```python
-# Prometheus automatically calculates percentiles from Histogram
-# Query in Prometheus:
-#   P50: histogram_quantile(0.50, rate(ml_request_duration_seconds_bucket[5m]))
-#   P95: histogram_quantile(0.95, rate(ml_request_duration_seconds_bucket[5m]))
-#   P99: histogram_quantile(0.99, rate(ml_request_duration_seconds_bucket[5m]))
+# Prometheus calculates percentiles from a Histogram via histogram_quantile():
+#   histogram_quantile(0.95, rate(ml_request_duration_seconds_bucket[5m]))
+# Choose buckets that bracket your SLO; histogram_quantile interpolates within
+# the bucket containing the target quantile. See:
+#   https://prometheus.io/docs/practices/histograms/
 
-# For custom tracking:
 import numpy as np
 from collections import deque
 
@@ -119,9 +114,11 @@ class LatencyTracker:
             "p95": np.percentile(arr, 95),
             "p99": np.percentile(arr, 99),
             "mean": np.mean(arr),
-            "max": np.max(arr)
+            "max": np.max(arr),
         }
 ```
+
+For high-cardinality or precise quantile work prefer Prometheus **native histograms** (sparse buckets, GA in Prometheus 2.40+) or a `Summary` type — see <https://prometheus.io/docs/concepts/metric_types/>.
 
 ### Throughput Tracking
 
@@ -168,16 +165,11 @@ PREDICTION_COUNT = Counter(
 def track_prediction(model_name: str, prediction: str):
     PREDICTION_COUNT.labels(
         model_name=model_name,
-        predicted_class=prediction
+        predicted_class=prediction,
     ).inc()
-
-# Example: Sentiment classifier
-result = model.predict("Great product!")  # Returns "positive"
-track_prediction("sentiment_classifier", result)
-
-# Dashboard query: Check if prediction distribution is shifting
-# rate(ml_predictions_by_class{predicted_class="positive"}[1h])
 ```
+
+Plot `rate(ml_predictions_by_class[1h])` per class to detect prediction-distribution drift (sudden spikes in one class are often the earliest sign of upstream-data or model regressions).
 
 ### Confidence Distribution Tracking
 
@@ -186,7 +178,7 @@ CONFIDENCE_HISTOGRAM = Histogram(
     'ml_prediction_confidence',
     'Model prediction confidence scores',
     ['model_name'],
-    buckets=[0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    buckets=[0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
 )
 
 LOW_CONFIDENCE_COUNT = Counter(
@@ -197,14 +189,11 @@ LOW_CONFIDENCE_COUNT = Counter(
 
 def track_confidence(model_name: str, confidence: float, threshold: float = 0.7):
     CONFIDENCE_HISTOGRAM.labels(model_name=model_name).observe(confidence)
-
     if confidence < threshold:
         LOW_CONFIDENCE_COUNT.labels(
             model_name=model_name,
-            threshold=str(threshold)
+            threshold=str(threshold),
         ).inc()
-
-# Alert if low confidence predictions increase (model uncertainty rising)
 ```
 
 ### Per-Segment Performance
@@ -224,24 +213,14 @@ class SegmentPerformanceTracker:
     def record_prediction(self, segment: str, is_correct: bool):
         if segment not in self.segments:
             self.segments[segment] = {"correct": 0, "total": 0}
-
         self.segments[segment]["total"] += 1
         if is_correct:
             self.segments[segment]["correct"] += 1
-
-        # Update gauge
         accuracy = self.segments[segment]["correct"] / self.segments[segment]["total"]
         SEGMENT_ACCURACY_GAUGE.labels(
             model_name=self.model_name,
-            segment=segment
+            segment=segment,
         ).set(accuracy)
-
-# Example: E-commerce recommendations
-tracker = SegmentPerformanceTracker("recommender")
-tracker.record_prediction(segment="electronics", is_correct=True)
-tracker.record_prediction(segment="clothing", is_correct=False)
-
-# Alert if accuracy drops for specific segment (targeted debugging)
 ```
 
 ### Ground Truth Sampling
@@ -252,89 +231,54 @@ from typing import Optional
 
 class GroundTruthSampler:
     def __init__(self, model_name: str, sampling_rate: float = 0.1):
-        """
-        sampling_rate: Fraction of predictions to send for human review (0.0-1.0)
-        """
         self.model_name = model_name
         self.sampling_rate = sampling_rate
         self.predictions = []
         self.ground_truths = []
 
     def sample_prediction(self, request_id: str, prediction: dict) -> bool:
-        """
-        Returns True if prediction should be sent for human review
-        """
         if random.random() < self.sampling_rate:
             self.predictions.append({
                 "request_id": request_id,
                 "prediction": prediction,
-                "timestamp": time.time()
+                "timestamp": time.time(),
             })
-            # Send to review queue (e.g., Label Studio, human review dashboard)
-            send_to_review_queue(request_id, prediction)
+            send_to_review_queue(request_id, prediction)  # Label Studio, Argilla, etc.
             return True
         return False
 
     def add_ground_truth(self, request_id: str, ground_truth: str):
-        """Human reviewer provides true label"""
         self.ground_truths.append({
             "request_id": request_id,
             "ground_truth": ground_truth,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         })
-
-        # Calculate rolling accuracy
         if len(self.ground_truths) >= 100:
             self.calculate_accuracy()
 
     def calculate_accuracy(self):
-        """Calculate accuracy on last N samples"""
         recent = self.ground_truths[-100:]
         pred_map = {p["request_id"]: p["prediction"] for p in self.predictions}
-
-        correct = sum(
-            1 for gt in recent
-            if pred_map.get(gt["request_id"]) == gt["ground_truth"]
-        )
-
+        correct = sum(1 for gt in recent if pred_map.get(gt["request_id"]) == gt["ground_truth"])
         accuracy = correct / len(recent)
-
         SEGMENT_ACCURACY_GAUGE.labels(
             model_name=self.model_name,
-            segment="ground_truth_sample"
+            segment="ground_truth_sample",
         ).set(accuracy)
-
         return accuracy
-
-# Usage
-sampler = GroundTruthSampler("sentiment_classifier", sampling_rate=0.1)
-
-@app.post("/predict")
-def predict(text: str):
-    result = model.predict(text)
-    request_id = generate_request_id()
-
-    # Sample for human review
-    sampler.sample_prediction(request_id, result)
-
-    return {"request_id": request_id, "result": result}
-
-# Later: Human reviewer provides label
-@app.post("/feedback")
-def feedback(request_id: str, true_label: str):
-    sampler.add_ground_truth(request_id, true_label)
-    return {"status": "recorded"}
 ```
+
+Common review-queue back-ends include **Label Studio** (<https://labelstud.io>) and **Argilla** (<https://argilla.io>), both of which integrate with model-prediction streams and produce labeled datasets that can feed back into retraining pipelines.
 
 
 ## Section 3: Data Drift Detection
 
-### Kolmogorov-Smirnov Test (Distribution Comparison)
+### Kolmogorov–Smirnov Test (Distribution Comparison)
 
 ```python
 from scipy.stats import ks_2samp
 import numpy as np
-from prometheus_client import Gauge
+from prometheus_client import Gauge, Counter
 
 DRIFT_SCORE_GAUGE = Gauge(
     'ml_data_drift_score',
@@ -350,258 +294,104 @@ DRIFT_ALERT = Counter(
 
 class DataDriftDetector:
     def __init__(self, model_name: str, reference_data: dict, window_size: int = 1000):
-        """
-        reference_data: Dict of feature_name -> np.array of training data values
-        window_size: Number of production samples before checking drift
-        """
         self.model_name = model_name
         self.reference_data = reference_data
         self.window_size = window_size
         self.current_window = {feature: [] for feature in reference_data.keys()}
-
-        # Drift thresholds
-        self.thresholds = {
-            "info": 0.1,      # Slight shift (log only)
-            "warning": 0.15,  # Moderate shift (investigate)
-            "critical": 0.25  # Severe shift (retrain needed)
-        }
+        self.thresholds = {"info": 0.1, "warning": 0.15, "critical": 0.25}
 
     def add_sample(self, features: dict):
-        """Add new production sample"""
         for feature_name, value in features.items():
             if feature_name in self.current_window:
                 self.current_window[feature_name].append(value)
-
-        # Check drift when window full
-        if len(self.current_window[list(self.current_window.keys())[0]]) >= self.window_size:
+        first_feature = next(iter(self.current_window))
+        if len(self.current_window[first_feature]) >= self.window_size:
             self.check_drift()
-            # Reset window
-            self.current_window = {feature: [] for feature in self.reference_data.keys()}
+            self.current_window = {f: [] for f in self.reference_data.keys()}
 
     def check_drift(self):
-        """Compare current window to reference using KS test"""
-        results = {}
-
-        for feature_name in self.reference_data.keys():
-            reference = self.reference_data[feature_name]
+        for feature_name, reference in self.reference_data.items():
             current = np.array(self.current_window[feature_name])
-
-            # Kolmogorov-Smirnov test
             statistic, p_value = ks_2samp(reference, current)
-
-            results[feature_name] = {
-                "ks_statistic": statistic,
-                "p_value": p_value
-            }
-
-            # Update Prometheus gauge
             DRIFT_SCORE_GAUGE.labels(
                 model_name=self.model_name,
-                feature_name=feature_name
+                feature_name=feature_name,
             ).set(statistic)
-
-            # Alert if drift detected
             severity = self._get_severity(statistic)
             if severity:
                 DRIFT_ALERT.labels(
                     model_name=self.model_name,
                     feature_name=feature_name,
-                    severity=severity
+                    severity=severity,
                 ).inc()
-                self._send_alert(feature_name, statistic, p_value, severity)
-
-        return results
 
     def _get_severity(self, ks_statistic: float) -> Optional[str]:
-        """Determine alert severity based on KS statistic"""
         if ks_statistic >= self.thresholds["critical"]:
             return "critical"
-        elif ks_statistic >= self.thresholds["warning"]:
+        if ks_statistic >= self.thresholds["warning"]:
             return "warning"
-        elif ks_statistic >= self.thresholds["info"]:
+        if ks_statistic >= self.thresholds["info"]:
             return "info"
         return None
-
-    def _send_alert(self, feature_name: str, ks_stat: float, p_value: float, severity: str):
-        """Send drift alert to monitoring system"""
-        message = f"""
-DATA DRIFT DETECTED
-
-Model: {self.model_name}
-Feature: {feature_name}
-Severity: {severity.upper()}
-
-KS Statistic: {ks_stat:.3f}
-P-value: {p_value:.4f}
-
-Interpretation:
-- KS < 0.1: No significant drift
-- KS 0.1-0.15: Slight shift (monitor)
-- KS 0.15-0.25: Moderate drift (investigate)
-- KS > 0.25: Severe drift (retrain recommended)
-
-Action:
-1. Review recent input examples
-2. Check for data source changes
-3. Compare distributions visually
-4. Consider retraining if accuracy dropping
-        """
-        send_alert_to_slack(message)  # Or PagerDuty, email, etc.
-
-# Usage example
-# Training data statistics
-reference_features = {
-    "text_length": np.random.normal(100, 20, 10000),  # Mean 100, std 20
-    "sentiment_score": np.random.normal(0.5, 0.2, 10000),  # Mean 0.5, std 0.2
-}
-
-drift_detector = DataDriftDetector("sentiment_classifier", reference_features)
-
-@app.post("/predict")
-def predict(text: str):
-    # Extract features
-    features = {
-        "text_length": len(text),
-        "sentiment_score": get_sentiment_score(text)
-    }
-
-    # Track for drift detection
-    drift_detector.add_sample(features)
-
-    result = model.predict(text)
-    return result
 ```
+
+KS interpretation: statistic D < 0.1 ≈ no drift; 0.1–0.15 slight; 0.15–0.25 moderate; > 0.25 severe. P-value alone is misleading at high N (any tiny difference becomes "significant"); track effect size (D) and complement with KL divergence or Wasserstein distance for richer signal.
 
 ### Population Stability Index (PSI) for Concept Drift
 
 ```python
-import numpy as np
-
 PSI_GAUGE = Gauge(
     'ml_concept_drift_psi',
     'Population Stability Index for concept drift',
-    ['model_name']
+    ['model_name'],
 )
 
 class ConceptDriftDetector:
     def __init__(self, model_name: str, num_bins: int = 10):
-        """
-        num_bins: Number of bins for PSI calculation
-        """
         self.model_name = model_name
         self.num_bins = num_bins
         self.baseline_distribution = None
         self.current_predictions = []
         self.window_size = 1000
-
-        # PSI thresholds
-        self.thresholds = {
-            "info": 0.1,      # Slight shift
-            "warning": 0.2,   # Moderate shift (investigate)
-            "critical": 0.25  # Severe shift (model behavior changed)
-        }
-
-    def set_baseline(self, predictions: list):
-        """Set baseline prediction distribution (from first week of production)"""
-        self.baseline_distribution = self._calculate_distribution(predictions)
+        self.thresholds = {"info": 0.1, "warning": 0.2, "critical": 0.25}
 
     def track_prediction(self, prediction: float):
-        """Track new prediction (probability or class)"""
         self.current_predictions.append(prediction)
-
-        # Check concept drift when window full
         if len(self.current_predictions) >= self.window_size:
             self.check_concept_drift()
             self.current_predictions = []
 
     def _calculate_distribution(self, values: list) -> np.ndarray:
-        """Calculate binned distribution"""
         hist, _ = np.histogram(values, bins=self.num_bins, range=(0, 1))
-        # Convert to proportions
-        return hist / len(values)
+        return hist / max(len(values), 1)
 
-    def calculate_psi(self, expected: np.ndarray, actual: np.ndarray) -> float:
-        """
-        Calculate Population Stability Index (PSI)
-
-        PSI = sum((actual% - expected%) * ln(actual% / expected%))
-
-        Interpretation:
-        - PSI < 0.1: No significant change
-        - PSI 0.1-0.2: Slight change (monitor)
-        - PSI > 0.2: Significant change (investigate/retrain)
-        """
-        # Avoid division by zero
-        expected = np.where(expected == 0, 0.0001, expected)
-        actual = np.where(actual == 0, 0.0001, actual)
-
-        psi = np.sum((actual - expected) * np.log(actual / expected))
-        return psi
+    @staticmethod
+    def calculate_psi(expected: np.ndarray, actual: np.ndarray) -> float:
+        expected = np.where(expected == 0, 1e-4, expected)
+        actual = np.where(actual == 0, 1e-4, actual)
+        return float(np.sum((actual - expected) * np.log(actual / expected)))
 
     def check_concept_drift(self):
-        """Check if model behavior has changed"""
         if self.baseline_distribution is None:
-            # Set first window as baseline
             self.baseline_distribution = self._calculate_distribution(self.current_predictions)
             return None
-
-        current_distribution = self._calculate_distribution(self.current_predictions)
-        psi = self.calculate_psi(self.baseline_distribution, current_distribution)
-
-        # Update Prometheus gauge
+        current = self._calculate_distribution(self.current_predictions)
+        psi = self.calculate_psi(self.baseline_distribution, current)
         PSI_GAUGE.labels(model_name=self.model_name).set(psi)
-
-        # Alert if concept drift detected
-        severity = self._get_severity(psi)
-        if severity:
-            self._send_alert(psi, severity)
-
         return psi
-
-    def _get_severity(self, psi: float) -> Optional[str]:
-        if psi >= self.thresholds["critical"]:
-            return "critical"
-        elif psi >= self.thresholds["warning"]:
-            return "warning"
-        elif psi >= self.thresholds["info"]:
-            return "info"
-        return None
-
-    def _send_alert(self, psi: float, severity: str):
-        message = f"""
-CONCEPT DRIFT DETECTED
-
-Model: {self.model_name}
-Severity: {severity.upper()}
-
-PSI: {psi:.3f}
-
-Interpretation:
-- PSI < 0.1: No significant change
-- PSI 0.1-0.2: Slight change (model behavior shifting)
-- PSI > 0.2: Significant change (model may need retraining)
-
-Action:
-1. Compare current vs baseline prediction distributions
-2. Check if input distribution also changed (data drift?)
-3. Validate accuracy on recent samples
-4. Consider retraining if accuracy dropping
-        """
-        send_alert_to_slack(message)
-
-# Usage
-concept_drift_detector = ConceptDriftDetector("sentiment_classifier")
-
-@app.post("/predict")
-def predict(text: str):
-    result = model.predict(text)
-    confidence = result["confidence"]
-
-    # Track prediction for concept drift
-    concept_drift_detector.track_prediction(confidence)
-
-    return result
 ```
+
+PSI rules of thumb: < 0.1 stable; 0.1–0.2 minor shift; > 0.2 material shift, investigate. Pair PSI with KL divergence for symmetric distributional comparison.
+
+### Drift-Detection Libraries
+
+For production-grade drift detection, prefer well-tested libraries over hand-rolled tests:
+
+- **Evidently** — Python library + dashboard for data, target, and prediction drift. <https://docs.evidentlyai.com>
+- **NannyML** — post-deployment performance estimation when ground truth is delayed (CBPE, DLE algorithms). <https://nannyml.readthedocs.io>
+- **Alibi Detect** — drift, outlier, and adversarial detection (Seldon). <https://docs.seldon.io/projects/alibi-detect>
+- **Deepchecks** — train/serve and continuous validation suites. <https://docs.deepchecks.com>
+- **TorchDrift** — drift detection for PyTorch tensor inputs. <https://torchdrift.org>
 
 
 ## Section 4: Dashboard Design
@@ -627,7 +417,6 @@ Page 2 - MODEL QUALITY:
     - Confidence distribution (histogram)
     - Per-segment accuracy (if applicable)
     - Ground truth accuracy (rolling window)
-  Layout: Time series + histograms
 
 Page 3 - DRIFT DETECTION:
   Purpose: Detect model degradation early
@@ -635,98 +424,48 @@ Page 3 - DRIFT DETECTION:
     - Data drift (KS test per feature)
     - Concept drift (PSI over time)
     - Feature distributions (current vs baseline)
-  Layout: Time series + distribution comparisons
 
 Page 4 - RESOURCES (only check when alerted):
   Purpose: Debug resource issues
   Metrics:
-    - CPU utilization
-    - Memory usage (RSS)
-    - GPU utilization/memory (if applicable)
-    - Disk I/O
-  Layout: System resource graphs
+    - CPU / memory / GPU utilization, disk I/O, network saturation
 ```
 
-### Grafana Dashboard Example (JSON)
+### Grafana Dashboard Example
+
+Grafana (<https://grafana.com/docs/grafana/latest/>) consumes Prometheus as a data source and supports dashboards-as-code via JSON or the Terraform/Tanka providers. Key panel ideas:
 
 ```json
 {
   "dashboard": {
-    "title": "ML Model Monitoring - Sentiment Classifier",
+    "title": "ML Model Monitoring",
     "panels": [
       {
-        "title": "Request Rate",
-        "targets": [
-          {
-            "expr": "rate(ml_requests_total{model_name=\"sentiment_classifier\"}[5m])",
-            "legendFormat": "{{endpoint}}"
-          }
-        ],
-        "type": "graph",
-        "gridPos": {"x": 0, "y": 0, "w": 6, "h": 8}
-      },
-      {
-        "title": "Error Rate",
-        "targets": [
-          {
-            "expr": "rate(ml_errors_total{model_name=\"sentiment_classifier\"}[5m]) / rate(ml_requests_total{model_name=\"sentiment_classifier\"}[5m])",
-            "legendFormat": "Error %"
-          }
-        ],
-        "type": "graph",
-        "gridPos": {"x": 6, "y": 0, "w": 6, "h": 8}
-      },
-      {
         "title": "Latency P95",
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, rate(ml_request_duration_seconds_bucket{model_name=\"sentiment_classifier\"}[5m]))",
-            "legendFormat": "P95"
-          }
-        ],
-        "type": "graph",
-        "gridPos": {"x": 12, "y": 0, "w": 6, "h": 8},
-        "alert": {
-          "conditions": [
-            {
-              "query": "A",
-              "reducer": "avg",
-              "evaluator": {"params": [0.5], "type": "gt"}
-            }
-          ],
-          "message": "Latency P95 above 500ms SLO"
-        }
+        "type": "timeseries",
+        "targets": [{
+          "expr": "histogram_quantile(0.95, rate(ml_request_duration_seconds_bucket[5m]))"
+        }],
+        "fieldConfig": {"defaults": {"thresholds": {"steps": [
+          {"color": "green",  "value": null},
+          {"color": "yellow", "value": 0.5},
+          {"color": "red",    "value": 1.0}
+        ]}}}
       },
       {
-        "title": "Prediction Distribution",
-        "targets": [
-          {
-            "expr": "rate(ml_predictions_by_class{model_name=\"sentiment_classifier\"}[1h])",
-            "legendFormat": "{{predicted_class}}"
-          }
-        ],
-        "type": "graph",
-        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8}
-      },
-      {
-        "title": "Data Drift (KS Test)",
-        "targets": [
-          {
-            "expr": "ml_data_drift_score{model_name=\"sentiment_classifier\"}",
-            "legendFormat": "{{feature_name}}"
-          }
-        ],
-        "type": "graph",
-        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
-        "thresholds": [
-          {"value": 0.15, "color": "yellow"},
-          {"value": 0.25, "color": "red"}
-        ]
+        "title": "Data Drift (KS Statistic)",
+        "type": "timeseries",
+        "targets": [{
+          "expr": "ml_data_drift_score",
+          "legendFormat": "{{feature_name}}"
+        }]
       }
     ]
   }
 }
 ```
+
+Pair Grafana with **Loki** for logs and **Tempo** for traces (all part of the Grafana LGTM stack — see <https://grafana.com/oss/>) to correlate metrics, logs, and traces against the same trace IDs.
 
 
 ## Section 5: Alert Rules (Actionable, Not Noisy)
@@ -734,292 +473,120 @@ Page 4 - RESOURCES (only check when alerted):
 ### Severity-Based Alerting
 
 ```yaml
-Alert Severity Levels:
-
-CRITICAL (page immediately, wake up on-call):
+CRITICAL (page on-call):
   - Error rate > 5% for 5 minutes
   - Latency P95 > 2× SLO for 10 minutes
   - Service down (health check fails)
-  - Model accuracy < 60% (catastrophic failure)
-  Response time: 15 minutes
-  Escalation: Page backup if no ack in 15 min
+  - Model accuracy < 60% on ground-truth sample
+  Response: 15 minutes; escalate if no ack
 
-WARNING (notify, but don't wake up):
+WARNING (Slack notify):
   - Error rate > 2% for 10 minutes
   - Latency P95 > 1.5× SLO for 15 minutes
-  - Data drift KS > 0.15 (moderate)
-  - Low confidence predictions > 20%
-  Response time: 1 hour
-  Escalation: Slack notification
+  - Data drift KS > 0.15 for 1 hour
+  - Low-confidence predictions > 20%
+  Response: 1 hour
 
-INFO (log for review):
+INFO (log/dashboard only):
   - Error rate > 1%
   - Latency increasing trend
-  - Data drift KS > 0.1 (slight)
-  - Concept drift PSI > 0.1
-  Response time: Next business day
-  Escalation: Dashboard review
+  - KS > 0.10 (slight drift)
+  - PSI > 0.10
 ```
 
 ### Prometheus Alert Rules
 
 ```yaml
-# prometheus_rules.yml
-
 groups:
   - name: ml_model_alerts
     interval: 30s
     rules:
-
-      # CRITICAL: High error rate
       - alert: HighErrorRate
         expr: |
-          (
-            rate(ml_errors_total[5m])
-            /
-            rate(ml_requests_total[5m])
-          ) > 0.05
+          rate(ml_errors_total[5m]) / rate(ml_requests_total[5m]) > 0.05
         for: 5m
         labels:
           severity: critical
           model: "{{ $labels.model_name }}"
         annotations:
           summary: "High error rate detected"
-          description: |
-            Model {{ $labels.model_name }} error rate is {{ $value | humanizePercentage }}
-            (threshold: 5%)
+          description: "{{ $labels.model_name }} error rate is {{ $value | humanizePercentage }}"
+          runbook: "https://wiki/runbooks/ml-high-error-rate"
 
-            RUNBOOK:
-            1. Check recent error logs: kubectl logs -l app=ml-service --since=10m | grep ERROR
-            2. Check model health: curl http://service/health
-            3. Check recent deployments: kubectl rollout history deployment/ml-service
-            4. If model OOM: kubectl scale --replicas=5 deployment/ml-service
-            5. If persistent: Rollback to previous version
-
-      # CRITICAL: High latency
       - alert: HighLatencyP95
         expr: |
-          histogram_quantile(0.95,
-            rate(ml_request_duration_seconds_bucket[5m])
-          ) > 1.0
+          histogram_quantile(0.95, rate(ml_request_duration_seconds_bucket[5m])) > 1.0
         for: 10m
         labels:
           severity: critical
-          model: "{{ $labels.model_name }}"
-        annotations:
-          summary: "Latency P95 above SLO"
-          description: |
-            Model {{ $labels.model_name }} latency P95 is {{ $value }}s
-            (SLO: 0.5s, threshold: 1.0s = 2× SLO)
 
-            RUNBOOK:
-            1. Check current load: rate(ml_requests_total[5m])
-            2. Check resource usage: CPU/memory/GPU utilization
-            3. Check for slow requests: Check P99 latency
-            4. Scale if needed: kubectl scale --replicas=10 deployment/ml-service
-            5. Check downstream dependencies (database, cache, APIs)
-
-      # WARNING: Moderate data drift
       - alert: DataDriftDetected
         expr: ml_data_drift_score > 0.15
         for: 1h
         labels:
           severity: warning
-          model: "{{ $labels.model_name }}"
-          feature: "{{ $labels.feature_name }}"
         annotations:
-          summary: "Data drift detected"
-          description: |
-            Model {{ $labels.model_name }} feature {{ $labels.feature_name }}
-            KS statistic: {{ $value }}
-            (threshold: 0.15 = moderate drift)
+          summary: "Data drift detected on {{ $labels.feature_name }}"
+          description: "KS statistic {{ $value }} above moderate threshold (0.15)"
 
-            RUNBOOK:
-            1. Compare current vs baseline distributions (Grafana dashboard)
-            2. Check recent data source changes
-            3. Review sample inputs for anomalies
-            4. If drift severe (KS > 0.25): Plan retraining
-            5. If accuracy dropping: Expedite retraining
-
-      # WARNING: Concept drift
-      - alert: ConceptDriftDetected
-        expr: ml_concept_drift_psi > 0.2
-        for: 1h
-        labels:
-          severity: warning
-          model: "{{ $labels.model_name }}"
-        annotations:
-          summary: "Concept drift detected"
-          description: |
-            Model {{ $labels.model_name }} PSI: {{ $value }}
-            (threshold: 0.2 = significant shift)
-
-            Model behavior is changing (same inputs → different outputs)
-
-            RUNBOOK:
-            1. Check prediction distribution changes (Grafana)
-            2. Compare with data drift (correlated?)
-            3. Validate accuracy on ground truth samples
-            4. If accuracy < 75%: Retraining required
-            5. Investigate root cause (seasonality, new patterns, etc.)
-
-      # CRITICAL: Low accuracy
       - alert: LowModelAccuracy
         expr: ml_accuracy_by_segment{segment="ground_truth_sample"} < 0.70
         for: 30m
         labels:
           severity: critical
-          model: "{{ $labels.model_name }}"
-        annotations:
-          summary: "Model accuracy below threshold"
-          description: |
-            Model {{ $labels.model_name }} accuracy: {{ $value | humanizePercentage }}
-            (threshold: 70%, baseline: 85%)
-
-            CRITICAL: Model performance severely degraded
-
-            RUNBOOK:
-            1. IMMEDIATE: Increase ground truth sampling rate (validate more)
-            2. Check for data drift (likely root cause)
-            3. Review recent input examples (new patterns?)
-            4. ESCALATE: Notify ML team for emergency retraining
-            5. Consider rollback to previous model version
-
-      # INFO: Increased low confidence predictions
-      - alert: HighLowConfidencePredictions
-        expr: |
-          (
-            rate(ml_low_confidence_predictions[1h])
-            /
-            rate(ml_requests_total[1h])
-          ) > 0.2
-        for: 1h
-        labels:
-          severity: info
-          model: "{{ $labels.model_name }}"
-        annotations:
-          summary: "High rate of low confidence predictions"
-          description: |
-            Model {{ $labels.model_name }} low confidence rate: {{ $value | humanizePercentage }}
-            (threshold: 20%)
-
-            Model is uncertain about many predictions
-
-            RUNBOOK:
-            1. Review low confidence examples (what's different?)
-            2. Check if correlated with drift
-            3. Consider increasing confidence threshold (trade recall for precision)
-            4. Monitor accuracy on low confidence predictions
-            5. May indicate need for retraining or model improvement
 ```
 
-### Alert Grouping (Reduce Noise)
+See Prometheus alerting rule syntax at <https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/>.
+
+### Alert Routing (Alertmanager)
 
 ```yaml
-# AlertManager configuration
 route:
   group_by: ['model_name', 'severity']
-  group_wait: 30s        # Wait 30s before sending first alert (batch correlated)
-  group_interval: 5m     # Send updates every 5 minutes
-  repeat_interval: 4h    # Re-send if not resolved after 4 hours
-
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
   routes:
-    # CRITICAL alerts: Page immediately
-    - match:
-        severity: critical
+    - match: { severity: critical }
       receiver: pagerduty
-      continue: true  # Also send to Slack
-
-    # WARNING alerts: Slack notification
-    - match:
-        severity: warning
+      continue: true
+    - match: { severity: warning }
       receiver: slack_warnings
-
-    # INFO alerts: Log only
-    - match:
-        severity: info
+    - match: { severity: info }
       receiver: slack_info
 
 receivers:
   - name: pagerduty
-    pagerduty_configs:
-      - service_key: <YOUR_PAGERDUTY_KEY>
-        description: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}"
-
+    pagerduty_configs: [{ service_key: <KEY> }]
   - name: slack_warnings
     slack_configs:
-      - api_url: <YOUR_SLACK_WEBHOOK>
+      - api_url: <WEBHOOK>
         channel: '#ml-alerts-warnings'
-        title: "⚠️ ML Warning Alert"
-        text: "{{ range .Alerts }}{{ .Annotations.description }}{{ end }}"
-
-  - name: slack_info
-    slack_configs:
-      - api_url: <YOUR_SLACK_WEBHOOK>
-        channel: '#ml-alerts-info'
-        title: "ℹ️ ML Info Alert"
-        text: "{{ range .Alerts }}{{ .Annotations.description }}{{ end }}"
 ```
+
+Alertmanager docs: <https://prometheus.io/docs/alerting/latest/alertmanager/>. For incident response and on-call rotations: PagerDuty (<https://www.pagerduty.com>), Opsgenie (<https://www.atlassian.com/software/opsgenie>), or open-source **Grafana OnCall** (<https://grafana.com/products/oncall/>).
 
 
 ## Section 6: SLAs and SLOs for ML Systems
 
-### Defining Service Level Objectives (SLOs)
+### Defining Service Level Objectives
 
 ```yaml
-Model SLOs Template:
+Service: <Model Name>     Owner: <Team>     Version: <semver>
 
-Service: [Model Name]
-Version: [Version Number]
-Owner: [Team Name]
-
-1. LATENCY
-   Objective: 95% of requests complete within [X]ms
-   Measurement: P95 latency from Prometheus histogram
-   Target: 95% compliance (monthly)
-   Current: [Track in dashboard]
-
-   Example:
-   - P50 < 100ms
-   - P95 < 500ms
-   - P99 < 1000ms
-
-2. AVAILABILITY
-   Objective: Service uptime > [X]%
-   Measurement: Health check success rate
-   Target: 99.5% uptime (monthly) = 3.6 hours downtime allowed
-   Current: [Track in dashboard]
-
-3. ERROR RATE
-   Objective: < [X]% of requests fail
-   Measurement: (errors / total requests) × 100
-   Target: < 1% error rate
-   Current: [Track in dashboard]
-
-4. MODEL ACCURACY
-   Objective: Accuracy > [X]% on ground truth sample
-   Measurement: Human-labeled sample (10% of traffic)
-   Target: > 85% accuracy (rolling 1000 samples)
-   Current: [Track in dashboard]
-
-5. THROUGHPUT
-   Objective: Support [X] requests/second
-   Measurement: Request rate from Prometheus
-   Target: Handle 1000 req/s without degradation
-   Current: [Track in dashboard]
-
-6. COST
-   Objective: < $[X] per 1000 requests
-   Measurement: Cloud billing / request count
-   Target: < $0.05 per 1000 requests
-   Current: [Track in dashboard]
+LATENCY:       P50 < 100ms, P95 < 500ms, P99 < 1000ms (95% compliance / month)
+AVAILABILITY:  Uptime > 99.5% (≈ 3.6 hours downtime/month allowed)
+ERROR RATE:    < 1% of requests fail
+ACCURACY:      > 85% on ground-truth sample (rolling 1000)
+THROUGHPUT:    Sustain 1000 req/s without degradation
+COST:          < $0.05 per 1000 requests
 ```
 
-### SLO Compliance Dashboard
+Use Google's SRE workbook framing — error budgets, burn rates, multi-window/multi-burn alerts: <https://sre.google/workbook/alerting-on-slos/>.
+
+### SLO Compliance Tracking
 
 ```python
-from prometheus_client import Gauge
-
 SLO_COMPLIANCE_GAUGE = Gauge(
     'ml_slo_compliance_percentage',
     'SLO compliance percentage',
@@ -1030,175 +597,70 @@ class SLOTracker:
     def __init__(self, model_name: str):
         self.model_name = model_name
         self.slos = {
-            "latency_p95": {"target": 0.5, "threshold": 0.95},  # 500ms, 95% compliance
-            "error_rate": {"target": 0.01, "threshold": 0.95},  # 1% errors
-            "accuracy": {"target": 0.85, "threshold": 0.95},    # 85% accuracy
-            "availability": {"target": 0.995, "threshold": 1.0}  # 99.5% uptime
+            "latency_p95": {"target": 0.5,  "compliance": 0.95},
+            "error_rate":  {"target": 0.01, "compliance": 0.95},
+            "accuracy":    {"target": 0.85, "compliance": 0.95},
+            "availability":{"target": 0.995,"compliance": 1.00},
         }
-        self.measurements = {slo: [] for slo in self.slos.keys()}
+        self.measurements = {slo: [] for slo in self.slos}
 
     def record_measurement(self, slo_type: str, value: float):
-        """Record SLO measurement (e.g., latency, error rate)"""
         self.measurements[slo_type].append({
             "value": value,
             "timestamp": time.time(),
-            "compliant": self._is_compliant(slo_type, value)
+            "compliant": self._is_compliant(slo_type, value),
         })
-
-        # Keep last 30 days
-        cutoff = time.time() - (30 * 24 * 3600)
-        self.measurements[slo_type] = [
-            m for m in self.measurements[slo_type]
-            if m["timestamp"] > cutoff
-        ]
-
-        # Update compliance gauge
+        cutoff = time.time() - 30 * 24 * 3600
+        self.measurements[slo_type] = [m for m in self.measurements[slo_type] if m["timestamp"] > cutoff]
         compliance = self.calculate_compliance(slo_type)
-        SLO_COMPLIANCE_GAUGE.labels(
-            model_name=self.model_name,
-            slo_type=slo_type
-        ).set(compliance)
+        SLO_COMPLIANCE_GAUGE.labels(model_name=self.model_name, slo_type=slo_type).set(compliance)
 
     def _is_compliant(self, slo_type: str, value: float) -> bool:
-        """Check if single measurement meets SLO"""
         target = self.slos[slo_type]["target"]
-
-        if slo_type in ["latency_p95", "error_rate"]:
-            return value <= target  # Lower is better
-        else:  # accuracy, availability
-            return value >= target  # Higher is better
+        return value <= target if slo_type in ("latency_p95", "error_rate") else value >= target
 
     def calculate_compliance(self, slo_type: str) -> float:
-        """Calculate SLO compliance percentage"""
         if not self.measurements[slo_type]:
             return 0.0
-
-        compliant_count = sum(
-            1 for m in self.measurements[slo_type]
-            if m["compliant"]
-        )
-
-        return compliant_count / len(self.measurements[slo_type])
-
-    def check_slo_status(self) -> dict:
-        """Check all SLOs and return status"""
-        status = {}
-
-        for slo_type, slo_config in self.slos.items():
-            compliance = self.calculate_compliance(slo_type)
-            threshold = slo_config["threshold"]
-
-            status[slo_type] = {
-                "compliance": compliance,
-                "threshold": threshold,
-                "status": "✓ MEETING SLO" if compliance >= threshold else "✗ VIOLATING SLO"
-            }
-
-        return status
-
-# Usage
-slo_tracker = SLOTracker("sentiment_classifier")
-
-# Record measurements periodically
-slo_tracker.record_measurement("latency_p95", 0.45)  # 450ms (compliant)
-slo_tracker.record_measurement("error_rate", 0.008)  # 0.8% (compliant)
-slo_tracker.record_measurement("accuracy", 0.87)     # 87% (compliant)
-
-# Check overall status
-status = slo_tracker.check_slo_status()
+        return sum(1 for m in self.measurements[slo_type] if m["compliant"]) / len(self.measurements[slo_type])
 ```
 
+For a richer SLO toolchain, see **Sloth** (<https://sloth.dev>) and **Pyrra** (<https://github.com/pyrra-dev/pyrra>) — both generate Prometheus alerts and recording rules from declarative SLO specs.
 
-## Section 7: Monitoring Stack (Prometheus + Grafana)
 
-### Complete Setup Example
+## Section 7: Monitoring Stack (Prometheus + Grafana + OpenTelemetry)
+
+### Reference Stack
 
 ```yaml
 # docker-compose.yml
-
-version: '3'
-
 services:
-  # ML Service
   ml-service:
     build: .
-    ports:
-      - "8000:8000"
-      - "8001:8001"  # Metrics endpoint
-    environment:
-      - MODEL_PATH=/models/sentiment_classifier.pt
-    volumes:
-      - ./models:/models
-
-  # Prometheus (metrics collection)
+    ports: ["8000:8000", "8001:8001"]   # 8001 = /metrics
   prometheus:
     image: prom/prometheus:latest
-    ports:
-      - "9090:9090"
+    ports: ["9090:9090"]
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - ./prometheus_rules.yml:/etc/prometheus/rules.yml
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-
-  # Grafana (visualization)
   grafana:
     image: grafana/grafana:latest
-    ports:
-      - "3000:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./grafana_dashboards:/etc/grafana/provisioning/dashboards
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-
-  # AlertManager (alert routing)
+    ports: ["3000:3000"]
   alertmanager:
     image: prom/alertmanager:latest
-    ports:
-      - "9093:9093"
-    volumes:
-      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
-
-volumes:
-  prometheus_data:
-  grafana_data:
-```
-
-```yaml
-# prometheus.yml
-
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
-
-rule_files:
-  - /etc/prometheus/rules.yml
-
-alerting:
-  alertmanagers:
-    - static_configs:
-        - targets: ['alertmanager:9093']
-
-scrape_configs:
-  - job_name: 'ml-service'
-    static_configs:
-      - targets: ['ml-service:8001']  # Metrics endpoint
-    metrics_path: /metrics
+    ports: ["9093:9093"]
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otelcol/config.yaml"]
 ```
 
 ```python
-# ML Service with Prometheus metrics
-
+# Minimal FastAPI service exposing /metrics
 from fastapi import FastAPI
-from prometheus_client import make_asgi_app, Counter, Histogram
-import uvicorn
+from prometheus_client import Counter, Histogram, make_asgi_app
 
 app = FastAPI()
-
-# Metrics
 REQUEST_COUNT = Counter('ml_requests_total', 'Total requests', ['endpoint'])
 REQUEST_LATENCY = Histogram('ml_latency_seconds', 'Request latency', ['endpoint'])
 
@@ -1206,207 +668,251 @@ REQUEST_LATENCY = Histogram('ml_latency_seconds', 'Request latency', ['endpoint'
 @REQUEST_LATENCY.labels(endpoint="/predict").time()
 def predict(text: str):
     REQUEST_COUNT.labels(endpoint="/predict").inc()
-    result = model.predict(text)
-    return {"prediction": result}
+    return {"prediction": model.predict(text)}
 
-# Mount Prometheus metrics endpoint
-metrics_app = make_asgi_app()
-app.mount("/metrics", metrics_app)
-
-if __name__ == "__main__":
-    # Main service on port 8000
-    # Metrics on port 8001
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+app.mount("/metrics", make_asgi_app())
 ```
 
+**OpenTelemetry** (<https://opentelemetry.io>) is the vendor-neutral standard for traces, metrics, and logs. The OpenTelemetry Collector exports to Prometheus, Tempo, Loki, Datadog, Honeycomb, etc., via a single config — instrument once, switch back-ends without code changes.
 
-## Section 8: Complete Example (End-to-End)
+
+## Section 8: LLM Observability
+
+LLM applications (chat assistants, RAG systems, agents) generate signals that traditional ML monitoring stacks don't capture: per-token cost, streaming latency, hallucination rates, prompt-injection attempts, tool-call success, retrieval relevance. This section covers the LLM-observability ecosystem and the new metrics it surfaces.
+
+Cross-references: see `yzmir-llm-specialist/llm-evaluation-metrics.md` for the offline eval methodology that production monitoring runs continuously, and `yzmir-llm-specialist/llm-safety-alignment.md` for production safety signals (refusals, jailbreak attempts, policy violations).
+
+### What's Different About LLM Monitoring
+
+| Traditional ML | LLM Application |
+|----|----|
+| Single inference call | Multi-turn conversation, tool calls, retrieval steps |
+| Per-request latency | Time-to-first-token (TTFT) + tokens/sec streaming |
+| Error rate | Refusal rate, hallucination rate, format violations |
+| Predictions in fixed schema | Free-form text (needs eval-as-judge to score) |
+| Cost = compute time | Cost = input_tokens × $/M + output_tokens × $/M |
+| Drift = feature distribution | Drift = prompt distribution, retrieval relevance, tool-call mix |
+| Adversarial input rare | Prompt injection, jailbreaks are constant background traffic |
+
+### Core LLM Signals to Track
+
+**Cost and usage:**
+- Input/output tokens per request, per user, per feature, per provider tier
+- Cost per request (computed from provider price sheet for the model tier in use)
+- Cost per active user, per conversation, per resolved task
+- Cache-hit rate (for prompt caching — see `yzmir-llm-specialist/context-engineering-and-prompt-caching.md`)
+
+**Latency:**
+- Time-to-first-token (TTFT) — user-perceived "is it working?" latency
+- Tokens-per-second during streaming
+- End-to-end latency including all tool calls and retrieval hops
+- Queue/throttle wait time at provider rate limits
+
+**Quality:**
+- LLM-as-judge scores on sampled production traffic (cross-ref `llm-evaluation-metrics.md`)
+- Hallucination/groundedness rate for RAG (citations resolve, claims supported by retrieved docs)
+- Refusal rate (legitimate refusals vs over-refusals)
+- Format/schema compliance (JSON validity, function-call argument validity)
+- Tool-call success rate and tool-error taxonomy
+- Retrieval metrics: recall@k, MRR, hit-rate on labeled query sets
+
+**Safety:**
+- Detected prompt-injection attempts (cross-ref `llm-safety-alignment.md`)
+- Policy-violation detections (PII, toxicity, off-topic)
+- Jailbreak success rate (system-prompt leakage, persona override)
+
+### Tooling Landscape
+
+**Open-source / self-hostable:**
+
+- **Arize Phoenix** — open-source LLM tracing, evaluation, and experiment tracking with OpenTelemetry-native traces. Notebooks-first DX, runs locally or self-hosted. Docs: <https://docs.arize.com/phoenix>. Repo: <https://github.com/Arize-ai/phoenix>.
+- **Langfuse** — open-source LLM observability + prompt versioning + dataset/eval management; SDKs for Python and JS, self-host via Docker or use Langfuse Cloud. <https://langfuse.com> and <https://langfuse.com/docs>.
+- **Helicone** — proxy-based observability (point your OpenAI-compatible client at Helicone's endpoint and it logs every request) with caching, retries, and per-user cost tracking. Open-source core, also offered as cloud. <https://helicone.ai> and <https://docs.helicone.ai>.
+- **OpenLLMetry** (Traceloop) — OpenTelemetry-native instrumentation library that emits LLM-call spans following the GenAI semantic conventions. <https://www.traceloop.com/openllmetry>.
+- **Opik** (Comet) — open-source LLM-evaluation and tracing tool, complements Comet's broader experiment tracking. <https://www.comet.com/site/products/opik/> and <https://github.com/comet-ml/opik>.
+- **DeepEval** — open-source LLM eval library with metrics like answer-relevance, faithfulness, contextual-precision; integrates with CI. <https://docs.confident-ai.com>.
+
+**Commercial / managed:**
+
+- **Arize AI** — enterprise platform combining traditional ML monitoring with LLM observability; ships Phoenix as the OSS path. <https://arize.com>.
+- **WhyLabs** — drift, data-quality, and LLM observability built on the open-source `whylogs` profiler. <https://whylabs.ai> and <https://whylogs.readthedocs.io>.
+- **Fiddler AI** — model monitoring, explainability, and LLM observability with built-in safety/hallucination metrics. <https://www.fiddler.ai>.
+- **Aporia** — ML and LLM observability with guardrails (PII, prompt-injection, hallucination detection inline). <https://www.aporia.com>.
+- **Datadog LLM Observability** — LLM tracing and evaluation as a module within Datadog APM. <https://docs.datadoghq.com/llm_observability/>.
+- **New Relic AI Monitoring** — APM-integrated LLM observability. <https://newrelic.com/platform/ai-monitoring>.
+- **Comet MPM (Model Production Monitoring)** — drift, quality, and integrity for ML and LLM models, integrates with Comet Experiments. <https://www.comet.com/site/products/model-production-monitoring/>.
+- **Deepchecks Monitoring** — continuous testing and monitoring for ML and LLM systems. <https://www.deepchecks.com/llm-evaluation-monitoring/>.
+- **Galileo** — LLM evaluation, observability, and guardrails with proprietary "Luna" eval models. <https://www.galileo.ai>.
+- **Braintrust** — LLM evals + tracing + prompt playground. <https://www.braintrust.dev>.
+- **LangSmith** (LangChain) — tracing, eval, and prompt management; deepest integration with LangChain/LangGraph but works with any LLM provider via SDK. <https://docs.smith.langchain.com>.
+
+### OpenTelemetry GenAI Semantic Conventions
+
+OpenTelemetry has emerging — and still evolving — semantic conventions for GenAI spans and metrics. Following them lets one instrumentation library export to any OTel-compatible back-end (Phoenix, Langfuse, Datadog, Grafana Tempo, Honeycomb, etc.). See the live spec at <https://opentelemetry.io/docs/specs/semconv/gen-ai/> and the metrics conventions at <https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-metrics/>.
+
+Stable-ish span attributes (still subject to change — pin OTel SDK versions and re-check quarterly):
+
+- `gen_ai.system` (e.g. `"openai"`, `"anthropic"`, `"vertex_ai"`)
+- `gen_ai.request.model`, `gen_ai.response.model`
+- `gen_ai.request.temperature`, `gen_ai.request.top_p`, `gen_ai.request.max_tokens`
+- `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`
+- `gen_ai.response.finish_reasons`
+- Operation events: `gen_ai.user.message`, `gen_ai.assistant.message`, `gen_ai.tool.message`, `gen_ai.choice`
+
+Standard metric instruments include `gen_ai.client.token.usage` (histogram) and `gen_ai.client.operation.duration` (histogram). The benefit: a single OTel-instrumented service emits traces consumable by Phoenix, metrics scrapeable by Prometheus, and logs shippable to Loki — with no per-back-end glue.
+
+### Worked Example: LLM Service With Phoenix + Prometheus
 
 ```python
-# complete_monitoring.py
-# Complete production monitoring for sentiment classifier
+# requirements: arize-phoenix, openinference-instrumentation-openai,
+#               opentelemetry-sdk, prometheus_client, fastapi
+import phoenix as px
+from openinference.instrumentation.openai import OpenAIInstrumentor
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from prometheus_client import Counter, Histogram, make_asgi_app
+from fastapi import FastAPI
 
+# 1) Start (or connect to) Phoenix collector — it speaks OTLP.
+session = px.launch_app()  # or run as a separate service
+tracer_provider = TracerProvider()
+tracer_provider.add_span_processor(
+    BatchSpanProcessor(OTLPSpanExporter(endpoint=session.url + "/v1/traces"))
+)
+trace.set_tracer_provider(tracer_provider)
+
+# 2) Auto-instrument your LLM client (here: OpenAI-compatible).
+OpenAIInstrumentor().instrument()
+
+# 3) Add LLM-specific Prometheus metrics alongside RED metrics.
+TOKENS_INPUT  = Counter('llm_input_tokens_total',  'Input tokens',  ['model_tier', 'feature'])
+TOKENS_OUTPUT = Counter('llm_output_tokens_total', 'Output tokens', ['model_tier', 'feature'])
+COST_USD      = Counter('llm_cost_usd_total',      'Estimated USD cost', ['model_tier', 'feature'])
+TTFT          = Histogram('llm_time_to_first_token_seconds', 'TTFT', ['model_tier', 'feature'],
+                          buckets=[0.1, 0.25, 0.5, 1, 2, 5, 10])
+TOOL_CALLS    = Counter('llm_tool_calls_total', 'Tool invocations', ['tool', 'status'])
+JUDGE_SCORE   = Histogram('llm_judge_score', 'LLM-as-judge score (0-1)',
+                          ['feature', 'metric'], buckets=[0.1*i for i in range(11)])
+INJECTION_DETECTED = Counter('llm_prompt_injection_detected_total',
+                             'Detected prompt-injection attempts', ['feature'])
+
+app = FastAPI()
+app.mount("/metrics", make_asgi_app())
+```
+
+Key practices:
+
+- **Sample, don't store everything.** Full prompt/response traces are expensive at scale; sample 5–20% for traces, log aggregates always. Phoenix and Langfuse both support sampling.
+- **Redact PII before exporting.** Use the OTel collector's `attributes` and `redaction` processors, or your observability provider's PII-scrubbing config.
+- **Run eval continuously, not just in CI.** Score a sampled slice of production traffic with an LLM-as-judge model and emit those scores to Prometheus / your observability tool. See `yzmir-llm-specialist/llm-evaluation-metrics.md` for judge-prompt design and metric definitions.
+- **Track tool-call taxonomy.** For agent systems, the most common failure mode is tool-call malformation or unrecoverable tool errors — instrument every tool invocation with `{tool, status, latency, error_type}`.
+
+### LLM Alert Rules
+
+```yaml
+groups:
+  - name: llm_alerts
+    rules:
+      - alert: LLMCostBurnHigh
+        expr: rate(llm_cost_usd_total[1h]) > 50  # $/hour
+        for: 15m
+        labels: { severity: warning }
+      - alert: LLMTimeToFirstTokenHigh
+        expr: histogram_quantile(0.95, rate(llm_time_to_first_token_seconds_bucket[5m])) > 3
+        for: 10m
+        labels: { severity: warning }
+      - alert: LLMJudgeScoreDropped
+        expr: avg_over_time(llm_judge_score{metric="faithfulness"}[1h]) < 0.7
+        for: 30m
+        labels: { severity: critical }
+      - alert: LLMInjectionAttemptsSpiking
+        expr: rate(llm_prompt_injection_detected_total[15m]) > 5 * rate(llm_prompt_injection_detected_total[24h] offset 1d)
+        for: 15m
+        labels: { severity: warning }
+      - alert: ToolCallSuccessRateLow
+        expr: |
+          sum(rate(llm_tool_calls_total{status="success"}[5m])) by (tool)
+          / sum(rate(llm_tool_calls_total[5m])) by (tool) < 0.9
+        for: 15m
+        labels: { severity: warning }
+```
+
+### LLM Monitoring Selection Matrix
+
+| Need | Recommended path |
+|----|----|
+| OSS, OTel-native, notebooks-first | Arize Phoenix + OpenLLMetry |
+| OSS with prompt versioning + datasets | Langfuse (self-hosted) |
+| Lowest-friction proxy / cost dashboard | Helicone |
+| Already on Datadog / New Relic | Their LLM module — single pane with APM |
+| Enterprise with safety/hallucination guardrails | Fiddler, Aporia, Galileo |
+| Deep LangChain/LangGraph users | LangSmith |
+| Multi-tenant SaaS, per-user cost attribution | Helicone or Langfuse with user-id tagging |
+| Need eval-as-CI gate alongside production tracing | Braintrust, Opik, DeepEval |
+
+The pattern that ages best: **instrument with OpenTelemetry (GenAI semconv) + a thin vendor-specific instrumentation library (OpenInference, OpenLLMetry, Langfuse SDK)**. The trace data then flows to whichever back-end you choose now and can be redirected later without code changes.
+
+
+## Section 9: Complete Example (End-to-End)
+
+```python
+# complete_monitoring.py — RED + model-quality + drift + LLM signals
 from fastapi import FastAPI, HTTPException
 from prometheus_client import Counter, Histogram, Gauge, make_asgi_app
-from scipy.stats import ks_2samp
-import numpy as np
 import time
-from typing import Optional
 
 app = FastAPI()
 
-# === 1. PERFORMANCE METRICS (RED) ===
+# RED
+REQUEST_COUNT = Counter('ml_requests_total', 'Requests', ['endpoint', 'model_version'])
+ERROR_COUNT   = Counter('ml_errors_total',   'Errors',   ['error_type'])
+LATENCY       = Histogram('ml_latency_seconds', 'Latency', ['endpoint'],
+                          buckets=[0.01, 0.05, 0.1, 0.5, 1.0, 2.0])
 
-REQUEST_COUNT = Counter(
-    'sentiment_requests_total',
-    'Total sentiment analysis requests',
-    ['endpoint', 'model_version']
-)
+# Model quality
+PRED_BY_CLASS = Counter('ml_predictions_by_class', 'Predictions', ['class'])
+CONFIDENCE    = Histogram('ml_prediction_confidence', 'Confidence',
+                          buckets=[i/10 for i in range(11)])
+ACCURACY      = Gauge('ml_accuracy_ground_truth', 'Sampled accuracy')
 
-ERROR_COUNT = Counter(
-    'sentiment_errors_total',
-    'Total errors',
-    ['error_type']
-)
+# Drift
+DRIFT_KS = Gauge('ml_data_drift_ks',     'KS per feature', ['feature'])
+DRIFT_PSI = Gauge('ml_concept_drift_psi','PSI on predictions')
 
-REQUEST_LATENCY = Histogram(
-    'sentiment_latency_seconds',
-    'Request latency',
-    ['endpoint'],
-    buckets=[0.01, 0.05, 0.1, 0.5, 1.0, 2.0]
-)
-
-# === 2. MODEL QUALITY METRICS ===
-
-PREDICTION_COUNT = Counter(
-    'sentiment_predictions_by_class',
-    'Predictions by sentiment class',
-    ['predicted_class']
-)
-
-CONFIDENCE_HISTOGRAM = Histogram(
-    'sentiment_confidence',
-    'Prediction confidence scores',
-    buckets=[0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-)
-
-ACCURACY_GAUGE = Gauge(
-    'sentiment_accuracy_ground_truth',
-    'Accuracy on ground truth sample'
-)
-
-# === 3. DRIFT DETECTION ===
-
-DRIFT_SCORE_GAUGE = Gauge(
-    'sentiment_data_drift_ks',
-    'KS statistic for data drift',
-    ['feature']
-)
-
-PSI_GAUGE = Gauge(
-    'sentiment_concept_drift_psi',
-    'PSI for concept drift'
-)
-
-# === Initialize Monitoring Components ===
-
-class SentimentMonitor:
-    def __init__(self):
-        # Reference data (from training)
-        self.reference_text_lengths = np.random.normal(100, 30, 10000)
-
-        # Drift detection
-        self.current_text_lengths = []
-        self.current_predictions = []
-        self.baseline_prediction_dist = None
-
-        # Ground truth tracking
-        self.predictions = {}
-        self.ground_truths = []
-
-        # SLO tracking
-        self.slo_measurements = []
-
-    def track_request(self, text: str, prediction: dict, latency: float):
-        """Track all metrics for a request"""
-        # 1. Performance metrics
-        REQUEST_COUNT.labels(
-            endpoint="/predict",
-            model_version="v1.0"
-        ).inc()
-
-        REQUEST_LATENCY.labels(endpoint="/predict").observe(latency)
-
-        # 2. Model quality
-        PREDICTION_COUNT.labels(
-            predicted_class=prediction["label"]
-        ).inc()
-
-        CONFIDENCE_HISTOGRAM.observe(prediction["confidence"])
-
-        # 3. Drift detection
-        self.current_text_lengths.append(len(text))
-        self.current_predictions.append(prediction["confidence"])
-
-        # Check drift every 1000 samples
-        if len(self.current_text_lengths) >= 1000:
-            self.check_data_drift()
-            self.check_concept_drift()
-            self.current_text_lengths = []
-            self.current_predictions = []
-
-        # 4. SLO tracking
-        self.slo_measurements.append({
-            "latency": latency,
-            "timestamp": time.time()
-        })
-
-monitor = SentimentMonitor()
-
-# === Endpoints ===
+# LLM (only emit when serving an LLM endpoint)
+LLM_TOKENS_OUT = Counter('llm_output_tokens_total', 'Output tokens', ['model_tier'])
+LLM_COST       = Counter('llm_cost_usd_total',       'Cost USD',     ['model_tier'])
+LLM_TTFT       = Histogram('llm_time_to_first_token_seconds', 'TTFT')
 
 @app.post("/predict")
 def predict(text: str):
-    start_time = time.time()
-
+    start = time.time()
     try:
-        # Dummy model prediction
-        result = {
-            "label": "positive",
-            "confidence": 0.92
-        }
-
-        latency = time.time() - start_time
-
-        # Track metrics
-        monitor.track_request(text, result, latency)
-
-        return {
-            "prediction": result["label"],
-            "confidence": result["confidence"],
-            "latency_ms": latency * 1000
-        }
-
+        result = {"label": "positive", "confidence": 0.92}
+        LATENCY.labels(endpoint="/predict").observe(time.time() - start)
+        REQUEST_COUNT.labels(endpoint="/predict", model_version="v1.0").inc()
+        PRED_BY_CLASS.labels(class=result["label"]).inc()
+        CONFIDENCE.observe(result["confidence"])
+        return result
     except Exception as e:
         ERROR_COUNT.labels(error_type=type(e).__name__).inc()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(500, str(e))
 
-@app.post("/feedback")
-def feedback(request_id: str, true_label: str):
-    """Collect ground truth labels"""
-    monitor.ground_truths.append({
-        "request_id": request_id,
-        "true_label": true_label,
-        "timestamp": time.time()
-    })
-
-    # Calculate accuracy on last 100 samples
-    if len(monitor.ground_truths) >= 100:
-        recent = monitor.ground_truths[-100:]
-        # Calculate accuracy (simplified)
-        accuracy = 0.87  # Placeholder
-        ACCURACY_GAUGE.set(accuracy)
-
-    return {"status": "recorded"}
-
-# Mount Prometheus metrics
-metrics_app = make_asgi_app()
-app.mount("/metrics", metrics_app)
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+app.mount("/metrics", make_asgi_app())
 ```
 
 
 ## Key Takeaways
 
-1. **Monitoring is mandatory** - Instrument before deployment
-2. **RED metrics first** - Rate, Errors, Duration for every service
-3. **Model quality matters** - Track predictions, confidence, accuracy
-4. **Drift detection prevents degradation** - KS test + PSI
-5. **Actionable alerts only** - Severity-based, with runbooks
-6. **SLOs define success** - Quantitative targets guide optimization
-7. **Dashboard = single pane of glass** - Healthy or not in 5 seconds
+1. **Monitoring is mandatory** — instrument before deployment, not after the first incident.
+2. **RED metrics first** — Rate, Errors, Duration for every service.
+3. **Model quality is its own pillar** — predictions, confidence, ground-truth-sampled accuracy.
+4. **Drift detection prevents silent degradation** — KS / PSI / KL plus a library like Evidently or NannyML.
+5. **Actionable alerts only** — severity tiers, runbook links, multi-burn-rate SLO alerts.
+6. **SLOs define success quantitatively** — error budgets steer engineering priorities.
+7. **LLM applications need a parallel observability layer** — TTFT, tokens, cost, judge scores, tool-call success, injection attempts; OpenTelemetry GenAI conventions are the durable substrate.
+8. **Cross-pack integration**: production monitoring is where `llm-evaluation-metrics.md` (offline eval methodology) and `llm-safety-alignment.md` (safety signals) become continuous, not point-in-time.
 
-**This skill prevents all 5 RED failures by providing systematic monitoring, alerting, and observability for production ML systems.**
+Tooling and APIs current as of 2026-05; revisit quarterly.

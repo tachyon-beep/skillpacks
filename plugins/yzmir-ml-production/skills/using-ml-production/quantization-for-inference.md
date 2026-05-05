@@ -26,6 +26,8 @@ Use this skill when you observe these symptoms:
 - Prototyping phase where optimization is premature
 - Model so small that quantization overhead not worth it (e.g., <5MB)
 
+**For LLM-specific generation-quality tradeoffs (perplexity vs. format choice, KV-cache quantization, speculative decoding):** see `yzmir-llm-specialist/llm-inference-optimization.md`. This sheet owns the quantization mechanics and cross-modality coverage; the LLM specialist sheet owns generation-quality decisions.
+
 ## Core Principle
 
 **Quantization trades precision for performance.**
@@ -38,6 +40,15 @@ Quantization converts high-precision numbers (FP32: 32 bits) to low-precision in
 **Formula:** Lower precision (FP32 → INT8 → INT4) = Smaller size + Faster inference + More accuracy loss
 
 The skill is choosing the **right precision for your accuracy tolerance**.
+
+## PyTorch namespace note
+
+PyTorch 2.x has consolidated quantization under `torch.ao.quantization`. The legacy `torch.quantization` module forwards to `torch.ao.quantization` and is deprecated for new code. There are two recommended paths:
+
+- **Eager-mode quantization** under `torch.ao.quantization` — the dynamic / static / QAT flow shown in Parts 1–3 below. This is the path you use for models that already work in eager mode and that you want to quantize without a graph capture.
+- **PT2E (PyTorch 2 Export) quantization** — the graph-based path using `torch.export.export()` + `prepare_pt2e()` + `convert_pt2e()` from `torch.ao.quantization.quantize_pt2e`. This is the recommended path for new work that targets `torch.compile` / Inductor or specific hardware backends (X86Inductor, XNNPACK, executorch). See Part 5b. ([PyTorch quantization docs](https://docs.pytorch.org/docs/main/quantization.html), [PT2E tutorial](https://docs.pytorch.org/ao/stable/pt2e_quantization/index.html))
+
+Throughout this sheet imports use `torch.ao.quantization`. If you see `torch.quantization` in older code it still works as an alias, but migrate it.
 
 ## Quantization Framework
 
@@ -86,20 +97,20 @@ The skill is choosing the **right precision for your accuracy tolerance**.
 - Quick experiment to see if quantization helps
 
 **Benefits:**
-- ✅ 4× size reduction (weights are 75% of model size)
-- ✅ 1.2-1.5× CPU speedup (modest, because activations still FP32)
-- ✅ Minimal accuracy loss (~0.2-0.5%)
-- ✅ No calibration data needed
+- 4× size reduction (weights are 75% of model size)
+- 1.2-1.5× CPU speedup (modest, because activations still FP32)
+- Minimal accuracy loss (~0.2-0.5%)
+- No calibration data needed
 
 **Limitations:**
-- ⚠️ Limited CPU speedup (activations still FP32)
-- ⚠️ Not optimal for edge devices needing maximum performance
+- Limited CPU speedup (activations still FP32)
+- Not optimal for edge devices needing maximum performance
 
 **PyTorch implementation:**
 
 ```python
 import torch
-import torch.quantization
+import torch.ao.quantization as tq
 
 # WHY: Dynamic quantization is simplest - just one function call
 # No calibration data needed because activations stay FP32
@@ -108,16 +119,17 @@ model.eval()  # WHY: Must be in eval mode (no batchnorm updates)
 
 # WHY: Specify which layers to quantize (Linear, LSTM, etc.)
 # These layers benefit most from quantization
-quantized_model = torch.quantization.quantize_dynamic(
+quantized_model = tq.quantize_dynamic(
     model,
     qconfig_spec={torch.nn.Linear},  # WHY: Quantize Linear layers only
-    dtype=torch.qint8  # WHY: INT8 is standard precision
+    dtype=torch.qint8                # WHY: INT8 is standard precision
 )
 
 # Save quantized model
 torch.save(quantized_model.state_dict(), 'model_quantized_dynamic.pth')
 
 # Verify size reduction
+import os
 original_size = os.path.getsize('model.pth') / (1024 ** 2)  # MB
 quantized_size = os.path.getsize('model_quantized_dynamic.pth') / (1024 ** 2)
 print(f"Original: {original_size:.1f}MB → Quantized: {quantized_size:.1f}MB")
@@ -138,20 +150,20 @@ print(f"Size reduction: {original_size / quantized_size:.1f}×")
 - Primary goal is inference speed
 
 **Benefits:**
-- ✅ 4× size reduction (same as dynamic)
-- ✅ 2-4× CPU speedup (both weights and activations INT8)
-- ✅ No retraining required (post-training)
-- ✅ Acceptable accuracy loss (~0.5-1%)
+- 4× size reduction (same as dynamic)
+- 2-4× CPU speedup (both weights and activations INT8)
+- No retraining required (post-training)
+- Acceptable accuracy loss (~0.5-1%)
 
 **Requirements:**
-- ⚠️ Needs calibration data (100-1000 samples from validation set)
-- ⚠️ Slightly more complex setup than dynamic
+- Needs calibration data (100-1000 samples from validation set)
+- Slightly more complex setup than dynamic
 
-**PyTorch implementation:**
+**PyTorch implementation (eager-mode static quantization):**
 
 ```python
 import torch
-import torch.quantization
+import torch.ao.quantization as tq
 
 def calibrate_model(model, calibration_loader):
     """
@@ -159,10 +171,6 @@ def calibrate_model(model, calibration_loader):
 
     WHY: Static quantization needs to know activation ranges.
     Calibration finds min/max values for each activation layer.
-
-    Args:
-        model: Model in eval mode with quantization stubs
-        calibration_loader: DataLoader with 100-1000 samples
     """
     model.eval()
     with torch.no_grad():
@@ -178,8 +186,10 @@ model.eval()
 
 # WHY: Insert quantization/dequantization stubs at boundaries
 # This tells PyTorch where to convert between FP32 and INT8
-model.qconfig = torch.quantization.get_default_qconfig('fbgemm')
-torch.quantization.prepare(model, inplace=True)
+model.qconfig = tq.get_default_qconfig('x86')  # WHY: 'x86' is the modern
+                                               # backend alias (replaces
+                                               # 'fbgemm' from PyTorch 2.x)
+tq.prepare(model, inplace=True)
 
 # Step 2: Calibrate with representative data
 # WHY: Must use data from training/validation set, not random data
@@ -197,7 +207,7 @@ calibration_loader = torch.utils.data.DataLoader(
 model = calibrate_model(model, calibration_loader)
 
 # Step 3: Convert to quantized model
-torch.quantization.convert(model, inplace=True)
+tq.convert(model, inplace=True)
 
 # Save quantized model
 torch.save(model.state_dict(), 'model_quantized_static.pth')
@@ -208,8 +218,7 @@ import time
 def benchmark(model, data, num_iterations=100):
     """WHY: Warm up model first, then measure average latency."""
     model.eval()
-    # Warm up (first few iterations slower)
-    for _ in range(10):
+    for _ in range(10):  # warm up
         model(data)
 
     start = time.time()
@@ -219,11 +228,9 @@ def benchmark(model, data, num_iterations=100):
     end = time.time()
     return (end - start) / num_iterations * 1000  # ms per inference
 
-test_data = torch.randn(1, 3, 224, 224)  # Example input
-
+test_data = torch.randn(1, 3, 224, 224)
 baseline_latency = benchmark(original_model, test_data)
 quantized_latency = benchmark(model, test_data)
-
 print(f"Baseline: {baseline_latency:.2f}ms")
 print(f"Quantized: {quantized_latency:.2f}ms")
 print(f"Speedup: {baseline_latency / quantized_latency:.2f}×")
@@ -243,20 +250,20 @@ print(f"Speedup: {baseline_latency / quantized_latency:.2f}×")
 - Critical production system with strict accuracy requirements
 
 **Benefits:**
-- ✅ Best accuracy (~0.1-0.3% loss vs 0.5-1% for static)
-- ✅ 4× size reduction (same as dynamic/static)
-- ✅ 2-4× CPU speedup (same as static)
+- Best accuracy (~0.1-0.3% loss vs 0.5-1% for static)
+- 4× size reduction (same as dynamic/static)
+- 2-4× CPU speedup (same as static)
 
 **Limitations:**
-- ⚠️ Requires retraining (most expensive option)
-- ⚠️ Takes hours to days depending on model size
-- ⚠️ More complex implementation
+- Requires retraining (most expensive option)
+- Takes hours to days depending on model size
+- More complex implementation
 
 **PyTorch implementation:**
 
 ```python
 import torch
-import torch.quantization
+import torch.ao.quantization as tq
 
 def train_one_epoch_qat(model, train_loader, optimizer, criterion):
     """
@@ -280,12 +287,12 @@ model.train()
 
 # WHY: QAT config includes fake quantization ops
 # These simulate quantization during forward pass
-model.qconfig = torch.quantization.get_default_qat_qconfig('fbgemm')
-torch.quantization.prepare_qat(model, inplace=True)
+model.qconfig = tq.get_default_qat_qconfig('x86')
+tq.prepare_qat(model, inplace=True)
 
 # Step 2: Train with quantization-aware training
 # WHY: Model learns to compensate for quantization errors
-optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)  # WHY: Low LR for fine-tuning
+optimizer = torch.optim.SGD(model.parameters(), lr=0.0001)  # low LR for fine-tuning
 criterion = torch.nn.CrossEntropyLoss()
 
 num_epochs = 5  # WHY: Usually 5-10 epochs sufficient for QAT fine-tuning
@@ -295,9 +302,8 @@ for epoch in range(num_epochs):
 
 # Step 3: Convert to quantized model
 model.eval()
-torch.quantization.convert(model, inplace=True)
+tq.convert(model, inplace=True)
 
-# Save QAT quantized model
 torch.save(model.state_dict(), 'model_quantized_qat.pth')
 ```
 
@@ -309,12 +315,13 @@ torch.save(model.state_dict(), 'model_quantized_qat.pth')
 | Type | Complexity | Calibration | Retraining | Size Reduction | CPU Speedup | Accuracy Loss |
 |------|-----------|-------------|------------|----------------|-------------|---------------|
 | **Dynamic** | Low | No | No | 4× | 1.2-1.5× | ~0.2-0.5% |
-| **Static** | Medium | Yes | No | 4× | 2-4× | ~0.5-1% |
+| **Static (eager)** | Medium | Yes | No | 4× | 2-4× | ~0.5-1% |
+| **Static (PT2E export)** | Medium | Yes | No | 4× | 2-4× (Inductor backend) | ~0.5-1% |
 | **QAT** | High | Yes | Yes | 4× | 2-4× | ~0.1-0.3% |
 
 **Decision flow:**
 1. Start with **dynamic quantization**: Simplest, verify quantization helps
-2. Upgrade to **static quantization**: If need more speedup, can afford calibration
+2. Upgrade to **static quantization**: If need more speedup, can afford calibration. Use eager-mode for legacy models, PT2E for new work targeting Inductor / specific backends.
 3. Use **QAT**: Only if accuracy loss from static too large (rare)
 
 **Why this order?** Incremental cost. Dynamic is free (5 minutes), static is cheap (15 minutes), QAT is expensive (hours/days). Don't pay for QAT unless you need it.
@@ -336,10 +343,10 @@ torch.save(model.state_dict(), 'model_quantized_qat.pth')
 ### Calibration Data Requirements
 
 **Data source:**
-- ✅ **Use validation set samples** (matches training distribution)
-- ❌ Don't use random images from internet (different distribution)
-- ❌ Don't use single image repeated (insufficient coverage)
-- ❌ Don't use training set that doesn't match deployment (distribution shift)
+- Use validation set samples (matches training distribution)
+- Don't use random images from internet (different distribution)
+- Don't use single image repeated (insufficient coverage)
+- Don't use training set that doesn't match deployment (distribution shift)
 
 **Data size:**
 - **Minimum:** 100 samples (sufficient for simple models)
@@ -364,22 +371,10 @@ def select_calibration_data(val_dataset, num_samples=1000):
 
     WHY: Want samples that cover range of activation values.
     Random selection from validation set usually sufficient.
-
-    Args:
-        val_dataset: Full validation dataset
-        num_samples: Number of calibration samples (default 1000)
-
-    Returns:
-        Calibration dataset subset
     """
-    # WHY: Random selection ensures diversity
-    # Stratified sampling can help ensure class coverage
     indices = np.random.choice(len(val_dataset), num_samples, replace=False)
-    calibration_dataset = torch.utils.data.Subset(val_dataset, indices)
+    return torch.utils.data.Subset(val_dataset, indices)
 
-    return calibration_dataset
-
-# Example: Select 1000 random samples from validation set
 calibration_dataset = select_calibration_data(val_dataset, num_samples=1000)
 calibration_loader = torch.utils.data.DataLoader(
     calibration_dataset,
@@ -391,78 +386,72 @@ calibration_loader = torch.utils.data.DataLoader(
 ### Common Calibration Pitfalls
 
 **Pitfall 1: Using wrong data distribution**
-- ❌ "Random images from internet" for ImageNet-trained model
-- ✅ Use ImageNet validation set samples
+- Wrong: "Random images from internet" for ImageNet-trained model
+- Right: Use ImageNet validation set samples
 
 **Pitfall 2: Too few samples**
-- ❌ 10 samples (insufficient coverage of activation ranges)
-- ✅ 100-1000 samples (good coverage)
+- Wrong: 10 samples (insufficient coverage of activation ranges)
+- Right: 100-1000 samples (good coverage)
 
 **Pitfall 3: Using training data that doesn't match deployment**
-- ❌ Calibrate on sunny outdoor images, deploy on indoor images
-- ✅ Calibrate on data matching deployment distribution
+- Wrong: Calibrate on sunny outdoor images, deploy on indoor images
+- Right: Calibrate on data matching deployment distribution
 
 **Pitfall 4: Skipping calibration validation**
-- ❌ Calibrate once, assume it works
-- ✅ Validate accuracy after calibration to verify ranges are good
+- Wrong: Calibrate once, assume it works
+- Right: Validate accuracy after calibration to verify ranges are good
 
 
-## Part 4: Precision Selection (INT8 vs INT4 vs FP16)
+## Part 4: Precision Selection (INT8 vs INT4 vs FP16 vs FP8)
 
 ### Precision Spectrum
 
 | Precision | Bits | Size vs FP32 | Speedup (CPU) | Typical Accuracy Loss |
 |-----------|------|--------------|---------------|----------------------|
 | **FP32** | 32 | 1× | 1× | 0% (baseline) |
-| **FP16** | 16 | 2× | 1.5× | <0.1% |
+| **BF16/FP16** | 16 | 2× | 1.5× | <0.1% |
+| **FP8 (E4M3/E5M2)** | 8 | 4× | 2-3× (on Hopper/Ada/Blackwell) | ~0.1-0.5% |
 | **INT8** | 8 | 4× | 2-4× | 0.5-1% |
-| **INT4** | 4 | 8× | 4-8× | 1-3% |
+| **MXFP6** | 6 + scale | ~5× | hardware-dependent (Blackwell native) | task-dependent |
+| **INT4 / MXFP4 / NF4** | 4 + scale | 8× | 4-8× | 1-3% |
+| **2-3 bit (AQLM, etc.)** | 2-3 + scale | 10-16× | hardware-limited | 2-5% |
 
 **Trade-off:** Lower precision = Smaller size + Faster inference + More accuracy loss
 
 ### When to Use Each Precision
 
-**FP16 (Half Precision):**
-- GPU inference (Tensor Cores optimized for FP16)
+**BF16 / FP16 (Half Precision):**
+- GPU inference (Tensor Cores optimized for FP16/BF16)
 - Need minimal accuracy loss (<0.1%)
-- Size reduction secondary concern
-- **Example:** Large language models on GPU
+- Default datatype for modern LLM training and inference baseline
+- BF16 preferred for training stability; FP16 fine for inference of already-trained weights
+
+**FP8 (E4M3 for forward, E5M2 for backward / activations):**
+- Hopper (H100), Ada (RTX 40-series), Blackwell (B100/B200) GPUs natively support FP8 in Tensor Cores via NVIDIA Transformer Engine
+- E4M3 = 4 exponent bits, 3 mantissa bits — better precision, used for weights and forward activations
+- E5M2 = 5 exponent bits, 2 mantissa bits — wider range, used for gradients
+- Best balance of accuracy and speed when hardware supports it
+- See [NVIDIA Transformer Engine docs](https://docs.nvidia.com/deeplearning/transformer-engine/) for E4M3/E5M2 conventions
 
 **INT8 (Standard Quantization):**
-- CPU inference (INT8 operations fast on CPU)
+- CPU inference (INT8 operations fast on CPU, AVX-VNNI / ARM dot-product)
 - Edge device deployment
 - Good balance of size/speed/accuracy
-- **Most common choice** for production deployment
-- **Example:** Image classification on mobile devices
+- **Most common choice** for non-LLM production deployment
+- Example: image classification on mobile devices
 
-**INT4 (Aggressive Quantization):**
-- Extremely memory-constrained (e.g., 1GB mobile devices)
-- Can tolerate larger accuracy loss (1-3%)
-- Need maximum size reduction (8×)
-- **Use sparingly** - accuracy risk high
-- **Example:** Large language models (LLaMA-7B: 13GB → 3.5GB)
+**INT4 / NF4 / MXFP4 (Aggressive Quantization):**
+- LLM weight-only quantization is the dominant use case
+- INT4 or NF4 (QLoRA) for weight-only LLM compression — see Part 7
+- MXFP4 (OCP MX format) on Blackwell for native 4-bit Tensor Core throughput
+- Use for non-LLM models only when memory pressure is extreme
 
-### Decision Flow
+**MXFP6 (block-scaled 6-bit):**
+- Blackwell-native, but no raw throughput advantage over MXFP8 — use when 6-bit gives accuracy MXFP4 cannot deliver and MXFP8 is too large
 
-```python
-def choose_precision(accuracy_tolerance, deployment_target):
-    """
-    Choose quantization precision based on requirements.
-
-    WHY: Different precisions for different constraints.
-    INT8 is default, FP16 for GPU, INT4 for extreme memory constraints.
-    """
-    if accuracy_tolerance < 0.1:
-        return "FP16"  # Minimal accuracy loss required
-    elif deployment_target == "GPU":
-        return "FP16"  # GPU optimized for FP16
-    elif deployment_target in ["CPU", "edge"]:
-        return "INT8"  # CPU optimized for INT8
-    elif deployment_target == "extreme_edge" and accuracy_tolerance > 1:
-        return "INT4"  # Only if can tolerate 1-3% loss
-    else:
-        return "INT8"  # Default safe choice
-```
+**Sub-4-bit (AQLM, HQQ 2-bit):**
+- Only for LLMs where 4-bit is still too large (e.g., 70B+ on consumer GPUs)
+- Accept 2-5% quality loss; verify on your eval set
 
 
 ## Part 5: ONNX Quantization (Cross-Framework)
@@ -473,7 +462,7 @@ def choose_precision(accuracy_tolerance, deployment_target):
 
 ```python
 import onnxruntime
-from onnxruntime.quantization import quantize_static, CalibrationDataReader
+from onnxruntime.quantization import quantize_static, CalibrationDataReader, QuantFormat
 import numpy as np
 
 class CalibrationDataReaderWrapper(CalibrationDataReader):
@@ -486,10 +475,10 @@ class CalibrationDataReaderWrapper(CalibrationDataReader):
         self.iterator = iter(calibration_data)
 
     def get_next(self):
-        """WHY: Called by ONNX to get next calibration batch."""
+        """Called by ONNX to get next calibration batch."""
         try:
             data, _ = next(self.iterator)
-            return {"input": data.numpy()}  # WHY: Return dict of input name → data
+            return {"input": data.numpy()}
         except StopIteration:
             return None
 
@@ -504,13 +493,14 @@ torch.onnx.export(
     'model.onnx',
     input_names=['input'],
     output_names=['output'],
-    opset_version=13  # WHY: ONNX opset 13+ supports quantization ops
+    opset_version=17,  # WHY: Opset 17 is the modern stable target
+                       # (covers all common quantization ops + LayerNorm)
 )
 
 # Step 2: Prepare calibration data
 calibration_loader = torch.utils.data.DataLoader(
     calibration_dataset,
-    batch_size=1,  # WHY: ONNX calibration uses batch size 1
+    batch_size=1,
     shuffle=False
 )
 calibration_reader = CalibrationDataReaderWrapper(calibration_loader)
@@ -520,35 +510,78 @@ quantize_static(
     'model.onnx',
     'model_quantized.onnx',
     calibration_data_reader=calibration_reader,
-    quant_format='QDQ'  # WHY: QDQ format compatible with most backends
+    quant_format=QuantFormat.QDQ  # WHY: QDQ format is the modern default,
+                                  # compatible with most backends
 )
-
-# Step 4: Benchmark ONNX quantized model
-import time
-
-session = onnxruntime.InferenceSession('model_quantized.onnx')
-input_name = session.get_inputs()[0].name
-
-test_data = np.random.randn(1, 3, 224, 224).astype(np.float32)
-
-# Warm up
-for _ in range(10):
-    session.run(None, {input_name: test_data})
-
-# Benchmark
-start = time.time()
-for _ in range(100):
-    session.run(None, {input_name: test_data})
-end = time.time()
-
-latency = (end - start) / 100 * 1000  # ms per inference
-print(f"ONNX Quantized latency: {latency:.2f}ms")
 ```
 
 **ONNX advantages:**
 - Cross-framework (works with PyTorch, TensorFlow, etc.)
 - Optimized ONNX Runtime for CPU inference
-- Good hardware backend support (x86, ARM)
+- Good hardware backend support (x86, ARM, CoreML, NNAPI)
+
+
+## Part 5b: PT2E Export Quantization (PyTorch 2 graph path)
+
+**When to use:** New PyTorch quantization work, especially when targeting `torch.compile` / Inductor, X86 server inference, ARM XNNPACK, or ExecuTorch on-device.
+
+PT2E is the graph-based replacement for FX-graph quantization. The flow is **export → prepare → calibrate → convert**, parameterized by a `Quantizer` object that encodes the target backend's constraints.
+
+```python
+import torch
+from torch.ao.quantization.quantize_pt2e import prepare_pt2e, convert_pt2e
+from torch.ao.quantization.quantizer.x86_inductor_quantizer import (
+    X86InductorQuantizer,
+    get_default_x86_inductor_quantization_config,
+)
+
+# Step 1: Capture model graph with torch.export
+# WHY: torch.export traces the model into an ExportedProgram - a stable
+# graph IR that downstream backends consume. This replaces the older
+# FX symbolic_trace path.
+model = torch.load('model.pth')
+model.eval()
+example_inputs = (torch.randn(1, 3, 224, 224),)
+
+exported_program = torch.export.export(model, example_inputs)
+graph_module = exported_program.module()
+
+# Step 2: Pick a Quantizer for your target backend
+# WHY: Quantizer encodes the backend's op-support and dtype constraints.
+# X86InductorQuantizer targets server CPU through torch.compile + Inductor.
+# Other quantizers exist for XNNPACK (ARM), ExecuTorch backends, etc.
+quantizer = X86InductorQuantizer()
+quantizer.set_global(get_default_x86_inductor_quantization_config())
+
+# Step 3: Prepare - inserts observers
+prepared_model = prepare_pt2e(graph_module, quantizer)
+
+# Step 4: Calibrate
+with torch.no_grad():
+    for batch_idx, (data, _) in enumerate(calibration_loader):
+        prepared_model(data)
+        if batch_idx >= 100:
+            break
+
+# Step 5: Convert - swaps observers for quantized ops
+quantized_model = convert_pt2e(prepared_model)
+
+# Step 6: Lower with torch.compile for execution
+# WHY: PT2E quantized graphs are designed to be consumed by Inductor
+# for fused INT8 codegen on CPU.
+optimized_model = torch.compile(quantized_model)
+```
+
+References: [PyTorch quantization overview](https://docs.pytorch.org/docs/main/quantization.html), [PT2E quantization index](https://docs.pytorch.org/ao/stable/pt2e_quantization/index.html), [PT2E with X86 backend tutorial](https://docs.pytorch.org/ao/stable/pt2e_quantization/pt2e_quant_x86_inductor.html), [`torch.ao.quantization.quantize_pt2e` source](https://github.com/pytorch/pytorch/blob/main/torch/ao/quantization/quantize_pt2e.py).
+
+**Eager vs PT2E summary:**
+
+| Aspect | Eager (`torch.ao.quantization`) | PT2E (`quantize_pt2e`) |
+|--------|---------------------------------|------------------------|
+| Graph capture | None (module-level) | `torch.export.export()` |
+| Best for | Legacy code, custom modules | New work, Inductor backends, on-device export |
+| Backends | FBGEMM, QNNPACK, x86 | X86Inductor, XNNPACK, ExecuTorch backends |
+| QAT | `prepare_qat` | `prepare_qat_pt2e` |
 
 
 ## Part 6: Accuracy Validation (Critical Step)
@@ -559,7 +592,7 @@ Quantization is **lossy compression**. Must measure accuracy impact:
 - Some models tolerate quantization well (<0.5% loss)
 - Some models sensitive to quantization (>2% loss)
 - Some layers more sensitive than others
-- **Can't assume quantization is safe without measuring**
+- Can't assume quantization is safe without measuring
 
 ### Validation Methodology
 
@@ -570,9 +603,6 @@ def validate_quantization(original_model, quantized_model, val_loader):
 
     WHY: Quantization is lossy - must measure impact.
     Compare baseline vs quantized on same validation set.
-
-    Returns:
-        dict with baseline_acc, quantized_acc, accuracy_loss
     """
     def evaluate(model, data_loader):
         model.eval()
@@ -594,21 +624,14 @@ def validate_quantization(original_model, quantized_model, val_loader):
         'baseline_acc': baseline_acc,
         'quantized_acc': quantized_acc,
         'accuracy_loss': accuracy_loss,
-        'acceptable': accuracy_loss < 2.0  # WHY: <2% loss usually acceptable
+        'acceptable': accuracy_loss < 2.0  # <2% loss usually acceptable
     }
 
-# Example validation
 results = validate_quantization(original_model, quantized_model, val_loader)
 print(f"Baseline accuracy: {results['baseline_acc']:.2f}%")
 print(f"Quantized accuracy: {results['quantized_acc']:.2f}%")
 print(f"Accuracy loss: {results['accuracy_loss']:.2f}%")
 print(f"Acceptable: {results['acceptable']}")
-
-# Decision logic
-if results['acceptable']:
-    print("✅ Quantization acceptable - deploy quantized model")
-else:
-    print("❌ Accuracy loss too large - try QAT or reconsider quantization")
 ```
 
 ### Acceptable Accuracy Thresholds
@@ -623,62 +646,85 @@ else:
 - Image classification: 1-2% top-1 accuracy loss acceptable
 - Object detection: 1-2% mAP loss acceptable
 - NLP classification: 0.5-1% accuracy loss acceptable
+- LLM generation: <0.1 perplexity increase, plus task-specific eval (see llm-specialist)
 - Medical/safety-critical: <0.5% loss required (use QAT)
 
 
-## Part 7: LLM Quantization (GPTQ, AWQ)
+## Part 7: LLM Quantization Reference Matrix
 
-**Note:** This skill covers general quantization. For LLM-specific optimization (GPTQ, AWQ, KV cache, etc.), see the `llm-inference-optimization` skill in the llm-specialist pack.
+LLMs need different quantization techniques than vision/NLP-classification models because:
+- They are dominated by very large `nn.Linear` weights (so weight-only quantization is highly effective).
+- Activations have severe outliers in specific channels — naive INT8 collapses quality.
+- Inference is memory-bandwidth bound on a single GPU, so smaller weights translate directly into throughput.
 
-### LLM Quantization Overview
+This part documents the named techniques. **For "should I use AWQ or GPTQ for *this* model" generation-quality decisions, KV-cache quantization, and speculative-decoding interactions, see `yzmir-llm-specialist/llm-inference-optimization.md`.**
 
-**Why LLMs need quantization:**
-- Very large (7B parameters = 13GB in FP16)
-- Memory-bound inference (limited by VRAM)
-- INT4 quantization: 13GB → 3.5GB (fits in consumer GPUs)
+### 7.1 Named techniques
 
-**LLM-specific quantization methods:**
-- **GPTQ:** Post-training quantization optimized for LLMs
-- **AWQ:** Activation-aware weight quantization (better quality than GPTQ)
-- **Both:** Achieve INT4 with <0.5 perplexity increase
+**AWQ — Activation-aware Weight Quantization**
+Lin et al., MIT Han Lab, 2023; MLSys 2024 best paper. [arXiv:2306.00978](https://arxiv.org/abs/2306.00978). Observes that ~1% of "salient" weights dominate quality; uses activation magnitudes to find a per-channel scale that protects them, then does weight-only INT4 quantization without backprop. Tool: [AutoAWQ](https://github.com/casper-hansen/AutoAWQ) (community) or [llm-awq](https://github.com/mit-han-lab/llm-awq) (official). Hardware: Ampere+ (uses INT4 packed kernels).
 
-### When to Use LLM Quantization
+**GPTQ — Generative Pretrained Transformer Quantization**
+Frantar et al., 2022. [arXiv:2210.17323](https://arxiv.org/abs/2210.17323). Layer-wise Hessian-based weight quantization at 3-4 bits using approximate second-order information from a small calibration set. Tool: [AutoGPTQ](https://github.com/AutoGPTQ/AutoGPTQ) (legacy) and [GPTQModel](https://github.com/ModelCloud/GPTQModel) (active fork). Hardware: any (CUDA, ROCm, CPU kernels exist).
 
-✅ **Use when:**
-- Deploying LLMs locally (consumer GPUs)
-- Memory-constrained (need to fit in 12GB/24GB VRAM)
-- Cost-sensitive (smaller models cheaper to host)
-- Latency-sensitive (smaller models faster to load)
+**AQLM — Additive Quantization for Language Models**
+Egiazarian et al., 2024. [arXiv:2401.06118](https://arxiv.org/abs/2401.06118). Generalizes additive quantization (multiple learned codebooks summed) to LLMs; achieves Pareto-optimal accuracy below 3 bits-per-parameter, including practical ~2-bit results. Tool: [AQLM repo](https://github.com/Vahe1994/AQLM). Hardware: GPU (custom CUDA kernels).
 
-❌ **Don't use when:**
-- Have sufficient GPU memory for FP16
-- Accuracy critical (medical, legal applications)
-- Already using API (OpenAI, Anthropic) - they handle optimization
+**HQQ — Half-Quadratic Quantization**
+Mobius Labs, 2023. Calibration-free weight quantization solved as a half-quadratic optimization in closed form per row, supporting 1-8 bit. Quantizes very large models in minutes without a calibration dataset. Tool: [hqq](https://github.com/mobiusml/hqq).
 
-### LLM Quantization References
+**bitsandbytes NF4 / FP4**
+Used in QLoRA. NF4 (4-bit NormalFloat) is a non-uniform datatype information-theoretically optimal for normally-distributed weights; FP4 is 4-bit floating-point. Dettmers et al., "QLoRA: Efficient Finetuning of Quantized LLMs," NeurIPS 2023, [arXiv:2305.14314](https://arxiv.org/abs/2305.14314). NF4 outperforms FP4 by ~1pp at the same bit-width. Tool: [bitsandbytes](https://github.com/bitsandbytes-foundation/bitsandbytes) integrated into HF Transformers.
 
-For detailed LLM quantization:
-- **See skill:** `llm-inference-optimization` (llm-specialist pack)
-- **Covers:** GPTQ, AWQ, KV cache optimization, token streaming
-- **Tools:** llama.cpp, vLLM, text-generation-inference
+**SmoothQuant**
+Xiao et al., MIT, 2022; ICML 2023. [arXiv:2211.10438](https://arxiv.org/abs/2211.10438). Mathematically equivalent transformation that migrates the "difficulty" of quantizing activation outliers into the weights. Enables W8A8 (INT8 weights + INT8 activations) for LLMs without retraining. Tool: [smoothquant repo](https://github.com/mit-han-lab/smoothquant). Pairs well with INT8 Tensor Cores.
 
-**Quick reference (defer to llm-specialist for details):**
+**GGUF + k-quants**
+File format and quantization scheme used by [llama.cpp](https://github.com/ggml-org/llama.cpp) and the broader GGML ecosystem. K-quants (`Q2_K`, `Q3_K`, `Q4_K_M`, `Q5_K_M`, `Q6_K`, `Q8_0`, etc.) are block-wise mixed-precision quantizations tuned for CPU and Apple Silicon inference. `Q4_K_M` and `Q5_K_M` are the practical default trade-off points for most users.
 
-```python
-# GPTQ quantization (example - see llm-specialist for full details)
-from transformers import AutoModelForCausalLM, GPTQConfig
+**FP8 (E4M3, E5M2)**
+Native Tensor Core support starting on NVIDIA Hopper (H100/H200), Ada (RTX 40-series), and Blackwell (B100/B200). E4M3 = 4 exponent / 3 mantissa bits (higher precision, used for weights and forward activations); E5M2 = 5 exponent / 2 mantissa bits (wider range, used for gradients). Tooling: [NVIDIA Transformer Engine](https://github.com/NVIDIA/TransformerEngine). Used by both training (with delayed scaling) and inference (with per-tensor scales).
 
-# WHY: GPTQ optimizes layer-wise for minimal perplexity increase
-quantization_config = GPTQConfig(bits=4, dataset="c4", tokenizer=tokenizer)
+**MXFP4 / MXFP6 — OCP Microscaling formats**
+[OCP MX v1.0 specification](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf), September 2023. Block-scaled formats with a 32-element block size and an 8-bit shared exponent (`E8M0`). MXFP4 uses E2M1 elements; MXFP6 supports E2M3 and E3M2. Native Blackwell Tensor Core support: MXFP4 has 2× the raw throughput of MXFP8; MXFP6 matches MXFP8 throughput but provides extra accuracy headroom. Reference paper: ["Microscaling Data Formats for Deep Learning"](https://arxiv.org/abs/2310.10537).
 
-model = AutoModelForCausalLM.from_pretrained(
-    "meta-llama/Llama-2-7b-hf",
-    quantization_config=quantization_config,
-    device_map="auto"
-)
+### 7.2 Hardware compatibility matrix
 
-# Result: 13GB → 3.5GB, <0.5 perplexity increase
-```
+| Format | Ampere (A100, A40) | Ada (RTX 40, L40) | Hopper (H100, H200) | Blackwell (B100/B200) | x86 CPU | ARM CPU | Apple Silicon |
+|--------|---|---|---|---|---|---|---|
+| INT8 | yes (Tensor Cores) | yes | yes | yes | yes (AVX-VNNI) | yes (dot-product) | yes |
+| FP16 / BF16 | yes | yes | yes | yes | bf16 partial | bf16 (SVE) | yes |
+| FP8 (E4M3/E5M2) | no | yes (Ada) | yes (native) | yes (native) | no | no | no |
+| INT4 weight-only (AWQ/GPTQ kernels) | yes | yes | yes | yes | partial (ggml) | partial | yes (MLX, llama.cpp) |
+| NF4 (bitsandbytes) | yes | yes | yes | yes | no | no | no |
+| MXFP4 / MXFP6 | no | no | no | yes (native) | no | no | no |
+| GGUF k-quants | yes (CUDA) | yes | yes | yes | yes (primary target) | yes | yes (primary target) |
+| AQLM (~2-bit) | yes | yes | yes | yes | partial | no | partial |
+
+### 7.3 Tool/format support matrix
+
+| Engine | AWQ | GPTQ | AQLM | HQQ | NF4/FP4 | SmoothQuant W8A8 | GGUF | FP8 | MXFP4/6 |
+|--------|-----|------|------|-----|---------|------------------|------|-----|---------|
+| **AutoAWQ** | yes (native) | no | no | no | no | no | no | no | no |
+| **AutoGPTQ / GPTQModel** | no | yes (native) | no | no | no | no | no | no | no |
+| **llama.cpp / ExLlamaV2** | partial (via convert) | yes (ExLlamaV2) | no | no | no | no | yes (llama.cpp primary) | no | no |
+| **vLLM** | yes | yes | yes | partial | yes (via bnb) | yes | partial (limited) | yes (Hopper+) | emerging (Blackwell) |
+| **TensorRT-LLM** | yes | yes | no | no | no | yes | no | yes (native) | yes (Blackwell) |
+| **Hugging Face Transformers + bitsandbytes** | via AWQ pkg | via GPTQ pkg | via AQLM pkg | via hqq pkg | yes (native) | no | no | partial | no |
+| **MLC-LLM** | yes | yes | no | no | no | no | no | no | no |
+| **NVIDIA Transformer Engine** | no | no | no | no | no | no | no | yes (primary) | yes (Blackwell) |
+
+(This matrix tracks supported formats, not performance; check current release notes for kernel-level details.)
+
+### 7.4 Quick-pick guidance
+
+- **Self-hosted LLM serving on NVIDIA, want the easy path:** vLLM + AWQ INT4 (or GPTQ INT4 if no AWQ checkpoint exists).
+- **Need to fit a 70B+ model on a single 80 GB GPU or 13B on 8 GB:** AQLM 2-bit, or AWQ INT3 if available.
+- **CPU / laptop / Apple Silicon:** llama.cpp + GGUF (`Q4_K_M` or `Q5_K_M`).
+- **Hopper / Blackwell, want maximum throughput on long-context serving:** TensorRT-LLM + FP8 (E4M3 weights + E4M3 activations) or MXFP4 on Blackwell.
+- **Need to fine-tune on consumer hardware:** QLoRA (NF4) via bitsandbytes + PEFT.
+
+For the "AWQ vs GPTQ vs FP8 for *this* particular model" decision, see `yzmir-llm-specialist/llm-inference-optimization.md` — the LLM-specialist sheet covers the perplexity / task-eval tradeoffs.
 
 
 ## Part 8: When NOT to Quantize
@@ -687,98 +733,87 @@ model = AutoModelForCausalLM.from_pretrained(
 
 **Example:** MobileNetV2 (14MB, 3ms CPU latency)
 - Quantization: 14MB → 4MB, 3ms → 2ms
-- **Benefit:** 10MB saved, 1ms faster
-- **Cost:** Calibration, validation, testing, debugging
+- Benefit: 10MB saved, 1ms faster
+- Cost: Calibration, validation, testing, debugging
 - **Decision:** Not worth effort unless specific requirement
 
 **Rule:** If current performance meets requirements, don't optimize.
 
 ### Scenario 2: GPU-Only Deployment with No Memory Constraints
 
-**Example:** ResNet50 on Tesla V100 with 32GB VRAM
+**Example:** ResNet50 on a single GPU with plenty of headroom
 - Quantization: 1.5-2× GPU speedup (modest)
-- FP32 already fast on GPU (Tensor Cores optimized)
-- No memory pressure (plenty of VRAM)
-- **Decision:** Focus on other bottlenecks (data loading, I/O)
+- FP16/BF16 already fast on Tensor Cores
+- No memory pressure
+- **Decision:** Focus on other bottlenecks (data loading, I/O, batching)
 
-**Rule:** Quantization is most beneficial for CPU inference and memory-constrained GPU.
+**Rule:** Quantization is most beneficial for CPU inference, edge, and memory-constrained GPU. For LLMs, even on big GPUs, weight-only quantization usually wins because inference is memory-bandwidth bound.
 
 ### Scenario 3: Accuracy-Critical Applications
 
 **Example:** Medical diagnosis model where misdiagnosis has severe consequences
 - Quantization introduces accuracy loss (even if small)
 - Risk not worth benefit
-- **Decision:** Keep FP32, optimize other parts (batching, caching)
+- **Decision:** Keep FP32/BF16, optimize other parts (batching, caching)
 
-**Rule:** Safety-critical systems should avoid lossy compression unless thoroughly validated.
+**Rule:** Safety-critical systems should avoid lossy compression unless thoroughly validated end-to-end.
 
 ### Scenario 4: Prototyping Phase
 
-**Example:** Early development, trying different architectures
-- Quantization is optimization - premature at prototype stage
-- Focus on getting model working first
-- **Decision:** Defer quantization until production deployment
-
-**Rule:** Don't optimize until you need to (Knuth: "Premature optimization is root of all evil").
+Quantization is optimization — premature at prototype stage. Focus on getting model working first.
 
 
 ## Part 9: Quantization Benchmarks (Expected Results)
+
+These are illustrative ranges from published benchmarks; verify on your hardware and model.
 
 ### Image Classification (ResNet50, ImageNet)
 
 | Metric | FP32 Baseline | Dynamic INT8 | Static INT8 | QAT INT8 |
 |--------|---------------|--------------|-------------|----------|
-| Size | 98MB | 25MB (4×) | 25MB (4×) | 25MB (4×) |
-| CPU Latency | 15ms | 12ms (1.25×) | 4ms (3.75×) | 4ms (3.75×) |
-| Top-1 Accuracy | 76.1% | 75.9% (0.2% loss) | 75.3% (0.8% loss) | 75.9% (0.2% loss) |
-
-**Insight:** Static quantization gives 3.75× speedup with acceptable 0.8% accuracy loss.
+| Size | ~98MB | ~25MB (4×) | ~25MB (4×) | ~25MB (4×) |
+| CPU Latency | ~15ms | ~12ms (1.25×) | ~4ms (3.75×) | ~4ms (3.75×) |
+| Top-1 Accuracy | ~76.1% | ~75.9% (-0.2pp) | ~75.3% (-0.8pp) | ~75.9% (-0.2pp) |
 
 ### Object Detection (YOLOv5s, COCO)
 
 | Metric | FP32 Baseline | Static INT8 | QAT INT8 |
 |--------|---------------|-------------|----------|
-| Size | 14MB | 4MB (3.5×) | 4MB (3.5×) |
-| CPU Latency | 45ms | 15ms (3×) | 15ms (3×) |
-| mAP@0.5 | 37.4% | 36.8% (0.6% loss) | 37.2% (0.2% loss) |
-
-**Insight:** QAT gives better accuracy (0.2% vs 0.6% loss) with same speedup.
+| Size | ~14MB | ~4MB (3.5×) | ~4MB (3.5×) |
+| CPU Latency | ~45ms | ~15ms (3×) | ~15ms (3×) |
+| mAP@0.5 | ~37.4% | ~36.8% (-0.6pp) | ~37.2% (-0.2pp) |
 
 ### NLP Classification (BERT-base, GLUE)
 
 | Metric | FP32 Baseline | Dynamic INT8 | Static INT8 |
 |--------|---------------|--------------|-------------|
-| Size | 440MB | 110MB (4×) | 110MB (4×) |
-| CPU Latency | 35ms | 28ms (1.25×) | 12ms (2.9×) |
-| Accuracy | 93.5% | 93.2% (0.3% loss) | 92.8% (0.7% loss) |
+| Size | ~440MB | ~110MB (4×) | ~110MB (4×) |
+| CPU Latency | ~35ms | ~28ms (1.25×) | ~12ms (2.9×) |
+| Accuracy | ~93.5% | ~93.2% (-0.3pp) | ~92.8% (-0.7pp) |
 
-**Insight:** Static quantization gives 2.9× speedup but dynamic sufficient if speedup not critical.
+### LLM Inference (7B class, single GPU)
 
-### LLM Inference (LLaMA-7B)
+Numbers cited from the AWQ ([arXiv:2306.00978](https://arxiv.org/abs/2306.00978)) and GPTQ ([arXiv:2210.17323](https://arxiv.org/abs/2210.17323)) papers, paraphrased; check published numbers and current kernels for your engine.
 
 | Metric | FP16 Baseline | GPTQ INT4 | AWQ INT4 |
 |--------|---------------|-----------|----------|
-| Size | 13GB | 3.5GB (3.7×) | 3.5GB (3.7×) |
-| First Token Latency | 800ms | 250ms (3.2×) | 230ms (3.5×) |
-| Perplexity | 5.68 | 5.82 (0.14 increase) | 5.77 (0.09 increase) |
+| Weights size | ~13GB | ~3.5GB (3.7×) | ~3.5GB (3.7×) |
+| Tokens/sec (single GPU, decode) | 1× | 2-3× | 2.7-3.9× |
+| Perplexity (WikiText-2 7B) | baseline | small increase | smaller increase |
 
-**Insight:** AWQ gives better quality than GPTQ with similar speedup.
+For up-to-date LLM serving throughput numbers (vLLM, TensorRT-LLM, SGLang), see `yzmir-llm-specialist/llm-inference-optimization.md` and the engine release notes.
 
 
 ## Part 10: Common Pitfalls and Solutions
 
 ### Pitfall 1: Skipping Accuracy Validation
 
-**Issue:** Deploy quantized model without measuring accuracy impact.
-**Risk:** Discover accuracy degradation in production (too late).
-**Solution:** Always validate accuracy on representative data before deployment.
-
 ```python
-# ❌ WRONG: Deploy without validation
+# WRONG: Deploy without validation
 quantized_model = quantize(model)
-deploy(quantized_model)  # Hope it works!
+deploy(quantized_model)
 
-# ✅ RIGHT: Validate before deployment
+# RIGHT: Validate before deployment
 quantized_model = quantize(model)
 results = validate_accuracy(original_model, quantized_model, val_loader)
 if results['acceptable']:
@@ -789,203 +824,113 @@ else:
 
 ### Pitfall 2: Using Wrong Calibration Data
 
-**Issue:** Calibrate with random/unrepresentative data.
-**Risk:** Activation ranges wrong → accuracy collapses.
-**Solution:** Use 100-1000 samples from validation set matching deployment distribution.
-
-```python
-# ❌ WRONG: Random images from internet
-calibration_data = download_random_images()
-
-# ✅ RIGHT: Samples from validation set
-calibration_data = torch.utils.data.Subset(val_dataset, range(1000))
-```
+Calibrate with random/unrepresentative data → activation ranges wrong → accuracy collapses. Use 100-1000 samples from validation/production-shadow set.
 
 ### Pitfall 3: Choosing Wrong Quantization Type
 
-**Issue:** Use dynamic quantization when need static speedup.
-**Risk:** Get 1.2× speedup instead of 3× speedup.
-**Solution:** Match quantization type to requirements (dynamic for size, static for speed).
+Use dynamic when need static speedup → get 1.2× instead of 3×. Match type to requirements.
 
-```python
-# ❌ WRONG: Use dynamic when need speed
-if need_fast_cpu_inference:
-    quantized_model = torch.quantization.quantize_dynamic(model)  # Only 1.2× speedup
+### Pitfall 4: Quantizing GPU-Only Deployments Unnecessarily
 
-# ✅ RIGHT: Use static for speed
-if need_fast_cpu_inference:
-    model = prepare_and_calibrate(model, calibration_data)
-    quantized_model = torch.quantization.convert(model)  # 2-4× speedup
-```
-
-### Pitfall 4: Quantizing GPU-Only Deployments
-
-**Issue:** Quantize model for GPU inference without memory pressure.
-**Risk:** Effort not worth modest 1.5-2× GPU speedup.
-**Solution:** Only quantize GPU if memory-constrained (multiple models in VRAM).
-
-```python
-# ❌ WRONG: Quantize for GPU with no memory issue
-if deployment_target == "GPU" and have_plenty_of_memory:
-    quantized_model = quantize(model)  # Wasted effort
-
-# ✅ RIGHT: Skip quantization if not needed
-if deployment_target == "GPU" and have_plenty_of_memory:
-    deploy(model)  # Keep FP32, focus on other optimizations
-```
+If you have memory headroom and FP16/BF16 meets latency, quantization may not be worth the integration cost. Exception: LLMs, where weight-only INT4 usually pays for itself via memory bandwidth.
 
 ### Pitfall 5: Over-Quantizing (INT4 When INT8 Sufficient)
 
-**Issue:** Use aggressive INT4 quantization when INT8 would suffice.
-**Risk:** Larger accuracy loss than necessary.
-**Solution:** Start with INT8 (standard), only use INT4 if extreme memory constraints.
+Larger accuracy loss than necessary. Start with INT8, only go to 4-bit if memory or latency forces it.
+
+### Pitfall 6: Using `torch.quantization` (legacy alias) in new code
 
 ```python
-# ❌ WRONG: Jump to INT4 without trying INT8
-quantized_model = quantize(model, precision="INT4")  # 2-3% accuracy loss
-
-# ✅ RIGHT: Start with INT8, only use INT4 if needed
-quantized_model_int8 = quantize(model, precision="INT8")  # 0.5-1% accuracy loss
-if model_still_too_large:
-    quantized_model_int4 = quantize(model, precision="INT4")
+# OLD: import torch.quantization  -- deprecated alias
+# NEW: import torch.ao.quantization as tq
 ```
 
-### Pitfall 6: Assuming All Layers Quantize Equally
+The old namespace forwards but is not the documented path. Use `torch.ao.quantization` for eager mode and `torch.ao.quantization.quantize_pt2e` for the export path.
 
-**Issue:** Quantize all layers uniformly, but some layers more sensitive.
-**Risk:** Accuracy loss dominated by few sensitive layers.
-**Solution:** Use mixed precision - keep sensitive layers in FP32/INT8, quantize others to INT4.
+### Pitfall 7: Assuming All Layers Quantize Equally
 
-```python
-# ✅ ADVANCED: Mixed precision quantization
-# Keep first/last layers in higher precision, quantize middle layers aggressively
-from torch.quantization import QConfigMapping
-
-qconfig_mapping = QConfigMapping()
-qconfig_mapping.set_global(get_default_qconfig('fbgemm'))  # INT8 default
-qconfig_mapping.set_module_name('model.layer1', None)  # Keep first layer FP32
-qconfig_mapping.set_module_name('model.layer10', None)  # Keep last layer FP32
-
-model = quantize_with_qconfig(model, qconfig_mapping)
-```
+Some layers (first conv, final classifier, attention output projections) are more sensitive. Use mixed precision — keep sensitive layers in higher precision, quantize the rest aggressively. PT2E quantizers support per-module configuration via `Quantizer.set_module_name()`.
 
 
 ## Part 11: Decision Framework Summary
 
 ### Step 1: Recognize Quantization Need
 
-**Symptoms:**
-- Model too slow on CPU (>10ms when need <5ms)
-- Model too large for edge devices (>50MB)
-- Deploying to CPU/edge (not GPU)
-- Need to reduce hosting costs
-
-**If YES → Proceed to Step 2**
-**If NO → Don't quantize, focus on other optimizations**
+Symptoms: too slow on CPU, too large for edge, deploying to CPU/edge/memory-constrained GPU, hosting cost pressure.
 
 ### Step 2: Choose Quantization Type
 
 ```
-Start with Dynamic:
-├─ Sufficient? (meets latency/size requirements)
-│  ├─ YES → Deploy dynamic quantized model
-│  └─ NO → Proceed to Static
-│
-Static Quantization:
-├─ Sufficient? (meets latency/size + accuracy acceptable)
-│  ├─ YES → Deploy static quantized model
-│  └─ NO → Accuracy loss >2%
-│     │
-│     └─ Proceed to QAT
-│
-QAT:
-├─ Train with quantization awareness
-└─ Achieves <1% accuracy loss → Deploy
+LLM?
+├─ YES → Part 7 matrix (AWQ/GPTQ/AQLM/GGUF/FP8/MXFP4 by hardware)
+└─ NO  → Vision/NLP-classification path:
+   Start with Dynamic
+   ├─ Sufficient? → Deploy
+   └─ NO → Static (eager or PT2E)
+      ├─ Sufficient and accuracy OK? → Deploy
+      └─ NO (>2% accuracy loss) → QAT
 ```
 
 ### Step 3: Calibrate (if Static/QAT)
 
-**Calibration data:**
-- Source: Validation set (representative samples)
-- Size: 100-1000 samples
-- Characteristics: Match deployment distribution
-
-**Calibration process:**
-1. Select samples from validation set
-2. Run through model to collect activation ranges
-3. Validate accuracy after calibration
-4. If accuracy loss >2%, try different calibration data or QAT
+100-1000 samples from validation set matching deployment distribution.
 
 ### Step 4: Validate Accuracy
 
-**Required measurements:**
-- Baseline accuracy (FP32)
-- Quantized accuracy (INT8/INT4)
-- Accuracy loss (baseline - quantized)
-- Acceptable threshold (typically <2%)
-
-**Decision:**
-- If accuracy loss <2% → Deploy
-- If accuracy loss >2% → Try QAT or reconsider quantization
+Baseline vs quantized on the same eval set. If task-specific eval is available (LLM benchmarks, downstream task), use it — perplexity alone is not sufficient for LLMs.
 
 ### Step 5: Benchmark Performance
 
-**Required measurements:**
-- Model size (MB): baseline vs quantized
-- Inference latency (ms): baseline vs quantized
-- Throughput (requests/sec): baseline vs quantized
-
-**Verify expected results:**
-- Size: 4× reduction (FP32 → INT8)
-- CPU speedup: 2-4× (static quantization)
-- GPU speedup: 1.5-2× (if applicable)
+Size, latency, throughput on the actual target hardware. Don't trust benchmarks from different GPUs / kernels.
 
 
 ## Part 12: Production Deployment Checklist
 
-Before deploying quantized model to production:
+**Accuracy validated**
+- [ ] Baseline measured on representative eval set
+- [ ] Quantized measured on the same eval set
+- [ ] Loss within acceptable threshold for the task
+- [ ] For LLMs: task-specific eval, not just perplexity (see llm-evaluation-metrics)
 
-**✅ Accuracy Validated**
-- [ ] Baseline accuracy measured on validation set
-- [ ] Quantized accuracy measured on same validation set
-- [ ] Accuracy loss within acceptable threshold (<2%)
-- [ ] Validated on representative production data
+**Performance benchmarked**
+- [ ] Size reduction measured
+- [ ] Latency measured on target hardware (not dev box)
+- [ ] Throughput measured under realistic load
+- [ ] For LLMs: tokens/sec at relevant batch sizes and context lengths
 
-**✅ Performance Benchmarked**
-- [ ] Size reduction measured (expect 4× for INT8)
-- [ ] Latency improvement measured (expect 2-4× CPU)
-- [ ] Throughput improvement measured
-- [ ] Performance meets requirements
+**Calibration verified** (if static/QAT)
+- [ ] Used 100-1000 samples from validation set
+- [ ] Distribution matches deployment
 
-**✅ Calibration Verified** (if static/QAT)
-- [ ] Used representative samples from validation set (not random data)
-- [ ] Used sufficient calibration data (100-1000 samples)
-- [ ] Calibration data matches deployment distribution
+**Edge cases tested**
+- [ ] Diverse inputs (long/short, edge of distribution)
+- [ ] No NaN/Inf outputs
+- [ ] Tested on the exact hardware/driver/runtime combination used in prod
 
-**✅ Edge Cases Tested**
-- [ ] Tested on diverse inputs (bright/dark images, long/short text)
-- [ ] Validated numerical stability (no NaN/Inf outputs)
-- [ ] Tested inference on target hardware (CPU/GPU/edge device)
-
-**✅ Rollback Plan**
-- [ ] Can easily revert to FP32 model if issues found
-- [ ] Monitoring in place to detect accuracy degradation
-- [ ] A/B testing plan to compare FP32 vs quantized
+**Rollback plan**
+- [ ] Can revert to higher-precision model
+- [ ] Monitoring catches accuracy/quality regressions
+- [ ] A/B comparison against the unquantized baseline
 
 
 ## Skill Mastery Checklist
 
 You have mastered quantization for inference when you can:
 
-- [ ] Recognize when quantization is appropriate (CPU/edge deployment, size/speed issues)
-- [ ] Choose correct quantization type (dynamic vs static vs QAT) based on requirements
-- [ ] Implement dynamic quantization in PyTorch (5 lines of code)
-- [ ] Implement static quantization with proper calibration (20 lines of code)
-- [ ] Select appropriate calibration data (validation set, 100-1000 samples)
-- [ ] Validate accuracy trade-offs systematically (baseline vs quantized)
-- [ ] Benchmark performance improvements (size, latency, throughput)
-- [ ] Decide when NOT to quantize (GPU-only, already fast, accuracy-critical)
-- [ ] Debug quantization issues (accuracy collapse, wrong speedup, numerical instability)
-- [ ] Deploy quantized models to production with confidence
+- [ ] Recognize when quantization is appropriate (CPU/edge/memory-constrained, LLM serving)
+- [ ] Choose the correct type (dynamic vs static eager vs PT2E vs QAT) based on requirements
+- [ ] Implement dynamic quantization in PyTorch using `torch.ao.quantization`
+- [ ] Implement static quantization with proper calibration in eager mode and PT2E
+- [ ] Pick the right LLM quantization technique from the Part 7 matrix for given hardware
+- [ ] Read OCP MX / FP8 hardware support tables and match formats to GPU generation
+- [ ] Validate accuracy trade-offs systematically (baseline vs quantized on the right eval)
+- [ ] Benchmark on the actual target hardware
+- [ ] Decide when NOT to quantize (already fast, accuracy-critical, no memory pressure)
+- [ ] Migrate code from legacy `torch.quantization` to `torch.ao.quantization`
+- [ ] Cross-reference `yzmir-llm-specialist/llm-inference-optimization.md` for LLM-specific generation-quality decisions
 
-**Key insight:** Quantization is not magic - it's a systematic trade-off of precision for performance. The skill is matching the right quantization approach to your specific requirements.
+**Key insight:** Quantization is not magic — it's a systematic trade-off of precision for performance. The skill is matching the right approach to your specific model class, hardware, and accuracy budget.
+
+---
+
+Tooling and APIs current as of 2026-05; revisit quarterly.
