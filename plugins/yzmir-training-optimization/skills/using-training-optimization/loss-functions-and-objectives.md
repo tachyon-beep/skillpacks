@@ -1530,6 +1530,30 @@ for x, y in train_loader:
 ```
 
 
+## Section 8.5: Preference / RLHF Loss Family (Pointer Section)
+
+This section **names** the preference-tuning losses and points readers to the owning sheet. Full coverage — when to use which, dataset format, KL/reference-model handling, training stability, and full code — lives in `yzmir-llm-specialist/skills/using-llm-specialist/llm-finetuning-strategies.md`. This sheet's job is just to make sure you recognize the loss when you see it and know where to go.
+
+These all share the same setup: a base policy `pi`, a reference policy `pi_ref` (frozen copy of the SFT model), and a dataset of (prompt, chosen, rejected) preference pairs (or, for some variants, single-trajectory rewards).
+
+| Loss | Citation | One-line "what it does" |
+|------|----------|--------------------------|
+| **PPO RLHF** | Schulman et al., "Proximal Policy Optimization Algorithms" (arXiv:1707.06347); applied to RLHF in Ouyang et al., "Training language models to follow instructions with human feedback" / InstructGPT (arXiv:2203.02155) | Train a separate reward model on preferences, then optimize the policy with PPO under a KL penalty to `pi_ref`. The original recipe — most expensive and most flexible. |
+| **DPO** (Direct Preference Optimization) | Rafailov et al., arXiv:2305.18290 | Closed-form re-derivation of the RLHF objective that turns it into a single supervised-style classification loss over (chosen, rejected) — no reward model, no PPO loop. Default starting point for most teams. |
+| **IPO** (Identity Preference Optimization) | Azar et al., "A General Theoretical Paradigm to Understand Learning from Human Preferences" (arXiv:2310.12036) | Replaces DPO's logistic link with an identity link to reduce overfitting on deterministic preferences (where DPO can drive the implicit reward gap to infinity). |
+| **KTO** (Kahneman-Tversky Optimization) | Ethayarajh et al., "KTO: Model Alignment as Prospect Theoretic Optimization" (arXiv:2402.01306) | Drops the pairwise requirement: trains on individual (prompt, response, desirable/undesirable) labels using a prospect-theory-inspired utility. Useful when you only have thumbs-up/thumbs-down data. |
+| **SimPO** (Simple Preference Optimization) | Meng et al., "SimPO: Simple Preference Optimization with a Reference-Free Reward" (arXiv:2405.14734) | Removes the reference model entirely and uses length-normalized log-likelihood as the implicit reward; reports gains over DPO at lower memory cost. |
+| **ORPO** (Odds Ratio Preference Optimization) | Hong et al., "ORPO: Monolithic Preference Optimization without Reference Model" (arXiv:2403.07691) | Combines SFT and preference signal in a single loss (NLL on chosen + odds-ratio penalty), no separate reference model, no two-stage pipeline. |
+| **GRPO** (Group Relative Policy Optimization) | Shao et al., "DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models" (arXiv:2402.03300) | PPO-family update that estimates the advantage from a *group* of sampled responses to the same prompt instead of a learned value function — drops the critic, well-suited to verifiable-reward RL (math, code). |
+
+**This sheet does not own these losses.** Don't implement DPO from this section's pointer — go to the owning sheet, where the surrounding context (preference dataset construction, reference-model lifecycle, eval, common failure modes like reward hacking and length bias) is covered together.
+
+**When to read what**:
+- "I need to pick between DPO/IPO/KTO/SimPO/ORPO for my fine-tune" → owning sheet.
+- "I have a custom verifiable reward and want GRPO-style training" → owning sheet plus `yzmir-deep-rl` for the RL plumbing.
+- "I just want to know what acronym X means" → the table above is enough.
+
+
 ## Section 9: Common Loss Function Pitfalls
 
 ### Pitfall 1: BCE Instead of BCEWithLogitsLoss
@@ -2136,3 +2160,7 @@ When you use this skill, you become an expert in loss function selection and imp
 - Avoid all common loss function pitfalls
 
 Remember: The loss function IS your model's objective. Get this right, and everything else follows.
+
+---
+
+*Optimizer/method landscape current as of 2026-05; revisit quarterly.*

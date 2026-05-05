@@ -1468,6 +1468,28 @@ Before concluding augmentation doesn't help:
 | Tabular | Feature noise 1%, SMOTE | Feature noise 5%, feature dropout | Feature noise 10%, heavy SMOTE |
 
 
+## Part 11: Synthetic Data and LLM-Generated Augmentation
+
+Beyond classical transforms, modern fine-tuning often augments datasets by **generating new examples with an LLM**. This is most relevant for instruction tuning, code/reasoning datasets, and any small-text-corpus situation. Treat it as augmentation only with the caveats below — it is not free data.
+
+**Common patterns**:
+
+- **Self-Instruct** (Wang et al., "Self-Instruct: Aligning Language Models with Self-Generated Instructions", arXiv:2212.10560): seed with a few hand-written instruction-output pairs, prompt an LLM to generate new instructions and outputs, filter for diversity and quality, and add the survivors to the training set. The technique behind much of the early instruction-tuned data corpus.
+- **Magpie** (Xu et al., "Magpie: Alignment Data Synthesis from Scratch by Prompting Aligned LLMs with Nothing", arXiv:2406.08464): exploits the fact that an aligned chat model, given only a chat template prefix and no user content, will hallucinate a plausible user instruction; generate the response in a second pass. Produces large alignment datasets from a single aligned model with no seed prompts.
+- **Distillation-style synthesis**: a stronger model generates labeled examples that a weaker model trains on. Effective for narrow tasks; the synthetic-data quality ceiling is the teacher's quality on that task.
+- **Targeted hard-negative generation**: prompt the LLM to generate adversarial-but-plausible negatives for retrieval, classification, or preference data.
+
+**Risks (these are real, not hypothetical)**:
+
+- **Mode collapse / diversity loss**: LLM-generated data tends to cluster around a narrow stylistic and semantic distribution. Without explicit diversity filtering (Self-Instruct uses ROUGE-based deduplication; Magpie uses embedding-distance filters), training on it amplifies the generator's biases.
+- **Distribution drift from real users**: Synthetic instructions look like what an LLM thinks users would ask, which is not what users actually ask. Eval on a real user-distribution slice, not on synthetic held-out data.
+- **Error inheritance**: If the generator gets a fact wrong, every synthetic example using that fact is wrong in the same direction — and standard held-out splits won't catch it (the held-out set has the same error). Spot-check with humans or a stronger verifier.
+- **Recursive collapse risk**: Training a model on its own outputs across multiple generations degrades quality (the "model collapse" phenomenon). Mix with real data; do not bootstrap synthetic data from a model that was itself trained on synthetic data without a real-data anchor.
+- **License contamination**: outputs from a closed model may be license-restricted for further training; check the provider's terms-of-use.
+
+**Discipline**: synthetic augmentation belongs upstream of the training loop, not inside it. Generate, filter, version (DVC, dataset card), and treat the synthetic split as a first-class dataset that you can ablate. Cross-ref `yzmir-llm-specialist/skills/using-llm-specialist/llm-finetuning-strategies.md` for the fine-tuning-with-synthetic-data discipline (mixing ratios, when to deduplicate against the eval set, and how to track contamination).
+
+
 ## Critical Rules
 
 1. **Augment training data ONLY**. Validation and test data must be unaugmented.
@@ -1480,4 +1502,8 @@ Before concluding augmentation doesn't help:
 8. **Know your domain**. Understand what invariances matter for your task.
 9. **Measure impact**. Profile training time and accuracy improvement.
 10. **Combine with regularization**. Augmentation works best with dropout, batch norm, weight decay.
+
+---
+
+*Optimizer/method landscape current as of 2026-05; revisit quarterly.*
 

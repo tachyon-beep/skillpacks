@@ -1003,6 +1003,34 @@ Need to improve model performance?
 
 ## Advanced Topics
 
+### muP / mu-Transfer: Tuning Small, Training Large
+
+**What it is**: Maximal Update Parameterization (muP) is a re-parameterization of the network (initialization scales, learning-rate scales, attention scaling) that makes optimal hyperparameters approximately invariant to model width. You tune learning rate and related HPs on a small proxy model (e.g., 30M params) and transfer the same values to the production model (e.g., 6.7B params) without re-tuning.
+
+**Citation**: Yang et al., "Tensor Programs V: Tuning Large Neural Networks via Zero-Shot Hyperparameter Transfer" (arXiv:2203.03466). The paper formalizes the parameterization and demonstrates LR transfer across width — and, with caveats, depth — in transformer pretraining.
+
+**Why it matters for HP tuning budget**:
+- Large-model HP search is prohibitively expensive (a single 6.7B pretraining run can cost tens of thousands of GPU-hours).
+- Under standard parameterization (SP), the optimal LR shifts as you scale width, so small-model sweeps don't transfer.
+- Under muP, the optimal LR is approximately stable across widths — sweep on a 30M-parameter proxy, transfer to a 6.7B model.
+
+**Practical workflow**:
+1. Re-parameterize the model in muP coordinates (use a library — see below).
+2. Run an LR sweep at small width (typical: 30M-300M proxy).
+3. Take the winning LR and transfer to the target scale.
+4. Validate: the loss-vs-LR curve at large scale should still peak near the proxy's optimum.
+
+**Libraries**:
+- `mup` (microsoft/mup): the reference implementation, includes `set_base_shapes`, muReadout, and example transformer/MLP integrations. https://github.com/microsoft/mup
+- Forks/ports exist for popular pretraining stacks (e.g., nanoGPT-mup variants in the community); verify the port reproduces the LR-transfer curve before trusting it.
+
+**Caveats**:
+- muP transfer is well-established for **width**; depth transfer is more fragile and has follow-up work.
+- The gains are largest for **pretraining**. For fine-tuning (where you're already near a good LR for the base model), muP saves less — the LR you actually want is dominated by base-model scale and dataset, not by width search.
+- muP requires correct re-parameterization at **every** scale-dependent layer; partial application gives misleading results.
+
+**When to use**: Any pretraining run at >1B parameters. Skip for fine-tuning, LoRA adapters, or models <100M where direct sweeps are cheap.
+
 ### Learning Rate Warmup (Critical for Transformers)
 
 **What It Is**: Start with very small LR, gradually increase to target over N steps, then decay.
@@ -1632,4 +1660,8 @@ Number of trials = min(
 13. **Use Log Scale for Exponential Parameters** - Critical for finding optimal
 14. **Stop When Returns Diminish** - Once improvement <0.1% per trial, stop searching
 15. **Debug Search Systematically** - Check bounds, pruning rates, parameter suggestions
+
+---
+
+*Optimizer/method landscape current as of 2026-05; revisit quarterly.*
 

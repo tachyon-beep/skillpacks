@@ -1462,3 +1462,27 @@ for epoch in range(200):
 
 Choose the fix that matches your diagnosis, not your intuition.
 
+
+## Overfitting on Instruction-Tuning Data (LLM SFT)
+
+Standard overfitting checks (train-loss vs. val-loss gap on a held-out split) **miss the most common failure mode** of LLM supervised fine-tuning: the model overfits to the **style and format** of the instruction dataset rather than to a generalizable capability. Train and validation loss can both keep dropping while the model becomes worse at instructions it hasn't seen the surface form of.
+
+Concrete symptoms:
+
+- Held-out loss keeps improving; user-facing quality on novel instructions stagnates or degrades.
+- Model rigidly adopts the dataset's formatting tics (always uses bulleted lists, always opens with "Certainly!", refuses anything not phrased like the training data).
+- Capability regression on tasks the base model could already do — the model is "forgetting" pretraining capability while the SFT loss looks fine.
+
+Why standard validation misses it: a held-out *split of the SFT dataset* shares the same instruction style, format, and topic distribution as the training split. Loss on it measures fit to the SFT distribution, not capability.
+
+**The fix is in the eval, not the training loop**:
+
+- Evaluate on **out-of-distribution instructions** drawn from a different source than your SFT data — e.g., a separate human-written eval set, or a benchmark like MT-Bench / IFEval / Arena-Hard, never the held-out shard of the same Self-Instruct or Magpie pool you trained on.
+- Maintain a **capability regression suite** (a small set of base-model-capable tasks) to catch silent capability loss.
+- Track *both* the SFT held-out loss (for optimization sanity) and the OOD eval (for what you actually care about). When they diverge — held-out loss still falling, OOD eval flat or worsening — stop training, regardless of standard early-stopping rules.
+
+For full coverage of LLM eval design — what to include in the OOD set, how to score open-ended outputs, judge-model pitfalls, and constructing capability-regression suites — cross-ref `yzmir-llm-specialist/skills/using-llm-specialist/llm-evaluation-metrics.md`. That sheet owns LLM-specific evaluation; this sheet just flags that *your overfitting detector must use it* when fine-tuning a language model.
+
+---
+
+*Optimizer/method landscape current as of 2026-05; revisit quarterly.*

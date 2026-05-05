@@ -1940,3 +1940,34 @@ python train.py --config configs/resnet18.yaml --resume experiments/resnet18_bas
 
 
 **Remember**: Experiment tracking is insurance. It costs 1% overhead but saves 100% when disaster strikes. Track from day 1, track everything, and your future self will thank you.
+
+
+## Scope Boundary: Training-Time Logging vs. Production Registry
+
+This sheet covers **training-time tracking**: per-step metrics, hyperparameter logging, run-to-run comparison, and the discipline of capturing enough state during a training run to reproduce or debug it later. The tools centered here (TensorBoard, W&B, MLflow tracking client) are optimized for that loop.
+
+For the **persistent side** — model registry, model versioning, lineage between dataset version and deployed artifact, staging/production promotion, and downstream serving metadata — see `yzmir-ml-production/skills/using-ml-production/experiment-tracking-and-versioning.md`. That sheet owns the registry workflow (e.g., MLflow Model Registry stages, DVC dataset pinning, model-card lineage). The two sheets are designed to compose: train and log here, then promote the resulting artifact through the production registry.
+
+Rule of thumb: if the question is "is my run going well and how does it compare to last week's runs?" — it's training-time tracking (this sheet). If the question is "which exact artifact is in production, what did it train on, and how do I roll it back?" — it's production registry (the ml-production sheet).
+
+
+## Reproducibility Checklist for FP8 / BF16 Training
+
+Mixed-precision and FP8 training introduce reproducibility hazards beyond standard FP32. When tracking experiments that use BF16 or FP8 (e.g., NVIDIA Transformer Engine on H100/H200, or PyTorch's native BF16 autocast), log enough state that a re-run lands in the same numerical regime.
+
+Minimum logged fields for FP8/BF16 runs:
+
+- **Precision recipe**: which layers are FP8 vs. BF16 vs. FP32; for Transformer Engine, the explicit `recipe.DelayedScaling` parameters (`margin`, `interval`, `fp8_format` such as E4M3 vs. HYBRID, `amax_history_len`, `amax_compute_algo`). Pin the `transformer-engine` version — recipe defaults change between releases.
+- **Autocast policy**: `torch.autocast` dtype, list of ops that opt out, gradient scaler config if any.
+- **Determinism flags**: `torch.use_deterministic_algorithms(True)`, `torch.backends.cudnn.deterministic = True`, `torch.backends.cudnn.benchmark = False`, and the env var `CUBLAS_WORKSPACE_CONFIG=:4096:8` (required by deterministic cuBLAS GEMMs). Log whether they were set; many FP8 kernels do not have deterministic implementations and will silently fall back or error — capture which.
+- **Seed control**: Python `random`, `numpy.random`, `torch.manual_seed`, `torch.cuda.manual_seed_all`, plus DataLoader `worker_init_fn` seeding and `generator=` for samplers.
+- **Hardware fingerprint**: GPU SKU (H100 SXM vs. PCIe vs. H200), driver version, CUDA version, NCCL version. FP8 numerics depend on the SM89/SM90 path; mixing SKUs across runs invalidates comparisons.
+- **Library versions**: `torch`, `transformer_engine`, `flash-attn`, `apex` (if used), `triton` — all pinned in the logged environment manifest.
+
+For the underlying mechanics of deterministic kernels and seed plumbing, cross-ref `yzmir-pytorch-engineering/skills/using-pytorch-engineering/checkpointing-and-reproducibility.md`. For the FP8 recipe details and which ops support FP8, see NVIDIA's Transformer Engine docs (https://docs.nvidia.com/deeplearning/transformer-engine/) and cross-ref `batch-size-and-memory-tradeoffs.md` in this pack.
+
+Honest caveat: full bitwise reproducibility under FP8 across runs is often **not achievable** — non-deterministic atomics and amax-history dynamics make it impractical. Aim for *statistical* reproducibility (loss curves within seed-level noise) and log enough to investigate when they aren't.
+
+---
+
+*Optimizer/method landscape current as of 2026-05; revisit quarterly.*

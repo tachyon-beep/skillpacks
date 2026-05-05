@@ -1683,6 +1683,43 @@ scaler.update()
 
 ## Advanced Topics
 
+### Gradient Management with 8-bit Optimizers (bitsandbytes)
+
+8-bit optimizers (e.g., `bitsandbytes.optim.AdamW8bit`, `Lion8bit`) quantize the **optimizer state** (running moments) to 8 bits to cut memory by ~75% versus a 32-bit AdamW state. This does **not** change how you manage gradients in the training step:
+
+- Gradients flowing into the optimizer are still BF16/FP32 (the dtype of `param.grad`); only the persistent moment buffers (`exp_avg`, `exp_avg_sq`) are quantized.
+- bitsandbytes performs **block-wise dynamic quantization** internally and dequantizes to higher precision for the actual update math, so you do not need to clip in 8-bit space.
+- **Clip before `optimizer.step()` exactly as with a normal optimizer**: `torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)`. The clip operates on `param.grad` before the optimizer reads it, so the 8-bit storage is irrelevant to clipping.
+- If you also use AMP, follow the standard mixed-precision pattern: `scaler.unscale_(optimizer)` first, then clip, then `scaler.step(optimizer)` (covered in §Mixed Precision Training Integration above).
+- One real gotcha: `bnb.optim.GlobalOptimManager` and the `optim_bits=8` config must be set **before** the optimizer sees parameters, not retroactively — otherwise the state buffer dtype is wrong and gradients-vs-state mismatches can produce silent slowdowns.
+
+Reference: bitsandbytes documentation (https://huggingface.co/docs/bitsandbytes/) and Dettmers et al., "8-bit Optimizers via Block-wise Quantization" (arXiv:2110.02861).
+
+### Gradient Management Under FP8 Training
+
+FP8 mixed precision (NVIDIA Transformer Engine, OCP MX formats) is more aggressive than BF16: forward/backward **matmuls** run in FP8 (E4M3 for forward, E5M2 for backward gradients in the HYBRID recipe), but the gradients that arrive at the optimizer — i.e., what `param.grad` holds — are still **BF16 or FP32**. Concretely:
+
+- Transformer Engine modules (`te.Linear`, `te.LayerNormMLP`, etc.) handle the FP8 cast internally for the matmul; the master weights and accumulated gradients live at higher precision.
+- `clip_grad_norm_` operates on these higher-precision gradients normally — you do **not** need an FP8-aware clip.
+- The relevant new failure mode is **amax-history instability**: if loss explodes, the FP8 scaling factors (driven by historical amax) can lag, causing further blowups. Gradient clipping at a sane threshold (e.g., `max_norm=1.0`) is even more important under FP8 than under BF16, because it prevents an outlier step from poisoning the amax history.
+- For sharded setups (FSDP + FP8), follow the FSDP clipping rules below; the FP8 layer's internal scaling does not change how gradients are gathered for clipping.
+
+For FP8 recipe details, dtype routing, and the amax/scaling mechanism, cross-ref `batch-size-and-memory-tradeoffs.md` in this pack and NVIDIA's Transformer Engine docs (https://docs.nvidia.com/deeplearning/transformer-engine/).
+
+### Gradient Clipping with FSDP (and DDP)
+
+Distributed data parallel (DDP) is straightforward: each rank holds full gradients, and `torch.nn.utils.clip_grad_norm_` works as-is (DDP all-reduces gradients during backward, so each rank already sees the global gradient before the clip).
+
+Fully Sharded Data Parallel (FSDP) is **not** the same. Each rank only holds a shard of each parameter's gradient, so a naive `torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)` would compute the norm over only the local shard and clip incorrectly.
+
+**The correct pattern** (PyTorch FSDP, both legacy `FullyShardedDataParallel` and FSDP2 / `fully_shard`):
+
+- Use the FSDP-specific clip method that knows how to compute the global norm across shards: `model.clip_grad_norm_(max_norm)` on the FSDP-wrapped root module. This performs the cross-rank all-reduce on the squared-norm before applying the clip ratio to local shards.
+- Equivalently, gather gradients first via `summon_full_params` / `unshard()` and then call the standard `torch.nn.utils.clip_grad_norm_` — but this is wasteful and only used when you need the full gradients for some other reason.
+- Do **not** call the global `torch.nn.utils.clip_grad_norm_` on FSDP-wrapped parameters directly without one of the above; the resulting clip will be silently per-shard and your effective `max_norm` will be wrong by roughly a factor of `sqrt(world_size)`.
+
+Reference: PyTorch FSDP docs (https://pytorch.org/docs/stable/fsdp.html) and the FSDP2 design notes. For broader distributed-training plumbing (sharding strategies, mixed precision config, activation checkpointing interactions), cross-ref `yzmir-pytorch-engineering/skills/using-pytorch-engineering/distributed-training-strategies.md`.
+
 ### Per-Layer Gradient Clipping
 
 **When global clipping isn't enough:**
@@ -2440,3 +2477,7 @@ clip_grad_norm_(...)  # Should unscale first!
 - The difference between reliable training and mysterious failures
 
 **Master these techniques and you'll have stable, efficient training.**
+
+---
+
+*Optimizer/method landscape current as of 2026-05; revisit quarterly.*
