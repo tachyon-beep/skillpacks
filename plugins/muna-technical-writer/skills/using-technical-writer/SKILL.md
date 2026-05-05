@@ -192,6 +192,24 @@ Register routing applies AFTER audience determination. Use register routing when
 
 ---
 
+### Complex Edits in Large Files
+
+**Symptoms**: "Edit this 5000-line spec", "Rename X across this module and update all the callers", "Merge sections 4 and 5 and renumber the rest", "Refactor error handling in this 3000-line file", "Update all 30 endpoints in the API reference"
+
+**Route to**:
+- `complex-writer` agent (surgical edit with pre-work assessment)
+- `complex-reviewer` agent (independent verification of the edit)
+
+**Key Pattern**: Survey → Pre-work assessment (complexity / blast radius / risk / mitigations) → caller confirms → Plan → Edit → Verify → paired review.
+
+**Cross-language**: The pair handles both documentation AND source code (Markdown, Python, Rust, TypeScript, Go, etc.). For language-specific *idiomatic* code review (after the edit is verified correct), prefer the language-specific reviewer (`rust-code-reviewer`, `python-code-reviewer`, etc.) — `complex-reviewer` verifies the edit landed correctly, not whether the code is idiomatic.
+
+**Example**: "Rename all uses of `legacy_handler` in this 4000-line service module" → complex-writer produces a pre-work assessment showing 47 call sites and TOC-of-handlers update needed; caller confirms; writer applies edits; complex-reviewer verifies zero hits of the old name and all 47 sites updated correctly.
+
+**When NOT to use**: Single-file changes <500 lines, simple typo fixes, or multi-file feature work (this pair is single-file scoped — for multi-file, use planning skills + subagent-driven-development).
+
+---
+
 ### Fact-Checking & Verification
 
 **Symptoms**: "Fact-check this paper", "Verify claims in this document", "Check if these citations are accurate"
@@ -271,6 +289,7 @@ Register routing applies AFTER audience determination. Use register routing when
 | "Developer guide" | documentation-structure + diagram-conventions + clarity |
 | "Executive summary" | clarity-and-style only |
 | "Fact-check paper" | `/fact-check <paths>` (slash command) |
+| "Edit this large file" / "rename across this module" | complex-writer + complex-reviewer agents |
 
 ---
 
