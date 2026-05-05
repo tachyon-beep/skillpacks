@@ -1,3 +1,89 @@
+---
+name: state-space-modeling
+description: State vectors, transition functions, reachability, attractors, and phase-space analysis for game systems - from fighting-game frame data to RTS tech trees and puzzle solvability
+---
+
+# State-Space Modeling for Games
+
+## Overview
+
+Every game has a state. *State-space modeling* is the discipline of writing that state down explicitly, mathematically, and completely — and then reasoning about which states are reachable, which are stable, which are deadlocks, and which are bugs. It is the foundation under save systems, replays, AI search, balance analysis, and procedural correctness checks.
+
+The discipline pays for itself in three ways:
+
+1. **Debugging by phase space.** Once you can plot the trajectory of state over time, "the player got stuck" becomes "the trajectory entered an absorbing region of state space" — a precise, fixable claim.
+2. **Reachability analysis.** Puzzles you cannot solve, achievements players cannot earn, equipment combinations the designer didn't anticipate — all of them are "is state X reachable from state X₀?" questions, answerable by graph search if the state space is finite.
+3. **Equilibrium and attractor analysis.** Long-running systems (economies, ecosystems, AI directors) settle into attractors. State-space modeling reveals what those attractors are *before* you ship.
+
+This sheet covers state vectors (what to put in them, what to leave out), transition functions (discrete, continuous, and event-driven), and the reading of trajectories in phase space. It cross-references `stability-analysis.md` for the eigenvalue mechanics on continuous state spaces and `differential-equations-for-games.md` when transitions are themselves ODEs.
+
+**Key insight**: If you cannot write down the complete state vector of your system on one page, you do not understand the system well enough to ship it. Most "weird state" bugs are bugs of *under-specification*: the developer forgot something belonged in the state.
+
+## When to Use
+
+Load this skill when:
+
+- Designing **save/load** for a non-trivial system
+- Designing **replay** functionality (replay = "re-derive trajectory from initial state + inputs")
+- Designing **AI** that searches for a solution (chess, puzzles, pathing, plan-based behaviour)
+- Designing **fighting-game frame data** (every move is a state transition with a known duration and follow-up set)
+- Designing **RTS tech trees** (reachability of build orders)
+- Auditing **puzzle solvability**
+- Modeling **resource systems** with multiple coupled stocks (cross-reference `stability-analysis.md`)
+- Debugging "got stuck" or "shouldn't be possible" issues
+
+**Symptoms you need this**:
+
+- Save files corrupt because something wasn't serialised
+- Replays diverge because not all state was captured
+- AI gets stuck in infinite loops in some game states
+- Puzzle reports of "I think this is unsolvable"
+- Achievement that nobody has unlocked
+- Build orders the developer didn't anticipate breaking the meta
+- Edge-case bugs that turn out to be *unreachable* states being reachable, or vice versa
+
+**Don't use for**:
+
+- Systems with no persistent state worth modeling (single-frame UI, transient particle effects)
+- Pure continuous physics with no discrete events (use `differential-equations-for-games.md` directly)
+- Trivial finite state machines that obviously work — overhead exceeds benefit
+
+## RED: Where State Modeling Failures Hide
+
+State-space failures rarely look like state-space failures. They look like save corruption, replay desync, AI infinite loops, and "unsolvable" puzzles. Three illustrative cases:
+
+### Failure 1: The Replay That Diverges From the Live Game
+
+**Scenario**: An RTS records every player input and replays the match by feeding the inputs back into the deterministic simulation. Replays start fine but diverge after a few minutes. Players notice when the replay shows a different unit dying than they remember.
+
+**What was missing from the state vector**:
+
+```python
+class GameState:
+    units: list[Unit]
+    resources: dict[str, int]
+    time: int
+    rng_seed: int
+    # Forgot: queue of pending construction orders inside each building
+    # Forgot: the AI scout's current waypoint index
+    # Forgot: the destruction-pending flag set by the previous tick's projectile resolution
+```
+
+**What went wrong**: The replay system serialised everything in `GameState` and assumed the simulation was deterministic given inputs. But three pieces of state lived inside subsystem objects (building queues, scout AI, projectile resolution) that were not persisted. Replays restarted those subsystems with default state. After a few minutes of compounded discrepancies, the replay went visibly wrong.
+
+**The state-space lesson**: A "complete state vector" is not "what the central object looks like" — it's "every quantity whose value affects the next transition." If a subsystem has internal state, that state is part of the vector or you cannot reproduce the trajectory.
+
+### Failure 2: The Puzzle Nobody Could Solve
+
+**Scenario**: A logic-puzzle game ships with 200 levels. Players report level 147 is "impossible." The designer is sure it's solvable; they solved it in playtesting. Investigation reveals it's solvable from the *editor's initial state* but not from the *shipped game's initial state* — the designer accidentally left a switch in a different position when exporting the level.
+
+**The state-space lesson**: Reachability is a property of `(initial_state, transition_function)`. Solvability tests must run from the actual shipped initial state, not the editor's working state. State-space modeling makes this distinction explicit and testable; informal modeling lets it slip through.
+
+### Failure 3: The "Impossible" Build Order
+
+**Scenario**: An RTS player discovers that with a specific 8-action build order they can field a tier-3 unit at minute 4 — three minutes faster than the designer thought possible. The combination breaks competitive balance.
+
+**The state-space lesson**: The designer was reasoning about *typical* trajectories through the build state space. Reachability analysis would have *enumerated* all reachable states at minute 4 from the start state and exposed the outlier. RTS tech trees are finite-branching graphs; modern hardware can search them exhaustively to depths of 40+ actions in seconds.
 
 ## GREEN Phase: State-Space Formulation
 

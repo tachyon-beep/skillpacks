@@ -1,3 +1,52 @@
+---
+name: chaos-and-sensitivity
+description: Sensitive dependence on initial conditions, Lyapunov exponents, deterministic chaos, multiplayer desyncs, and floating-point reproducibility for game and simulation systems
+---
+
+# Chaos and Sensitivity for Games
+
+## Overview
+
+A simulation is **chaotic** when arbitrarily small changes in its starting state produce arbitrarily large differences in its outcome — even though every step is fully deterministic. The classic image is the butterfly's wings causing a hurricane; the practical image is your two competitive-multiplayer servers diverging within seconds and refusing to agree on which units exist.
+
+Chaos is not the same as randomness. A chaotic system has no random number generator in it; it is fully reproducible *if* you can reproduce its initial state and every arithmetic operation bit-exactly. That "if" is doing all the work. Float reordering, transcendental-function library differences, denormals, fused multiply-add, even compiler optimization can flip a bit deep in the trajectory and unfold into total divergence within a hundred steps.
+
+This sheet teaches you to **recognize chaos when it bites you, quantify it with Lyapunov exponents, and engineer around it** — through fixed-point arithmetic, deterministic networking protocols, branchless code, and conscious decisions about which simulations *can* be replayed and which cannot.
+
+**Key insight**: Some failures look like RNG bugs but are actually float chaos. Some failures look like float chaos but are actually use-after-free of an RNG seed. Tell them apart by *removing all randomness* and looking for divergence anyway.
+
+## When to Use
+
+Load this skill when:
+
+- Building **competitive multiplayer** with lockstep or deterministic-rollback networking (RTS, fighting games, racing)
+- Building **replay systems** that must reproduce a session bit-exactly
+- Implementing **procedural generation** that's expected to produce identical worlds across machines
+- Working with **physics that loops on itself** — orbital mechanics, n-body, cloth, fluid, ragdolls
+- Debugging a "seemingly random" issue that survives setting all RNG seeds
+- Making a simulation **scientifically reproducible** (even single-machine, across runs)
+
+**Symptoms you need this**:
+
+- "Same seed produces different results across machines / OS / GPU drivers"
+- Multiplayer desyncs that grow over time but start small
+- Replays that diverge from live capture after a few minutes
+- Procedural worlds that differ between identical-looking builds
+- Floating-point sums that depend on iteration order
+- "It works on my machine" applied to deterministic logic
+- Physics systems that explode at high simulation speeds but are fine at normal speed
+
+**Don't use for**:
+
+- Genuinely random systems where determinism isn't required (loot rolls, particle effects)
+- Stable, dissipative systems with strong damping (most camera/UI animation)
+- Single-player asynchronous games with no replay requirement
+- Systems where a perceptual difference is acceptable (cinematics, ambient audio)
+
+## RED: Where Chaos Bites
+
+The failure cases below come from real (and lightly disguised) shipped systems. Each shows a different *flavour* of sensitive dependence: classical chaos in the dynamics, floating-point divergence across hardware, RNG state corruption masquerading as chaos, and order-of-iteration effects that look stochastic but aren't.
+
 
 #### Failure 1: Competitive Multiplayer Butterfly Effect (StarCraft AI Desync)
 

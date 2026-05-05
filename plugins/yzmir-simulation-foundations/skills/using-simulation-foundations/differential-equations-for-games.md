@@ -1,3 +1,114 @@
+---
+name: differential-equations-for-games
+description: Formulating and solving ordinary differential equations for game systems - physics, ecosystems, resource flows, AI behaviour, and economy dynamics
+---
+
+# Differential Equations for Games
+
+## Overview
+
+Most "feel"-related game systems are governed by differential equations whether you write them as such or not. Camera smoothing, projectile motion, resource regeneration, AI pursuit, ecosystem populations, economy supply-and-demand, weather, fluid surfaces, audio envelopes, and recoil decay are all *rate-of-change* problems. You can model them with ad-hoc magic numbers and live with the consequences, or formulate them as ODEs, solve them properly, and get systems that are predictable, tunable, and stable across frame rates.
+
+This sheet covers:
+
+- **Recognising** when a game system is an ODE (most are)
+- **Formulating** ODEs from the qualitative behaviour you want
+- **Choosing the order** (first-order for decay/growth; second-order for spring-like, projectile, mass-on-end-of-string behaviour)
+- **Solving** with appropriate integrators (cross-references `numerical-methods.md`)
+- **Validating** with stability analysis (cross-references `stability-analysis.md`)
+- **Linking** ODEs to their controllers (cross-references `feedback-control-theory.md`)
+
+The recurring lesson: a system with one or two well-chosen parameters and a defensible ODE will always feel better and tune faster than one with five magic numbers and a switch statement.
+
+**Key insight**: Frame-rate-dependent behaviour is the #1 symptom that you have an unrecognised ODE. Anywhere you find `current = current * 0.95` or `value += rate * deltaTime` in a system that doesn't *want* to depend on frame rate, you have an ODE that's been informally discretised by accident.
+
+## When to Use
+
+Load this skill when:
+
+- Designing **physics** that need to feel right at multiple frame rates (60 Hz on console, 144 Hz on PC, 30 Hz on mobile)
+- Modeling **populations** (NPCs, enemies, resources, currency) with continuous dynamics
+- Building **AI director** systems that maintain target intensity, difficulty, or pacing
+- Creating **smooth animation** of any continuous quantity (cameras, audio fades, UI tweens)
+- Designing **economy systems** with continuous flow (production, consumption, market price)
+- Building **environmental systems** (weather, vegetation growth, fire spread)
+- Working with anything that responds to a *rate*, not a *snapshot*
+
+**Symptoms you need this**:
+
+- "Behaviour changes at different frame rates"
+- "I have to retune everything when we change tick rate"
+- "Springs explode when the player presses too hard"
+- "Population either goes extinct or explodes; can't find the balance number"
+- "Cooldown reduction stacks weirdly"
+- "Game feels different at 30 vs 60 vs 144 FPS"
+- "We tuned by hand for weeks and it still feels off"
+
+**Don't use for**:
+
+- Pure event-driven systems (state machines, turn-based logic) — use `state-space-modeling.md`
+- Stochastic systems where the rate is random — use `stochastic-simulation.md`
+- Closed-form solutions you can compute analytically (e.g., projectile under constant gravity)
+- Discrete inventory, currency in integer units, achievement counters
+
+## RED: Where Magic Numbers Fail
+
+Each failure below is an ODE that someone tried to model without realising it was an ODE. The pattern is consistent: ad-hoc per-frame update → frame-rate dependence → instability under stress → an unprincipled fix that survives until the next stress test.
+
+
+#### Failure 1: Velocity-Damped Object That "Stops at 60 FPS But Drifts at 144"
+
+**Scenario**: A puck on ice, slowing down via friction.
+
+**What they did**:
+
+```csharp
+void Update() {
+    velocity *= 0.99f;          // "friction"
+    position += velocity * Time.deltaTime;
+}
+```
+
+**What went wrong**:
+
+- At 60 FPS the puck stopped after about 8 seconds. At 144 FPS it stopped after ~3 seconds. At 30 FPS it slid forever.
+- The team "fixed" it with `velocity *= Mathf.Pow(0.99f, Time.deltaTime * 60.0f)`, which is closer but still wrong (and computationally expensive).
+- Final shipping fix used a hard-coded fixed-tick simulation, which then fought the physics engine that was already running at variable rate.
+
+**Why**: Multiplying by a constant per frame is **exponential decay with a frame-rate-dependent time constant**. Each frame:
+
+```
+v_{n+1} = (0.99) * v_n
+```
+
+The continuous time constant is `τ = -dt / ln(0.99)`. Halve `dt`, halve `τ`. Behaviour scales with frame rate.
+
+**What the right model looks like**:
+
+This is a first-order ODE: `dv/dt = -k·v`. Solve it analytically per frame:
+
+```csharp
+const float k = 1.0f;  // "friction" rate, units of 1/second
+void Update() {
+    velocity *= Mathf.Exp(-k * Time.deltaTime);
+    position += velocity * Time.deltaTime;
+}
+```
+
+Or use a stable explicit form:
+
+```csharp
+const float k = 1.0f;
+void Update() {
+    float dt = Time.deltaTime;
+    float decay = 1.0f / (1.0f + k * dt);   // Implicit Euler — unconditionally stable
+    velocity *= decay;
+    position += velocity * dt;
+}
+```
+
+Both are framerate-independent. The first is exact for the linear ODE; the second is stable even at huge `dt` and is the better default in a game where `dt` can spike. Cross-reference `numerical-methods.md` for the trade-offs.
+
 
 #### Failure 2: Exploding Spring Physics (Third-Person Camera)
 
@@ -382,14 +493,20 @@ Where:
 **Behavior**: Oscillating populations (boom-bust cycles).
 
 ```python
-def lotka_volterra(state, t, alpha, beta, delta, gamma):
+def lotka_volterra(t, state, alpha, beta, delta, gamma):
     """Lotka-Volterra predator-prey dynamics."""
     H, P = state
     dH_dt = alpha * H - beta * H * P
     dP_dt = delta * beta * H * P - gamma * P
     return [dH_dt, dP_dt]
 
-from scipy.integrate import odeint
+from scipy.integrate import solve_ivp
+# `solve_ivp` is SciPy's modern ODE interface (replaces the older `odeint`).
+# It supports stiff solvers (method='Radau' or 'BDF'), adaptive step sizes,
+# event detection, and dense output. The function signature is f(t, y, *args)
+# rather than odeint's (y, t, *args). Pass `t_eval=` to sample the solution at
+# specific times. `sol.y` has shape (n_states, n_times); transpose for
+# n_times-major access.
 
 # Example: Rimworld ecosystem
 alpha = 0.1   # Rabbit birth rate
@@ -400,8 +517,9 @@ gamma = 0.05  # Fox death rate
 state0 = [40, 9]  # Initial populations
 t = np.linspace(0, 400, 1000)
 
-result = odeint(lotka_volterra, state0, t, args=(alpha, beta, delta, gamma))
-H, P = result.T
+sol = solve_ivp(lotka_volterra, (t[0], t[-1]), state0,
+                args=(alpha, beta, delta, gamma), t_eval=t)
+H, P = sol.y
 
 print(f"Equilibrium: H* = {gamma/(delta*beta):.1f}, P* = {alpha/beta:.1f}")
 # Equilibrium: H* = 8.3, P* = 5.0
@@ -422,7 +540,7 @@ dP/dt = δβHP - γP
 ```
 
 ```python
-def ecosystem_with_capacity(state, t, alpha, beta, delta, gamma, K):
+def ecosystem_with_capacity(t, state, alpha, beta, delta, gamma, K):
     """Predator-prey with carrying capacity."""
     H, P = state
     dH_dt = alpha * H * (1 - H / K) - beta * H * P
@@ -434,9 +552,9 @@ K = 100  # Carrying capacity for herbivores
 state0 = [40, 9]
 t = np.linspace(0, 400, 1000)
 
-result = odeint(ecosystem_with_capacity, state0, t,
-                args=(alpha, beta, delta, gamma, K))
-H, P = result.T
+sol = solve_ivp(ecosystem_with_capacity, (t[0], t[-1]), state0,
+                args=(alpha, beta, delta, gamma, K), t_eval=t)
+H, P = sol.y
 
 # Populations converge to stable equilibrium
 print(f"Final state: {H[-1]:.1f} herbivores, {P[-1]:.1f} predators")
@@ -481,7 +599,7 @@ dv/dt = F/m
 **Game Application**: All physics-based movement.
 
 ```python
-def newtonian_motion(state, t, force_func, mass):
+def newtonian_motion(t, state, force_func, mass):
     """Newton's second law: F = ma."""
     x, v = state
     F = force_func(x, v, t)
@@ -497,8 +615,9 @@ mass = 1.0
 state0 = [0, 20]  # Initial: ground level, 20 m/s upward
 t = np.linspace(0, 4, 100)
 
-result = odeint(newtonian_motion, state0, t, args=(gravity_force, mass))
-x, v = result.T
+sol = solve_ivp(newtonian_motion, (t[0], t[-1]), state0,
+                args=(gravity_force, mass), t_eval=t)
+x, v = sol.y
 
 print(f"Max height: {x.max():.1f} m")  # ~20.4 m
 print(f"Time to ground: {t[np.argmin(np.abs(x[50:]))]:.2f} s")  # ~4 s
@@ -520,7 +639,7 @@ Where:
 **Game Application**: Camera smoothing, character controller, UI animations.
 
 ```python
-def spring_damper(state, t, k, c, m):
+def spring_damper(t, state, k, c, m):
     """Spring-mass-damper system."""
     x, v = state
     dx_dt = v
@@ -540,8 +659,8 @@ for zeta in damping_ratios:
     state0 = [1.0, 0.0]  # 1m displacement, 0 velocity
     t = np.linspace(0, 2, 200)
 
-    result = odeint(spring_damper, state0, t, args=(k, c, m))
-    x, v = result.T
+    sol = solve_ivp(spring_damper, (t[0], t[-1]), state0, args=(k, c, m), t_eval=t)
+    x, v = sol.y
 
     print(f"ζ={zeta:.1f}: Settling time ~{t[np.argmax(np.abs(x) < 0.01)]:.2f}s")
 ```
@@ -620,7 +739,7 @@ Where:
 **Simplified**: `dv/dt = -k * v * |v|`
 
 ```python
-def projectile_with_drag(state, t, k, g):
+def projectile_with_drag(t, state, k, g):
     """Projectile motion with quadratic drag."""
     x, y, vx, vy = state
 
@@ -641,8 +760,8 @@ g = 9.8   # Gravity
 state0 = [0, 0, 800, 10]  # 800 m/s horizontal, 10 m/s up
 t = np.linspace(0, 5, 1000)
 
-result = odeint(projectile_with_drag, state0, t, args=(k, g))
-x, y, vx, vy = result.T
+sol = solve_ivp(projectile_with_drag, (t[0], t[-1]), state0, args=(k, g), t_eval=t)
+x, y, vx, vy = sol.y
 
 # Find impact point
 impact_idx = np.argmax(y < 0)
@@ -671,7 +790,7 @@ Where:
 
 ```python
 # Example: Factorio-style resource chain
-def resource_flow(state, t, production_rate, consumption_rate):
+def resource_flow(t, state, production_rate, consumption_rate):
     """Simple production-consumption model."""
     R = state[0]
     dR_dt = production_rate - consumption_rate
@@ -683,9 +802,10 @@ consumption = 40  # ore/min
 R0 = [100]        # Initial stockpile
 
 t = np.linspace(0, 60, 100)
-result = odeint(resource_flow, R0, t, args=(production, consumption))
+sol = solve_ivp(resource_flow, (t[0], t[-1]), R0,
+                args=(production, consumption), t_eval=t)
 
-print(f"After 1 hour: {result[-1, 0]:.0f} ore")  # 700 ore
+print(f"After 1 hour: {sol.y[0, -1]:.0f} ore")  # 700 ore
 print(f"Net flow: {production - consumption} ore/min")
 ```
 
@@ -703,7 +823,7 @@ Where:
 - `D` = consumption (constant or demand-driven)
 
 ```python
-def resource_with_capacity(state, t, P, D, C):
+def resource_with_capacity(t, state, P, D, C):
     """Resource flow with storage capacity."""
     R = state[0]
     production = P * (1 - R / C)  # Slows when full
@@ -717,11 +837,11 @@ C = 500  # Storage cap
 R0 = [50]
 
 t = np.linspace(0, 100, 1000)
-result = odeint(resource_with_capacity, R0, t, args=(P, D, C))
+sol = solve_ivp(resource_with_capacity, (t[0], t[-1]), R0, args=(P, D, C), t_eval=t)
 
 # Converges to equilibrium
 R_equilibrium = C * (1 - D / P)
-print(f"Equilibrium: {result[-1, 0]:.0f} (theory: {R_equilibrium:.0f})")
+print(f"Equilibrium: {sol.y[0, -1]:.0f} (theory: {R_equilibrium:.0f})")
 ```
 
 
@@ -735,7 +855,7 @@ dE/dt = k₂G - D_engine
 ```
 
 ```python
-def resource_chain(state, t, P_iron, k1, k2, D_engine, max_buffers):
+def resource_chain(t, state, P_iron, k1, k2, D_engine, max_buffers):
     """Three-stage production chain."""
     I, G, E = state
     G_max, E_max = max_buffers
@@ -761,9 +881,11 @@ max_buffers = (100, 50)
 state0 = [0, 0, 0]
 t = np.linspace(0, 200, 1000)
 
-result = odeint(resource_chain, state0, t,
-                args=(P_iron, k1, k2, D_engine, max_buffers))
-I, G, E = result.T
+# Stage-switching makes this RHS mildly stiff; an implicit method handles it well.
+sol = solve_ivp(resource_chain, (t[0], t[-1]), state0,
+                args=(P_iron, k1, k2, D_engine, max_buffers),
+                t_eval=t, method="LSODA")
+I, G, E = sol.y
 
 print(f"Steady state: {I[-1]:.1f} iron, {G[-1]:.1f} gears, {E[-1]:.1f} engines")
 ```
@@ -1548,27 +1670,32 @@ def test_exponential_decay():
 def test_equilibrium_stability():
     """Check system converges to equilibrium."""
     # Logistic growth should reach K
-    result = odeint(
-        lambda N, t: 0.1 * N[0] * (1 - N[0]/100),
+    t = np.linspace(0, 100, 1000)
+    sol = solve_ivp(
+        lambda t, N: 0.1 * N[0] * (1 - N[0] / 100),
+        (t[0], t[-1]),
         [10],
-        np.linspace(0, 100, 1000)
+        t_eval=t,
     )
 
-    assert abs(result[-1, 0] - 100) < 1.0  # Within 1% of K
+    assert abs(sol.y[0, -1] - 100) < 1.0  # Within 1% of K
 
 def test_conservation_laws():
     """Energy should be conserved (for conservative systems)."""
     # Harmonic oscillator
-    def oscillator(state, t):
+    def oscillator(t, state):
         x, v = state
         return [v, -x]  # Spring force
 
     state0 = [1, 0]  # Initial displacement, zero velocity
     t = np.linspace(0, 100, 10000)
-    result = odeint(oscillator, state0, t)
+    # Use a tight tolerance — RK45 still drifts; for true symplectic
+    # behaviour use a Verlet integrator (see numerical-methods.md).
+    sol = solve_ivp(oscillator, (t[0], t[-1]), state0, t_eval=t,
+                    rtol=1e-9, atol=1e-12)
 
     # Total energy = 0.5 * (x² + v²)
-    energy = 0.5 * (result[:, 0]**2 + result[:, 1]**2)
+    energy = 0.5 * (sol.y[0]**2 + sol.y[1]**2)
     energy_drift = abs(energy[-1] - energy[0]) / energy[0]
 
     assert energy_drift < 0.01  # <1% drift over 100 time units
@@ -1629,16 +1756,18 @@ def test_lotka_volterra_period():
     expected_period = 2 * np.pi / np.sqrt(alpha * gamma)
 
     # Run simulation
-    result = odeint(
+    t = np.linspace(0, 200, 10000)
+    sol = solve_ivp(
         lotka_volterra,
+        (t[0], t[-1]),
         [40, 9],
-        np.linspace(0, 200, 10000),
-        args=(alpha, 0.02, 0.3, gamma)
+        args=(alpha, 0.02, 0.3, gamma),
+        t_eval=t,
     )
 
     # Find peaks in herbivore population
     from scipy.signal import find_peaks
-    peaks, _ = find_peaks(result[:, 0])
+    peaks, _ = find_peaks(sol.y[0])
 
     # Measure average period
     if len(peaks) > 2:

@@ -1,3 +1,57 @@
+---
+name: stability-analysis
+description: Equilibrium analysis, eigenvalue methods, Lyapunov stability, and bifurcation detection for game economies, ecosystems, AI controllers, and physics systems
+---
+
+# Stability Analysis for Game Systems
+
+## Overview
+
+A game system is **stable** if small disturbances stay small. It is **unstable** if small disturbances grow without bound. Most shipped game-system bugs in simulation-heavy genres — runaway economies, extinct ecosystems, exploding ragdolls, oscillating AI directors — are stability failures, and almost all of them are *predictable* by linearizing around the equilibrium and checking eigenvalues.
+
+You do not need to derive a Lyapunov function from scratch to ship a stable simulation. You need three things:
+
+1. **Identify equilibria** — the steady states your system would settle into if disturbances stopped.
+2. **Linearize around them** — compute the Jacobian matrix and its eigenvalues.
+3. **Read off the verdict** — eigenvalues with positive real parts mean *unstable*; negative mean *stable*; pure imaginary means *marginal* (oscillates forever).
+
+That recipe catches roughly 90% of stability bugs before launch. The remaining 10% — limit cycles, strange attractors, multistability, hysteresis — require a richer toolkit, but they're also rare in practice.
+
+**Key insight**: If you can't write down a fixed point of your system, you don't understand it well enough to stabilize it. Most "balance" bugs are actually "no equilibrium exists" or "the equilibrium is unstable."
+
+## When to Use
+
+Load this skill when:
+
+- Designing **economies** (currency flow, item markets, crafting graphs)
+- Designing **ecosystems** (predator-prey, resource-consumer, multi-species)
+- Designing **AI directors** that adapt to player behaviour
+- Designing **reputation, faction, or social systems** with feedback loops
+- Building a **physics engine** whose constraint solver might diverge
+- Auditing any system that "balances" itself by adjusting parameters at runtime
+- Cross-referenced from `feedback-control-theory.md` to verify a closed-loop is stable
+
+**Symptoms you need this**:
+
+- Economy hyperinflates or deflates over weeks of play
+- Population in an ecosystem extinguishes or explodes
+- Difficulty AI gets relentlessly harder or trivially easy
+- Reputation locks you into a positive- or negative-feedback spiral
+- Physics ragdoll launches the player to infinity
+- Patches that "just adjust one number" cascade into meta upheaval
+- "It was balanced when 10K players were online; broken at 500K"
+
+**Don't use for**:
+
+- Systems with no continuous feedback (one-shot puzzles, scripted quests)
+- Pure authored content (story, fixed level design)
+- Tiny indie games where the math overhead exceeds the development overhead
+- Systems where "balance" is qualitative and stability isn't measurable
+
+## RED: When Stability Is Ignored
+
+Each failure below comes from skipping equilibrium analysis. The eigenvalue check that would have caught it is shown after the symptoms — usually a five-line derivation that would have saved months.
+
 
 #### Failure 1: Economy Hyperinflation (EVE Online Economy Collapse)
 
@@ -1056,10 +1110,10 @@ Unlike equilibrium points (single fixed state), limit cycles are closed orbits w
 # dP/dt = (1 - (P/P_sat)²) * P - hunting
 
 import numpy as np
-from scipy.integrate import odeint
+from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 
-def van_der_pol(state, t, mu):
+def van_der_pol(t, state, mu):
     x, y = state
     dx = y
     dy = -x - mu * (x**2 - 1) * y
@@ -1082,8 +1136,8 @@ for i, init_cond in enumerate([
     [-2, 1],
     [0, 3]
 ]):
-    solution = odeint(van_der_pol, init_cond, t, args=(mu,))
-    ax.plot(solution[:, 0], solution[:, 1], color=colors[i], label=f'init {i+1}')
+    sol = solve_ivp(van_der_pol, (t[0], t[-1]), init_cond, args=(mu,), t_eval=t)
+    ax.plot(sol.y[0], sol.y[1], color=colors[i], label=f'init {i+1}')
 
 ax.set_xlabel('x (position/population)')
 ax.set_ylabel('y (velocity/birth-death rate)')
@@ -1093,9 +1147,9 @@ ax.legend()
 
 # Time series
 ax = axes[1]
-solution = odeint(van_der_pol, [0.1, 0], t, args=(mu,))
-ax.plot(t, solution[:, 0], label='Position')
-ax.plot(t, solution[:, 1], label='Velocity')
+sol = solve_ivp(van_der_pol, (t[0], t[-1]), [0.1, 0], args=(mu,), t_eval=t)
+ax.plot(t, sol.y[0], label='Position')
+ax.plot(t, sol.y[1], label='Velocity')
 ax.set_xlabel('Time')
 ax.set_ylabel('State value')
 ax.set_title('Time Series Evolution')
@@ -1688,10 +1742,10 @@ Before shipping, verify:
 **Stability checks:**
 ```python
 import numpy as np
-from scipy.integrate import odeint
+from scipy.integrate import solve_ivp
 
 # Rimworld-style ecosystem
-def rimworld_ecosystem(state, t, params):
+def rimworld_ecosystem(t, state, params):
     deer, wolves, plants, colonists = state
 
     a_deer = params['deer_birth']
@@ -1720,7 +1774,7 @@ def find_rimworld_equilibrium():
     }
 
     def equilibrium_eq(state):
-        return rimworld_ecosystem(state, 0, params)
+        return rimworld_ecosystem(0.0, state, params)
 
     # Guess: balanced ecosystem
     x_eq = fsolve(equilibrium_eq, [500, 100, 5000, 10])
@@ -1733,7 +1787,10 @@ print(f"Equilibrium: Deer={x_eq[0]:.0f}, Wolves={x_eq[1]:.0f}, Plants={x_eq[2]:.
 
 # Simulate for 5000 days (in-game time)
 t = np.linspace(0, 5000, 10000)
-solution = odeint(rimworld_ecosystem, x_eq + np.array([50, 10, 500, 0]), t, args=(params,))
+sol = solve_ivp(rimworld_ecosystem, (t[0], t[-1]),
+                x_eq + np.array([50, 10, 500, 0]),
+                args=(params,), t_eval=t)
+solution = sol.y.T
 
 # Check stability
 final_state = solution[-1]

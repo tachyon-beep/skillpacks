@@ -1,3 +1,88 @@
+---
+name: continuous-vs-discrete
+description: Choosing between continuous (ODE) and discrete (event/turn) simulation models, recognizing modeling-mismatch bugs, and combining the two without breaking either
+---
+
+# Continuous vs Discrete Simulation
+
+## Overview
+
+Every game system you simulate is either **continuous** (state evolves over time according to a rate of change) or **discrete** (state changes only at well-defined events). Picking the wrong model is the source of an entire category of bugs that look mysterious from inside the code:
+
+- Treating a tick-based economy as if it were continuous → off-by-one accumulation, fractional currency, items that don't exist.
+- Treating a continuous physics system as if it were discrete → integration that explodes when the framerate dips, behaviour that depends on tick rate.
+- Trying to run both models on the same state — for instance, real-time physics during a turn-based combat round — produces phase-lag artefacts that no amount of polishing fixes.
+
+This sheet teaches you to **identify which model fits your system**, recognize the four common modeling mismatches, and combine continuous and discrete sub-systems cleanly when a real game inevitably needs both.
+
+**Key insight**: The decision between continuous and discrete is not "which is more elegant" — it's "which model can the underlying *quantity* actually inhabit." Population counts are integers, but at large scales their dynamics are well-approximated by ODEs. Camera position is continuous. Inventory slots are discrete. Get the underlying ontology right and the implementation falls out.
+
+## When to Use
+
+Load this skill when:
+
+- Choosing between **ODE-based** and **event-based** simulation for a new system
+- A system "feels weird" — fractional values where there shouldn't be any, or chunky stepping where there should be smoothness
+- Combining **turn-based and real-time** mechanics in the same game (visible animation during paused logic; real-time pursuit between turns)
+- Migrating a prototype from "tick every frame" to a real simulation engine
+- Performance-tuning: the simulation is too expensive and you suspect the model is wrong, not the code
+
+**Symptoms you need this**:
+
+- Half-units, fractional gold, partial achievements that "shouldn't be possible"
+- Behaviour changes when frame rate changes, even with correct `dt` handling
+- Turn-based logic with real-time animation produces visible inconsistencies
+- "Continuous" simulation produces stair-step behaviour the player can see
+- ODE solvers chosen for a system that doesn't actually have continuous dynamics
+- Simulation cost is dominated by ODE integration of a fundamentally discrete process
+
+**Don't use for**:
+
+- A system where the answer is obviously one or the other (camera = continuous; inventory = discrete; settle that and move on)
+- Pure event-driven game logic with no continuous state at all (use a state machine; cross-ref `state-space-modeling.md`)
+- Pure physics simulation with no discrete events (use `differential-equations-for-games.md` directly)
+
+## RED: When the Wrong Model Is Chosen
+
+The failures below come from picking the wrong model — sometimes by default, sometimes because the engine made the wrong choice easy. Each pairs the wrong-model symptom with what the right model would have looked like.
+
+
+### Failure 1: Continuous Physics in a Tick-Based Strategy Game
+
+**Scenario**: A 4X strategy game with a 1-second-per-tick simulation. Designers add a "diplomatic momentum" stat that should "smoothly rise and fall as nations interact."
+
+**What they did**:
+
+```python
+# Diplomatic momentum, updated every tick using continuous-style ODE math
+def tick_diplomacy(nation, dt):
+    # Treat momentum as a continuous quantity with rate equation
+    dM = -0.1 * nation.momentum + 0.05 * nation.recent_actions
+    nation.momentum += dM * dt   # dt = 1.0 (one tick)
+```
+
+**What went wrong**:
+
+- The "rate" of decay (`0.1`) was tuned in a continuous-time mental model — 10% per second. With 1-second ticks, the discrete update overshoots the continuous behaviour for any large `recent_actions` step.
+- When designers shortened the tick to 0.5 seconds for "smoother diplomacy," the time constant changed (now 5% per tick = ~9.75% per second). All tunings broke.
+- Save/load preserved `momentum` to four decimal places, but a deterministic re-simulation produced different numbers because the JSON serializer rounded.
+
+**What the right model looks like**:
+
+This is a **discrete-time difference equation**, not a continuous-time ODE. State the recurrence directly:
+
+```python
+# Difference equation: M_{n+1} = (1 - alpha) * M_n + beta * actions_n
+ALPHA = 0.1  # decay per tick
+BETA = 0.05  # contribution per tick
+def tick_diplomacy(nation):
+    nation.momentum = (1.0 - ALPHA) * nation.momentum + BETA * nation.recent_actions
+```
+
+No `dt`. No drift on save/load if you store integers (or fixed-point). Tick rate changes require explicit `(ALPHA, BETA)` re-tuning, which is the *correct* answer because the system genuinely changes meaning at a different tick rate.
+
+The tell that you've made this mistake: you have a `dt` in your update function and `dt` is always exactly the same constant.
+
 
 ### Failure 2: Turn-Based Combat with Real-Time Physics
 
@@ -735,18 +820,25 @@ def test_discrete_determinism():
 
 # Test 3: Discretization preserves continuous behavior
 def test_discretization_accuracy():
-    # Continuous ODE solution
-    y_exact = odeint(dy_dt, y0, t_continuous)
+    # Continuous ODE solution (modern SciPy interface; signature is f(t, y))
+    from scipy.integrate import solve_ivp
+    sol = solve_ivp(
+        lambda t, y: dy_dt(y),
+        (t_continuous[0], t_continuous[-1]),
+        [y0],
+        t_eval=t_continuous,
+    )
+    y_exact = sol.y[0]
 
-    # Discretized version
-    y_discrete = []
+    # Discretized version (forward Euler)
+    y_discrete = [y0]
     y = y0
     for dt in (t_continuous[1:] - t_continuous[:-1]):
-        y += dy_dt(y) * dt
+        y = y + dy_dt(y) * dt
         y_discrete.append(y)
 
     # Error should be small
-    error = np.max(np.abs(y_exact - y_discrete))
+    error = np.max(np.abs(y_exact - np.array(y_discrete)))
     assert error < 0.01  # Less than 1% error
 ```
 

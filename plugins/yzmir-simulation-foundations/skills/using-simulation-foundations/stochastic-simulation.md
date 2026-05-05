@@ -1,3 +1,53 @@
+---
+name: stochastic-simulation
+description: Probability distributions, Monte Carlo methods, stochastic differential equations, variance reduction, and randomness patterns for game systems
+---
+
+# Stochastic Simulation for Games
+
+## Overview
+
+Randomness in games is rarely the kind of randomness that's in textbooks. Players don't perceive a uniform distribution as "fair" — they perceive *streaks*, *droughts*, and *clumps* and interpret them as bugs. They expect a 20% crit chance to deliver a crit roughly every five hits, not "no crits for 30 hits, then four in a row" — even though the latter is the *correct* sample from a Bernoulli(0.2).
+
+Stochastic simulation in games is therefore as much about **shaping the distribution to match player intuition** as it is about generating numbers. Pity systems, deterministic spreading, variance reduction, anti-streak corrections, and explicit fairness guarantees are *features*, not statistical mistakes — they're the response to "the math is right but it feels wrong."
+
+This sheet covers the math (distributions, expectations, variance, the Central Limit Theorem) *and* the engineering (when to use a pity timer, how to debias a procedural generator, how to make rare events feel rare without feeling broken). It cross-references `chaos-and-sensitivity.md` for the determinism side: stochastic systems and *deterministic* systems are not opposites — many shipped games are bit-deterministic stochastic simulations driven by a seeded PRNG.
+
+**Key insight**: True randomness is uncomfortable. Most players want *predictably random* — outcomes that vary, but stay within emotionally acceptable bounds. The job of a stochastic system in a game is to deliver predictable randomness without feeling rigged.
+
+## When to Use
+
+Load this skill when:
+
+- Designing **loot, drop, or gacha systems** with rare-tier outcomes
+- Designing **crit, dodge, hit-rate** combat math
+- Designing **procedural content** (levels, encounters, terrain, items) with variety guarantees
+- Designing **AI uncertainty** — bosses with non-deterministic action choice
+- Modeling **player skill distributions** for matchmaking or difficulty
+- Implementing **Monte Carlo evaluation** of game systems before launch
+- Cross-referenced from `feedback-control-theory.md` when the controller's measurement is stochastic
+- Cross-referenced from `chaos-and-sensitivity.md` when seeding a deterministic stochastic simulation
+
+**Symptoms you need this**:
+
+- "Players say the loot table is broken; the math says it's fine"
+- Crit-rate complaints despite correct expected values
+- Procedurally generated levels feel samey or bizarrely similar
+- Rare events cluster — three rare drops in one hour, then nothing for a week
+- Matchmaking puts players who should be evenly matched into lopsided games
+- Streaks of all-misses or all-hits make combat feel unresponsive
+
+**Don't use for**:
+
+- Pure deterministic simulation where seeded RNG isn't required (use `state-space-modeling.md`)
+- Closed-form analytical questions (just compute the expected value)
+- Simulations where you need *bit-identical* reproduction across hardware — that's a determinism problem, not a stochastic one (use `chaos-and-sensitivity.md`)
+- Continuous control systems where the measurement isn't noisy (use `feedback-control-theory.md`)
+
+## RED: Where "Mathematically Correct" Randomness Fails
+
+The four failures below all share a pattern: the implementation is mathematically defensible (correct expected value, correct distribution) but feels wrong, exploits open, or breaks the experience. The fix is *not* to stop using randomness; it's to apply variance reduction, distribution shaping, or pity timers — well-known techniques covered in the GREEN section.
+
 
 ### Failure 1: Loot Pity Breaking (Gacha Game Collapse)
 
