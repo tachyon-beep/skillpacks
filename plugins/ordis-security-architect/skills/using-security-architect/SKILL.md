@@ -91,6 +91,42 @@ When you see a link like `[threat-modeling.md](threat-modeling.md)`, read the fi
 
 ### Specialized Contexts (Extensions)
 
+#### LLM / AI / Agentic Systems
+
+**Symptoms**: "LLM", "prompt injection", "RAG", "vector store", "agent",
+"MCP", "model registry", "AI safety" (security flavor), "jailbreak",
+"model poisoning"
+
+**Route to**: [llm-and-ai-security.md](llm-and-ai-security.md)
+
+**When to add**:
+- Add [threat-modeling.md](threat-modeling.md) for STRIDE spine
+- Add [supply-chain-security.md](supply-chain-security.md) when model registries, datasets, or inference deps are in scope
+- Cross-faction: Yzmir LLM specialist for prompt/fine-tune/RAG correctness
+
+**Example**: "Threat model our customer support chatbot with tool-use" →
+Load [llm-and-ai-security.md](llm-and-ai-security.md) +
+[threat-modeling.md](threat-modeling.md)
+
+---
+
+#### Build / Supply-Chain / Release Pipeline
+
+**Symptoms**: "supply chain", "SBOM", "SLSA", "Sigstore", "cosign",
+"dependency confusion", "typosquat", "provenance", "build attestation",
+"signed releases"
+
+**Route to**: [supply-chain-security.md](supply-chain-security.md)
+
+**When to add**:
+- Add [security-architecture-review.md](security-architecture-review.md) for tooling catalog
+- Add [compliance-awareness-and-mapping.md](compliance-awareness-and-mapping.md) for EO 14028 / EU CRA mapping
+
+**Example**: "Design our SLSA L2 build pipeline" →
+Load [supply-chain-security.md](supply-chain-security.md)
+
+---
+
 #### Classified/High-Security Systems
 
 **Symptoms**: "TOP SECRET", "classified data", "security clearances", "multi-level security", "Bell-LaPadula"
@@ -155,6 +191,8 @@ Load these for **any** project with security needs:
 
 Load these **only** when context requires:
 
+- [llm-and-ai-security.md](llm-and-ai-security.md) - LLM, RAG, agentic, and ML threats (OWASP LLM Top 10, MITRE ATLAS)
+- [supply-chain-security.md](supply-chain-security.md) - SLSA, SBOM, Sigstore, dependency threats, build provenance
 - [classified-systems-security.md](classified-systems-security.md) - Handling classified/sensitive data with clearances
 - [compliance-awareness-and-mapping.md](compliance-awareness-and-mapping.md) - Regulatory compliance (HIPAA, PCI-DSS, GDPR, etc.)
 - [security-authorization-and-accreditation.md](security-authorization-and-accreditation.md) - Government ATO/AIS processes
@@ -177,6 +215,8 @@ What's the situation?
 └─ Domain-specific → See "Specific Security Domains" above
 
 Is this a specialized context?
+├─ LLM / RAG / agent → ADD: llm-and-ai-security
+├─ Build pipeline / SBOM / signing → ADD: supply-chain-security
 ├─ Classified data → ADD: classified-systems-security
 ├─ Compliance required → ADD: compliance-awareness-and-mapping
 ├─ Government ATO → ADD: security-authorization-and-accreditation
@@ -254,6 +294,8 @@ You: Loading documenting-threats-and-controls + muna/technical-writer/documentat
 | **Classified data** | classified-systems-security + core skills | Extension required |
 | **Compliance** | compliance-awareness-and-mapping + core skills | Extension for regulatory contexts |
 | **Government ATO** | security-authorization-and-accreditation + core skills | Extension for ATO/AIS |
+| **LLM / RAG / agent** | llm-and-ai-security + threat-modeling | Extension for AI systems |
+| **Build pipeline / SBOM** | supply-chain-security + threat-modeling | Extension for release/supply chain |
 | **Document security** | documenting-threats-and-controls, muna/documentation-structure | Cross-faction |
 
 ---
@@ -261,7 +303,7 @@ You: Loading documenting-threats-and-controls + muna/technical-writer/documentat
 ## Common Mistakes
 
 ### ❌ Loading All Skills at Once
-**Wrong**: Load all 8 security-architect skills for every security task
+**Wrong**: Load all 10 security-architect skills for every security task
 **Right**: Load only the skills your situation needs (use decision tree)
 
 ### ❌ Skipping Threat Modeling
@@ -316,24 +358,29 @@ Your routing:
 4. Load: threat-modeling (if threats not already modeled)
 ```
 
----
+### Example 4: Customer-Facing Chatbot with Tools
 
-## Phase 1 Note
+```
+User: "Threat model our support chatbot — it reads tickets and can issue refunds"
 
-**Currently Available** (Phase 1):
-- ✅ `using-security-architect` (this skill)
-- ✅ `threat-modeling` (in progress)
+Your routing:
+1. Recognize: LLM + agentic + tool use + financial action
+2. Load: llm-and-ai-security (OWASP LLM Top 10, agentic threats)
+3. Load: threat-modeling (STRIDE spine, attack trees on tool calls)
+4. Consider: security-controls-design (action-side controls, refund cap enforcement)
+```
 
-**Coming Soon** (Phases 2-3):
-- `security-controls-design`
-- `architecture-security-review`
-- `secure-by-design-patterns`
-- `classified-systems-security`
-- `compliance-awareness-and-mapping`
-- `security-authorization-and-accreditation`
-- `documenting-threats-and-controls`
+### Example 5: SLSA-Aligned Build Pipeline
 
-**For Phase 1**: Focus on threat-modeling as primary skill. Reference other skills by name even though they're not implemented yet - this tests the routing logic.
+```
+User: "Design our release pipeline to meet SLSA L2 and produce signed SBOMs"
+
+Your routing:
+1. Recognize: Supply chain + provenance + signing
+2. Load: supply-chain-security (SLSA, SBOM, Sigstore)
+3. Load: security-architecture-review (tooling alignment)
+4. Consider: compliance-awareness-and-mapping (EO 14028 / EU CRA mapping if in scope)
+```
 
 ---
 
@@ -366,6 +413,8 @@ After routing, load the appropriate specialist skill for detailed guidance:
 
 ### Extension Skills (Specialized Contexts)
 
-6. [classified-systems-security.md](classified-systems-security.md) - Multi-level security (MLS), Bell-LaPadula, classified data handling, security clearances
-7. [compliance-awareness-and-mapping.md](compliance-awareness-and-mapping.md) - HIPAA, PCI-DSS, SOC2, GDPR, regulatory mapping, compliance frameworks
-8. [security-authorization-and-accreditation.md](security-authorization-and-accreditation.md) - ATO/AIS processes, SSP/SAR, POA&M, FedRAMP, FISMA, government authorization
+6. [llm-and-ai-security.md](llm-and-ai-security.md) - OWASP LLM Top 10 (2025), MITRE ATLAS, prompt injection, agentic threats, model supply chain, RAG security
+7. [supply-chain-security.md](supply-chain-security.md) - SLSA v1.1, SBOM (CycloneDX 1.6, SPDX), Sigstore, in-toto, dependency confusion, build provenance
+8. [classified-systems-security.md](classified-systems-security.md) - Multi-level security (MLS), Bell-LaPadula, classified data handling, security clearances
+9. [compliance-awareness-and-mapping.md](compliance-awareness-and-mapping.md) - NIST CSF 2.0, ISO 27001:2022, PCI-DSS v4.0.1, SOC 2, GDPR, EU AI Act, NIS2, regulatory mapping
+10. [security-authorization-and-accreditation.md](security-authorization-and-accreditation.md) - ATO/AIS processes, SSP/SAR, POA&M, FedRAMP, FISMA, government authorization

@@ -219,9 +219,150 @@ For each security property:
 3. **Design defense-in-depth**: Redundant checks at multiple layers
 
 
+## Standard Threat Identifiers (CWE / CVSS / ATT&CK / ATLAS)
+
+Threat-model artifacts that travel outside your team — to security
+auditors, blue teams, regulators, or downstream consumers — should be
+tagged with **standard identifiers** so others can cross-reference them
+against their own tooling.
+
+### CWE — What kind of weakness is this?
+
+**CWE** (Common Weakness Enumeration, MITRE) categorizes the *class* of
+defect. Tag every threat with the most specific CWE ID that fits.
+
+Common IDs to know:
+
+| CWE | Name | Use when |
+|-----|------|----------|
+| CWE-20 | Improper Input Validation | Most input-handling defects (umbrella) |
+| CWE-22 | Path Traversal | File access via untrusted path |
+| CWE-77 / CWE-78 | Command / OS Command Injection | Shell exec with untrusted input |
+| CWE-79 | Cross-Site Scripting | HTML/JS rendered from untrusted input |
+| CWE-89 | SQL Injection | SQL constructed from untrusted input |
+| CWE-94 | Code Injection | `eval`/dynamic code from untrusted input |
+| CWE-200 | Information Exposure | Sensitive data leaked in response/log/error |
+| CWE-269 | Improper Privilege Management | Authorization gaps, over-broad grants |
+| CWE-287 / CWE-306 | Improper / Missing Authentication | Auth bypass or absent |
+| CWE-352 | CSRF | Cross-site state-changing forgery |
+| CWE-400 / CWE-770 | Resource Exhaustion / Allocation w/o Limits | DoS |
+| CWE-434 | Unrestricted File Upload | Upload of dangerous types |
+| CWE-502 | Deserialization of Untrusted Data | Pickle/YAML/Java deserialization |
+| CWE-918 | SSRF | Server-side fetch from untrusted URL |
+| CWE-1357 / CWE-1395 | Reliance on Vulnerable Component / Dependency | Supply-chain |
+| CWE-1426 | Improper Validation of Generative AI Output | LLM output handling |
+
+The full corpus is at `cwe.mitre.org`. CWE has a Top 25 published
+annually — **CWE Top 25 (2024)** is the current list at time of writing;
+verify the current edition when citing.
+
+### CVSS — How severe is the vulnerability?
+
+**CVSS** (Common Vulnerability Scoring System) is the industry-standard
+severity score for *concrete vulnerabilities* (not threats in the
+abstract). Useful when a threat has been validated as exploitable and
+you need to communicate severity to non-experts or feed into a SOC
+prioritization queue.
+
+- **CVSS v3.1**: Still the most widely deployed (FIRST, NVD).
+- **CVSS v4.0**: Released Nov 2023, adopted by NVD in 2024. Adds threat
+  metrics (exploit maturity), supplemental metrics (safety, automatable),
+  and environmental refinements.
+
+Use the calculator at `first.org/cvss/calculator/4.0` (or v3.1).
+Severity bands (v3.1 / v4.0): None 0, Low 0.1–3.9, Medium 4.0–6.9,
+High 7.0–8.9, Critical 9.0–10.0.
+
+**EPSS** (Exploit Prediction Scoring System) is a complementary score —
+*probability of exploitation in the next 30 days* — published by FIRST
+at `first.org/epss`. Use CVSS for *severity*, EPSS for *likelihood
+under current threat conditions*. The combination beats either alone for
+prioritization.
+
+**SSVC** (Stakeholder-Specific Vulnerability Categorization, CISA) is an
+alternative decision-tree model that some federal/critical-infrastructure
+contexts prefer over scalar scores.
+
+### MITRE ATT&CK — How would the adversary do it?
+
+**ATT&CK** (`attack.mitre.org`) catalogs adversary tactics and
+techniques — *what they do once they're in*. Tag attack-tree leaves
+with technique IDs so blue teams can map detections.
+
+Tactics are the broad goals (e.g., **TA0001 Initial Access**, **TA0004
+Privilege Escalation**, **TA0010 Exfiltration**). Techniques (`T####`)
+are the specific methods.
+
+High-frequency techniques to know:
+
+| ID | Technique |
+|----|-----------|
+| T1190 | Exploit Public-Facing Application |
+| T1078 | Valid Accounts (credential abuse) |
+| T1059 | Command and Scripting Interpreter |
+| T1505 | Server Software Component |
+| T1195 | Supply Chain Compromise (.001 dev tools, .002 software, .003 hardware) |
+| T1566 | Phishing |
+| T1110 | Brute Force |
+| T1486 | Data Encrypted for Impact (ransomware) |
+
+ATT&CK has matrices for Enterprise, Mobile, ICS, and Containers. Pick
+the matrix that fits the system under analysis.
+
+### MITRE ATLAS — Adversarial threats against AI
+
+**ATLAS** (`atlas.mitre.org`) is the AI-specific equivalent. Tag LLM /
+ML threats with `AML.T####` IDs.
+
+Common IDs:
+
+| ID | Technique |
+|----|-----------|
+| AML.T0051 | LLM Prompt Injection |
+| AML.T0054 | LLM Jailbreak |
+| AML.T0019 | Publish Poisoned Datasets |
+| AML.T0020 | Poison Training Data |
+| AML.T0024 | Exfiltration via ML Inference API |
+| AML.T0010 | ML Supply Chain Compromise |
+| AML.T0053 | LLM Plugin Compromise |
+
+Cross-link to `llm-and-ai-security.md` when modeling LLM-using systems.
+
+### CVE — When the threat is a known vulnerability
+
+If the threat in question is *exploitation of a published CVE*, cite
+the CVE ID (`CVE-YYYY-NNNNN`). Verify via `nvd.nist.gov` or `cve.org`.
+Do not invent CVE numbers.
+
+### Tagging Convention
+
+Add columns to the threat table:
+
+```markdown
+| ID | Description | STRIDE | CWE | ATT&CK / ATLAS | CVSS (v3.1 / v4.0) | EPSS | Risk |
+|----|-------------|--------|-----|-----------------|--------------------|------|------|
+| T-01 | Config-override of `security_level` | T,E | CWE-1357 | T1565.003 | 9.1 (Critical) | 0.06 | 9 |
+| T-02 | Plugin duck-type bypass | E   | CWE-863 | T1078 | 7.5 (High) | 0.02 | 6 |
+```
+
+You don't need every column for every threat — but the discipline of
+tagging surfaces gaps (e.g., a threat with no plausible CWE is often
+too vague to mitigate).
+
+---
+
 ## Risk Scoring
 
 **Purpose**: Prioritize threats by (Likelihood × Impact)
+
+The 1–3 × 1–3 matrix below is the recommended **default for
+architectural threat modeling** — it's pedagogically simple, quick to
+apply, and consistent across a team. Use **CVSS** when the threat is a
+concrete vulnerability with a defined attack vector and you need to
+communicate severity outside the team. Use **CVSS + EPSS** (or **SSVC**)
+when feeding a SOC prioritization queue. The two scoring systems are
+complementary: the matrix for design-time prioritization, CVSS for
+operational triage.
 
 ### Likelihood Scale
 
@@ -537,6 +678,33 @@ Goal: Access classified data
 **Quick test**: If attacker can't gain anything (data, money, access, disruption), threat modeling may be overkill.
 
 
+## Other Threat-Modeling Methodologies
+
+STRIDE is the default in this skill because it's well-suited to
+architecture-level threat enumeration. Other methodologies cover
+different angles — pick the one that matches the question:
+
+| Methodology | Focus | When to use |
+|-------------|-------|-------------|
+| **STRIDE** | Per-component threat enumeration | Architecture-level (default) |
+| **LINDDUN** | Privacy threats (Linkability, Identifiability, Non-repudiation, Detectability, Disclosure, Unawareness, Non-compliance) | Personal-data systems, GDPR/HIPAA contexts |
+| **PASTA** | 7-stage process tying business impact to technical threats | Programs needing exec-level risk traceability |
+| **OCTAVE Allegro** | Asset-centric organizational risk | Strategic/enterprise risk, not per-system |
+| **Attack Trees** | Goal-oriented exploitation paths | Already covered above; pairs with any methodology |
+| **Kill chain / Cyber Kill Chain** | Adversary phases | Detection/blue-team alignment; pairs with ATT&CK |
+
+For privacy-heavy systems, run **LINDDUN** alongside STRIDE — STRIDE
+finds confidentiality and integrity threats but undercounts linkability,
+identifiability, and unawareness threats that GDPR-style regulators
+care about.
+
+For LLM/AI systems, the OWASP Top 10 for LLM Applications (2025) is
+the right enumeration; see `llm-and-ai-security.md`.
+
+For supply-chain threats, see `supply-chain-security.md`.
+
+---
+
 ## Cross-References
 
 ### Load These Skills Together
@@ -545,6 +713,12 @@ Goal: Access classified data
 - `ordis/security-architect/threat-modeling` (this skill) - Find threats
 - `ordis/security-architect/security-controls-design` - Design mitigations
 - `ordis/security-architect/secure-by-design-patterns` - Prevent threats at architecture level
+
+**For LLM/AI systems**:
+- `ordis/security-architect/llm-and-ai-security` - OWASP LLM Top 10, MITRE ATLAS, agentic threats
+
+**For supply-chain threats**:
+- `ordis/security-architect/supply-chain-security` - SLSA, SBOM, Sigstore, dependency threats
 
 **For documentation**:
 - `ordis/security-architect/documenting-threats-and-controls` - Document threat model

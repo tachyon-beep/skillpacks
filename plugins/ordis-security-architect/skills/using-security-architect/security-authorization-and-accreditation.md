@@ -1,6 +1,12 @@
 
 # Security Authorization and Accreditation
 
+> **Note on examples**: dates, identifiers, and approver names in
+> worked examples below are illustrative. Substitute the actual
+> values from your authorization package when adapting templates.
+> NIST SP 800-37 Rev 2 (Dec 2018) and SP 800-53 Rev 5 (Sep 2020,
+> with updates) remain the operative US federal references.
+
 ## Overview
 
 Navigate government/defense security authorization processes. Core principle: **Authorization is risk acceptance by an official with authority**.
@@ -29,7 +35,7 @@ Load this skill when:
 
 ### Core Concept: Risk Management Framework (RMF)
 
-**RMF** (NIST SP 800-37) has 7 steps:
+**RMF** (NIST SP 800-37 Rev 2) has 7 steps:
 
 ```
 1. PREPARE → 2. CATEGORIZE → 3. SELECT → 4. IMPLEMENT → 5. ASSESS → 6. AUTHORIZE → 7. MONITOR
@@ -78,10 +84,8 @@ Overall System Impact: HIGH (highest of C/I/A)
 ### Step 3: SELECT (Control Selection)
 
 **Activities**:
-- Select control baseline (NIST SP 800-53)
-- Low baseline → 125 controls
-- Moderate baseline → 325 controls
-- High baseline → 421 controls
+- Select control baseline (NIST SP 800-53 Rev 5)
+- Approximate baseline sizes (Rev 5): Low ~125, Moderate ~325, High ~421 controls (verify against current Rev 5 baselines and any superseding revision)
 - Tailor controls (add/remove based on organizational needs)
 
 **Control Families**:
@@ -222,7 +226,7 @@ For EACH control in baseline:
 - Test: Attempt to create account without approval (should fail)
 **Evidence Location**:
 - ServiceNow workflow documentation: /docs/account-mgmt.pdf
-- Sample access review: /evidence/access-review-2025-01.xlsx
+- Sample access review: /evidence/access-review-2026-01.xlsx
 
 (Repeat for all ~125-421 controls depending on baseline)
 
@@ -267,7 +271,7 @@ For EACH control in baseline:
 
 ### AC-2: Account Management
 **Assessment Procedures**:
-1. Interview: System administrators (2025-03-15)
+1. Interview: System administrators (2026-03-15)
 2. Examine: ServiceNow workflow, access review reports
 3. Test: Attempted unauthorized account creation
 
@@ -286,9 +290,9 @@ For EACH control in baseline:
 
 | Finding ID | Control | Severity | Status | Remediation Due |
 |------------|---------|----------|--------|-----------------|
-| AC-2-001 | AC-2 | Medium | Open | 2025-06-01 |
-| IA-5-001 | IA-5 | High | Open | 2025-04-15 |
-| SC-7-001 | SC-7 | Low | Open | 2025-08-01 |
+| AC-2-001 | AC-2 | Medium | Open | 2026-06-01 |
+| IA-5-001 | IA-5 | High | Open | 2026-04-15 |
+| SC-7-001 | SC-7 | Low | Open | 2026-08-01 |
 
 ## Assessor Recommendation
 Recommend INTERIM ATO for 6 months conditional on remediation of HIGH findings within 30 days. Re-assessment required before full ATO.
@@ -314,13 +318,13 @@ Recommend INTERIM ATO for 6 months conditional on remediation of HIGH findings w
 **Risk Level**: HIGH
 **Risk Description**: Weak passwords vulnerable to brute-force attacks. Estimated 15% of user accounts have 8-character passwords.
 **Milestones**:
-- [ ] Milestone 1: Update password policy to require 12 characters (2025-04-01) - System Admin
-- [ ] Milestone 2: Force password reset for all 8-char passwords (2025-04-15) - System Admin
-- [ ] Milestone 3: Verify 100% compliance via audit query (2025-04-20) - ISSO
-- [ ] Milestone 4: Provide evidence to assessor (2025-04-25) - ISSO
+- [ ] Milestone 1: Update password policy to require 12 characters (2026-04-01) - System Admin
+- [ ] Milestone 2: Force password reset for all 8-char passwords (2026-04-15) - System Admin
+- [ ] Milestone 3: Verify 100% compliance via audit query (2026-04-20) - ISSO
+- [ ] Milestone 4: Provide evidence to assessor (2026-04-25) - ISSO
 **Resources Required**: 40 hours engineering time, communication campaign for users
 **Status**: IN PROGRESS (Milestone 1 complete, Milestone 2 in progress)
-**Scheduled Completion**: 2025-04-25
+**Scheduled Completion**: 2026-04-25
 **Actual Completion**: [TBD]
 
 ## POA&M Item #2
@@ -329,10 +333,10 @@ Recommend INTERIM ATO for 6 months conditional on remediation of HIGH findings w
 **Weakness**: Dormant privileged accounts not automatically disabled.
 **Risk Level**: MEDIUM
 **Milestones**:
-- [ ] Implement automated script to disable admin accounts after 30 days inactivity (2025-05-01)
-- [ ] Immediate review and disable of current dormant admin accounts (2025-04-10)
+- [ ] Implement automated script to disable admin accounts after 30 days inactivity (2026-05-01)
+- [ ] Immediate review and disable of current dormant admin accounts (2026-04-10)
 - [ ] Monthly verification report to ISSO (ongoing)
-**Scheduled Completion**: 2025-05-01
+**Scheduled Completion**: 2026-05-01
 
 ## POA&M Item #3 (Risk Acceptance)
 **Finding ID**: SC-8-001
@@ -346,7 +350,7 @@ Recommend INTERIM ATO for 6 months conditional on remediation of HIGH findings w
 - Data transmitted is non-sensitive system configuration (no PII, credentials, or classified data)
 - Migration to HTTPS requires vendor upgrade (cost: $50k, timeline: 12 months)
 - Risk mitigated by network segmentation
-**Acceptance Date**: 2025-03-20
+**Acceptance Date**: 2026-03-20
 **Acceptance Authority**: Authorizing Official [Name]
 **Re-evaluation Date**: 2026-03-20 (annual review)
 
@@ -388,9 +392,9 @@ This authorization covers the system as described in SSP version 2.1, including:
 
 This interim ATO is granted subject to the following conditions:
 
-a) HIGH-severity finding IA-5-001 (password policy weakness) must be remediated within 30 days (by 2025-04-25). Failure to remediate will result in suspension of ATO.
+a) HIGH-severity finding IA-5-001 (password policy weakness) must be remediated within 30 days (by 2026-04-25). Failure to remediate will result in suspension of ATO.
 
-b) All MEDIUM-severity findings must be remediated or risk-accepted within 90 days (by 2025-07-01).
+b) All MEDIUM-severity findings must be remediated or risk-accepted within 90 days (by 2026-07-01).
 
 c) Monthly POA&M status reports submitted to ISSM.
 
@@ -546,8 +550,8 @@ nessus scan --authenticated --target 10.0.1.0/24 \
 **Exploit**: Extracted 10 test user records via injection
 **Impact**: Attacker could exfiltrate entire user database
 **Recommendation**: Implement parameterized queries, input validation
-**Remediation**: Developer committed fix (commit abc123), deployed 2025-03-20
-**Verification**: Re-tested 2025-03-22, vulnerability no longer exploitable
+**Remediation**: Developer committed fix (commit abc123), deployed 2026-03-20
+**Verification**: Re-tested 2026-03-22, vulnerability no longer exploitable
 
 ## Summary
 - High findings: 1 (remediated)
@@ -601,17 +605,17 @@ cron: 0 3 1 * * /opt/scap/compliance-check.sh
 ```markdown
 # Monthly Access Review
 
-## Review Date: 2025-04-01
+## Review Date: 2026-04-01
 ## Reviewer: Data Owner (Jane Smith)
 
 | User | Role | Last Login | Action |
 |------|------|------------|--------|
-| john.doe@example.com | Admin | 2025-03-28 | ✅ Retain |
-| alice.smith@example.com | User | 2025-03-25 | ✅ Retain |
+| john.doe@example.com | Admin | 2026-03-28 | ✅ Retain |
+| alice.smith@example.com | User | 2026-03-25 | ✅ Retain |
 | bob.jones@example.com | Admin | 2024-12-15 | ❌ Remove (dormant 4 months) |
 
 **Actions Taken**:
-- Disabled bob.jones@example.com on 2025-04-02
+- Disabled bob.jones@example.com on 2026-04-02
 - Notified ISSO of access review completion
 ```
 
@@ -630,16 +634,16 @@ Upgrade PostgreSQL from 13.2 to 13.10 (security patches)
 ## Authorization Impact
 - Change Type: Minor (security patch)
 - ATO Impact: None (no re-authorization required per continuous monitoring plan)
-- ISSO Notification: Required (notified 2025-03-15)
+- ISSO Notification: Required (notified 2026-03-15)
 
 ## Testing
-- Tested in dev environment: 2025-03-10 (PASS)
+- Tested in dev environment: 2026-03-10 (PASS)
 - Contingency plan: Snapshot before upgrade, 4-hour rollback window
 
 ## Approval
-- ISSO: Approved (2025-03-16)
-- System Owner: Approved (2025-03-17)
-- Deployed: 2025-03-20
+- ISSO: Approved (2026-03-16)
+- System Owner: Approved (2026-03-17)
+- Deployed: 2026-03-20
 ```
 
 #### 4. Trigger Events for Re-Authorization

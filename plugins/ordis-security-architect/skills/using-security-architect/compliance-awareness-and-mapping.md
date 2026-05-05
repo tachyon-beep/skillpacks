@@ -32,10 +32,10 @@ Load this skill when:
 **Before** identifying frameworks, ask:
 
 1. **"What jurisdiction?"**
-   - Australia → ISM, IRAP, Privacy Act, PSPF
-   - United Kingdom → Cyber Essentials, NCSC, Official Secrets Act
-   - United States → NIST CSF, FedRAMP, FISMA
-   - European Union → NIS2, GDPR, ISO 27001
+   - Australia → ISM (current edition), IRAP, Privacy Act 1988 (as amended 2024), PSPF
+   - United Kingdom → Cyber Essentials / Cyber Essentials Plus, NCSC guidance, UK GDPR, DPA 2018
+   - United States → NIST CSF 2.0 (Feb 2024), FedRAMP (Rev 5 baselines), FISMA, EO 14028
+   - European Union → NIS2 (Dir. 2022/2555, transposition deadline Oct 2024), GDPR, ISO/IEC 27001:2022, EU AI Act (Reg. 2024/1689), CRA (Reg. 2024/2847)
 
 2. **"What industry?"**
    - Healthcare → HIPAA (US), GDPR (EU), Australian Privacy Principles
@@ -234,9 +234,10 @@ Identify missing/insufficient controls, prioritize by risk.
 - Session management (timeouts, revocation)
 
 ### 2. Encryption
-- Data at rest (AES-256, key management)
-- Data in transit (TLS 1.2+)
-- Key rotation and access control
+- Data at rest (AES-256, authenticated key management; envelope encryption with HSM/KMS where required)
+- Data in transit (TLS 1.3 default; TLS 1.2 acceptable for legacy interop only — TLS 1.0/1.1 deprecated by RFC 8996 and most frameworks)
+- Key rotation, separation of duties, and access control on key material
+- **Crypto-agility** — design for algorithm migration; track post-quantum (FIPS 203/204/205) as a multi-year roadmap concern
 
 ### 3. Audit Logging
 - Authentication events (login, logout, failures)
@@ -275,11 +276,44 @@ Identify missing/insufficient controls, prioritize by risk.
 
 ## Framework-Specific Nuances
 
+### Standards Versions Cheat-Sheet
+
+Always cite the version when mapping controls. Frameworks change
+materially between editions.
+
+| Framework | Current edition | Key change to know |
+|-----------|-----------------|--------------------|
+| **NIST CSF** | **2.0** (Feb 2024) | Added the **Govern** function (sixth alongside Identify/Protect/Detect/Respond/Recover); broadened scope beyond critical infrastructure |
+| **NIST SP 800-53** | **Rev 5** (Sep 2020, with updates) | Privacy controls integrated; supply-chain (SR) family added |
+| **NIST SP 800-37 (RMF)** | **Rev 2** (Dec 2018) | Prepare step added |
+| **NIST SP 800-218 (SSDF)** | **v1.1** (Feb 2022) | Secure development lifecycle; cited by EO 14028 |
+| **NIST AI RMF** | **1.0** (Jan 2023) + **GenAI Profile** (July 2024) | AI risk management |
+| **ISO/IEC 27001** | **2022** | Annex A controls reduced from 114 to 93, reorganized into 4 themes; the 2013 edition retired Oct 2025 |
+| **ISO/IEC 27002** | **2022** | Companion to 27001:2022 |
+| **ISO/IEC 42001** | **2023** | AI management system |
+| **PCI-DSS** | **v4.0.1** (June 2024) | Several future-dated requirements became mandatory 31 March 2025 (auth, scripts, log review, etc.) |
+| **SOC 2 (TSC)** | **2017 TSC, points of focus revised 2022** | Continuous monitoring expectations strengthened |
+| **HIPAA Security Rule** | 2013 (HITECH); **2024 NPRM** for modernization in flight | Watch for finalization; encryption likely to move from "addressable" to required |
+| **GDPR** | Reg. (EU) 2016/679 (in force May 2018) | UK GDPR is the post-Brexit equivalent |
+| **NIS2** | Dir. (EU) 2022/2555 | Transposition deadline Oct 2024; broadens scope vs original NIS |
+| **EU AI Act** | Reg. (EU) 2024/1689 | In force Aug 2024; obligations phase in 2025–2027 |
+| **EU CRA** | Reg. (EU) 2024/2847 | In force Dec 2024; main obligations apply Dec 2027 |
+| **OWASP Top 10 (web)** | **2021** | Watch for next edition |
+| **OWASP API Security Top 10** | **2023** | Successor to 2019 list |
+| **OWASP Top 10 for LLM Apps** | **2025** | See `llm-and-ai-security.md` |
+| **OWASP ASVS** | **5.0** (2024) | Verification standard |
+| **CIS Controls** | **v8.1** (2024) | Implementation Groups (IG1/2/3) |
+
+When you cite a framework in a control mapping, **include the version**.
+"NIST CSF" without a version is ambiguous after Feb 2024.
+
+---
+
 ### SOC2 (Service Organization Control 2)
 
 **Purpose**: Trust assurance for service providers (SaaS, cloud)
 
-**Trust Service Criteria**:
+**Trust Service Criteria** (2017 TSC, points of focus revised 2022):
 - Security (always required)
 - Availability (optional)
 - Processing Integrity (optional)
@@ -299,6 +333,17 @@ Identify missing/insufficient controls, prioritize by risk.
 
 **Purpose**: Protect payment card data
 
+**Current version**: **PCI-DSS v4.0.1** (June 2024). Several future-dated
+requirements added in v4.0 became **mandatory 31 March 2025** — any
+control mapping done after that date must treat them as in scope, not
+"future":
+
+- Authenticated internal vulnerability scans
+- Multi-factor authentication for all access into the CDE (not just remote/admin)
+- Detection and response for changes to payment-page scripts
+- Targeted risk analyses replacing prescriptive frequencies for several requirements
+- Phishing-resistant MFA expectations strengthened
+
 **12 Requirements** (grouped into 6 control objectives):
 1. Build and maintain secure network
 2. Protect cardholder data
@@ -308,8 +353,8 @@ Identify missing/insufficient controls, prioritize by risk.
 6. Maintain information security policy
 
 **Key Requirements**:
-- Quarterly vulnerability scans (by Approved Scanning Vendor)
-- Annual penetration testing
+- Internal and external vulnerability scans on defined cadences (quarterly external by ASV; internal authenticated)
+- Annual penetration testing (segmentation testing if segmentation is claimed)
 - Cardholder data encryption (PAN never stored plainly)
 - Strict access control (need-to-know basis)
 
@@ -375,6 +420,92 @@ Identify missing/insufficient controls, prioritize by risk.
 **Common Gap**: GDPR applies to ANY company processing EU resident data, regardless of company location. Many US companies underestimate scope.
 
 
+### NIS2 Directive — EU Cybersecurity (Dir. 2022/2555)
+
+**Purpose**: Replace and broaden NIS1; raise the cybersecurity baseline
+across "essential" and "important" entities in the EU.
+
+**Status**: In force; transposition deadline was 17 October 2024.
+National laws in member states are now the operative compliance text.
+
+**Scope**: Significantly broader than NIS1 — energy, transport, banking,
+health, drinking water, digital infrastructure, ICT service management,
+public administration, space, postal services, waste management,
+chemicals, food, certain manufacturing, digital providers, research.
+
+**Key Requirements**:
+- Risk-management measures (incident handling, business continuity, supply-chain security, vulnerability handling)
+- Incident reporting (early warning within 24h; full notification within 72h; final report within one month)
+- Management-body accountability (named officers; potential personal liability)
+- Supply-chain due diligence
+
+**Common Gap**: NIS2 holds the **management body** personally
+accountable. Boards and execs need named cybersecurity training and
+documented oversight, not just delegation to a CISO.
+
+
+### EU AI Act (Reg. (EU) 2024/1689)
+
+**Purpose**: Risk-tiered regulation of AI systems sold or used in the EU.
+
+**Status**: In force August 2024. Obligations phase in:
+- Prohibitions and AI literacy: ~Feb 2025
+- General-purpose AI (GPAI) model obligations: ~Aug 2025
+- Most high-risk system obligations: ~Aug 2026
+- Embedded high-risk (Annex II) systems: ~Aug 2027
+
+**Risk Tiers**:
+- **Prohibited**: Social scoring by public authorities, certain biometric categorization, etc.
+- **High-risk** (Annex III): Critical infrastructure, education, employment, essential services, law enforcement, migration, justice. Require conformity assessment, risk management, data governance, transparency, human oversight, accuracy/robustness/cybersecurity, post-market monitoring, registration in EU database.
+- **GPAI** (General-purpose AI models): Documentation, copyright, summaries of training data; additional obligations for "systemic risk" models.
+- **Limited risk**: Transparency obligations (disclose AI interaction).
+- **Minimal risk**: Voluntary codes of conduct.
+
+**Common Gap**: Treating AI Act as "EU only" — like GDPR, it applies
+extraterritorially when output is used in the EU.
+
+**Cross-link**: `llm-and-ai-security.md` covers the security-architect
+contribution to high-risk-system obligations (cybersecurity controls,
+robustness, post-market monitoring).
+
+
+### EU CRA — Cyber Resilience Act (Reg. (EU) 2024/2847)
+
+**Purpose**: Harmonize cybersecurity requirements for "products with
+digital elements" (PDEs) sold in the EU. Mandates secure-by-design,
+vulnerability handling, and SBOM-equivalent inventories.
+
+**Status**: In force December 2024; main obligations apply
+~December 2027. Earlier obligations on importers/manufacturers begin
+sooner; consult current European Commission guidance.
+
+**Scope**: Most software and connected hardware sold in the EU
+(open-source maintained by stewards has tailored treatment).
+
+**Cross-link**: `supply-chain-security.md` for SBOM, vulnerability
+handling, and signing controls aligned with CRA expectations.
+
+
+### Post-Quantum Cryptography Note
+
+NIST has finalized the first three post-quantum standards (Aug 2024):
+
+- **FIPS 203 (ML-KEM)** — module-lattice key encapsulation (CRYSTALS-Kyber)
+- **FIPS 204 (ML-DSA)** — module-lattice digital signature (CRYSTALS-Dilithium)
+- **FIPS 205 (SLH-DSA)** — stateless hash-based signature (SPHINCS+)
+
+**For 2026-era architecture reviews**: at minimum, flag PQ readiness as
+a forward-looking concern. **Crypto-agility** — the ability to swap
+algorithms without re-architecting — matters more than picking the
+"right" PQ algorithm today. Identify long-lived secrets (data with
+multi-decade confidentiality requirements) and treat "harvest now,
+decrypt later" as a real threat for those.
+
+US national-security systems are subject to **CNSA 2.0** (NSA, Sep 2022,
+updated 2024) which sets a phased migration timeline to PQ algorithms
+for classified-adjacent systems.
+
+
 ## Evidence Collection
 
 **Auditors need evidence that controls are operating, not just documented.**
@@ -414,23 +545,23 @@ aws logs filter-log-events \
 #### 4. Test Results
 ```markdown
 # Penetration Test Report (Annual)
-- Date: 2025-03-15
+- Date: {{YYYY-MM-DD — date of test}}
 - Tester: Acme Security (SOC2 requirement)
 - Findings: 2 medium, 5 low
 - Remediation: All medium fixed within 30 days
-- Evidence: pentest-report-2025.pdf
+- Evidence: pentest-report-{{YYYY}}.pdf
 ```
 
 #### 5. Interview Records
 ```markdown
-# Auditor Interview: DevOps Lead (2025-04-10)
+# Auditor Interview: DevOps Lead ({{YYYY-MM-DD}})
 Q: How do you handle production changes?
 A: Pull request → 2 approvals → CI/CD deploy → post-deploy verification
 
 Q: How long are logs retained?
 A: 90 days in CloudWatch, then archived to S3 for 7 years
 
-Evidence: interview-notes-devops-2025-04-10.md
+Evidence: interview-notes-devops-{{YYYY-MM-DD}}.md
 ```
 
 
@@ -483,15 +614,19 @@ Evidence: interview-notes-devops-2025-04-10.md
 
 | If you have... | Consider these frameworks... | Priority |
 |----------------|------------------------------|----------|
-| **Australian government data** | ISM, IRAP, PSPF | Mandatory |
-| **Australian private healthcare** | Privacy Act, Healthcare-specific | Mandatory |
-| **US healthcare (HIPAA data)** | HIPAA, HITECH | Mandatory |
+| **Australian government data** | ISM (current), IRAP, PSPF | Mandatory |
+| **Australian private healthcare** | Privacy Act 1988 (as amended), Healthcare-specific | Mandatory |
+| **US healthcare (HIPAA data)** | HIPAA, HITECH (and watch HHS NPRM updates) | Mandatory |
 | **EU resident data** | GDPR | Mandatory |
-| **Payment card data** | PCI-DSS | Mandatory |
-| **US government contracts** | FedRAMP, FISMA, NIST 800-53 | Mandatory |
-| **B2B SaaS (any jurisdiction)** | SOC2 | High priority |
-| **Enterprise software** | ISO 27001 | Medium priority |
-| **UK government** | Cyber Essentials, NCSC | Mandatory |
+| **Payment card data** | PCI-DSS v4.0.1 | Mandatory |
+| **US government contracts** | FedRAMP (Rev 5), FISMA, NIST 800-53 Rev 5, EO 14028 | Mandatory |
+| **EU "essential / important" entities** | NIS2 (national transposition) | Mandatory |
+| **EU-marketed connected products** | EU CRA | Mandatory (phased) |
+| **AI systems sold in EU** | EU AI Act (risk tier dependent) | Mandatory |
+| **B2B SaaS (any jurisdiction)** | SOC 2 | High priority |
+| **Enterprise software** | ISO/IEC 27001:2022 | Medium priority |
+| **AI management system** | ISO/IEC 42001:2023 | Medium priority |
+| **UK government** | Cyber Essentials / Plus, NCSC, UK GDPR/DPA 2018 | Mandatory |
 
 **Always verify**: This table is a starting point, not definitive. Consult legal/compliance experts for your specific situation.
 
@@ -513,7 +648,7 @@ Evidence: interview-notes-devops-2025-04-10.md
 
 **Right**: Learn discovery process, reference frameworks as needed
 
-**Why**: Frameworks update (e.g., PCI-DSS v4.0 in 2024). Process is stable, details change.
+**Why**: Frameworks update (e.g., PCI-DSS v4.0.1 effective 2024 with mandatory requirements landing March 2025; NIST CSF 2.0 added the Govern function in Feb 2024; ISO 27001:2022 superseded the 2013 edition with retirement in Oct 2025). Process is stable, details change — always cite the version.
 
 
 ### ❌ Mapping Without Inventory

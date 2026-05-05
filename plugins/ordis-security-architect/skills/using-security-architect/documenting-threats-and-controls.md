@@ -1,6 +1,10 @@
 
 # Documenting Threats and Controls
 
+> **Note on examples**: dates and identifiers in worked examples below
+> are illustrative. Substitute your project's actual dates, IDs, and
+> approvers when adapting templates.
+
 ## Overview
 
 Document security decisions with threat context and traceability. Core principle: **Security documentation explains WHY (threat), WHAT (control), and HOW to verify**.
@@ -102,7 +106,7 @@ After mitigations: [Describe remaining risk]
 
 ## Likelihood and Impact
 **Likelihood**: MEDIUM
-**Justification**: XSS vulnerabilities are common (OWASP Top 10). Application has user-generated content (profiles, comments). No Content Security Policy detected.
+**Justification**: XSS vulnerabilities are common (OWASP Top 10:2021 A03 (Injection / XSS)). Application has user-generated content (profiles, comments). No Content Security Policy detected.
 
 **Impact**: HIGH
 **Justification**: Hijacked session grants full user access including:
@@ -124,7 +128,7 @@ Data breach affects confidentiality, integrity, availability.
 After mitigations: **LOW**
 - Risk remains if attacker exploits 0-day XSS within 30-minute token window
 - Mitigation: Monitoring for anomalous API usage patterns
-**Accepted by**: Chief Security Officer on 2025-03-15
+**Accepted by**: Chief Security Officer on 2026-03-15
 ```
 
 **Key elements**:
@@ -245,7 +249,7 @@ Accepted
 API requires stateless authentication mechanism for 10,000+ concurrent users across geographically distributed servers. Session storage (Redis) becomes bottleneck at scale.
 
 ### Threat Model
-- **Threat 1: Token theft via XSS** → HIGH risk (OWASP Top 10)
+- **Threat 1: Token theft via XSS** → HIGH risk (OWASP Top 10:2021 A03 (Injection / XSS))
 - **Threat 2: Token forgery** → HIGH risk (impersonate any user)
 - **Threat 3: Token replay** → MEDIUM risk (reuse stolen token)
 - **Threat 4: Key compromise** → CRITICAL risk (forge all tokens)
@@ -320,17 +324,17 @@ We will use **JWT (JSON Web Tokens) with RS256 signatures** for API authenticati
 - **Risk 1: Token theft via network sniffing** - Severity: LOW
   - Mitigation: HTTPS/TLS 1.3 encrypts tokens in transit
   - Residual: None (HTTPS enforced at load balancer, HSTS enabled)
-  - Accepted by: CISO on 2025-03-15
+  - Accepted by: CISO on 2026-03-15
 
 - **Risk 2: Private key compromise** - Severity: CRITICAL
   - Mitigation: Key stored in AWS Secrets Manager with IAM restrictions, rotated every 90 days, access audited
   - Residual: Key theft remains possible via insider threat or infrastructure compromise
-  - Accepted by: CISO on 2025-03-15 (continuous monitoring for suspicious token generation)
+  - Accepted by: CISO on 2026-03-15 (continuous monitoring for suspicious token generation)
 
 - **Risk 3: XSS in legacy pages** - Severity: MEDIUM
   - Mitigation: Content Security Policy (CSP) blocks inline scripts, output encoding on all user content
   - Residual: 0-day XSS could bypass CSP before patch
-  - Accepted by: CISO on 2025-03-15 (30-minute token window limits exposure)
+  - Accepted by: CISO on 2026-03-15 (30-minute token window limits exposure)
 
 ### Ongoing Security Requirements
 - **Key rotation**: Rotate RS256 key pair every 90 days (automated via AWS Secrets Manager rotation)
@@ -346,7 +350,7 @@ We will use **JWT (JSON Web Tokens) with RS256 signatures** for API authenticati
 
 ## Verification
 ### Testing Strategy
-- **Penetration test**: Focus on token theft, forgery attempts, replay attacks (Q2 2025)
+- **Penetration test**: Focus on token theft, forgery attempts, replay attacks (Q2 2026)
 - **Functional test**: Verify token expiration at 30:01 minutes, blacklist prevents logout token reuse
 - **Load test**: 10k concurrent users, <50ms auth latency
 
@@ -363,7 +367,7 @@ We will use **JWT (JSON Web Tokens) with RS256 signatures** for API authenticati
 - Key management: `infrastructure/secrets-manager-key-rotation.yaml`
 
 
-**Approver**: Security Architect (Jane Smith) on 2025-03-15
+**Approver**: Security Architect (Jane Smith) on 2026-03-15
 ```
 
 **Key elements**:
@@ -416,7 +420,7 @@ setting: value
 - Configuration: `/path/to/config.yaml`
 - Logs: CloudWatch Log Group `/aws/lambda/auth`, query: `[Filter pattern]`
 - Policy: `/docs/account-management-policy.pdf`
-- Test results: `/evidence/penetration-test-2025-Q1.pdf`
+- Test results: `/evidence/penetration-test-2026-Q1.pdf`
 
 ### Compliance Mapping
 - NIST SP 800-53: AC-2
@@ -471,21 +475,21 @@ MANAGER_APPROVAL_REQUIRED = True
 3. **Test**: Attempt to create account without manager approval
    - Procedure: Submit ServiceNow ticket, skip approval step
    - Expected result: Request rejected with error "Manager approval required"
-   - Actual result: ✅ Request rejected (tested 2025-03-10)
+   - Actual result: ✅ Request rejected (tested 2026-03-10)
 
 4. **Test**: Verify inactivity disablement
    - Procedure: Create test account, wait 31 days without login, attempt login
    - Expected result: Login fails with "Account disabled due to inactivity"
-   - Actual result: ✅ Account disabled (tested 2025-02-15)
+   - Actual result: ✅ Account disabled (tested 2026-02-15)
 
 ### Evidence Artifacts
 - **Configuration**: `/infrastructure/terraform/iam-accounts.tf`
 - **Logs**:
   - Account creation: CloudWatch Log Group `/aws/servicenow/accounts`, query: `fields @timestamp, username, manager_approval_status | filter action="create"`
   - Inactivity disablements: CloudWatch Log Group `/aws/lambda/account-lifecycle`, query: `fields @timestamp, username, reason | filter reason="inactivity_30d"`
-- **Policy**: `/docs/account-management-policy-v2.1.pdf` (approved 2025-01-10)
+- **Policy**: `/docs/account-management-policy-v2.1.pdf` (approved 2026-01-10)
 - **Approval workflow**: ServiceNow workflow screenshot `/evidence/servicenow-account-approval-workflow.png`
-- **Test results**: `/evidence/account-management-functional-tests-2025-Q1.pdf`
+- **Test results**: `/evidence/account-management-functional-tests-2026-Q1.pdf`
 
 ### Compliance Mapping
 - **NIST SP 800-53**: AC-2 (Account Management)
@@ -578,7 +582,7 @@ This requirement enforces: **Confidentiality** and **Integrity**
 - **Code**: `src/auth/mfa-middleware.ts:45-78` (MFA enforcement logic)
 - **Configuration**: `infrastructure/aws-iam-policy.json:12` (IAM policy requires MFA for admin role)
 - **Documentation**: `/docs/adr-029-mfa-for-admins.md` (Security ADR documenting decision)
-- **Evidence**: `/evidence/mfa-functional-test-2025-03.pdf` (Test results showing MFA enforcement)
+- **Evidence**: `/evidence/mfa-functional-test-2026-03.pdf` (Test results showing MFA enforcement)
 ```
 
 **Key elements**:
