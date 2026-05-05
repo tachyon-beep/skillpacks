@@ -1,0 +1,27 @@
+{
+  "name": "axiom-static-analysis-engineering",
+  "version": "0.1.0",
+  "description": "Building static analyzers as engines, not running them as users. AST → IR → analysis → reporting pipelines: visitation patterns, abstract-domain (taint lattice) design, three-phase inference (variable → function → callgraph), plugin architecture for rules, false-positive economics with auditable suppression, and the static-vs-runtime boundary. v0.1.0 ships router + 6 sheets covering the architectural spine and operational reality; manifest-driven configuration, SARIF/CI integration, callgraph-resolution depth, cross-module flow, decorator-as-assertion, scaling/incremental analysis, LLM-assisted rule explanation, plus 3 commands and 2 agents are scheduled for v0.2.0. Pattern pack — applies wherever you build an analyzer (linting, taint, contracts, governance, entity extraction).",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "axiom",
+    "static-analysis",
+    "ast",
+    "abstract-interpretation",
+    "taint-analysis",
+    "dataflow",
+    "callgraph",
+    "linter",
+    "sarif",
+    "analyzer-engine",
+    "rule-engine",
+    "false-positive",
+    "ir-design",
+    "abstract-domain"
+  ]
+}
