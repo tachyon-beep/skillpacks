@@ -153,6 +153,26 @@
       "category": "development"
     },
     {
+      "name": "axiom-determinism-and-replay",
+      "source": "./plugins/axiom-determinism-and-replay",
+      "description": "Architecture-level determinism and replay (router + 6 foundational sheets in v0.1.0) - seed governance, RNG isolation, snapshot strategy, divergence detection, replay infrastructure design, determinism-vs-reproducibility distinction; for RL substrates, multi-agent systems, and any simulation that must be re-run from inputs",
+      "keywords": [
+        "axiom",
+        "determinism",
+        "replay",
+        "reproducibility",
+        "seed-governance",
+        "rng-isolation",
+        "snapshot",
+        "divergence",
+        "rollback",
+        "rl-infrastructure",
+        "simulation",
+        "multi-agent"
+      ],
+      "category": "development"
+    },
+    {
       "name": "bravos-simulation-tactics",
       "source": "./plugins/bravos-simulation-tactics",
       "description": "Game simulation implementation patterns and tactics - 11 skills",

@@ -1,0 +1,27 @@
+{
+  "name": "axiom-determinism-and-replay",
+  "version": "0.1.0",
+  "description": "Architecture-level determinism and replay: seed governance, RNG isolation, snapshot strategy, divergence detection, and replay infrastructure design. Frames 'what happened' as a recoverable fact for RL substrates, multi-agent systems, and any simulation that must be re-run from inputs. v0.1.0 ships router + 6 foundational sheets covering the architectural spine; concurrency, GPU, floating-point, external-effects substitution, canonical state encoding, property-test discipline, cost analysis, plus 3 commands and 2 agents are scheduled for v0.2.0.",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "axiom",
+    "determinism",
+    "replay",
+    "reproducibility",
+    "seed-governance",
+    "rng-isolation",
+    "snapshot",
+    "divergence",
+    "rollback",
+    "lockstep",
+    "rl-infrastructure",
+    "simulation",
+    "multi-agent",
+    "debuggability"
+  ]
+}
