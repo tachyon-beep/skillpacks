@@ -391,14 +391,21 @@ with mlflow.start_run():
         "cpu_count": os.cpu_count()
     })
 
-# ✅ BETTER: Use conda/docker for full reproducibility
-# conda env export > environment.yml
-# Log environment file as artifact
+# ✅ BETTER: Use uv (or conda/docker) for full reproducibility
+# uv produces a deterministic uv.lock that pins every transitive dep:
+#   uv lock                          # Refresh lockfile
+#   uv export -o requirements.txt    # Export for pip-only consumers
+# Log the lockfile as an artifact:
 with mlflow.start_run():
-    mlflow.log_artifact("environment.yml")
+    mlflow.log_artifact("uv.lock")     # Or environment.yml / requirements.txt
 ```
 
-**Why this matters**: Reproducibility requires controlling all randomness sources. Different package versions or Python versions can produce different results.
+**Why this matters**: Reproducibility requires controlling all randomness
+sources. Different package versions or Python versions can produce different
+results. For pure-Python and CPU ML workflows, `uv.lock` is faster and more
+deterministic than conda's `environment.yml`. Stay on conda only when you need
+its native scientific stack (CUDA toolkits, MKL-pinned BLAS) bundled with the
+environment.
 
 
 ## Data Versioning and Lineage

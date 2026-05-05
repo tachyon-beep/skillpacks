@@ -962,7 +962,7 @@ jobs:
 ```yaml
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.6
+    rev: v0.15.12
     hooks:
       - id: ruff
         args: [--fix]  # Auto-fix what we can

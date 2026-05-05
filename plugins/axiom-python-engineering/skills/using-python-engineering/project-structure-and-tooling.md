@@ -28,7 +28,7 @@ This skill covers SETUP of tooling. For FIXING lint warnings systematically, see
 - "New Python project setup"
 - "Configure ruff/black/mypy"
 - "src layout vs flat layout"
-- "Poetry vs pip-tools"
+- "uv vs Poetry vs pip-tools"
 - "Package my project"
 
 
@@ -143,9 +143,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.4.0",
-    "mypy>=1.5.0",
-    "ruff>=0.1.0",
+    "pytest>=8.3",
+    "mypy>=1.13",
+    "ruff>=0.8",
 ]
 
 [project.urls]
@@ -459,9 +459,130 @@ ignore_errors = true  # TODO: Fix legacy code
 
 ## Dependency Management
 
-### pip-tools
+**Default recommendation: `uv` (Astral, Rust-based).** It is 10-100× faster than
+pip/Poetry, manages Python interpreter installation, project lockfile, and dev
+dependency groups (PEP 735) in one tool. Use it unless you have a specific
+reason to pick something else.
 
-**Recommended for most projects. Simple, standard, no lock-in.**
+### uv (Default for new projects)
+
+**Install:**
+```bash
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# Or via Homebrew
+brew install uv
+# Or via pipx
+pipx install uv
+```
+
+**Initialise a project:**
+```bash
+uv init my-package --lib       # Library (src layout, build-backend configured)
+uv init my-app                 # Application (flat layout)
+uv init my-pkg --build-backend hatch   # Pin build backend explicitly
+```
+
+`uv init` creates `pyproject.toml`, `.python-version`, `README.md`, `main.py`
+(for app) or `src/<name>/__init__.py` (for `--lib`), plus `.gitignore` and an
+initialised git repo.
+
+**Add and remove dependencies:**
+```bash
+uv add "requests>=2.31" "pydantic>=2"        # Runtime deps
+uv add --dev pytest mypy ruff pre-commit     # Dev group (PEP 735)
+uv add --group docs sphinx myst-parser       # Named group
+uv add --optional gpu torch                  # Extra (ships with package)
+uv remove pydantic                           # Remove
+```
+
+**Sync environment from the lockfile:**
+```bash
+uv sync                       # Install runtime + dev deps from uv.lock
+uv sync --no-dev              # Production install (CI/Docker)
+uv sync --frozen              # Refuse to update the lockfile
+```
+
+**Run commands inside the project venv (no manual `source .venv/bin/activate`):**
+```bash
+uv run pytest
+uv run python -m my_package
+uv run ruff check .
+```
+
+**Lockfile management:**
+```bash
+uv lock                       # Refresh uv.lock without installing
+uv lock --upgrade             # Bump all deps to latest compatible
+uv lock --upgrade-package ruff   # Bump one dep only
+uv export -o requirements.txt --no-hashes   # Export to pip format if needed
+```
+
+**Tool installation (replaces `pipx`):**
+```bash
+uv tool install ruff
+uv tool install --from huggingface_hub[cli] huggingface-cli   # When package name ≠ binary name
+uv tool run ruff check .       # Equivalent of `uvx`
+uvx ruff check .               # Shorthand
+```
+
+**Manage Python interpreters:**
+```bash
+uv python install 3.12 3.13
+uv python list
+uv python pin 3.12             # Writes .python-version
+```
+
+**Pip-compatible interface (drop-in replacement):**
+```bash
+uv pip install -e ".[dev]"
+uv pip compile requirements.in -o requirements.txt
+uv pip sync requirements.txt
+uv venv                        # Create .venv (faster than `python -m venv`)
+```
+
+**Resulting `pyproject.toml` after `uv init --lib && uv add --dev pytest`:**
+```toml
+[project]
+name = "my-package"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+```
+
+**Build and publish (replaces `python -m build` + `twine`):**
+```bash
+uv build                       # Builds sdist + wheel into dist/
+uv publish                     # Publishes (uses UV_PUBLISH_TOKEN env var)
+uv publish --index testpypi    # Publish to a configured alternate index
+```
+
+**Why uv?**
+- One tool for venv, deps, lockfile, Python install, tool install, build, publish.
+- Lockfile (`uv.lock`) is the modern replacement for `requirements.txt`-via-`pip-compile`.
+- Resolution is reproducible across platforms and orders of magnitude faster
+  than pip/Poetry.
+- Native PEP 735 dependency groups: `--dev`, `--group docs`, etc., without
+  abusing `[project.optional-dependencies]`.
+- Drop-in `uv pip` interface means you can adopt incrementally.
+
+**When to pick something else:**
+- Locked-down enterprise environment that mandates pip + an internal index → `pip-tools`.
+- Existing Poetry codebase with mature tooling → keep Poetry, don't churn.
+- Conda-managed scientific stack with native libs → conda/mamba (not covered here).
+
+### pip-tools (Alternative: pip-only environments)
+
+Use when uv is not allowed and you must stick to pip.
 
 **Setup:**
 ```bash
@@ -476,26 +597,8 @@ pydantic>=2.0.0
 
 **Generate locked requirements:**
 ```bash
-pip-compile requirements.in
-# Creates requirements.txt with exact versions
-```
-
-**File:** `requirements.txt` (auto-generated)
-```
-certifi==2023.7.22
-    # via requests
-charset-normalizer==3.2.0
-    # via requests
-idna==3.4
-    # via requests
-pydantic==2.3.0
-    # via -r requirements.in
-pydantic-core==2.6.3
-    # via pydantic
-requests==2.31.0
-    # via -r requirements.in
-urllib3==2.0.4
-    # via requests
+pip-compile requirements.in --generate-hashes
+# Creates requirements.txt with exact versions and hashes
 ```
 
 **Development dependencies:**
@@ -503,36 +606,33 @@ urllib3==2.0.4
 **File:** `requirements-dev.in`
 ```
 -c requirements.txt  # Constrain to production versions
-pytest>=7.4.0
-mypy>=1.5.0
-ruff>=0.1.0
+pytest>=8.3
+mypy>=1.13
+ruff>=0.8
+pre-commit>=4.0
 ```
 
-**Compile:**
+**Compile and sync:**
 ```bash
 pip-compile requirements-dev.in
-```
-
-**Sync environment:**
-```bash
 pip-sync requirements.txt requirements-dev.txt
 ```
 
 **Why pip-tools?**
-- Uses standard requirements.txt format
-- No proprietary lock file
-- Simple mental model
-- Works everywhere
-- No lock-in
+- No new tooling beyond pip.
+- Plain `requirements.txt` output that any pip-only workflow understands.
+- Works with restrictive corporate networks/mirrors that have not whitelisted
+  uv yet.
 
-### Poetry
+**Why NOT pip-tools (vs uv)?**
+- 10-100× slower resolution.
+- No lockfile abstraction; you maintain `.in`/`.txt` pairs by hand.
+- No interpreter management, tool install, or build/publish.
 
-**Better for libraries, more features, heavier.**
+### Poetry (Alternative: existing Poetry codebases)
 
-**Setup:**
-```bash
-curl -sSL https://install.python-poetry.org | python3 -
-```
+Use when you already have a working Poetry project. Don't migrate purely to
+follow fashion — the migration cost rarely pays back.
 
 **File:** `pyproject.toml`
 ```toml
@@ -548,9 +648,9 @@ requests = "^2.31.0"
 pydantic = "^2.0.0"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.4.0"
-mypy = "^1.5.0"
-ruff = "^0.1.0"
+pytest = "^8.3"
+mypy = "^1.13"
+ruff = "^0.8"
 
 [build-system]
 requires = ["poetry-core"]
@@ -559,37 +659,43 @@ build-backend = "poetry.core.masonry.api"
 
 **Commands:**
 ```bash
-poetry install          # Install dependencies
-poetry add requests     # Add dependency
-poetry add --group dev pytest  # Add dev dependency
-poetry update           # Update dependencies
-poetry lock             # Update lock file
-poetry build            # Build package
-poetry publish          # Publish to PyPI
+poetry install
+poetry add requests
+poetry add --group dev pytest
+poetry update
+poetry lock
+poetry build
+poetry publish
 ```
 
-**Why Poetry?**
-- Manages dependencies AND build system
-- Better dependency resolution
-- Built-in virtual environment management
-- Integrated publishing
+**Why Poetry over uv?**
+- You already have a `poetry.lock` and a working CI pipeline. Stability beats
+  novelty.
+- Tight integration with internal Poetry-aware corporate tooling.
 
-**Why NOT Poetry?**
-- Heavier tool
-- Proprietary lock format
-- Slower than pip-tools
-- Lock-in to Poetry workflow
+**Why NOT Poetry (vs uv)?**
+- Slower. Proprietary lockfile. No interpreter management. Heavier dev
+  workflow. uv covers everything Poetry does and more.
+
+### PDM (Alternative: PEP-standard purist)
+
+PDM is similar to Poetry but tracks PEP standards (PEP 621, PEP 582 historically).
+Niche today: uv has eaten most of PDM's niche. Mention only if a project already
+uses it.
 
 ### Comparison Decision Tree
 
 ```
-Publishing to PyPI? → Poetry (integrated workflow)
-Simple project? → pip-tools (minimal)
-Need reproducible builds? → Either (both lock)
-Team unfamiliar with tools? → pip-tools (simpler)
-Complex dependency constraints? → Poetry (better resolver)
-CI/CD integration? → pip-tools (faster)
+New project, no constraints?              → uv
+Existing Poetry/pip-tools setup that works? → keep it (don't churn)
+Locked-down pip-only enterprise env?      → pip-tools
+Conda-required for native scientific deps? → conda/mamba
+Need PEP 735 dependency groups?           → uv (native) or PDM
+Publishing to PyPI?                       → uv build / uv publish
 ```
+
+**Bottom line:** Default to uv for greenfield work. Keep what works for
+brownfield projects.
 
 
 ## Pre-commit Hooks
@@ -598,16 +704,19 @@ CI/CD integration? → pip-tools (faster)
 
 **Install:**
 ```bash
-pip install pre-commit
+uv tool install pre-commit          # If using uv
+# Or: pipx install pre-commit
+# Or: pip install pre-commit
 ```
 
 **File:** `.pre-commit-config.yaml`
 
 ```yaml
+# Pin revs to current versions; refresh with `pre-commit autoupdate`.
 repos:
-  # Ruff for linting and formatting
+  # Ruff for linting and formatting (replaces black, isort, flake8, pyupgrade)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.6
+    rev: v0.15.12
     hooks:
       # Run linter
       - id: ruff
@@ -617,14 +726,14 @@ repos:
 
   # mypy for type checking
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.7.0
+    rev: v1.20.2
     hooks:
       - id: mypy
         additional_dependencies: [types-requests]
 
   # Standard pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -634,14 +743,12 @@ repos:
         args: [--maxkb=1000]
       - id: check-merge-conflict
       - id: check-case-conflict
-
-  # Python-specific
-  - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
-        name: isort (python)
 ```
+
+> **Do not add a separate `pycqa/isort` hook.** Ruff handles import sorting via
+> the `I` rule set; an isort hook duplicates work and disagrees on edge cases.
+> Same applies to standalone `black` (use `ruff format`), `flake8` (use
+> `ruff check`), and `pyupgrade` (use ruff's `UP` rules).
 
 **Install hooks:**
 ```bash
@@ -845,7 +952,7 @@ twine upload dist/*
 
 **Better: Use GitHub Actions**
 
-**File:** `.github/workflows/publish.yml`
+**File:** `.github/workflows/publish.yml` (uv-based, recommended)
 ```yaml
 name: Publish to PyPI
 
@@ -856,23 +963,28 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # Required for PyPI Trusted Publishing
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.12"
 
-      - name: Install build
-        run: pip install build twine
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
 
       - name: Build package
-        run: python -m build
+        run: uv build
 
-      - name: Publish to PyPI
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        run: twine upload dist/*
+      - name: Publish to PyPI (Trusted Publishing)
+        run: uv publish
+```
+
+**Trusted Publishing is the modern standard** — configure your PyPI project to
+trust the GitHub Actions OIDC identity for this repo and you don't need a
+`PYPI_API_TOKEN` secret at all. See <https://docs.pypi.org/trusted-publishers/>.
+
+If you must use an API token instead:
+```yaml
+      - run: uv publish --token ${{ secrets.PYPI_API_TOKEN }}
 ```
 
 **Why this matters**: Automated publishing on GitHub release. Consistent process, no manual uploads.
@@ -962,13 +1074,17 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.4.0",
-    "pytest-cov>=4.1.0",
-    "mypy>=1.5.0",
-    "ruff>=0.1.0",
-    "pre-commit>=3.5.0",
-    "types-requests>=2.31.0",
+    "pytest>=8.3",
+    "pytest-cov>=5.0",
+    "mypy>=1.13",
+    "ruff>=0.8",
+    "pre-commit>=4.0",
+    "types-requests>=2.31",
 ]
+
+# If using uv, prefer PEP 735 dependency groups instead of optional-dependencies:
+# [dependency-groups]
+# dev = ["pytest>=8.3", "pytest-cov>=5.0", "mypy>=1.13", "ruff>=0.8", "pre-commit>=4.0"]
 
 [project.urls]
 Homepage = "https://github.com/username/awesome-project"
@@ -1068,20 +1184,20 @@ exclude_lines = [
 ```yaml
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.6
+    rev: v0.15.12
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.7.0
+    rev: v1.20.2
     hooks:
       - id: mypy
         additional_dependencies: [types-requests, pydantic]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -1148,7 +1264,7 @@ dmypy.json
 Thumbs.db
 ```
 
-### CI Workflow
+### CI Workflow (uv-managed)
 
 **File:** `.github/workflows/ci.yml`
 
@@ -1167,35 +1283,50 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.12"]
+        python-version: ["3.12", "3.13"]
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
         with:
-          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-      - name: Install dependencies
-        run: |
-          pip install -e ".[dev]"
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Sync dependencies
+        run: uv sync --all-extras
 
       - name: Run ruff (lint)
-        run: ruff check .
+        run: uv run ruff check .
 
       - name: Run ruff (format check)
-        run: ruff format --check .
+        run: uv run ruff format --check .
 
       - name: Run mypy
-        run: mypy src/
+        run: uv run mypy src/
 
       - name: Run pytest
-        run: pytest --cov --cov-report=xml
+        run: uv run pytest --cov --cov-report=xml
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         if: matrix.os == 'ubuntu-latest'
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+```
+
+**For pip-only environments**, swap the uv steps for:
+
+```yaml
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: pip install -e ".[dev]"
 ```
 
 
@@ -1324,7 +1455,7 @@ repos:
 # ✅ CORRECT: Fast checks only
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.6
+    rev: v0.15.12
     hooks:
       - id: ruff
       - id: ruff-format
@@ -1348,20 +1479,19 @@ repos:
 ### Choosing Dependency Manager
 
 ```
-├─ Publishing to PyPI?
-│  ├─ Yes → Poetry (integrated workflow)
-│  └─ No
-│     ├─ Need simple workflow? → pip-tools
-│     ├─ Complex constraints? → Poetry
-│     └─ Existing requirements.txt? → pip-tools
+├─ Greenfield project? → uv (default)
+├─ Existing Poetry/pip-tools project working fine? → keep it (no churn)
+├─ Locked-down pip-only enterprise env? → pip-tools
+└─ Conda required for native scientific deps? → conda/mamba
 ```
 
 ### Choosing Build Backend
 
 ```
+├─ Using uv? → hatchling (uv init default) or "uv" backend (uv_build)
 ├─ Using Poetry? → poetry-core
-├─ Need setuptools features? → setuptools
-└─ Simple project? → hatchling
+├─ Need setuptools features (entry_points hacks, C extensions)? → setuptools
+└─ Otherwise? → hatchling
 ```
 
 ### Line Length Configuration
@@ -1376,39 +1506,55 @@ repos:
 
 ## Common Workflows
 
-### New Project from Scratch
+### New Project from Scratch (uv-managed, recommended)
+
+```bash
+# 1. Initialise the project (creates pyproject.toml, .python-version, src/, git repo)
+uv init my_project --lib --python 3.12
+cd my_project
+
+# 2. Add dev dependencies as a PEP 735 group
+uv add --dev pytest pytest-cov mypy ruff pre-commit
+
+# 3. Create py.typed marker for downstream type checking
+touch src/my_project/py.typed
+
+# 4. Drop in .pre-commit-config.yaml (see example above)
+
+# 5. Install pre-commit hooks (run via uvx so we don't need it in dev deps)
+uvx pre-commit install
+
+# 6. Create initial environment + lockfile
+uv sync
+
+# 7. First commit
+git add .
+git commit -m "feat: initial project structure"
+```
+
+### New Project from Scratch (pip-only fallback)
 
 ```bash
 # 1. Create structure
-mkdir my_project
-cd my_project
-git init
-
-# 2. Create directory structure
+mkdir my_project && cd my_project && git init
 mkdir -p src/my_project tests
 
-# 3. Create pyproject.toml (see example above)
-# 4. Create .pre-commit-config.yaml (see example above)
-# 5. Create .gitignore (see example above)
+# 2. Author pyproject.toml, .pre-commit-config.yaml, .gitignore (see examples above)
 
-# 6. Initialize package
-cat > src/my_project/__init__.py << 'EOF'
-"""My awesome project."""
-__version__ = "0.1.0"
-EOF
-
-# 7. Create py.typed marker for type checking
+# 3. Initialise package
+printf '"""My project."""\n__version__ = "0.1.0"\n' > src/my_project/__init__.py
 touch src/my_project/py.typed
 
-# 8. Install in editable mode
+# 4. Create venv and install in editable mode
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 
-# 9. Install pre-commit hooks
+# 5. Install pre-commit hooks
 pre-commit install
 
-# 10. First commit
-git add .
-git commit -m "feat: Initial project structure"
+# 6. First commit
+git add . && git commit -m "feat: initial project structure"
 ```
 
 ### Adding Ruff to Existing Project
@@ -1441,7 +1587,7 @@ ruff format .
 cat >> .pre-commit-config.yaml << 'EOF'
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.6
+    rev: v0.15.12
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
@@ -1503,32 +1649,51 @@ ruff format .
 
 ## Quick Reference
 
-### Essential Commands
+### Essential Commands (uv-managed workflow)
+
+```bash
+# Project lifecycle
+uv init my-pkg --lib          # Scaffold a library project
+uv sync                       # Install runtime + dev deps from uv.lock
+uv add "requests>=2.31"       # Add runtime dep
+uv add --dev pytest           # Add dev dep (PEP 735 group)
+uv lock --upgrade             # Bump all deps within constraints
+uv tool install pre-commit    # Install pre-commit globally
+uvx ruff check .              # One-shot tool run
+
+# Daily workflow (always prefix with `uv run` to use the project venv)
+uv run ruff check .           # Lint
+uv run ruff check --fix .     # Lint and auto-fix
+uv run ruff format .          # Format
+uv run mypy src/              # Type check
+uv run pytest                 # Run tests
+
+# Pre-commit
+uvx pre-commit install        # Install git hooks
+uvx pre-commit run --all-files
+uvx pre-commit autoupdate     # Refresh hook revs
+
+# Building and publishing
+uv build                      # Build sdist + wheel
+uv publish                    # Publish to PyPI (Trusted Publishing or token)
+```
+
+### Essential Commands (pip-only fallback)
 
 ```bash
 # Project setup
-pip install -e ".[dev]"       # Editable install with dev deps
-pre-commit install            # Install git hooks
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+pre-commit install
 
-# Daily workflow
-ruff check .                  # Lint
-ruff check --fix .           # Lint and auto-fix
-ruff format .                # Format
-mypy src/                    # Type check
-pytest                       # Run tests
+# pip-tools dependency management
+pip-compile requirements.in
+pip-compile requirements-dev.in
+pip-sync requirements.txt requirements-dev.txt
 
-# Pre-commit
-pre-commit run --all-files   # Run all hooks manually
-pre-commit autoupdate        # Update hook versions
-
-# Dependency management (pip-tools)
-pip-compile requirements.in              # Lock dependencies
-pip-compile requirements-dev.in          # Lock dev dependencies
-pip-sync requirements.txt requirements-dev.txt  # Sync environment
-
-# Building and publishing
-python -m build              # Build package
-twine upload dist/*          # Upload to PyPI
+# Build and publish
+python -m build
+twine upload dist/*
 ```
 
 ### Configuration Checklist

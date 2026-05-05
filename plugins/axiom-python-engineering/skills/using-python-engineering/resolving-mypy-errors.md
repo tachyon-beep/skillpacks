@@ -1033,7 +1033,7 @@ mypy --fast-module-lookup .
 ```yaml
 # Cache .mypy_cache directory between runs
 - name: Cache mypy
-  uses: actions/cache@v3
+  uses: actions/cache@v4
   with:
     path: .mypy_cache
     key: mypy-${{ hashFiles('**/*.py') }}

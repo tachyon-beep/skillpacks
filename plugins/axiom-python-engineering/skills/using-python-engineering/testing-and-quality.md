@@ -1372,10 +1372,11 @@ jobs:
         pytest --cov=mypackage --cov-report=xml --cov-report=term-missing
 
     - name: Upload coverage
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
-        file: ./coverage.xml
+        files: ./coverage.xml
         fail_ci_if_error: true
+        token: ${{ secrets.CODECOV_TOKEN }}
 ```
 
 ### Parallel Testing in CI

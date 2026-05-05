@@ -597,10 +597,61 @@ exclude = [
 ```
 
 **pyright vs mypy:**
-- pyright: Faster, better IDE integration, stricter by default
-- mypy: More configurable, wider adoption, plugin ecosystem
+- pyright: Faster, better IDE integration (Pylance), stricter by default
+- mypy: More configurable, wider adoption, mature plugin ecosystem (Django,
+  SQLAlchemy, NumPy)
 
-**Recommendation**: Use both if possible. pyright in IDE, mypy in CI.
+**Recommendation**: Use both if possible. pyright in IDE, mypy in CI. Pinning
+mypy to a specific version in CI prevents the "new mypy release surfaced 50
+errors overnight" problem.
+
+### Emerging Type Checkers (Preview — track but don't depend on yet)
+
+Two new Rust-implemented type checkers are landing in late 2024 / 2025. Both
+target the same problem mypy has — speed at scale — by following pyright's
+architecture but pushing further.
+
+**`ty` (Astral)** — from the makers of ruff and uv. Goal: a type checker that
+runs at ruff-like speed on a millions-of-lines codebase, with the same tight
+editor feedback loop.
+
+```bash
+uvx ty check src/
+```
+
+**`pyrefly` (Meta)** — Meta's open-source successor to pyre, rewritten in Rust.
+Targets the same scale Meta hits internally on Python monorepos.
+
+```bash
+pip install pyrefly
+pyrefly check src/
+```
+
+**Status (as of 2025): both are pre-1.0 and labelled preview.**
+
+**Use them when:**
+- Mypy is the bottleneck on a large codebase (>500k LoC) and you can absorb
+  rough edges.
+- You want to evaluate them in parallel with mypy in CI (don't replace yet).
+
+**Do not use them as your only type checker** until at least the upstream
+projects declare 1.0 / production-ready. Stick to mypy and/or pyright for now.
+
+### Python 3.13 Notes
+
+Python 3.13 (Oct 2024) introduced two major experimental features the type
+system does not yet have polished support for:
+
+- **Free-threaded build (PEP 703)** — `python3.13t`. Removes the GIL. Most
+  mainstream type checkers and many C-extension wheels are still catching up;
+  treat it as experimental and not the default for production.
+- **Experimental JIT (PEP 744)** — opt-in JIT compiler. Doesn't affect typing
+  but may shift performance recommendations in the future.
+
+For type-system purposes, write code as you would for 3.12. The 3.12 type
+syntax (PEP 695) remains the modern baseline; 3.13 mainly polishes error
+messages and removes some long-deprecated stdlib modules (PEP 594). Default
+new projects to 3.12 unless you have a specific reason to chase 3.13.
 
 ### Dealing with Untyped Libraries
 
