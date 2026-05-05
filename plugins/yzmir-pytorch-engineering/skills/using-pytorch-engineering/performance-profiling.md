@@ -810,6 +810,28 @@ Inactive allocations: 3.00 GB  ← Cached for reuse (fragmentation)
 # Periodic torch.cuda.empty_cache() may help
 ```
 
+**Fragmentation remediation: `expandable_segments`**
+
+For workloads with variable batch sizes or shape-changing inputs (the most common
+fragmentation cause), set the allocator to use expandable segments. This lets a
+single CUDA segment grow in place rather than accreting many small unmergeable
+allocations:
+
+```bash
+# Set BEFORE Python starts (allocator reads env on import torch)
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+python train.py
+```
+
+The environment variable is also accessible as `PYTORCH_ALLOC_CONF` (alias). Per
+the CUDA semantics docs, this option is experimental but production-stable for
+most training workloads; it specifically helps "jobs changing allocation sizes
+frequently, such as having a changing batch size." Cite:
+https://docs.pytorch.org/docs/stable/notes/cuda.html
+
+Confirm the fix worked by re-running `print(torch.cuda.memory_summary())` and
+checking that `Inactive` drops and `Alloc Retries` stays at 0.
+
 
 **Step 4: Memory Snapshot (PyTorch 2.0+)**
 
@@ -1874,20 +1896,342 @@ Before claiming you've profiled the code, verify:
   - [ ] Have profiling artifacts (traces, summaries)
 
 
+## Profiling `torch.compile`
+
+`torch.compile` is the production-default kernel-fusion path in PyTorch 2.x and
+must be profiled differently from eager mode. The compiled function is traced by
+TorchDynamo, optimized by Inductor, and replayed as fused CUDA kernels. Three
+phenomena make naive profiling misleading: (1) the first call pays a multi-second
+compile cost, (2) input-shape changes can trigger silent recompilation, and
+(3) unsupported Python constructs introduce **graph breaks** that fall back to
+eager execution and erase most of the speedup.
+
+### Step 1: Measure compile vs eager on the same workload
+
+```python
+import torch
+import time
+
+def benchmark(fn, *args, n_warmup=10, n_iter=100):
+    """Steady-state wall-clock with CUDA sync. See GPU Timing Best Practices."""
+    for _ in range(n_warmup):
+        fn(*args)
+    torch.cuda.synchronize()
+    start = torch.cuda.Event(enable_timing=True)
+    end = torch.cuda.Event(enable_timing=True)
+    start.record()
+    for _ in range(n_iter):
+        fn(*args)
+    end.record()
+    torch.cuda.synchronize()
+    return start.elapsed_time(end) / n_iter  # ms/iter
+
+eager_model = MyModel().cuda()
+compiled_model = torch.compile(eager_model)  # default mode
+
+# WARNING: first call compiles. Discard it from timing.
+_ = compiled_model(sample_input)  # warm-up triggers compile
+
+eager_ms = benchmark(eager_model, sample_input)
+compiled_ms = benchmark(compiled_model, sample_input)
+print(f"Eager:    {eager_ms:.3f} ms/iter")
+print(f"Compiled: {compiled_ms:.3f} ms/iter  ({eager_ms / compiled_ms:.2f}x)")
+```
+
+**If the speedup is < 1.2x**, you almost certainly have graph breaks or
+recompilation. Profile next.
+
+### Step 2: Diagnose graph breaks with `TORCH_LOGS`
+
+Per the torch.compile troubleshooting guide, set environment variables to surface
+break and recompile events:
+
+```bash
+# Show every graph break with file/line context
+TORCH_LOGS="graph_breaks" python train.py
+
+# Show every recompilation and the guard that failed
+TORCH_LOGS="recompiles" python train.py
+
+# Both, plus full Dynamo decisions (verbose)
+TORCH_LOGS="graph_breaks,recompiles,dynamo" python train.py
+```
+
+Each graph break logged means a Python construct Dynamo could not trace; the
+compiled region splits and the kernel-fusion benefit ends at that boundary.
+Common causes: `.item()` / `.tolist()` calls, data-dependent Python control flow,
+`print()` inside the forward, calls into untraceable C extensions.
+
+Cite: https://docs.pytorch.org/docs/stable/torch.compiler_troubleshooting.html
+
+### Step 3: Programmatic inspection with `torch._dynamo.explain`
+
+For a focused break analysis without rerunning the whole training loop:
+
+```python
+import torch._dynamo
+
+explanation = torch._dynamo.explain(model)(sample_input)
+print(explanation)
+# Reports: number of graphs, number of graph breaks, exact reasons,
+# and the source line where each break occurred.
+```
+
+`torch._dynamo.explain` returns a structured report (graph count, break reasons,
+per-break source location) that pinpoints the lines to refactor. Use it as the
+first diagnostic when `compiled_ms / eager_ms` is unimpressive.
+
+### Step 4: Deeper Inductor diagnostics
+
+When you need to see the generated kernels themselves (rare; reserve for genuine
+optimization work, not first-pass debugging):
+
+```python
+import torch._inductor.config
+torch._inductor.config.trace.enabled = True   # emit per-graph trace artifacts
+# Run the workload; trace files appear under torch_compile_debug/
+```
+
+Combine with the eager profile from Step 2 of the systematic methodology to
+confirm where compile actually changed the kernel mix.
+
+### Anti-patterns that defeat `torch.compile`
+
+```python
+# ANTI-PATTERN 1: tensor-value-dependent control flow
+@torch.compile
+def forward(x):
+    if x.sum() > 0:        # graph break: condition needs .item()
+        return x * 2
+    return x
+
+# FIX: prefer torch.where / masking
+@torch.compile
+def forward(x):
+    return torch.where(x.sum(keepdim=True) > 0, x * 2, x)
+
+# ANTI-PATTERN 2: shape-dependent Python control flow
+@torch.compile
+def forward(x):
+    if x.size(0) > 32:     # forces recompile per batch size
+        return slow_path(x)
+    return fast_path(x)
+# FIX: use a single path or mark dynamic with torch.compile(dynamic=True)
+
+# ANTI-PATTERN 3: .item() in hot path
+loss_value = loss.item()   # syncs CPU/GPU, breaks graph if inside compiled region
+# FIX: keep loss as tensor; .item() only at logging boundaries
+```
+
+Cross-reference: see `module-design-patterns.md` for compile-friendly module
+construction patterns.
+
+
+## CUDA Graphs
+
+CUDA Graphs eliminate per-kernel launch overhead by capturing a sequence of CUDA
+operations once and replaying it as a single submission. They pay off in the
+**kernel-launch-bound regime**: small models, very short iterations (typically
+sub-millisecond), or large GPU clusters where many small launches dominate the
+timeline. Kernel-launch overhead is ~5-10 µs per kernel; if your iteration
+contains hundreds of tiny ops, this becomes the bottleneck before any actual
+compute does.
+
+CUDA Graphs require **static shapes, static control flow, and a fixed memory
+plan** during capture. They do not coexist with `.item()`, dynamic batch sizes,
+or per-step Python branches.
+
+### `make_graphed_callables` (recommended for training)
+
+Per the PyTorch reference, `torch.cuda.make_graphed_callables` returns graphed
+versions of one or more callables that are autograd-compatible:
+
+```python
+torch.cuda.make_graphed_callables(
+    callables,                       # Module/Callable or tuple of them
+    sample_args,                     # tuple of Tensors, or tuple of tuples
+    num_warmup_iters=3,
+    allow_unused_input=False,
+    pool=None,
+)
+```
+
+Typical training-loop integration:
+
+```python
+import torch
+
+model = MyModel().cuda()
+optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
+
+# Static shapes required: capture with the same shape used at runtime.
+sample_args = (torch.randn(BATCH, FEATURES, device="cuda"),)
+graphed_model = torch.cuda.make_graphed_callables(model, sample_args)
+
+for batch in dataloader:
+    x, y = batch[0].cuda(non_blocking=True), batch[1].cuda(non_blocking=True)
+    optimizer.zero_grad(set_to_none=True)
+    out = graphed_model(x)              # replays captured graph
+    loss = criterion(out, y)
+    loss.backward()
+    optimizer.step()
+```
+
+Cite: https://docs.pytorch.org/docs/stable/generated/torch.cuda.make_graphed_callables.html
+
+### Lower-level `torch.cuda.graph` context manager
+
+For custom capture (e.g., capturing a complete forward+backward+optimizer step):
+
+```python
+torch.cuda.graph(
+    cuda_graph,                      # torch.cuda.CUDAGraph instance
+    pool=None,
+    stream=None,
+    capture_error_mode="global",     # "global" | "thread_local" | "relaxed"
+)
+```
+
+```python
+g = torch.cuda.CUDAGraph()
+
+# Warm up before capture (allocator and cuDNN must settle).
+for _ in range(3):
+    optimizer.zero_grad(set_to_none=True)
+    out = model(static_input)
+    loss = criterion(out, static_target)
+    loss.backward()
+    optimizer.step()
+torch.cuda.synchronize()
+
+with torch.cuda.graph(g):
+    optimizer.zero_grad(set_to_none=True)
+    static_out = model(static_input)
+    static_loss = criterion(static_out, static_target)
+    static_loss.backward()
+    optimizer.step()
+
+# Per-step: copy real data into the captured input buffer, then replay.
+for batch in dataloader:
+    static_input.copy_(batch[0])
+    static_target.copy_(batch[1])
+    g.replay()
+```
+
+Cite: https://docs.pytorch.org/docs/stable/generated/torch.cuda.graph.html
+
+### When NOT to use CUDA Graphs
+
+- Iteration time > 5 ms with a handful of large kernels: launch overhead is
+  amortized away; capture machinery costs more than it saves.
+- Dynamic shapes per step: capture must be redone, eliminating the win.
+- Heavy Python work per step (logging, callbacks): not capturable; would need
+  refactoring outside the graph.
+- Workloads already dominated by a single matmul: graph capture is irrelevant.
+
+If you are not certain you are launch-bound, profile first (Step 1 of the
+systematic methodology). The classic signature: high CPU activity in
+`cudaLaunchKernel`, low SM occupancy, large gaps between kernels in the trace
+view.
+
+
+## NVTX and Nsight Systems
+
+NVTX (NVIDIA Tools Extension) annotates the GPU timeline with named ranges so a
+profiler can group kernels by semantic boundary (e.g., "forward", "block_3",
+"attention"). PyTorch's wrapper sits at `torch.cuda.nvtx`. The most useful flow
+is to combine NVTX annotations in code with `nsys profile` for capture.
+
+### API surface
+
+```python
+# Imperative push/pop (returns nesting depth)
+torch.cuda.nvtx.range_push(msg: str) -> int
+torch.cuda.nvtx.range_pop() -> int
+
+# Context manager (preferred — exception-safe)
+with torch.cuda.nvtx.range("forward"):
+    out = model(x)
+```
+
+Cite: https://docs.pytorch.org/docs/stable/generated/torch.cuda.nvtx.range_push.html
+
+### Annotation pattern in a training loop
+
+```python
+import torch
+
+for step, (x, y) in enumerate(dataloader):
+    with torch.cuda.nvtx.range(f"step_{step}"):
+        with torch.cuda.nvtx.range("h2d"):
+            x = x.cuda(non_blocking=True)
+            y = y.cuda(non_blocking=True)
+        with torch.cuda.nvtx.range("forward"):
+            out = model(x)
+        with torch.cuda.nvtx.range("loss"):
+            loss = criterion(out, y)
+        with torch.cuda.nvtx.range("backward"):
+            loss.backward()
+        with torch.cuda.nvtx.range("optimizer"):
+            optimizer.step()
+            optimizer.zero_grad(set_to_none=True)
+```
+
+### Capturing with Nsight Systems
+
+```bash
+# Capture a single training step. Skip the first N steps to avoid compile noise.
+nsys profile \
+    --trace=cuda,nvtx,cudnn,cublas \
+    --capture-range=cudaProfilerApi \
+    --capture-range-end=stop \
+    -o train_profile \
+    python train.py
+
+# Open the .nsys-rep file in Nsight Systems GUI to see NVTX bands aligned with
+# kernels, memcpys, cuDNN calls, and CPU activity.
+```
+
+Inside the script, gate capture with `torch.cuda.cudart().cudaProfilerStart()` /
+`...Stop()` so only the target steps are recorded. NVTX ranges then become the
+labeled lanes in the timeline that make the trace navigable.
+
+For pure-Python timeline annotation that integrates with `torch.profiler` instead
+of Nsight, prefer `torch.profiler.record_function("name")`. Use NVTX when you
+need the Nsight Systems UI's depth (cuDNN handle reuse, cuBLAS algorithm choice,
+SM occupancy alongside the timeline).
+
+
 ## References
 
 **PyTorch Profiling Documentation:**
-- torch.profiler: https://pytorch.org/docs/stable/profiler.html
-- Profiling recipe: https://pytorch.org/tutorials/recipes/recipes/profiler_recipe.html
-- Performance tuning guide: https://pytorch.org/tutorials/recipes/recipes/tuning_guide.html
+- torch.profiler: https://docs.pytorch.org/docs/stable/profiler.html
+- Profiling recipe: https://docs.pytorch.org/tutorials/recipes/recipes/profiler_recipe.html
+- Performance tuning guide: https://docs.pytorch.org/tutorials/recipes/recipes/tuning_guide.html
+- torch.compile troubleshooting: https://docs.pytorch.org/docs/stable/torch.compiler_troubleshooting.html
+- CUDA Graphs: https://docs.pytorch.org/docs/stable/generated/torch.cuda.graph.html
+- make_graphed_callables: https://docs.pytorch.org/docs/stable/generated/torch.cuda.make_graphed_callables.html
+- NVTX: https://docs.pytorch.org/docs/stable/generated/torch.cuda.nvtx.range_push.html
+- CUDA memory management (PYTORCH_CUDA_ALLOC_CONF): https://docs.pytorch.org/docs/stable/notes/cuda.html
 
 **Related Skills:**
-- tensor-operations-and-memory (memory leak debugging, operation optimization)
+- tensor-operations-and-memory (memory leak debugging, operation optimization, channels_last)
 - mixed-precision-and-optimization (AMP profiling, Tensor Core utilization)
 - distributed-training-strategies (multi-GPU profiling)
+- module-design-patterns (compile-friendly module construction)
+- debugging-techniques (torch.compile debugging deep-dive)
+
+**Cross-pack:**
+- yzmir-training-optimization (throughput tuning, batch-size and memory tradeoffs)
+- yzmir-llm-specialist (inference optimization, kernel selection)
+- yzmir-ml-production (production inference profiling)
 
 **Tools:**
 - Chrome tracing: chrome://tracing
 - TensorBoard profiler: tensorboard --logdir=<path>
 - NVIDIA Nsight Systems: nsys profile python train.py
 - PyTorch Memory Visualizer: python -m torch.cuda._memory_viz
+
+---
+
+PyTorch API surface current as of 2026-05 (PyTorch 2.9+); revisit quarterly.

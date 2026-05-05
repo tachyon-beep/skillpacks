@@ -1771,15 +1771,242 @@ Before writing `__init__` or `forward`, check yourself:
 ```
 
 
+## `torch.compile`-Friendly Module Design
+
+Modules that pass through `torch.compile` cleanly (no graph breaks, no
+recompiles) get the full kernel-fusion speedup. Modules that fight Dynamo
+silently fall back to eager and look "compiled" without being so. The
+constraints below cost nothing in eager mode and unlock substantial speedups
+under compile.
+
+### Avoid tensor-value-dependent Python control flow
+
+The single most common graph-break cause is branching on a tensor value:
+
+```python
+# ANTI-PATTERN: branches on a Python bool derived from a tensor
+class GatedBlock(nn.Module):
+    def forward(self, x):
+        if x.sum() > 0:                      # graph break — needs .item()
+            return self.path_a(x)
+        return self.path_b(x)
+
+# COMPILE-FRIENDLY: keep the branch in tensor-land
+class GatedBlock(nn.Module):
+    def forward(self, x):
+        gate = (x.sum(dim=-1, keepdim=True) > 0).to(x.dtype)
+        return gate * self.path_a(x) + (1 - gate) * self.path_b(x)
+```
+
+Per the torch.compile programming-model docs, "graph breaks are caused by ...
+data-dependent control flow." Convert with `torch.where`, masking, or a
+gating tensor. Cite:
+https://docs.pytorch.org/docs/stable/torch.compiler_troubleshooting.html
+
+### Avoid `.item()` and `.tolist()` in the forward path
+
+Both force a CPU/GPU sync and unconditionally break the graph:
+
+```python
+# ANTI-PATTERN
+def forward(self, x):
+    n = x.size(0)                           # OK — symbolic int
+    threshold = self.scale.item()           # graph break — sync to CPU
+    return torch.clamp(x, max=threshold)
+
+# COMPILE-FRIENDLY: keep scale as a tensor
+def forward(self, x):
+    return torch.minimum(x, self.scale)     # broadcast handles shape
+```
+
+Reserve `.item()` for the logging boundary outside the compiled region.
+
+### Avoid Python-side shape gymnastics
+
+Recompilation triggers on shape changes Dynamo cannot prove are dynamic. Two
+practical guidelines:
+
+1. Don't index with Python ints derived from tensor sizes inside a hot loop.
+2. If batch size genuinely varies, opt in explicitly:
+   `model = torch.compile(model, dynamic=True)`.
+
+### Avoid `print` and Python logging in `forward`
+
+Both force graph breaks. Move logging to outside the compiled region or use
+`torch._dynamo.config.reorderable_logging_functions` for instrumented runs.
+
+### Compile-friendly checklist
+
+```
+[ ] No `.item()` / `.tolist()` calls in forward
+[ ] No `if`/`while` on tensor values (use `torch.where` / masking)
+[ ] No `print` / Python logging in forward
+[ ] No data-dependent shape resizing (dynamic shapes opt-in only)
+[ ] Custom autograd Functions use supported pattern
+    (see custom-autograd-functions.md)
+[ ] Verified with `torch._dynamo.explain(module)(sample_input)` — zero breaks
+```
+
+Cross-reference: `performance-profiling.md` (Profiling `torch.compile`) shows
+how to measure breaks; `debugging-techniques.md` (torch.compile debugging)
+shows the env vars for diagnosing them.
+
+
+## FlexAttention as the Modern Attention Building Block
+
+For new transformer-style modules, **FlexAttention** is the canonical PyTorch
+2.x attention primitive. It generalizes scaled dot-product attention with a
+user-supplied `score_mod` and `mask_mod`, and lowers to a fused kernel via
+`torch.compile`.
+
+### Import path
+
+```python
+from torch.nn.attention.flex_attention import flex_attention, create_block_mask
+```
+
+### Module integration pattern
+
+```python
+import torch
+import torch.nn as nn
+from torch.nn.attention.flex_attention import flex_attention
+
+class FlexSelfAttention(nn.Module):
+    def __init__(self, d_model: int, n_heads: int):
+        super().__init__()
+        self.n_heads = n_heads
+        self.head_dim = d_model // n_heads
+        self.qkv = nn.Linear(d_model, 3 * d_model, bias=False)
+        self.out = nn.Linear(d_model, d_model, bias=False)
+
+    def forward(self, x, score_mod=None, block_mask=None):
+        B, T, _ = x.shape
+        qkv = self.qkv(x).reshape(B, T, 3, self.n_heads, self.head_dim)
+        q, k, v = qkv.unbind(dim=2)
+        q, k, v = (t.transpose(1, 2) for t in (q, k, v))   # (B, H, T, D)
+        out = flex_attention(q, k, v, score_mod=score_mod, block_mask=block_mask)
+        return self.out(out.transpose(1, 2).reshape(B, T, -1))
+```
+
+The `score_mod` (a function `(score, b, h, q_idx, kv_idx) -> score`) and
+`block_mask` (built via `create_block_mask`) are the customization points
+(causal, local, document-boundary, ALiBi, etc.). FlexAttention is documented as
+prototype but is the recommended successor to hand-rolled attention kernels;
+for the API surface, cross-reference `mixed-precision-and-optimization.md`.
+
+Cite: https://docs.pytorch.org/docs/main/nn.attention.flex_attention.html
+
+
+## Activation Checkpointing Variants
+
+Activation checkpointing trades compute for memory: forward activations are
+discarded and recomputed during backward. Get the API surface and the failure
+modes right.
+
+### `use_reentrant=False` is the modern default
+
+Per the PyTorch activation-checkpointing technical guide, `use_reentrant=True`
+is the legacy implementation; `use_reentrant=False` is the recommended path
+and **must be passed explicitly** in current PyTorch (omitting it raises in
+2.9+). The non-reentrant variant supports nested autograd, hooks, and
+`torch.compile` correctly.
+
+```python
+import torch
+from torch.utils.checkpoint import checkpoint
+
+class CheckpointedBlock(nn.Module):
+    def __init__(self, block: nn.Module):
+        super().__init__()
+        self.block = block
+
+    def forward(self, x):
+        # ALWAYS pass use_reentrant explicitly.
+        return checkpoint(self.block, x, use_reentrant=False)
+```
+
+The current signature is:
+
+```python
+torch.utils.checkpoint.checkpoint(
+    function, *args,
+    use_reentrant: bool,        # required — pass False for new code
+    context_fn=None,
+    determinism_check="default",
+    debug=False,
+    **kwargs,
+)
+```
+
+Cite: https://docs.pytorch.org/docs/stable/checkpoint.html and
+https://pytorch.org/blog/activation-checkpointing-techniques/
+
+### Selective activation checkpointing
+
+Checkpointing every block doubles backward compute. **Selective** checkpointing
+keeps cheap-to-recompute activations and recomputes only the expensive ones
+(e.g., recompute MLPs, keep attention outputs). For FSDP, use
+`checkpoint_wrapper` with an auto-wrap policy:
+
+```python
+from torch.distributed.algorithms._checkpoint.checkpoint_wrapper import (
+    checkpoint_wrapper, CheckpointImpl, apply_activation_checkpointing,
+)
+
+def selective_policy(submodule):
+    # Only checkpoint TransformerBlock layers, not attention sub-layers
+    return isinstance(submodule, TransformerBlock)
+
+apply_activation_checkpointing(
+    model,
+    checkpoint_wrapper_fn=lambda m: checkpoint_wrapper(
+        m, checkpoint_impl=CheckpointImpl.NO_REENTRANT,
+    ),
+    auto_wrap_policy=selective_policy,
+)
+```
+
+`CheckpointImpl.NO_REENTRANT` matches `use_reentrant=False` semantics and
+composes with FSDP and `torch.compile`.
+
+### Anti-pattern: checkpointing a non-pure function
+
+```python
+# ANTI-PATTERN: dropout inside the checkpointed region randomizes per-pass
+def forward(self, x):
+    return checkpoint(lambda y: F.dropout(self.lin(y), p=0.1), x,
+                      use_reentrant=False)   # forward != recomputed forward
+```
+
+`preserve_rng_state=True` (default) keeps the recompute deterministic with the
+original forward; do not turn it off unless you understand the consequences.
+
+
 ## References
 
 **PyTorch Documentation:**
-- nn.Module: https://pytorch.org/docs/stable/notes/modules.html
-- Hooks: https://pytorch.org/docs/stable/notes/modules.html#module-hooks
-- Initialization: https://pytorch.org/docs/stable/nn.init.html
+- nn.Module: https://docs.pytorch.org/docs/stable/notes/modules.html
+- Hooks: https://docs.pytorch.org/docs/stable/notes/modules.html#module-hooks
+- Initialization: https://docs.pytorch.org/docs/stable/nn.init.html
+- torch.utils.checkpoint: https://docs.pytorch.org/docs/stable/checkpoint.html
+- torch.compile troubleshooting: https://docs.pytorch.org/docs/stable/torch.compiler_troubleshooting.html
+- FlexAttention: https://docs.pytorch.org/docs/main/nn.attention.flex_attention.html
+- Activation checkpointing techniques (blog): https://pytorch.org/blog/activation-checkpointing-techniques/
 
 **Related Skills:**
-- tensor-operations-and-memory (memory management)
-- debugging-techniques (using hooks for debugging)
-- distributed-training-strategies (DDP-compatible module design)
+- tensor-operations-and-memory (memory management, channels_last)
+- debugging-techniques (using hooks for debugging, torch.compile debugging)
+- distributed-training-strategies (DDP-compatible module design, FSDP wrap policies)
 - checkpointing-and-reproducibility (state dict best practices)
+- mixed-precision-and-optimization (FlexAttention API surface, autocast)
+- performance-profiling (compile profiling, graph break diagnosis)
+
+**Cross-pack:**
+- yzmir-training-optimization (memory/compute tradeoffs)
+- yzmir-llm-specialist (transformer module design, FlexAttention recipes)
+- yzmir-ml-production (export-friendly module patterns)
+
+---
+
+PyTorch API surface current as of 2026-05 (PyTorch 2.9+); revisit quarterly.

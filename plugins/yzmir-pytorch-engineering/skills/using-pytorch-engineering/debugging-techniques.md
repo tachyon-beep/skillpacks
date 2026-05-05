@@ -1768,6 +1768,201 @@ if DEBUG:
 | Memory growing over iterations | Check what's being accumulated | Track allocations | Storing tensors with computation graph |
 
 
+## Debugging `torch.compile`
+
+`torch.compile` failures fall into three classes: graph breaks (silent
+performance loss), recompilation thrash (silent performance loss), and outright
+errors during tracing or inductor lowering. Each has a specific diagnostic
+tool. Per the torch.compile troubleshooting guide:
+
+### Environment-variable diagnostics (`TORCH_LOGS`)
+
+```bash
+# 1. See every graph break with file/line context
+TORCH_LOGS="graph_breaks" python train.py
+
+# 2. See recompilations and the failing guard
+TORCH_LOGS="recompiles" python train.py
+
+# 3. Verbose Dynamo decisions (large output, use for unexplained behavior)
+TORCH_LOGS="dynamo" python train.py
+
+# 4. All of the above together
+TORCH_LOGS="graph_breaks,recompiles,dynamo" python train.py
+
+# 5. See exactly which lines Dynamo traces
+TORCH_LOGS="trace_source" python train.py
+```
+
+Cite: https://docs.pytorch.org/docs/stable/torch.compiler_troubleshooting.html
+
+### Programmatic break analysis: `torch._dynamo.explain`
+
+For a single-shot diagnosis without rerunning the full training loop:
+
+```python
+import torch._dynamo
+
+explanation = torch._dynamo.explain(my_model)(sample_input)
+print(explanation)
+# Output includes:
+#   - Number of compiled graphs and graph breaks
+#   - Reason for each break (e.g., "unsupported builtin: print")
+#   - Source location of each break
+```
+
+Use this as the first diagnostic when a compiled model is barely faster than
+eager. Per the troubleshooting docs, "the best way to see what's happening is
+to use `torch._dynamo.explain()`."
+
+### Recompilation thrash
+
+Each recompile log line names the guard that failed (typically a shape or a
+type). If you see > a handful of recompiles per training step, you have either:
+
+- A genuinely dynamic input shape — use `torch.compile(model, dynamic=True)`.
+- A code path that swaps between similar-looking but distinct types.
+- Too low a cache limit — `torch._dynamo.config.cache_size_limit` controls when
+  Dynamo gives up and falls back to eager.
+
+### Inductor-level diagnostics
+
+When the failure is in lowering (post-Dynamo), enable trace artifacts:
+
+```python
+import torch._inductor.config
+torch._inductor.config.trace.enabled = True
+# Per-graph artifacts emit under torch_compile_debug/
+```
+
+Reserve this for genuine inductor bugs; it is verbose and slow.
+
+### `disable` as triage
+
+If a single function is causing problems and you need to keep training while
+investigating, mark it as opaque to Dynamo:
+
+```python
+@torch._dynamo.disable
+def problematic_fn(x):
+    return some_complex_logic(x)
+```
+
+The rest of the model remains compiled.
+
+Cross-reference: see `performance-profiling.md` (Profiling `torch.compile`) for
+the corresponding measurement workflow, and `module-design-patterns.md`
+(`torch.compile`-Friendly Module Design) for how to author modules that don't
+trigger these in the first place.
+
+
+## FSDP-Specific Debugging Gotchas
+
+FSDP shards parameters across ranks, so several "obvious" debugging idioms
+silently break. The most common gotchas:
+
+### `.grad` access requires `use_orig_params=True`
+
+By default, FSDP1 flattens parameters into a single `FlatParameter` per shard
+unit, so `module.weight.grad` does not point at the per-parameter gradient you
+expect. Construct FSDP with `use_orig_params=True` if you need per-parameter
+`.grad` access (e.g., for diagnostics, custom optimizers, layer-wise LR scaling).
+
+```python
+from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+
+model = FSDP(model, use_orig_params=True)
+# Now param.grad behaves as expected.
+```
+
+For FSDP2 (`fully_shard`), per-parameter sharding is the default, but the
+gradient is a `DTensor`; access shard-local data via `.to_local()` for
+inspection.
+
+### Forward all-gathers parameters; backward re-gathers
+
+A forward call temporarily materializes full parameters on each rank.
+Implications:
+
+- `print(model.weight.shape)` outside forward shows the **sharded** shape
+  (small), inside forward shows the **full** shape (large). Both are correct
+  for their context — do not "fix" the difference.
+- Memory profiling must measure forward-time peak, not idle-time allocation.
+- A backward pass re-gathers parameters; if your custom hook expects the full
+  tensor outside backward, it will see shards instead.
+
+### Gradient clipping correctness
+
+`torch.nn.utils.clip_grad_norm_` on an FSDP-wrapped model computes the norm
+across the local shard only — wrong. Use the FSDP-aware path:
+
+```python
+# FSDP1
+model.clip_grad_norm_(max_norm=1.0)            # FSDP method, all-reduces correctly
+
+# FSDP2 / per-parameter sharding via fully_shard
+# clip_grad_norm_ on DTensor parameters handles the all-reduce internally,
+# but verify on your version against:
+#   https://docs.pytorch.org/docs/stable/distributed.fsdp.fully_shard.html
+```
+
+### Checkpoint format mismatch
+
+Loading a non-FSDP checkpoint into an FSDP model (or vice versa) requires the
+state-dict-type machinery from `checkpointing-and-reproducibility.md` (FSDP
+Checkpoint Discipline section). Symptoms of mismatch include "missing keys"
+errors with FSDP-specific prefixes (`_fsdp_wrapped_module.`), or silently
+loaded but wrong-shape parameters. Always use the documented save/load helpers.
+
+Cross-reference: `distributed-training-strategies.md` for the wrapping itself
+and `checkpointing-and-reproducibility.md` for FSDP1/FSDP2 save/load patterns.
+
+
+## NaN/Inf Under FP8 (Brief)
+
+FP8 (`e4m3` for forward activations, `e5m2` for backward gradients) has a
+dynamic range narrow enough that under-/overflow becomes a routine training
+hazard, not an exotic failure mode. When debugging NaN/Inf in an FP8 run:
+
+- **Per-tensor scaling history matters.** FP8 implementations (e.g., NVIDIA
+  TransformerEngine) track per-tensor amax history to set scale factors.
+  Stale or incorrect history is a common silent NaN source. Check that the
+  scale-update interval matches your training-step granularity.
+- **Forward overflow vs backward underflow.** `e4m3` (forward) overflows on
+  large activations; `e5m2` (backward) underflows on small gradients. The
+  symptoms differ — log forward and backward NaN sources separately
+  (forward hooks for activations, backward hooks for grads).
+- **Master weights are FP32.** If master weights themselves are NaN, the bug
+  is in the optimizer or LR schedule, not the FP8 quantization. Always check
+  master weights first.
+- **Loss scaling is BF16's job, not FP8's.** Don't combine `GradScaler` with
+  FP8; the scaling lives inside the FP8 implementation.
+
+Apply the standard NaN-detection patterns in this sheet (anomaly detection,
+forward/backward hooks) but expect to find the root cause in the FP8 scale
+machinery rather than the model code.
+
+Cross-reference: `yzmir-training-optimization/batch-size-and-memory-tradeoffs.md`
+covers the broader FP8 recipe; this sheet is the debugging entry point.
+
+
+## Note on `torch.autograd.set_detect_anomaly(True)`
+
+This sheet uses `set_detect_anomaly(True)` extensively. **It is debug-only.**
+The instrumentation roughly doubles backward pass cost and serializes some
+operations to capture stack traces. Pattern:
+
+```python
+# DEBUG: enable temporarily, capture the offending step, disable.
+with torch.autograd.detect_anomaly():
+    loss.backward()    # raises with stack trace at the offending op
+```
+
+Never leave `set_detect_anomaly(True)` enabled in a training run beyond
+diagnosis. For NaN monitoring in production, use forward/backward hooks with
+`torch.isnan().any()` checks — they are O(1) and don't perturb training.
+
+
 ## Summary
 
 **Systematic debugging methodology prevents random trial-and-error:**
@@ -1801,3 +1996,28 @@ if DEBUG:
 - Leaving debug code in production
 
 **Remember:** Debugging is systematic investigation, not random guessing. Form hypothesis, test it, iterate. PyTorch provides excellent debugging tools - use them!
+
+
+## References
+
+**PyTorch Documentation:**
+- torch.compile troubleshooting: https://docs.pytorch.org/docs/stable/torch.compiler_troubleshooting.html
+- Anomaly detection: https://docs.pytorch.org/docs/stable/autograd.html#anomaly-detection
+- FSDP: https://docs.pytorch.org/docs/stable/fsdp.html
+- FSDP2 (`fully_shard`): https://docs.pytorch.org/docs/stable/distributed.fsdp.fully_shard.html
+
+**Related Skills:**
+- performance-profiling (compile profiling, NVTX, expandable_segments)
+- module-design-patterns (compile-friendly module construction)
+- distributed-training-strategies (FSDP wrapping, gradient clipping)
+- checkpointing-and-reproducibility (FSDP checkpoint discipline)
+- mixed-precision-and-optimization (autocast and GradScaler, FP8 recipes)
+
+**Cross-pack:**
+- yzmir-training-optimization (batch-size and memory tradeoffs, FP8 details)
+- yzmir-llm-specialist (large-model debugging patterns)
+- yzmir-ml-production (production-mode error handling)
+
+---
+
+PyTorch API surface current as of 2026-05 (PyTorch 2.9+); revisit quarterly.

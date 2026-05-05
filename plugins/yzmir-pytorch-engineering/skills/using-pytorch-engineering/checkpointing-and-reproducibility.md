@@ -38,6 +38,14 @@ Checkpoint failures stem from: incomplete state (missing optimizer momentum, wro
 
 ## Complete Checkpoint Strategy
 
+> **API migration note (PyTorch 2.x).** `torch.cuda.amp.GradScaler` is deprecated
+> in favor of the device-agnostic `torch.amp.GradScaler("cuda", ...)`. The
+> deprecation warning is explicit:
+> `torch.cuda.amp.GradScaler(args...) is deprecated. Please use torch.amp.GradScaler("cuda", args...) instead.`
+> All examples below use the new form. State-dict format is compatible across
+> the rename (existing checkpoints load), but new code should use the new path.
+> Cite: https://docs.pytorch.org/docs/stable/amp.html
+
 ### The Complete Checkpoint
 
 **Critical Rule:** A checkpoint is NOT just the model. It must contain ALL state needed to resume training exactly where it stopped.
@@ -203,7 +211,7 @@ def load_checkpoint(
     optimizer: torch.optim.Optimizer,
     scheduler: torch.optim.lr_scheduler._LRScheduler,
     device: torch.device,
-    scaler: Optional[torch.cuda.amp.GradScaler] = None
+    scaler: Optional["torch.amp.GradScaler"] = None
 ) -> dict:
     """Load complete training checkpoint and restore all state.
 
@@ -1775,7 +1783,7 @@ def save_checkpoint(
     scheduler: torch.optim.lr_scheduler._LRScheduler,
     loss: float,
     checkpoint_path: str,
-    scaler: Optional[torch.cuda.amp.GradScaler] = None,
+    scaler: Optional["torch.amp.GradScaler"] = None,
     **kwargs
 ) -> None:
     """Save complete training checkpoint."""
@@ -1819,7 +1827,7 @@ def load_checkpoint(
     optimizer: torch.optim.Optimizer,
     scheduler: torch.optim.lr_scheduler._LRScheduler,
     device: torch.device,
-    scaler: Optional[torch.cuda.amp.GradScaler] = None
+    scaler: Optional["torch.amp.GradScaler"] = None
 ) -> int:
     """Load complete checkpoint and return start_epoch."""
 
@@ -1908,6 +1916,89 @@ for epoch in range(start_epoch, num_epochs):
 ```
 
 
+## FSDP Checkpoint Discipline
+
+Fully Sharded Data Parallel (FSDP) shards parameters across ranks, so a naive
+`model.state_dict()` returns sharded tensors that are not portable. The two
+generations of FSDP have distinct checkpoint contracts; using the wrong one
+silently produces unloadable checkpoints.
+
+### FSDP1: rank-0 full state dict
+
+For FSDP1, gather a full (unsharded) state dict on rank 0 with the
+`state_dict_type` context manager, then save only on rank 0:
+
+```python
+import torch
+import torch.distributed as dist
+from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+from torch.distributed.fsdp import StateDictType, FullStateDictConfig
+
+save_policy = FullStateDictConfig(offload_to_cpu=True, rank0_only=True)
+with FSDP.state_dict_type(model, StateDictType.FULL_STATE_DICT, save_policy):
+    cpu_state = model.state_dict()           # only meaningful on rank 0
+
+if dist.get_rank() == 0:
+    torch.save({"model_state_dict": cpu_state, ...}, "ckpt.pt")
+dist.barrier()                               # all ranks wait for rank 0
+```
+
+**Critical:** all ranks must enter the `state_dict_type` context together
+(it is a collective). Only rank 0 actually writes the file. Without
+`offload_to_cpu=True` and `rank0_only=True`, every rank materializes the full
+model in GPU memory, often OOMing.
+
+### FSDP2 (`fully_shard`): use `torch.distributed.checkpoint`
+
+FSDP2 (per-parameter sharding via `fully_shard`) is the modern path and uses
+**Distributed Checkpoint (DCP)** — sharded files written in parallel by every
+rank, with a single coordinated load. The recommended state-dict helpers live
+in `torch.distributed.checkpoint.state_dict`:
+
+```python
+from torch.distributed.checkpoint.state_dict import (
+    get_state_dict, set_state_dict,
+    get_model_state_dict, set_model_state_dict,
+    get_optimizer_state_dict, set_optimizer_state_dict,
+)
+import torch.distributed.checkpoint as dcp
+
+# --- Save (every rank participates; DCP writes sharded files) ---
+model_sd, optim_sd = get_state_dict(model, optimizers=[optimizer])
+dcp.save({"model": model_sd, "optim": optim_sd}, checkpoint_id="ckpt_dir")
+
+# --- Load (every rank participates) ---
+model_sd, optim_sd = get_state_dict(model, optimizers=[optimizer])  # placeholder shape
+dcp.load({"model": model_sd, "optim": optim_sd}, checkpoint_id="ckpt_dir")
+set_state_dict(
+    model, optimizers=[optimizer],
+    model_state_dict=model_sd, optim_state_dict=optim_sd,
+)
+```
+
+These helpers handle "any module that is parallelized by PyTorch FSDP/
+fully_shard, DDP/replicate, tensor_parallel/parallelize_module" and combinations
+thereof. Use the model-only or optimizer-only variants
+(`get_model_state_dict` / `set_model_state_dict` /
+`get_optimizer_state_dict` / `set_optimizer_state_dict`) when you need to
+manage them independently (e.g., loading pretrained weights into a fresh
+optimizer). The signatures use canonical FQNs so checkpoints round-trip across
+parallelism strategies.
+
+Cite: https://docs.pytorch.org/docs/stable/distributed.checkpoint.html
+
+### Sharded vs full state dict — when to use which
+
+| Format | When | Pros | Cons |
+|--------|------|------|------|
+| **Full (rank-0 only)** | Final-model export, HF Hub upload, smaller models that fit on one rank | Single file, portable | Slow, OOM risk for very large models, doesn't scale |
+| **Sharded (DCP)** | Periodic training checkpoints, models that don't fit on one rank | Fast parallel I/O, no OOM, scales to TB | Multi-file directory, requires DCP to load |
+
+For LLM training, save sharded checkpoints during training and produce a single
+full checkpoint only at the end (or via a separate consolidation step). For
+mid-training resume, sharded is mandatory above ~10B parameters.
+
+
 ## Summary
 
 **Checkpointing is NOT just saving the model.** A complete checkpoint requires 7+ components: epoch, model state, optimizer state, scheduler state, loss, and RNG states (PyTorch, CUDA, NumPy, Python). Missing any component causes training divergence on resume, learning rate resets, or non-reproducible results.
@@ -1923,3 +2014,26 @@ for epoch in range(start_epoch, num_epochs):
 **Version compatibility is NOT automatic.** Save PyTorch version in metadata. Use weights_only=True in PyTorch 2.0+ for security. Log missing/unexpected keys when using strict=False. Have migration strategy for old checkpoints.
 
 These practices ensure training continuity, reproducibility, and checkpoint integrity across crashes, version changes, and distributed training scenarios.
+
+
+## References
+
+**PyTorch Documentation:**
+- AMP / GradScaler: https://docs.pytorch.org/docs/stable/amp.html
+- Distributed Checkpoint: https://docs.pytorch.org/docs/stable/distributed.checkpoint.html
+- FSDP2 (`fully_shard`): https://docs.pytorch.org/docs/stable/distributed.fsdp.fully_shard.html
+- Reproducibility notes: https://docs.pytorch.org/docs/stable/notes/randomness.html
+
+**Related Skills:**
+- distributed-training-strategies (FSDP1/FSDP2 wrappers, DDP)
+- mixed-precision-and-optimization (autocast and GradScaler usage)
+- debugging-techniques (FSDP-specific debugging gotchas)
+
+**Cross-pack:**
+- yzmir-training-optimization (optimizer state, LR scheduler resume)
+- yzmir-llm-specialist (large-model checkpoint sharding patterns)
+- yzmir-ml-production (checkpoint-to-production model conversion)
+
+---
+
+PyTorch API surface current as of 2026-05 (PyTorch 2.9+); revisit quarterly.

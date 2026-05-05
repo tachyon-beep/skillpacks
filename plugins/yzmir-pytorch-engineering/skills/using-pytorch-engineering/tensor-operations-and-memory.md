@@ -1015,15 +1015,96 @@ for epoch in range(num_epochs):
 6. ✅ All tensors on same device (no implicit transfers)
 
 
+## Memory Format: `channels_last` for CNN Throughput
+
+For 4D tensors (NCHW) feeding convolutions on Tensor Core GPUs (Volta and later),
+the **channels-last** memory layout (NHWC under the hood) eliminates the
+transposes cuDNN otherwise inserts to feed Tensor Cores. Per the PyTorch
+tutorial, this gives 22% training-throughput improvement on ResNet50 and 8-35%
+across vision models on V100; gains are larger on Ampere/Hopper with FP16/BF16.
+
+### Conversion pattern
+
+```python
+# Convert model parameters and buffers
+model = model.to(memory_format=torch.channels_last)
+
+# Convert each input batch (do this once after H2D transfer)
+x = x.to(memory_format=torch.channels_last)
+
+# Forward proceeds without inserted NCHW<->NHWC transposes
+out = model(x)
+```
+
+The `memory_format` flag is **a stride-only conversion**: shape stays NCHW
+semantically (so existing code reads `x.shape[1]` as channels), but the strides
+match NHWC physical layout. This is why downstream code does not need changes.
+
+### Verification
+
+```python
+assert x.is_contiguous(memory_format=torch.channels_last)
+# Sanity-check after a layer that may reset format:
+assert out.is_contiguous(memory_format=torch.channels_last)
+```
+
+If a custom op silently returns a `torch.contiguous_format` tensor, the next
+convolution will pay a transpose. Audit custom modules and `.contiguous()`
+calls; prefer `.contiguous(memory_format=torch.channels_last)` when
+re-materializing.
+
+### Caveats
+
+- Only Conv/Batchnorm with cuDNN backend exploit it (cuDNN >= 7.6).
+- 3D vision (`Conv3d`) uses `torch.channels_last_3d`.
+- Combine with mixed precision (`torch.amp.autocast`) for the largest wins on
+  Tensor Core hardware.
+- Some non-cuDNN ops will fall back to `torch.contiguous_format`. Profile end-to-
+  end to confirm net positive (see `performance-profiling.md`).
+
+Cite: https://docs.pytorch.org/tutorials/intermediate/memory_format_tutorial.html
+
+
+## OOM Remediation: `expandable_segments`
+
+When a job repeatedly OOMs despite the working-set fitting in memory, the cause
+is usually fragmentation, not capacity. The CUDA caching allocator can leave
+unmergeable holes between segments when batch shapes vary across iterations.
+Setting the allocator to use expandable segments lets a single segment grow in
+place rather than accruing fragmentation:
+
+```bash
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+python train.py
+```
+
+This is the recommended first remediation step before reducing batch size or
+adding gradient checkpointing. See `performance-profiling.md` (Memory Profiling
+section) for how to confirm fragmentation is the cause via
+`torch.cuda.memory_summary()`.
+
+Cite: https://docs.pytorch.org/docs/stable/notes/cuda.html
+
+
 ## References
 
 **PyTorch Documentation:**
-- Memory Management: https://pytorch.org/docs/stable/notes/cuda.html
-- Profiler: https://pytorch.org/tutorials/recipes/recipes/profiler_recipe.html
-- Mixed Precision: https://pytorch.org/docs/stable/amp.html
+- Memory Management: https://docs.pytorch.org/docs/stable/notes/cuda.html
+- Profiler: https://docs.pytorch.org/tutorials/recipes/recipes/profiler_recipe.html
+- Mixed Precision: https://docs.pytorch.org/docs/stable/amp.html
+- Channels Last: https://docs.pytorch.org/tutorials/intermediate/memory_format_tutorial.html
 
 **Related Skills:**
-- performance-profiling (deeper profiling techniques)
+- performance-profiling (deeper profiling techniques, expandable_segments verification)
 - distributed-training-strategies (multi-GPU memory management)
 - mixed-precision-and-optimization (detailed autocast usage)
 - debugging-techniques (systematic PyTorch debugging)
+
+**Cross-pack:**
+- yzmir-training-optimization (batch-size and memory tradeoffs)
+- yzmir-llm-specialist (KV-cache memory for transformers)
+- yzmir-ml-production (inference memory budgeting)
+
+---
+
+PyTorch API surface current as of 2026-05 (PyTorch 2.9+); revisit quarterly.

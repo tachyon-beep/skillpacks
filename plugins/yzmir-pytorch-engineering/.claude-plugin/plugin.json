@@ -1,7 +1,7 @@
 {
   "name": "yzmir-pytorch-engineering",
-  "version": "1.1.4",
-  "description": "PyTorch mastery - tensors, modules, distributed training, profiling, debugging - 9 skills, 3 commands, 2 agents",
+  "version": "1.2.0",
+  "description": "PyTorch 2.9+ mastery - torch.compile (modes/dynamic/fullgraph), torch.amp (BF16/FP16/FP8), FSDP1/FSDP2 (fully_shard, MixedPrecisionPolicy), DTensor + device_mesh, FlexAttention, scaled_dot_product_attention, CUDA Graphs, NVTX/Nsight, torch.profiler, channels_last, expandable_segments. 8 reference sheets + 1 router, 3 commands, 2 agents.",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"
