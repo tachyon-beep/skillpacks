@@ -343,6 +343,22 @@
       "category": "ai-ml"
     },
     {
+      "name": "yzmir-morphogenetic-rl",
+      "source": "./plugins/yzmir-morphogenetic-rl",
+      "description": "RL-controlled neural-network morphogenesis - controllers that decide WHEN and HOW to grow a network during training. Covers controller action/observation/reward design, governor/safety-gate discipline, rollback-as-RL-signal, deterministic morphogenesis, ablation/evaluation under topology change. Companion to yzmir-dynamic-architectures.",
+      "keywords": [
+        "yzmir",
+        "morphogenetic",
+        "rl-controller",
+        "growth-control",
+        "safety-gates",
+        "governor",
+        "rollback",
+        "topology-change"
+      ],
+      "category": "ai-ml"
+    },
+    {
       "name": "yzmir-llm-specialist",
       "source": "./plugins/yzmir-llm-specialist",
       "description": "LLM techniques - fine-tuning, RLHF, inference optimization - 8 skills",
