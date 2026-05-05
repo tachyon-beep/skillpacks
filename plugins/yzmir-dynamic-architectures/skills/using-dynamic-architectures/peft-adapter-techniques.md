@@ -426,15 +426,194 @@ model.add_weighted_adapter(
 
 ## Adapter Variants
 
-### Comparison Table
+### Comparison Table (2024+)
 
-| Method | Trainable Location | Parameters | Best For |
-|--------|-------------------|------------|----------|
-| LoRA | Parallel to linear | r×(d+k) per layer | General fine-tuning |
-| QLoRA | LoRA + 4-bit base | Same as LoRA | Memory-constrained |
-| DoRA | LoRA + magnitude | LoRA + d per layer | When LoRA underperforms |
-| AdaLoRA | Adaptive rank | Dynamic | Automatic rank selection |
-| IA³ | Element-wise rescaling | 3×d per layer | Extreme efficiency |
+Order is roughly chronological / capability-tier. "Std." entries are well-supported in `peft >= 0.10`; "Newer" entries may require nightly or research code.
+
+| Method | Trainable Location | Parameters per adapted layer | Best For | Status |
+|--------|-------------------|------------------------------|----------|--------|
+| LoRA (Hu et al., 2021) | Parallel low-rank ΔW = BA | r×(d+k) | General baseline | Std. |
+| QLoRA (Dettmers et al., 2023) | LoRA over NF4-quantised base | Same as LoRA | 65B+ on single GPU | Std. |
+| DoRA (Liu et al., 2024) | Magnitude m + LoRA direction | LoRA + d per layer | LoRA underperforms full FT | Std. |
+| AdaLoRA (Zhang et al., 2023) | Adaptive rank via SVD pruning | Dynamic | Auto rank selection | Std. |
+| IA³ (Liu et al., 2022) | Element-wise rescaling vectors | 3×d per layer | Extreme efficiency | Std. |
+| LoRA+ (Hayou et al., 2024) | LoRA with η_B / η_A ratio ≈ 16× | Same as LoRA | Free quality bump for LoRA | Std. |
+| VeRA (Kopiczko et al., 2024) | Shared random A,B + per-layer scaling vectors b,d | (d+k) per layer | 10× fewer params than LoRA | Std. |
+| PiSSA (Meng et al., 2024) | LoRA initialised from top-r SVD of W | Same as LoRA | Faster convergence than LoRA | Std. |
+| LoftQ (Li et al., 2024) | Joint quantisation + LoRA init | Same as QLoRA | Closes QLoRA quantisation gap | Std. |
+| rsLoRA (Kalajdzievski, 2023) | LoRA with α/√r scaling (not α/r) | Same as LoRA | Stable training at high rank | Std. |
+| LongLoRA (Chen et al., 2024) | LoRA + shifted-sparse attention during FT | Same as LoRA | Context-window extension | Std. |
+| OLoRA (Büyükakyüz, 2024) | LoRA initialised via QR of W | Same as LoRA | Faster, more stable than vanilla | Newer |
+| MoLE / X-LoRA (Wu et al., 2024) | Gated mixture over LoRA experts | k × LoRA | Multi-skill composition | Newer |
+
+### Modern PEFT Variants (2024+)
+
+These post-LoRA techniques mostly tweak **initialisation** or **scaling**; the LoRA topology (B·A added in parallel to a linear) is unchanged. The pay-off is usually faster convergence, less rank sensitivity, or 5–10× parameter reduction at iso-quality.
+
+#### LoRA+ — Asymmetric Learning Rates
+
+LoRA+ (Hayou et al., 2024, "LoRA+: Efficient Low Rank Adaptation of Large Models") observes that A and B should not share an LR. The optimal ratio η_B / η_A grows with model width — empirically ≈ 16 for typical LLMs.
+
+```python
+# Standard LoRA: same LR on A and B
+optimizer = AdamW([
+    {"params": lora_A_params, "lr": 1e-4},
+    {"params": lora_B_params, "lr": 1e-4},
+])
+
+# LoRA+: B trains ~16x faster
+optimizer = AdamW([
+    {"params": lora_A_params, "lr": 1e-4},
+    {"params": lora_B_params, "lr": 16e-4},  # lr_ratio = 16
+])
+# peft >= 0.10 supports loraplus_lr_ratio in TrainingArguments
+```
+
+When to use: free quality bump for any LoRA training run; keep all other hyperparameters the same.
+
+#### VeRA — Vector-based Random Adaptation
+
+VeRA (Kopiczko et al., 2024, "VeRA: Vector-based Random Matrix Adaptation") freezes a single pair of random matrices (A, B) shared across **all** adapted layers, and learns only two small per-layer vectors b, d.
+
+```
+ΔW_l = diag(b_l) · B · diag(d_l) · A      # B, A frozen and shared
+
+Trainable per layer: d + k (two diagonal vectors), independent of rank.
+Compared to LoRA at r=8 on a 7B model: ~10x fewer trainable parameters at
+comparable quality on instruction-following benchmarks.
+```
+
+Implementation outline:
+
+```python
+class VeRALinear(nn.Module):
+    """VeRA: shared frozen B, A; learn per-layer scaling vectors b, d."""
+
+    # Shared frozen random matrices (registered once on the model, not the layer)
+    # Convention: A: (r, in), B: (out, r), drawn from Kaiming-uniform once.
+
+    def __init__(self, base_linear: nn.Linear, A_shared: torch.Tensor, B_shared: torch.Tensor):
+        super().__init__()
+        self.weight = base_linear.weight  # frozen
+        self.weight.requires_grad = False
+        # Share via buffer references; A_shared/B_shared live on the parent
+        self.register_buffer("A", A_shared, persistent=False)
+        self.register_buffer("B", B_shared, persistent=False)
+
+        # Per-layer trainable vectors. b initialised to 0 (so ΔW=0 at init).
+        self.b = nn.Parameter(torch.zeros(base_linear.out_features))
+        self.d = nn.Parameter(torch.ones(base_linear.in_features))
+
+    def forward(self, x):
+        # ΔW · x  =  b ⊙ (B (d ⊙ (A x)))
+        Ax = F.linear(x * self.d, self.A)            # (..., r)
+        BAx = F.linear(Ax, self.B)                   # (..., out)
+        return F.linear(x, self.weight) + self.b * BAx
+```
+
+When to use: parameter-budget extreme — many concurrent adapters, on-device personalisation, or storing thousands of user-specific deltas.
+
+#### PiSSA — Principal Singular Values and Vectors Adaptation
+
+PiSSA (Meng et al., 2024, "PiSSA: Principal Singular Values and Singular Vectors Adaptation of Large Language Models") notes that LoRA initialises B = 0, so the **principal** components of W stay frozen while only "residual" updates are learned. PiSSA flips this: initialise B·A from the top-r SVD of W and freeze the **residual** instead.
+
+```python
+def pissa_init(linear: nn.Linear, rank: int):
+    """Initialise A, B from top-r SVD of W; freeze residual."""
+    W = linear.weight.data                                    # (out, in)
+    U, S, Vh = torch.linalg.svd(W, full_matrices=False)
+    U_r, S_r, Vh_r = U[:, :rank], S[:rank], Vh[:rank, :]
+
+    # Principal components go into trainable LoRA factors
+    A = torch.diag(S_r.sqrt()) @ Vh_r                         # (r, in)
+    B = U_r @ torch.diag(S_r.sqrt())                          # (out, r)
+
+    # Residual: original minus principal r components, kept frozen
+    W_residual = W - B @ A
+    return A, B, W_residual
+
+# Forward: y = x @ W_residual.T + (x @ A.T) @ B.T
+# At init: y == x @ W.T  (perfect reconstruction)
+# During training: principal components move freely, fine details stay fixed
+```
+
+Empirically converges faster than LoRA and reaches lower loss at the same rank. Especially strong when the task requires **changing** dominant features rather than adding new ones.
+
+#### LoftQ — Quantisation-Aware LoRA Init
+
+LoftQ (Li et al., 2024, "LoftQ: LoRA-Fine-Tuning-Aware Quantization for Large Language Models") closes the gap between QLoRA and full-precision LoRA by jointly choosing the quantised weight Q and LoRA factors B, A so that Q + BA ≈ W:
+
+```
+minimise   ‖W − (Q + BA)‖_F
+where      Q is N-bit (e.g. NF4)
+           B, A have rank r
+
+Iterate:
+    Q  ← quantise(W − BA)
+    BA ← top-r SVD of (W − Q)
+```
+
+Drop-in replacement for QLoRA's default zero-init when you observe the
+quantised base model has degraded substantially compared to fp16 base.
+
+```python
+from peft import LoftQConfig, LoraConfig, get_peft_model
+
+loftq_config = LoftQConfig(loftq_bits=4, loftq_iter=5)
+lora_config = LoraConfig(
+    init_lora_weights="loftq",
+    loftq_config=loftq_config,
+    r=64, lora_alpha=16,
+    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+)
+model = get_peft_model(quantised_base, lora_config)
+```
+
+#### rsLoRA — Rank-Stabilised LoRA
+
+rsLoRA (Kalajdzievski, 2023, "A Rank Stabilization Scaling Factor for Fine-Tuning with LoRA") fixes a numerical issue at high rank: the standard LoRA scaling α/r causes the per-token activation magnitude to *shrink* as r grows, which suppresses learning at large r. The fix: scale by α/√r instead.
+
+```python
+class RSLoRALinear(LoRALinear):
+    def __init__(self, *args, alpha=1.0, rank=64, **kwargs):
+        super().__init__(*args, alpha=alpha, rank=rank, **kwargs)
+        # Override LoRA's α/r with α/√r
+        self.scaling = alpha / (rank ** 0.5)
+
+# In peft:
+LoraConfig(use_rslora=True, r=64, lora_alpha=16, ...)
+```
+
+Use rsLoRA whenever **r ≥ 32**. At low rank the difference is negligible; at high rank it can be the difference between converging and stalling.
+
+#### LongLoRA — Context Extension via Sparse Attention
+
+LongLoRA (Chen et al., 2024, "LongLoRA: Efficient Fine-tuning of Long-Context Large Language Models") extends a model's effective context window without retraining attention from scratch. Two ingredients:
+
+1. **Shifted-sparse attention (S²-Attn)** during fine-tuning — split heads into two groups, half attend within local windows, half attend to windows shifted by half-window-size. Cheap O(n × w) attention that approximates full attention well enough for FT.
+2. **LoRA on attention + extra trainable embedding/norm layers** — pure LoRA can't extend context; you need to update positional embeddings and layer norms too.
+
+```python
+LoraConfig(
+    r=8, lora_alpha=16,
+    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+    modules_to_save=["embed_tokens", "norm"],  # full FT for these
+)
+```
+
+Combined with RoPE θ-base scaling (e.g. ABF, NTK-aware), pushes 4k → 32k+ at modest cost. For larger context jumps (32k → 1M), see YaRN / LongRoPE.
+
+---
+
+## Initialisation Strategies — Quick Reference
+
+| Init | What it does | When to choose |
+|------|--------------|----------------|
+| Default LoRA (B=0, A Kaiming) | ΔW = 0 at init; safe restart from base | Default, low rank |
+| PiSSA | A,B = top-r SVD of W; freeze residual | Want to *change* dominant features |
+| LoftQ | Joint quantise + LoRA fit | QLoRA on aggressive quantisation |
+| OLoRA | A,B from QR of W | Stability at large rank without rsLoRA |
+| Gaussian small | Both A and B nonzero | Diagnostic only — usually unstable |
 
 ### IA³ (Infused Adapter by Inhibiting and Amplifying)
 
@@ -555,8 +734,48 @@ def verify_peft_setup(model):
 
 ---
 
+## Multi-LoRA Serving (Pointer)
+
+Training many adapters per base model raises a *serving* question, not a training one: how do you batch requests that target different LoRAs without one-LoRA-per-replica memory blowup? That's S-LoRA / LoRAX / Punica territory — heterogeneous batched matmul over a pool of adapters with paged adapter memory.
+
+For **production serving** of multi-tenant LoRA deployments, see:
+
+- `yzmir-ml-production` → inference serving sheets — covers S-LoRA (Sheng et al., 2024), LoRAX, Punica (Chen et al., 2024), and how to plumb adapters through vLLM / TGI.
+
+This pack owns the *training* and *composition* of adapters; production *serving* of pools of adapters lives there.
+
+---
+
 ## See Also
 
 - **gradient-isolation-techniques.md**: Foundation for understanding freezing and gradient control
 - **continual-learning-foundations.md**: When adapters are used for task sequences
 - **progressive-training-strategies.md**: Staged adapter training approaches
+- **modular-neural-composition.md**: Adapter merging (TIES, DARE, task arithmetic, SLERP) and gated mixtures of LoRAs
+- **yzmir-llm-specialist** (cross-pack): PEFT *applied to LLMs* — instruction tuning recipes, RLHF + LoRA
+- **yzmir-training-optimization** (cross-pack): FSDP2 + QLoRA, FP8 / MX-format training, gradient checkpointing trade-offs
+
+---
+
+## References
+
+LoRA family (foundations):
+- Hu, E. J. et al. (2021). *LoRA: Low-Rank Adaptation of Large Language Models.* arXiv:2106.09685.
+- Dettmers, T. et al. (2023). *QLoRA: Efficient Finetuning of Quantized LLMs.* NeurIPS.
+- Liu, S. et al. (2024). *DoRA: Weight-Decomposed Low-Rank Adaptation.* ICML.
+- Zhang, Q. et al. (2023). *AdaLoRA: Adaptive Budget Allocation for Parameter-Efficient Fine-Tuning.* ICLR.
+- Liu, H. et al. (2022). *Few-Shot Parameter-Efficient Fine-Tuning is Better and Cheaper than In-Context Learning* (IA³). NeurIPS.
+
+Modern PEFT (2023–2024):
+- Hayou, S., Ghosh, N. & Yu, B. (2024). *LoRA+: Efficient Low Rank Adaptation of Large Models.* ICML.
+- Kopiczko, D. J., Blankevoort, T. & Asano, Y. M. (2024). *VeRA: Vector-based Random Matrix Adaptation.* ICLR.
+- Meng, F., Wang, Z. & Zhang, M. (2024). *PiSSA: Principal Singular Values and Singular Vectors Adaptation of Large Language Models.* NeurIPS.
+- Li, Y. et al. (2024). *LoftQ: LoRA-Fine-Tuning-Aware Quantization for Large Language Models.* ICLR.
+- Kalajdzievski, D. (2023). *A Rank Stabilization Scaling Factor for Fine-Tuning with LoRA* (rsLoRA). arXiv:2312.03732.
+- Chen, Y. et al. (2024). *LongLoRA: Efficient Fine-tuning of Long-Context Large Language Models.* ICLR.
+- Büyükakyüz, K. (2024). *OLoRA: Orthonormal Low-Rank Adaptation of Large Language Models.* arXiv:2406.01775.
+- Wu, X. et al. (2024). *Mixture of LoRA Experts (MoLE)* / Buehler et al. (2024) *X-LoRA*.
+
+Quantisation primitives used by QLoRA / LoftQ:
+- Frantar, E. et al. (2023). *GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers.* ICLR.
+- Lin, J. et al. (2024). *AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration.* MLSys.

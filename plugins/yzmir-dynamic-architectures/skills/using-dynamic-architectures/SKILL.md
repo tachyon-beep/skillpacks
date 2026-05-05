@@ -73,10 +73,14 @@ Key tensions:
 | "Model forgets old tasks when I train new ones" | continual-learning-foundations |
 | "New module destabilizes existing weights" | gradient-isolation-techniques |
 | "Fine-tune LLM efficiently without full training" | peft-adapter-techniques |
+| "Pick a modern PEFT variant (VeRA / LoRA+ / PiSSA / LoftQ / rsLoRA)" | peft-adapter-techniques |
 | "When should I add more capacity?" | dynamic-architecture-patterns |
 | "How do module outputs combine?" | modular-neural-composition |
+| "Merge several fine-tuned checkpoints (TIES / DARE / SLERP / MergeKit)" | modular-neural-composition |
+| "Production-grade MoE (Switch / Mixtral / DeepSeek-MoE / Expert Choice)" | modular-neural-composition |
 | "How do I manage the grow/train/integrate cycle?" | ml-lifecycle-orchestration |
 | "How do I warm up new modules safely?" | progressive-training-strategies |
+| "Serve many LoRAs in one process (S-LoRA / LoRAX / Punica)" | → yzmir-ml-production |
 
 ---
 
@@ -142,9 +146,10 @@ Key tensions:
 - LoRA (low-rank adaptation) fundamentals
 - QLoRA (quantized base + LoRA adapters)
 - DoRA (weight-decomposed adaptation)
-- Adapter placement strategies
+- Modern PEFT (2024+): LoRA+, VeRA, PiSSA, LoftQ, rsLoRA, LongLoRA
+- Adapter placement and rank-selection strategies
 - Merging adapters into base model
-- Multiple adapter management
+- Multiple adapter management (with pointer to S-LoRA serving in `yzmir-ml-production`)
 
 **When to Use:**
 - Fine-tuning LLMs on limited compute
@@ -188,7 +193,8 @@ Key tensions:
 
 **Covers:**
 - Combination mechanisms (additive, multiplicative, selective)
-- Mixture of Experts (sparse gating, load balancing)
+- Mixture of Experts — Shazeer baseline through Switch / Mixtral / DeepSeek-MoE, Expert Choice routing, auxiliary-loss-free balancing, sparse upcycling
+- Adapter merging & task arithmetic — TIES, DARE / DARE-TIES, SLERP, model souping, MergeKit, LoraHub
 - Grafting semantics (input/output attachment points)
 - Interface contracts (shape matching, normalization boundaries)
 - Multi-module coordination (independent, competitive, cooperative)
@@ -324,8 +330,11 @@ Watch for these signs of incorrect approach:
 | "Evaluate architecture changes without mutation" | yzmir-deep-rl/counterfactual-reasoning | Counterfactual simulation |
 | "Debug PyTorch gradient flow" | yzmir-pytorch-engineering | Low-level PyTorch debugging |
 | "Optimize training loop performance" | yzmir-training-optimization | General training optimization |
+| "FSDP2 + QLoRA, FP8 training, MoE dispatch kernels" | yzmir-training-optimization | Distributed/low-precision throughput |
+| "Apply PEFT recipes to LLMs (instruction tuning, RLHF)" | yzmir-llm-specialist | PEFT *applied to LLMs in production* |
 | "Design transformer architecture" | yzmir-neural-architectures | Static architecture design |
 | "Deploy morphogenetic model" | yzmir-ml-production | Production deployment |
+| "Serve many LoRAs in one process (S-LoRA / LoRAX / Punica)" | yzmir-ml-production | Multi-tenant adapter serving |
 
 **Intersection with deep-rl:** If using RL to control architecture decisions (when to grow/prune), combine this pack's lifecycle orchestration with deep-rl's policy gradient or actor-critic methods.
 

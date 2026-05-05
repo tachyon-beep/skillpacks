@@ -1,7 +1,7 @@
 {
   "name": "yzmir-dynamic-architectures",
-  "version": "1.1.4",
-  "description": "Dynamic/morphogenetic neural networks - grow, prune, adapt topology during training. Covers continual learning, gradient isolation, PEFT/LoRA, modular composition, lifecycle orchestration. 7 reference sheets, 2 commands, 1 SME agent.",
+  "version": "1.2.0",
+  "description": "Dynamic/morphogenetic neural networks - grow, prune, adapt topology during training. Covers continual learning, gradient isolation, modern PEFT (LoRA, QLoRA, DoRA, VeRA, PiSSA, LoftQ, LoRA+, rsLoRA, LongLoRA), modular composition (post-Mixtral MoE, adapter merging via TIES/DARE/SLERP/MergeKit), lifecycle orchestration. 7 reference sheets, 2 commands, 1 SME agent.",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"
@@ -16,6 +16,16 @@
     "gradient-isolation",
     "peft",
     "lora",
+    "qlora",
+    "dora",
+    "vera",
+    "pissa",
+    "loftq",
+    "model-merging",
+    "ties-merging",
+    "dare",
+    "mergekit",
+    "mixture-of-experts",
     "neural-architecture-search",
     "modular-networks",
     "progressive-training"
