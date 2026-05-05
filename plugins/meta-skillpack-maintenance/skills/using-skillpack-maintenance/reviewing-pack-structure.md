@@ -92,13 +92,21 @@ Rebuild if:
 - Appropriate model selection?
 - Activation examples (positive AND negative)?
 - Overlaps with other agents?
+- **SME Agent Protocol compliance** — for reviewer/auditor/advisor/critic agents:
+  - Description ends with "Follows SME Agent Protocol with confidence/risk assessment." (or equivalent)
+  - Body cites `meta-sme-protocol:sme-agent-protocol`
+  - Body requires the four output sections: **Confidence Assessment**, **Risk Assessment**, **Information Gaps**, **Caveats** (verbatim — these names are load-bearing across the marketplace)
+- **`tools:` key audit** — if the agent declares `tools:`, confirm the restriction is intentional. Most repo agents omit `tools:` and inherit the parent context. Spurious `tools:` lists are a maintenance burden.
 
 **Model selection guide:**
-| Complexity | Model |
-|------------|-------|
-| Quick, focused tasks | haiku |
-| Most agent work | sonnet |
-| Complex reasoning | opus |
+| Complexity | Model | Notes |
+|------------|-------|-------|
+| Quick, focused tasks | haiku | Default for delinting, formatting, mechanical sweeps |
+| Most agent work | sonnet | Default for review, critique, analysis |
+| Complex reasoning | opus | Default for synthesis, multi-step diagnosis, architecture |
+| Long-context review work | opus 1M-context variant (when available) | Use when reviewing >200k tokens of plugin content; otherwise stay on standard sonnet/opus |
+
+Declare just the model family (`sonnet`, `opus`, `haiku`) in the frontmatter — the runtime resolves the active version. Do not pin to a specific model ID unless the agent has a hard dependency.
 
 ### Hooks Analysis
 
@@ -116,6 +124,21 @@ Rebuild if:
 | Inject context at prompt | UserPromptSubmit |
 | Load context at session | SessionStart |
 | Cleanup | SessionEnd |
+
+### Router / Slash-Command Alignment
+
+**Check for:**
+- Every router skill (`skills/using-*/SKILL.md`) has a corresponding `.claude/commands/<name>.md` wrapper at the repo root (or a documented reason it does not).
+- The wrapper's "When to Use" guidance does not contradict the router skill's `description:` frontmatter.
+- The plugin is registered in `.claude-plugin/marketplace.json` with the correct directory and category.
+
+**Common issues:**
+| Issue | Fix |
+|-------|-----|
+| Router exists, no slash-command wrapper | Add `.claude/commands/<name>.md` (see CLAUDE.md for pattern) |
+| Slash-command wrapper exists, no router skill | Wrapper is orphaned; either restore the router or remove the wrapper |
+| Plugin missing from `marketplace.json` | Add catalog entry; users cannot install otherwise |
+| `marketplace.json` entry points to renamed/missing directory | Update or remove the catalog entry |
 
 ---
 

@@ -75,10 +75,21 @@ For **reference skills** (API docs, guides):
 - Focus on real-world (B) - can users find and apply info?
 
 **Test execution:**
-1. Design challenging scenario from gauntlet categories
-2. Provide scenario to a test agent WITH the skill
-3. Observe: Does it follow? Where does it rationalize?
-4. Document failure modes with exact quotes
+
+1. Design a challenging scenario from the gauntlet categories.
+2. Provide the scenario to a fresh-context test runner that has access to the skill. Concrete options:
+   - **Subagent dispatch** (preferred for repeatable tests). Use the `Agent` tool with `subagent_type: general-purpose` (or a domain agent if one exists). Pass the scenario in the prompt and explicitly mention the skill name so the subagent invokes it via the `Skill` tool. Example prompt frame:
+
+     ```
+     You are testing skill `<plugin>:<skill-name>`. Invoke it via the Skill tool, then attempt the following task: <scenario>. Report what the skill instructed you to do and where (if anywhere) you were tempted to skip it.
+     ```
+
+   - **Fresh interactive session** (when behaviour under user pressure matters). Open a new Claude Code session with no prior context, paste the scenario, and observe whether the skill activates and is followed. Useful when testing description-based discovery.
+   - **Inline trial within the current session** (lowest fidelity). Acceptable for a quick sanity check, but the current session's prior context can mask discovery failures. Do not rely on this alone.
+3. Observe: Does it follow the skill? Where does it rationalize? Capture exact wording.
+4. Document failure modes with verbatim quotes from the test runner's output.
+
+**Choosing the mechanism.** Subagent dispatch is the default — it gives you a clean context, a parseable transcript, and parallelism if you want to run multiple scenarios. Fresh sessions are reserved for cases where activation/discovery itself is the thing under test.
 
 ### Testing Commands
 

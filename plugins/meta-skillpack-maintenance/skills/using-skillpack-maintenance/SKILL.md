@@ -13,13 +13,16 @@ Systematic maintenance of Claude Code plugins including skills, commands, agents
 
 ## Scope: What This Skill Maintains
 
-| Component | Location | Frontmatter |
+| Component | Location | Frontmatter (observed in this marketplace) |
 |-----------|----------|-------------|
-| **Skills** | `skills/*/SKILL.md` | `name`, `description`, `allowed-tools` |
-| **Reference sheets** | `skills/using-*/*.md` | (none - content files) |
-| **Commands** | `commands/*.md` | `description`, `allowed-tools`, `argument-hint` |
-| **Agents** | `agents/*.md` | `description`, `model`, `tools` |
+| **Skills** | `skills/*/SKILL.md` | `name`, `description` (and optionally `allowed-tools`) |
+| **Reference sheets** | `skills/using-*/*.md` | (none — content files referenced by a router SKILL.md) |
+| **Commands** | `commands/*.md` | `description`, `allowed-tools` (quoted array), `argument-hint` |
+| **Agents** | `agents/*.md` | `description`, `model` (most repo agents declare ONLY these two — `tools` is rare) |
 | **Hooks** | `hooks/hooks.json` | JSON with event matchers |
+| **Slash-command routers** | repo-root `.claude/commands/*.md` | thin wrapper exposing a router skill as `/name` |
+
+**Note on `tools:` for agents.** A spot-check of the 32-plugin marketplace shows ~60/65 agents declare only `description` and `model`. Adding a `tools:` key restricts the agent to that exact set; omit it to inherit the parent context. Recommend `tools:` only when restriction is intentional and audited.
 
 ## When to Use
 
@@ -122,45 +125,63 @@ Execute approved changes:
 ```yaml
 ---
 name: skill-name
-description: When to use this skill and what it does
-allowed-tools: [Read, Grep, Glob]  # optional
+description: Use when [trigger condition] — [what the skill does]. Routes to / loads [reference sheets] when [...].
 ---
 ```
 
 **Key questions:**
-- Does description trigger correct activation?
+- Does the description start with **"Use when..."** (the dominant repo convention for discoverability)? Browse `plugins/*/skills/*/SKILL.md` to confirm.
+- Does the description trigger correct activation?
 - Is guidance actionable under pressure?
 - Are there missing anti-patterns?
+
+**`allowed-tools` on skills is rare** in this marketplace; most SKILL.md files omit it and let the calling context govern tool access. Only add it if the skill must restrict tool use.
 
 ### Commands (commands/*.md)
 
 ```yaml
 ---
-description: What this command does
-allowed-tools: [Read, Bash, Glob, Grep]
+description: What this command does (one line, no trailing period)
+allowed-tools: ["Read", "Bash", "Glob", "Grep", "Skill"]
 argument-hint: "[optional_arg]"
 ---
 ```
 
+**Frontmatter style observed across this marketplace:**
+- `allowed-tools` is a **quoted JSON-style array** of tool name strings — `["Read", "Bash"]`, not `[Read, Bash]`. Verify with `head -10 plugins/*/commands/*.md`.
+- `argument-hint` is a quoted string showing argument shape, e.g. `"[symptom_or_endpoint]"` or `"<file.py> [function_or_script_args]"`.
+- Most router commands include `"Skill"` in `allowed-tools` so they can dispatch to specialist skills.
+
 **Key questions:**
-- Is the command user-invocable (vs skill which is model-invoked)?
-- Does it have clear entry point?
-- Are tool restrictions appropriate?
+- Is the command user-invocable (vs. a skill, which is model-invoked)?
+- Does it have a clear entry point?
+- Are tool restrictions appropriate (and quoted)?
 
 ### Agents (agents/*.md)
 
 ```yaml
 ---
-description: What this agent specializes in
-model: sonnet  # or opus, haiku
-tools: [Read, Grep, Glob, Bash, Write]
+description: What this agent specializes in. Follows SME Agent Protocol with confidence/risk assessment.
+model: sonnet
 ---
+```
+
+**Frontmatter style observed across this marketplace:**
+- The two near-universal keys are `description` and `model` (~60/65 agents declare only these).
+- `tools:` is uncommon (~5/65 agents) and acts as a **restriction**. Omit it unless you intend to restrict.
+- For SME-style agents (reviewers, auditors, advisors), the description should end with the phrase **"Follows SME Agent Protocol with confidence/risk assessment."** so callers know to expect the four-section output. See `meta-sme-protocol:sme-agent-protocol`.
+
+**SME body convention.** SME agent system prompts in this repo include a `**Protocol**:` line near the top, e.g.:
+
+```markdown
+**Protocol**: You follow the SME Agent Protocol defined in `meta-sme-protocol:sme-agent-protocol`. Before reviewing, READ the relevant code. Your output MUST include Confidence Assessment, Risk Assessment, Information Gaps, and Caveats sections.
 ```
 
 **Key questions:**
 - Clear scope boundaries (what it does / doesn't do)?
 - Appropriate model selection for complexity?
 - Activation examples (positive and negative)?
+- If it's an SME agent: does the body cite `meta-sme-protocol:sme-agent-protocol` and require the four output sections?
 
 ### Hooks (hooks/hooks.json)
 
@@ -181,6 +202,40 @@ tools: [Read, Grep, Glob, Bash, Write]
 - Correct event type for the use case?
 - Matcher pattern accurate?
 - Script executable and tested?
+
+### Slash-Command Routers (`.claude/commands/*.md`)
+
+This marketplace exposes router skills (`using-X` skills) as repo-root slash commands so users can invoke them explicitly without competing for skill-discovery context. Per `/home/john/skillpacks/CLAUDE.md`:
+
+> All router skills (`using-X` skills) are available as slash commands in `.claude/commands/` due to skill context limits.
+
+**Example wrapper** (`/home/john/skillpacks/.claude/commands/python-engineering.md`):
+
+```markdown
+# Using Python Engineering
+
+## Overview
+
+This meta-skill routes you to the right Python specialist based on symptoms...
+
+## When to Use
+
+Load this skill when:
+- Working with Python and encountering problems
+- ...
+```
+
+**Maintenance check.** When a plugin contains a router skill (any `using-X` SKILL.md), confirm a corresponding `.claude/commands/X.md` exists at the repo root. Missing wrappers mean the router is not user-invocable as a slash command. If a plugin intentionally has no slash-command exposure, document that decision in the plugin's README.
+
+```bash
+# List router skills
+find plugins -path "*/skills/using-*/SKILL.md"
+
+# List slash-command wrappers
+ls .claude/commands/
+
+# Diff to find routers without wrappers
+```
 
 ---
 

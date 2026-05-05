@@ -59,11 +59,12 @@ You should have completed and gotten approval for:
 
 ### 2. Commands
 
-**Create new commands:**
+**Create new commands** (match the marketplace's quoted-array convention):
+
 ```yaml
 ---
-description: [What this command does]
-allowed-tools: [Tool, List]
+description: What this command does (one line, no trailing period)
+allowed-tools: ["Read", "Bash", "Glob", "Grep", "Skill"]
 argument-hint: "[args]"
 ---
 
@@ -71,6 +72,11 @@ argument-hint: "[args]"
 
 [Command content]
 ```
+
+**Frontmatter rules:**
+- `allowed-tools` is a **quoted JSON-style array** of tool name strings. Verify with `head -10 plugins/*/commands/*.md`.
+- Include `"Skill"` if the command should be able to dispatch to specialist skills.
+- `argument-hint` is a quoted string showing argument shape, e.g. `"[symptom_or_endpoint]"` or `"<file.py> [function_or_script_args]"`.
 
 **Fix existing commands:**
 - Update descriptions for clarity
@@ -84,28 +90,30 @@ argument-hint: "[args]"
 
 ### 3. Agents
 
-**Create new agents:**
+**Create new agents** (match the marketplace's two-key frontmatter convention; only add `tools:` if you intend to restrict):
+
 ```yaml
 ---
-description: [What this agent specializes in]
+description: What this agent specializes in. Follows SME Agent Protocol with confidence/risk assessment.
 model: sonnet
-tools: [Read, Grep, Glob, Bash, Write]
 ---
 
 # Agent Name
 
-[Agent system prompt]
+[Agent system prompt — 1–2 paragraphs of role, scope, and standards.]
+
+**Protocol**: You follow the SME Agent Protocol defined in `meta-sme-protocol:sme-agent-protocol`. Before [acting], READ [relevant inputs]. Your output MUST include Confidence Assessment, Risk Assessment, Information Gaps, and Caveats sections.
 
 ## When to Activate
 
 <example>
 User: "[matching task]"
-Action: Activate - [reason]
+Action: Activate — [reason]
 </example>
 
 <example>
 User: "[non-matching task]"
-Action: Do NOT activate - [reason, handoff]
+Action: Do NOT activate — [reason, handoff target]
 </example>
 
 ## Scope Boundaries
@@ -113,6 +121,13 @@ Action: Do NOT activate - [reason, handoff]
 **I do:** [list]
 **I do NOT:** [list, with handoffs]
 ```
+
+**Frontmatter rules:**
+- The two near-universal keys are `description` and `model`. Adding a `tools:` key restricts the agent to that exact set; omit it to inherit the parent context. Spot-check shows ~60/65 marketplace agents omit `tools:`.
+- For SME-style agents (review / audit / advise / critique), end the description with the phrase **"Follows SME Agent Protocol with confidence/risk assessment."** so callers know to expect the four-section output.
+- For non-SME agents (autonomous executors like delinters, formatters), the SME protocol does not apply — describe what they do and the model used.
+
+**Slash-command wrapper.** If the new agent is part of a router pattern, also add or update the `.claude/commands/<name>.md` wrapper at the repo root.
 
 **Fix existing agents:**
 - Clarify scope boundaries
@@ -222,12 +237,12 @@ Coherence:
 
 Version: [old] → [new] ([patch/minor/major])
 
-🤖 Generated with Claude Code
-
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```
+
+**Co-author identifier.** Use the model identifier matching the model that did the work (e.g. `Claude Opus 4.7 (1M context)` or `Claude Sonnet 4.6`). Check `~/CLAUDE.md` or recent repo commits for the project's current convention before committing — older templates referenced an unversioned identifier or included a `🤖 Generated with Claude Code` line; current marketplace convention is the model-identified co-author only.
 
 **Do NOT push** - let user decide when to push.
 

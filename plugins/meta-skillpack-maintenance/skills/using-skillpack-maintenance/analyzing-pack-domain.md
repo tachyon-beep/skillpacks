@@ -73,8 +73,9 @@ ls plugins/[name]/agents/*.md 2>/dev/null
 
 For each agent:
 - Description from frontmatter
-- Model and tools
+- Model (and `tools` if declared — usually omitted)
 - Specialization area
+- **SME-protocol compliance** — for reviewer/auditor/advisor/critic-style agents, check whether the description ends with "Follows SME Agent Protocol..." and the body cites `meta-sme-protocol:sme-agent-protocol` with Confidence / Risk / Information Gaps / Caveats sections required. Non-SME agents (e.g., autonomous executors like `delinting-specialist`) are exempt.
 
 #### Hooks
 ```bash
@@ -91,7 +92,22 @@ For each hook:
 cat plugins/[name]/.claude-plugin/plugin.json
 ```
 
-Note: version, description accuracy, skill count
+Note: version, description accuracy, skill count.
+
+#### Marketplace Registration
+```bash
+grep -A1 "\"name\": \"[plugin-name]\"" .claude-plugin/marketplace.json
+```
+
+Confirm the plugin is registered in the marketplace catalog. An unregistered plugin is invisible to users running `/plugin marketplace`. Equally, a registered plugin whose directory was renamed or removed leaves a broken catalog entry.
+
+#### Slash-Command Wrapper (for router skills)
+```bash
+# If pack contains a router skill (using-X SKILL.md), check for the wrapper
+ls .claude/commands/[X].md 2>/dev/null
+```
+
+Note whether each router skill has a paired `.claude/commands/*.md` so users can invoke it as `/X`. Missing wrappers reduce discoverability.
 
 ### Phase A: Research (Conditional)
 
