@@ -386,28 +386,124 @@ Diffusion (T=1000): 1000 forward passes = 50 seconds
 
 ### Modern Diffusion Models
 
-**Stable Diffusion (2022+):**
-- Latent diffusion (denoise in VAE latent space)
-- Text conditioning (CLIP text encoder)
-- Pretrained on billions of images
-- Fine-tunable
+The generative-model field changed substantially between 2022 and 2025. The
+2022-era picture (Stable Diffusion 1.x, DALL-E 2, Imagen) is now of
+**historical interest**; production work has moved to:
 
-**DALL-E 2 (2022):**
-- Prior network (text → image embedding)
-- Diffusion decoder (embedding → image)
+#### Latent diffusion — the foundational recipe
 
-**Imagen (2022, Google):**
-- Text conditioning with T5 encoder
-- Cascaded diffusion (64×64 → 256×256 → 1024×1024)
+**Paper:** Rombach et al. — *High-Resolution Image Synthesis with Latent
+Diffusion Models* (CVPR 2022). The basis for the entire Stable Diffusion line:
+denoise in a VAE latent (typically 64× smaller than pixels) instead of pixel
+space, making high-resolution diffusion tractable on commodity GPUs.
+
+#### SDXL — Stable Diffusion XL
+
+**Paper:** Podell et al. — *SDXL: Improving Latent Diffusion Models for
+High-Resolution Image Synthesis* (Stability AI, 2023).
+
+A bigger U-Net, two text encoders (OpenCLIP-G + CLIP-L), conditioning on image
+size and crop offsets, and a separate refiner model. Native 1024×1024.
+Currently the most widely-deployed SD-family base for fine-tuning.
+
+#### Stable Diffusion 3 (SD3) — MMDiT + Rectified Flow
+
+**Paper:** Esser et al. — *Scaling Rectified Flow Transformers for
+High-Resolution Image Synthesis* (Stability AI, 2024).
+
+Two big changes from SDXL:
+1. **MMDiT** — a Diffusion Transformer (DiT) backbone with **separate weights**
+   for image and text tokens but joint attention. Replaces the U-Net.
+2. **Rectified Flow** training objective instead of standard DDPM noise
+   prediction.
+
+#### FLUX.1
+
+Released by Black Forest Labs (2024); the team came out of the original
+Stable Diffusion / SDXL work. Open-weights `dev` and `schnell` variants. Uses
+a flow-matching objective with a hybrid MMDiT + parallel-DiT block design;
+generally considered the strongest open-weights image model as of 2024-2025.
+
+#### DiT — Diffusion Transformers
+
+**Paper:** Peebles & Xie — *Scalable Diffusion Models with Transformers*
+(ICCV 2023).
+
+Replaces U-Net with a plain ViT-style backbone for the diffusion denoiser,
+with adaptive LayerNorm conditioning (adaLN-Zero). Cleaner scaling laws than
+U-Net; basis for SD3, FLUX, Sora, and most current frontier image/video
+diffusion models.
+
+#### Video diffusion
+
+- **Stable Video Diffusion** (Blattmann et al. 2023): image-to-video latent
+  diffusion built on SD2.1.
+- **Sora** (OpenAI, 2024 — paper-style technical report only): DiT-style
+  spatiotemporal diffusion on patchified video latents; the reference design
+  for current text-to-video systems.
+- **Veo / VideoPoet / Runway Gen-3**: closed-source competitors; mostly
+  DiT-class architectures with various conditioning strategies.
+
+#### Conditioning add-ons
+
+These don't replace the base model — they layer on top of any modern
+diffusion checkpoint:
+
+- **ControlNet** (Zhang et al. ICCV 2023): clone the encoder, train it on
+  edge maps / depth / poses; lets you inject structural control into a frozen
+  base diffusion model.
+- **IP-Adapter** (Ye et al. 2023): image prompts via lightweight adapter
+  modules; common for style/identity transfer.
+- **LoRA for diffusion** (Hu et al. 2021 LoRA + Stable Diffusion community
+  practice): de-facto standard for fine-tuning style or subject without
+  retraining the whole model.
+
+#### Faster sampling — Consistency / LCM / Turbo / Distillation
+
+The 50–1000 denoising steps that hurt early diffusion are no longer the
+reality for production:
+
+| Method | Paper | Steps |
+|--------|-------|-------|
+| DDIM | Song et al. 2021 | 25–50 |
+| DPM-Solver / DPM-Solver++ | Lu et al. 2022 | 10–20 |
+| **Consistency Models** | Song et al. ICML 2023 | 1–4 |
+| **LCM — Latent Consistency Models** | Luo et al. 2023 | 2–8 |
+| **SDXL-Turbo / SD-Turbo** | Sauer et al. 2023 | 1–4 (adversarial distillation) |
+| **Flow Matching / Rectified Flow** | Liu et al. ICLR 2023; Lipman et al. ICLR 2023 | Straighter ODE → fewer steps |
+
+**Practical impact:** Generating 1024² with a distilled LCM-LoRA in 2–4 steps
+is now real-time on a single consumer GPU.
+
+#### Discrete diffusion (text and other categorical data)
+
+**Papers:** Austin et al. — *D3PM* (NeurIPS 2021); Lou, Meng, Ermon — *SEDD:
+Score Entropy Discrete Diffusion* (ICML 2024).
+
+Diffusion-style training over discrete tokens. Currently mostly research, but
+SEDD-class models are starting to compete with autoregressive language models
+on small-scale benchmarks. Worth knowing about; not yet production.
+
+#### Historical / deprecated as primary references
+
+- **DALL-E 2** (Ramesh et al. 2022, OpenAI): unCLIP architecture, prior +
+  diffusion decoder. Superseded by DALL-E 3.
+- **Imagen** (Saharia et al. NeurIPS 2022, Google): T5-XXL text encoder,
+  cascaded pixel-space diffusion (64→256→1024). Architecturally important —
+  proved text encoder strength matters a lot — but no longer the frontier.
+- **Stable Diffusion 1.5 / 2.1**: still widely fine-tuned and deployed in the
+  community, but for new work start from SDXL, SD3, or FLUX.
 
 **When to use Diffusion:**
-✅ High-quality generation (best quality)
-✅ Stable training (standard loss)
-✅ Diversity needed (no mode collapse)
-✅ Conditioning (text-to-image, class-conditional)
+✅ High-quality image / video generation (current SOTA)
+✅ Stable training (standard MSE / flow-matching loss; no adversarial dynamics)
+✅ Diversity (no mode collapse)
+✅ Controllable (text, ControlNet, IP-Adapter, LoRA conditioning)
+✅ With Consistency / LCM / Turbo distillation: real-time inference is now in
+   reach — the old "diffusion is too slow" rule has weakened substantially
 
-❌ Need fast inference (< 1 second)
-❌ Real-time generation
+❌ Sub-50ms latency on small accelerators — still hard even with distillation
+❌ Discrete / structured output where autoregressive wins (text)
 
 ### Implementation (DDPM)
 
@@ -647,24 +743,29 @@ Tiny budget (research, small scale):
 → Few thousand images, CPU possible
 ```
 
-### Modern Recommendations (2025)
+### Modern Recommendations (2026)
 
-**For new projects:**
-1. **Default: Diffusion**
-   - Fine-tune Stable Diffusion or train from scratch
-   - Best quality + stability
-
-2. **If need speed: GAN**
-   - Use pretrained StyleGAN2 if available
-   - Or train GAN (if can tolerate instability)
-
-3. **If need latent space: VAE**
-   - For interpolation, not generation quality
+**For new image-generation projects:**
+1. **Default: Diffusion (DiT-class).** Fine-tune SDXL / SD3 / FLUX with LoRA
+   for style/subject; use ControlNet/IP-Adapter for structural control. This
+   covers ~95% of "I need to generate images" use cases.
+2. **If you need speed:** Distill the diffusion model with LCM/Turbo/Consistency
+   methods rather than reaching for a GAN. Modern distilled diffusion often
+   matches GAN throughput at higher quality.
+3. **If you need a still-image GAN niche:** StyleGAN2/3 remain useful for
+   tightly-bounded face / texture domains where a small GAN already trained
+   well, especially when sub-50ms latency is required.
+4. **If you need video:** Stable Video Diffusion or a Sora-class DiT video
+   model. Open-weights SVD is the practical entry point.
+5. **If you need latent space arithmetic:** VAE (or the VAE component of a
+   latent diffusion model — they're literally the same).
 
 **AVOID:**
-- Training GAN from scratch (unless necessary)
-- Using VAE for high-quality generation
-- Autoregressive for high-res images
+- Training GAN from scratch as your default — distilled diffusion has eaten
+  most of the GAN niche.
+- Using VAE alone for sharp image generation (still blurry).
+- Pixel-space autoregressive for high-resolution images — VQ-token
+  autoregressive (VAR, MaskGIT-style) is fine; PixelCNN-on-pixels is not.
 
 
 ## Part 8: Training from Scratch vs Fine-Tuning
@@ -791,13 +892,16 @@ Large images (> 256×256):
 5. GAN (3/10 - very unstable)
 ```
 
-### Modern Stack (2025)
+### Modern Stack (2026)
 
 ```
-Image generation: Stable Diffusion (fine-tuned)
-Fast inference: StyleGAN2 (if available)
-Latent space: VAE
-Research: Diffusion (easiest to train)
+Image generation, default      : SDXL / SD3 / FLUX + LoRA (DiT-class diffusion)
+Image generation, real-time    : LCM / SDXL-Turbo / consistency-distilled diffusion
+Image structural control       : ControlNet, IP-Adapter on top of the base model
+Video generation               : Stable Video Diffusion or Sora-class DiT
+Niche GAN use (faces/textures) : StyleGAN2/3 (pretrained)
+Latent space arithmetic        : VAE (or the VAE inside a latent diffusion model)
+Research / new objectives      : Flow Matching / Rectified Flow / discrete diffusion (SEDD)
 ```
 
 

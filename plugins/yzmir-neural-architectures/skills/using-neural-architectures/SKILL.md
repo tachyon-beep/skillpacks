@@ -66,7 +66,7 @@ When you see a link like `[cnn-families-and-selection.md](cnn-families-and-selec
 | Sequences (time series, text, audio) | [sequence-models-comparison.md](sequence-models-comparison.md) | Temporal dependencies need sequential models |
 | Graphs (social networks, molecules) | [graph-neural-networks-basics.md](graph-neural-networks-basics.md) | Graph structure requires GNNs |
 | Generation task (create images, text) | [generative-model-families.md](generative-model-families.md) | Generative models are specialized |
-| Multiple modalities (text + images) | [architecture-design-principles.md](architecture-design-principles.md) | Need custom design |
+| Multiple modalities (text + images, audio, video) | [multimodal-architectures.md](multimodal-architectures.md) | Vision-language, CLIP/SigLIP, LLaVA, Flamingo, native multimodal |
 | Unclear / Generic | [architecture-design-principles.md](architecture-design-principles.md) | Start with fundamentals |
 
 ### Step 2: Check for Special Requirements
@@ -196,11 +196,18 @@ These answers determine architecture appropriateness.
 
 **Clarifying questions:**
 
-- "Use case?" (Real-time game → GAN, Art/research → Diffusion, Fast training → VAE)
-- "Quality vs speed?" (Quality → Diffusion, Speed → GAN)
-- "Controllability?" (Fine control → StyleGAN/Conditional models)
+- "Use case?" (Production text-to-image → SDXL/SD3/FLUX + LoRA;
+  real-time/edge → distilled diffusion (LCM/Turbo) or a pretrained GAN niche;
+  cross-modal generation → native multimodal (Chameleon/Gemini-class))
+- "Quality vs speed?" (Quality → DiT-class diffusion;
+  Speed → distilled diffusion *before* reaching for GAN — distillation
+  closed most of the speed gap)
+- "Controllability?" (Structural control → ControlNet on top of diffusion;
+  identity / style → IP-Adapter or LoRA fine-tune)
 
-**CRITICAL:** Different generative models have VERY different trade-offs. Must clarify requirements.
+**CRITICAL:** Different generative models have VERY different trade-offs.
+Don't reflexively recommend GAN for "fast" — distilled diffusion is the
+modern fast option. Don't recommend training Stable Diffusion from scratch.
 
 ---
 
@@ -304,15 +311,21 @@ These answers determine architecture appropriateness.
 
 ### When Problem Spans Multiple Modalities
 
-**Example:** "Text + image classification" (multimodal)
+**Default route:** [multimodal-architectures.md](multimodal-architectures.md) —
+covers contrastive (CLIP / SigLIP), generative bolt-on (LLaVA / BLIP-2 /
+Flamingo), and native multimodal (Chameleon / Gemini-style) recipes, plus
+audio and video extensions.
 
-**Route to BOTH:**
+**Only fall back to component sheets if the user is building from scratch
+without using foundation models:**
 
 1. [sequence-models-comparison.md](sequence-models-comparison.md) (for text)
 2. [cnn-families-and-selection.md](cnn-families-and-selection.md) (for images)
-3. [architecture-design-principles.md](architecture-design-principles.md) (for fusion strategy)
+3. [architecture-design-principles.md](architecture-design-principles.md) (for hand-rolled fusion strategy)
 
-**Order matters:** Understand individual modalities BEFORE fusion.
+**Order matters:** In 2026 the default for "vision + language" is
+**SigLIP + MLP projector + open LLM**, not designing fusion from first
+principles. Read the multimodal sheet before reaching for design-principles.
 
 ### When Architecture + Other Concerns
 
@@ -377,7 +390,11 @@ If query contains these patterns, ASK clarifying questions before routing:
 | **Diffusion Models** | Real-time generation needed | GANs (1 forward pass vs 50-1000 steps) |
 | **Diffusion Models** | Limited compute for training | VAEs (faster training) |
 | **Graph Transformers** | Small graphs (< 100 nodes) | Standard GNNs (GCN, GAT) simpler and effective |
-| **LLMs (GPT-style)** | < 1M tokens of training data | Simpler language models or fine-tuning |
+| **Mamba / SSMs** | Short context, strong-pretrained ecosystem matters | Transformer + GQA + FlashAttention (still dominant) |
+| **MoE Transformers** | Below ~3-5B total params, on-device inference | Dense Transformer (active params == total params) |
+| **Native multimodal models** | Below frontier scale, single-modality output | LLaVA-style bolt-on (SigLIP + MLP + LLM) |
+| **Diffusion Transformers (DiT)** | Tiny generative tasks, very small datasets | U-Net latent diffusion (cheaper to train at small scale) |
+| **LLMs (GPT-style) for narrow classification** | Tabular / closed-set tasks with clean labels | Boosted trees (XGBoost/LightGBM) or small fine-tuned encoder |
 
 **Counter-narrative:** "New architecture ≠ better for your use case. Match architecture to constraints."
 
@@ -394,7 +411,8 @@ Start here: What's your primary goal?
 │  │  ├─ Sequences → [sequence-models-comparison.md](sequence-models-comparison.md)
 │  │  ├─ Graphs → [graph-neural-networks-basics.md](graph-neural-networks-basics.md)
 │  │  ├─ Generation → [generative-model-families.md](generative-model-families.md)
-│  │  └─ Unknown/Multiple → [architecture-design-principles.md](architecture-design-principles.md)
+│  │  ├─ Multimodal (text + image / audio / video) → [multimodal-architectures.md](multimodal-architectures.md)
+│  │  └─ Unknown → [architecture-design-principles.md](architecture-design-principles.md)
 │  └─ Special requirements?
 │     ├─ Deep network (>20 layers) unstable → [normalization-techniques.md](normalization-techniques.md) (CRITICAL)
 │     ├─ Need attention mechanism → [attention-mechanisms-catalog.md](attention-mechanisms-catalog.md)
@@ -515,7 +533,8 @@ After routing, load the appropriate specialist skill for detailed guidance:
 4. [generative-model-families.md](generative-model-families.md) - GANs, VAEs, Diffusion models, image generation, style transfer, generative modeling trade-offs
 5. [graph-neural-networks-basics.md](graph-neural-networks-basics.md) - GCN, GAT, node classification, link prediction, graph embeddings, molecular structures
 6. [normalization-techniques.md](normalization-techniques.md) - BatchNorm, LayerNorm, GroupNorm, training stability for deep networks (>20 layers)
-7. [sequence-models-comparison.md](sequence-models-comparison.md) - RNN, LSTM, Transformer, TCN comparison, time series, NLP, sequential data
-8. [transformer-architecture-deepdive.md](transformer-architecture-deepdive.md) - Transformer internals, ViT, BERT, positional encoding, scaling transformers
+7. [multimodal-architectures.md](multimodal-architectures.md) - CLIP/SigLIP, LLaVA, BLIP-2 / Q-Former, Flamingo / Idefics, native multimodal (Chameleon / Gemini-style), audio + video extensions
+8. [sequence-models-comparison.md](sequence-models-comparison.md) - RNN, LSTM, Transformer, TCN, Mamba/SSM, RWKV, Jamba; time series, NLP, sequential data
+9. [transformer-architecture-deepdive.md](transformer-architecture-deepdive.md) - Transformer internals, ViT (DINOv2/MAE/SigLIP-era), MoE (Mixtral/DeepSeek-MoE/OLMoE), positional encoding (RoPE/YaRN/NoPE)
 
 **Critical principle:** Architecture comes BEFORE training. Get this right first.

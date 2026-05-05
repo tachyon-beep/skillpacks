@@ -283,10 +283,138 @@ self.W_q = nn.Linear(d_model, d_model)  # Multiple Q heads
 - Example: 32 Q heads → 8 K/V heads (4 Q per K/V)
 - Benefit: 4x smaller KV cache, minimal accuracy loss
 
-**Used in:** LLaMA-2, Mistral, Mixtral
+**Used in:** LLaMA-2/3, Mistral, Mixtral, Gemma, Qwen2, DeepSeek-V2/V3.
+
+### Multi-head Latent Attention (MLA)
+
+**Paper:** DeepSeek-AI — *DeepSeek-V2: A Strong, Economical, and Efficient
+Mixture-of-Experts Language Model* (2024).
+
+**Idea:** Project K and V into a low-rank "latent" before caching, instead of
+sharing K/V heads (GQA/MQA). Result: KV cache shrinks ~10× vs MHA, often
+beats GQA on quality at the same cache size.
+
+**Used in:** DeepSeek-V2, DeepSeek-V3, DeepSeek-R1.
+
+**When to consider:** Long-context decoder-only models where KV cache is the
+bottleneck and you're training from scratch (MLA is harder to retrofit).
 
 
-## Part 3: Position Encoding
+## Part 2.5: Mixture-of-Experts (MoE) Transformers
+
+A decade-old idea that became the dominant frontier-model pattern after Mixtral
+(late 2023): replace the dense feed-forward block with a *sparse* one — many
+"expert" FFNs plus a router that activates only a few per token.
+
+**Why it matters:** A 47B-parameter MoE that activates 13B per token (Mixtral
+8×7B) often matches or beats a 70B dense model on quality, at ~13B FLOPs per
+token. Total parameters scale; compute per token does not.
+
+### Origin and key papers
+
+| Paper | Contribution |
+|-------|-------------|
+| Shazeer et al. 2017 — *Outrageously Large Neural Networks* | Sparsely-gated MoE in LSTMs; introduced top-k routing + load-balancing loss |
+| GShard (Lepikhin et al. 2020) | Token-level expert routing for Transformers, expert parallelism |
+| Switch Transformer (Fedus et al. 2021) | Top-1 routing simplification, capacity factor, scaling laws for sparse models |
+| ST-MoE (Zoph et al. 2022) | Stability tricks (router z-loss), better fine-tuning |
+| Mixtral 8×7B (Jiang et al. 2024) | First widely-used open-weights production MoE; 8 experts, top-2 routing |
+| DeepSeek-MoE (Dai et al. 2024) | Fine-grained experts (many small experts) + shared experts; better expert specialization |
+| OLMoE (Muennighoff et al. 2024) | Fully-open MoE recipe (data, code, weights) |
+
+### How MoE replaces the FFN
+
+A standard Transformer block:
+
+```
+y = x + MHA(LN(x))
+y = y + FFN(LN(y))      # FFN(x) = W2 · GeLU(W1 · x)
+```
+
+An MoE block:
+
+```
+y = x + MHA(LN(x))
+y = y + MoE(LN(y))
+where MoE(x) = sum_{e in TopK(router(x))} g_e(x) · FFN_e(x)
+```
+
+- `router(x)` is typically a single linear layer producing logits over experts
+- `TopK` keeps the top-1 (Switch) or top-2 (Mixtral) experts
+- `g_e(x)` are router-softmax weights, used to combine selected experts
+
+### Routing strategies
+
+| Strategy | When activated | Notes |
+|----------|---------------|-------|
+| **Top-1 (Switch)** | Single expert per token | Simplest, fastest, slightly lower quality |
+| **Top-2 (Mixtral, GShard)** | Two experts per token | Standard production choice |
+| **Expert Choice (Zhou et al. 2022)** | Each expert picks top-N tokens (inverted) | Balances load by construction; harder to mask for autoregressive training |
+| **Fine-grained experts (DeepSeek-MoE)** | Many small experts, plus a "shared" expert active for every token | Better expert specialization; total expert count explodes |
+| **Hash routing (HASH layers)** | Random fixed routing | Used as a baseline; surprisingly strong |
+
+### Load balancing — the central problem
+
+If routing is unconstrained, a few experts collapse and absorb all tokens (the
+classic mode-collapse failure). Standard mitigations:
+
+- **Auxiliary load-balancing loss** (Shazeer 2017): penalize variance in
+  per-expert token counts.
+- **Router z-loss** (ST-MoE): penalize large router logits to stabilize
+  training.
+- **Capacity factor**: cap how many tokens an expert can accept; overflow
+  tokens skip the MoE layer (residual passes through).
+- **Auxiliary-loss-free balancing** (DeepSeek-V3): per-expert bias updated
+  online to equalize load without an explicit loss term — currently the
+  state-of-the-art recipe for very-large MoEs.
+
+### Expert parallelism
+
+MoE forces a new parallelism dimension. With E experts, you typically:
+
+- Shard experts across devices (each device holds a subset of experts)
+- All-to-all the activations: tokens routed to expert e are sent to that
+  device, processed, sent back
+- Combine with tensor / pipeline / data parallelism (4D-parallel training)
+
+The all-to-all is the bandwidth bottleneck. Modern MoE training relies on fast
+interconnects (NVLink, NVSwitch) and overlap-friendly kernels (MegaBlocks,
+DeepEP).
+
+### When MoE pays off
+
+| Condition | Pay off? |
+|-----------|----------|
+| Very large total budget (>30B total params) | ✅ Strong gains over dense at equal active params |
+| Inference is memory-bandwidth-bound, not compute-bound | ⚠️ Memory cost is total params, not active — you still need to hold all experts in VRAM |
+| Single-GPU on-device deployment | ❌ Total VRAM cost dominates; dense is usually better |
+| Training data << model size | ❌ Sparsity hurts when data is the bottleneck |
+| Long-tail / multi-domain data | ✅ Experts can specialize |
+
+**Rule of thumb (2026):** Frontier models are MoE (Mixtral, DeepSeek-V3,
+Qwen2-MoE, GPT-4-class internal models). Most production fine-tunes and
+on-device models are still dense — MoE adds VRAM cost, deployment complexity,
+and serving constraints that aren't worth it below the very-large scale.
+
+### Mixtral, DeepSeek-MoE, OLMoE — what's different
+
+- **Mixtral 8×7B (2024).** 8 experts, top-2 routing, 47B total / 13B active.
+  Standard reference design. Open weights.
+- **DeepSeek-MoE / V2 / V3.** Fine-grained experts (V3: 256 routed + 1 shared
+  per layer, 8 active), MLA attention, auxiliary-loss-free load balancing.
+  V3 is 671B total / 37B active. Currently the strongest open-weights MoE.
+- **OLMoE 7B (2024).** 64 experts, top-8 routing. Fully open including data
+  and training code; the cleanest reference for studying MoE recipes.
+
+### What NOT to do
+
+- **Don't train a tiny MoE.** Below ~3–5B total parameters, the routing
+  overhead and expert imbalance erase the sparsity gains. Use a dense
+  Transformer.
+- **Don't ignore load balancing.** Skipping the aux loss/z-loss/bias scheme
+  produces dead experts and broken capacity utilization.
+- **Don't assume MoE is "just a faster Transformer at inference."** Active
+  FLOPs are lower; total VRAM is higher. Plan around the cache.
 
 ### Why Position Encoding?
 
@@ -391,13 +519,52 @@ scores = Q @ K^T / √d_k + alibi_bias
 
 | Use Case | Recommended | Why |
 |----------|-------------|-----|
-| NLP (variable length) | RoPE or ALiBi | Better extrapolation |
+| NLP (variable length) | RoPE (with extension if needed) | Production standard since LLaMA |
 | NLP (fixed length) | Learned embeddings | Adapts to data |
-| Vision (ViT) | 2D learned embeddings | Spatial structure |
-| Long sequences (>2k) | ALiBi | Best extrapolation |
+| Vision (ViT) | 2D learned embeddings or RoPE-2D | Spatial structure |
+| Long sequences (>2k) | RoPE + YaRN / NTK-aware scaling | Extends pretrained context |
 | Legacy/compatibility | Sinusoidal | Original Transformer |
 
-**Modern trend (2023+):** RoPE and ALiBi dominate over sinusoidal
+**Modern trend (2023-2026):** RoPE has won. Almost every open-weights LLM
+released since LLaMA-1 uses RoPE. ALiBi is now a minority choice (BLOOM,
+some research models). Sinusoidal is essentially historical.
+
+### Strategy 5: Extending RoPE Context (YaRN / NTK-aware / Position Interpolation)
+
+**Problem:** A model pretrained at 4k context degrades fast above its training
+length, even with RoPE. You want 32k–128k+ context without retraining from
+scratch.
+
+**Solutions, in order of how invasive they are:**
+
+1. **Position Interpolation (PI)** — Chen et al. 2023. Linearly down-scale
+   position indices so test-time positions sit inside the trained range.
+   Cheap, but blurs short-range resolution.
+2. **NTK-aware scaling** — Adjust the RoPE base frequency rather than scaling
+   positions linearly. Preserves high-frequency components better than PI.
+3. **YaRN — Yet another RoPE extensioN** (Peng et al. 2023). Combines
+   NTK-by-parts scaling with an attention temperature correction. The most
+   widely deployed RoPE extension; lets a 4k-trained model fine-tune to 128k+
+   with minimal extra training.
+4. **LongRoPE** (Microsoft, 2024). Search-based per-dimension scaling factors
+   pushing context to 2M+ tokens with light fine-tuning.
+
+**Practical rule:** If a published checkpoint has a YaRN or LongRoPE variant,
+use it. Don't rewrite RoPE math by hand.
+
+### Strategy 6: NoPE — No Position Encoding
+
+**Paper:** Kazemnejad et al. — *The Impact of Positional Encoding on Length
+Generalization in Transformers* (NeurIPS 2023).
+
+**Surprising finding:** Decoder-only Transformers with the causal mask but **no
+positional encoding at all** can outperform RoPE/ALiBi on length generalization
+in some controlled settings. The causal mask itself breaks permutation
+invariance enough to learn position implicitly.
+
+**Status:** Mostly research signal. Production models still use RoPE because the
+ecosystem (caching, extension techniques, kernels) is built around it. Worth
+knowing about; not worth defaulting to.
 
 
 ## Part 4: Architecture Variants
@@ -675,16 +842,35 @@ class VisionTransformer(nn.Module):
 
 **2. Data Requirements**
 
-| Dataset Size | CNN | ViT (from scratch) | ViT (pretrained) |
-|--------------|-----|-------------------|------------------|
-| Small (< 100k) | ✅ Good | ❌ Fails | ✅ Good |
-| Medium (100k-1M) | ✅ Excellent | ⚠️ Poor | ✅ Good |
-| Large (> 1M) | ✅ Excellent | ⚠️ OK | ✅ Excellent |
-| Huge (> 100M) | ✅ Excellent | ✅ SOTA | N/A |
+| Dataset Size | CNN | ViT (supervised from scratch) | ViT (with MAE/DINOv2-style SSL) | ViT (fine-tuned from pretrained) |
+|--------------|-----|------------------------------|---------------------------------|----------------------------------|
+| Small (< 100k) | ✅ Good | ❌ Fails | ⚠️ Limited | ✅ Good |
+| Medium (100k-1M) | ✅ Excellent | ⚠️ Poor | ✅ Good | ✅ Excellent |
+| Large (> 1M) | ✅ Excellent | ⚠️ OK | ✅ Excellent | ✅ Excellent |
+| Huge (> 100M) | ✅ Excellent | ✅ SOTA | ✅ SOTA | N/A |
 
-**Key finding:** ViT needs 100M+ images to train from scratch
-- Original ViT: Trained on JFT-300M (300 million images)
-- Without massive data, ViT underperforms CNNs significantly
+**Original 2020-era finding (Dosovitskiy et al.):** ViT needed JFT-300M to beat
+CNNs from scratch. **Updated picture (2022+):**
+
+- **DeiT** (Touvron et al. 2021): With aggressive augmentation + distillation,
+  ViT reaches CNN-level accuracy on ImageNet-1k (~1.3M images) from scratch.
+- **MAE — Masked Autoencoders** (He et al. 2022): Self-supervised pretraining
+  on ImageNet-1k (mask 75% of patches, reconstruct) makes ViT competitive
+  without supervised labels.
+- **DINOv2** (Oquab et al. 2024): Self-supervised ViT trained on a curated
+  142M-image dataset; produces general-purpose features that beat
+  CLIP/SigLIP on dense prediction tasks. This is now the default off-the-shelf
+  vision encoder when you don't want a CLIP-aligned representation.
+- **EVA / EVA-02** (Fang et al. 2023): Masked image modeling with CLIP targets;
+  scales cleanly to multi-billion-parameter ViTs.
+- **Register tokens** (Darcet et al. ICLR 2024): Adding a few extra learnable
+  "register" tokens to ViT removes attention-map artifacts and improves dense
+  prediction — a small, near-free architectural fix that should be in any new
+  ViT recipe.
+
+**Practical rule for 2026:** "ViT needs 100M images" is no longer true.
+For most vision tasks, fine-tune a DINOv2 / SigLIP / EVA-02 / MAE checkpoint
+rather than train from scratch — same as the NLP playbook.
 
 **3. Computational Cost**
 
@@ -712,19 +898,34 @@ class VisionTransformer(nn.Module):
 - Edge deployment (mobile, embedded)
 - Need architectural inductive biases
 
-### Hybrid Approaches (2022-2023)
+### Hybrid Approaches (2022-2024)
 
-**ConvNeXt:** CNN with ViT design choices
-- Matches ViT accuracy with CNN efficiency
-- Works better on small datasets
+**ConvNeXt / ConvNeXt v2:** CNN with ViT design choices.
+- ConvNeXt (Liu et al. 2022) ports ViT recipes (large kernels, LayerNorm,
+  GELU, fewer activations) into a pure-conv backbone.
+- ConvNeXt v2 (Woo et al. 2023) adds a fully convolutional masked autoencoder
+  (FCMAE) pretraining objective and Global Response Normalization.
+- Result: matches ViT accuracy at similar scale with CNN-friendly inference.
 
-**Swin Transformer:** Hierarchical ViT with local windows
-- Shifted windows for efficiency
-- O(n) complexity instead of O(n²)
-- Better for dense prediction (segmentation)
+**Swin / Swin v2:** Hierarchical ViT with shifted local windows.
+- Original Swin (Liu et al. 2021): O(n) complexity, strong on dense
+  prediction.
+- Swin v2 (Liu et al. 2022): scales cleanly past 3B params; fixes the
+  attention-instability issues that hurt original Swin at scale.
 
-**CoAtNet:** Mix conv layers (early) + Transformer layers (late)
-- Gets both inductive bias and global attention
+**MaxViT** (Tu et al. ECCV 2022): Block (local) + grid (sparse global)
+attention alternation, plus mobile-conv blocks. Strong Pareto curve at
+moderate compute.
+
+**Hiera** (Ryali et al. ICML 2023): Strips Swin back to a plain hierarchical
+ViT trained with MAE; matches Swin/MaxViT with a much simpler architecture.
+
+**FastViT** (Vasu et al. ICCV 2023): Reparameterizable hybrid CNN/ViT
+optimized for mobile inference latency.
+
+**CoAtNet** (Dai et al. NeurIPS 2021): Conv layers early, Transformer layers
+late. Was state-of-the-art on ImageNet for a window in 2021–2022; still a
+clean reference for the conv-then-attention pattern.
 
 
 ## Part 6: Implementation Checklist

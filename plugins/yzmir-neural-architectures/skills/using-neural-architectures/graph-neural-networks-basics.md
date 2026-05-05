@@ -341,6 +341,84 @@ class GAT(nn.Module):
         return x
 ```
 
+### Architecture 4: GIN (Graph Isomorphism Network)
+
+**Paper:** Xu et al. — *How Powerful are Graph Neural Networks?* (ICLR 2019).
+
+**Key idea:** GCN/GAT-style aggregations are provably less expressive than the
+1-Weisfeiler-Lehman (1-WL) graph isomorphism test. GIN is the simplest GNN
+that **matches 1-WL expressiveness**.
+
+**Update rule:**
+
+```
+h_i^(l+1) = MLP^(l)( (1 + ε^(l)) · h_i^(l) + Σ_{j∈N(i)} h_j^(l) )
+```
+
+A sum aggregator (rather than mean/max) plus an MLP after the aggregation is
+what unlocks the expressiveness improvement — mean/max collapse multiset
+information.
+
+**When to use:**
+- Graph-classification tasks where structure matters more than features
+  (molecular property prediction, OGB graph-level benchmarks)
+- You're hitting an accuracy ceiling with GCN/GAT and suspect the bound is
+  expressivity, not training
+
+### Architecture 5: Graph Transformers / Graphormer
+
+**Papers:**
+- Ying et al. — *Do Transformers Really Perform Bad for Graph Representation?*
+  (Graphormer, NeurIPS 2021)
+- Rampášek et al. — *Recipe for a General, Powerful, Scalable Graph
+  Transformer* (GraphGPS, NeurIPS 2022)
+
+**Key idea:** Treat the graph as a fully-connected token sequence and apply a
+Transformer, with **structural / positional encodings** to inject graph
+information that attention alone can't see:
+- **Centrality encoding** (per-node)
+- **Spatial encoding** (shortest-path distance between i and j as an attention
+  bias)
+- **Edge encoding** (edge features along the path)
+
+**GraphGPS** adds a recipe combining a local message-passing GNN layer with a
+global Transformer attention layer, with positional encodings (Laplacian
+eigenvectors, random-walk encodings).
+
+**When to use:**
+- Graph regression/classification on small-to-medium graphs where global
+  context matters (molecules, OGB-PCQM4Mv2)
+- Tasks where 1-WL expressiveness limits message-passing GNNs
+- You can afford O(n²) attention over nodes
+
+**When NOT to use:**
+- Million-node single-graph problems (Transformer attention won't scale
+  without further sparsification)
+
+### Architecture 6: E(3)-Equivariant GNNs (for 3D / molecular / materials)
+
+When nodes have **3D coordinates** (atoms in a molecule, particles in a
+simulation), a permutation-invariant GNN is not enough — you also want
+**equivariance to rotations and translations** in 3D space (the E(3) group):
+rotating the molecule should rotate the predicted forces in lockstep, and
+predicted scalar properties (energy) should be unchanged.
+
+| Model | Paper | Notes |
+|-------|-------|-------|
+| **SchNet** | Schütt et al. NeurIPS 2017 | Continuous-filter conv on distances; invariant (not equivariant) |
+| **EGNN** | Satorras et al. ICML 2021 | Equivariant message passing using only relative distances and coordinate updates; minimal and effective |
+| **NequIP** | Batzner et al. Nature Commun. 2022 | E(3)-equivariant tensor features; sample-efficient interatomic potentials |
+| **MACE** | Batatia et al. NeurIPS 2022 | Higher body-order equivariant messages; current SOTA for many ML interatomic potentials |
+| **Allegro** | Musaelian et al. Nature Commun. 2023 | Strictly local equivariant model; scales to very large molecular systems |
+
+**When to use:** Molecular property prediction with conformers, force fields,
+materials simulation, drug discovery, protein structure (AlphaFold-class
+work). On 3D-structural problems an equivariant GNN typically dominates a
+non-equivariant one even with much less data.
+
+**When NOT to use:** No 3D coordinates, or the 3D structure is irrelevant —
+plain GIN/GAT/GCN will be cheaper and adequate.
+
 ### Architecture Comparison
 
 | Feature | GCN | GraphSAGE | GAT |
@@ -372,7 +450,26 @@ Need interpretability:
 
 Production deployment:
 → GraphSAGE (most robust and scalable)
+
+Graph-classification, expressivity ceiling:
+→ GIN (matches 1-WL test) or Graph Transformer (Graphormer / GraphGPS)
+
+3D coordinates (molecules, materials, particles):
+→ E(3)-equivariant GNN — EGNN (simple), NequIP / MACE (production-strength)
 ```
+
+### Note on expressivity (1-WL)
+
+GCN, GraphSAGE, and GAT are all bounded by the 1-Weisfeiler-Lehman
+isomorphism test — they cannot distinguish certain non-isomorphic graphs
+(e.g., regular graphs of the same degree). If your task requires
+distinguishing such graphs (some molecular substructures, some social
+network motifs), you need either:
+- **GIN** (matches 1-WL exactly with a sum aggregator)
+- **Higher-order GNNs** (k-WL bounded; expensive)
+- **Graph Transformers with positional encodings** (sidestep WL by injecting
+  global structural information)
+- **Equivariant GNNs** with 3D coordinates (use geometry to break the symmetry)
 
 
 ## Part 4: When NOT to Use GNN

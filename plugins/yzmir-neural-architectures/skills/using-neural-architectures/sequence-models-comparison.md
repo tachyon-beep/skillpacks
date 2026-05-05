@@ -6,11 +6,13 @@ Sequence modeling has evolved rapidly:
 - 2014-2017: LSTM/GRU dominated
 - 2017+: Transformers revolutionized the field
 - 2018+: TCN emerged as efficient alternative
-- 2021+: Sparse Transformers for very long sequences
-- 2022+: State Space Models (S4) for extreme lengths
+- 2021-2022: Sparse Transformers, S4 for very long sequences
+- 2023-2024: Linear-time sequence models — Mamba / Mamba-2, RWKV-5/6,
+  RetNet, Hyena, Jamba (Transformer + Mamba hybrid)
 
 Don't default to LSTM (outdated) or blindly use Transformers (not always appropriate).
-Match architecture to your sequence characteristics.
+Don't reflexively swap to Mamba either — most production sequence work in 2026
+is still Transformer + GQA + FlashAttention. Match architecture to characteristics.
 </CRITICAL_CONTEXT>
 
 ## When to Use This Skill
@@ -63,7 +65,8 @@ START: What's your primary constraint?
 │  │  └─ Hierarchical models
 │  │
 │  └─ Very Long (> 10000 steps)
-│     └─ State Space Models (S4)
+│     ├─ Modern: Mamba-2 or Jamba-style hybrid (constant-memory inference)
+│     └─ Legacy / research: S4
 │
 ├─ DATA TYPE
 │  ├─ Natural Language
@@ -380,31 +383,109 @@ model = TCN(input_channels=1, num_channels=[64, 128, 256])
 **Status:** Specialized for long sequences, active research area
 
 
-### 7. State Space Models (S4) - Cutting Edge
+### 7. Linear-Time Sequence Models (S4 / Mamba / RWKV / RetNet / Hyena)
 
-**Architecture:** Structured state space with efficient recurrence
+A family of architectures that match Transformer quality on language while
+keeping **O(n) inference** and (mostly) **O(n) or O(n log n) training**. They
+replace softmax attention with recurrent or convolutional state updates.
 
-**Complexity:** O(n log n) training, O(n) inference
+**Why this family exists:** Transformer attention is O(n²) in compute and memory,
+and KV-cache grows linearly with context — making 100k–1M token contexts
+expensive. Linear-time models swap attention for a state update that is
+constant-memory at inference (no KV cache).
 
-**Strengths:**
-- ✅ **Very long sequences** (10k-100k steps)
-- ✅ Linear inference complexity
-- ✅ Strong theoretical foundations
-- ✅ Handles continuous-time sequences
+#### S4 — Structured State Space
 
-**Weaknesses:**
-- ❌ Newer (less mature ecosystem)
-- ❌ Complex mathematics
-- ❌ Fewer pre-trained models
-- ❌ Harder to implement
+**Paper:** Gu, Goel, Ré — *Efficiently Modeling Long Sequences with Structured
+State Spaces* (ICLR 2022).
 
-**When to Use:**
-- ✅ Extremely long sequences (> 10k steps)
-- ✅ Audio (raw waveforms, 16kHz sampling)
-- ✅ Medical signals (ECG, EEG)
-- ✅ Research applications
+Discretized linear state-space model with HiPPO-initialized matrices. Excellent
+on Long Range Arena benchmark; underperformed Transformers on language until
+selective variants (Mamba) appeared.
 
-**Status:** **Cutting edge** (2022+), promising for very long sequences
+#### Mamba / Mamba-2 — Selective State Space
+
+**Papers:** Gu & Dao — *Mamba: Linear-Time Sequence Modeling with Selective State
+Spaces* (2023). Dao & Gu — *Transformers are SSMs: Generalized Models and
+Efficient Algorithms Through Structured State Space Duality* (Mamba-2, 2024).
+
+**Key idea:** Make the SSM parameters **input-dependent** (selective). This is
+the missing piece that lets SSMs match Transformer quality on language and
+matches the in-context-learning behaviour Transformers were getting from
+attention.
+
+- O(n) inference, no KV cache → constant memory regardless of context length
+- Hardware-aware kernel (Mamba uses a parallel scan, Mamba-2 uses matrix
+  multiply via the SSD framework, much more TPU/GPU-friendly)
+- Mamba-2 is faster than Mamba and easier to scale; Mamba-2 reframes SSMs and
+  attention as duals of the same underlying operation
+
+**When to use:**
+- Very long contexts (100k–1M tokens) where KV cache cost dominates
+- On-device / edge LLM inference (constant memory wins)
+- Streaming / real-time settings
+
+**When NOT to use:**
+- You need a strong pre-trained model with rich tooling and ecosystem (still
+  Transformer)
+- Your context is short and you're memory-bound on weights, not KV — Mamba
+  doesn't help
+- You need state-of-the-art on tasks that benchmark heavy retrieval over the
+  context window — pure SSMs underperform Transformers on associative recall;
+  use a hybrid
+
+#### RWKV (v5 / v6 "Finch")
+
+**Paper:** Peng et al. — *RWKV: Reinventing RNNs for the Transformer Era* (2023),
+plus the v5/v6 "Eagle and Finch" follow-up (2024).
+
+A linear-attention-inspired recurrent architecture that can be trained as a
+Transformer (parallel) and run as an RNN (linear inference). Open weights at
+several scales; popular in the on-device / hobbyist community.
+
+#### RetNet — Retentive Network
+
+**Paper:** Sun et al. — *Retentive Network: A Successor to Transformer for Large
+Language Models* (2023).
+
+Three execution modes from the same weights: parallel (training), recurrent
+(inference), chunkwise recurrent (long context). Less ecosystem traction than
+Mamba but conceptually clean.
+
+#### Hyena
+
+**Paper:** Poli et al. — *Hyena Hierarchy: Towards Larger Convolutional Language
+Models* (ICML 2023).
+
+Long convolutions with implicit parameterization. Competitive at small/medium
+scale; mostly subsumed by Mamba in practice.
+
+#### Jamba — Transformer + Mamba Hybrid
+
+**Paper:** Lieber et al. — *Jamba: A Hybrid Transformer-Mamba Language Model*
+(AI21, 2024).
+
+Interleaves Mamba layers with Transformer layers (and adds MoE). Captures
+Transformer's strong in-context retrieval **and** Mamba's cheap long-context
+inference. The hybrid pattern (sometimes called "1:7" or similar Mamba:attention
+ratios) has become the default way to ship SSM-based production models.
+
+#### Linear-time vs Transformer — How to Choose
+
+| Criterion | Pick Transformer | Pick SSM/Mamba | Pick Hybrid (Jamba-style) |
+|-----------|------------------|----------------|---------------------------|
+| Context ≤ 8k | ✅ default | Marginal benefit | Overkill |
+| Context 32k–256k | KV cache hurts | ✅ Constant memory | ✅ Best of both |
+| Context > 256k | Impractical without tricks | ✅ Native | ✅ Native |
+| Heavy in-context retrieval | ✅ Strong | ⚠️ Weaker | ✅ Strong |
+| Pretrained ecosystem | ✅ Massive | Limited | Limited |
+| On-device inference | KV cache problem | ✅ Constant memory | ⚠️ Mixed |
+| Streaming generation | KV cache grows | ✅ Constant cost/token | ✅ Constant cost/token |
+
+**Status (2026):** Mamba-2 and hybrids are credible production options for
+long-context and on-device LLMs. Pure Transformers still dominate where strong
+pretrained models and tooling matter most. Treat SSMs as a real alternative,
+not a research curiosity — but not as a Transformer replacement.
 
 
 ## Practical Selection Guide
@@ -633,13 +714,21 @@ Winner: Transformer
 2021: State Space Models (S4)
 → Very long sequences (10k-100k)
 → Theoretical foundations
-→ Cutting edge research
 
-Current (2025):
-- NLP: Transformer standard (BERT, GPT)
-- Time Series: TCN or Transformer
-- Audio: Specialized (WaveNet, Transformer)
-- Edge: LSTM or TCN (low memory)
+2023: Mamba (selective SSM)
+→ First SSM that matches Transformer quality on language
+→ O(n) inference, no KV cache
+
+2024: Mamba-2, Jamba (Mamba+Transformer hybrid)
+→ Hardware-aware kernels, hybrid architectures
+→ Production-credible long-context / on-device inference
+
+Current (2026):
+- NLP: Transformer dominant (BERT, GPT, LLaMA, Mistral, Gemma)
+- Long context (>100k tokens): Mamba-2 or Mamba/Transformer hybrid
+- Time Series: Transformer or TCN; Mamba for very long horizons
+- Audio: Conformer (speech), SSMs for raw waveform
+- Edge / streaming: Mamba (constant memory) or quantized small Transformer
 ```
 
 
@@ -697,7 +786,8 @@ Based on answers:
 | Short text (< 50 tokens) | BiLSTM, DistilBERT | 1D CNN | Full BERT (overkill) |
 | Long text (> 512 tokens) | Longformer, BigBird | Hierarchical | Standard BERT (memory) |
 | Time series (< 1k steps) | TCN, Transformer | LSTM | Basic RNN |
-| Time series (> 1k steps) | Sparse Transformer, S4 | Hierarchical | Standard Transformer |
+| Time series (> 1k steps) | Sparse Transformer, Mamba-2 | Hierarchical, S4 | Standard Transformer |
+| Very long context LLM (>100k tok) | Mamba-2 or Jamba hybrid | Sparse / sliding-window Transformer | Vanilla Transformer (KV cache) |
 | Small dataset (< 10k) | LSTM, TCN | Simple models | Transformer (overfits) |
 | Large dataset (> 100k) | Transformer | TCN | LSTM (plateaus) |
 | Edge deployment | TCN, LSTM | Quantized Transformer | Large Transformer |

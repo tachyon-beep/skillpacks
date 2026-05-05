@@ -276,7 +276,105 @@ model = models.mobilenet_v3_small(pretrained=True)
 **Status:** Theoretically elegant, but ResNet/EfficientNet more practical
 
 
-### 6. VGG Family (2014) - Historical Baseline
+### 6. Modern Hybrid / Transformer-Era Vision Backbones (2022-2024)
+
+The CNN-vs-ViT split is largely obsolete. Modern vision backbones either:
+1. Are pure-conv but borrow ViT design choices (ConvNeXt, ConvNeXt v2), or
+2. Are hierarchical ViTs / hybrids that look like CNNs from the outside
+   (Swin v2, MaxViT, Hiera, FastViT).
+
+These families dominate the modern Pareto frontier. If you're choosing a
+backbone today and aren't constrained to legacy ResNet/EfficientNet
+checkpoints, **start here**.
+
+#### ConvNeXt v2
+
+**Papers:** Liu et al. — *A ConvNet for the 2020s* (CVPR 2022); Woo et al. —
+*ConvNeXt V2: Co-designing and Scaling ConvNets with Masked Autoencoders*
+(CVPR 2023).
+
+ConvNeXt v1 ports Transformer-era design (large 7×7 depthwise kernels,
+LayerNorm, GELU, fewer activations, inverted bottleneck) into a pure-conv
+backbone. v2 adds Global Response Normalization and an FCMAE
+(Fully-Convolutional Masked Autoencoder) self-supervised pretraining recipe.
+
+- Matches ViT/Swin accuracy at similar parameter counts
+- CNN-friendly inference (no attention, no shifted-window bookkeeping)
+- Strong off-the-shelf checkpoints on `timm`
+- **Use when:** You want ViT-class accuracy with conv-style deployment
+
+#### EfficientNetV2
+
+**Paper:** Tan & Le — *EfficientNetV2: Smaller Models and Faster Training*
+(ICML 2021).
+
+Successor to EfficientNet that explicitly fixes V1's two main pain points:
+slow training (V1's depthwise convs at low resolution were
+memory-bandwidth-bound) and unstable progressive learning. V2 uses
+Fused-MBConv blocks at early stages and a smarter compound scaling rule.
+
+- Trains 5–11× faster than V1 at similar accuracy
+- Smaller checkpoint footprint at the same accuracy band
+- **Use when:** You want EfficientNet's compound-scaling story but with
+  modern training speed; V2 is a strict upgrade over V1 for new work.
+
+#### Swin Transformer v2
+
+**Paper:** Liu et al. — *Swin Transformer V2: Scaling Up Capacity and
+Resolution* (CVPR 2022).
+
+Hierarchical ViT with shifted local windows; v2 adds residual-post-norm,
+scaled cosine attention, and a log-spaced continuous position bias to scale
+past 3B params and 1500² input resolution without divergence.
+
+- Strong for dense prediction (segmentation, detection); the canonical
+  "ViT that behaves like a CNN backbone" choice
+- Heavier inference than ConvNeXt — pick ConvNeXt if attention isn't pulling
+  weight
+
+#### MaxViT
+
+**Paper:** Tu et al. — *MaxViT: Multi-Axis Vision Transformer* (ECCV 2022).
+
+Alternates **block attention** (local) and **grid attention** (sparse global)
+with mobile-conv blocks. Scales linearly in image size and competes with
+Swin/ConvNeXt across the accuracy/compute frontier.
+
+#### Hiera
+
+**Paper:** Ryali et al. — *Hiera: A Hierarchical Vision Transformer without
+the Bells-and-Whistles* (ICML 2023).
+
+Strips Swin back to a plain hierarchical ViT trained with MAE. Matches or
+beats Swin/MaxViT despite being simpler. **Use when:** You want a clean,
+minimal hierarchical ViT and have an MAE-style pretraining stage available.
+
+#### FastViT
+
+**Paper:** Vasu et al. — *FastViT: A Fast Hybrid Vision Transformer using
+Structural Reparameterization* (ICCV 2023).
+
+CNN/ViT hybrid built around RepMixer blocks that **reparameterize at
+inference** (training graph collapses into a faster inference graph).
+Best-in-class for on-device mobile latency among hybrids.
+
+#### Modern Pareto Cheatsheet
+
+| Goal | Pick |
+|------|------|
+| Best accuracy / FLOP, supervised pretrain | ConvNeXt v2, EfficientNetV2 |
+| Best accuracy / FLOP, SSL pretrain available | Hiera + MAE, ConvNeXt v2 + FCMAE |
+| Dense prediction (det/seg) backbone | Swin v2, ConvNeXt v2, MaxViT |
+| Mobile / on-device latency | FastViT, MobileNetV3, EfficientNetV2-S |
+| Off-the-shelf general vision features | DINOv2 ViT, SigLIP ViT (see ViT section in transformer sheet) |
+
+(Don't read absolute parameter counts off the original ImageNet papers —
+modern training recipes and checkpoint variants drift faster than this
+sheet can be updated. Use the family/regime guidance, then look up the
+current best variant on `timm` or the official repo.)
+
+
+### 7. VGG Family (2014) - Historical Baseline
 
 **Architecture:** Very deep (16-19 layers), small 3×3 convolutions, many parameters
 
@@ -367,44 +465,127 @@ Always use:
 
 ### Scenario 4: Object Detection
 
-**Goal:** Select backbone for detection framework
+**Goal:** Select detector + backbone
 
-**Recommendation:**
+The detector landscape split in two around 2020 with the introduction of DETR.
+Modern choices fall into three buckets:
+
+#### A. Real-time CNN detectors (YOLO family)
+
+The YOLO line is still the default for real-time detection. Recent versions
+have absorbed Transformer-style ideas (decoupled head, anchor-free, NMS-free
+variants) while staying CNN-fast.
+
+| Variant | Year | Notes |
+|---------|------|-------|
+| YOLOv5 / YOLOv7 | 2020-2022 | Mature, widely-deployed PyTorch baselines |
+| YOLOv8 (Ultralytics) | 2023 | Anchor-free, decoupled head, simpler training |
+| YOLOv9 (Wang et al. 2024) | 2024 | PGI + GELAN; better accuracy/FLOP |
+| YOLOv10 (Wang et al. 2024) | 2024 | NMS-free dual-label assignment; lower latency |
+| YOLOv11 (Ultralytics) | 2024 | Iterative refinement on YOLOv8 codebase |
+
+Pick whichever has the best maintained checkpoints for your deployment
+target. Differences between v8/v9/v10/v11 are modest; ecosystem stability
+matters more than the latest paper.
+
+#### B. Transformer-based detectors (DETR family)
+
+**Paper:** Carion et al. — *End-to-End Object Detection with Transformers*
+(DETR, ECCV 2020).
+
+DETR replaced the hand-engineered detection pipeline (anchors, NMS, heuristic
+matching) with a Transformer that does set prediction via Hungarian matching.
+The original was slow to converge; the followups fixed that:
+
+- **Deformable DETR** (Zhu et al. ICLR 2021): sparse deformable attention,
+  10× faster convergence.
+- **DAB-DETR / DN-DETR** (2022): better query design, denoising training.
+- **DINO** (Zhang et al. ICLR 2023): contrastive denoising + mixed query
+  selection; long-time COCO leader.
+- **RT-DETR** (Zhao et al. CVPR 2024): real-time DETR variant; competes with
+  YOLO on latency while keeping the NMS-free, end-to-end-trainable property.
+- **Co-DETR** (Zong et al. ICCV 2023): collaborative hybrid assignments;
+  strong COCO numbers.
+
+**When to use:** You want end-to-end training (no NMS / anchors), or you're
+already in a Transformer stack and want a unified backbone.
+
+#### C. Open-vocabulary / promptable detection
+
+| Model | Paper | What it does |
+|-------|-------|-------------|
+| **CLIP-based detectors** (ViLD, RegionCLIP, OWL-ViT) | Various 2021-2022 | Detect objects by text prompt rather than fixed class list |
+| **OWL-ViT / OWL-v2** | Minderer et al. 2022 / 2023 | Open-vocabulary detection from CLIP-style ViT |
+| **Grounding DINO** | Liu et al. ECCV 2024 | DETR-style grounded detection from natural-language phrases |
+| **YOLO-World** | Cheng et al. CVPR 2024 | Real-time open-vocabulary detection |
+
+**When to use:** You can't enumerate classes ahead of time, or you need
+detection driven by natural-language queries.
+
+#### Detection backbone summary
+
 ```
-Faster R-CNN:
-→ ResNet-50 + FPN (standard)
-→ ResNet-101 + FPN (more accuracy)
-
-YOLOv8:
-→ CSPDarknet (built-in, optimized)
-
-EfficientDet:
-→ EfficientNet + BiFPN (best efficiency)
-
-Custom detection:
-→ ResNet or EfficientNet as backbone
-→ Add Feature Pyramid Network (FPN) for multi-scale
+Real-time CNN, fixed classes      → YOLOv8/v9/v10/v11
+End-to-end Transformer detector   → DINO or RT-DETR
+Best COCO accuracy, no realtime   → Co-DETR or DINO
+Open-vocabulary / text-prompt     → Grounding DINO, OWL-v2, YOLO-World
+Legacy two-stage (Faster R-CNN)   → ResNet/Swin + FPN — still supported,
+                                    but rarely the right new-build choice
 ```
 
-**Note:** Detection adds significant compute on top of backbone. Choose efficient backbone.
 
-
-### Scenario 5: Semantic Segmentation
+### Scenario 5: Semantic / Instance / Promptable Segmentation
 
 **Goal:** Dense pixel-wise prediction
 
-**Recommendation:**
+#### Classic semantic segmentation
+
 ```
 U-Net style:
-→ ResNet-18/34 as encoder (fast)
-→ EfficientNet-B0 as encoder (efficient)
+→ ResNet / EfficientNet / ConvNeXt encoder + skip-connected decoder
 
-DeepLabV3:
-→ ResNet-50 (standard)
-→ MobileNetV3 (mobile deployment)
+DeepLabV3 / DeepLabV3+:
+→ ResNet, ConvNeXt, or MobileNetV3 backbone
+→ Atrous convolutions for multi-scale context
 
-Key: Segmentation requires multi-scale features
-→ Ensure backbone has skip connections or FPN
+Mask2Former (Cheng et al. CVPR 2022):
+→ Universal segmentation (semantic / instance / panoptic in one model)
+→ Strong default for general segmentation work
+```
+
+#### Promptable / foundation-model segmentation: SAM and SAM-2
+
+**Papers:**
+- Kirillov et al. — *Segment Anything* (SAM, ICCV 2023)
+- Ravi et al. — *SAM 2: Segment Anything in Images and Videos* (Meta, 2024)
+
+SAM is a **promptable** segmentation foundation model: you give it a point,
+box, mask, or text prompt and it produces a segmentation mask, in zero-shot.
+Architecture: ViT image encoder + prompt encoder + lightweight mask decoder.
+Trained on the SA-1B dataset (1.1B masks).
+
+SAM-2 generalizes this to **video**, adding a memory module so a single
+prompt propagates across frames; works for both image and video.
+
+**When to use SAM / SAM-2:**
+- You need masks but don't have a labeled dataset → zero-shot promptable
+  segmentation.
+- You want to bootstrap a labeling pipeline (SAM-assisted annotation is now
+  the dominant way to build new segmentation datasets).
+- Video object segmentation with sparse user input.
+
+**When NOT to use:**
+- You have a fixed, narrow class set with plenty of labels → fine-tune a
+  smaller specialist (Mask2Former, DeepLabV3+ with ConvNeXt) for lower
+  inference cost.
+- Hard real-time mobile constraints — SAM's ViT encoder is heavy. Look at
+  MobileSAM or EfficientSAM for distilled lightweight variants.
+
+```
+Multi-scale semantic seg, fixed classes → Mask2Former + ConvNeXt/Swin v2
+Mobile / edge semantic seg              → DeepLabV3+ + MobileNetV3
+Zero-shot / promptable / labeling       → SAM (image) or SAM-2 (image+video)
+Open-vocabulary semantic seg            → ODISE, OpenSeeD, SAN
 ```
 
 
@@ -534,12 +715,18 @@ MobileNetV3-Large:  5M params (fast inference)
 → For research/large-scale applications
 ```
 
-**Current Recommendations (2025):**
-- Cloud: **EfficientNet** (best efficiency) or ResNet (simplicity)
-- Edge: **EfficientNet-Lite** or MobileNetV3
-- Mobile: **MobileNetV3** + quantization
-- Detection: **EfficientDet** or YOLOv8
-- Baseline: **ResNet** (simple, well-tested)
+**Current Recommendations (2026):**
+- Cloud, supervised: **ConvNeXt v2** or **EfficientNetV2**
+- Cloud, self-supervised features: **DINOv2** ViT or **Hiera + MAE**
+- Edge: **EfficientNetV2-S/M** or **FastViT**
+- Mobile: **MobileNetV3** + quantization (still the practical default for the
+  smallest budgets)
+- Detection (real-time): **YOLOv8/v9/v10/v11** or **RT-DETR**
+- Detection (best accuracy): **DINO**, **Co-DETR**
+- Detection (open vocabulary): **Grounding DINO**, **YOLO-World**
+- Segmentation (general): **Mask2Former** + ConvNeXt v2 / Swin v2
+- Segmentation (promptable / zero-shot): **SAM** / **SAM-2**
+- Baseline / well-tested: **ResNet-50** (still fine; just not the frontier)
 
 
 ## Decision Checklist
