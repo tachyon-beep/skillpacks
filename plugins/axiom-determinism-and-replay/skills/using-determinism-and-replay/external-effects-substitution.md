@@ -1,3 +1,8 @@
+---
+name: external-effects-substitution
+description: Use when external effects (clock, network, filesystem, syscalls, third-party APIs) leak non-determinism into the system — substitution patterns at the boundary, recorded-then-replayed inputs, and the design discipline that keeps replay independent of the world outside the system. Produces `10-external-effects-substitution.md`.
+---
+
 # External Effects Substitution
 
 ## Overview

@@ -1,6 +1,6 @@
 {
   "name": "axiom-determinism-and-replay",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Architecture-level determinism and replay: seed governance, RNG isolation, snapshot strategy, divergence detection, replay infrastructure, concurrency strategies, floating-point policy, GPU determinism, external-effects substitution, canonical state encoding, property tests, and cost-of-determinism accounting. Frames 'what happened' as a recoverable fact for RL substrates, multi-agent systems, multiplayer lockstep engines, and any simulation that must be re-run from inputs. Ships a router + 13 specialist sheets, 3 commands (/scaffold-replay-system, /verify-replay, /diagnose-divergence), and 2 SME-protocol-conformant agents (determinism-reviewer, replay-debugger).",
   "author": {
     "name": "tachyon-beep",

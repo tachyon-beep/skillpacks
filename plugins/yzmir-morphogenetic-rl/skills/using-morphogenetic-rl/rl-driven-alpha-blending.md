@@ -1,3 +1,8 @@
+---
+name: rl-driven-alpha-blending
+description: Use when an RL controller decides the alpha schedule for blending in a new seed/module — observation space against blending state, action shape (rate vs absolute alpha), reward shaping against integration outcome, and the boundary against fixed-schedule blending.
+---
+
 # RL-Driven Alpha Blending
 
 This is a bridge sheet. The alpha-blending mechanics — how the new module's contribution is mixed in via α, when gradients flow through the new path, the standard cosine/linear/sigmoid schedule shapes — are covered in `yzmir-dynamic-architectures/gradient-isolation-techniques`. This sheet covers only the morphogenesis-RL-specific concern: making α a *learned controller output* rather than a fixed schedule.

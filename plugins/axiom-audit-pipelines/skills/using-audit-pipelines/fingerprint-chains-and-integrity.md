@@ -1,3 +1,8 @@
+---
+name: fingerprint-chains-and-integrity
+description: Use when constructing the chain that turns independent entries into evidence about their own past — linked-hash vs Merkle, gap-recovery procedure, partial-trust verification model, clock dependence, and what changes count as chain-breaking events. Produces `03-chain-and-integrity-spec.md`.
+---
+
 # Fingerprint Chains and Integrity
 
 ## Overview

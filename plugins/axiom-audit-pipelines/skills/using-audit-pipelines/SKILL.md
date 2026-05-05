@@ -1,6 +1,6 @@
 ---
 name: using-audit-pipelines
-description: Use when a system makes procedural decisions that must be defensible after the fact — rule firings, governor decisions, state transitions, gate verdicts, eligibility determinations, automated approvals — and you need a verifiable provenance chain rather than ordinary observability. Routes through canonical encoding, decision-log architecture, fingerprint chains, signed exports, immutable storage, retention with right-to-be-forgotten, partial replay, and performance budgets.
+description: Use when a system makes procedural decisions that must be defensible after the fact — rule firings, governor decisions, state transitions, gate verdicts, eligibility determinations, automated approvals — and you need a verifiable provenance chain rather than ordinary observability. Use when an auditor, regulator, customer, or court might later ask "prove it" about a decision the system made. Use when retention, redaction, or right-to-be-forgotten obligations conflict naively with append-only storage. Do not use for ordinary observability or for system-level threat modelling.
 ---
 
 # Using Audit Pipelines

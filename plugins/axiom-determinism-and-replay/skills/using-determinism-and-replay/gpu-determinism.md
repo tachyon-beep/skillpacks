@@ -1,3 +1,8 @@
+---
+name: gpu-determinism
+description: Use when GPU non-determinism threatens replay — atomic ordering, kernel non-associativity, cuDNN/cuBLAS algorithm selection, mixed precision, multi-GPU collectives, and the cost in throughput of forcing deterministic kernels. Produces `09-gpu-determinism-config.md`.
+---
+
 # GPU Determinism
 
 ## Overview

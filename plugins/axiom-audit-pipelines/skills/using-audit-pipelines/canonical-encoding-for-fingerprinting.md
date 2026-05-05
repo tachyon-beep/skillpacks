@@ -1,3 +1,8 @@
+---
+name: canonical-encoding-for-fingerprinting
+description: Use when picking the canonical byte form for log entries before hashing — RFC 8785 JCS or alternative with rationale, and the gotcha classes (floats, map ordering, timezones, Unicode normalisation, integer width) that silently break verification on a sloppy rule. Produces `02-canonical-encoding-spec.md`.
+---
+
 # Canonical Encoding for Fingerprinting
 
 ## Overview

@@ -1,3 +1,8 @@
+---
+name: partial-replay-from-trail
+description: Use when designing replay-from-audit (reconstructing system state from N entries to answer "given what happened, what did the system look like?"). Covers replay scope honesty, what state outside the trail is required, and the boundary against replay-for-debugging owned by axiom-determinism-and-replay. Produces `08-replay-capability.md`.
+---
+
 # Partial Replay from an Audit Trail
 
 ## Overview

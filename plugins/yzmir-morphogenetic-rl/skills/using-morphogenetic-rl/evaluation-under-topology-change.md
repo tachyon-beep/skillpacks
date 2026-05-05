@@ -1,3 +1,8 @@
+---
+name: evaluation-under-topology-change
+description: Use when comparing checkpoints whose architectures differ — parameter-budget controls, FLOPs-budget controls, capacity-matched baselines, and the discipline that prevents "morphogenesis improves over static" from meaning "morphogenesis used more parameters."
+---
+
 # Evaluation Under Topology Change
 
 ## When to Use

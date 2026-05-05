@@ -1,3 +1,8 @@
+---
+name: determinism-vs-reproducibility
+description: Use when fixing the vocabulary before fighting about implementation — picking a determinism class ("two runs are equivalent iff [precise predicate]") and distinguishing logical equivalence from bit-exactness. The first sheet in the pack. Produces `01-determinism-class.md`.
+---
+
 # Determinism vs Reproducibility
 
 ## Overview

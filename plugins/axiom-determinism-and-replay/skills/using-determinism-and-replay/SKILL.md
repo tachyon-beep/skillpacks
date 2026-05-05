@@ -1,6 +1,6 @@
 ---
 name: using-determinism-and-replay
-description: Use when designing a system whose past behaviour must be recoverable as a fact — RL training substrates, multi-agent simulations, deterministic game engines, replay-debuggable services, multiplayer lockstep, or any pipeline where "I cannot reproduce that bug" is unacceptable. Routes through determinism-vs-reproducibility, seed governance, RNG isolation, snapshot strategy, divergence detection, replay infrastructure, concurrency, floating-point, GPU, external-effects substitution, canonical state encoding, property tests, and cost analysis. Architecture-level: how to design a deterministic system. For verifying an existing simulation against known patterns, use `/check-determinism` from yzmir-simulation-foundations instead.
+description: Use when designing a system whose past behaviour must be recoverable as a fact — RL training substrates, multi-agent simulations, deterministic game engines, replay-debuggable services, multiplayer lockstep, or any pipeline where "I cannot reproduce that bug" is unacceptable. Use when teams disagree about what "snapshot", "seed", or "replay" mean across modules. Use when cross-machine or cross-process determinism is required, or a regulator will ask "what was the input at tick T?". Architecture-level: how to design a deterministic system. For verifying an existing simulation against known patterns, use `/check-determinism` from yzmir-simulation-foundations instead.
 ---
 
 # Using Determinism and Replay

@@ -1,3 +1,8 @@
+---
+name: rollback-as-rl-signal
+description: Use when shaping reward when the governor reverts a controller decision — reverted-graft penalty, sparse-rollback PPO behaviour, off-policy reweighting for rollback events, and the discipline that keeps rollback informative without pushing the policy into never-grow.
+---
+
 # Rollback as RL Signal
 
 ## When to Use

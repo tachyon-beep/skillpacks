@@ -1,3 +1,8 @@
+---
+name: deterministic-morphogenesis
+description: Use when reproducing morphogenesis runs across topology changes — same-seed-same-graft guarantees, RNG isolation between policy/governor/network, replay across shape changes, and the cross-pack interaction with axiom-determinism-and-replay.
+---
+
 # Deterministic Morphogenesis
 
 ## When to Use

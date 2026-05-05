@@ -1,6 +1,6 @@
 ---
 name: using-rust-workspaces
-description: Use when working in a Rust **cargo workspace** — multiple crates under one `[workspace]` root, shared `Cargo.lock`, shared target dir. Routes through workspace structure (layered / feature-grouped / domain-grouped), `workspace.dependencies` + resolver-2/3 with feature-graph semantics, `workspace.lints` + workspace-scope `clippy.toml`, workspace-scope `deny.toml`, feature-unification gotchas, public-vs-internal crate boundaries with the internal-traits-crate pattern, Miri on the unsafe-bearing subset, test organisation, rustdoc + mdbook architecture, release flow (synchronised vs independent versioning), task-runner patterns, workspace-scope coverage, and the workspace anti-pattern refusal list. Pairs with `/rust-engineering` — that pack is single-crate-shaped; this pack composes those concerns at workspace scale. Do not load for a single-crate project.
+description: Use when working in a Rust **cargo workspace** — multiple crates under one `[workspace]` root, shared `Cargo.lock`, shared target dir. Use when promoting a single-crate project to a workspace, when crates have drifted into per-crate dependency versions / lint configs / licence policies, when feature-unification surprises produce different binaries from `cargo build` vs `cargo build -p`, or when deciding which crates to publish vs keep private. Pairs with `/rust-engineering` — that pack is single-crate-shaped; this pack composes those concerns at workspace scale. Do not load for a single-crate project.
 ---
 
 # Using Rust Workspaces

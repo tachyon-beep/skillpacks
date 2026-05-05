@@ -1,3 +1,8 @@
+---
+name: snapshot-strategy
+description: Use when deciding what a snapshot captures, what it doesn't (caches, lazy initialisation, JIT effects, scheduler state, GPU memory), and how state outside the snapshot is re-derived on rehydration. Cadence, format, and rehydration protocol. Produces `04-snapshot-strategy.md`.
+---
+
 # Snapshot Strategy
 
 ## Overview

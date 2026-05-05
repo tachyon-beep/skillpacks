@@ -1,3 +1,8 @@
+---
+name: safety-gated-seed-fsm
+description: Use when designing the finite-state machine that governs a seed's lifecycle — proposed → admitted → grown → blended → integrated → retired (or aborted) — with the safety gates between transitions and the controller's observation/action surface against the FSM.
+---
+
 # Safety-Gated Seed FSM
 
 This is a bridge sheet. The seed lifecycle FSM mechanics — states, transitions, persistence — are covered in `yzmir-dynamic-architectures/ml-lifecycle-orchestration`. This sheet covers only the morphogenesis-RL-specific overlay: how governor verdicts and controller proposals integrate with that FSM.

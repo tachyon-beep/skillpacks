@@ -1,3 +1,8 @@
+---
+name: property-tests-as-determinism-checks
+description: Use when designing the property-test suite that proves the determinism class holds — same-seed-same-result, snapshot-rehydrate-equivalence, divergence-detection convergence, replay-from-N-entries scope, and concurrency-replay equivalence. Produces `12-property-test-suite.md`.
+---
+
 # Property Tests as Determinism Checks
 
 ## Overview

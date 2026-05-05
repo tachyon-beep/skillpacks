@@ -1,3 +1,8 @@
+---
+name: governor-and-safety-gates
+description: Use when designing NaN/Inf/loss-explosion gates that veto controller decisions — gate independence from the policy, the discipline that keeps the governor from being trained against, and the boundary between safety-gating (hard) and reward-shaping (soft).
+---
+
 # Governor and Safety Gates
 
 ## When to Use

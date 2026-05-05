@@ -1,3 +1,8 @@
+---
+name: retention-expiry-and-rtbf
+description: Use when reconciling append-only storage with retention obligations, right-to-be-forgotten, redaction-for-legal-hold, and incident-investigation preservation. Mechanisms: cryptographic erasure, redaction-with-witness, segregated-PII architectures, explicit waivers anchored in named legal authority. Pairs with immutable-storage-patterns. Contributes to `06-storage-and-retention.md`.
+---
+
 # Retention, Expiry, and Right-to-be-Forgotten
 
 ## Overview

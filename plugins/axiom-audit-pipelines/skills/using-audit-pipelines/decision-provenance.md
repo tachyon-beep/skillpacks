@@ -1,3 +1,8 @@
+---
+name: decision-provenance
+description: Use when binding an entry's output to its inputs commitment, ruleset id/version, and code version so that "given the same inputs and ruleset on the same code, you would produce the same output" is a verifiable claim. Covers ML-model rulesets and version-pinning discipline. Produces `05-provenance-bindings.md`.
+---
+
 # Decision Provenance
 
 ## Overview

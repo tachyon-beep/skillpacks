@@ -1,3 +1,8 @@
+---
+name: rl-controller-for-morphogenesis
+description: Use when designing the RL controller's action space (when/which structural change), observation space (what the policy sees about network state), and reward function for topology-changing decisions — including the failure mode where reward goes down even when growth helped, and where it goes up because the controller learned to game the gates.
+---
+
 # RL Controller for Morphogenesis
 
 ## When to Use

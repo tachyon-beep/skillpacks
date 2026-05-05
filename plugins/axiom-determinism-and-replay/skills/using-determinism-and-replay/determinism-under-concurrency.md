@@ -1,3 +1,8 @@
+---
+name: determinism-under-concurrency
+description: Use when concurrency threatens determinism — thread scheduling, async ordering, message-passing non-determinism, lock-free races, and the strategies (deterministic schedulers, single-thread mode, ordered queues, replay-of-the-schedule) that make concurrent systems deterministic on demand. Produces `07-concurrency-determinism-spec.md`.
+---
+
 # Determinism Under Concurrency
 
 ## Overview

@@ -1,3 +1,8 @@
+---
+name: immutable-storage-patterns
+description: Use when designing append-only storage at rest — write-once-verify-many guarantees, encryption-at-rest, the boundary between trail and registry, and the operational discipline (backup, restore, migration) that keeps storage from becoming the weak link. Pairs with retention-expiry-and-rtbf. Contributes to `06-storage-and-retention.md`.
+---
+
 # Immutable Storage Patterns
 
 ## Overview

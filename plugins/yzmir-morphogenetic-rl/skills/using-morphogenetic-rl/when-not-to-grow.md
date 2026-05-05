@@ -1,3 +1,8 @@
+---
+name: when-not-to-grow
+description: Use when deciding the network has reached its useful capacity, the controller is growing into pathology, or the problem doesn't benefit from morphogenesis — refusal patterns, capacity-saturation signals, and the boundary against "always grow more."
+---
+
 # When Not to Grow
 
 ## When to Use

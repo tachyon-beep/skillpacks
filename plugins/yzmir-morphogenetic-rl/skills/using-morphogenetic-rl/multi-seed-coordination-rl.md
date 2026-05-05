@@ -1,3 +1,8 @@
+---
+name: multi-seed-coordination-rl
+description: Use when multiple seeds compete for the same slot or interact during integration — coordination between controllers, slot-allocation policy, and the multi-agent RL shape (cooperative vs competitive) that the morphogenesis system implicitly requires.
+---
+
 # Multi-Seed Coordination in RL
 
 ## When to Use

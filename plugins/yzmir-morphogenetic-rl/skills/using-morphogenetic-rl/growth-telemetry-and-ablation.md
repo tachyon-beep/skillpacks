@@ -1,3 +1,8 @@
+---
+name: growth-telemetry-and-ablation
+description: Use when designing the logging schema that survives shape changes — additivity over topology change, ablation-friendly fields (so a grown vs static comparison is meaningful), and the metrics that distinguish controller signal from network signal.
+---
+
 # Growth Telemetry and Ablation
 
 ## When to Use

@@ -1,3 +1,8 @@
+---
+name: decision-log-architecture
+description: Use when defining what counts as a decision in this system — entry shape, mandatory fields, the boundary between decisions and ordinary log lines, and entry-shape versioning that does not invalidate older entries. The first sheet in the pack; classifies the tier. Produces `00-scope-and-decisions.md` and `01-decision-log-schema.md`.
+---
+
 # Decision-Log Architecture
 
 ## Overview

@@ -1,3 +1,8 @@
+---
+name: canonical-state-encoding-for-replay
+description: Use when replay must compare states across machines, processes, or versions — canonicalisation rule for state hashes, the gotcha classes shared with audit-pipeline encoding (floats, map ordering, timezones, Unicode, integer width), and the cross-pack overlap with axiom-audit-pipelines when both apply. Produces `11-canonical-state-encoding.md`.
+---
+
 # Canonical State Encoding for Replay
 
 ## Overview
