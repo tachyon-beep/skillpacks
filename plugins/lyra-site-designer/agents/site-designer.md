@@ -39,17 +39,24 @@ You design sites that look like they belong alongside Rust's documentation, Go's
 - Admonition blocks: note, warning, tip, danger with consistent styling
 
 ### Static Site Tooling
-- Hugo, Astro, Eleventy, Jekyll, or plain HTML/CSS — choose the simplest tool that serves the content
+- For **docs sites**: prefer a docs-first framework (Starlight on Astro, VitePress, or Docusaurus 3) over rolling sidebar/search/dark-mode by hand
+- For **blogs / custom layouts / no-Node toolchains**: Hugo
+- For **project sites with marketing + interactive demos**: Astro (island architecture)
+- For **simple sites or under five pages**: plain HTML/CSS
 - Build pipelines: markdown → HTML with proper templating
 - Asset management: CSS bundling, image optimization
-- Deployment: static file hosting, CDN configuration
+- Deployment: static file hosting (GitHub Pages first-party flow, Cloudflare Pages, Netlify), CDN configuration
 
 ### CSS/HTML Craftsmanship
 - Semantic markup: proper heading hierarchy, landmark elements, accessible forms
-- CSS custom properties for theming: colors, typography, spacing as design tokens
+- CSS custom properties for theming with OKLCH primitives + `light-dark()` semantic tokens (one declaration per token, not duplicated dark-mode block)
+- **Container queries** (`@container`/`container-type`) for component-level layout decisions; viewport media queries for page-level decisions
+- **`:has()`** for stateful parent styling (active sidebar section, code block with copy button, etc.)
+- Native CSS nesting (Baseline 2023) — no preprocessor needed
+- Fluid typography with `clamp()` for hero/heading scales
 - Responsive layouts without framework dependencies
 - Print stylesheets for documentation pages
-- CSS-only interactions where JavaScript isn't needed (details/summary, :target selectors)
+- CSS-only interactions where JavaScript isn't needed: `<details>`/`<summary>`, `:target`, native `<dialog>` and the `popover` attribute (Baseline 2024 — replaces hand-rolled focus-trap modal/sidebar JS)
 
 ### Accessibility
 - WCAG AA compliance as baseline
@@ -110,25 +117,36 @@ When defining design tokens, follow this process:
 4. **Set spacing scale**: consistent base unit (4px or 8px), derive all margins/padding/gaps from multiples
 
 ```css
-/* Example design token structure */
+/* Example design token structure — OKLCH primitives, light-dark() semantics */
 :root {
-  /* Color anchors */
-  --color-primary: #1a365d;
-  --color-accent: #0a6e72;
+  color-scheme: light dark;
 
-  /* Derived colors — light mode */
-  --color-bg: #ffffff;
-  --color-bg-subtle: #f7f8fa;
-  --color-bg-code: #f0f2f5;
-  --color-text: #1a1a2e;
-  --color-text-muted: #4a5568;
-  --color-border: #e2e8f0;
-  --color-link: var(--color-accent);
+  /* Primitives (OKLCH for perceptual uniformity) */
+  --navy-100: oklch(0.93 0.025 250);
+  --navy-700: oklch(0.38 0.080 250);
+  --navy-900: oklch(0.20 0.045 250);
+  --teal-400: oklch(0.70 0.110 195);
+  --teal-600: oklch(0.55 0.110 195);
+
+  /* Semantic — single declaration per token, swaps on color-scheme */
+  --color-primary:    light-dark(var(--navy-700), oklch(0.78 0.06 250));
+  --color-accent:     light-dark(var(--teal-600), var(--teal-400));
+  --color-bg:         light-dark(oklch(0.99 0.003 250), oklch(0.18 0.020 250));
+  --color-bg-subtle:  light-dark(oklch(0.97 0.005 250), oklch(0.22 0.020 250));
+  --color-bg-code:    light-dark(var(--navy-100),       oklch(0.25 0.020 250));
+  --color-text:       light-dark(var(--navy-900),       oklch(0.93 0.015 250));
+  --color-text-muted: light-dark(oklch(0.55 0.020 250), oklch(0.70 0.020 250));
+  --color-border:     light-dark(oklch(0.86 0.012 250), oklch(0.30 0.020 250));
+  --color-link:       var(--color-accent);
+  --color-link-hover: color-mix(in oklch, var(--color-link) 80%, var(--color-text) 20%);
 
   /* Typography */
   --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-code: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
   --font-heading: var(--font-body);
+
+  /* Fluid hero scale */
+  --text-fluid-h1: clamp(2rem, 1.4rem + 3vw, 3.5rem);
 
   /* Spacing (8px base) */
   --space-1: 0.25rem;  /* 4px */
@@ -143,17 +161,9 @@ When defining design tokens, follow this process:
   --sidebar-width: 16rem;
 }
 
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #0d1117;
-    --color-bg-subtle: #161b22;
-    --color-bg-code: #1c2128;
-    --color-text: #e6edf3;
-    --color-text-muted: #8b949e;
-    --color-border: #30363d;
-  }
-}
+/* Toggle override flips color-scheme; light-dark() does the rest */
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
 ```
 
 ## Common Page Templates

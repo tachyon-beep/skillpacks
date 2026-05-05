@@ -219,6 +219,57 @@ Skip this section entirely if the project is new. An empty social proof section 
 }
 ```
 
+## Polish: View Transitions and `@starting-style`
+
+Two modern primitives can lift the perceived quality of a landing page without adding any framework or animation library.
+
+### Same-Document View Transitions for Tab Switches
+
+If the install command (or "examples in language X / Y / Z") uses tabs, wrap the panel swap in a view transition for a smooth crossfade with no JS animation code. The View Transitions API (same-document) is Baseline 2024 — Chrome 111, Safari 18, Firefox 129.
+
+```javascript
+function switchInstallTab(nextTab) {
+  const update = () => {
+    // your existing tab-switching logic
+    activatePanel(nextTab);
+  };
+  if (document.startViewTransition) {
+    document.startViewTransition(update);
+  } else {
+    update();              // graceful fallback — instant swap
+  }
+}
+```
+
+```css
+/* Optional: tune the default crossfade */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 180ms;
+}
+```
+
+### `@starting-style` for Hero Reveal
+
+`@starting-style` (Baseline 2024 — Chrome 117, Safari 17.5, Firefox 129) lets an element animate from a defined "before mounted" state to its normal style without any JS hook. Useful for a one-shot hero reveal that doesn't need a library:
+
+```css
+.hero h1 {
+  opacity: 1;
+  translate: 0 0;
+  transition: opacity 400ms ease, translate 400ms ease;
+}
+
+@starting-style {
+  .hero h1 {
+    opacity: 0;
+    translate: 0 0.5rem;
+  }
+}
+```
+
+Both features no-op gracefully on older browsers — the page just renders without the effect, which is the correct fallback.
+
 ## What NOT to Include
 
 - Pricing tables (this is for open-source / developer tools)

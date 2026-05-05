@@ -177,7 +177,7 @@
     {
       "name": "lyra-site-designer",
       "source": "./plugins/lyra-site-designer",
-      "description": "Static site design and implementation for developer tools and documentation - information architecture, HTML/CSS, design tokens, developer UX patterns - 1 skill, 1 agent, 1 command, 6 reference sheets",
+      "description": "Static site design and implementation for developer tools and documentation - information architecture, modern CSS (container queries, :has(), OKLCH, light-dark(), View Transitions), design tokens, docs-first frameworks (Starlight, VitePress, Docusaurus 3), developer UX patterns - 1 skill, 1 agent, 1 command, 6 reference sheets",
       "keywords": [
         "lyra",
         "site",

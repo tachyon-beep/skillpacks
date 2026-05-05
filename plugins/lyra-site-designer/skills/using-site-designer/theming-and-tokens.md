@@ -14,119 +14,112 @@ Reference sheet for defining design token systems, implementing dark/light mode,
 
 ### Token Layers
 
-Organize tokens in three layers:
+Organize tokens in three layers. Use **OKLCH** for primitives — it is perceptually uniform, so equal lightness steps in the ramp look like equal steps to the eye, and the hue stays stable across the ramp. `oklch()` is Baseline 2023 (Chrome 111, Safari 15.4, Firefox 113).
 
 ```css
 :root {
-  /* Layer 1: Primitives — raw values, never used directly in components */
-  --navy-50: #f0f4f8;
-  --navy-100: #d9e2ec;
-  --navy-200: #bcccdc;
-  --navy-500: #627d98;
-  --navy-700: #334e68;
-  --navy-900: #102a43;
+  color-scheme: light dark;
 
-  --teal-400: #0fa89e;
-  --teal-600: #0a6e72;
-  --teal-800: #044e54;
+  /* Layer 1: Primitives — raw values, never used directly in components.
+     OKLCH(L C H): L = 0..1 lightness, C = chroma, H = hue degrees.
+     Equal L steps = perceptually equal lightness steps. */
+  --navy-50:  oklch(0.97 0.012 250);
+  --navy-100: oklch(0.93 0.025 250);
+  --navy-200: oklch(0.86 0.045 250);
+  --navy-500: oklch(0.55 0.090 250);
+  --navy-700: oklch(0.38 0.080 250);
+  --navy-900: oklch(0.20 0.045 250);
 
-  /* Layer 2: Semantic — role-based aliases, theme-dependent */
-  --color-bg: var(--navy-50);
-  --color-bg-subtle: white;
-  --color-text: var(--navy-900);
-  --color-text-muted: var(--navy-500);
-  --color-primary: var(--navy-700);
-  --color-accent: var(--teal-600);
-  --color-border: var(--navy-200);
-  --color-link: var(--teal-600);
-  --color-link-hover: var(--teal-800);
-  --color-bg-code: var(--navy-100);
-  --color-bg-code-block: var(--navy-900);
-  --color-code-text: var(--navy-100);
+  --teal-400: oklch(0.70 0.110 195);
+  --teal-600: oklch(0.55 0.110 195);
+  --teal-800: oklch(0.38 0.080 195);
+
+  /* Layer 2: Semantic — role-based aliases, theme-dependent.
+     light-dark(lightValue, darkValue) picks the right side based on
+     :root color-scheme. Replaces a duplicated dark-mode token block. */
+  --color-bg:            light-dark(oklch(0.99 0.003 250), oklch(0.18 0.020 250));
+  --color-bg-subtle:     light-dark(oklch(0.97 0.005 250), oklch(0.22 0.020 250));
+  --color-text:          light-dark(var(--navy-900),       oklch(0.93 0.015 250));
+  --color-text-muted:    light-dark(var(--navy-500),       oklch(0.70 0.020 250));
+  --color-primary:       light-dark(var(--navy-700),       oklch(0.78 0.060 250));
+  --color-accent:        light-dark(var(--teal-600),       var(--teal-400));
+  --color-border:        light-dark(var(--navy-200),       oklch(0.30 0.020 250));
+  --color-link:          var(--color-accent);
+  /* color-mix derives hover from link without committing a second token value */
+  --color-link-hover:    color-mix(in oklch, var(--color-link) 80%, var(--color-text) 20%);
+  --color-bg-code:       light-dark(var(--navy-100),       oklch(0.25 0.020 250));
+  --color-bg-code-block: light-dark(var(--navy-900),       oklch(0.15 0.018 250));
+  --color-code-text:     light-dark(oklch(0.95 0.010 250), oklch(0.93 0.015 250));
 
   /* Layer 3: Component — specific to a component (optional, define as needed) */
   --sidebar-bg: var(--color-bg-subtle);
   --sidebar-border: var(--color-border);
   --nav-bg: var(--color-primary);
-  --nav-text: white;
+  --nav-text: light-dark(white, var(--navy-900));
 }
 ```
 
 ### Why Three Layers?
 
 - **Primitives** define the full color ramp — they never change between themes
-- **Semantic tokens** map primitives to roles — these swap between light and dark
+- **Semantic tokens** map primitives to roles — `light-dark()` swaps the value per scheme
 - **Component tokens** are optional — only create them when a component needs to deviate from semantic defaults
+
+### Why OKLCH + `light-dark()`?
+
+- **OKLCH ramps are perceptually uniform.** Equal `L` steps look like equal lightness steps; equal `C` steps look like equal saturation steps. Hex ramps drift through perceptual lightness in the middle of the ramp, which is why so many hex palettes fail WCAG mid-ramp and need manual fixups.
+- **`light-dark()` halves the dark-mode block.** One declaration site per token instead of two, so the "I updated the light value but forgot the dark value" bug class disappears. It activates from the `color-scheme` property — set `color-scheme: light dark` on `:root` and the engine resolves which side to use.
+- **`color-mix(in oklch, ...)`** derives hover/active states from a base color without committing a separate token, keeping the palette compact and the relationships visible.
+
+### Legacy hex fallback
+
+If you must support browsers that pre-date Baseline 2023 (older Safari TPs, downstream products on locked Chromium forks), define hex aliases first and use `@supports` to layer the OKLCH/`light-dark()` ramp on top. For most public dev-tool sites — which track evergreen browsers — this isn't needed.
 
 ### Generating a Palette from Anchor Colors
 
-Given a primary color (e.g., `#1a365d` navy) and an accent (e.g., `#2b6cb0` blue):
+Given a primary color (e.g., navy at `oklch(0.38 0.08 250)`) and an accent (e.g., teal at `oklch(0.55 0.11 195)`):
 
-1. **Generate a full ramp** for each: 50 (lightest) through 900 (darkest), 10 steps
-2. **Derive grays** from the primary hue (tinted grays look more cohesive than pure gray)
-3. **Add functional colors**: success (green), warning (amber), error (red), info (blue)
-4. **Test contrast**: every text/background combination must pass WCAG AA
+1. **Generate a full OKLCH ramp** for each: hold hue (`H`) and chroma (`C`) roughly fixed and step `L` from ~0.97 down to ~0.18, 9–10 steps.
+2. **Derive grays** from the primary hue with very low chroma (`C ≈ 0.005–0.015`) — tinted grays read as cohesive with the brand instead of clinical.
+3. **Add functional colors**: success (green ~140°), warning (amber ~75°), error (red ~25°), info (blue ~250°). Use the same `L`/`C` envelope so they sit at consistent visual weight.
+4. **Test contrast**: every text/background combination must pass WCAG AA. OKLCH lightness is *not* the same as WCAG luminance — a contrast checker is still required.
 
 ```css
-/* Tinted grays derived from navy hue (210°) */
---gray-50: #f7f8fa;   /* warm, not clinical */
---gray-100: #ebedf0;
---gray-200: #d1d5db;
---gray-400: #9ca3af;
---gray-600: #4b5563;
---gray-800: #1f2937;
---gray-900: #111827;
+/* Tinted grays derived from navy hue (~250°) */
+--gray-50:  oklch(0.98 0.005 250);
+--gray-100: oklch(0.94 0.008 250);
+--gray-200: oklch(0.86 0.012 250);
+--gray-400: oklch(0.66 0.015 250);
+--gray-600: oklch(0.48 0.018 250);
+--gray-800: oklch(0.28 0.018 250);
+--gray-900: oklch(0.18 0.015 250);
 
-/* Functional colors */
---color-success: #059669;
---color-warning: #d97706;
---color-error: #dc2626;
---color-info: #2563eb;
+/* Functional colors — equal L envelope so they read at consistent weight */
+--color-success: oklch(0.58 0.13 145);
+--color-warning: oklch(0.72 0.15  75);
+--color-error:   oklch(0.58 0.18  25);
+--color-info:    oklch(0.58 0.16 245);
 ```
 
 ## Dark Mode Implementation
 
-### CSS Approach: prefers-color-scheme + Toggle
+### CSS Approach: `color-scheme` + `light-dark()` + Toggle Override
+
+The semantic-token block above already uses `light-dark()`, so per-scheme values exist exactly once. To make the toggle override the system preference, switch the `color-scheme` property at the root — `light-dark()` honours it automatically:
 
 ```css
-/* Default: light mode */
 :root {
-  --color-bg: #ffffff;
-  --color-bg-subtle: #f7f8fa;
-  --color-text: #1a1a2e;
-  --color-text-muted: #4a5568;
-  --color-border: #e2e8f0;
-  --color-bg-code: #f0f2f5;
-  --color-bg-code-block: #1e293b;
-  --color-code-text: #e2e8f0;
+  /* System preference is the default; engine maps light-dark() accordingly */
+  color-scheme: light dark;
 }
 
-/* System preference: dark */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-bg: #0d1117;
-    --color-bg-subtle: #161b22;
-    --color-text: #e6edf3;
-    --color-text-muted: #8b949e;
-    --color-border: #30363d;
-    --color-bg-code: #1c2128;
-    --color-bg-code-block: #0d1117;
-    --color-code-text: #e6edf3;
-  }
-}
-
-/* Explicit dark mode (toggle override) */
-:root[data-theme="dark"] {
-  --color-bg: #0d1117;
-  --color-bg-subtle: #161b22;
-  --color-text: #e6edf3;
-  --color-text-muted: #8b949e;
-  --color-border: #30363d;
-  --color-bg-code: #1c2128;
-  --color-bg-code-block: #0d1117;
-  --color-code-text: #e6edf3;
-}
+/* Explicit user choice (toggle) overrides system preference.
+   No need to redeclare every token — light-dark() reads color-scheme. */
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
 ```
+
+This is the canonical 2024+ pattern: the only thing the toggle changes is `color-scheme`. Every token automatically picks the correct side of its `light-dark()` declaration.
 
 ### Toggle JavaScript
 

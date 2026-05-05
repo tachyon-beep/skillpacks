@@ -9,9 +9,43 @@ Reference sheet for making developer sites work across screen sizes — from wid
 - Creating responsive tables, code blocks, and other content that tends to overflow
 - Any page where mobile usability is a requirement
 
-## Breakpoint System
+## Container Queries — Default to These
 
-Use a mobile-first approach with consistent breakpoints:
+For component-level layout (cards, code blocks, callouts, sidebars, ToC entries), use **container queries**. They reflow based on the *available width of the parent container*, not the viewport. A 280px-wide sidebar slot needs to look the same whether the viewport is 1024px or 1920px — viewport media queries can't tell those apart, but `@container` can. Container queries are Baseline 2023 (Chrome 105, Safari 16, Firefox 110).
+
+```css
+/* Mark which elements are query containers */
+.docs-content,
+.feature-grid,
+.api-entry {
+  container-type: inline-size;
+}
+
+/* Style a card based on the *card's* available width, not the viewport */
+.feature-card {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+@container (min-width: 28rem) {
+  .feature-card {
+    grid-template-columns: auto 1fr;  /* icon next to text once there's room */
+  }
+}
+
+@container (min-width: 40rem) {
+  .feature-card {
+    padding: var(--space-5);
+  }
+}
+```
+
+For **page-level** breakpoints (header layout, body padding, when the sidebar exists at all), viewport media queries are still the right tool — that's a viewport question.
+
+## Viewport Breakpoint System
+
+Use a mobile-first approach with consistent breakpoints for page-level layout decisions:
 
 ```css
 :root {
@@ -26,6 +60,66 @@ Use a mobile-first approach with consistent breakpoints:
 @media (min-width: 768px) { /* tablet and up */ }
 @media (min-width: 1024px) { /* laptop and up */ }
 @media (min-width: 1280px) { /* desktop */ }
+```
+
+## Fluid Typography with `clamp()`
+
+Hero titles and section headings benefit from typography that scales smoothly between breakpoints rather than stepping at viewport thresholds. `clamp(min, preferred, max)` is Baseline 2020:
+
+```css
+:root {
+  /* Fluid heading scale: scales from min to max across viewport range */
+  --text-fluid-h1: clamp(2rem,    1.4rem + 3vw, 3.5rem);
+  --text-fluid-h2: clamp(1.5rem,  1.1rem + 2vw, 2.25rem);
+  --text-lead:     clamp(1.05rem, 0.95rem + 0.5vw, 1.25rem);
+}
+
+.hero h1 { font-size: var(--text-fluid-h1); line-height: 1.1; }
+```
+
+## Native CSS Nesting
+
+Native CSS nesting (Baseline 2023) keeps related rules visually grouped without a preprocessor. Combined with container queries it makes component CSS read top-to-bottom:
+
+```css
+.feature-card {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+
+  & h3 {
+    margin-top: 0;
+    color: var(--color-primary);
+  }
+
+  @container (min-width: 28rem) {
+    padding: var(--space-5);
+  }
+}
+```
+
+## Stateful Parent Styling with `:has()`
+
+`:has()` lets a parent style itself based on what's inside it — Baseline 2023 (Safari 15.4, Chrome 105, Firefox 121). The single most useful application in docs sites is highlighting a sidebar section that contains the active page:
+
+```css
+/* Sidebar section that contains the current page gets emphasis */
+.docs-sidebar li:has(> a[aria-current="page"]) {
+  background: var(--color-bg-subtle);
+  border-left: 3px solid var(--color-accent);
+}
+
+/* Parent details element of the active page is auto-expanded
+   (server-rendered: add `open` attribute when section contains current page).
+   :has() lets the styling complement the markup without extra classes. */
+.docs-sidebar details:has(a[aria-current="page"]) summary {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Code block container that has a copy button reserves space for it */
+.code-block:has(.code-block__copy) pre {
+  padding-right: var(--space-8);
+}
 ```
 
 ## Documentation Layout (Sidebar + Content + ToC)
@@ -81,85 +175,43 @@ Use a mobile-first approach with consistent breakpoints:
 
 ### Mobile (< 768px): Single column, off-canvas sidebar
 
+Use the **native `popover` attribute** (Baseline 2024 — Chrome 114, Safari 17, Firefox 125). The browser handles the open/close state, the backdrop, focus management, light-dismiss on outside click, and Escape-to-close — replacing what used to be ~30 lines of custom JS plus a focus-trap library.
+
+```html
+<button popovertarget="docs-sidebar"
+        aria-label="Toggle navigation"><!-- hamburger icon --></button>
+
+<aside id="docs-sidebar" popover class="docs-sidebar">
+  <!-- nav links -->
+</aside>
+```
+
 ```css
 @media (max-width: 768px) {
   .docs-layout {
     grid-template-columns: 1fr;
   }
 
-  .docs-sidebar {
+  /* The :popover-open pseudo-class targets the open state without JS */
+  .docs-sidebar:popover-open {
     position: fixed;
-    left: -100%;
-    top: var(--header-height);
-    width: 80%;
-    max-width: 320px;
-    z-index: 100;
-    background: var(--color-bg);
-    transition: left 0.2s ease;
+    inset: var(--header-height) auto 0 0;
+    width: min(80%, 320px);
+    margin: 0;
+    border: 0;
     border-right: 1px solid var(--color-border);
-    box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+    background: var(--color-bg);
+    box-shadow: 2px 0 8px rgb(0 0 0 / 0.15);
   }
 
-  .docs-sidebar.is-open {
-    left: 0;
-  }
-
-  /* Overlay behind sidebar */
-  .docs-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.3);
-    z-index: 99;
-  }
-
-  .docs-overlay.is-open {
-    display: block;
+  /* Native backdrop — replaces the .docs-overlay element */
+  .docs-sidebar::backdrop {
+    background: rgb(0 0 0 / 0.3);
   }
 }
 ```
 
-### Sidebar Toggle
-
-```html
-<button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false">
-  <svg><!-- hamburger icon --></svg>
-</button>
-```
-
-```javascript
-const toggle = document.querySelector('.sidebar-toggle');
-const sidebar = document.querySelector('.docs-sidebar');
-const overlay = document.querySelector('.docs-overlay');
-
-function openSidebar() {
-  sidebar.classList.add('is-open');
-  overlay.classList.add('is-open');
-  toggle.setAttribute('aria-expanded', 'true');
-  // Trap focus inside sidebar
-  sidebar.querySelector('a, button')?.focus();
-}
-
-function closeSidebar() {
-  sidebar.classList.remove('is-open');
-  overlay.classList.remove('is-open');
-  toggle.setAttribute('aria-expanded', 'false');
-  toggle.focus();
-}
-
-toggle.addEventListener('click', () => {
-  sidebar.classList.contains('is-open') ? closeSidebar() : openSidebar();
-});
-
-overlay.addEventListener('click', closeSidebar);
-
-// Close on Escape
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && sidebar.classList.contains('is-open')) {
-    closeSidebar();
-  }
-});
-```
+That's the whole pattern. No `is-open` class plumbing, no Escape handler, no focus trap, no overlay element. The browser handles all of it. (For browsers without popover support, the button is still focusable and the aside still renders — you can layer a small JS fallback if your audience requires it.)
 
 ## Responsive Header/Navigation
 
@@ -221,7 +273,6 @@ Tables are the most common overflow problem on mobile:
 /* Wrap tables in a scrollable container */
 .table-wrapper {
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
   margin: var(--space-4) 0;
 }
 
@@ -245,7 +296,6 @@ Tables are the most common overflow problem on mobile:
 /* Code blocks scroll horizontally, don't wrap */
 .code-block pre {
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 /* On very small screens, reduce code font size slightly */

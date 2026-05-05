@@ -4,14 +4,14 @@ Reference sheet for choosing and configuring static site generators. Load this w
 
 ## When to Use This Reference
 
-- Choosing between Hugo, Astro, Eleventy, Jekyll, or plain HTML
+- Choosing between general-purpose generators (Hugo, Astro, Eleventy) and docs-first frameworks (Starlight, VitePress, Docusaurus)
 - Configuring a static site generator for a new project
 - Setting up build pipelines, templating, and deployment
 - Migrating between static site generators
 
 ## Decision Matrix
 
-### Choosing a Generator
+### General-Purpose Generators
 
 | Factor | Hugo | Astro | Eleventy | Plain HTML |
 |--------|------|-------|----------|------------|
@@ -21,18 +21,37 @@ Reference sheet for choosing and configuring static site generators. Load this w
 | **Templating** | Go html/template | JSX/Astro | Nunjucks/Liquid/etc | Manual |
 | **Content** | Markdown + front matter | Markdown + MDX | Markdown + data files | Manual |
 | **JS framework support** | None (by design) | React/Vue/Svelte islands | None (by design) | Manual |
-| **Best for** | Docs sites, blogs | Content + interactive bits | Simple sites, blogs | < 5 pages |
+| **Best for** | Blogs, custom layouts | Content + interactive bits | Simple sites, blogs | < 5 pages |
 | **Binary dependency** | Yes (Go) | Yes (Node) | Yes (Node) | None |
 | **Ecosystem** | Themes, modules | Components, integrations | Plugins | N/A |
+
+### Docs-First Frameworks (Recommended for Documentation Sites)
+
+For a project's docs site, prefer a purpose-built docs framework over rolling your own with a general-purpose generator. They ship sidebar nav, search, dark mode, MDX, and accessible defaults out of the box.
+
+| Factor | Starlight (Astro) | VitePress | Docusaurus 3 |
+|--------|-------------------|-----------|--------------|
+| **Underlying** | Astro | Vite + Vue | React |
+| **Sidebar / ToC / search** | Built in (Pagefind) | Built in (local + Algolia) | Built in (Algolia) |
+| **Dark mode** | Built in | Built in | Built in |
+| **MDX / components** | Yes (any framework via Astro islands) | Yes (Vue components) | Yes (React components) |
+| **i18n** | Yes | Yes | Yes (mature) |
+| **Versioned docs** | Manual | Manual | Built in |
+| **Best for** | Most modern OSS dev-tool docs in 2025 | Vue / Vite ecosystem tools | Larger projects needing versioning + React ecosystem |
+| **Caveat** | Younger ecosystem | Vue idioms even if you don't write Vue | Heavier bundle, React-first |
 
 ### Quick Recommendations
 
 - **< 5 pages, no blog**: Plain HTML/CSS. No build step needed.
-- **Documentation site (10-100 pages)**: Hugo or Eleventy. Hugo for speed, Eleventy for flexibility.
-- **Project site with interactive elements**: Astro (island architecture — static by default, JS where needed).
-- **Blog + docs**: Hugo (built-in taxonomy, RSS, pagination).
-- **Maximum simplicity**: Eleventy with Nunjucks templates.
-- **Must avoid Node.js**: Hugo (single Go binary).
+- **Modern OSS dev-tool docs (default pick in 2025)**: **Starlight** on Astro. Sidebar/search/i18n/dark-mode all built in; tunes well; stays out of the way.
+- **Project lives in the Vue/Vite world**: **VitePress**. Same idioms as the rest of your stack.
+- **Versioned docs with sizable React component library**: **Docusaurus 3**. Built-in versioning is the differentiator.
+- **Blog + docs in one**: **Hugo** (built-in taxonomies, RSS, pagination) or **Astro** with content collections.
+- **Project site with marketing page + interactive demos**: **Astro** (island architecture — static by default, JS where needed).
+- **Must avoid Node.js**: **Hugo** (single Go binary).
+- **Maximum simplicity, no docs framework conventions**: **Eleventy** with Nunjucks.
+
+> Jekyll is omitted — still works, but for new dev-tool sites in 2025 the docs-first frameworks above ship with strictly more out of the box and don't carry the Ruby toolchain.
 
 ## Hugo Setup
 
@@ -48,7 +67,7 @@ site/
 │   │   ├── getting-started.md
 │   │   └── configuration.md
 │   └── blog/
-│       └── 2024-01-release.md
+│       └── 2026-01-release.md
 ├── layouts/                  # Templates
 │   ├── _default/
 │   │   ├── baseof.html      # Base template
@@ -246,33 +265,55 @@ npx @11ty/eleventy --pathprefix="/docs/"
 | **Vercel** | Yes | Yes | Git integration | Astro/Next.js projects |
 | **Self-hosted (Caddy/Nginx)** | N/A | Yes | Manual/CI | Full control |
 
-### GitHub Actions Build
+### GitHub Actions Build (first-party Pages flow)
+
+Use GitHub's first-party `actions/configure-pages` + `actions/upload-pages-artifact` + `actions/deploy-pages` flow. This is the supported path since 2023; the older third-party `peaceiris/actions-gh-pages` is no longer recommended.
 
 ```yaml
 # .github/workflows/deploy.yml
-name: Deploy
+name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build
-        run: |
-          # Hugo
-          hugo --minify
-          # OR Eleventy
-          npm ci && npx @11ty/eleventy
-          # OR Astro
-          npm ci && npx astro build
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - uses: actions/configure-pages@v5
+      # Pick ONE of the build steps:
+      - name: Build (Astro / Starlight)
+        run: npm ci && npx astro build
+      # - name: Build (Hugo)
+      #   run: hugo --minify
+      # - name: Build (Eleventy)
+      #   run: npm ci && npx @11ty/eleventy
+      # - name: Build (VitePress)
+      #   run: npm ci && npx vitepress build docs
+      - uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public  # or ./_site or ./dist
+          path: ./dist  # or ./public (Hugo) or ./_site (Eleventy) or ./docs/.vitepress/dist (VitePress)
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
 ```
 
 ### Caching Headers
