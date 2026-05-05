@@ -232,3 +232,90 @@ Verifying now (1 minute) ensures demo success tomorrow."
 **Route to**: `ml-production` (serving, containerization, API setup)
 
 **DON'T**: Route to pytorch-engineering (this is deployment, not framework issues)
+
+---
+
+## Example 13: Agentic / Tool-Use Ambiguity
+
+**User**: "I'm building an agent that uses tools to answer customer support tickets. What pack do I need?"
+
+**Trap**: "Agent" used to imply RL. In 2026 it overwhelmingly means *LLM agent loop* — a model calling tools, often via MCP.
+
+**DO**: Disambiguate before routing.
+
+```
+"In modern usage, 'agent' usually means an LLM that calls tools in a loop -
+that's an LLM-application question, not RL. Quick confirm:
+
+A) LLM-driven: model decides which tool to call, executes, reads result, repeats.
+   → llm-specialist (agentic patterns, MCP, tool-use anti-patterns)
+
+B) RL-driven: agent learns a policy from reward signals over many episodes.
+   → deep-rl (rare for support tickets - needs an env + reward function)
+
+99% of 'agent' questions are A. Confirm A?"
+```
+
+**Route**: `llm-specialist` (agentic patterns) for the typical case. Cross-ref `axiom-engineering-foundations` if the question is really about the surrounding system (sandboxing, observability, error handling around tool calls).
+
+**Rationale**: "Agent" is the canonical 2026 keyword-trap. RL agents and LLM agents share a word but almost nothing else.
+
+---
+
+## Example 14: Continual-Learning Misroute
+
+**User**: "I keep adding new product categories to my classifier and it forgets old ones. I've tried more epochs and bigger learning rate and nothing helps."
+
+**Pressures**: They're already deep in `training-optimization` thinking ("more epochs, bigger LR") — easy to keep them there.
+
+**Recognize**: This is **catastrophic forgetting**, a continual-learning lifecycle problem. `training-optimization` won't fix it; the architecture/training-loop *design* needs to change.
+
+**DO**: Honest redirect.
+
+```
+"This is catastrophic forgetting - the classic continual-learning failure mode.
+No learning-rate or epoch tweak fixes it because the model has no mechanism to
+preserve old representations.
+
+Routing to dynamic-architectures for the right toolbox:
+- Replay buffers / rehearsal
+- EWC / synaptic intelligence
+- Adapter / LoRA-per-task composition
+- Modular gating
+
+Once you've picked a strategy there, training-optimization helps you tune it."
+```
+
+**Route**: `dynamic-architectures` first → `training-optimization` second.
+
+**Rationale**: Symptom ("performance gets worse over time") sounds like a training problem, but the *cause* is architectural: the model has no preservation mechanism. Wrong pack will burn weeks.
+
+---
+
+## Example 15: Reasoning Model Failures
+
+**User**: "I'm using a reasoning model with extended thinking and the answers are worse than the regular model. Same prompt. Why?"
+
+**Recognize**: Reasoning models (o-series, Claude extended thinking, R1, Gemini thinking) prompt and evaluate **differently** than chat models — over-prompting hurts them, "show your work" instructions are redundant or harmful, and eval needs to account for thinking-token cost. This is an LLM-application concern, not training, not architecture, not deployment.
+
+**DO**: Route to `llm-specialist` reasoning-models sheet.
+
+```
+"Reasoning models behave very differently from chat models on the same prompt:
+
+- Heavy chain-of-thought instructions are usually redundant or counterproductive
+  (the model already does it internally).
+- Few-shot examples can constrain the reasoning trace - sometimes harmful.
+- Eval needs to track thinking tokens separately from output tokens
+  (cost and latency profile is fundamentally different).
+- Some tasks don't benefit at all (reasoning tax without a payoff).
+
+Routing to llm-specialist's reasoning-models sheet for prompt structure
+and the 'when not to use a reasoning model' decision matrix."
+```
+
+**Route**: `llm-specialist` (reasoning-models). Cross-ref `ml-production` if the question is *cost* / *latency* of reasoning models in production.
+
+**DON'T**: Route to `training-optimization` ("extended thinking failure" sounds like a training symptom but it isn't), and don't route to `neural-architectures` ("reasoning model architecture" is the provider's, not yours).
+
+**Rationale**: Reasoning models are a 2025+ paradigm; older prompt-engineering intuition often makes them worse, not better. Naming this trap explicitly prevents the misroute.

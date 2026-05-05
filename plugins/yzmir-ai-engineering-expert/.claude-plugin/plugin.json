@@ -1,7 +1,7 @@
 {
   "name": "yzmir-ai-engineering-expert",
-  "version": "1.0.4",
-  "description": "Primary router for all AI/ML engineering skillpacks - directs to specialized packs",
+  "version": "1.1.0",
+  "description": "Primary router for all 9 Yzmir AI/ML engineering skillpacks - covers framework, training, RL, LLM applications (incl. reasoning, agentic/MCP, multimodal, RAG), neural architectures, ML production, dynamic architectures, simulation foundations, and systems thinking",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

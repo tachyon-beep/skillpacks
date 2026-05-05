@@ -54,12 +54,19 @@ Before routing, if query contains ANY of these ambiguous patterns, ASK ONE clari
 
 | Keywords/Signals | Route To | Why |
 |------------------|----------|-----|
-| PyTorch, CUDA, memory, distributed, tensor, GPU | **pytorch-engineering** | Foundation issues |
-| NaN loss, converge, unstable, hyperparameters, gradients, LR | **training-optimization** | Training problems |
-| Agent, policy, reward, environment, MDP, game, exploration | **deep-rl** | RL domain |
-| LLM, fine-tune, RLHF, LoRA, GPT, prompt, instruction tuning | **llm-specialist** | Language models |
-| Which architecture, CNN vs transformer, model selection | **neural-architectures** | Architecture choice |
-| Deploy, serve, production, quantize, inference, latency, mobile | **ml-production** | Deployment |
+| PyTorch, CUDA, memory, distributed, tensor, `torch.compile`, FSDP, GPU | **pytorch-engineering** | Foundation issues |
+| NaN loss, converge, unstable, hyperparameters, gradients, LR, FP8, mixed precision | **training-optimization** | Training problems |
+| Agent, policy, reward, environment, MDP, game, exploration, MARL | **deep-rl** | RL domain |
+| LLM, fine-tune, RLHF, LoRA, prompt, instruction tuning, Claude / o-series / Llama / Mistral / Gemini, RAG, retrieval, embedding, reranker, prompt caching | **llm-specialist** | Language model applications |
+| Reasoning models, "thinking tokens", extended thinking, o-series, R1, test-time compute, reasoning eval | **llm-specialist** | Inference-time reasoning is an LLM-application concern |
+| Agent loop, tool use, MCP server/client, multi-agent orchestration, autonomous agent | **llm-specialist** | Agentic patterns are LLM-application concerns |
+| Multimodal, VLM, vision-language, image+text, audio understanding | **llm-specialist** (application) and/or **neural-architectures** (modality fusion) | Routing depends on whether the question is "use a VLM" vs "design a fusion architecture" |
+| Diffusion, flow matching, DiT, Stable Diffusion, image / video / audio generation | **neural-architectures** | Generative-media architecture |
+| Which architecture, CNN vs transformer, Mamba vs attention, model selection | **neural-architectures** | Architecture choice |
+| Deploy, serve, production, quantize, inference, latency, mobile, vLLM, SGLang, TensorRT-LLM, observability, drift | **ml-production** | Deployment |
+| Network grows / prunes during training, continual learning, catastrophic forgetting, modular composition, MoE routing, adapter merging | **dynamic-architectures** | Networks that change topology over time |
+| ODE, integrator, physics sim, determinism, stability, replay, time-step, numerical methods | **simulation-foundations** | Simulation mathematics (often underpins RL environments) |
+| Causal loop, feedback dynamics, leverage points, system archetypes, stock-flow, behavior-over-time | **systems-thinking** | Whole-system reasoning |
 
 ---
 
@@ -73,6 +80,12 @@ When task spans domains, route to ALL relevant packs in execution order:
 | "Fine-tune LLM with distributed training" | llm-specialist + pytorch-engineering | Domain first, then infrastructure |
 | "LLM memory error during fine-tuning" | pytorch-engineering + llm-specialist | Foundation first |
 | "RL training unstable" | training-optimization + deep-rl | General training first |
+| "RL env determinism / replay broken" | simulation-foundations + deep-rl | Sim correctness before agent |
+| "Continual-learning model forgets old tasks" | dynamic-architectures + training-optimization | Lifecycle design first, then training schedule |
+| "Reasoning model is slow / expensive" | llm-specialist + ml-production | Application strategy first, serving second |
+| "Build an agent that uses tools and a vector store" | llm-specialist (agentic + RAG) | Often single-pack; bring in `axiom-engineering-foundations` for system design if scope grows |
+| "Diffusion model training diverges" | training-optimization + neural-architectures | General training first, architecture second |
+| "Production LLM hallucinations / drift" | ml-production (observability) + llm-specialist (eval, RAG, prompting) | Detect before redesign |
 
 **Principle**: Load in order of dependency. Fix foundation before domain. Complete training before deployment.
 
@@ -87,6 +100,10 @@ When task spans domains, route to ALL relevant packs in execution order:
 | "Deploy RL model" | deep-rl | ml-production | Deployment problem |
 | "Transformer for chess" | neural-architectures | deep-rl FIRST | RL problem |
 | "Chatbot learning" | llm-specialist | ASK FIRST | Could be LLM OR RL |
+| "My model forgets old data" | training-optimization | dynamic-architectures FIRST | Continual-learning lifecycle problem |
+| "Replay diverges between machines" | deep-rl | simulation-foundations FIRST | Determinism / numerics problem |
+| "o3 / extended thinking gives bad answers" | (guess) | llm-specialist (reasoning models sheet) | Reasoning-model prompting and eval differs from chat |
+| "Build an MCP server / tool-using agent" | (none) | llm-specialist (agentic patterns) | Agent design lives with LLM applications |
 
 ---
 
@@ -133,6 +150,9 @@ When task spans domains, route to ALL relevant packs in execution order:
 | "They mentioned transformer" | Keywords mislead; problem type matters | "Transformer for what problem type?" |
 | "LLM mentioned, must be llm-specialist" | LLM could have foundation issues | Check problem type first |
 | "They asked to 'fix RL'" | User's framing can be wrong | Verify RL is correct approach |
+| "They said 'agent', must be deep-rl" | Modern "agent" usually means tool-using LLM, not RL | Distinguish RL agent (policy + reward) from LLM agent (tool loop + planning) |
+| "They mentioned diffusion / DiT" | Could be training instability, serving cost, or architecture | Verify problem type before routing to neural-architectures |
+| "They mentioned MoE" | Could be training (load balancing), architecture, or serving | Cross-cutting; clarify which slice of MoE they mean |
 
 ---
 
@@ -190,11 +210,17 @@ When task spans domains, route to ALL relevant packs in execution order:
 ## When NOT to Use Yzmir Skills
 
 **Skip AI/ML skills when:**
-- Simple data processing without ML
-- Statistical analysis without neural networks
-- Data cleaning/ETL without model training
+- Simple data processing without ML.
+- Statistical analysis without neural networks.
+- Data cleaning / ETL without model training.
+- The task is pure system architecture (route to `axiom-solution-architect`), pure DevOps (route to `axiom-devops-engineering`), or pure security threat modeling for the surrounding system (route to `ordis-security-architect`).
 
-**Red flag**: If you're not training/deploying a neural network or implementing ML algorithms, probably don't need Yzmir.
+**Edge cases worth naming:**
+- *"Build a chatbot"* with no ML training and no fine-tuning — usually a Yzmir question (`llm-specialist`: prompting, RAG, agent loop) but bring in `axiom-solution-architect` if the request is really about system design.
+- *"Why does my agent's tool call fail?"* — usually `llm-specialist` (agentic patterns), but if it's a tool-runtime / sandbox / IPC issue it's `axiom-engineering-foundations`.
+- *"Make my LLM responses cheaper"* — `llm-specialist` (prompt caching, model routing, smaller models) and/or `ml-production` (serving stack). Both are valid.
+
+**Red flag**: If you're not training, deploying, prompting, retrieving for, or evaluating a model, you probably don't need Yzmir.
 
 ---
 
@@ -206,12 +232,15 @@ User Query
 Is query ambiguous? → YES → ASK clarifying question
     ↓ NO
 Identify problem type:
-    - Framework error? → pytorch-engineering
-    - Training not working? → training-optimization
+    - Framework error / PyTorch API? → pytorch-engineering
+    - Training not working / optimizer / precision? → training-optimization
     - RL problem? → deep-rl
-    - LLM fine-tuning? → llm-specialist
-    - Architecture choice? → neural-architectures
-    - Production deployment? → ml-production
+    - LLM application (prompt, RAG, fine-tune, reasoning, agent, MCP)? → llm-specialist
+    - Architecture choice (CNN/transformer/Mamba/diffusion)? → neural-architectures
+    - Production deployment / serving / observability? → ml-production
+    - Network grows/prunes / continual learning / MoE composition? → dynamic-architectures
+    - Simulation math / determinism / ODEs? → simulation-foundations
+    - Whole-system feedback / causal loops / leverage? → systems-thinking
     ↓
 Cross-cutting? → YES → Route to MULTIPLE packs (order by dependency)
     ↓ NO
@@ -236,13 +265,22 @@ See [routing-examples.md](routing-examples.md) for detailed worked examples:
 
 ## AI Engineering Plugin Router Catalog
 
-This meta-router directs you to the appropriate Yzmir AI/ML plugin:
+This meta-router directs you to the appropriate Yzmir AI/ML plugin. The Yzmir faction ships **9 specialist packs** plus this router:
 
-1. **yzmir-pytorch-engineering** - PyTorch framework: CUDA, memory, distributed, tensor operations
-2. **yzmir-training-optimization** - Training problems: NaN losses, convergence, gradients, learning rate
-3. **yzmir-deep-rl** - Reinforcement learning: Agents, policies, rewards, environments, MDP
-4. **yzmir-llm-specialist** - Large language models: Fine-tuning, RLHF, LoRA, prompt engineering
-5. **yzmir-neural-architectures** - Architecture selection: CNN vs transformer, model design
-6. **yzmir-ml-production** - Production deployment: Serving, quantization, inference, MLOps
+1. **yzmir-pytorch-engineering** — PyTorch framework: CUDA, memory, FSDP/`torch.compile`, distributed, tensor operations.
+2. **yzmir-training-optimization** — Training problems: optimizers, schedules, precision (BF16/FP8), gradients, convergence, hyperparameters.
+3. **yzmir-deep-rl** — Reinforcement learning: agents, policies, rewards, environments, MDP, offline RL, MARL.
+4. **yzmir-llm-specialist** — LLM applications: prompting, RAG, fine-tuning (SFT/DPO/GRPO), reasoning models, agentic patterns / MCP, multimodal use, prompt caching, evaluation, safety.
+5. **yzmir-neural-architectures** — Architecture selection: CNN / transformer / Mamba / GNN / diffusion / DiT / multimodal fusion, capacity and depth-width tradeoffs.
+6. **yzmir-ml-production** — Production: vLLM / SGLang / TensorRT-LLM serving, quantization (`torch.ao.quantization`, AWQ, GPTQ, FP8), MLOps, observability (Phoenix / Langfuse / OTel GenAI), drift, scaling.
+7. **yzmir-dynamic-architectures** — Networks that grow / prune / adapt: continual learning, gradient isolation, modular composition, MoE routing, adapter merging, lifecycle.
+8. **yzmir-simulation-foundations** — Simulation mathematics: ODEs, integrators, stability, control theory, determinism — often the foundation under RL environments and physics-based systems.
+9. **yzmir-systems-thinking** — Systems thinking methodology: causal loops, leverage points, archetypes, stocks-flows, behavior-over-time graphs.
 
-**Remember**: When in doubt, ASK. Clarification takes seconds, wrong routing takes minutes.
+**Adjacent (non-Yzmir) routers worth knowing about:**
+- `axiom-engineering-foundations` — general software-engineering rigor for AI systems (debugging, refactoring, code review).
+- `axiom-solution-architect` — when AI is one component of a larger system that needs an architecture document.
+- `ordis-security-architect` — LLM threat modeling, prompt injection, exfil, AI supply chain.
+- `axiom-python-engineering` — Python tooling foundations underneath PyTorch / Transformers code.
+
+**Remember**: When in doubt, ASK. Clarification takes seconds, wrong routing takes minutes. **Knowledge cutoff awareness**: model IDs and provider features evolve quickly — capability-tier framing in downstream packs (frontier reasoning / frontier general / fast-cheap / on-device) is intentional. Check provider docs for current model IDs before quoting them in user-facing answers.
