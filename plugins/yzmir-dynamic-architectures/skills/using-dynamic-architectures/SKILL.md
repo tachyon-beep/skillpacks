@@ -290,9 +290,11 @@ Key tensions:
 **Need:** RL agent deciding when to grow, prune, integrate
 
 **Routing sequence:**
-1. **ml-lifecycle-orchestration** - Learned controller patterns
-2. **dynamic-architecture-patterns** - What actions the RL agent can take
-3. **gradient-isolation-techniques** - Safe exploration during training
+1. **`yzmir-morphogenetic-rl`** (companion pack) - Controller action/observation/reward design, governor and safety gates, rollback-as-RL-signal shaping. This is the canonical home for the RL-controller-decides-mutation loop.
+2. **dynamic-architecture-patterns** - What actions the RL agent can take (this pack)
+3. **gradient-isolation-techniques** - Safe exploration during training (this pack)
+
+**Boundary:** `yzmir-morphogenetic-rl` covers WHEN/HOW the controller decides to grow. This pack covers HOW the growable network trains once a decision is made.
 
 ---
 
@@ -336,7 +338,7 @@ Watch for these signs of incorrect approach:
 | "Deploy morphogenetic model" | yzmir-ml-production | Production deployment |
 | "Serve many LoRAs in one process (S-LoRA / LoRAX / Punica)" | yzmir-ml-production | Multi-tenant adapter serving |
 
-**Intersection with deep-rl:** If using RL to control architecture decisions (when to grow/prune), combine this pack's lifecycle orchestration with deep-rl's policy gradient or actor-critic methods.
+**Intersection with deep-rl + morphogenetic-rl:** If using RL to control architecture decisions (when to grow/prune), the canonical home for that work is `yzmir-morphogenetic-rl` (controller, governor, rollback shaping). Compose with `yzmir-deep-rl`'s policy gradient / actor-critic methods for the algorithm side, and this pack's lifecycle orchestration for the network-training side.
 
 **Counterfactual evaluation:** Before committing to a live mutation (grow/prune), use deep-rl's `counterfactual-reasoning.md` to simulate the change and evaluate outcomes without risk. This is critical for production morphogenetic systems.
 

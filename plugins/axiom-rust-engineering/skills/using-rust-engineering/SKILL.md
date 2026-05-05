@@ -308,14 +308,18 @@ When you see a link like `[systematic-delinting.md](systematic-delinting.md)`, r
 - "ndarray vs nalgebra for numerical kernels"
 - "How to expose a Rust struct to Python with PyO3?"
 
-**Route to**: [ai-ml-and-interop.md](ai-ml-and-interop.md)
+**Route to**: [ai-ml-and-interop.md](ai-ml-and-interop.md) for the AI/ML framework choices (candle, burn, tch-rs, ndarray, nalgebra) and basic PyO3 onboarding.
 
-**Why**: Rust's role in AI/ML pipelines—as Python extension via PyO3, as a performance kernel, or as a standalone inference host—introduces cross-language ownership and memory layout constraints not covered by either the Rust or ML literature alone.
+**For production-grade PyO3 work**, redirect to **`/pyo3-interop`** (the `axiom-pyo3-interop` pack). That pack treats the Python ↔ Rust FFI boundary as a discipline distinct from per-crate Rust work — GIL release patterns, abi3 vs native and the wheel matrix, maturin inside a Cargo workspace, batched FFI to amortise crossing cost, zero-copy NumPy via the buffer protocol, Gymnasium environments backed by Rust, error mapping with traceback fidelity, lifecycle and teardown at interpreter shutdown, async across the boundary (`pyo3-async-runtimes`, tokio + asyncio), packaging and wheels (cibuildwheel, manylinux), debugging boundary panics / segfaults / GIL deadlocks, and the cost-of-crossing performance model. Load that pack when the FFI surface is the hot path (RL self-play, simulation engines, training data pipelines, inference servers); this sheet is sufficient for one-off bindings and ML-framework selection.
+
+**Why**: Rust's role in AI/ML pipelines—as Python extension via PyO3, as a performance kernel, or as a standalone inference host—introduces cross-language ownership and memory layout constraints not covered by either the Rust or ML literature alone. Once the Python surface becomes more than a thin convenience binding, those constraints deserve their own pack.
 
 **Example queries**:
-- "Build a PyO3 extension that processes NumPy arrays"
-- "Integrate candle model into a Python service"
-- "Zero-copy tensor sharing between Rust and Python"
+- "Build a PyO3 extension that processes NumPy arrays" → start here; redirect to `/pyo3-interop` for production hardening.
+- "Integrate candle model into a Python service" → start here for the candle side, `/pyo3-interop` for the binding.
+- "Zero-copy tensor sharing between Rust and Python" → `/pyo3-interop:numpy-buffer-protocol`.
+- "GIL deadlock in our PyO3 module" → `/pyo3-interop:gil-release-patterns` and `/pyo3-interop:debugging-pyo3`.
+- "Wheel matrix for PyO3 module across CPython 3.9–3.13" → `/pyo3-interop:abi3-vs-native-extensions` and `/pyo3-interop:packaging-and-wheels`.
 
 ---
 

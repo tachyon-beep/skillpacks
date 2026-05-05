@@ -34,6 +34,7 @@ Use this pack when:
 Do **not** use this pack when:
 
 - You have a **pure Rust crate** with no Python surface — load `/rust-engineering` instead.
+- You have a **multi-crate Rust workspace** with no Python surface — load `/rust-workspaces` instead.
 - You have a **pure Python project** with no FFI — load `/python-engineering` instead.
 - You want a **one-off ctypes / cffi binding** for a small foreign function — PyO3 is overkill, use the lighter mechanism.
 - You are **wrapping a C library for Python** with no Rust in the picture — use `cffi` or write a small CPython extension; PyO3 is for Rust-side projects.

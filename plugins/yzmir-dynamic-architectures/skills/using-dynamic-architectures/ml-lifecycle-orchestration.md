@@ -557,46 +557,14 @@ class HeuristicController:
 
 ### Learned Controller (RL)
 
-Train a policy to make decisions.
+When the controller is itself an RL policy that decides when/whether to mutate the network's topology, the canonical home for that design work is the companion pack `yzmir-morphogenetic-rl`. That pack covers:
 
-```python
-class RLController:
-    def __init__(self, observation_dim, action_space, policy_network):
-        self.policy = policy_network
-        self.action_space = action_space  # ['hold', 'advance', 'prune', 'grow']
+- Controller action/observation/reward design (`rl-controller-for-morphogenesis`)
+- Governor and safety-gate discipline that vetoes controller decisions (`governor-and-safety-gates`)
+- Rollback-as-RL-signal shaping when the governor reverts a decision (`rollback-as-rl-signal`)
+- Multi-seed coordination, deterministic morphogenesis, growth-aware ablation, and the "when not to grow" refusal list
 
-    def act(self, observation, deterministic=False):
-        obs_tensor = torch.tensor(observation, dtype=torch.float32)
-        with torch.no_grad():
-            logits = self.policy(obs_tensor)
-            if deterministic:
-                action_idx = logits.argmax()
-            else:
-                action_idx = torch.distributions.Categorical(logits=logits).sample()
-        return self.action_space[action_idx]
-
-    def get_reward(self, metrics, action_taken):
-        """Reward function for RL training"""
-        reward = 0
-
-        # Reward improvement
-        if metrics.get('loss_improved'):
-            reward += 1.0
-
-        # Penalize regression
-        if metrics.get('host_regression', 0) > 0:
-            reward -= 2.0
-
-        # Penalize budget overrun
-        if metrics.get('over_budget'):
-            reward -= 1.0
-
-        # Reward successful integration
-        if action_taken == 'advance' and metrics.get('integration_success'):
-            reward += 5.0
-
-        return reward
-```
+The `RLController` sketch that previously lived here was a one-page caricature — load `/morphogenetic-rl` for the actual treatment. **This pack remains the home for HOW the growable network trains** (gradient isolation, alpha blending mechanics, lifecycle FSM training, progressive integration). The companion pack is the home for WHEN/HOW the controller decides to grow.
 
 ### Hybrid Controller
 

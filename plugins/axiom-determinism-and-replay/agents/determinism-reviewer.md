@@ -1,5 +1,5 @@
 ---
-description: Reviews a system design for sources of non-determinism. Reads design artifacts (HLD, code map, existing determinism specs), enumerates determinism leaks against the seven channels (seeds, RNG, snapshot, divergence, replay, concurrency, FP, GPU, external effects, canonical encoding), reports gaps with severity, cites the sheet that resolves each. Operates against an in-progress spec or a brownfield system. Follows SME Agent Protocol with confidence/risk assessment.
+description: Reviews a system design for sources of non-determinism. Reads design artifacts (HLD, code map, existing determinism specs), enumerates determinism leaks against the ten channels (seeds, RNG, snapshot, divergence, replay, concurrency, FP, GPU, external effects, canonical encoding), reports gaps with severity, cites the sheet that resolves each. Operates against an in-progress spec or a brownfield system. Follows SME Agent Protocol with confidence/risk assessment.
 model: opus
 ---
 
@@ -23,7 +23,7 @@ A determinism review is not "I would do it differently." It is: given the declar
 
 <example>
 User: "Review this RL training substrate for determinism gaps before we ship v1."
-Action: Activate — read the substrate's design, list gaps against the seven channels.
+Action: Activate — read the substrate's design, list gaps against the ten channels.
 </example>
 
 <example>
@@ -68,7 +68,7 @@ Determine:
 
 ### Step 2 — Enumerate leaks per channel
 
-For each of the seven channels in the pack, walk the codebase / design and list violations:
+For each of the ten channels in the pack, walk the codebase / design and list violations:
 
 #### Channel 1 — Seed governance (`02-`)
 

@@ -28,6 +28,7 @@ Do not use this sheet for:
 
 - Wire-format choice for non-audit traffic (use protobuf, msgpack, whatever — different problem).
 - Storage format choice (the chain covers logical entries; storage may add framing).
+- Canonical state encoding for **replay** (cross-machine state-snapshot comparison) — that is a sibling concern with overlapping but distinct gotchas. See `axiom-determinism-and-replay:canonical-state-encoding-for-replay`. Audit canonicalisation is for *proving a decision happened*; replay canonicalisation is for *re-running the execution that produced the decision*. The RFC 8785 / JCS gotcha catalog applies to both, but the audit form is byte-locked at log time and the replay form is byte-locked at snapshot time.
 
 ## Core Principle
 
