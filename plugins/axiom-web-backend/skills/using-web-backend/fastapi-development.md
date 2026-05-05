@@ -134,15 +134,21 @@ async def get_user(user_id: int):
 **✅ Pattern: Use async libraries or run_in_threadpool**
 
 ```python
-# GOOD Option 1: Async database library
-from databases import Database
+# GOOD Option 1: SQLAlchemy 2.0 async (asyncpg driver)
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-database = Database("postgresql://...")
+engine = create_async_engine("postgresql+asyncpg://user:pass@host/db")
+async_session = async_sessionmaker(engine, expire_on_commit=False)
+
+async def get_db() -> AsyncSession:
+    async with async_session() as session:
+        yield session
 
 @app.get("/users/{user_id}")
-async def get_user(user_id: int):
-    query = "SELECT * FROM users WHERE id = :user_id"
-    return await database.fetch_one(query=query, values={"user_id": user_id})
+async def get_user(user_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.id == user_id))
+    return result.scalar_one_or_none()
 
 # GOOD Option 2: Run blocking code in thread pool
 from fastapi.concurrency import run_in_threadpool
@@ -158,16 +164,18 @@ async def get_user(user_id: int):
     return await run_in_threadpool(blocking_db_call, user_id)
 ```
 
-**Decision table**:
+**Decision table** (FastAPI 0.115+, SQLAlchemy 2.0+):
 
 | Scenario | Use |
 |----------|-----|
-| PostgreSQL with async needed | `asyncpg` or `databases` library |
-| PostgreSQL, sync is fine | `psycopg2` with `def` (not `async def`) endpoints |
-| MySQL with async | `aiomysql` |
+| PostgreSQL with async needed | SQLAlchemy 2.0 async + `asyncpg`, or `psycopg` 3 (built-in async) |
+| PostgreSQL, sync is fine | `psycopg` 3 (sync mode) with `def` (not `async def`) endpoints |
+| MySQL with async | `asyncmy` (recommended) or `aiomysql` |
 | SQLite | `aiosqlite` (async) or sync with `def` endpoints |
 | External API calls | `httpx.AsyncClient` |
 | CPU-intensive work | `run_in_threadpool` or Celery |
+
+> The `databases` library is unmaintained (no meaningful release since 2022). Prefer SQLAlchemy 2.0 async or raw `asyncpg`/`psycopg` 3 instead.
 
 ### 3. Lifespan Management (Modern Pattern)
 
@@ -176,6 +184,7 @@ async def get_user(user_id: int):
 ```python
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+import redis.asyncio as redis  # redis-py 4.2+; the standalone aioredis package is archived
 
 # Global resources
 resources = {}
@@ -186,17 +195,16 @@ async def lifespan(app: FastAPI):
     resources["db_pool"] = await create_async_pool(
         "postgresql://...",
         min_size=10,
-        max_size=20
+        max_size=20,
     )
-    resources["redis"] = await aioredis.create_redis_pool("redis://...")
+    resources["redis"] = redis.from_url("redis://localhost:6379", decode_responses=True)
     resources["ml_model"] = load_ml_model()  # Can be sync or async
 
     yield  # Application runs
 
     # Shutdown
     await resources["db_pool"].close()
-    resources["redis"].close()
-    await resources["redis"].wait_closed()
+    await resources["redis"].aclose()  # redis-py 5.x; older 4.x use .close()
     resources.clear()
 
 app = FastAPI(lifespan=lifespan)
@@ -437,23 +445,25 @@ def test_with_mock_db(client):
 
 ## Production Deployment
 
-**ASGI server configuration** (Uvicorn + Gunicorn):
+**ASGI server configuration** (Uvicorn 0.30+ supports multi-worker natively):
 
 ```bash
-# gunicorn with uvicorn workers (production)
-gunicorn main:app \
+# Modern: uvicorn with built-in multi-worker (preferred)
+uvicorn main:app \
+  --host 0.0.0.0 --port 8000 \
   --workers 4 \
-  --worker-class uvicorn.workers.UvicornWorker \
-  --bind 0.0.0.0:8000 \
-  --timeout 120 \
-  --graceful-timeout 30 \
-  --keep-alive 5
+  --timeout-keep-alive 5
+
+# Alternative: Granian (Rust HTTP server, drop-in for ASGI)
+granian --interface asgi --workers 4 --host 0.0.0.0 --port 8000 main:app
 ```
 
-**Environment-based configuration**:
+> Gunicorn + `uvicorn.workers.UvicornWorker` is no longer the recommended default — Uvicorn added native multi-worker support in 2023. Use Gunicorn only if you need its preload/worker-management features (e.g. memory-resident ML models with `--preload`).
+
+**Environment-based configuration** (Pydantic v2 + `pydantic-settings`):
 
 ```python
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     database_url: str
@@ -461,8 +471,7 @@ class Settings(BaseSettings):
     secret_key: str
     debug: bool = False
 
-    class Config:
-        env_file = ".env"
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()
 

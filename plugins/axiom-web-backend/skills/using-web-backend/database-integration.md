@@ -58,8 +58,8 @@ engine = create_engine(
 **Environment-based configuration**:
 
 ```python
-import os
-from pydantic import BaseSettings
+# Pydantic v2: BaseSettings moved to the pydantic-settings package
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class DatabaseSettings(BaseSettings):
     database_url: str
@@ -68,8 +68,7 @@ class DatabaseSettings(BaseSettings):
     pool_pre_ping: bool = True
     pool_recycle: int = 3600
 
-    class Config:
-        env_file = ".env"
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = DatabaseSettings()
 
@@ -1070,21 +1069,28 @@ pool_size_gauge = Gauge('db_pool_size', 'Number of connections in pool')
 pool_checked_out_gauge = Gauge('db_pool_checked_out', 'Connections currently checked out')
 pool_overflow_gauge = Gauge('db_pool_overflow', 'Overflow connections')
 
-@app.on_event("startup")
-async def start_pool_metrics():
-    """Collect pool metrics periodically"""
-    import asyncio
+# Use the lifespan context manager (FastAPI 0.93+) — @app.on_event is deprecated.
+import asyncio
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
 
-    async def collect_metrics():
-        while True:
-            pool = engine.pool
-            pool_size_gauge.set(pool.size())
-            pool_checked_out_gauge.set(pool.checkedout())
-            pool_overflow_gauge.set(pool.overflow())
+async def _collect_pool_metrics():
+    while True:
+        pool = engine.pool
+        pool_size_gauge.set(pool.size())
+        pool_checked_out_gauge.set(pool.checkedout())
+        pool_overflow_gauge.set(pool.overflow())
+        await asyncio.sleep(10)  # Every 10 seconds
 
-            await asyncio.sleep(10)  # Every 10 seconds
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(_collect_pool_metrics())
+    try:
+        yield
+    finally:
+        task.cancel()
 
-    asyncio.create_task(collect_metrics())
+app = FastAPI(lifespan=lifespan)
 ```
 
 ## Anti-Patterns

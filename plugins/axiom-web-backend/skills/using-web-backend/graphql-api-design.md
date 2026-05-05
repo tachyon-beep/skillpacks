@@ -107,15 +107,20 @@ const createLoaders = () => ({
   // ... other loaders
 });
 
-// Add to context
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
-  context: () => ({
-    loaders: createLoaders(),
+// Apollo Server 4+ moved `context` out of the constructor — it is now a per-request
+// callback passed to the transport (`startStandaloneServer` or `expressMiddleware`).
+import { ApolloServer } from '@apollo/server';
+import { startStandaloneServer } from '@apollo/server/standalone';
+
+const server = new ApolloServer({ typeDefs, resolvers });
+
+const { url } = await startStandaloneServer(server, {
+  context: async ({ req }) => ({
+    loaders: createLoaders(),  // fresh per request — avoids stale cache
     db,
-    user: getCurrentUser()
-  })
+    user: await getCurrentUser(req),
+  }),
+  listen: { port: 4000 },
 });
 
 // Use in resolver
@@ -642,19 +647,25 @@ type Post {
 Composes schemas and routes requests:
 
 ```javascript
-const { ApolloGateway } = require('@apollo/gateway');
+// @apollo/server 4+ with @apollo/gateway 2+ (Federation 2)
+import { ApolloServer } from '@apollo/server';
+import { startStandaloneServer } from '@apollo/server/standalone';
+import { ApolloGateway, IntrospectAndCompose } from '@apollo/gateway';
 
 const gateway = new ApolloGateway({
-  serviceList: [
-    { name: 'users', url: 'http://user-service:4001/graphql' },
-    { name: 'posts', url: 'http://post-service:4002/graphql' }
-  ]
+  // Use IntrospectAndCompose for dev; managed federation (Apollo Studio) for prod.
+  supergraphSdl: new IntrospectAndCompose({
+    subgraphs: [
+      { name: 'users', url: 'http://user-service:4001/graphql' },
+      { name: 'posts', url: 'http://post-service:4002/graphql' },
+    ],
+  }),
 });
 
-const server = new ApolloServer({
-  gateway,
-  subscriptions: false  // Not yet supported in federation
-});
+const server = new ApolloServer({ gateway });
+await startStandaloneServer(server, { listen: { port: 4000 } });
+// Note: subscriptions are not part of Federation; expose them on a dedicated subgraph
+// using a subscriptions-capable transport (see "Subscriptions" section below).
 ```
 
 **Reference Resolver** (fetch extended fields):
@@ -812,29 +823,35 @@ test('user resolver fetches user', async () => {
 
 ### Integration Testing
 
+Apollo Server 4+ removed `apollo-server-testing` — use `server.executeOperation()`
+directly. This skips the HTTP transport but exercises the full schema/resolver pipeline.
+
 ```javascript
-const { ApolloServer } = require('apollo-server');
-const { createTestClient } = require('apollo-server-testing');
+// @apollo/server v4+; requires Node 18+ and ESM
+import { ApolloServer } from '@apollo/server';
+import assert from 'node:assert';
 
 const server = new ApolloServer({ typeDefs, resolvers });
-const { query } = createTestClient(server);
 
 test('GetUser query', async () => {
-  const GET_USER = gql`
-    query GetUser($id: ID!) {
-      user(id: $id) {
-        name
-        email
+  const response = await server.executeOperation({
+    query: `
+      query GetUser($id: ID!) {
+        user(id: $id) {
+          name
+          email
+        }
       }
-    }
-  `;
+    `,
+    variables: { id: '1' },
+  });
 
-  const res = await query({ query: GET_USER, variables: { id: '1' } });
-
-  expect(res.errors).toBeUndefined();
-  expect(res.data.user).toMatchObject({
+  // Apollo v4 returns { body: { kind: 'single', singleResult: { data, errors } } }
+  assert(response.body.kind === 'single');
+  expect(response.body.singleResult.errors).toBeUndefined();
+  expect(response.body.singleResult.data.user).toMatchObject({
     name: 'Alice',
-    email: 'alice@example.com'
+    email: 'alice@example.com',
   });
 });
 ```
@@ -892,26 +909,65 @@ type Mutation {
 
 ### 3. No Context in Subscriptions
 
+Apollo Server 4 removed the built-in subscriptions transport — wire WebSockets via
+`graphql-ws` and a `WebSocketServer`, then resolve auth in the `context` callback.
+
 ```javascript
-// ❌ Missing auth context
+// @apollo/server 4+, graphql-ws 5+, ws 8+
+import { createServer } from 'node:http';
+import express from 'express';
+import { ApolloServer } from '@apollo/server';
+import { expressMiddleware } from '@apollo/server/express4';
+import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { WebSocketServer } from 'ws';
+import { useServer } from 'graphql-ws/lib/use/ws';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+
+const schema = makeExecutableSchema({ typeDefs, resolvers });
+const app = express();
+const httpServer = createServer(app);
+
+const wsServer = new WebSocketServer({ server: httpServer, path: '/graphql' });
+
+// ✅ Authenticate on the WebSocket connection; pass the user into resolver context.
+const wsCleanup = useServer(
+  {
+    schema,
+    context: async (ctx) => {
+      const token = ctx.connectionParams?.authToken;
+      const user = token ? verifyToken(token) : null;
+      if (!user) throw new Error('Unauthorized');
+      return { user };
+    },
+  },
+  wsServer,
+);
+
 const server = new ApolloServer({
-  subscriptions: {
-    onConnect: () => {
-      return {};  // No user context!
-    }
-  }
+  schema,
+  plugins: [
+    ApolloServerPluginDrainHttpServer({ httpServer }),
+    {
+      async serverWillStart() {
+        return { async drainServer() { await wsCleanup.dispose(); } };
+      },
+    },
+  ],
 });
 
-// ✅ Include auth
-const server = new ApolloServer({
-  subscriptions: {
-    onConnect: (connectionParams) => {
-      const token = connectionParams.authToken;
-      const user = verifyToken(token);
-      return { user };
-    }
-  }
-});
+await server.start();
+app.use(
+  '/graphql',
+  cors(),
+  bodyParser.json(),
+  expressMiddleware(server, {
+    context: async ({ req }) => ({ user: await authenticateHttp(req) }),
+  }),
+);
+
+httpServer.listen(4000);
 ```
 
 ## Tooling Ecosystem

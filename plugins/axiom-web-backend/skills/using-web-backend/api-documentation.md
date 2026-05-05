@@ -89,39 +89,43 @@ tags_metadata = [
 
 app = FastAPI(openapi_tags=tags_metadata)
 
-# Rich schema with examples
+# Rich schema with examples (Pydantic v2 + FastAPI 0.115+)
+from pydantic import BaseModel, ConfigDict, Field
+
 class PaymentRequest(BaseModel):
     amount: float = Field(
         ...,
         gt=0,
         le=999999.99,
         description="Payment amount in USD",
-        example=99.99
+        examples=[99.99],
     )
     currency: str = Field(
         default="USD",
         pattern="^[A-Z]{3}$",
         description="ISO 4217 currency code",
-        example="USD"
+        examples=["USD"],
     )
 
-    class Config:
-        schema_extra = {
+    # Pydantic v2: replace `class Config: schema_extra` with model_config + json_schema_extra.
+    model_config = ConfigDict(
+        json_schema_extra={
             "examples": [
                 {
                     "amount": 149.99,
                     "currency": "USD",
                     "payment_method": "card_visa_4242",
-                    "description": "Premium subscription"
+                    "description": "Premium subscription",
                 },
                 {
                     "amount": 29.99,
                     "currency": "EUR",
                     "payment_method": "paypal_account",
-                    "description": "Monthly plan"
-                }
+                    "description": "Monthly plan",
+                },
             ]
         }
+    )
 
 # Comprehensive error documentation
 @app.post(
@@ -272,12 +276,13 @@ class PaymentRequest(BaseModel):
     amount: float = Field(..., description="Amount in USD")
     currency: str = Field(default="USD", description="ISO 4217 currency code")
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "examples": [
                 {"amount": 99.99, "currency": "USD", "payment_method": "pm_card_visa"}
             ]
         }
+    )
 
 # Docs auto-generated from model
 # - OpenAPI spec from Field descriptions

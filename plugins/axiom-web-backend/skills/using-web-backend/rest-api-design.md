@@ -520,4 +520,4 @@ def create_order(order: Order, idempotency_key: str = Header(None)):
 - **RFC 7807**: Problem Details for HTTP APIs
 - **RFC 8594**: Sunset HTTP Header
 - **JSON:API**: Opinionated REST specification
-- **OpenAPI 3.0**: API documentation standard
+- **OpenAPI 3.1**: API documentation standard (full JSON Schema 2020-12 alignment; emitted by FastAPI 0.99+ by default)
