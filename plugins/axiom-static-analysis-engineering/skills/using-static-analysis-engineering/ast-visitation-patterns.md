@@ -95,7 +95,7 @@ The AST you choose determines what you can do with it. This is the single most c
 
 ## Source-Position Preservation
 
-For diagnostics to be useful, every emitted finding needs (file, start_line, start_col, end_line, end_col). For SARIF emission (planned v0.2.0 sheet), you also need byte offsets.
+For diagnostics to be useful, every emitted finding needs (file, start_line, start_col, end_line, end_col). For SARIF emission , you also need byte offsets.
 
 **Rules:**
 
@@ -164,5 +164,5 @@ A complete `01-` answers:
 - `taint-lattice-design.md` — what the visitor produces (the IR over which the lattice is computed)
 - `three-phase-inference.md` — how visited nodes feed the inference worklist
 - `plugin-architecture-for-analyzer-rules.md` — how rules attach to visitor entry points
-- v0.2.0 planned: `decorator-as-assertion.md` — the descriptor pattern for runtime + static dual analysis (visitor sees the decorator; runtime sees the wrapped call)
-- v0.2.0 planned: `scaling-to-large-codebases.md` — incremental visitation, caching the AST itself
+- `decorator-as-assertion.md` — the descriptor pattern for runtime + static dual analysis (visitor sees the decorator; runtime sees the wrapped call)
+- `scaling-to-large-codebases.md` — incremental visitation, caching the AST itself

@@ -193,15 +193,18 @@ cd skillpacks
   cost-of-determinism accounting
 - `/plugin install axiom-determinism-and-replay`
 
-**axiom-static-analysis-engineering** - router + 6 sheets _(new — May 2026, v0.1)_
+**axiom-static-analysis-engineering** - router + 13 sheets, 3 commands, 2 agents _(new — May 2026, v0.2)_
 
 - Building static analyzers as engines, not running them as users
 - AST visitation, taint-lattice (abstract-domain) design with monotonicity,
   three-phase inference (variable → function → callgraph) with termination proofs
 - Plugin architecture for rules, false-positive economics with auditable
   suppression lifecycle, the static-vs-runtime boundary
-- v0.2.0 will add SARIF/CI integration, callgraph construction, scaling, plus
-  3 commands and 2 agents
+- Callgraph construction (Rung 0–4 resolution, dynamic-feature handling),
+  cross-module flow with stub libraries, decorator-as-assertion (runtime + static
+  agreement contract), manifest-driven configuration with coherence validation,
+  SARIF / CI integration, incremental analysis at scale, LLM-assisted finding
+  explanations as a substitutable pattern
 - `/plugin install axiom-static-analysis-engineering`
 
 ### 🤖 AI/ML Engineering (Yzmir) - 11 Packs

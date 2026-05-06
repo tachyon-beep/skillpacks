@@ -56,7 +56,7 @@ Use the platform's plugin mechanism: Python entry points (`pyproject.toml` `[pro
 
 A manifest file (YAML, TOML, JSON) explicitly lists every rule, its module path, and its enabled state. The engine reads the manifest at startup; nothing is implicit.
 
-**Strengths:** explicit; auditable; supports per-project enables/disables; allows dry-run ("which rules would fire if I enabled this set?"). v0.2.0 sheet `manifest-driven-configuration-with-coherence-validation.md` is dedicated to this.
+**Strengths:** explicit; auditable; supports per-project enables/disables; allows dry-run ("which rules would fire if I enabled this set?"). `manifest-driven-configuration-with-coherence-validation.md` is dedicated to this.
 **Weaknesses:** more ceremony per rule; out-of-tree rules need a manifest entry plus the package install.
 
 **Recommendation:** decorator registry inside the analyzer's own ruleset; entry points or manifest for third-party rules. Decide in `04-`; do not mix unintentionally.
@@ -149,7 +149,7 @@ Recommended fields per finding:
 
 **The fingerprint is load-bearing.** Without a stable fingerprint, suppressions cannot match findings across runs (a comment shift renumbers lines and old `# noqa`s become stale). Fingerprint should compose: `(rule_id, file_relpath, byte_range_of_meaningful_token, lattice_value_at_sink_if_present)` or similar — stable under formatting changes, unstable when the underlying defect changes.
 
-**SARIF emission** (v0.2.0 sheet `sarif-emission-and-ci-integration.md`) is the standardised export format for GitHub Code Scanning and similar; until then, ship a stable native format and document it.
+**SARIF emission** (`sarif-emission-and-ci-integration.md`) is the standardised export format for GitHub Code Scanning and similar; until then, ship a stable native format and document it.
 
 ## Deprecation Flow
 
@@ -199,8 +199,8 @@ A complete `04-` answers:
 - `three-phase-inference.md` — what summaries / callsite envs rules consume
 - `false-positive-economics.md` — suppression lifecycle is the operational counterpart to this sheet's deprecation lifecycle
 - `static-vs-runtime-tradeoffs.md` — when the right answer is "no static rule for this; runtime check"
-- v0.2.0 planned: `manifest-driven-configuration-with-coherence-validation.md` — the manifest variant in depth
-- v0.2.0 planned: `sarif-emission-and-ci-integration.md` — SARIF output schema and CI exit-code semantics
-- v0.2.0 planned: `decorator-as-assertion.md` — runtime + static dual rules; a single source of truth driving both
+- `manifest-driven-configuration-with-coherence-validation.md` — the manifest variant in depth
+- `sarif-emission-and-ci-integration.md` — SARIF output schema and CI exit-code semantics
+- `decorator-as-assertion.md` — runtime + static dual rules; a single source of truth driving both
 - Cross-pack: `axiom-system-archaeologist:analyze-codebase` — consumes this sheet's output schema; needs a stable contract
 - Cross-pack: `ordis-security-architect:design-controls` — the control taxonomy that aligns with the rule category enum

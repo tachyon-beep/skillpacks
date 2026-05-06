@@ -181,5 +181,5 @@ A complete `02-` answers:
 - `plugin-architecture-for-analyzer-rules.md` — how rules consume lattice values (rule fires when value at sink is $\sqsupseteq$ a threshold)
 - `false-positive-economics.md` — when a "false positive" is the lattice over-approximating correctly vs the lattice being wrong
 - `static-vs-runtime-tradeoffs.md` — invariants the lattice cannot express and that fall back to runtime
-- v0.2.0 planned: `cross-module-flow-analysis.md` — how the lattice value crosses function summaries and module boundaries
+- `cross-module-flow-analysis.md` — how the lattice value crosses function summaries and module boundaries
 - Cross-pack: `ordis-security-architect:design-controls` — the threat model that forces the tier set

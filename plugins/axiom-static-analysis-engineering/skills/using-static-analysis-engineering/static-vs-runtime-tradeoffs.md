@@ -70,7 +70,7 @@ A single decorator drives both sides. The decorator wraps the function for runti
 def delete_user(user_id: UserId) -> None: ...
 ```
 
-The static rule reads the decorator and verifies that callers either are themselves `@requires_permission("admin")` or have a check earlier in the call chain. The runtime check catches the residual (a caller invoked from a context the static analysis couldn't reach — eval, dynamic dispatch, third-party callback). v0.2.0 sheet `decorator-as-assertion.md` covers this pattern in depth, including how to verify the static and runtime models agree.
+The static rule reads the decorator and verifies that callers either are themselves `@requires_permission("admin")` or have a check earlier in the call chain. The runtime check catches the residual (a caller invoked from a context the static analysis couldn't reach — eval, dynamic dispatch, third-party callback). `decorator-as-assertion.md` covers this pattern in depth, including how to verify the static and runtime models agree.
 
 ### Static guard + runtime fallback
 
@@ -160,7 +160,7 @@ The fix is honesty in `06-`: if the long-term home is static, plan it; if it isn
 |---------|---------|-----|
 | Static rule for a value-dependent property (e.g., "this string is a valid email") | High FP rate; lattice grows special cases | Move to runtime; document in `06-` |
 | Runtime check for a structural property the type system already enforces | Redundant cost; type-shaped runtime errors | Remove the runtime check; trust the type |
-| Dual enforcement without agreement contract | Static and runtime drift; static evolves, runtime stays, gap appears | Write the agreement contract; v0.2.0 sheet `decorator-as-assertion.md` covers the verification pattern |
+| Dual enforcement without agreement contract | Static and runtime drift; static evolves, runtime stays, gap appears | Write the agreement contract; `decorator-as-assertion.md` covers the verification pattern |
 | "We'll make it static later" with no plan | Static layer never materialises; runtime cost permanent | Drop the pretense or commit a date |
 | Ad-hoc check addition wherever a bug landed | Random check distribution; ledger out of date | Re-emit `06-` after every check addition; treat the ledger as authoritative |
 | Boundary statement is "case-by-case" | Not a boundary; check distribution stays random | The ledger must generalise; if it can't, articulate the *principle* and apply it |
@@ -185,7 +185,7 @@ A complete `06-` answers:
 - `three-phase-inference.md` — over-approximation in inference is a static-vs-runtime question: do we accept the FPs or move to runtime?
 - `plugin-architecture-for-analyzer-rules.md` — when a rule retires, this sheet records the runtime check that replaces (or doesn't replace) it
 - `false-positive-economics.md` — the cost of runtime is per call; the cost of static is per FP; this sheet weighs them
-- v0.2.0 planned: `decorator-as-assertion.md` — the descriptor pattern for dual enforcement with verified agreement
+- `decorator-as-assertion.md` — the descriptor pattern for dual enforcement with verified agreement
 - Cross-pack: `axiom-audit-pipelines:audit-aware-logging-vs-observability` — the analogous "what's evidence-grade vs ordinary" boundary, same discipline applied to logs
 - Cross-pack: `ordis-security-architect:design-controls` — for security-bearing invariants, the threat model dictates whether prevention (static) or detection (runtime) is the right control
 - Cross-pack: `axiom-sdlc-engineering:quality-assurance` — verification (does the check work) vs validation (is the check the right one) discipline applied to the boundary itself

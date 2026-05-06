@@ -1,7 +1,7 @@
 {
   "name": "axiom-static-analysis-engineering",
-  "version": "0.1.2",
-  "description": "Building static analyzers as engines, not running them as users. AST → IR → analysis → reporting pipelines: visitation patterns, abstract-domain (taint lattice) design, three-phase inference (variable → function → callgraph), plugin architecture for rules, false-positive economics with auditable suppression, and the static-vs-runtime boundary. v0.1 ships router + 6 sheets covering the architectural spine and operational reality; manifest-driven configuration, SARIF/CI integration, callgraph-resolution depth, cross-module flow, decorator-as-assertion, scaling/incremental analysis, LLM-assisted rule explanation, plus 3 commands and 2 agents are scheduled for v0.2.0. Pattern pack — applies wherever you build an analyzer (linting, taint, contracts, governance, entity extraction).",
+  "version": "0.2.0",
+  "description": "Building static analyzers as engines, not running them as users. AST → IR → analysis → reporting pipelines: visitation patterns, abstract-domain (taint lattice) design, three-phase inference (variable → function → callgraph), plugin architecture for rules, false-positive economics with auditable suppression, the static-vs-runtime boundary, callgraph construction (resolution rungs, dynamic features), cross-module flow with stub libraries, decorator-as-assertion (runtime + static dual enforcement), manifest-driven configuration with coherence validation, SARIF / CI integration, incremental analysis at scale, and LLM-assisted finding explanations as a pattern. Router + 13 sheets, 3 commands (/scaffold-analyzer, /design-tier-model, /design-rule-set), 2 agents (rule-designer, false-positive-analyst). Pattern pack — applies wherever you build an analyzer (linting, taint, contracts, governance, entity extraction).",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"
@@ -22,6 +22,9 @@
     "rule-engine",
     "false-positive",
     "ir-design",
-    "abstract-domain"
+    "abstract-domain",
+    "decorator-as-assertion",
+    "manifest-coherence",
+    "incremental-analysis"
   ]
 }

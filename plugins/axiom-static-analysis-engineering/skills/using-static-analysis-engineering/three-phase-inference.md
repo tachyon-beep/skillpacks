@@ -82,7 +82,7 @@ class FunctionSummary:
 
 - Phase 3 propagates across the callgraph. Without summaries, every callsite re-analyses the callee body, which is exponential in call depth.
 - Summaries make the engine **incremental**: if a function body doesn't change, its summary doesn't change, and only callers need re-propagation.
-- Summaries are the natural unit for **library stubs** (a third-party function whose body is unavailable but whose summary is hand-written; v0.2.0 sheet `cross-module-flow-analysis.md` covers this in depth).
+- Summaries are the natural unit for **library stubs** (a third-party function whose body is unavailable but whose summary is hand-written; `cross-module-flow-analysis.md` covers this in depth).
 
 **Common subtleties:**
 
@@ -123,7 +123,7 @@ def propagate_callgraph(callgraph: CallGraph, summaries: dict[Function, Function
 
 **Common subtleties:**
 
-- **Callgraph completeness** — virtual dispatch, dynamic imports, `getattr`, `eval`, decorator-modified callables. If the callgraph is missing an edge, propagation misses flow. The conservative move is to treat unknown callees as $\top$ (returns worst-case, writes worst-case to all globals); the precise move requires deeper resolution. v0.2.0 sheet `callgraph-construction.md` is dedicated to this.
+- **Callgraph completeness** — virtual dispatch, dynamic imports, `getattr`, `eval`, decorator-modified callables. If the callgraph is missing an edge, propagation misses flow. The conservative move is to treat unknown callees as $\top$ (returns worst-case, writes worst-case to all globals); the precise move requires deeper resolution. `callgraph-construction.md` is dedicated to this.
 - **Higher-order functions** — `map(f, xs)` is a callsite where `f` depends on the value of an argument. Either specialise per known `f` (more precise; combinatorially explosive) or treat `f` as a value of "callable lattice" with a summary that is the join over possible callees (sound; less precise).
 - **Exceptions** — a callee that raises propagates control back to the caller's exception handler. Many analyzers ignore this and silently miss flow through `except` clauses. State the choice in `03-`.
 - **Library stubs** — for callees whose bodies are unavailable (stdlib, third-party), use hand-written summaries. The summary discipline is the same as Phase 2; the source is human, not the engine.
@@ -181,7 +181,7 @@ Incremental analysis requires:
 
 The cache is the hard part. Stale cache hits are silent wrong answers. Cache key must include lattice version (`02-` semver) and analyzer version (`99-` semver), or every lattice change requires a full cache flush.
 
-v0.2.0 sheet `scaling-to-large-codebases.md` covers the full incremental story; this sheet covers the architecture.
+`scaling-to-large-codebases.md` covers the full incremental story; this sheet covers the architecture.
 
 ## Common Mistakes
 
@@ -189,9 +189,9 @@ v0.2.0 sheet `scaling-to-large-codebases.md` covers the full incremental story; 
 |---------|---------|-----|
 | All three phases interleaved into one big fixed-point | Hard to debug, hard to make incremental, often slower | Separate the phases; each is a clean worklist |
 | Skipping Phase 2 (no function summaries) | Exponential cost in call depth | Build summaries; cache them |
-| Callgraph missing edges (virtual dispatch, dynamic imports) | False negatives | Conservatively treat unresolved callees as $\top$; refine in v0.2.0 sheet |
+| Callgraph missing edges (virtual dispatch, dynamic imports) | False negatives | Conservatively treat unresolved callees as $\top$; refine via `callgraph-construction.md` |
 | No SCC handling for recursion | Phase 3 doesn't terminate | Condense SCCs; iterate within each |
-| Library calls treated as identity | Massive false negatives at framework boundaries | Hand-written summaries (stubs); v0.2.0 sheet covers this |
+| Library calls treated as identity | Massive false negatives at framework boundaries | Hand-written summaries (stubs); see `cross-module-flow-analysis.md` |
 | Cache invalidation misses lattice version | Stale cache yields wrong findings after `02-` change | Cache key includes lattice and analyzer version |
 | No termination proof | Inference loops on certain inputs | Write the proof template; if it doesn't compose, fix `02-` |
 | Higher-order calls specialised exhaustively | Combinatorial explosion | Either specialise + iteration cap or use callable-lattice with joined summary |
@@ -204,7 +204,7 @@ A complete `03-` answers:
 2. **CFG construction** — what counts as an edge (control flow, exceptions, generators), how phi nodes / merges are handled.
 3. **Worklist algorithm** — explicit pseudocode for each phase; queue ordering (FIFO, priority, postorder).
 4. **Summary representation** — `FunctionSummary` schema; what's polymorphic, what's monomorphic, what's pure.
-5. **Callgraph construction reference** — pointer to v0.2.0 sheet or interim memo on resolution depth.
+5. **Callgraph construction reference** — pointer to `callgraph-construction.md` for resolution depth.
 6. **Recursion / cycle handling** — SCC condensation? Summary-level worklist? Iteration bound.
 7. **Higher-order handling** — specialise, callable-lattice, or hybrid.
 8. **Exception handling** — does the engine track `except` flow? Stated explicitly.
@@ -218,6 +218,6 @@ A complete `03-` answers:
 - `taint-lattice-design.md` — provides the lattice whose properties Phase 1's termination relies on
 - `plugin-architecture-for-analyzer-rules.md` — rules consume Phase 3's per-callsite envs (sink reached with what tier)
 - `false-positive-economics.md` — over-approximation in any phase shows up as FPs at the rule layer
-- v0.2.0 planned: `callgraph-construction.md` — full treatment of resolution, virtual dispatch, dynamic imports
-- v0.2.0 planned: `cross-module-flow-analysis.md` — Phase 3 across module boundaries with library stubs
-- v0.2.0 planned: `scaling-to-large-codebases.md` — incremental Phase 1/2/3 caching and parallelism
+- `callgraph-construction.md` — full treatment of resolution, virtual dispatch, dynamic imports
+- `cross-module-flow-analysis.md` — Phase 3 across module boundaries with library stubs
+- `scaling-to-large-codebases.md` — incremental Phase 1/2/3 caching and parallelism

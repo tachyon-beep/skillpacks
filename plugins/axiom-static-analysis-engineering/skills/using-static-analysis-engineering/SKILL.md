@@ -103,10 +103,10 @@ The pack produces a numbered artifact set in an `analyzer-engineering/` workspac
 | 06 | `static-runtime-boundary.md` | `static-vs-runtime-tradeoffs` |
 | 99 | `analyzer-engineering-specification.md` | router-owned consolidation |
 
-**Planned for v0.2.0** (numbered slots reserved; do not collide):
+**Shipped in v0.2.0:**
 
-| # | Artifact | Producer skill (planned) |
-|---|----------|--------------------------|
+| # | Artifact | Producer skill |
+|---|----------|----------------|
 | 07 | `callgraph-construction.md` | `callgraph-construction` (resolution depth, virtual dispatch, dynamic imports) |
 | 08 | `cross-module-flow.md` | `cross-module-flow-analysis` (boundary semantics, summary functions) |
 | 09 | `decorator-as-assertion-spec.md` | `decorator-as-assertion` (runtime + static dual enforcement, descriptor pattern) |
@@ -115,8 +115,8 @@ The pack produces a numbered artifact set in an `analyzer-engineering/` workspac
 | 12 | `scaling-and-incrementality.md` | `scaling-to-large-codebases` (caching, parallelism, watch mode) |
 | 13 | `llm-assisted-explanation.md` | `llm-assisted-rule-explanation` (the pattern, not the LLM) |
 
-**Planned commands (v0.2.0):** `/scaffold-analyzer`, `/design-tier-model`, `/design-rule-set`.
-**Planned agents (v0.2.0):** `rule-designer`, `false-positive-analyst`.
+**Commands (v0.2.0):** `/scaffold-analyzer`, `/design-tier-model`, `/design-rule-set`.
+**Agents (v0.2.0):** `rule-designer`, `false-positive-analyst`.
 
 ## Spec Dependency Graph
 
@@ -164,12 +164,10 @@ Every analyzer is classified during `taint-lattice-design` and recorded in `00-s
 | XS | Single-rule pattern matcher (one regex, one AST shape, one verdict) | `00, 01`; `02–06` may be one-page memos |
 | S | Small ruleset, single project, no taint propagation, suppressions tracked manually | XS set + `02, 04`; `05` is an inline checklist |
 | M | Multi-rule analyzer with at least one dataflow rule, used across multiple projects | S set + full `02, 03, 04, 05` |
-| L | Taint analyzer with multi-tier lattice, plugin extension surface, CI-blocking, ≥1000 LoC analyzer | M set + full `06`, planned `07-callgraph-construction.md`, planned `11-sarif-and-ci.md` (interim memos until v0.2.0 ships) |
-| XL | Cross-module / cross-language analyzer with formal soundness/completeness claims, regulator visibility, security-bearing | L set + planned `08-cross-module-flow.md`, formal proof obligations recorded in `02-` and discharged in `03-` |
+| L | Taint analyzer with multi-tier lattice, plugin extension surface, CI-blocking, ≥1000 LoC analyzer | M set + full `06`, `07-callgraph-construction.md`, `11-sarif-and-ci.md`, `12-scaling-and-incrementality.md` |
+| XL | Cross-module / cross-language analyzer with formal soundness/completeness claims, regulator visibility, security-bearing | L set + `08-cross-module-flow.md`, formal proof obligations recorded in `02-` and discharged in `03-` |
 
 Tier is authoritative. If any sheet's guidance forces an artifact above your declared tier, that artifact becomes required — this is a tier promotion, not a waiver.
-
-**v0.1.0 scope honesty:** L and XL tiers reference v0.2.0-planned artifacts. For now, L/XL projects should record interim positions (e.g., "callgraph: function-name resolution only; virtual-dispatch and dynamic-import sheets pending v0.2.0") in `99-` and re-gate when v0.2.0 ships.
 
 ## Routing
 
@@ -194,7 +192,7 @@ Tier is authoritative. If any sheet's guidance forces an artifact above your dec
 
 1. Read `static-vs-runtime-tradeoffs` first (`06-`). Most "we should make this static" requests fail under cost analysis: the invariant depends on values, not types, and statics can only see types.
 2. If static is genuinely tractable: `taint-lattice-design` (`02-`) for the abstract domain that captures the invariant; `three-phase-inference` (`03-`) for propagation; `plugin-architecture-for-analyzer-rules` (`04-`) for the rule.
-3. If dual enforcement is the answer (runtime catches the residual, static catches the bulk): plan the v0.2.0 sheet `decorator-as-assertion-spec` interim — record the runtime guard and the static rule together, with a stated agreement contract.
+3. If dual enforcement is the answer (runtime catches the residual, static catches the bulk): `decorator-as-assertion` (`09-`) — record the runtime guard and the static rule under a single agreement contract; both implementations cite it.
 
 ### Scenario: "Suppressions are growing faster than rules"
 
@@ -202,16 +200,14 @@ Tier is authoritative. If any sheet's guidance forces an artifact above your dec
 2. Cross-link to `axiom-audit-pipelines` for waiver-as-decision: every `# noqa: RULE` is a procedural decision and lives in the same evidence regime as governor verdicts.
 3. If the rule itself is wrong, `taint-lattice-design` (`02-`) — refine the lattice rather than suppress the symptoms.
 
-### Specialist Agents (planned for v0.2.0)
+### Specialist Agents
 
-- **`agent: rule-designer`** *(planned)* — Given a desired invariant in plain English, drafts a static rule against the existing lattice and inference pipeline. Will run the rule against a test corpus and report the FP/FN profile before adoption.
-- **`agent: false-positive-analyst`** *(planned)* — Reviews the suppression set for systemic issues (a single rule with disproportionate suppressions, a waiver pattern that signals lattice mis-design, expiring waivers that have no review).
+- **`agent: rule-designer`** — Given a desired invariant in plain English, drafts a static rule against the existing lattice and inference pipeline; produces `RuleMetadata`, examples_violation / examples_clean fixtures, and the rule's structural sketch. Surfaces conflicts with existing rules.
+- **`agent: false-positive-analyst`** — Reviews the suppression set for systemic issues (a single rule with disproportionate suppressions, a waiver pattern that signals lattice mis-design, expiring waivers without review). Classifies suppressions by root cause (lattice imprecision, callgraph over-approximation, stub gap, runtime property masquerading as static, …) and routes findings to the artifact that owns the fix.
 
-For v0.1.0, these workflows run manually using the protocols in `plugin-architecture-for-analyzer-rules.md` and `false-positive-economics.md`.
+### Slash Commands
 
-### Slash Commands (planned for v0.2.0)
-
-- `/scaffold-analyzer` — drop in a base AST visitor + rule registry + emission scaffolding (SARIF or native), aligned to the declared analyzer tier.
+- `/scaffold-analyzer` — drop in a base AST visitor + rule registry + emission scaffolding (SARIF or native), aligned to the declared analyzer tier; consumes the artifact set this skill produces.
 - `/design-tier-model` — interactive elicitation: what tiers does your trust hierarchy actually need? Output feeds `taint-lattice-design`.
 - `/design-rule-set` — bootstrap a manifest + initial rule set against an existing analyzer or a fresh scaffold.
 
@@ -221,7 +217,7 @@ Run before emitting `99-analyzer-engineering-specification.md`. Each check produ
 
 | # | Check | Question |
 |---|-------|----------|
-| 1 | Tier coverage | Every artifact required by the declared tier exists. (For L/XL pre-v0.2.0, interim memos are recorded with re-gate triggers.) |
+| 1 | Tier coverage | Every artifact required by the declared tier exists. |
 | 2 | Visitation honesty | `01-` names the visitation strategy and lists what is *not* visited (comments, types-only nodes, synthetic nodes from desugaring). "We walk the AST" without scope statement fails. |
 | 3 | Lattice well-formedness | `02-` proves the abstract domain is a lattice: partial order specified, join (and meet, if used) specified, monotonicity of transfer functions stated, finite height stated (or chain-condition argued). A "lattice" with neither monotonicity nor finite height is a soup. |
 | 4 | Termination proof | `03-` shows the inference terminates: lattice from `02-` has finite ascending chains, transfer functions are monotonic, worklist algorithm is specified. Hand-waving "it converges" fails. |
@@ -246,7 +242,7 @@ A `99-analyzer-engineering-specification.md` whose gate report is older than its
 | Plugin model migration | `04-`, all rule registrations re-done | Check 6 |
 | Suppression policy change | `05-`, cross-link to audit pack | Check 7 |
 | Move check from runtime to static (or vice versa) | `06-`, both sides updated, test corpus extended | Check 9 |
-| New downstream consumer (system-archaeologist, IDE plug-in, CI gate) | `04-` output schema versioned, planned `11-sarif-and-ci.md` interim memo | Check 10 |
+| New downstream consumer (system-archaeologist, IDE plug-in, CI gate) | `04-` output schema versioned, `11-sarif-and-ci.md` updated for the consumer's idioms | Check 10 |
 
 Bump the `99-` semver on every re-emission. Re-gate before downstream citation.
 
@@ -256,7 +252,7 @@ Bump the `99-` semver on every re-emission. Re-gate before downstream citation.
 |-----------|----------|
 | The desired invariant depends on runtime values, not types or structure (e.g., "this string is a valid SQL identifier") | Stop. Statics can't answer this. Move to runtime; record the determination in `06-`. Do not invent a half-static rule that lies. |
 | The team disagrees on what "false positive" means and the disagreement is values, not vocabulary (one party considers "rule fires on a sanitiser" a TP because the sanitiser shouldn't exist; another considers it FP) | Stop at `05-`. Resolve before tuning the rule, otherwise every refinement makes one party angrier. |
-| A required cross-module / cross-language analysis is impossible at v0.1.0 scope | Record the limitation in `99-` with the v0.2.0 sheet that will address it (planned `08-cross-module-flow.md`); proceed at the lower tier; re-gate when v0.2.0 ships. |
+| A required cross-module / cross-language analysis is genuinely outside the analyzer's tier | Record the limitation in `99-`, citing `08-cross-module-flow.md` for the boundary discipline if it applies; proceed at the lower tier; re-gate if scope expands. |
 | The proposed lattice is not actually a lattice (joins are non-commutative, or there's no top, or the order is partial-but-not-bounded) | Return to `02-`. Either fix the lattice or pick a simpler abstract domain. Do not paper over with engineering hacks; soundness depends on the algebra. |
 | Suppressions are required to ship and the suppression-lifecycle sheet has not been written | Stop and write `05-` first, even minimally. Suppressions without lifecycle calcify; once they're in, the cost of imposing lifecycle later is *every PR*. |
 
@@ -363,11 +359,20 @@ If your analyzer is itself part of a CI pipeline whose results must reproduce ac
 | Design the rule extension surface | `plugin-architecture-for-analyzer-rules` |
 | Govern suppressions and FP-rate | `false-positive-economics` |
 | Decide static vs runtime for an invariant | `static-vs-runtime-tradeoffs` |
+| Build the callgraph (resolution rung; dynamic features) | `callgraph-construction` |
+| Cross boundaries with stubs and library models | `cross-module-flow-analysis` |
+| Design a decorator that is both a runtime check and a static rule | `decorator-as-assertion` |
+| Configure the analyzer with a layered, validated manifest | `manifest-driven-configuration-with-coherence-validation` |
+| Emit SARIF and integrate with CI / GitHub Code Scanning | `sarif-emission-and-ci-integration` |
+| Make analysis incremental and parallel without losing soundness | `scaling-to-large-codebases` |
+| Enrich findings with LLM-generated prose without letting the LLM decide | `llm-assisted-rule-explanation` |
+| Scaffold an analyzer engine | `/scaffold-analyzer` |
+| Design the lattice's tier set interactively | `/design-tier-model` |
+| Bootstrap an initial rule set + manifest | `/design-rule-set` |
+| Draft a rule from an invariant against the lattice | agent: `rule-designer` |
+| Triage a shipping analyzer's suppression set for systemic issues | agent: `false-positive-analyst` |
 | Run an existing analyzer | wrong pack — `/python-engineering`, `/rust-engineering` |
 | Consume an analyzer's output for a system map | wrong pack — `/system-archaeologist` |
-| Callgraph, cross-module flow, decorator-as-assertion, manifests, SARIF, scaling, LLM-explanation | *(planned for v0.2.0)* |
-| Scaffold an analyzer, design a tier model, design a rule set (commands) | *(planned for v0.2.0)* |
-| Rule-designer agent, false-positive-analyst agent | *(planned for v0.2.0)* |
 
 ## The Bottom Line
 
@@ -379,21 +384,27 @@ If your analyzer is itself part of a CI pipeline whose results must reproduce ac
 
 After routing, load the appropriate specialist sheet for detailed guidance.
 
-**Shipped in v0.1.0:**
+**Spike (architectural backbone):**
 
 1. [ast-visitation-patterns.md](ast-visitation-patterns.md) — Visitor, walker, transformer; lossless vs structural ASTs; parent tracking, source-position preservation, comment handling; choice criteria
 2. [taint-lattice-design.md](taint-lattice-design.md) — Lattice formalism (partial order, join, monotonicity, finite height); tier model; extension rules; the "boolean lattice masquerading as types" anti-pattern
 3. [three-phase-inference.md](three-phase-inference.md) — Variable → function → callgraph; worklist algorithm; termination proof; whole-program vs incremental; cycle handling
+
+**Support (operational reality):**
+
 4. [plugin-architecture-for-analyzer-rules.md](plugin-architecture-for-analyzer-rules.md) — Rule discovery, lifecycle, metadata schema, conflict resolution, deprecation, output schema versioning
 5. [false-positive-economics.md](false-positive-economics.md) — Suppression vs refinement; waiver lifecycle; FP-rate budget; cross-link to audit-pipelines for waiver-as-decision
 6. [static-vs-runtime-tradeoffs.md](static-vs-runtime-tradeoffs.md) — What statics can decide; the Rice-theorem ceiling; dual enforcement; cost model
 
-**Planned for v0.2.0:**
+**Boundary discipline (added v0.2.0):**
 
-7. `callgraph-construction.md` — Resolution strategies, virtual dispatch, dynamic imports, monomorphisation
-8. `cross-module-flow-analysis.md` — Boundary semantics, summary functions, library stubs
-9. `decorator-as-assertion.md` — Runtime + static dual enforcement, descriptor pattern, agreement contracts
-10. `manifest-driven-configuration-with-coherence-validation.md` — YAML overlays, schema enforcement, tier consistency
-11. `sarif-emission-and-ci-integration.md` — GitHub Code Scanning, exit-code semantics, suppression tracking in SARIF
-12. `scaling-to-large-codebases.md` — Incremental analysis, caching, parallelism, watch mode
-13. `llm-assisted-rule-explanation.md` — The pattern (rule output → LLM explanation), not the LLM
+7. [callgraph-construction.md](callgraph-construction.md) — Resolution strategies (Rung 0–4: name, CHA, RTA, VTA, k-CFA), virtual dispatch, dynamic imports, monomorphisation, the conservative-`top` floor and resolution-rate metric
+8. [cross-module-flow-analysis.md](cross-module-flow-analysis.md) — Boundary semantics, stub library discipline, framework callbacks via synthetic entry points, cross-language FFI, the boundary-statement format
+9. [decorator-as-assertion.md](decorator-as-assertion.md) — Runtime + static agreement contract, descriptor / `functools.wraps` discipline, the recognition registry, disagreement modes, decorator-aware lattice extension at body entry
+
+**Operations (added v0.2.0):**
+
+10. [manifest-driven-configuration-with-coherence-validation.md](manifest-driven-configuration-with-coherence-validation.md) — Layered overlays (engine → workspace → project → package → inline), schema and validation passes (syntax, schema, reference, coherence, drift, lifecycle), audit metadata per entry
+11. [sarif-emission-and-ci-integration.md](sarif-emission-and-ci-integration.md) — SARIF 2.1.0 emission, exit-code semantics (analyzer / config / infra distinguished), suppression round-tripping, fingerprint stability, baseline comparison, consumer matrix
+12. [scaling-to-large-codebases.md](scaling-to-large-codebases.md) — Three-cache structure (Phase 1 / Phase 2 / Phase 3), cache-key composition that survives lattice / ruleset / stub-library bumps, reverse-edge index, parallelism with determinism, watch mode, partition strategies, incremental-vs-whole-program self-test
+13. [llm-assisted-rule-explanation.md](llm-assisted-rule-explanation.md) — The pattern (rule output → structured prompt → LLM → review gate → annotation), not the LLM; boundary statement (model annotates, never decides); prompt-injection threat model; provenance and reproducibility
