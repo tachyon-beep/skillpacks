@@ -1,8 +1,16 @@
 # Claude Code Skill Packs Marketplace
 
-## Professional AI/ML, Python engineering, web backend, DevOps, SDLC, game development, security, documentation, and UX skills for Claude Code
+## Professional AI/ML, Python & Rust engineering, web backend, DevOps, SDLC, solution architecture, game development, security, documentation, and UX skills for Claude Code
 
-30 complete skillpacks • 173+ skills • Install what you need
+38 complete skillpacks • 200+ skills • Install what you need
+
+> **Recent additions (May 2026)**: 6 new packs — `yzmir-morphogenetic-rl`,
+> `axiom-determinism-and-replay`, `axiom-audit-pipelines`,
+> `axiom-static-analysis-engineering`, `axiom-rust-workspaces`,
+> `axiom-pyo3-interop`. Plus a 2026-era refresh sweep across the AI/ML cluster
+> (PyTorch 2.9+, FSDP2, vLLM/SGLang, GRPO/DreamerV3, Mamba/SSM, modern PEFT) and
+> the design/security/quality packs (WCAG 2.2, Material 3, Pydantic v2,
+> Typst 0.14, SLSA/SBOM/Sigstore).
 
 ---
 
@@ -39,10 +47,12 @@ cd skillpacks
 
 ### 🔒 Security (Ordis)
 
-**ordis-security-architect** - 9 skills
+**ordis-security-architect** - 11 skills, 3 commands, 2 agents _(refreshed for 2026)_
 
-- Threat modeling (STRIDE), security controls, compliance frameworks
-- ATO processes, classified systems, security architecture review
+- Threat modeling (STRIDE / CWE / CVSS / ATT&CK), security controls
+- Compliance: NIST CSF 2.0, ISO 27001:2022, PCI-DSS v4.0.1, GDPR, NIS2, EU AI Act
+- LLM/AI security (OWASP LLM Top 10:2025, MITRE ATLAS), supply-chain
+  (SLSA, SBOM, Sigstore), ATO/RMF
 - `/plugin install ordis-security-architect`
 
 ### 📝 Documentation (Muna) - 4 Packs
@@ -58,6 +68,8 @@ cd skillpacks
 
 - Documentation structure, clarity & style, diagram conventions
 - Security-aware docs, incident response, ITIL/governance
+- Includes `complex-writer` / `complex-reviewer` agent pair for surgical edits
+  in large files (≥2000 lines), cross-language
 - `/plugin install muna-technical-writer`
 
 **muna-panel-review** - 3 agents, 1 skill, 3 commands
@@ -72,14 +84,37 @@ cd skillpacks
 - Derivation tracking, consistency auditing, evolution management
 - `/plugin install muna-wiki-management`
 
-### 🔬 Development (Axiom) - 8 Packs
+### 🔬 Development (Axiom) - 15 Packs
 
 **axiom-python-engineering** - 10 skills
 
-- Modern Python 3.12+: types, syntax, project structure, delinting
-- Testing, async, debugging, profiling
+- Modern Python 3.13: uv-first tooling, ty/pyrefly, current pre-commit revs
+- Testing, async, debugging, profiling, delinting
 - Scientific computing (NumPy/pandas), ML workflows
 - `/plugin install axiom-python-engineering`
+
+**axiom-rust-engineering** - router + 11 reference sheets, 5 commands, 3 agents
+
+- Rust 2024 edition: ownership, traits, async (tokio), testing
+- Clippy/cargo tooling, performance, unsafe/FFI, AI/ML interop (PyO3, candle)
+- Single-crate-shaped — composes with `axiom-rust-workspaces` and `axiom-pyo3-interop`
+- `/plugin install axiom-rust-engineering`
+
+**axiom-rust-workspaces** - router + 13 sheets, 3 commands, 1 agent _(new — May 2026)_
+
+- Rust at workspace scope: multi-crate composition, `[workspace.dependencies]`,
+  `[workspace.lints]`, `deny.toml` with waiver lifecycle
+- Feature unification (resolver-2/3), Miri-on-subset, public-vs-internal crate
+  boundaries (internal-traits-crate / sealed-trait), 10-pattern anti-pattern list
+- `/plugin install axiom-rust-workspaces`
+
+**axiom-pyo3-interop** - router + 13 sheets, 3 commands, 1 agent _(new — May 2026)_
+
+- Python ↔ Rust FFI discipline: `Bound<'py, T>`, GIL release, abi3, maturin
+- Batched FFI to amortise crossing cost, zero-copy NumPy buffer protocol,
+  Gymnasium environments backed by Rust, async across the boundary
+- Wheel matrix (cibuildwheel, manylinux), interpreter-teardown discipline
+- `/plugin install axiom-pyo3-interop`
 
 **axiom-system-archaeologist** - 5 skills
 
@@ -95,6 +130,13 @@ cd skillpacks
 - Prevents diplomatic softening, analysis paralysis, security compromise
 - Router + 3 specialist skills for technical debt and architecture review
 - `/plugin install axiom-system-architect`
+
+**axiom-solution-architect** - 9 skills, 2 agents, 2 commands
+
+- Forward solution architecture: brief/HLD/epic → traceable artifact set
+- ADRs, C4, NFRs, RTM, integration/migration, risks, TOGAF/ArchiMate
+- Consolidated Solution Architecture Document (SAD) with consistency gate
+- `/plugin install axiom-solution-architect`
 
 **axiom-web-backend** - 12 skills
 
@@ -132,41 +174,87 @@ cd skillpacks
 - Technical debt triage, codebase confidence building
 - `/plugin install axiom-engineering-foundations`
 
-### 🤖 AI/ML Engineering (Yzmir) - 10 Packs
+**axiom-audit-pipelines** - router + 11 sheets, 3 commands, 2 agents _(new — May 2026)_
+
+- Audit-grade decision pipelines: canonical encoding (RFC 8785 JCS), append-only
+  decision logs, fingerprint chains (linked-hash and Merkle)
+- HMAC and Ed25519 signed exports, immutable storage, decision provenance
+  (inputs/ruleset/code closure), threat model for the log itself
+- Retention reconciled with right-to-be-forgotten, partial replay, performance budgets
+- `/plugin install axiom-audit-pipelines`
+
+**axiom-determinism-and-replay** - router + 13 sheets, 3 commands, 2 agents _(new — May 2026)_
+
+- Architecture-level determinism and replay for RL substrates, multi-agent
+  systems, multiplayer lockstep engines, replay-debuggable services
+- Seed governance, RNG isolation, snapshot strategy, divergence detection,
+  rollback, concurrency strategies, floating-point and GPU determinism
+- External-effects substitution, canonical state encoding, property tests,
+  cost-of-determinism accounting
+- `/plugin install axiom-determinism-and-replay`
+
+**axiom-static-analysis-engineering** - router + 6 sheets _(new — May 2026, v0.1)_
+
+- Building static analyzers as engines, not running them as users
+- AST visitation, taint-lattice (abstract-domain) design with monotonicity,
+  three-phase inference (variable → function → callgraph) with termination proofs
+- Plugin architecture for rules, false-positive economics with auditable
+  suppression lifecycle, the static-vs-runtime boundary
+- v0.2.0 will add SARIF/CI integration, callgraph construction, scaling, plus
+  3 commands and 2 agents
+- `/plugin install axiom-static-analysis-engineering`
+
+### 🤖 AI/ML Engineering (Yzmir) - 11 Packs
 
 **yzmir-ai-engineering-expert** - 1 router skill
 
 - Primary router that directs to specialized AI/ML packs
 - `/plugin install yzmir-ai-engineering-expert`
 
-**yzmir-pytorch-engineering** - 9 skills
+**yzmir-pytorch-engineering** - 9 skills _(refreshed for PyTorch 2.9+)_
 
 - Tensors, modules, distributed training, profiling, debugging
+- torch.compile, FSDP1/FSDP2, FlexAttention, torch.amp
 - `/plugin install yzmir-pytorch-engineering`
 
-**yzmir-training-optimization** - 11 skills
+**yzmir-training-optimization** - 11 skills _(refreshed)_
 
-- Optimizers, learning rates, convergence, hyperparameter tuning
+- Modern optimizers, schedules, mixed-precision, batch-size strategy
+- Learning rates, convergence, hyperparameter tuning
 - `/plugin install yzmir-training-optimization`
 
-**yzmir-deep-rl** - 13 skills
+**yzmir-deep-rl** - 13 skills _(refreshed)_
 
-- DQN, PPO, SAC, reward shaping, exploration, offline RL
+- DQN, PPO, SAC, reward shaping, exploration
+- Modern offline RL, GRPO, DreamerV3 / TD-MPC2, REDQ/DroQ/CrossQ,
+  MAPPO/IPPO, BBF/Agent57, Go-Explore
 - `/plugin install yzmir-deep-rl`
 
-**yzmir-neural-architectures** - 9 skills
+**yzmir-morphogenetic-rl** - router + 7 sheets, 2 commands, 2 agents _(new — May 2026)_
+
+- RL controllers that decide WHEN/HOW to mutate a network's topology during training
+- Controller action/observation/reward design, governor and safety gates
+- Rollback-as-RL-signal, deterministic morphogenesis, ablation under topology change
+- Companion to `yzmir-dynamic-architectures`
+- `/plugin install yzmir-morphogenetic-rl`
+
+**yzmir-neural-architectures** - 9 skills _(refreshed)_
 
 - CNNs, Transformers, RNNs, attention mechanisms, architecture selection
+- Mamba/SSM, MoE (Mixtral/DeepSeek/OLMoE), modern diffusion (SDXL/FLUX/DiT/SD3),
+  multimodal (CLIP/SigLIP/LLaVA), SAM/SAM-2, ConvNeXt v2, equivariant GNNs
 - `/plugin install yzmir-neural-architectures`
 
-**yzmir-llm-specialist** - 8 skills
+**yzmir-llm-specialist** - 8 skills _(refreshed)_
 
-- Fine-tuning, RLHF, RAG, inference optimization, prompt engineering
+- Reasoning models, agentic + MCP, modern serving stack, DPO/GRPO
+- RAG with contextual retrieval, fine-tuning, inference optimization
 - `/plugin install yzmir-llm-specialist`
 
-**yzmir-ml-production** - 11 skills
+**yzmir-ml-production** - 11 skills _(refreshed)_
 
-- Quantization, model serving, MLOps, monitoring, debugging
+- torch.ao.quantization, vLLM/SGLang/TensorRT-LLM serving
+- LLM observability, MLOps, monitoring, debugging
 - `/plugin install yzmir-ml-production`
 
 **yzmir-simulation-foundations** - 9 skills
@@ -180,10 +268,12 @@ cd skillpacks
 - Archetypes, modeling, visualization
 - `/plugin install yzmir-systems-thinking`
 
-**yzmir-dynamic-architectures** - 7 skills
+**yzmir-dynamic-architectures** - 6 skills, 1 agent, 2 commands _(refreshed)_
 
-- Dynamic/morphogenetic neural networks
-- Continual learning, gradient isolation, PEFT/LoRA
+- Dynamic/morphogenetic neural networks: grow, prune, adapt topology
+- Continual learning, gradient isolation, lifecycle orchestration
+- Modern PEFT (VeRA/PiSSA/LoftQ/LoRA+/rsLoRA/LongLoRA), post-Mixtral MoE,
+  adapter merging (TIES/DARE/SLERP/MergeKit)
 - `/plugin install yzmir-dynamic-architectures`
 
 ### 🎮 Game Development (Bravos) - 2 Packs
@@ -208,10 +298,11 @@ cd skillpacks
 - Static site tooling guidance (Hugo, Astro, Eleventy)
 - `/plugin install lyra-site-designer`
 
-**lyra-ux-designer** - 11 skills
+**lyra-ux-designer** - 12 reference sheets _(refreshed for 2026)_
 
-- Visual design, accessibility (WCAG), interaction patterns
-- Mobile/web/desktop/game UI design
+- WCAG 2.2 accessibility, modern web platform primitives (dialog, popover,
+  `:has()`, container queries)
+- iOS 17+ and Material 3 mobile patterns, AI-experience patterns
 - `/plugin install lyra-ux-designer`
 
 ### ✅ Quality Engineering (Ordis)
@@ -351,8 +442,8 @@ I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO
 
 ## What's Inside
 
-- **173+ Skills**: Production-ready guidance across 7 domains
-- **30 Packs**: Install only what you need
+- **200+ Skills**: Production-ready guidance across 7 domains
+- **38 Packs**: Install only what you need
 - **Per-Pack Plugins**: Independent versioning, clean dependencies
 - **Complete Coverage**: Design → Foundation → Training → Production
 
@@ -364,14 +455,14 @@ I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO
 skillpacks/
 ├── .claude-plugin/
 │   └── marketplace.json       # Marketplace catalog
-├── plugins/                   # All 30 skillpacks
-│   ├── axiom-*/               # Development (8 packs)
+├── plugins/                   # All 38 skillpacks
+│   ├── axiom-*/               # Development (15 packs)
 │   ├── bravos-*/              # Game development (2 packs)
 │   ├── lyra-*/                # UX & site design (2 packs)
 │   ├── meta-*/                # Meta utilities (2 packs)
 │   ├── muna-*/                # Documentation (4 packs)
 │   ├── ordis-*/               # Quality & security (2 packs)
-│   └── yzmir-*/               # AI/ML (10 packs)
+│   └── yzmir-*/               # AI/ML (11 packs)
 └── docs/                      # Planning documents
 ```
 
