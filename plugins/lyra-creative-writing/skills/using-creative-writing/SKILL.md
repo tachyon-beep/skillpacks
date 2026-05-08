@@ -34,7 +34,7 @@ Four hard rules, in this order:
 
 **Consultant** — `/plan-story`. The writer brings a premise, logline, or partial outline; the `outline-architect` agent develops or interrogates the outline using the writer's chosen structural lens (or proposes two or three lenses if none is stated). Sheets typically loaded: `story-structure-and-arc`, `openings-and-endings`, plus any of `worldbuilding-by-implication`, `research-and-verisimilitude`, `creative-nonfiction-craft` as relevant. Consultant mode never drafts prose.
 
-## The 13 sheets
+## The 13 craft sheets
 
 | Sheet | Topic | Primary consumers |
 |---|---|---|
@@ -52,7 +52,27 @@ Four hard rules, in this order:
 | `revision-and-cutting` | Pass-based revision (structural before line), kill-your-darlings without sentimentality, the over-polished early-draft trap | `revision-coach`, `line-reviewer` |
 | `creative-nonfiction-craft` | CNF/fiction overlap and divergence, truth-claim vs verisimilitude, persona vs author, ethics of writing about real people | `line-reviewer`, `developmental-reviewer`, `outline-architect` |
 
-## The 8 agents
+## The 9 genre sheets
+
+v0.2 adds nine genre-specific sheets covering the major prose-narrative genres: `mystery`, `thriller`, `sf`, `fantasy`, `horror`, `romance`, `literary-fiction`, `memoir-and-personal-essay`, `literary-journalism`. Each presents conventions through a uniform reader-contract discipline: name the contract → name the cost of breaking → name books worth the cost. The router loads on demand — typically one genre sheet per session, two when the project is genuinely cross-genre (literary thriller, romantasy, memoir-as-essay-collection). For three-genre projects, the router asks which to focus on rather than loading three at once.
+
+Genre sheets reference the v0.1 craft sheets rather than re-explaining universal craft. If a genre question turns out to be a craft question (pacing, POV, dialogue), defer to the craft sheet.
+
+The sheets do **not** rank genres against each other. Literary fiction is one mode among nine, with its own contract and its own breaking-costs — not the unmarked default the others deviate from. The literary-vs-genre debate is named honestly inside `literary-fiction.md` rather than left as subtext.
+
+| Sheet | Contract | Cross-genre handled |
+|---|---|---|
+| `mystery` | Fair-play puzzle that resolves; cosy↔noir axis | literary-fiction, romance, horror |
+| `thriller` | Stakes-escalation under time pressure | literary-fiction, romance |
+| `sf` | Novum-driven extrapolation with rule-bound consequences | literary-fiction, fantasy, horror |
+| `fantasy` | Mythopoeic coherence; soft↔hard magic axis (Sanderson's laws as one tradition) | literary-fiction, sf, romance, horror |
+| `horror` | Dread that compounds; cosmic↔domestic axis | literary-fiction, mystery, sf, fantasy |
+| `romance` | HEA/HFN; subgenre conventions (regency, romantasy, romantic suspense, dark) | fantasy (romantasy), thriller (rom-suspense), literary-fiction |
+| `literary-fiction` | Ambiguity-tolerant ending, prose-as-virtue, interiority foregrounded; literary-prize/MFA/literary-press ecology | thriller, sf, horror (romance and fantasy briefly) |
+| `memoir-and-personal-essay` | Truth-claim with persona discipline; lyric↔narrative axis | literary-journalism, literary-fiction (autofiction) |
+| `literary-journalism` | Truth-claim with reportorial verification; subject-as-collaborator vs subject-as-material | memoir-and-personal-essay, literary-fiction |
+
+## The 11 agents
 
 | Agent | Mode | Scope |
 |---|---|---|
@@ -64,10 +84,13 @@ Four hard rules, in this order:
 | `scene-drafter` | Drafter | Drafts a scene from beats + voice samples + POV/distance constraint |
 | `outline-architect` | Consultant | Builds outlines from premise; supports multiple structural lenses; stress-tests for weak cause/effect |
 | `revision-coach` | Consultant | Synthesises five coach-mode reports into a prioritised revision-pass plan |
+| `worldbuilding-consultant` | Consultant | World abstraction: magic-system rule-checks, mythopoeic coherence, technological extrapolation, geography/economy/politics consistency. Distinct from `outline-architect` (story-level) and the `worldbuilding-by-implication` sheet (technique). |
+| `opening-and-ending-doctor` | Coach | First 5 pages and last 5 pages only. Output is a *promise ledger* — signal inventory at the front, promise reckoning at the back. Distinct output shape from `developmental-reviewer`'s manuscript-wide memo. |
+| `premise-stress-tester` | Consultant (adversarial) | Pre-outline. Interrogates a premise: what is the story engine? Conflict load-bearing or decorative? What does this add to genre prior art? Distinct from `outline-architect`, which develops premises that have already passed muster. |
 
 ## Sheet-loading discipline
 
-The router loads one to three sheets per session based on the conversation. It does **not** load all thirteen; the context cost is wasteful and the user's question rarely spans the whole pack. Load on demand. If a question arises that the loaded sheets do not cover, name what is missing and load the relevant sheet, rather than answering generically.
+The router loads one to three craft sheets per session based on the conversation, plus one genre sheet (or two when the project is cross-genre, with a router prompt for three-genre projects). It does **not** load all twenty-two; the context cost is wasteful and the user's question rarely spans the whole pack. Load on demand. If a question arises that the loaded sheets do not cover, name what is missing and load the relevant sheet, rather than answering generically.
 
 ## Composition with `muna-panel-review`
 
@@ -80,7 +103,7 @@ When the writer wants simulated reader reactions to a draft — beta-reader pane
 - **Treating any formula as universal law.** Save the Cat, Hero's Journey, MRUs, the seven-point structure — useful diagnostic lenses, none of them universal. Workshop tradition is sceptical of all of them and especially of the literary novel that gets force-fitted to a commercial-thriller beat sheet.
 - **Ranking literary above genre, or genre above literary.** Both are real craft. The pack's exemplars deliberately pair them (Le Guin and Tana French, Kate Chopin and Stephen King, Edith Wharton and Tana French again). Ranking is for awards committees, not craft work.
 - **Mixing critique types in a single pass.** A coach-mode session that drifts into rewriting; a developmental memo that picks up line-edit annotations; a continuity report that volunteers craft judgements. Each agent is scoped deliberately. The separation is the design.
-- **Loading all 13 sheets at once.** Wasteful and rarely necessary. Load on demand.
+- **Loading all 22 sheets at once.** Wasteful and rarely necessary. Load on demand — typically one craft sheet, optionally one genre sheet, occasionally a second sheet for cross-genre work.
 
 ## Rationalisation table
 

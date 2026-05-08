@@ -20,7 +20,7 @@ File path or pasted prose. Optional `--focus=` flag, comma-separated from `pov`,
 ## Orchestration
 
 1. Load `using-creative-writing/SKILL.md`; confirm coach mode.
-2. Select agents from `--focus`. If the prose has no dialogue, drop `dialogue-doctor` and note it.
+2. Select agents from `--focus`. If the prose has no dialogue, drop `dialogue-doctor` and surface a one-line note in the final report ("dialogue-doctor auto-skipped: prose has no dialogue"). If `--focus=dialogue` is set explicitly and the prose has no dialogue, override the auto-skip and run dialogue-doctor anyway with a warning ("the prose appears to have no dialogue; running dialogue-doctor anyway because --focus=dialogue was specified").
 3. **Dispatch in parallel as Task agents — one tool message with multiple Agent calls. Serial dispatch is forbidden:**
    - `developmental-reviewer` → structure/character/pacing memo
    - `line-reviewer` → annotated line edits

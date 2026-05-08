@@ -1,0 +1,46 @@
+# Literary Fiction
+
+## The contract
+
+Literary-fiction readers come expecting prose to do work, interiority to be taken seriously, and the ending to refuse easy resolution. The contract is plural — there is no RWA, no Detection Club oath, no fifteen-beat sheet — but it is real, and it is enforced by a recognisable ecology: the literary press (NYT Book Review, LRB, NYRB, *Granta*, *n+1*, *Paris Review*), the prize circuit (Booker, Pulitzer, NBA, NBCC, Booker International, Folio, Goldsmiths, Women's Prize, IMPAC), the literary imprints (FSG, Knopf, Riverhead, Cape, Picador, And Other Stories, Fitzcarraldo at the experimental edge), the MFA-trained reviewer class, and the literary-magazine ecosystem from which most literary debutants emerge. These constituencies disagree among themselves about what literary fiction is *for* — that disagreement is part of what the category is — but they agree on what it is *not*: prose that is merely functional, interiority that is merely declared, endings that close with the click of a commercial latch.
+
+The shared expectations are three. First, prose is load-bearing — sentences carry meaning the plot does not, and a writer who cannot turn a sentence is held to be doing the wrong job in the wrong room. Second, interiority is foregrounded — what a character notices, what they avoid noticing, the gap between what they think they want and what the prose lets the reader see, is often the actual subject. Third, endings tolerate ambiguity — irresolution can be the point, and a too-tidy close reads as a failure of nerve or a category mistake. The contract is character- and language-driven more often than premise-driven; meaning is made by attention rather than action.
+
+## The literary-vs-genre debate, named honestly
+
+The workshop does not pick a side, and this sheet will not. The debate is real. Le Guin spent decades arguing that science fiction could be literature, against critics who treated *literary* and *genre* as exclusive categories; Atwood resisted the SF label for *The Handmaid's Tale* and was challenged on it by Le Guin in print. Ishiguro's *Klara and the Sun* won the Booker as literary fiction with an SF premise the SF community had been working with for fifty years. Cormac McCarthy moved between literary, Western, and post-apocalyptic with literary credentials that carried him across borders the genre community polices for its own reasons. Donna Tartt's *The Goldfinch* won the Pulitzer with thriller-shape under literary prose; Whitehead's *The Underground Railroad* won the Pulitzer by literalising the railroad as fantasy.
+
+The "literary [genre]" cross-marketed move — literary thriller, literary horror, literary SF, literary romance — exists because *literary* is itself a marketing category, because the two-aisle binary was always a market construct as much as a craft one, and because writers' literary credentials sometimes act as a passport into territory the genre community has been working without that passport for a hundred years. Workshop position: literary craft is real and difficult; genre craft is real and difficult; they are different forms of attention to different contracts, and ranking either above the other is a move for awards committees, not for craft work.
+
+## The cost of breaking the literary contract
+
+Concrete and felt at every level. Functional prose — prose that conveys information without rhythm, image, or pressure at the sentence — reads to a literary reader as a category mistake; the book gets reviewed elsewhere, or not at all. Interiority that is shallow — characters whose thoughts are restated plot rather than weather of mind — reads as commercial in a register the literary press does not champion. Endings that close too neatly read as the writer flinching from the harder ending the book had earned.
+
+The reshelve when literary readers feel let down: upmarket commercial (Moyes, Nicholls, Picoult — a real and healthy market with its own readers, agents, prizes, and craft, not a lesser room, just a different one), book-club fiction, women's fiction, or general fiction. The literary imprints decline; the literary review pages skip it; the prize juries do not see it. Some books cross from upmarket commercial *into* literary attention later (the slow Booker recognition of crime and SF over the last two decades), but most do not. The MFA tradition — Iowa, Hopkins, NYU, Michener, Houston, Cornell — has shaped the contemporary US literary canon for better (close-reading discipline, sentence-level seriousness) and for worse (the famous "MFA voice", the perceived sameness of workshop-trained debuts). Naming this is honest. Letting it be the whole of the conversation is not.
+
+## Books worth the cost
+
+*Beloved* (Morrison, 1987) — broke linear chronology and stable POV for haunting; the Pulitzer and the Nobel underwrite what the form did. *Mrs Dalloway* (Woolf, 1925) — broke the act-structure contract and founded much of what twentieth-century literary fiction took as available. *The Remains of the Day* (Ishiguro, 1989) — broke "literary fiction needs interiority foregrounded" by foregrounding repression and letting the reader see what Stevens cannot; Booker. *Gilead* (Robinson, 2004) — broke "literary needs propulsion" by being almost plotless, an epistolary meditation that the Pulitzer recognised anyway. *Lincoln in the Bardo* (Saunders, 2017) — broke the conventional novel form entirely; chorus-of-the-dead structure; Booker. *Lucy* (Kincaid, 1990) — broke novel-versus-essay-versus-memoir distinctions and made the unstable form the argument. *The Underground Railroad* (Whitehead, 2016) — broke literary-versus-genre by literalising the railroad as fantasy; Pulitzer. *The Road* (McCarthy, 2006) — broke punctuation, broke SF's novum-with-rules, broke the post-apocalyptic genre's interest in cause; Pulitzer.
+
+Each book did literary work by refusing some literary convention. Several are also genre books — *The Underground Railroad* is fantasy; *The Road* is post-apocalyptic SF; *Klara and the Sun* is SF; *Beloved* has a ghost. They are literary *and*, not literary *instead of*.
+
+## Crossing with thriller
+
+The literary-thriller cross is a working category now. Donna Tartt's *The Secret History* taught the form what slow dread under retrospective narration could carry — the murder is in the prologue. Mick Herron's *Slough House* sits at the comic-literary edge of spy fiction; the prose is doing work the genre had not asked for. Liz Moore's *Long Bright River* and *The God of the Woods* run thriller engines through literary prose registers. Ottessa Moshfegh's *Eileen* and *Death in Her Hands* work the literary-noir border where unreliable interiority is itself the suspense engine. Contract collision: thriller wants pace, literary tolerates dwelling. The successful crosses honour stake-specificity at the page level and let the literary commitments sit in voice and structure.
+
+## Crossing with sf
+
+The longest-running cross-genre debate in twentieth-century letters. Le Guin (*The Left Hand of Darkness*, *The Dispossessed*) and Atwood (*The Handmaid's Tale*, *Oryx and Crake*) wrote SF that the literary press had to take seriously and disagreed in print about whether their books were SF. Ishiguro's *Klara and the Sun* and *Never Let Me Go* won literary recognition for SF premises. Ted Chiang's stories are literary fiction whose discipline is the SF idea worked through to its consequences. Emily St. John Mandel's *Station Eleven* and *Sea of Tranquility* run between literary and SF rooms by design. The cross works when the prose carries and the novum has rules; it fails when literary credentials are used to excuse SF craft the writer has not done.
+
+## Crossing with horror
+
+Shirley Jackson is the deep root — *We Have Always Lived in the Castle* and *The Haunting of Hill House* are literary fiction and horror without the seam showing. Mariana Enríquez (*Things We Lost in the Fire*, *Our Share of Night*) writes Argentine literary horror where political violence and the supernatural share a register. Stephen Graham Jones (*The Only Good Indians*, *My Heart is a Chainsaw*) brings literary attention to slasher and creature traditions the literary press had ignored. Carmen Maria Machado's *Her Body and Other Parties* sits between horror, fairy tale, and literary short fiction. Iain Reid's *I'm Thinking of Ending Things* runs literary unreliability into psychological-horror territory. The cross succeeds when dread is allowed to be the subject rather than the genre marker.
+
+## Brief mentions
+
+Romance crossing is rare and tense — Byatt's *Possession*, Rooney's *Normal People*, Cusk's *Outline* trilogy work the literary-versus-romance friction as their actual subject; see `romance.md`. Fantasy crossing runs through Le Guin's *Earthsea*, Susanna Clarke's *Jonathan Strange & Mr Norrell* and *Piranesi*, and Whitehead's *Underground Railroad* on the literalised-metaphor edge.
+
+## Cross-references
+
+Sheets: `prose-rhythm-and-style`, `character-interiority`, `story-structure-and-arc`, `openings-and-endings`, `revision-and-cutting`.
+Agents: `developmental-reviewer`, `line-reviewer`, `opening-and-ending-doctor`.
