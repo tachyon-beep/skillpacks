@@ -398,6 +398,7 @@ This is prose, not structured data. Scribe cannot merge. **Reject and re-spawn t
 
 Before returning, every reviewer MUST verify:
 
+- [ ] **The output file parses as YAML.** Run `python3 -c "import yaml; yaml.safe_load(open('<path>'))"` (or equivalent) AFTER writing. If the parse raises any exception, fix the file and re-validate. **Do not skip this — self-validation that does not actually parse the YAML is silent failure.** Common trap: an unquoted scalar that begins with `"` (e.g., `reason: "Failed to ..." log path requires...`) — YAML treats the leading quote as opening a double-quoted string and chokes on the trailing text. Fix by either quoting the entire value with single quotes (`reason: '"Failed to ..." log path requires...'`) or rewording to avoid leading punctuation.
 - [ ] `schema_version: 1` is present
 - [ ] `focus` matches the focus the reviewer was assigned
 - [ ] All required keys for that focus are present (use `[]` for empty, never omit)
@@ -414,11 +415,13 @@ A partial that fails this checklist is invalid and the reviewer is re-spawned.
 
 Before producing canonical:
 
+- [ ] **All 4 partials parse as YAML.** Run `yaml.safe_load` on each partial BEFORE attempting merge. If any partial fails to parse, STOP — report the failure to the orchestrator with the parser error message. Do NOT attempt to fix the partial yourself; the failing reviewer must be re-spawned. Do NOT produce a canonical from invalid input.
 - [ ] All 4 partials present (or `partials_merged` reflects which are missing)
 - [ ] `module_id`, `module_path`, `module_loc` agree across all partials (mismatch = reject, re-spawn)
 - [ ] No new findings added (every line in canonical traces to a partial)
 - [ ] Conflicts logged in `provenance.conflicts_resolved`
 - [ ] `confidence.overall` defaults to MIN; deviation requires reasoning in provenance
+- [ ] **The canonical file parses as YAML.** Same `yaml.safe_load` check as above, AFTER writing the canonical. If it fails, the fix is on the scribe (likely an escaping issue introduced during merge); fix and re-validate.
 
 ---
 

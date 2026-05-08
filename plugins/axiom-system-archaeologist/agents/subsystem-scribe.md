@@ -39,9 +39,17 @@ Action: Do NOT activate. Subsystem synthesis is a different role — use codebas
 
 ## Merge Protocol
 
-### Step 1: Read all four partials
+### Step 1: Read all four partials AND verify each parses as YAML
 
 If any of the 4 is missing or empty, **stop and report**. The orchestrator must re-dispatch the missing reviewer. Do not produce a canonical with placeholders.
+
+**Before merging, parse each partial:**
+
+```bash
+for f in <partial paths>; do python3 -c "import yaml; yaml.safe_load(open('$f'))" || echo "PARSE FAILURE: $f"; done
+```
+
+If any partial fails to parse, **STOP** — do not attempt to fix the partial yourself. Report the parser error to the orchestrator with the failing file path, and the orchestrator will re-spawn the failing reviewer. Producing a canonical from invalid YAML input would propagate the failure into the canonical, making it unparseable downstream. Empirical calibration showed reviewers can produce invalid YAML while reporting "self-check pass" — you are the second line of defense.
 
 ### Step 2: Verify shared identity
 
@@ -123,7 +131,13 @@ If any partial was missing, list only those merged in `partials_merged`, set `co
 
 ### Step 8: Self-validate
 
-Run the **Validation Checklist (Scribe Self-Check)** from `findings-schema.md`. Every check must pass before you write the canonical.
+Run the **Validation Checklist (Scribe Self-Check)** from `findings-schema.md`. Every check must pass before you write the canonical. **After writing the canonical, parse it:**
+
+```bash
+python3 -c "import yaml; yaml.safe_load(open('<canonical path>'))"
+```
+
+If the parse fails, the bug is in your merge step (likely an escaping issue when copying a partial value). Fix and re-validate. Do NOT return until the canonical parses cleanly.
 
 ### Step 9: Return summary
 

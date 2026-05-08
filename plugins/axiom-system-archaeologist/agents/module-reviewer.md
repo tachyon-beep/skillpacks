@@ -91,8 +91,20 @@ You return to the orchestrator a one-paragraph summary including:
 
 ## Self-Validation Before Returning
 
-Run the **Validation Checklist (Reviewer Self-Check)** from `findings-schema.md`. Every item must pass. Common failures:
+Run the **Validation Checklist (Reviewer Self-Check)** from `findings-schema.md`. Every item must pass. **The first item — actual YAML parse verification — is non-negotiable.** Self-validation that does not parse the YAML you just wrote is silent failure: empirical calibration showed ~6% of partials failed to parse despite reviewers reporting "self-check pass."
 
+Run after writing:
+
+```bash
+python3 -c "import yaml; yaml.safe_load(open('<your-partial-path>'))"
+```
+
+If this command exits with any error, your partial is invalid YAML. Fix it and re-run before returning.
+
+Common failures:
+
+- **Unquoted scalar starting with `"`**: `reason: "Failed to X" log path requires ...` — YAML opens a double-quoted string at the first `"` and chokes on the trailing text. Fix: wrap the whole value in single quotes, e.g. `reason: '"Failed to X" log path requires ...'` or reword.
+- **Unescaped colon in unquoted scalar**: `summary: foo: bar` looks like nested mapping. Fix: quote the whole value.
 - Forgot `schema_version: 1`
 - Wrote prose under `summary` fields
 - Reported findings outside focus
