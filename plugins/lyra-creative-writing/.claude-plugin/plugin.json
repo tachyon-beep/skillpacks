@@ -1,0 +1,16 @@
+{
+  "name": "lyra-creative-writing",
+  "version": "0.1.0",
+  "description": "Workshop-voiced craft pack for prose narrative — fiction and creative nonfiction. Three modes: draft (Claude writes), critique (Claude diagnoses your draft), plan (Claude consults on structure). v0.1 ships router + 13 craft sheets, 3 commands, 8 agents. Workshop tradition: craft as observable skill, both literary and genre fiction valued, formulas treated as heuristics not laws. Sibling to lyra-ux-designer under the Lyra (arts/beauty) faction. Roadmap: v0.2 genre annex, v0.3 other craft lineages (structuralist, genre-mechanical, pluralist), v0.4 format expansion (poetry, scripts, plays, comics, songwriting, IF).",
+  "author": { "name": "tachyon-beep", "url": "https://github.com/tachyon-beep" },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "lyra", "creative-writing", "fiction", "creative-nonfiction",
+    "craft", "workshop", "pov", "scene-construction", "dialogue",
+    "pacing", "character", "showing-not-telling", "prose-rhythm",
+    "story-structure", "revision", "openings", "endings",
+    "memoir", "literary-journalism", "drafting", "critique",
+    "developmental-editing", "line-editing", "continuity"
+  ]
+}

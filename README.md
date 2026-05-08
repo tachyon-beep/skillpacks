@@ -291,7 +291,20 @@ cd skillpacks
 - Emergent gameplay, player-driven narratives, strategic depth
 - `/plugin install bravos-systems-as-experience`
 
-### 🎨 UX & Site Design (Lyra) - 2 Packs
+### 🎨 UX, Site Design & Creative Writing (Lyra) - 3 Packs
+
+**lyra-creative-writing** - 1 router + 13 craft sheets, 3 commands, 8 agents _(new for 2026)_
+
+- Workshop-voiced craft pack for prose narrative — fiction and creative nonfiction
+- Three explicit modes (draft, critique, plan) with mode-switching protocol
+- Coverage: POV and voice, scene construction, dialogue, character interiority,
+  showing-vs-telling, prose rhythm, pacing and tension, story structure,
+  openings and endings, worldbuilding by implication, research and verisimilitude,
+  revision and cutting, creative nonfiction craft
+- `/critique-prose` fans out 5 coach-mode agents in parallel and synthesises a
+  prioritised revision-pass plan via `revision-coach`
+- Composes with `muna-panel-review` for beta-reader simulation
+- `/plugin install lyra-creative-writing`
 
 **lyra-site-designer** - 1 skill, 1 agent, 1 command, 6 reference sheets
 

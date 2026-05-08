@@ -309,6 +309,29 @@
       "category": "game-development"
     },
     {
+      "name": "lyra-creative-writing",
+      "source": "./plugins/lyra-creative-writing",
+      "description": "Workshop-voiced craft pack for prose narrative — fiction and creative nonfiction. Three explicit modes (draft, critique, plan) with mode-switching protocol. v0.1 ships router + 13 craft sheets + 3 commands + 8 agents. Roadmap: v0.2 genre annex, v0.3 other craft lineages, v0.4 format expansion (poetry, scripts, plays, comics, songwriting, IF). Composes with muna-panel-review for beta-reader simulation.",
+      "keywords": [
+        "lyra",
+        "creative-writing",
+        "fiction",
+        "creative-nonfiction",
+        "craft",
+        "workshop",
+        "drafting",
+        "critique",
+        "developmental-editing",
+        "line-editing",
+        "pov",
+        "scene-construction",
+        "dialogue",
+        "story-structure",
+        "memoir"
+      ],
+      "category": "user-experience"
+    },
+    {
       "name": "lyra-site-designer",
       "source": "./plugins/lyra-site-designer",
       "description": "Static site design and implementation for developer tools and documentation - information architecture, modern CSS (container queries, :has(), OKLCH, light-dark(), View Transitions), design tokens, docs-first frameworks (Starlight, VitePress, Docusaurus 3), developer UX patterns - 1 skill, 1 agent, 1 command, 6 reference sheets",
