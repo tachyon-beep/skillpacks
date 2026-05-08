@@ -154,7 +154,7 @@ Write findings to `01-discovery-findings.md`
 
 ### Step 4: Subagent Orchestration Strategy
 
-**Decision point:** Sequential vs Parallel
+**Decision point:** Sequential vs Parallel vs **Ultralarge per-module track**
 
 **Use SEQUENTIAL when:**
 - Project < 5 subsystems
@@ -163,12 +163,24 @@ Write findings to `01-discovery-findings.md`
 
 **Use PARALLEL when:**
 - Project ≥ 5 independent subsystems
-- Large codebase (20K+ LOC, 10+ plugins/services)
+- Large codebase (20K–100K LOC, 10+ plugins/services)
 - Subsystems are loosely coupled
+
+**Use ULTRALARGE PER-MODULE TRACK when ANY of:**
+- Source LOC > 100,000
+- Subsystem candidates > 12
+- Test corpus LOC ≥ source LOC
+- Doc corpus > 500 markdown files
+- Plugin-registry architecture with extensible categories
+
+The ultralarge track abandons single-pass orchestration and switches to manual subsystem partitioning + per-module review-with-scribe. **Use the `/analyze-ultralarge` command, not `/analyze-codebase`.** See:
+- Tier criteria & partitioning protocol → [partitioning-ultralarge-repos.md](partitioning-ultralarge-repos.md)
+- Per-module loop → [module-by-module-with-scribe.md](module-by-module-with-scribe.md)
+- Findings schema (load-bearing) → [findings-schema.md](findings-schema.md)
 
 **Common rationalization:** "Solo work is faster than coordination overhead"
 
-**Reality:** For large systems, orchestration overhead (5 min) saves hours of sequential work.
+**Reality:** For large systems, orchestration overhead (5 min) saves hours of sequential work. For ultralarge systems, single-pass orchestration produces a thin, sample-driven catalog that misses entire subsystems — the per-module track is non-negotiable at that scale.
 
 ### Step 5: Subagent Delegation Pattern
 
@@ -413,3 +425,6 @@ See individual skill files for detailed contracts:
 - Language/framework patterns → [language-framework-patterns.md](language-framework-patterns.md)
 - Deliverable options → [deliverable-options.md](deliverable-options.md)
 - Specialist integration → [specialist-integration.md](specialist-integration.md)
+- Ultralarge tier criteria & partitioning → [partitioning-ultralarge-repos.md](partitioning-ultralarge-repos.md)
+- Ultralarge per-module loop → [module-by-module-with-scribe.md](module-by-module-with-scribe.md)
+- Ultralarge findings schema (load-bearing) → [findings-schema.md](findings-schema.md)

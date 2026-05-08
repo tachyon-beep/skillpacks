@@ -84,7 +84,7 @@ Write findings to `01-discovery-findings.md`
 
 ### Step 4: Subagent Orchestration Strategy
 
-**Decision point:** Sequential vs Parallel
+**Decision point:** Sequential vs Parallel vs **Ultralarge per-module track**
 
 **Use SEQUENTIAL when:**
 - Project < 5 subsystems
@@ -93,8 +93,17 @@ Write findings to `01-discovery-findings.md`
 
 **Use PARALLEL when:**
 - Project ≥ 5 independent subsystems
-- Large codebase (20K+ LOC, 10+ plugins/services)
+- Large codebase (20K–100K LOC, 10+ plugins/services)
 - Subsystems are loosely coupled
+
+**Use ULTRALARGE PER-MODULE TRACK when ANY of:**
+- Source LOC > 100,000
+- Subsystem candidates > 12
+- Test corpus LOC ≥ source LOC
+- Doc corpus > 500 markdown files
+- Plugin-registry architecture with extensible categories
+
+The ultralarge track abandons single-pass orchestration: invoke `/analyze-ultralarge` (not `/analyze-codebase`) for manual subsystem partitioning + per-module review-with-scribe. See the `partitioning-ultralarge-repos`, `module-by-module-with-scribe`, and `findings-schema` reference sheets.
 
 **Document decision in `00-coordination.md`:**
 
