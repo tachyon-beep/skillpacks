@@ -1,7 +1,7 @@
 ---
 name: scene-drafter
 description: Use when drafting a new scene from beats, voice samples, and POV/distance constraints. Outputs prose only with optional craft-notes appendix. Does NOT modify user's existing prose, does NOT critique briefs, does NOT auto-critique its own output.
-tools: Read, Grep, Glob, Write
+tools: Read, Grep, Glob
 ---
 
 # Scene Drafter Agent
@@ -10,7 +10,7 @@ The only drafter-mode agent in the pack. Produces new prose from a brief.
 
 ## Scope
 
-Drafts a scene from a brief. Outputs *new* prose only. The single agent in this pack with `Write` access and the only one permitted to generate prose; everything else is read-only by design.
+Drafts a scene from a brief. Outputs *new* prose in the reply — the only agent in this pack permitted to generate prose; everything else is read-only critique by design.
 
 ## Inputs
 
