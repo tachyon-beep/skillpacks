@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, solution architecture, game development, security, documentation, site design, and UX skills for Claude Code - 32 complete skillpacks with 193+ TDD-validated skills",
-    "version": "3.13.0",
+    "version": "3.14.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -311,7 +311,7 @@
     {
       "name": "lyra-creative-writing",
       "source": "./plugins/lyra-creative-writing",
-      "description": "Workshop-voiced craft pack for prose narrative — fiction and creative nonfiction. Three explicit modes (draft, critique, plan) with mode-switching protocol. v0.1 ships router + 13 craft sheets + 3 commands + 8 agents. Roadmap: v0.2 genre annex, v0.3 other craft lineages, v0.4 format expansion (poetry, scripts, plays, comics, songwriting, IF). Composes with muna-panel-review for beta-reader simulation.",
+      "description": "Workshop-voiced craft pack for prose narrative — fiction and creative nonfiction. Three explicit modes (draft, critique, plan) with mode-switching protocol. v0.2 ships router + 13 craft sheets + 9 genre sheets (mystery, thriller, sf, fantasy, horror, romance, literary-fiction, memoir-and-personal-essay, literary-journalism) + 3 commands + 11 agents. Genre sheets use a reader-contract three-move discipline: name the contract → name the cost of breaking → name books worth the cost. Roadmap: v0.3 other craft lineages, v0.4 format expansion (poetry, scripts, plays, comics, songwriting, IF). Composes with muna-panel-review for beta-reader simulation.",
       "keywords": [
         "lyra",
         "creative-writing",
@@ -327,7 +327,19 @@
         "scene-construction",
         "dialogue",
         "story-structure",
-        "memoir"
+        "memoir",
+        "genre",
+        "mystery",
+        "thriller",
+        "sf",
+        "fantasy",
+        "horror",
+        "romance",
+        "literary-fiction",
+        "literary-journalism",
+        "worldbuilding",
+        "premise",
+        "reader-contract"
       ],
       "category": "user-experience"
     },

@@ -11,6 +11,14 @@
 > (PyTorch 2.9+, FSDP2, vLLM/SGLang, GRPO/DreamerV3, Mamba/SSM, modern PEFT) and
 > the design/security/quality packs (WCAG 2.2, Material 3, Pydantic v2,
 > Typst 0.14, SLSA/SBOM/Sigstore).
+>
+> **In-flight expansions**: `lyra-creative-writing` v0.2 — genre annex with 9
+> genre sheets (mystery, thriller, sf, fantasy, horror, romance, literary-fiction,
+> memoir-and-personal-essay, literary-journalism) using a reader-contract
+> three-move discipline, plus 3 new agents (worldbuilding-consultant,
+> opening-and-ending-doctor, premise-stress-tester). `axiom-system-archaeologist`
+> v1.6 — ultralarge-tier per-module track for repos >100K LOC or >12 subsystems,
+> with calibration-driven YAML-parse self-validation.
 
 ---
 
@@ -116,12 +124,15 @@ cd skillpacks
 - Wheel matrix (cibuildwheel, manylinux), interpreter-teardown discipline
 - `/plugin install axiom-pyo3-interop`
 
-**axiom-system-archaeologist** - 5 skills
+**axiom-system-archaeologist** - 5 commands, 4 agents _(v1.6 ultralarge-tier — May 2026)_
 
 - Deep codebase architecture analysis through subagent coordination
-- C4 diagrams (Context, Container, Component levels)
-- Subsystem catalog generation with validation gates
-- Stakeholder-ready architecture documentation
+- C4 diagrams (Context, Container, Component levels), subsystem catalogs,
+  security surface mapping, test infrastructure analysis, dependency visualization
+- Incremental delta analysis, cross-pack specialist integration
+- Ultralarge-tier per-module track for repos >100K LOC or >12 subsystems, with
+  calibration-driven YAML-parse self-validation (v1.6.0 + v1.6.1)
+- Stakeholder-ready architecture documentation with output-contract validation gates
 - `/plugin install axiom-system-archaeologist`
 
 **axiom-system-architect** - 4 skills
@@ -293,16 +304,24 @@ cd skillpacks
 
 ### 🎨 UX, Site Design & Creative Writing (Lyra) - 3 Packs
 
-**lyra-creative-writing** - 1 router + 13 craft sheets, 3 commands, 8 agents _(new for 2026)_
+**lyra-creative-writing** - 1 router + 13 craft + 9 genre sheets, 3 commands, 11 agents _(v0.2 genre annex — May 2026)_
 
 - Workshop-voiced craft pack for prose narrative — fiction and creative nonfiction
 - Three explicit modes (draft, critique, plan) with mode-switching protocol
-- Coverage: POV and voice, scene construction, dialogue, character interiority,
+- Craft coverage: POV and voice, scene construction, dialogue, character interiority,
   showing-vs-telling, prose rhythm, pacing and tension, story structure,
   openings and endings, worldbuilding by implication, research and verisimilitude,
   revision and cutting, creative nonfiction craft
+- Genre coverage (v0.2): mystery, thriller, sf, fantasy, horror, romance,
+  literary-fiction, memoir-and-personal-essay, literary-journalism — each
+  presenting conventions through a uniform reader-contract three-move discipline
+  (name the contract → name the cost of breaking → name books worth the cost).
+  Literary fiction is one mode among nine, not the unmarked default
 - `/critique-prose` fans out 5 coach-mode agents in parallel and synthesises a
   prioritised revision-pass plan via `revision-coach`
+- v0.2 agents: `worldbuilding-consultant` (world abstraction), `opening-and-ending-doctor`
+  (promise-ledger output, first-5/last-5 pages), `premise-stress-tester`
+  (adversarial pre-outline interrogation)
 - Composes with `muna-panel-review` for beta-reader simulation
 - `/plugin install lyra-creative-writing`
 
