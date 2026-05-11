@@ -229,15 +229,15 @@ component-boundary question to `axiom-system-architect`.
 
 All packs named as handoff targets in this sheet:
 
-- [`axiom-planning`](../../../../axiom-planning/skills/using-planning/SKILL.md) — code-implementation-plan instances of procedural discipline
-- [`axiom-system-architect`](../../../../axiom-system-architect/skills/using-system-architect/SKILL.md) — system shape: components, services, modules
-- [`yzmir-simulation-foundations`](../../../../yzmir-simulation-foundations/skills/using-simulation-foundations/SKILL.md) — continuous-time dynamics, ODEs, control theory
-- [`bravos-simulation-tactics`](../../../../bravos-simulation-tactics/skills/using-simulation-tactics/SKILL.md) — game-style emergent flow, player-driven systems
-- [`muna-technical-writer`](../../../../muna-technical-writer/skills/using-technical-writer/SKILL.md) — rendering procedures as documentation prose
-- [`lyra-ux-designer`](../../../../lyra-ux-designer/skills/using-ux-designer/SKILL.md) — rendering procedures as wizard UI
-- [`lyra-site-designer`](../../../../lyra-site-designer/skills/using-site-designer/SKILL.md) — rendering procedures as site information architecture
+- `axiom-planning` (`/axiom-planning`) — code-implementation-plan instances of procedural discipline
+- `axiom-system-architect` (`/system-architect`) — system shape: components, services, modules
+- `yzmir-simulation-foundations` (`/simulation-foundations`) — continuous-time dynamics, ODEs, control theory
+- `bravos-simulation-tactics` (`/simulation-tactics`) — game-style emergent flow, player-driven systems
+- `muna-technical-writer` (`/technical-writer`) — rendering procedures as documentation prose
+- `lyra-ux-designer` (`/ux-designer`) — rendering procedures as wizard UI
+- `lyra-site-designer` (`/site-designer`) — rendering procedures as site information architecture
 - `axiom-web-backend`, `axiom-rust-engineering`, `axiom-python-engineering`,
-  `yzmir-llm-specialist`, `ordis-security-architect`, `muna-technical-writer`,
+  `yzmir-llm-specialist`, `ordis-security-architect`,
   `yzmir-ml-production` — domain packs for content judgement inside stages
 
 The routing table in [SKILL.md](SKILL.md) routes the symptom "is this question
