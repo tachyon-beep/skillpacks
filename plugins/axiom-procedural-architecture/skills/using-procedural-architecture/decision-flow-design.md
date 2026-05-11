@@ -19,7 +19,7 @@ A forced-choice|forced choice commits the audience to an option immediately. A d
 
 Deferral has its own cost: uncertainty held open blocks downstream stages, forks the procedure's live state, and may force the audience to carry mental reservations through work that should be settled. A decision deferred too long becomes debt — every stage that executes under an unresolved assumption is a stage that may need to be re-executed if the assumption resolves badly.
 
-| Cost of deferral | Cost of revision (reversal cost) | Decision | |
+| Cost of deferral | Cost of revision (reversal cost) | Decision | Pattern |
 |---|---|---|---|
 | Low | Low | Defer until inputs are richer — no urgency and cheap to fix | Defer |
 | Low | High | Defer and scaffold — high cost to revise, but deferral is cheap; gather the inputs that make revision unnecessary | Defer + gate |
@@ -121,6 +121,8 @@ Conflicts typically arise from three sources: a scan or check later in the proce
 - Working-memory capacity: mid-level engineer, unfamiliar with the org's CI tooling
 - Error cost: medium (broken CI delays team; not a production data incident)
 - Reversibility appetite: medium (willing to revise, prefers not to redo infra work)
+- Latency tolerance: low (setup is a one-shot task; interrupting mid-wizard is high friction)
+- Recovery options: full restart available (wizard state is not persisted between sessions)
 
 ---
 
@@ -138,7 +140,7 @@ Options: pytest / Jest / RSpec / Other (escalate to team lead)
 - **Forced or deferred?** Deferred. Language and framework are not known until stage 1 exits; asking test-runner selection before that produces meaningless answers (the audience can only guess). Cost of deferral is low — nothing depends on this until the CI config is generated. Stage 1 is cheap, so deferral is cheap. → **Defer until stage 1 exits.**
 - **Preconditions:** language-declaration-record and framework-declaration-record. If either is absent, stage 1 is incomplete; the wizard must not advance to this decision point.
 - **"Other" handling:** Required. The ecosystem has legitimate edge cases (Vitest, Bun, custom runners). "Other" routes to a text-capture stage with a prompt to name the runner and a note that the wizard cannot validate its config; the output is flagged for manual review before the CI config is committed.
-- **Re-asking:** If the language is later changed (e.g., the audience discovers the repository contains a second language), this decision point is re-asked for the new language. The prior test-runner answer is preserved for the original language; a second answer is appended. The procedure carries two runner declarations as a valid plural state.
+- **Re-asking:** If the audience initially declared "Python" but a language-detection scan at a later stage identifies the repository's actual primary language as TypeScript, the prior test-runner selection (pytest) is invalidated — it was keyed to the wrong language. Policy: **abort and re-ask just this decision point.** The wizard retracts the pytest exit artifact, re-runs Decision 1 with TypeScript as the confirmed language, and propagates the new answer (e.g., Jest or Vitest) to any downstream stages that consumed the prior artifact. The prior declaration is not preserved alongside the new one; augmentation is not a valid policy here because the two answers are mutually exclusive given the corrected primary-language input.
 
 ---
 
@@ -165,16 +167,19 @@ Options: Deploy on merge to main / Manual trigger only
 Stage:      secrets configuration (stage 4)
 Decision:   secrets-backend selection
 Preconditions:
+  - project-secrets intake gate answered "yes, this project uses secrets"
+    (intake gate is a forced-choice question that fires before stage 1;
+     its exit artifact is the secrets-use-declaration; if the answer is "no",
+     this decision point is bypassed entirely)
   - secrets-scan result exists (stage 3 exit artifact: secrets-scan-report)
-  - audience has answered: does this project use secrets at all?
 Options: Vault / AWS Secrets Manager / GitHub Secrets / No secrets in this pipeline
   (if precondition: secrets detected → "No secrets" option is suppressed)
 ```
 
-- **Forced or deferred?** Deferred, then forced with a preflight. The question cannot be asked until the secrets-scan runs (precondition). Once the scan result is in hand, the choice is forced — downstream stages for credential injection differ completely by backend, and leaving it open blocks all of them. High reversal cost (migrating a secrets backend mid-pipeline is a coordination event) means the question must be scaffolded before committing. → **Defer until scan exits; then force with preflight (review scan findings before presenting options).**
-- **Preconditions:** secrets-scan-report from stage 3. If the scan has not completed, this decision point does not fire.
+- **Forced or deferred?** Precondition-gated, then forced with preflight. The question cannot be asked until the project-secrets intake gate has been answered and the secrets-scan has completed — both are preconditions, not elective deferrals. Once those inputs are in hand, the choice is forced — downstream stages for credential injection differ completely by backend, and leaving it open blocks all of them. High reversal cost (migrating a secrets backend mid-pipeline is a coordination event) means the question must be scaffolded before committing. → **Precondition-gated; then force with preflight (review scan findings before presenting options).**
+- **Preconditions:** secrets-use-declaration from the project-secrets intake gate, and secrets-scan-report from stage 3. If either is absent, this decision point does not fire.
 - **"Other" handling:** Refused for standard pipelines. Every backend option routes to a concrete credential-injection template; "Other" has no template and produces an inoperable CI config. If the org's actual backend is absent from the list, the wizard must be extended — the option set is a system invariant, not an audience choice.
-- **Re-asking under state change:** This is the hard case. If the audience declares "no secrets" at stage 2 but the secrets-scan (stage 3) finds an API key committed in `.env.example`, the "No secrets in this pipeline" declaration is invalidated. Policy: **abort the decision point, re-ask.** The wizard presents the scan findings with severity, retracts the "no secrets" exit artifact from stage 2, and re-asks the decision. Any downstream work from stage 2's artifact (e.g., a draft CI config generated under the "no secrets" assumption) is discarded. Carrying the conflicting state forward — generating a CI config that has no credential injection for a pipeline that demonstrably needs it — is a security defect, not a workflow shortcut.
+- **Re-asking under state change:** This is the hard case. If the audience declared "no secrets" at the project-secrets intake gate (the precondition for this decision point) but the secrets-scan finds an API key committed in `.env.example`, the intake declaration is invalidated. Policy: **abort the decision point, re-ask.** The wizard presents the scan findings with severity, retracts the "no secrets" answer from the intake gate, and re-asks the intake question — which, if answered "yes, this project uses secrets," consequently re-fires Decision 3. Any downstream work produced under the "no secrets" assumption (e.g., a draft CI config with no credential-injection block) is discarded. Carrying the conflicting state forward — generating a CI config that has no credential injection for a pipeline that demonstrably needs it — is a security defect, not a workflow shortcut.
 
 ---
 
