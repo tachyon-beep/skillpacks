@@ -77,9 +77,7 @@ The agent handles one ticket at a time.
 
 ### Why Queueing Theory's Closed Form Misleads Here
 
-A naive M/M/1 analysis ignores priority classes and treats all tickets as identical. Aggregate arrival rate λ = 20/hr. Weighted mean service time = 0.8 × 10 + 0.2 × 3 = 8.6 minutes, so μ ≈ 7 tickets per hour. Utilization ρ = 20/7 ≈ 2.86 — the system is overloaded in this parameterisation, which is deliberately extreme to illustrate the point.
-
-Back up to a feasible parameterisation: λ = 6/hr, same priority split (λ_n = 4.8/hr, λ_f = 1.2/hr), same service times. Weighted mean service time = 8.6 min = 0.143 hr, μ ≈ 7/hr. ρ = 6/7 ≈ 0.86. M/M/1 average wait in queue: W_q = ρ / (μ(1 − ρ)) ≈ 0.86 / (7 × 0.14) ≈ 0.88 hr ≈ 53 minutes. The M/M/1 model reports one number: everyone waits about 53 minutes on average.
+A naive M/M/1 analysis ignores priority classes and treats all tickets as identical. Consider a feasible parameterisation: λ = 6/hr, priority split (λ_n = 4.8/hr, λ_f = 1.2/hr), same service times. Weighted mean service time = 0.8 × 10 + 0.2 × 3 = 8.6 min = 0.143 hr, μ ≈ 7/hr. Utilization ρ = 6/7 ≈ 0.86. M/M/1 average wait in queue: W_q = ρ / (μ(1 − ρ)) ≈ 0.86 / (7 × 0.14) ≈ 0.88 hr ≈ 52 minutes. The M/M/1 model reports one number: everyone waits about 52 minutes on average.
 
 **This single average conceals the priority dynamic.** Fast-track tickets jump the queue; normal tickets absorb the displacement. The average masks a distribution where fast-track tickets have very short waits and normal tickets have substantially longer waits than the average suggests. A team that designs SLAs from the M/M/1 average will overpromise for normal tickets and may not notice until normal-ticket satisfaction data arrives.
 
