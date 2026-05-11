@@ -77,7 +77,7 @@ If any of these three properties fails, the net is unsound. A net that satisfies
 
 ## Process Calculi in 100 Words
 
-**CSP, CCS, and π-calculus** are algebraic frameworks for modelling concurrent processes. They describe systems where two or more execution threads interact through synchronized communication. This sheet teaches **recognition, not authoring**: when someone reaches for a process calculus, they are modelling concurrent interaction — parallel threads that must synchronize — not sequential flow. If your procedure is sequential (one token, one path, no parallelism), a workflow net is the right model and process calculi are overkill. If the procedure has genuinely parallel threads that must synchronize at join points, that is when process calculi become relevant. Milner's *Communicating and Mobile Processes* and Hoare's *Communicating Sequential Processes* (both freely available) are the standard entry points for actual modelling.
+**CSP, CCS, and π-calculus** are algebraic frameworks for modelling concurrent processes. They describe systems where two or more execution threads interact through synchronized communication. This sheet teaches **recognition, not authoring**: when someone reaches for a process calculus, they are modelling concurrent interaction — parallel threads that must synchronize — not sequential flow. If your procedure is sequential (one token, one path, no parallelism), a workflow net is the right model and process calculi are overkill. If the procedure has genuinely parallel threads that must synchronize at join points, that is when process calculi become relevant.
 
 ---
 
@@ -135,7 +135,7 @@ high   low
   +--+--+
      |
      v
-  [close]
+  [close]  ← AND-join: requires tokens from both branches
      |
      v
   ( end )
