@@ -290,7 +290,14 @@
       "name": "axiom-procedural-architecture",
       "source": "./plugins/axiom-procedural-architecture",
       "description": "Structural reasoning for staged procedures — design, critique, and analyze decompositions of any procedure into composable stages, dependencies, decision points, and flow properties. Two roles (producer/critic) over one shared corpus. Router + 13 sheets, 3 commands, 2 agents.",
-      "keywords": ["axiom", "procedural-architecture", "decomposition", "workflow", "process-design", "queueing"],
+      "keywords": [
+        "axiom",
+        "procedural-architecture",
+        "decomposition",
+        "workflow",
+        "process-design",
+        "queueing"
+      ],
       "category": "development"
     },
     {
