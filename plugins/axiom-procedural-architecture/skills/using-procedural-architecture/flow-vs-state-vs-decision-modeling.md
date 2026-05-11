@@ -25,7 +25,7 @@ This sheet teaches recognition: given a procedure you need to model, which forma
 - State is implicit — the procedure does not need to track where a long-lived entity is between sessions.
 - Decisions are the main feature: the diagram reader needs to see which condition leads to which path.
 
-**What it reveals.** The complete set of decision points, the conditions at each branch, and the paths through the procedure. A flowchart is a direct encoding of the procedure's decision structure. Reviewing it against a MECE audit (see `branching-and-mece-review.md`) tells you whether every branch is covered and mutually exclusive.
+**What it reveals.** The complete set of decision points, the conditions at each branch, and the paths through the procedure. A flowchart is a direct encoding of the procedure's decision structure. Reviewing it against a MECE (*mutually exclusive, collectively exhaustive*) audit (see `branching-and-mece-review.md`) tells you whether every branch is covered and mutually exclusive.
 
 **What it hides.**
 - *Parallelism.* A flowchart has one token, one path. If two stages can execute concurrently, the flowchart cannot represent that without conventions (parallel tracks, swim lanes) that belong to BPMN or Petri nets, not to a basic flowchart.
@@ -107,9 +107,9 @@ This sheet teaches recognition: given a procedure you need to model, which forma
 |---|---|
 | Sequential execution with branches; order is the main concern | Flowchart |
 | Long-lived entity with persistent state; lifecycle tracking | State machine |
-| Multiple actors with clear handoffs; who owns which stage | BPMN or sequence diagram |
+| Multiple actors with clear handoffs; **ownership, parallelism, and process automation** are the concern | BPMN |
 | Conditional logic concentrated at one decision point | Decision table |
-| Message exchange between systems; timing and ordering | Sequence diagram |
+| Multiple systems exchanging messages; **the API or protocol contract** is the concern (technical/implementation focus) | Sequence diagram |
 
 Most real procedures have more than one dominant character. The question to ask is: *what is the most important thing to make visible?* That determines the primary abstraction. Secondary properties can be modelled separately or deferred to a downstream sheet (see Cross-References).
 
