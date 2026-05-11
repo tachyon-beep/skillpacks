@@ -37,31 +37,17 @@ The phrase "no ambiguity about what 'done' looks like" rules out exit artifacts 
 
 **A chain of stages each doing almost nothing is a ladder-of-trivials; the consumer would execute the entire chain in a single mental beat.**
 
-The signal is not that any individual stage is short. The signal is that the consumer's natural chunking collapses several of them into one unit. When an experienced consumer reads the procedure and thinks "I would just do steps 3, 4, and 5 together — they're all one move," that is the ladder smell. The consumer is doing the consolidation in their head that the author should have done in the decomposition.
+The signal: the consumer's natural chunking collapses several consecutive stages into one unit. When they read the procedure and think "I would just do stages 3, 4, and 5 together — they're all one move," that is the ladder smell.
 
-The underlying cause is usually author-side decomposition at sub-task level rather than at the stage level the consumer actually operates. The author enumerates every physical action; the consumer's working model groups those actions into coherent units.
-
-Diagnostic signals:
-- Five or more consecutive stages, each taking under thirty seconds for the target consumer.
-- No distinct exit artifact per stage — each stage's exit is just "the next micro-action is now possible."
-- A consumer who can describe the whole chain in one verb phrase ("set up the repo remote") even though the decomposition has it as five stages.
-
-The smell name in the catalog is `ladder-of-trivials`; the catalog with diagnostic signals and fix patterns lives in [decomposition-smells.md](decomposition-smells.md). This section defines the smell briefly; that sheet provides the full entry including the re-entrancy interaction and the rookie mistake of splitting the merge to avoid the name.
+The smell name in the catalog is `ladder-of-trivials`; the catalog with diagnostic signals, fix patterns, and the re-entrancy interaction lives in [decomposition-smells.md](decomposition-smells.md).
 
 ### Too Coarse: The God-Step
 
 **A single stage hiding multiple decisions, multiple artifacts, and multiple failure modes is a god-step; the consumer cannot state its exit criterion in one sentence.**
 
-The one-sentence exit criterion is the practical test. If you hand the decomposition to the target consumer and ask "when is this stage done?" and they cannot answer in one sentence without listing sub-steps, the stage is a god-step. "When I've deployed the service" is not an exit criterion. "When the service is deployed" — is that after the manifest is committed? After CI passes? After the load balancer has updated? After smoke tests pass? Each of those questions is a hidden stage.
+The practical test: ask the target consumer "when is this stage done?" If they cannot answer in one sentence without listing sub-stages, the stage is a god-step. "When I've deployed the service" is not an exit criterion; it contains at least four hidden stages.
 
-God-steps are dangerous in proportion to error cost. A god-step in a procedure where errors are cheap and reversible is an inconvenience — the consumer will fumble through and fix it. A god-step in a procedure where errors are expensive and irreversible (production database migrations, infrastructure provisioning, security-configuration changes) is a structural defect: the consumer cannot verify intermediate state, cannot identify where a failure occurred, and cannot safely retry from a known checkpoint.
-
-Diagnostic signals:
-- You cannot write the exit artifact in one line. "The service is running" is not an exit artifact. `health-check-result: HTTP 200 at staging endpoint, latency < 500ms` is.
-- Multiple things can fail independently within the stage, each requiring a different recovery action.
-- The consumer would naturally ask a follow-up question before they know they're done: "Does that mean I also need to...?"
-
-The full catalog entry for god-step is in [decomposition-smells.md](decomposition-smells.md). This sheet's job is to identify the smell at grain-choice time; the smell catalog's job is to provide the adversarial checklist for the critic pass.
+The full catalog entry — including error-cost scaling, the adversarial checklist, and the edge cases that confuse god-step with intentional coarse grain — is in [decomposition-smells.md](decomposition-smells.md).
 
 ---
 
@@ -82,6 +68,7 @@ This is not a preference for more or less detail. It is an engineering decision 
 - Working-memory capacity: high — can hold the full deployment context across all stages simultaneously.
 - Error cost: medium — staging failures are recoverable without production impact.
 - Reversibility appetite: high — comfortable rolling back manually.
+- Latency tolerance: high — accepts multi-minute stages; can context-switch if needed.
 - Recovery options: can diagnose failures from first principles without scaffolding.
 
 **Grain choice: coarse — 4 to 5 stages, each large but with unambiguous exit criteria.**
@@ -115,6 +102,7 @@ Stage 5 — Rollback or finalize
 - Working-memory capacity: low across turns — benefits from explicit structure that constrains drift between stages.
 - Error cost: medium — agent errors can cascade silently if intermediate state is not verified explicitly.
 - Reversibility appetite: medium — can execute rollback if the target state is declared precisely.
+- Latency tolerance: low — stage execution must complete within a predictable timeout; open-ended blocking is a drift risk.
 - Recovery options: limited to declared recovery paths; cannot improvise from first principles.
 
 **Grain choice: medium — 8 to 10 stages, each with declared exit artifact in a specific, machine-verifiable format.**
@@ -163,6 +151,7 @@ Stage 9 — Execute finalization or rollback
 - Working-memory capacity: low — unfamiliar domain; can hold at most 2–3 active constraints; will lose track of context if stages are too long.
 - Error cost: high subjectively — the novice cannot distinguish a recoverable error from a critical one; fear of "breaking production" is real even in staging.
 - Reversibility appetite: low — wants explicit verification at each stage before proceeding; does not trust their own judgment on "is this safe to continue?"
+- Latency tolerance: medium — needs closure at each stage; long waits without feedback increase anxiety-driven errors.
 - Recovery options: none without explicit scaffolding — cannot diagnose failures from first principles; requires a defined escalation path for anything unexpected.
 
 **Grain choice: fine — 15+ stages, each tiny, with explicit verification at each stage; irreversible actions get additional scaffolding stages before them.**
@@ -234,7 +223,7 @@ Stage 16 — Notify the team that staging is updated
 
 Working-memory capacity sets the ceiling on stage size. A consumer with high working-memory can track the full context of a large stage — all its sub-decisions, intermediate states, and potential failure modes — without losing their place. A consumer with low working-memory drops context mid-stage and either guesses or has to restart. The grain-size question ("can they execute this in one focused attempt?") is asking: does this stage fit within the consumer's working memory?
 
-Error cost sets the floor on stage size. When errors are expensive and hard to reverse, small stages are not just convenient — they are a safety mechanism. Explicit checkpoints after each stage let the consumer verify intermediate state before committing to the next irreversible action. A god-step in a high-error-cost procedure is a structural defect because it removes those checkpoints: the consumer cannot verify that sub-step 3 of 7 succeeded before sub-step 4 makes an irreversible change.
+Error cost sets the floor on stage size. When errors are expensive and hard to reverse, small stages are not just convenient — they are a safety mechanism. Explicit checkpoints after each stage let the consumer verify intermediate state before committing to the next irreversible action. A god-step in a high-error-cost procedure is a structural defect because it removes those checkpoints: the consumer cannot verify that sub-stage 3 of 7 succeeded before sub-stage 4 makes an irreversible change.
 
 The relationship:
 - High working-memory + low error cost → coarser grain is safe. The consumer can carry the context and can recover if something goes wrong.
