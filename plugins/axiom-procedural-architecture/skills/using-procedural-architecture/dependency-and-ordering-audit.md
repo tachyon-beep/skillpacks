@@ -65,7 +65,7 @@ Execute in order. Each pass is independent; results are merged at the end.
 
 **Pass 2 — Decision-Point Precondition Walk (Check 2).** List every decision point with its declared preconditions. Trace each precondition to its producer. Verify the producer stage precedes the decision point in the declared flow. Flag every decision point whose preconditions are not satisfied before control reaches it.
 
-**Pass 3 — Reversal-Cost Ranking (Check 3).** Assign each stage and decision point a reversal-cost tier: very-low / low / medium / high. Walk the decomposition in declared order. Flag each position where a higher-tier decision point precedes a lower-tier stage that would have produced scaffolding information for it.
+**Pass 3 — Reversal-Cost Ranking (Check 3).** Assign each stage and decision point a reversal-cost tier: very-low / low / medium / high (calibrated by time, state, money, and coordination cost to undo the exit artifact — see `decomposition-fundamentals.md`). Walk the decomposition in declared order. Flag each position where a higher-tier decision point precedes a lower-tier stage that would have produced scaffolding information for it.
 
 **Pass 4 — Side-Effect Inventory (Check 4).** For each stage, enumerate side effects beyond the declared exit artifact. For each side effect, check whether any later stage consumes it without a declared input dependency. Flag each such consumption.
 
@@ -140,8 +140,9 @@ Stage 5 — Test SSH connection
                     of Stage 3 (Generate keypair), which appears at position 3 — after Stage 1.
                     No audience prior state covers this; the audience arrives without a keypair.
   Remediation:      Reorder: move Stage 2 (Choose key type) and Stage 3 (Generate keypair) to
-                    positions 1 and 2. Corrected order: Choose key type → Generate keypair →
-                    Deploy key → Configure passphrase policy → Test connection.
+                    positions 1 and 2, and Stage 4 (Configure passphrase policy) to position 3.
+                    Corrected order: Choose key type → Generate keypair → Configure passphrase
+                    policy → Deploy key → Test connection.
 
 ---
 
