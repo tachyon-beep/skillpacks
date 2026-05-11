@@ -214,6 +214,6 @@ Stage 5 — Test SSH connection
 ## Cross-references
 
 - [decomposition-fundamentals.md](decomposition-fundamentals.md) — the five structural properties this audit checks adversarially: dependency correctness (Checks 1, 4), reversibility-ordered staging (Check 3), and the precondition discipline behind Check 2.
-- [decomposition-smells.md](decomposition-smells.md) — the smell catalog for severity calibration: god-step, mystery-step, orphan-path, premature-fork, and related patterns. A finding should cite the smell it instantiates; the smell's severity guidance overrides this sheet's generic tiers when they conflict.
+- [decomposition-smells.md](decomposition-smells.md) — the canonical smell catalog for smell naming and false-positive calibration: god-step, mystery-step, orphan-state, premature-commitment, and related patterns. A finding should cite the smell it instantiates.
 - [decision-flow-design.md](decision-flow-design.md) — the producer's information-readiness gating discipline that Checks 2 and 3 audit. A decision point that violates Check 2 or 3 has a correspondingly missing or misplaced gate from that sheet's perspective.
 - [procedural-boundary-and-handoffs.md](procedural-boundary-and-handoffs.md) — when a finding's remediation requires domain-content judgment (which key type is technically superior, whether the org's tooling supports passphrases), that judgment is out of scope for this audit; document the gap in the remediation field and hand off to the appropriate domain pack.

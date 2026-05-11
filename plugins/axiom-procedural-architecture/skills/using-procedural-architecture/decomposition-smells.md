@@ -1,6 +1,6 @@
 ---
 name: decomposition-smells
-description: Canonical catalog of nine decomposition smells (god-step, mystery-step, decision-without-information, audience-amnesia, ladder-of-trivials, premature-commitment, orphan-state, fake-branch, re-entrancy-blindness), each with definition, diagnostic signal, false-positive caveat, and recommended remediation. This is the definitive source other critic and producer sheets defer to for smell names, severity calibration, and fix patterns.
+description: Canonical catalog of nine decomposition smells (god-step, mystery-step, decision-without-information, audience-amnesia, ladder-of-trivials, premature-commitment, orphan-state, fake-branch, re-entrancy-blindness), each with definition, diagnostic signal, false-positive caveat, and recommended remediation. This is the definitive source other critic and producer sheets defer to for smell names, false-positive calibration, and fix patterns.
 ---
 
 # Decomposition Smells
@@ -22,7 +22,7 @@ Run the catalog as a structured pass after the producer delivers a draft decompo
 3. **Apply the false-positive caveat**: Is the pattern explained by a legitimate design choice?
 4. **If not**: Apply the remediation.
 
-When a smell maps to an ordering defect found by `dependency-and-ordering-audit.md`, or a branching defect found by `branching-and-mece-review.md`, cite the smell name in that sheet's finding. The smell's severity guidance takes precedence over the generic tiers in the sibling sheets when they conflict.
+When a smell maps to an ordering defect found by `dependency-and-ordering-audit.md`, or a branching defect found by `branching-and-mece-review.md`, cite the smell name in that sheet's finding. This catalog is authoritative for smell naming and false-positive calibration; severity remains contextual and is owned by the audit sheet that raised the finding.
 
 Document your smell findings in the same format as those sheets when the output will be handed back to a producer:
 
@@ -46,9 +46,9 @@ Remediation: [specific action; see individual smell entries for patterns]
 
 **Diagnostic signal.** Ask the target consumer: "When is this stage done?" If they cannot answer in one sentence without listing sub-stages, or if the stage's exit artifact requires a paragraph to describe, the stage is a god-step. Secondary signal: the stage has more than one failure mode that leads to different recovery paths.
 
-**False-positive caveat.** A stage may have substantial internal complexity that is legitimately invisible to the consumer. "Provision Kubernetes cluster" is a god-step by name but acceptable when: (a) the audience is opinionated about cluster shape, (b) the implementation hides the sub-steps correctly behind a single tool call or script with a single verifiable exit artifact, and (c) the failure modes collapse into a single "cluster provisioning failed" state with a documented recovery path. The test is not internal complexity — it is whether the consumer must manage that complexity explicitly. If they execute one command and verify one artifact, the stage's grain is correct from their perspective regardless of what happens underneath.
+**False-positive caveat.** A stage may have substantial internal complexity that is legitimately invisible to the consumer. "Provision Kubernetes cluster" is a god-step by name but acceptable when: (a) the audience is opinionated about cluster shape, (b) the implementation hides the sub-stages correctly behind a single tool call or script with a single verifiable exit artifact, and (c) the failure modes collapse into a single "cluster provisioning failed" state with a documented recovery path. The test is not internal complexity — it is whether the consumer must manage that complexity explicitly. If they execute one command and verify one artifact, the stage's grain is correct from their perspective regardless of what happens underneath.
 
-**Remediation.** Split the god-step into constituent stages, each with a single exit artifact and a single unambiguous completion criterion. Alternatively, if the complexity is correctly hidden, expose that hiding explicitly: name the tool, script, or API that encapsulates the sub-steps, specify the machine-verifiable exit artifact format, and collapse the failure modes into a declared error state with a documented recovery path. Do not split a stage that is already correctly encapsulated — splitting it would produce a ladder-of-trivials. The distinction is whether the consumer must make sub-decisions; if not, the encapsulation is doing its job.
+**Remediation.** Split the god-step into constituent stages, each with a single exit artifact and a single unambiguous completion criterion. Alternatively, if the complexity is correctly hidden, expose that hiding explicitly: name the tool, script, or API that encapsulates the sub-stages, specify the machine-verifiable exit artifact format, and collapse the failure modes into a declared error state with a documented recovery path. Do not split a stage that is already correctly encapsulated — splitting it would produce a ladder-of-trivials. The distinction is whether the consumer must make sub-decisions; if not, the encapsulation is doing its job.
 
 ---
 
@@ -96,7 +96,7 @@ Remediation: [specific action; see individual smell entries for patterns]
 
 **False-positive caveat.** Fine grain is correct for high-error-cost, low-working-memory audiences. What looks like a ladder-of-trivials for a senior engineer is correct granularity for a novice who needs explicit intermediate verification — and required for an LLM agent that needs machine-verifiable checkpoints to avoid drift. The smell fires only when the grain is finer than the declared audience actually needs: when the audience's working-memory can comfortably span the cluster and the error cost is low enough that intermediate verification adds no safety value. Evaluate against the declared audience parameters before merging.
 
-**Remediation.** Identify the ladder cluster — the consecutive trivial stages — and merge them into a single stage with a richer exit artifact that incorporates all the intermediate artifacts as components or verification criteria. The merged stage's name should describe the coherent unit of work, not enumerate its sub-steps. Verify the merged stage passes the grain-size test: can the target consumer execute it in one focused attempt with no ambiguity about what "done" looks like? If not, the merge went too far — a god-step is waiting on the other side. Full grain calibration guidance is in `granularity-calibration.md`.
+**Remediation.** Identify the ladder cluster — the consecutive trivial stages — and merge them into a single stage with a richer exit artifact that incorporates all the intermediate artifacts as components or verification criteria. The merged stage's name should describe the coherent unit of work, not enumerate its sub-stages. Verify the merged stage passes the grain-size test: can the target consumer execute it in one focused attempt with no ambiguity about what "done" looks like? If not, the merge went too far — a god-step is waiting on the other side. Full grain calibration guidance is in `granularity-calibration.md`.
 
 ---
 
@@ -155,8 +155,8 @@ Add these declarations to the stage's exit artifact specification or as a dedica
 
 ## Cross-references
 
-- [dependency-and-ordering-audit.md](dependency-and-ordering-audit.md) — the critic-side ordering audit; its Check 2 (premature commitment) and Check 4 (hidden coupling) surface instances of the premature-commitment and orphan-state smells. Use this catalog for severity calibration and smell naming when assembling findings from that audit.
-- [branching-and-mece-review.md](branching-and-mece-review.md) — the critic-side branching audit; its Check 4 (fake branches) is the detailed audit procedure for the fake-branch smell. A fake-branch finding from that sheet should be cited against this catalog entry for authoritative severity guidance.
+- [dependency-and-ordering-audit.md](dependency-and-ordering-audit.md) — the critic-side ordering audit; its Check 2 (premature commitment) and Check 4 (hidden coupling) surface instances of the premature-commitment and orphan-state smells. Use this catalog for smell naming and false-positive calibration when assembling findings from that audit.
+- [branching-and-mece-review.md](branching-and-mece-review.md) — the critic-side branching audit; its Check 4 (fake branches) is the detailed audit procedure for the fake-branch smell. A fake-branch finding from that sheet should be cited against this catalog entry for canonical smell naming and false-positive calibration.
 - [granularity-calibration.md](granularity-calibration.md) — the producer-side grain calibration sheet; its two pathologies (god-step and ladder-of-trivials) are the producer's framing of smells 1 and 5 in this catalog. The granularity-calibration sheet provides worked examples of what each pathology looks like at three audience levels; this catalog provides the adversarial diagnostic signals and false-positive caveats.
 - [audience-modeling-for-procedures.md](audience-modeling-for-procedures.md) — the six audience parameters (prerequisites, working-memory capacity, error cost, reversibility appetite, latency tolerance, recovery options); authoritative for evaluating whether audience-amnesia (smell 4) has occurred and whether the re-entrancy-blindness (smell 9) false-positive caveat applies.
 - [procedural-boundary-and-handoffs.md](procedural-boundary-and-handoffs.md) — when a smell's remediation requires domain-content judgment that is out of scope for this structural audit, document the gap and hand off per the protocol in that sheet.
