@@ -23,7 +23,7 @@ Prerequisites bound what the decomposition may assume without a stage. A stage t
 
 **Elicitation.** Ask three questions: What tools and credentials must already exist? What conceptual knowledge does the consumer need to interpret outputs? What earlier procedures must have completed? The third question is easy to miss: "has deployed to this service before" is a prerequisite that rules out a wide class of confusion about what "deployment acknowledged" looks like.
 
-**Design impact.** A prerequisite that exists means the corresponding stage can be omitted. A prerequisite that is absent means a stage must exist to produce it — or the procedure must refuse to start. Do not paper over absent prerequisites with a vague "ensure you have X before starting"; name the stage that produces X, or declare it explicitly as out-of-scope with a hard precondition check at the procedure's entry.
+**Decomposition impact.** A prerequisite that exists means the corresponding stage can be omitted. A prerequisite that is absent means a stage must exist to produce it — or the procedure must refuse to start. Do not paper over absent prerequisites with a vague "ensure you have X before starting"; name the stage that produces X, or declare it explicitly as out-of-scope with a hard precondition check at the procedure's entry.
 
 **Worked signals:**
 - Senior engineer has the deployment manifest format memorized → the stage "review manifest schema" can be omitted; a link to the schema is sufficient.
@@ -40,7 +40,7 @@ This is the primary driver of stage size. A consumer with high working-memory ca
 
 **Elicitation.** Classify as `low`, `medium`, or `high` based on the consumer's familiarity with the domain and the procedure's inherent cognitive load. Low: novice, or LLM agent without persistent memory, or human in a high-distraction context. Medium: mid-level engineer doing something familiar but not routine. High: senior practitioner with deep domain familiarity executing a procedure they own.
 
-**Design impact.** Low working-memory requires smaller stages with explicit, machine-verifiable exit artifacts. Medium working-memory allows stages that bundle related sub-tasks but must still produce named artifacts at every exit. High working-memory supports coarse stages where the consumer self-manages sub-steps — but the exit artifact must still be named and unambiguous.
+**Decomposition impact.** Low working-memory requires smaller stages with explicit, machine-verifiable exit artifacts. Medium working-memory allows stages that bundle related sub-tasks but must still produce named artifacts at every exit. High working-memory supports coarse stages where the consumer self-manages sub-steps — but the exit artifact must still be named and unambiguous.
 
 **Note.** Working-memory capacity and error cost interact: low working-memory at high error cost is the intersection that demands the finest grain and the most explicit verification scaffolding. See [granularity-calibration.md](granularity-calibration.md) for the full interaction table.
 
@@ -58,7 +58,7 @@ Three levels:
 
 **Elicitation.** For each major decision point in the proposed decomposition, ask: "What is the worst outcome if the consumer makes the wrong choice here?" Map that outcome to a level. A procedure that contains even one High-error-cost decision point must be treated as High overall, because the structural safeguards required by a single high-cost point propagate upstream (the scaffolding stages must exist before the consumer reaches that point).
 
-**Design impact.** Low error cost allows the procedure to place decision points confidently and accept that mistakes will be discovered quickly. Medium error cost requires explicit verification stages after irreversible actions — checkpoints that confirm the correct choice was made before proceeding. High error cost requires pre-commitment scaffolding: a gate stage that forces the consumer to review consequences before the irreversible action fires, an escalation path for uncertainty, and a dry-run or preview stage where technically feasible.
+**Decomposition impact.** Low error cost allows the procedure to place decision points confidently and accept that mistakes will be discovered quickly. Medium error cost requires explicit verification stages after irreversible actions — checkpoints that confirm the correct choice was made before proceeding. High error cost requires pre-commitment scaffolding: a gate stage that forces the consumer to review consequences before the irreversible action fires, an escalation path for uncertainty, and a dry-run or preview stage where technically feasible.
 
 ---
 
@@ -70,7 +70,13 @@ This is distinct from error cost. A consumer may face medium error cost but have
 
 **Elicitation.** Ask: "If you reach stage 7 and realize you made the wrong choice at stage 3, what would you do?" The answer characterizes appetite, not just capability. An LLM agent with declared error-handling logic can technically restart; its reversibility appetite depends on whether the procedure designer has given it a recovery path to invoke.
 
-**Design impact.** Low reversibility appetite means decisions that could technically be deferred should be forced early and validated — the consumer will not restart mid-procedure. It also means the procedure should front-load the information needed to make expensive decisions correctly, even at the cost of slower progress. High reversibility appetite allows deferral: "we will come back to this after we have the environment-readiness report" is acceptable when the consumer is genuinely willing to revisit.
+Three levels:
+
+- **Low** — the consumer will not voluntarily restart; they will rationalize a bad choice rather than back up and redo stages.
+- **Medium** — the consumer will back up and redo a stage if given an explicit recovery path, but will not improvise one.
+- **High** — the consumer actively prefers to defer expensive decisions and revisit them after gathering more information; backing up is a normal part of their workflow.
+
+**Decomposition impact.** Low reversibility appetite means decisions that could technically be deferred should be forced early and validated — the consumer will not restart mid-procedure. It also means the procedure should front-load the information needed to make expensive decisions correctly, even at the cost of slower progress. High reversibility appetite allows deferral: "we will come back to this after we have the environment-readiness report" is acceptable when the consumer is genuinely willing to revisit.
 
 ---
 
@@ -82,7 +88,13 @@ Some consumers can context-switch during a long-running stage and return when it
 
 **Elicitation.** Ask: "If stage N takes five minutes with no visible output, what does the consumer do?" The answers cluster: a senior engineer opens a second terminal and monitors independently; an LLM agent hits a timeout and re-runs the stage; a novice interprets the silence as a hang and ctrl-C's it.
 
-**Design impact.** Low latency tolerance requires stages that either complete quickly or produce visible progress signals on a defined cadence. A polling stage (LLM agent: "poll convergence every 15 seconds until complete or timeout at 10 minutes") is a structural response to low latency tolerance — it turns a blocking wait into a loop with observable state. High latency tolerance allows async stages where the consumer starts the work and checks back; the exit artifact is produced out-of-band. For novices specifically: low latency tolerance does not mean stages must be fast, it means stages must communicate — a progress marker or expected-duration note per stage is not documentation polish, it is a structural safety mechanism that prevents premature abort.
+Three levels:
+
+- **Low** — the consumer is locked into the procedure and will interpret silence as an error; they cannot context-switch and will abort if there is no visible progress.
+- **Medium** — the consumer tolerates stage-level waits of seconds to a few minutes, but needs explicit closure at each exit — a stage that spans multiple sessions is too long.
+- **High** — the consumer can context-switch during a long-running stage and return later; they will open a parallel monitoring window and tolerate async completion.
+
+**Decomposition impact.** Low latency tolerance requires stages that either complete quickly or produce visible progress signals on a defined cadence. A polling stage (LLM agent: "poll convergence every 15 seconds until complete or timeout at 10 minutes") is a structural response to low latency tolerance — it turns a blocking wait into a loop with observable state. High latency tolerance allows async stages where the consumer starts the work and checks back; the exit artifact is produced out-of-band. For novices specifically: low latency tolerance does not mean stages must be fast, it means stages must communicate — a progress marker or expected-duration note per stage is not documentation polish, it is a structural safety mechanism that prevents premature abort.
 
 ---
 
@@ -94,7 +106,7 @@ A senior engineer who owns the infrastructure can manually inspect logs, roll ba
 
 **Elicitation.** Enumerate the consumer's actual recovery tools: access level, tools available, escalation paths, whether they can interpret raw error output. Do not assume; ask or observe. Recovery options that exist in theory but require context the consumer lacks are not recovery options for this consumer.
 
-**Design impact.** Narrow recovery options mean each stage must include more defensive scaffolding — precondition checks, explicit failure paths, and escalation instructions. A stage with a narrow-recovery consumer must never fail silently; failure output must be human-readable or machine-parseable without requiring the consumer to interpret raw state. Wide recovery options reduce the defensive scaffolding budget: the consumer can handle partial failures, so the procedure can afford to be less defensive per-stage and more aggressive about progress.
+**Decomposition impact.** Narrow recovery options mean each stage must include more defensive scaffolding — precondition checks, explicit failure paths, and escalation instructions. A stage with a narrow-recovery consumer must never fail silently; failure output must be human-readable or machine-parseable without requiring the consumer to interpret raw state. Wide recovery options reduce the defensive scaffolding budget: the consumer can handle partial failures, so the procedure can afford to be less defensive per-stage and more aggressive about progress.
 
 ---
 
@@ -173,20 +185,7 @@ audience:
 
 ### Audience B: LLM Agent
 
-```yaml
-audience:
-  prerequisites:
-    - deployment CLI available in PATH; manifest schema in tool catalog
-    - staging credentials injected as env vars; no memory of prior runs
-  working_memory_capacity: low — no persistent context across turns; state must be encoded in artifacts
-  error_cost: medium — silent drift between stages can produce incorrect state without explicit failure signal
-  reversibility_appetite: medium — can execute rollback if target state is declared precisely
-  latency_tolerance: low — stages must complete within a defined timeout; blocking waits cause drift
-  recovery_options:
-    - re-run from a specified stage if preconditions are satisfiable
-    - invoke escalation API with structured error payload
-    - abort and report failure with stage ID and artifact state
-```
+This audience uses the same declaration shown in § Minimum viable declaration — a worked fill-out for the LLM-agent audience above. The stage decisions below show how that parameter set shapes the deploy-to-staging decomposition.
 
 **Stage decisions driven by these parameters:**
 
