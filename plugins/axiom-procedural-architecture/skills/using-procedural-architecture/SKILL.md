@@ -11,7 +11,9 @@ description: Use when designing or critiquing the structure of a staged procedur
 
 This pack treats a *procedure* as an abstract object: a graph of **stages**, each with declared inputs, an **exit artifact**, and a defined relationship to **decision points** that select among successors. The shape of that graph — its dependencies, its branching, its grain, its capacity — is the artifact this pack designs and audits. A wizard is a procedure. A troubleshooting tree is a procedure. A training curriculum is a procedure. A multi-stage approval pipeline is a procedure. A decision pipeline is a procedure. The same structural discipline applies whether the procedure is run by a human, by an LLM, by a team, or by a queue of jobs.
 
-Two roles share one corpus. The **producer** ("thinker") builds a decomposition forward: goal in, stages out, dependencies declared, decision points enumerated, exit artifacts named, **audience parameters** stated. The **critic** ("checker") audits a proposed decomposition backward: defects in, findings out, with **severity** and **evidence** on every finding. Both roles read the same 13 reference sheets but with different epistemics. If they always agree, the critic is rubber-stamping — that is a bug in the pipeline, not a feature.
+In smell-name vocabulary, "step" is the colloquial alias for "stage" — the catalog uses *god-step*, *mystery-step*, and *ladder-of-trivials* because the smells are recognized under those names. Outside the smell catalog, prefer "stage."
+
+Three roles over one shared corpus: a **producer** ("thinker") that constructs decompositions forward — goal in, stages out, dependencies declared, decision points enumerated, exit artifacts named, **audience parameters** stated; a **critic** ("checker") that adversarially audits a proposed decomposition backward — defects in, findings out, with **severity** and **evidence** on every finding; and an **analyst** that characterizes flow properties (capacity, soundness, stochastic behavior) when structural review alone is insufficient. The roles read the same 13 reference sheets with different epistemics. If the producer and critic always agree, the critic is rubber-stamping — that is a bug in the pipeline, not a feature.
 
 ## When to Use
 
@@ -94,17 +96,19 @@ axiom-procedural-architecture (structural)    yzmir-simulation-foundations (dyna
 
 This pack is a sibling of `axiom-planning` (which is its code-implementation-plan specialisation), a sibling of `axiom-system-architect` (which handles system shape rather than procedure shape), and strictly upstream of the rendering packs (`muna-technical-writer`, `lyra-ux-designer`, `lyra-site-designer`). It hands off to `yzmir-simulation-foundations` when the question moves from staged-discrete to continuous dynamics, and to `bravos-simulation-tactics` when the question moves to emergent player-driven flow. It receives input from `axiom-system-archaeologist` when an existing procedure is recovered from a codebase and needs structural critique.
 
-## Two-Role Architecture
+## Role Architecture
 
-The producer and the critic share the corpus of 13 sheets. They do not share epistemics.
+The producer, the critic, and the analyst share the corpus of 13 sheets. They do not share epistemics.
 
 **Producer epistemics — constructive, forward.** Given a goal and an audience, the producer asks: what is the smallest set of stages, in what order, with what dependencies, that gets this audience to that goal with an audit-able artifact at each exit? The producer builds. The producer's failure mode is over-confidence in the first decomposition that "feels right": grain too coarse where the audience needs scaffolding, decision points placed before their inputs exist, fake branches that converge identically, audience parameters left implicit.
 
 **Critic epistemics — adversarial, backward.** Given a proposed decomposition, the critic asks: what is structurally wrong with this? Where are the smells from `decomposition-smells.md`? Where do dependencies cross stages without being declared? Which decision points lack the information needed to decide? Which stages have no defined exit artifact? Which paths terminate, and which loop or dangle? The critic finds. The critic's failure mode is rubber-stamping — producing a clean bill of health on a structure that the producer's first instinct should have caught.
 
+**Analyst epistemics — descriptive, forensic.** The analyst is neither building nor adversarial. Given a structurally-sound procedure that misbehaves at scale or under stochastic conditions, the analyst asks *why* — bottleneck identification, soundness verification, sensitivity characterization. Analyst output is a verdict bound to a specific question: "stage 3 is the bottleneck because utilisation is 0.92 and Little's Law projects a 14-minute wait queue at peak," not "stage 3 is wrong." The analyst's failure mode is modeling theatre — reaching for queueing formulas or DES when the real defect is structural and a critic pass would have caught it cheaper.
+
 **If producer and critic always agree, the pipeline is broken.** A typical run produces at least one substantive disagreement: the producer staged decision D at point P; the critic finds D's inputs are not yet available at P and demands D move later or P move earlier. Resolving that disagreement is the work the pipeline exists to do. A run that produces no disagreement is evidence the critic is reading the same way the producer wrote — same bias, same blind spots — and the audit is theatre. Treat zero-disagreement runs as a defect of the critic, not as a virtue of the producer.
 
-The producer's slash command is `/decompose-procedure`. The critic's slash command is `/review-decomposition`. The analyst's slash command (capacity, soundness, stochastic flow — distinct epistemics again) is `/analyze-procedure`. The two SME agents are `decomposition-architect` (producer) and `decomposition-critic` (critic); both follow the SME Agent Protocol and emit **finding / severity / evidence** triples where they make claims.
+The producer's slash command is `/decompose-procedure`. The critic's slash command is `/review-decomposition`. The analyst's slash command is `/analyze-procedure`. The two SME agents are `decomposition-architect` (producer) and `decomposition-critic` (critic); both follow the SME Agent Protocol and emit **finding / severity / evidence** triples where they make claims.
 
 ## Start Here
 
@@ -188,7 +192,7 @@ The 13 sheets:
 
 Run this checklist before declaring any producer or critic deliverable done. Failures are blocking, not advisory. Silent passes are the failure mode this pack exists to prevent.
 
-- **Audience parameters declared.** The decomposition (or the critique of it) names the audience's prerequisites, working-memory capacity, error cost tolerance, reversibility appetite, and latency tolerance — not "the user" or "a developer," concrete parameters per [audience-modeling-for-procedures.md](audience-modeling-for-procedures.md). An undeclared audience is an implicit assumption; implicit assumptions calcify.
+- **Audience parameters declared** per [audience-modeling-for-procedures.md](audience-modeling-for-procedures.md) — the six parameters (prerequisites, working-memory capacity, error cost, reversibility appetite, latency tolerance, recovery options) must all be present and non-default. "The user" or "a developer" is not a declaration; an undeclared audience is an implicit assumption, and implicit assumptions calcify.
 - **Dependencies acyclic and declared.** The stage graph has no cycles. Every dependency (stage B reads stage A's exit artifact) is explicit, not silent. Per [dependency-and-ordering-audit.md](dependency-and-ordering-audit.md): a stage that secretly reads another stage's exhaust is a defect even if it works.
 - **Every decision point has its inputs available before it fires.** A decision point that asks the audience to choose before the information needed to choose has been produced is a smell (`decision-without-information`); the decision moves later or the input moves earlier. Per [decision-flow-design.md](decision-flow-design.md).
 - **Every stage has a defined exit artifact.** No stage exits to "the user proceeds" without naming what was produced. The exit artifact is what downstream stages and the audit trail consume. Per [decomposition-fundamentals.md](decomposition-fundamentals.md).
