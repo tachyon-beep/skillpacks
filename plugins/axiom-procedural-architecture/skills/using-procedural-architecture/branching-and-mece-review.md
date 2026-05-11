@@ -182,14 +182,18 @@ Stage 3 — Select deployment region
 **Finding 1**
   Stage reference:      Stage 1 — Identify storage provider (position 1 of 3);
                         decision point: "Which cloud provider?"
-  Defect class:         Check 1 — Coverage Gap
+  Defect class:         Check 3 — Escape-Hatch Omission
   Severity:             High
   Evidence:             On-premise / self-hosted object stores (MinIO, Ceph) are not covered by
                         AWS / GCP / Azure and no "Other" option exists. An audience member running
                         a MinIO cluster has no valid option. If forced to pick the nearest named
                         option (e.g., "AWS" because S3-compatible), subsequent stages configure
                         AWS-specific authentication and IAM, which will not apply to their
-                        infrastructure. The exit artifact is silently wrong.
+                        infrastructure. The exit artifact is silently wrong. The root defect is
+                        escape-hatch omission in an open-ended domain (cloud providers); the
+                        downstream consequence is the coverage gap that would otherwise classify
+                        under Check 1. Cite Check 3 because the remediation is to add "Other"
+                        (open-ended) rather than to enumerate every conceivable provider.
   Remediation:          Add an "Other / Self-hosted (S3-compatible)" option with a defined
                         downstream path — at minimum, a stage that captures the endpoint URL and
                         credential type without assuming a public-cloud provider's IAM. If the
@@ -268,7 +272,7 @@ Stage 3 — Select deployment region
                         a separate option: "US-East (default) / US-West." If the intent is
                         to hide the decision from audiences who do not need to make it,
                         remove the decision point from the default path and add it only as
-                        an advanced configuration step.
+                        an advanced-configuration stage.
 
 ---
 
