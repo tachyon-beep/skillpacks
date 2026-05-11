@@ -32,7 +32,7 @@ At any decision point, the set of selectable options must be:
 
 **Stages are roughly the same size of work; mixing god-steps with trivial-steps in a single decomposition is a smell.**
 
-Grain is not about absolute size — a curriculum for a junior can have finer grain than one for a senior on the same material. Grain is about *consistency within a single decomposition for a specific audience*. A decomposition where stage 3 takes fifteen minutes and stage 7 takes two weeks is not just inconvenient: it signals that the stages are not being drawn at the same level of abstraction. The god-step hides decision points and dependencies inside itself. The trivial-step is padding that exists to fill space between the real stages.
+Grain is not about absolute size — a curriculum for a junior can have finer grain than one for a senior on the same material. Grain is about *consistency within a single decomposition for a specific audience*. A decomposition where stage 3 takes fifteen minutes and stage 7 takes two weeks is not just inconvenient: it signals that the stages are not being drawn at the same level of abstraction. The god-step hides decision points and dependencies inside itself. The trivial-step (part of the `ladder-of-trivials` cluster smell) is padding that exists to fill space between the real stages.
 
 **Signal.** Estimate effort for each stage against the same audience. If the ratio of max to min effort across stages exceeds ~5:1, the decomposition has a grain problem. Either the large stage needs subdivision or the cluster of small stages needs consolidation into a single stage with a richer exit artifact. Both operations should improve the ratio without hiding dependencies.
 
