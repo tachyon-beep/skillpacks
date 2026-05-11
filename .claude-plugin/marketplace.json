@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, solution architecture, game development, security, documentation, site design, and UX skills for Claude Code - 32 complete skillpacks with 193+ TDD-validated skills",
-    "version": "3.14.0",
+    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, solution architecture, game development, security, documentation, site design, and UX skills for Claude Code - 33 complete skillpacks with 194+ TDD-validated skills",
+    "version": "3.15.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -284,6 +284,13 @@
         "pyfunction",
         "interpreter-teardown"
       ],
+      "category": "development"
+    },
+    {
+      "name": "axiom-procedural-architecture",
+      "source": "./plugins/axiom-procedural-architecture",
+      "description": "Structural reasoning for staged procedures — design, critique, and analyze decompositions of any procedure into composable stages, dependencies, decision points, and flow properties. Two roles (producer/critic) over one shared corpus. Router + 13 sheets, 3 commands, 2 agents.",
+      "keywords": ["axiom", "procedural-architecture", "decomposition", "workflow", "process-design", "queueing"],
       "category": "development"
     },
     {
