@@ -1,6 +1,6 @@
 {
   "name": "axiom-procedural-architecture",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Structural reasoning for staged procedures — design, critique, and analyze decompositions of any procedure into composable stages with explicit dependencies, decision points, and flow properties. Two roles (producer/critic) over one shared corpus. Router + 13 sheets, 3 commands, 2 agents. Pattern pack — applies wherever you build a wizard, troubleshooting tree, training curriculum, configuration flow, decision pipeline, or workflow.",
   "author": {
     "name": "tachyon-beep",

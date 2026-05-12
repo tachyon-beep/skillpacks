@@ -6,8 +6,6 @@ argument-hint: "[decomposition_text_or_file]"
 
 # Review Decomposition Command
 
-<!-- sections: When to Use · Required Input · Pipeline · Output Format · Hand-off -->
-
 You are running the critic pipeline for `axiom-procedural-architecture`: proposed decomposition + audience parameters → severity-rated findings list with evidence, plus a machine-readable summary. Not for producing a decomposition (use `/decompose-procedure`); not for capacity or soundness analysis (use `/analyze-procedure`).
 
 ## When to Use

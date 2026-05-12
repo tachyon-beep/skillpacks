@@ -6,8 +6,6 @@ argument-hint: "[procedure_text_or_file] [analysis_question]"
 
 # Analyze Procedure Command
 
-<!-- sections: When to Use · Required Input · Pipeline · Output Format · Hand-off -->
-
 You are running the analyst pipeline for `axiom-procedural-architecture`: a structurally-sound procedure + an analysis question → a scoped report covering bottleneck identification, simulation recommendations, or soundness verdicts. Not for first-pass structural critique (use `/review-decomposition`); not for producing a decomposition (use `/decompose-procedure`); not for continuous-time dynamics outside procedure shape (use `/simulation-foundations`).
 
 ## When to Use

@@ -6,8 +6,6 @@ argument-hint: "[goal_description_or_file]"
 
 # Decompose Procedure Command
 
-<!-- sections: When to use|When to Use · Required input|Required Input · Output format|Output Format -->
-
 You are running the producer pipeline for `axiom-procedural-architecture`: goal description + audience parameters → structured decomposition (stage list, decision-point inventory, dependency graph, exit artifacts). Not for critiquing an existing procedure (use `/review-decomposition`) or soundness/capacity analysis (use `/analyze-procedure`).
 
 ## When to Use

@@ -225,9 +225,83 @@ component-boundary question to `axiom-system-architect`.
 
 ---
 
+### Smell 6: Site-IA Colonisation
+
+**Symptom.** The conversation moves from "the onboarding procedure has six
+stages with these dependencies" (structural: stages and ordering) to "should
+each stage be its own page, or grouped under a parent route in the navigation?"
+or "what should the breadcrumb hierarchy look like?" (site information
+architecture: how the procedural shape is rendered into a navigable structure of
+pages).
+
+**Test.** Is the question about *what* the procedure does at each stage and how
+stages depend on each other, or about *how* the procedure is rendered into a
+hierarchy of pages, sections, and reading paths? Hierarchy of pages is site IA.
+
+**Redirect.** Hand the navigation hierarchy, page grouping, and reading-path
+questions to `lyra-site-designer`. The structural decomposition is upstream
+input; the site shape is downstream output.
+
+---
+
+### Smell 7: Emergent-Flow Colonisation
+
+**Symptom.** The conversation moves from "the procedure has these stages and
+this audience" (structural: predetermined shape, declared audience parameters)
+to "what happens when multiple actors interact under the procedure
+simultaneously and the procedural shape itself emerges from those interactions
+rather than being declared up front?" (emergent flow: the procedure is being
+authored by the interaction, not designed in advance).
+
+**Test.** Are stages predetermined and audience parameters known, or is the
+procedure being authored by actor interaction in real time? If the latter, the
+shape is emergent rather than declared.
+
+**Redirect.** Hand the emergent-flow question to `bravos-simulation-tactics`.
+This pack reasons about declared procedural shape; emergent shape under
+multi-actor interaction is a different object.
+
+---
+
+## Inbound Relationships
+
+This pack does not only hand off — it also receives. The most common upstream
+source is `axiom-system-archaeologist`.
+
+### From `axiom-system-archaeologist` — recovered procedures
+
+When system archaeology surfaces a procedure-shaped object inside an existing
+codebase (extracted control flow, a multi-stage workflow inferred from call
+graphs, a wizard reconstructed from UI traversal), the archaeology output is the
+input to this pack's critic role. The archaeologist's job ends at "here is the
+procedure that exists"; this pack's job begins at "is the procedure that exists
+structurally sound?"
+
+**Handoff artifact shape.** What this pack expects to receive:
+
+- A stage list (or prose that can be decomposed into stages without ambiguity).
+- Dependencies and ordering as observed (even if implicit — the archaeologist
+  may report "stages B and C both follow A but with no declared ordering
+  between them").
+- Decision points and branches as observed in the recovered procedure.
+- Audience parameters if known; if not, the critic infers from context or flags
+  the gap.
+
+**What this pack produces in response.** A standard critic-role output — a
+severity-rated findings list with evidence and a machine-readable summary —
+covering the recovered procedure's structural defects (orphan stages,
+re-entrancy blindness, escape-hatch overuse, MECE violations, dependency
+inversions, etc.). The findings feed back to the archaeology consumer as
+structural debt the codebase carries.
+
+**Slash command.** `/system-archaeologist` for the recovery; `/review-decomposition`
+for the structural critique of what was recovered.
+
+---
+
 ## Cross-References
 
-All packs named as handoff targets in this sheet:
+Outbound — packs named as handoff targets in this sheet:
 
 - `axiom-planning` (`/axiom-planning`) — code-implementation-plan instances of procedural discipline
 - `axiom-system-architect` (`/system-architect`) — system shape: components, services, modules
@@ -239,6 +313,10 @@ All packs named as handoff targets in this sheet:
 - `axiom-web-backend`, `axiom-rust-engineering`, `axiom-python-engineering`,
   `yzmir-llm-specialist`, `ordis-security-architect`,
   `yzmir-ml-production` — domain packs for content judgement inside stages
+
+Inbound — packs that feed this pack:
+
+- `axiom-system-archaeologist` (`/system-archaeologist`) — recovered procedures extracted from existing codebases, handed in for structural critique
 
 The routing table in [SKILL.md](SKILL.md) routes the symptom "is this question
 really for this pack?" to this sheet. The other 12 reference sheets route to

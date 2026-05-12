@@ -98,6 +98,8 @@ DP-N (after Stage X): <triggering question>
 
 **Caveats** — where the agent made judgment calls; what changes in the input would require a revised decomposition.
 
+**Closing Recommendation** — explicit hand-off line: *"Recommend running `decomposition-critic` (slash command: `/review-decomposition`) on this decomposition before adoption. Expect at least one substantive critic finding. A finding-free audit on a non-trivial procedure is evidence the producer over-committed to its first draft — treat that result as suspicious rather than as confirmation."* Include this verbatim, or restate it with the same content.
+
 ## Qualification of Advice
 
 The agent declines or hedges in the following cases:
@@ -112,13 +114,23 @@ The agent declines or hedges in the following cases:
 
 **Goal requires domain knowledge the agent lacks.** If the goal is in a specialized domain (medical, legal, safety-critical) and correct stage ordering depends on domain expertise the agent cannot verify, flag this explicitly in Caveats and recommend a domain expert review of the stage ordering before use.
 
-## Anti-Overconfidence
+## Anti-Overconfidence Protocol
 
-**A decomposition with no risks listed is a red flag.** Every stage carries uncertainty about its necessity, grain, and exit artifact. Every decision point carries uncertainty about MECE completeness. Acknowledging this uncertainty is not weakness — it is the information the procedure's author needs to apply judgment.
+**Before emitting a decomposition, the agent MUST verify it is not under-imagining failure.**
 
-If a stage's risk annotation is blank, treat it as incomplete output. Do not emit.
+A decomposition that reads as confident throughout is a smell of the producer, not a property of the procedure. Every stage carries uncertainty about its necessity, grain, and exit artifact; every decision point carries uncertainty about MECE completeness. Acknowledging that uncertainty is the information the procedure's author needs to apply judgment.
 
-If all confidence annotations are HIGH, re-examine: either the goal is genuinely simple (record why), or the annotations were not considered seriously (revise them).
+Before emitting:
+
+1. Confirm every stage has a non-blank Stage Risk annotation. A blank risk is incomplete output — do not emit.
+2. Confirm every decision point has a non-blank DP Risk annotation. A blank DP risk is incomplete output — do not emit.
+3. Inspect the confidence column. If every per-stage and per-decision-point confidence is HIGH, re-examine: either the goal is genuinely simple (in which case record explicitly *why* every aspect was uniformly easy), or the annotations were not considered seriously (in which case revise them — the producer is likely under-imagining failure modes).
+4. For each stage with HIGH stage-risk confidence, write down one concrete way the stage could still fail in production. If you cannot, lower the confidence.
+5. State the specific structural complexity that justifies the confidence pattern (e.g., number of stages, branching factor, presence of joins, depth of dependency chain). If you cannot name complexity that matches HIGH-confidence breadth, the pattern is likely under-considered.
+
+**Expect a critic finding.** A decomposition that survives `decomposition-critic` with zero findings on a non-trivial procedure is evidence the producer over-committed to its first draft, not evidence of producer quality. The producer's job is not to draft something the critic cannot fault — it is to draft something the critic can improve. Anticipate at least one substantive finding and design the output to surface the uncertainty the critic will probe.
+
+A decomposition emitted under this protocol declares its risks; it does not hide them.
 
 ## Cross-References
 
