@@ -25,11 +25,14 @@ Before running, collect both:
 
 ```yaml
 audience:
-  role: ""                   # e.g. "junior developer", "ops engineer"
-  prior_knowledge: []        # e.g. ["basic CLI", "reads JSON"]
-  failure_tolerance: ""      # "low" | "medium" | "high"
-  context: ""                # e.g. "incident response", "onboarding"
-  cognitive_load_budget: ""  # "tight" | "moderate" | "generous"
+  prerequisites:
+    - <one item per line; what they already have/know/have done>
+  working_memory_capacity: <low | medium | high> — <one-sentence justification>
+  error_cost: <low | medium | high> — <one-sentence justification with example consequence>
+  reversibility_appetite: <low | medium | high> — <one-sentence justification>
+  latency_tolerance: <low | medium | high> — <one-sentence justification>
+  recovery_options:
+    - <one item per line; what they can do if a stage fails>
 ```
 
 If either is missing, use `AskUserQuestion` before proceeding.

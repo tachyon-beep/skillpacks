@@ -27,8 +27,8 @@ Before running, collect both:
 Finding: audience-amnesia
 Severity: high
 Evidence: No audience parameters supplied with the decomposition.
-Remediation: Declare audience block (role, prior_knowledge, failure_tolerance,
-             context, cognitive_load_budget) before re-evaluating.
+Remediation: Declare audience block (prerequisites, working_memory_capacity, error_cost,
+             reversibility_appetite, latency_tolerance, recovery_options) before re-evaluating.
 ```
 
 ## Pipeline

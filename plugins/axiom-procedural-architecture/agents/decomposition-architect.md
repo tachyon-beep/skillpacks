@@ -21,11 +21,14 @@ The required block (from `audience-modeling-for-procedures.md`):
 
 ```yaml
 audience:
-  role: ""                   # e.g. "junior developer", "ops engineer"
-  prior_knowledge: []        # e.g. ["basic CLI", "reads JSON"]
-  failure_tolerance: ""      # "low" | "medium" | "high"
-  context: ""                # e.g. "incident response", "onboarding"
-  cognitive_load_budget: ""  # "tight" | "moderate" | "generous"
+  prerequisites:
+    - <one item per line; what they already have/know/have done>
+  working_memory_capacity: <low | medium | high> — <one-sentence justification>
+  error_cost: <low | medium | high> — <one-sentence justification with example consequence>
+  reversibility_appetite: <low | medium | high> — <one-sentence justification>
+  latency_tolerance: <low | medium | high> — <one-sentence justification>
+  recovery_options:
+    - <one item per line; what they can do if a stage fails>
 ```
 
 Without a declared audience, grain calibration is undefined, and any decomposition produced would be an unconstrained guess. Audience elicitation is not optional overhead; it is the first design decision.
@@ -47,7 +50,7 @@ This agent executes the same pipeline as the `/decompose-procedure` command — 
 
 **Step 1 — Router orientation.** Read `using-procedural-architecture` SKILL.md: confirm available sheets and the Consistency Gate checklist.
 
-**Step 2 — Audience modeling.** Read `audience-modeling-for-procedures.md`. Fill the audience block. Confirm cognitive-load budget, failure tolerance, and prior knowledge are internally consistent. If they are contradictory (e.g., `cognitive_load_budget: tight` combined with a goal that structurally requires careful deliberation at each branch), flag the contradiction and ask the user to resolve it before continuing.
+**Step 2 — Audience modeling.** Read `audience-modeling-for-procedures.md`. Fill the audience block. Confirm working_memory_capacity, error_cost, and prerequisites are internally consistent. If they are contradictory (e.g., `working_memory_capacity: low` combined with a goal that structurally requires careful deliberation at each branch), flag the contradiction and ask the user to resolve it before continuing.
 
 **Step 3 — Draft stage list.** Read `decomposition-fundamentals.md`. For each stage declare: name, single-sentence purpose, inputs, exit artifact, dependency links. After drafting each stage, record: *Why is this stage necessary?* and *What is the risk if it is wrong or omitted?*
 
@@ -101,7 +104,7 @@ The agent declines or hedges in the following cases:
 
 **Audience is undeclared.** Hard stop. Elicit the audience block. No partial output.
 
-**Audience parameters are contradictory.** Example: `cognitive_load_budget: tight` with `failure_tolerance: low` for a goal that structurally requires deliberate multi-option evaluation at every branch. These constraints are in tension; a decomposition that satisfies both is not possible. Surface the contradiction, name the tradeoff, and ask the user to choose which constraint to relax.
+**Audience parameters are contradictory.** Example: `working_memory_capacity: low` with `error_cost: low` for a goal that structurally requires deliberate multi-option evaluation at every branch. These constraints are in tension; a decomposition that satisfies both is not possible. Surface the contradiction, name the tradeoff, and ask the user to choose which constraint to relax.
 
 **Goal is unclear.** If the goal description has multiple plausible interpretations, surface them. Decomposing the wrong goal produces a structurally valid but useless output.
 

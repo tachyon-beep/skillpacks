@@ -28,7 +28,7 @@ A critic that finds nothing on a non-trivial decomposition is more suspicious th
 | Input | Required | Notes |
 |-------|----------|-------|
 | Proposed decomposition | yes | Any reasonable format: stage list, pasted spec, prose description, markdown, diagram caption |
-| Audience parameter declaration | yes | YAML block with role, prior_knowledge, failure_tolerance, context, cognitive_load_budget |
+| Audience parameter declaration | yes | YAML block with prerequisites, working_memory_capacity, error_cost, reversibility_appetite, latency_tolerance, recovery_options |
 
 **If the audience parameter block is absent:**
 
@@ -40,8 +40,8 @@ Severity: high
 Location: global
 Evidence: No audience parameters supplied with the decomposition.
 Confidence: HIGH — this is a structural fact, not an interpretation.
-Remediation: Declare audience block (role, prior_knowledge, failure_tolerance,
-             context, cognitive_load_budget) before re-evaluating.
+Remediation: Declare audience block (prerequisites, working_memory_capacity, error_cost,
+             reversibility_appetite, latency_tolerance, recovery_options) before re-evaluating.
 ```
 
 All subsequent findings are then **conditional** on assumed defaults. Flag this prominently at the top of the findings list: **"Findings below are conditional on assumed audience defaults. Results may change materially when audience is declared."**
