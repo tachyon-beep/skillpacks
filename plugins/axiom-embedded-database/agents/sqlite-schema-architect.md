@@ -120,6 +120,8 @@ All PRAGMAs must be in a single connection-setup function. Scattered PRAGMAs are
 
 ### 3. Concurrency Strategy
 
+**All query templates emitted by this agent are parameter-bound** — values are passed via `?` positional or `:name` named bindings, never via f-strings, `%`-formatting, `.format()`, or string concatenation. This applies to claim UPDATEs, heartbeat UPDATEs, every example below, and every query template a downstream implementer derives from this design. See `parameterized-sql-only.md`.
+
 Declare:
 
 - **BEGIN flavour per transaction class.** For each distinct write pattern (e.g., "claim transaction", "append transaction", "migration transaction"), state which BEGIN flavour to use (`DEFERRED`, `IMMEDIATE`, or `EXCLUSIVE`) and why.
@@ -301,7 +303,7 @@ PRAGMA temp_store = MEMORY;
 | Append transaction (producer inserts a new job) | `BEGIN DEFERRED` | No competing read-then-write; a producer writes a new row. Deferred is safe and reduces lock pressure. |
 | Completion transaction (worker marks job done) | `BEGIN DEFERRED` | The worker owns the job by `claimed_by` identity; no other thread can legally complete it. Deferred is safe. |
 | Reaper (expiry + deletion) | `BEGIN IMMEDIATE` | The reaper reads then deletes; a concurrent worker could claim a job the reaper is about to expire. IMMEDIATE prevents the race. |
-| Migration | `BEGIN EXCLUSIVE` | Migration must run alone; all readers and writers blocked while schema changes are applied. |
+| Migration | `BEGIN IMMEDIATE` | RESERVED lock acquired at BEGIN — no `SQLITE_BUSY` surprise on the first DDL statement, and no second process can run migrations concurrently. Under WAL, `EXCLUSIVE` does not block readers anyway (see `transactions-and-isolation.md`); `IMMEDIATE` is the correct flavour per `schema-migrations.md`. |
 
 **Single-writer vs. multi-writer:** The design permits multiple writer threads in one process. Correctness depends on `PRAGMA busy_timeout = 5000` and `BEGIN IMMEDIATE` on claim transactions. There is no application-level mutex — SQLite's WAL locking is the serialisation primitive.
 
@@ -329,14 +331,19 @@ WHERE id = (
 
 Why `BEGIN IMMEDIATE` here: two workers entering `BEGIN DEFERRED` both read `claimed_by IS NULL = true` for the same job before either writes. Both UPDATE succeeds if DEFERRED — second UPDATE silently overwrites the first's claim. IMMEDIATE means the second worker blocks at BEGIN until the first commits, then re-evaluates the WHERE (now `claimed_by IS NOT NULL`) and gets rows-affected = 0.
 
-**Heartbeat:** Long-running jobs MUST extend the lease every `lease_duration_ms / 2`:
+**Heartbeat:** Long-running jobs MUST extend the lease every `lease_duration_ms / 3` — three heartbeat opportunities per lease period, so a single missed heartbeat (network blip, GC pause) does not cost the worker the lease:
 
 ```sql
 UPDATE jobs
 SET claim_expires_at = :new_expiry
-WHERE id = :job_id AND claimed_by = :worker_id;
--- If rows affected = 0, the lease was stolen; worker must abort the job.
+WHERE id = :job_id
+  AND claimed_by = :worker_id
+  AND claim_expires_at >= :now_ms;
+-- If rows affected = 0, the lease has either expired or was stolen by another
+-- worker — stop processing immediately and treat the job as lost.
 ```
+
+The `claim_expires_at >= :now_ms` guard is mandatory. Without it, a zombie worker that woke up after its own lease expired can successfully heartbeat a lease another worker has already taken — rows-affected returns 1, but the heartbeat over-extends the new owner's lease, producing a silent split-brain. See `optimistic-locking-and-leases.md`.
 
 ---
 
@@ -345,7 +352,7 @@ WHERE id = :job_id AND claimed_by = :worker_id;
 **Initial migration (version 1):**
 
 ```sql
-BEGIN EXCLUSIVE;
+BEGIN IMMEDIATE;
 
 PRAGMA application_id = 0x4A514442;   -- 'JQDB' — file-type identity
 PRAGMA user_version = 1;
@@ -363,7 +370,7 @@ COMMIT;
 1. Open connection; run PRAGMA block.
 2. Read `PRAGMA user_version` → `current_version`.
 3. Compare to `TARGET_VERSION` (latest migration number in the migration list).
-4. For `v` in `current_version + 1 .. TARGET_VERSION`: execute `migrations[v]` inside `BEGIN EXCLUSIVE`; advance `PRAGMA user_version = v`; commit.
+4. For `v` in `current_version + 1 .. TARGET_VERSION`: execute `migrations[v]` inside `BEGIN IMMEDIATE`; advance `PRAGMA user_version = v`; commit.
 5. On error in migration `v`: rollback; log; halt startup with a clear message ("migration v failed; database is at version N-1; manual intervention required").
 
 No migration in the list may be modified after it has shipped. Add migration N+1 to extend the schema; never edit migration N.
@@ -372,7 +379,7 @@ No migration in the list may be modified after it has shipped. Add migration N+1
 
 ```sql
 -- migrations[2]:
-BEGIN EXCLUSIVE;
+BEGIN IMMEDIATE;
 ALTER TABLE jobs ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0;
 PRAGMA user_version = 2;
 COMMIT;
