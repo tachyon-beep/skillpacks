@@ -30,7 +30,7 @@ Write-Ahead Logging reorders the sequence of I/O without weakening its guarantee
 
 **Checkpoint.** Periodically, the WAL is folded back into the main database file in a process called checkpointing. By default, SQLite triggers an automatic checkpoint when the WAL reaches 1000 pages (`wal_autocheckpoint`). Checkpointing is driven by the writer (it happens as part of commit-path logic), but can also be triggered manually.
 
-The default checkpoint mode is PASSIVE: SQLite copies as many WAL frames as possible into the main file without blocking any reader or writer. If a reader holds a snapshot that pins early WAL frames, those frames are left in place and the checkpoint makes partial progress. PASSIVE never blocks; it simply skips frames that are in use. The WAL file shrinks only up to the point no reader currently holds a snapshot over. Manual checkpoint modes — FULL, RESTART, TRUNCATE — can block new writers until all readers have released their snapshots, but these are not triggered by `wal_autocheckpoint`. For most workloads, PASSIVE is the right mode and requires no application changes.
+The default checkpoint mode is PASSIVE: SQLite copies as many WAL frames as possible into the main file without blocking any reader or writer. If a reader holds a snapshot that pins early WAL frames, those frames are left in place and the checkpoint makes partial progress. PASSIVE never blocks; it simply skips frames that are in use. The WAL file shrinks only up to the point no reader currently holds a snapshot over. Manual checkpoint modes — FULL, RESTART, TRUNCATE — are not triggered by `wal_autocheckpoint`; they must be invoked explicitly. FULL waits for readers to drain before checkpointing all pages — the checkpoint call itself blocks during the drain, but writers are not blocked during that wait. RESTART does what FULL does and additionally briefly blocks new writers during the WAL reset phase. TRUNCATE does what RESTART does and additionally truncates the WAL file to zero bytes after the reset. For most workloads, PASSIVE is the right mode and requires no application changes.
 
 **The NFS caveat.** WAL requires two processes (or threads in different processes) to coordinate through the `.db-shm` shared-memory file, which uses POSIX memory-mapped locking semantics. NFS, SMB, CIFS, and many FUSE implementations do not implement these semantics correctly or at all. Enabling WAL mode on a network filesystem is not a configuration choice that degrades gracefully — it produces silent corruption. The discipline is binary: WAL is for local-host filesystems only. If you must use a network filesystem, use `DELETE` journal mode with `busy_timeout` and accept the read/write serialisation.
 
@@ -291,29 +291,44 @@ def _run_batched(self) -> None:
             break
         batch = [item]
         # Drain any additional items that arrived while we were processing the first.
+        # Stop the drain immediately if a sentinel arrives — we must not let None
+        # reach the (job, future) unpack below.
+        stop_after_batch = False
         try:
             while True:
-                batch.append(self._queue.get_nowait())
+                next_item = self._queue.get_nowait()
+                if next_item is None:
+                    stop_after_batch = True
+                    break
+                batch.append(next_item)
         except queue.Empty:
             pass
 
-        self._conn.execute("BEGIN IMMEDIATE")
-        results: list[tuple[Any, concurrent.futures.Future]] = []
-        try:
-            for job, future in batch:
-                if job is None:
-                    # sentinel inside a batch: finish the transaction first
-                    break
-                result = job(self._conn)
-                results.append((result, future))
-            self._conn.execute("COMMIT")
-            for result, future in results:
-                future.set_result(result)
-        except Exception as exc:
-            self._conn.execute("ROLLBACK")
-            for _, future in results:
-                if not future.done():
-                    future.set_exception(exc)
+        self._process_batch(batch)
+        if stop_after_batch:
+            break
+    self._conn.close()
+
+
+def _process_batch(
+    self,
+    batch: list[tuple[Callable[[sqlite3.Connection], Any], concurrent.futures.Future]],
+) -> None:
+    """Execute a batch of jobs inside one BEGIN IMMEDIATE transaction."""
+    self._conn.execute("BEGIN IMMEDIATE")
+    results: list[tuple[Any, concurrent.futures.Future]] = []
+    try:
+        for job, future in batch:
+            result = job(self._conn)
+            results.append((result, future))
+        self._conn.execute("COMMIT")
+        for result, future in results:
+            future.set_result(result)
+    except Exception as exc:
+        self._conn.execute("ROLLBACK")
+        for _, future in batch:
+            if not future.done():
+                future.set_exception(exc)
 ```
 
 Batching trades latency (the submitter waits slightly longer for the batch to fill) for throughput (fewer fsync calls per write). Tune the batch-drain strategy based on the observed arrival rate.
@@ -328,7 +343,7 @@ Batching trades latency (the submitter waits slightly longer for the batch to fi
 
 - **Spinning on SQLITE_BUSY without backoff.** A tight retry loop that immediately re-attempts `BEGIN IMMEDIATE` wastes CPU, may cause livelock-like contention, and does not give the current holder time to commit. Always sleep between retries. Exponential backoff with jitter distributes retry pressure. The queue pattern eliminates this entirely by ensuring only one writer attempts writes at a time.
 
-- **A long-running write transaction while readers wait for the next snapshot.** In WAL mode, a writer holding an open write transaction has committed to a WAL frame; readers at the next `BEGIN DEFERRED` see that frame. But if the write transaction runs for minutes (large batch import, slow migration), it delays WAL checkpointing and bloats the WAL file. Break large write workloads into bounded transaction sizes. The queue pattern supports this naturally — each submitted job is one transaction.
+- **A long-running write transaction.** A writer holding an open write transaction holds RESERVED for its entire duration, serialising all other writers until it commits or rolls back. (Readers are unaffected under WAL — they continue reading the pre-write snapshot.) On commit, the resulting WAL frames cannot be checkpointed until snapshot-pinning readers advance past them, so a single multi-minute write turns into protracted WAL bloat. Break large write workloads into bounded transaction sizes. The queue pattern supports this naturally — each submitted job is one transaction.
 
 - **Application-level locking via the database itself.** SQLite does not have `SELECT ... FOR UPDATE`. `LOCK TABLE` does not exist in SQLite. Advisory application locks cannot be implemented via a "locks" table with `UPDATE ... WHERE holder IS NULL`, because two concurrent readers can both read `NULL` before either writes. Application-level coordination requires either `BEGIN IMMEDIATE` (letting SQLite's own lock serialise writers) or an external mechanism like `portalocker`. Do not attempt to build a lock table inside SQLite.
 
