@@ -160,7 +160,45 @@ if len(samples) >= 2:
 
 **If WAL file is absent.** The database is not in WAL mode. Note this in the report — WAL mode is the production-correct setting per `pragma-discipline.md`. A missing WAL file is itself a configuration finding.
 
-### 4. Slow-query identification
+### 4. Page-cache hit rate
+
+SQLite's page cache keeps recently accessed database pages in memory to avoid re-reading them from disk. A low cache hit rate means the working set exceeds the configured cache size (`PRAGMA cache_size`), and reads are hitting the OS page cache or disk on every access.
+
+**Check current cache usage via PRAGMA.** `PRAGMA cache_used` returns the number of pages currently in the page cache for the connection:
+
+```python
+conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+cache_used = conn.execute("PRAGMA cache_used").fetchone()[0]
+cache_size = conn.execute("PRAGMA cache_size").fetchone()[0]
+# cache_size is negative = KiB limit; positive = page count limit
+print(f"Cache used: {cache_used} pages")
+print(f"Cache size: {cache_size} (negative = KiB, positive = page count)")
+```
+
+`PRAGMA cache_size` with a negative value sets a KiB ceiling (e.g., `-2000` = 2 MB); with a positive value it sets a page-count ceiling. The default is 2000 pages (typically 8 MB with a 4096-byte page size, per `PRAGMA page_size`).
+
+**Limitation: hit rate not measurable from Python's `sqlite3`.** The C-level functions `sqlite3_status(SQLITE_STATUS_PAGECACHE_HIT, ...)` and `sqlite3_db_status(SQLITE_DBSTATUS_CACHE_HIT, ...)` expose cache hit and miss counters, but Python's stdlib `sqlite3` module does not bind these functions. Cache hit rate cannot be measured directly without a C extension, `ctypes`, or an alternative driver such as `apsw` (which exposes `apsw.Connection.status()`).
+
+**Proxy measurement.** Instead of measuring hit rate directly, compare query timing between runs:
+
+- First run after a fresh connection: cold cache — reads come from OS page cache or disk.
+- Subsequent runs: warm cache — reads come from SQLite's page cache.
+
+A large ratio (e.g., first run 200 ms, second run 5 ms) suggests the working set fits in the page cache but the initial page load is expensive. A flat ratio (both runs slow) suggests the working set exceeds the page cache — consider increasing `PRAGMA cache_size` per `pragma-discipline.md`.
+
+**Recommended action if cache appears undersized.** Increase `PRAGMA cache_size` to cover the hot working set. Use `PRAGMA page_count` and `PRAGMA page_size` to estimate database size:
+
+```python
+page_count = conn.execute("PRAGMA page_count").fetchone()[0]
+page_size = conn.execute("PRAGMA page_size").fetchone()[0]
+db_size_mb = (page_count * page_size) / (1024 * 1024)
+# Set cache_size to cover ~25% of the database for typical OLTP hot sets
+suggested_cache_kib = -(page_count * page_size * 0.25) // 1024
+```
+
+Note that `cache_size` is connection-scoped — it must be re-set on every connection open. It is not persisted in the database file.
+
+### 5. Slow-query identification
 
 Wrap each query in a timing harness using a read-only connection. Run each query five times (warm-up on first run, four measurement runs) and record wall-clock time per execution:
 
@@ -191,8 +229,6 @@ for query in queries:
 ```
 
 **Limitations.** The timing harness runs queries sequentially in a single-process context. It does not reproduce concurrent write pressure. The results are useful for identifying expensive queries but do not replicate production latency under load. For production-representative timing, instrument the application with a logging wrapper that records statement duration at the `execute()` call site.
-
-**Page cache state.** SQLite's page cache (`PRAGMA cache_size`) is connection-scoped. The first run of each query may warm the OS page cache; subsequent runs benefit from it. The harness discards the first run to reduce cold-start noise. Note that `sqlite3.Cursor` does not expose `sqlite3_status()` or `sqlite3_db_status()` page-cache-hit counters from Python; those require the C API. This is a known limitation — cache hit rate cannot be measured directly from `sqlite3` in the standard library.
 
 ## Output format
 
