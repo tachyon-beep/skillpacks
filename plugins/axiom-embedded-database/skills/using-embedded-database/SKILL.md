@@ -237,16 +237,18 @@ All reference sheets are in the same directory as this `SKILL.md`. When you see 
 
 ## Commands and Agents
 
-The pack ships two slash commands and one agent.
+The pack ships three slash commands and two agents.
 
 **Commands:**
 
-- `/scaffold-embedded-db` — scaffold a production-grade SQLite layer: PRAGMA configuration, migration runner skeleton, connection-pool shape, parameterised query helpers, and an integrity-check cron stub. Aligned to a declared language target (Python `sqlite3`/`aiosqlite` or Rust `rusqlite`/`sqlx`).
-- `/audit-sqlite-layer` — sweep an existing SQLite layer for anti-patterns: PRAGMA configuration gaps, migration runner discipline, transaction flavour misuse, raw string interpolation in SQL, missing indexed expressions on JSON columns, FTS trigger absence. Produces a structured findings list with sheet references.
+- `/scaffold-sqlite-schema` — scaffold a production-grade SQLite layer from a declared workload shape (general, job-queue, audit-log, OLAP-companion): PRAGMA configuration, `application_id` / `user_version` registration, migration runner skeleton, parameterised query helpers. Aligned to the declared language target (Python `sqlite3` / `aiosqlite` or Rust `rusqlite` / `sqlx`).
+- `/audit-sqlite-discipline` — sweep a project for embedded-database discipline violations: PRAGMA gaps, missing parameterisation, transaction-flavour misuse, concurrent-access pattern holes, JSON column index gaps, FTS trigger absence. Produces a structured findings list with sheet citations; optionally dispatches `embedded-database-reviewer` for narrative synthesis.
+- `/profile-sqlite-workload` — `EXPLAIN QUERY PLAN` sweep, index-hit-rate measurement, WAL-size and page-cache-hit inventory, slow-query identification. Runtime profiling complement to the static sweep in `/audit-sqlite-discipline`.
 
-**Agent:**
+**Agents:**
 
-- **`embedded-db-reviewer`** — reviews an application's embedded-database usage for correctness and production-readiness gaps. Sweeps source against all 13 sheets and the 13 anti-patterns; reports findings with severity and the sheet that closes each gap. Follows the SME Agent Protocol (Confidence Assessment, Risk Assessment, Information Gaps, Caveats).
+- **`embedded-database-reviewer`** — reviews an application's embedded-database usage for correctness and production-readiness. Sweeps source against all 13 sheets and the 13 anti-patterns; reports findings with severity and the sheet that closes each gap. Follows the SME Agent Protocol (Confidence Assessment, Risk Assessment, Information Gaps, Caveats).
+- **`sqlite-schema-architect`** — given a schema description and workload profile, produces schema design recommendations: indexing strategy, normalisation level, JSON column vs relational tradeoffs, migration sequence, and the claim-lease table shape if needed.
 
 ## Cross-References
 
