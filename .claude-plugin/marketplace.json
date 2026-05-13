@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, solution architecture, game development, security, documentation, site design, and UX skills for Claude Code - 33 complete skillpacks with 194+ TDD-validated skills",
-    "version": "3.15.1",
+    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, solution architecture, game development, security, documentation, site design, and UX skills for Claude Code - 34 complete skillpacks with 208+ TDD-validated skills",
+    "version": "3.16.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -297,6 +297,27 @@
         "workflow",
         "process-design",
         "queueing"
+      ],
+      "category": "development"
+    },
+    {
+      "name": "axiom-embedded-database",
+      "source": "./plugins/axiom-embedded-database",
+      "description": "SQLite and DuckDB as application-embedded databases at production scale - PRAGMA discipline, schema migrations under SQLite's ALTER constraints, WAL tuning, transactions/isolation, single-writer concurrency, optimistic locking + claim leases, parameterized-SQL, JSON1, FTS5, DuckDB-for-OLAP, SQLCipher, backup/restore. Router + 13 sheets, 3 commands, 2 agents.",
+      "keywords": [
+        "axiom",
+        "embedded-database",
+        "sqlite",
+        "duckdb",
+        "wal",
+        "pragma",
+        "schema-migrations",
+        "optimistic-locking",
+        "claim-leases",
+        "json1",
+        "fts5",
+        "sqlcipher",
+        "backup-restore"
       ],
       "category": "development"
     },
