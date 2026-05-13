@@ -44,7 +44,9 @@ DuckDB embeds in-process, like SQLite, but the concurrency model differs:
 ```python
 import duckdb
 
-# In-process, file-backed. Multiple connections to the same file are supported.
+# In-process, file-backed. Multiple connections within a single process are
+# supported; but unlike SQLite, multiple processes cannot open the same
+# DuckDB file in read-write mode concurrently.
 conn = duckdb.connect("analytics.duckdb")
 
 # :memory: — no persistence, useful for ad-hoc exploration or tests.
@@ -55,7 +57,7 @@ mem_conn = duckdb.connect(":memory:")
 
 **File durability.** The `.duckdb` file is the durability boundary, analogous to SQLite's `.db` file. DuckDB writes a transaction log alongside the main file. On clean shutdown, the file is consistent. On crash, recovery runs at next open.
 
-**File format stability.** DuckDB's on-disk format has not been stable across all versions. The v0.10 → v1.0 transition (2024) was a significant format break: databases created with v0.9 cannot be opened by v1.0 without export/re-import. As of DuckDB v1.0, the format is declared stable and the project has committed to forward compatibility. If you are pinning a DuckDB version in production, note the version in a comment next to the dependency and have an export path ready if the format changes.
+**File format stability.** DuckDB's on-disk format has not been stable across all versions. The v0.10 → v1.0 transition (2024) was a significant format break: databases created with v0.10 (and earlier) cannot be opened by v1.0 without export/re-import. As of DuckDB v1.0, the format is declared stable and the project has committed to forward compatibility. If you are pinning a DuckDB version in production, note the version in a comment next to the dependency and have an export path ready if the format changes.
 
 ## The hybrid pattern: SQLite OLTP + DuckDB OLAP
 
@@ -271,7 +273,7 @@ The equivalent query in SQLite on the same 10M-row table reads every row's full 
 
 **Writing to the same SQLite file from both DuckDB and a native SQLite application simultaneously.** DuckDB's `sqlite_scanner` extension uses the SQLite library for locking, so a DuckDB read coexists safely with a SQLite writer in WAL mode — that is the normal SQLite reader/writer pattern. The hazard is concurrent *writes* from both sides: if DuckDB writes back to the SQLite file through the extension at the same time as your application is writing through its own SQLite connection, you have two writers competing through SQLite's single-writer serialisation. The result is write conflicts and potential corruption. In practice, treat `ATTACH (TYPE SQLITE)` as read-only from the DuckDB side. If you need to write from DuckDB, use the periodic ETL pattern to a separate DuckDB file instead.
 
-**Treating the `.duckdb` file as portable across DuckDB versions without an export plan.** The v0.9 → v1.0 format break required `EXPORT DATABASE` / `IMPORT DATABASE` to migrate. As of v1.0, the format is declared stable, but the lesson from that break is clear: pin the DuckDB version in your dependency manifest, test upgrades against real data before deploying, and have a working `EXPORT DATABASE` / `IMPORT DATABASE` path in your runbook. A `.duckdb` file is not a plain-text format; it is engine-specific.
+**Treating the `.duckdb` file as portable across DuckDB versions without an export plan.** The v0.10 → v1.0 format break required `EXPORT DATABASE` / `IMPORT DATABASE` to migrate databases from any pre-v1.0 release. As of v1.0, the format is declared stable, but the lesson from that break is clear: pin the DuckDB version in your dependency manifest, test upgrades against real data before deploying, and have a working `EXPORT DATABASE` / `IMPORT DATABASE` path in your runbook. A `.duckdb` file is not a plain-text format; it is engine-specific.
 
 **Treating DuckDB as a replacement for a real data warehouse at multi-host scale.** DuckDB is a single-process engine. It has no server mode, no cross-host replication, no distributed query execution, and no shared storage. If you need analytical queries from multiple hosts, or data that multiple writer processes contribute to simultaneously across machines, you need a warehouse (ClickHouse, BigQuery, Snowflake, Redshift). DuckDB is the right choice for the single-process analytical workload; it is not a drop-in warehouse substitute.
 
