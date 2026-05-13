@@ -72,14 +72,44 @@ If yes, dispatch `embedded-database-reviewer` and incorporate its findings befor
 
 ## Scaffold steps
 
-### Step 1 — Detect or create the target directory
+### Step 1 — Detect or create the target directory; generate `application_id`
 
 ```bash
 TARGET_DIR="${TARGET_DIR:-.}"   # default to current directory
 mkdir -p "${TARGET_DIR}/migrations"
+mkdir -p "${TARGET_DIR}/tests"
 ```
 
-Report the resolved paths before writing any files.
+Generate a unique 32-bit `application_id` at scaffold time so every scaffolded
+project gets a distinct magic number. This runs in the command's Bash/Python
+prelude — not in the emitted code — and the result is substituted into the
+emitted `db.py` as a literal hex constant.
+
+```python
+# Run in the command's Python prelude.
+import os
+import zlib
+
+# PROJECT_NAME is the package name elicited from the user (or derived from the
+# directory name). It is a string like "myapp" — never user-provided SQL.
+project_name = PROJECT_NAME
+
+# Combine a deterministic crc32 of the package name with 4 bytes of randomness
+# so identical package names across different scaffolds still get distinct IDs.
+crc = zlib.crc32(project_name.encode("utf-8"))
+rand = int.from_bytes(os.urandom(4), "big")
+# Mask to 32-bit signed positive range — SQLite stores application_id as a
+# signed 32-bit integer in the file header.
+APPLICATION_ID = (crc ^ rand) & 0x7FFFFFFF
+APPLICATION_ID_HEX = f"0x{APPLICATION_ID:08X}"
+```
+
+Substitute `APPLICATION_ID_HEX` into the `_APPLICATION_ID` literal in the emitted
+`db.py` (step 2). The emitted code then carries a stable, project-specific magic
+number from the moment the scaffold runs — no manual edit required.
+
+Report the resolved paths and the generated `application_id` before writing any
+files.
 
 ### Step 2 — Emit the connection helper
 
@@ -92,7 +122,10 @@ This module is the only path to a database connection. All callers go through
 `connection()`. Direct `sqlite3.connect()` calls bypass the PRAGMA block and
 produce misconfigured connections.
 
-application_id: 0x2A7F1C3E  # derived at project init: crc32(b"myapp") ^ random_4bytes
+application_id: substituted at scaffold time as
+    zlib.crc32(b"<project_name>") ^ os.urandom(4), masked to 32-bit signed.
+Do not change after the database is created — the migration runner asserts
+the file's application_id matches this constant on every open.
 """
 import sqlite3
 import threading
@@ -103,10 +136,12 @@ from pathlib import Path
 _local = threading.local()
 _DB_PATH: str = ""
 
-# 32-bit magic number unique to this application.
-# Chosen at scaffold time: zlib.crc32(b"<package>") ^ random 4 bytes, masked to
-# fit a 32-bit signed integer. Do not change after the database is created.
-_APPLICATION_ID: int = 0x2A7F1C3E
+# 32-bit magic number unique to this application. Substituted at scaffold time
+# from zlib.crc32(b"<project>") ^ os.urandom(4), masked to 32-bit signed.
+# The literal below was generated for this project — do not change it after
+# the database is created. The migration runner asserts the file's
+# application_id matches this constant on every open.
+_APPLICATION_ID: int = {{APPLICATION_ID_HEX}}   # e.g. 0x2A7F1C3E — scaffold-substituted
 
 
 def configure(db_path: str | Path) -> None:
