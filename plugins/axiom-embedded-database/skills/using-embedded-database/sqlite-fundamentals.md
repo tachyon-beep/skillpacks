@@ -1,6 +1,6 @@
 ---
 name: sqlite-fundamentals
-description: Use when standing up a new SQLite-backed component, inheriting an SQLite layer with surprising failure modes, or defending an SQLite choice against "just use Postgres". Covers the in-process execution model, connection lifecycle, ACID semantics in the embedded context, thread/process concurrency rules, and the VFS layer. Foundation for every other sheet in the pack.
+description: Use when standing up a new SQLite-backed component, inheriting an SQLite layer with surprising failure modes, or defending an SQLite choice against "just use Postgres". Covers the in-process execution model, connection lifecycle, ACID semantics in the embedded context, and thread/process concurrency rules. Foundation for every other sheet in the pack.
 ---
 
 # SQLite Fundamentals
@@ -166,9 +166,9 @@ def configure(db_path: str) -> None:
 
 def _open() -> sqlite3.Connection:
     """Open and configure a fresh connection for the calling thread."""
-    conn = sqlite3.connect(_DB_PATH, isolation_level=None)  # autocommit off handled via BEGIN
+    conn = sqlite3.connect(_DB_PATH, isolation_level=None)  # isolation_level=None = autocommit; all transaction boundaries are explicit BEGIN/COMMIT
     conn.row_factory = sqlite3.Row
-    # PRAGMAs must be set per-connection; they are not stored in the database file.
+    # Most PRAGMAs are session-level (not stored); foreign_keys, synchronous, and cache settings must be re-applied on every open.
     conn.execute("PRAGMA journal_mode = WAL")
     conn.execute("PRAGMA synchronous = NORMAL")
     conn.execute("PRAGMA foreign_keys = ON")       # Off by default — always enable.

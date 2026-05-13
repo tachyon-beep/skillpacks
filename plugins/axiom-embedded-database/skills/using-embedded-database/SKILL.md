@@ -46,7 +46,7 @@ Do **not** use this pack when:
 
 If your input is "we have (or want) an embedded database and need it to be production-grade," and you have not run this pack before:
 
-1. [`sqlite-fundamentals.md`](sqlite-fundamentals.md) — the SQLite execution model: connection lifecycle, the VFS layer, WAL vs rollback journal, the type-affinity system, and the connection-pool shape that survives multi-threaded access.
+1. [`sqlite-fundamentals.md`](sqlite-fundamentals.md) — the SQLite execution model: the in-process model, connection lifecycle, ACID semantics in the embedded context, and thread/process concurrency rules.
 2. [`pragma-discipline.md`](pragma-discipline.md) — PRAGMA configuration is the application: `journal_mode`, `synchronous`, `cache_size`, `temp_store`, `foreign_keys`, `busy_timeout` — choose them deliberately, not by default.
 3. [`schema-migrations.md`](schema-migrations.md) — version the schema before building anything else: migration runner discipline, `user_version` / `application_id` as the version register, forward-only vs rollback strategies, the SQLite `ALTER TABLE` constraint surface.
 4. [`transactions-and-isolation.md`](transactions-and-isolation.md) — choose `BEGIN` flavour deliberately: DEFERRED vs IMMEDIATE vs EXCLUSIVE, the lock-upgrade surprise, SAVEPOINT for nested scopes, isolation semantics in WAL mode.
@@ -64,7 +64,7 @@ If your input is "we have (or want) an embedded database and need it to be produ
 
 | Sheet | Role |
 |-------|------|
-| [`sqlite-fundamentals.md`](sqlite-fundamentals.md) | Connection model, VFS, WAL vs rollback journal, type affinity, connection-pool shape |
+| [`sqlite-fundamentals.md`](sqlite-fundamentals.md) | In-process model, connection lifecycle, ACID in embedded context, thread/process rules |
 | [`pragma-discipline.md`](pragma-discipline.md) | Production PRAGMA configuration: journal mode, sync level, cache, foreign keys, busy timeout |
 | [`schema-migrations.md`](schema-migrations.md) | Versioned schema evolution: migration runner, `user_version`, ALTER TABLE constraints, rollback strategy |
 | [`transactions-and-isolation.md`](transactions-and-isolation.md) | BEGIN flavour selection, lock-upgrade semantics, SAVEPOINT, WAL-mode isolation model |
