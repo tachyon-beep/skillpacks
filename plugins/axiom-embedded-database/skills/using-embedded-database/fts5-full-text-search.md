@@ -131,7 +131,7 @@ CREATE VIRTUAL TABLE docs_fts USING fts5(
 );
 ```
 
-Optional modifier: `remove_diacritics 2` strips combining diacritics from letters, so `résumé` matches `resume`. Omitting this defaults to `remove_diacritics 1` (removes only common ASCII-range diacritics).
+Optional modifier: `remove_diacritics 2` strips combining diacritics from letters, so `résumé` matches `resume`. Omitting this defaults to `remove_diacritics 1` (removes only common ASCII-range diacritics). Mode `2` requires SQLite 3.27.0+ (2019-02-07).
 
 ```sql
 tokenize = 'unicode61 remove_diacritics 2'
@@ -373,11 +373,11 @@ If you choose application-level dual writes, any write path that bypasses the ap
 
 ### Using `unicode61` for identifier or code search
 
-`unicode61` tokenises on word boundaries. An identifier like `getUserByEmail` tokenises to two tokens (`getuserbyemail` — actually one token in this case — or splits at underscores in `get_user_by_email`). Users searching for `Email` as a substring will not find `getUserByEmail`. Use the `trigram` tokenizer for code and identifier search so infix matches work. Requires SQLite 3.34.0+.
+`unicode61` tokenises on word boundaries. An identifier like `getUserByEmail` tokenises to one token (`getuserbyemail`) — `unicode61` does not split camelCase. An underscore-delimited form like `get_user_by_email` splits at underscores into four tokens. Either way, prefix or substring matches inside the identifier fail with `unicode61`; users searching for `Email` will not find `getUserByEmail`. Use the `trigram` tokenizer for code- and identifier-shaped search so infix matches work. Requires SQLite 3.34.0+.
 
 ### Specifying `remove_diacritics` incorrectly for Unicode text
 
-The default `remove_diacritics 1` strips only a subset of common Latin diacritics. Text with Arabic, Greek, or less common Latin diacritics will not be normalised, causing `résumé` ≠ `resume` mismatches on some Unicode ranges. If your content may contain non-ASCII diacritics and you want diacritic-insensitive matching, set `remove_diacritics 2` explicitly.
+The default `remove_diacritics 1` strips only a subset of common Latin diacritics. Text with Greek or less common Latin diacritics will not be normalised, causing `résumé` ≠ `resume` mismatches on some Unicode ranges. If your content may contain non-ASCII diacritics and you want diacritic-insensitive matching, set `remove_diacritics 2` explicitly (requires SQLite 3.27.0+, 2019-02-07). Note that scripts like Arabic also require shaping and normalisation that diacritic-removal alone does not address.
 
 ### External-content table out of sync after schema change
 
