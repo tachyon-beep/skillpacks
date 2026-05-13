@@ -65,11 +65,12 @@ The most practical deployment for applications that need both transactional writ
 
 **Option A: periodic ETL.** On a schedule (hourly, nightly), read new rows from SQLite, append them to DuckDB. Analytical queries run against DuckDB. The data is never perfectly fresh, but the latency is acceptable for dashboards and batch reports.
 
-**Option B: `ATTACH` SQLite from DuckDB.** DuckDB's `sqlite_scanner` extension lets you attach a SQLite database file and query it as a DuckDB relation. The extension reads the SQLite file's pages directly — it does not open a SQLite connection; it interprets the B-tree format. This means:
+**Option B: `ATTACH` SQLite from DuckDB.** DuckDB's `sqlite_scanner` extension lets you attach a SQLite database file and query it as a DuckDB relation. The extension uses the SQLite library internally — it opens a real SQLite connection and delegates locking to SQLite's own lock machinery. This means:
 
-- The SQLite file must not be write-locked while DuckDB is reading it (WAL mode helps here — readers and the DuckDB scanner can coexist with a SQLite writer).
+- Locking is handled by the SQLite library: within the same process, SQLite uses mutexes; across processes, SQLite uses filesystem locks. A DuckDB read coexists with a SQLite writer under the same rules as any other SQLite reader. In WAL mode, DuckDB's scanner and a concurrent SQLite writer can proceed without blocking each other.
 - The `ATTACH` read is done at query time, not cached — large OLAP queries over an `ATTACH`'d SQLite table still pay row-store costs for the SQLite side, then the DuckDB engine post-processes.
 - Use it for moderate-size SQLite tables where freshness matters more than performance.
+- Because the extension links the SQLite library into the DuckDB process, linking multiple copies of SQLite into the same application (e.g., your application already links libsqlite and so does DuckDB) can cause conflicts. Check the DuckDB documentation for your build's SQLite linkage before using `ATTACH` in a process that also loads its own SQLite.
 
 ```sql
 -- In DuckDB, not SQLite.
@@ -268,7 +269,7 @@ The equivalent query in SQLite on the same 10M-row table reads every row's full 
 
 **Forgetting the WHERE and loading 100 GB of Parquet into memory.** `SELECT * FROM read_parquet('huge.parquet')` with no WHERE clause materialises the entire file into DuckDB's working memory. With a memory limit set, this spills and becomes very slow. Without a limit, it exhausts RAM. Always filter before materialising: add a WHERE, limit the columns with SELECT, or process in chunks. The `read_parquet` path is fast precisely because DuckDB can skip data it doesn't need — let it.
 
-**Opening the same SQLite file from both DuckDB and native SQLite simultaneously without coordination.** DuckDB's `sqlite_scanner` extension reads a SQLite file by parsing its page format directly. It does not go through the SQLite library's lock machinery. A concurrent SQLite write (appending WAL frames) while DuckDB is reading the same file may result in DuckDB reading a partially-updated state. For production use, either time DuckDB reads to off-peak windows, or use the periodic ETL pattern so DuckDB is querying its own copy of the data.
+**Writing to the same SQLite file from both DuckDB and a native SQLite application simultaneously.** DuckDB's `sqlite_scanner` extension uses the SQLite library for locking, so a DuckDB read coexists safely with a SQLite writer in WAL mode — that is the normal SQLite reader/writer pattern. The hazard is concurrent *writes* from both sides: if DuckDB writes back to the SQLite file through the extension at the same time as your application is writing through its own SQLite connection, you have two writers competing through SQLite's single-writer serialisation. The result is write conflicts and potential corruption. In practice, treat `ATTACH (TYPE SQLITE)` as read-only from the DuckDB side. If you need to write from DuckDB, use the periodic ETL pattern to a separate DuckDB file instead.
 
 **Treating the `.duckdb` file as portable across DuckDB versions without an export plan.** The v0.9 → v1.0 format break required `EXPORT DATABASE` / `IMPORT DATABASE` to migrate. As of v1.0, the format is declared stable, but the lesson from that break is clear: pin the DuckDB version in your dependency manifest, test upgrades against real data before deploying, and have a working `EXPORT DATABASE` / `IMPORT DATABASE` path in your runbook. A `.duckdb` file is not a plain-text format; it is engine-specific.
 
