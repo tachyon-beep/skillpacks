@@ -14,7 +14,7 @@ You are sweeping a project's SQLite usage to find places where embedded-database
 
 Typical use cases: pre-merge discipline check on a new SQLite-backed service, brownfield gap analysis before upgrading a production database, or onboarding sweep when inheriting a codebase.
 
-## Sweep Dimensions
+## Sweep dimensions
 
 For each dimension: grep / glob pattern, heuristic, severity, and cross-reference sheet.
 
@@ -158,7 +158,7 @@ For each dimension: grep / glob pattern, heuristic, severity, and cross-referenc
 
     Sheet: `backup-restore-and-corruption.md`
 
-## Output Format
+## Output format
 
 Emit findings as structured JSON:
 
@@ -196,7 +196,7 @@ Emit findings as structured JSON:
 
 Present HIGH findings first, then MED, then LOW. Within each severity band, order by file path then line number. After the JSON block, emit a plain-language triage summary (3–5 sentences maximum).
 
-## Optional: Dispatch Reviewer Agent
+## Optional: dispatch reviewer agent
 
 If the `--review` flag is present (or if the user asks for narrative synthesis), run the sweep, then pass the findings JSON to the `embedded-database-reviewer` agent for a prose summary with prioritized remediation guidance:
 
@@ -220,7 +220,7 @@ After generating findings:
 
 Re-run the sweep after fixing each severity band. The command is cheap to re-run — no compilation, no database connection.
 
-## Cross-References
+## Cross-references
 
 - `using-embedded-database` — discipline router; load this first for design decisions
 - `sqlite-fundamentals.md` — connection model, threading, row factory
