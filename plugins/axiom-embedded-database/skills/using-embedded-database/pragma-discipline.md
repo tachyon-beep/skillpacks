@@ -50,7 +50,7 @@ Read this sheet when:
 | Value | fsync behaviour | Durability guarantee |
 |-------|-----------------|---------------------|
 | `OFF` | Never | Data in OS cache; any OS crash or power loss loses recent writes |
-| `NORMAL` | At WAL checkpoint | Committed transactions survive OS crash; last transaction may be lost on power loss |
+| `NORMAL` | At WAL checkpoint and critical moments | Committed transactions survive OS crash; last transaction may be lost on power loss |
 | `FULL` | On every commit and at WAL checkpoint | Committed transactions survive OS crash and power loss |
 
 **Production-correct value.** `PRAGMA synchronous = NORMAL` for most workloads paired with WAL mode. Use `PRAGMA synchronous = FULL` when you cannot accept any committed-transaction loss on power failure — financial records, safety-critical state, compliance-mandated durability.
@@ -67,7 +67,7 @@ Read this sheet when:
 
 **What it does.** Sets the number of milliseconds SQLite will wait for a lock before returning `SQLITE_BUSY`. Default is 0 — any lock contention raises `SQLITE_BUSY` immediately. With a non-zero timeout, SQLite retries with internal backoff until the timeout expires or the lock is acquired.
 
-**Production-correct value.** `PRAGMA busy_timeout = 5000` for human-interactive workloads (5 seconds). Long-running batch processes may want 30000 or higher. The exact value depends on your worst-case write transaction duration and how long a blocked caller can wait.
+**Production-correct value.** `PRAGMA busy_timeout = 5000` for human-interactive workloads (5 seconds). Long-running batch processes should use 30000 or higher. The exact value depends on your worst-case write transaction duration and how long a blocked caller can wait.
 
 **Scope.** Connection-scoped — must be re-set on every connection open.
 
@@ -91,7 +91,7 @@ Read this sheet when:
 
 ### `cache_size`
 
-**What it does.** Sets the number of pages the connection will hold in its in-process page cache. Positive values are page counts; negative values are kibibytes. Default is `-2000` (approximately 2 MiB with the default 4096-byte page size).
+**What it does.** Sets the number of pages the connection will hold in its in-process page cache. Positive values are page counts; negative values are kibibytes. Default is `-2000` (approximately 2 MiB; negative values are KiB regardless of page size).
 
 **Production-correct value.** `PRAGMA cache_size = -64000` (64 MiB) for a database with active reads over a large dataset. Adjust based on available memory and working set size.
 
@@ -99,7 +99,7 @@ Read this sheet when:
 
 **Failure mode if mis-set.** With 2 MiB of cache and a database that has more than a few thousand rows in its hot tables: every query that does not fit in cache produces disk reads. On SSDs this is tolerable; on spinning disk or network storage it dominates query latency. The application "gets slow as the database grows" — the root cause is a cache too small for the working set.
 
-**How to size it.** `PRAGMA page_stats` returns per-page-type counts. A rough rule: set cache to hold the hot tables' total pages comfortably. For an analytical workload, 256 MiB is not excessive. For a small embedded store on a memory-constrained device, the default may be correct. Measure with `PRAGMA cache_spill`.
+**How to size it.** The `dbstat` virtual table reports per-page-type counts (`SELECT type, count(*), sum(payload) FROM dbstat GROUP BY type`); `PRAGMA page_count` gives the database's total page count. A rough rule: set cache to hold the hot tables' total pages comfortably. For an analytical workload, 256 MiB is not excessive. For a small embedded store on a memory-constrained device, the default may be correct.
 
 ---
 
@@ -131,7 +131,7 @@ Read this sheet when:
 
 ### `application_id`
 
-**What it does.** Stores a 32-bit integer in the database file header. Used to identify which application owns the file. The `file` utility and `sqlite3_file_control(SQLITE_FCNTL_PRAGMA)` can read it from a file without opening it as a SQLite database. Default is 0.
+**What it does.** Stores a 32-bit integer in the database file header at byte offset 60. Used to identify which application owns the file. The `file` utility reads it from the file header without needing to open it as a SQLite database. Default is 0.
 
 **Production-correct value.** A fixed, unique integer that identifies your application. Choose one that is unlikely to collide: a CRC32 of your application name, a value registered in the SQLite application ID registry, or a value derived from a UUID. Document it in your project.
 
@@ -245,10 +245,14 @@ use rusqlite::{Connection, Result};
 
 fn setup_pragmas(conn: &Connection) -> Result<()> {
     // journal_mode is database-scoped but idempotent to set on every open.
-    conn.execute_batch("PRAGMA journal_mode = WAL")?;
+    // PRAGMA journal_mode returns the resulting mode as a row; assert it took.
+    // On a read-only filesystem the transition silently fails and the row will
+    // not be "wal" — `execute_batch` would discard that signal.
+    let mode: String = conn.query_row("PRAGMA journal_mode = WAL", [], |r| r.get(0))?;
+    assert_eq!(mode, "wal", "WAL mode did not take; check filesystem permissions");
     conn.execute_batch("PRAGMA synchronous = NORMAL")?;
     conn.execute_batch("PRAGMA foreign_keys = ON")?;
-    conn.execute_batch(&format!("PRAGMA busy_timeout = {}", 5_000))?;
+    conn.execute_batch("PRAGMA busy_timeout = 5000")?;
     conn.execute_batch("PRAGMA cache_size = -64000")?;
     conn.execute_batch("PRAGMA temp_store = MEMORY")?;
     Ok(())
