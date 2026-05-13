@@ -1,0 +1,26 @@
+{
+  "name": "axiom-mcp-engineering",
+  "version": "0.1.0",
+  "description": "Engineering MCP (Model Context Protocol) servers as production-grade agent interfaces — tool API surface design, idempotency and atomic claim semantics under agent retry, structured error envelopes agents can recover from, schema versioning across model drift, transport reliability (stdio framing, HTTP), output-shape discipline (pagination, truncation, summary vs detail), the four MCP primitives (tools / resources / prompts / sampling), composition across multiple servers, observability of tool calls, and testing via golden conversations. Two roles (architect / critic) over one shared corpus. Router + 13 sheets (scaffold; v0.1.0 ships router only). Discipline pack — applies wherever you ship an MCP server agents will retry, drift against, and operate concurrently.",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "axiom",
+    "mcp",
+    "model-context-protocol",
+    "agent-tools",
+    "tool-api-design",
+    "idempotency",
+    "claim-leases",
+    "error-envelopes",
+    "schema-versioning",
+    "stdio-transport",
+    "agent-interface",
+    "tool-call-observability",
+    "golden-conversation-testing"
+  ]
+}
