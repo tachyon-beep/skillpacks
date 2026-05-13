@@ -22,7 +22,7 @@ Use this sheet when:
 
 **Pre-3.25.0**: only `RENAME TABLE`. One operation. Everything else is unsupported.
 
-**3.25.0+**: adds `ALTER TABLE t RENAME COLUMN old TO new`. Column rename is supported. Foreign key references that name the old column in other tables are silently updated in most cases — but only in schema text, not in trigger bodies; verify with `PRAGMA integrity_check` after renaming if triggers reference the column.
+**3.25.0+**: adds `ALTER TABLE t RENAME COLUMN old TO new`. Column rename is supported. Foreign key references in schema text are silently updated, but old column names embedded in trigger bodies are not — SQLite's rewriter operates on schema strings, and trigger bodies are opaque to it. Verify with `PRAGMA integrity_check` after renaming if any trigger references the column.
 
 **3.35.0+**: adds `ALTER TABLE t DROP COLUMN c`. The column must not be a primary key column, a generated column, or a column named in an index, foreign key, CHECK constraint, or trigger. If any of those are true, the drop fails. You must use the rebuild-table pattern instead.
 
@@ -111,6 +111,8 @@ if violations:
     raise RuntimeError(f"FK violations after migration: {violations}")
 ```
 
+The 12 steps above show the full envelope as a standalone recipe. When the migration runs under a versioned runner (next section), the runner owns steps 1, 2, 11, and 12 — and adds `PRAGMA user_version = N` between steps 10 and 11 so the version bump is inside the same transaction as the schema change. Individual migration functions then carry only steps 3–10.
+
 ## Versioning the schema
 
 Two PRAGMAs in the database file header identify the file:
@@ -146,30 +148,47 @@ def migrate(conn: sqlite3.Connection) -> None:
 
 
 def apply_migration(conn: sqlite3.Connection, v: int) -> None:
-    """Apply a single migration version and bump user_version atomically."""
+    """Apply a single migration version and bump user_version atomically.
+
+    The runner owns the transaction. migrate_fn does its DDL and data work but
+    must NOT issue BEGIN, COMMIT, or ROLLBACK; the version bump and the schema
+    change must land in the same transaction.
+
+    Rebuild-table migrations require foreign_keys=OFF, which is silently ignored
+    inside a transaction — so the runner must set it before BEGIN. migrate_fn
+    can assume FK enforcement is already off and need not touch it.
+    """
     migrate_fn = MIGRATIONS[v]
-    # FK enforcement must be OFF before the transaction for rebuild-table migrations.
-    # migrate_fn is responsible for turning it OFF at its start and ON after commit.
-    migrate_fn(conn)
-    # user_version cannot be set via parameter binding — SQLite does not support
-    # binding values in PRAGMA statements. This f-string is safe because v is an
-    # int produced by range() from LATEST_VERSION, never from user input.
-    # Verify immediately to catch any silent failure.
-    conn.execute(f"PRAGMA user_version = {v}")
+    conn.execute("PRAGMA foreign_keys = OFF")
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            migrate_fn(conn)
+            # user_version cannot be set via parameter binding — SQLite does not
+            # support binding values in PRAGMA statements. This f-string is safe
+            # because v is an int produced by range() from LATEST_VERSION, never
+            # from user input. PRAGMA user_version writes the 4-byte file header
+            # and participates in transactional rollback, so it belongs in the
+            # same BEGIN…COMMIT as the schema change.
+            conn.execute(f"PRAGMA user_version = {v}")
+            conn.execute("COMMIT")
+        except Exception:
+            conn.execute("ROLLBACK")
+            raise
+    finally:
+        conn.execute("PRAGMA foreign_keys = ON")
     actual = conn.execute("PRAGMA user_version").fetchone()[0]
     if actual != v:
         raise RuntimeError(f"user_version write failed: expected {v}, got {actual}")
 ```
 
-**Atomicity requirement.** Each migration function must be fully transactional: begin, do all DDL and data work, commit. The `user_version` bump belongs in the same transaction as the schema change. If the migration commits but `user_version` is not updated, the runner will re-run the migration on next open, double-applying it. If the migration function does not commit before `apply_migration` returns, the version bump lands outside the schema change's transaction — an intermediate state that will appear consistent but is not.
+**Atomicity requirement.** The runner owns the transaction; the `user_version` bump and the schema change land in the same `BEGIN … COMMIT`. `PRAGMA user_version = N` writes the 4-byte file header and participates in transactional rollback — it is one of the PRAGMAs that can be safely issued inside a transaction. If the version bump were outside the transaction, a crash between `COMMIT` and the bump would leave a fully-migrated schema at version N-1, and the runner would re-run migration N on next open, double-applying it. There is no exception to the atomicity rule for this PRAGMA.
+
+`PRAGMA foreign_keys` is different — it is silently ignored inside a transaction — so the runner sets it before `BEGIN` and restores it after `COMMIT`, in a `try/finally` that survives errors. Individual migration functions (`migrate_v1`, `migrate_v2`, …) therefore must not issue `BEGIN`, `COMMIT`, `ROLLBACK`, or `PRAGMA foreign_keys` themselves; the runner has already arranged the envelope.
 
 **The runner must be idempotent.** Running `migrate()` on a database at LATEST_VERSION must be a no-op. The check `if current == LATEST_VERSION: return` provides this; do not rely on catching errors from re-applying migrations.
 
-**Test coverage required.** The test suite must exercise two paths per migration version N:
-1. Migrate from empty (version 0) up to N in one `migrate()` call.
-2. Migrate from N-1 to N incrementally with realistic data in place.
-
-These are different code paths. Fresh-install exercises the full chain; incremental upgrade exercises the data transformation on live rows. Both must pass before a migration ships.
+**Test coverage required.** Every migration version N requires three tests (see `## Testing migrations` below for the full pattern with code): a forward test from N-1 to N with realistic data, a fresh-schema test that builds at N directly, and a backwards-equivalence test that asserts the two produce identical schemas. All three exercise different code paths; all three must pass before a migration ships.
 
 ## Migration as code, not as SQL files
 
@@ -253,39 +272,33 @@ ALTER TABLE products ADD COLUMN category TEXT NOT NULL DEFAULT 'uncategorized';
 
 This works. The default is written into the schema text permanently — `sqlite_schema` will contain `DEFAULT 'uncategorized'` even after backfill. Future rows inserted without specifying `category` will silently get `'uncategorized'` rather than raising a NOT NULL error. Whether that is correct depends on your application. If the default was a migration-time fill value not a valid application value, this encodes a mistake into the schema. The 12-step pattern avoids this.
 
-**Option B: rebuild-table** (cleaner schema, no permanent default):
+**Option B: rebuild-table** (cleaner schema, no permanent default). The runner has already set `foreign_keys = OFF` and opened the transaction; this function only does the schema and data work.
 
 ```python
 def migrate_v3(conn: sqlite3.Connection) -> None:
-    conn.execute("PRAGMA foreign_keys = OFF")
-    conn.execute("BEGIN")
-    try:
-        conn.execute("""
-            CREATE TABLE products_new (
-                id       INTEGER PRIMARY KEY,
-                name     TEXT NOT NULL,
-                price    REAL NOT NULL,
-                category TEXT NOT NULL   -- no DEFAULT: application must supply it
-            )
-        """)
-        conn.execute("""
-            INSERT INTO products_new (id, name, price, category)
-            SELECT id, name, price, COALESCE(category, 'uncategorized')
-            FROM products
-        """)
-        conn.execute("DROP TABLE products")
-        conn.execute("ALTER TABLE products_new RENAME TO products")
-        # Recreate any indexes that existed on products.
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)")
-        violations = conn.execute("PRAGMA foreign_key_check").fetchall()
-        if violations:
-            raise RuntimeError(f"FK violations: {violations}")
-        conn.execute("COMMIT")
-    except Exception:
-        conn.execute("ROLLBACK")
-        raise
-    finally:
-        conn.execute("PRAGMA foreign_keys = ON")
+    # Precondition (provided by apply_migration): foreign_keys = OFF, inside
+    # an open BEGIN IMMEDIATE. This function must not BEGIN/COMMIT/ROLLBACK.
+    conn.execute("""
+        CREATE TABLE products_new (
+            id       INTEGER PRIMARY KEY,
+            name     TEXT NOT NULL,
+            price    REAL NOT NULL,
+            category TEXT NOT NULL   -- no DEFAULT: application must supply it
+        )
+    """)
+    conn.execute("""
+        INSERT INTO products_new (id, name, price, category)
+        SELECT id, name, price, COALESCE(category, 'uncategorized')
+        FROM products
+    """)
+    conn.execute("DROP TABLE products")
+    conn.execute("ALTER TABLE products_new RENAME TO products")
+    # Recreate any indexes that existed on products.
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)")
+    violations = conn.execute("PRAGMA foreign_key_check").fetchall()
+    if violations:
+        # Raising propagates to apply_migration, which issues ROLLBACK.
+        raise RuntimeError(f"FK violations: {violations}")
 ```
 
 **Three tests for migration v3**:
@@ -329,7 +342,7 @@ The `test_migrate_v3_fresh` test is the one that catches Option A's footgun: if 
 
 **Migrations not wrapped in transactions.** A multi-step migration (CREATE new table, INSERT, DROP old) that is not inside `BEGIN ... COMMIT` leaves the database in a half-migrated state on any failure. On next open, the runner sees `user_version` unchanged and re-runs from the same step — which may now fail differently because the old table is gone. Wrap every migration in a single transaction.
 
-**`user_version` bump outside the migration transaction.** If `PRAGMA user_version = N` is executed after the migration's `COMMIT`, a crash between the two leaves a fully-migrated schema at version N-1. The runner re-runs migration N, which fails because the new table already exists (or succeeds silently and double-transforms the data). The version bump belongs inside the same transaction as the schema change. Since SQLite does not allow PRAGMA inside certain transaction contexts, the pattern is: commit the schema transaction, then immediately set `user_version` and verify it.
+**`user_version` bump outside the migration transaction.** If `PRAGMA user_version = N` is executed after the migration's `COMMIT`, a crash between the two leaves a fully-migrated schema at version N-1. The runner re-runs migration N, which fails because the new table already exists (or succeeds silently and double-transforms the data). The version bump must be inside the same `BEGIN … COMMIT` as the schema change. SQLite supports `PRAGMA user_version = N` inside a transaction — it writes the 4-byte file header and participates in rollback. There is no exception to the atomicity rule for this PRAGMA. (The PRAGMAs with transaction restrictions are `foreign_keys`, which is silently ignored inside a transaction, and `journal_mode`, which cannot be changed inside one. `user_version` has neither restriction.)
 
 **Running `PRAGMA foreign_keys = ON` during a rebuild-table.** `PRAGMA foreign_keys` is silently ignored when issued inside a transaction. The ordering in the 12-step pattern is not style — it is load-bearing. `PRAGMA foreign_keys = OFF` must precede `BEGIN`; `PRAGMA foreign_keys = ON` must follow `COMMIT`. If you issue `foreign_keys = OFF` inside the transaction, FK enforcement may still be on for the duration of the migration, causing the DROP TABLE or INSERT to fail on FK violations that the rebuild is in the process of fixing.
 
