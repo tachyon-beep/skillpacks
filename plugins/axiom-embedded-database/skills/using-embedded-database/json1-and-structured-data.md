@@ -150,15 +150,16 @@ CREATE INDEX idx_users_email
     ON users(json_extract(metadata, '$.email'));
 ```
 
-**The index is used if and only if the query contains the exact same expression** — same function, same column, same path string, same case. SQLite's query planner matches the index by textual identity of the expression, not by semantic equivalence.
+**The index is used if and only if the query contains the exact same expression** — same function, same column, same path string spelling. SQLite's query planner matches the index by structural identity of the expression, not by semantic equivalence. SQL function names are case-insensitive (`JSON_EXTRACT` and `json_extract` match), but the path string is a literal — case and exact spelling matter.
 
 ```sql
 -- Uses the index: expression matches exactly.
 SELECT id FROM users WHERE json_extract(metadata, '$.email') = ?;
 
--- Does NOT use the index: path string differs (double quotes vs single quotes
--- in some driver configurations, or a different spelling).
-SELECT id FROM users WHERE json_extract(metadata, "$.email") = ?;
+-- Does NOT use the index: path string differs by case.
+-- '$.email' (in the index) and '$.Email' (in the query) are different literals;
+-- the planner does not normalise them.
+SELECT id FROM users WHERE json_extract(metadata, '$.Email') = ?;
 ```
 
 **Before: full-table scan.**
@@ -230,7 +231,6 @@ A JSON column is schemaless in the database. It is not schemaless in the applica
 
 ```python
 from __future__ import annotations
-import json
 import sqlite3
 from pydantic import BaseModel, ValidationError
 
