@@ -80,55 +80,15 @@ Never hardcode the key, never derive it from a username or hostname, never store
 
 **Key derivation helper (Python):**
 
-```python
-import os
-import keyring  # pip install keyring
-from pathlib import Path
+The simplest cross-platform retrieval is `keyring.get_password(service, account)` — backed by macOS Keychain, Windows Credential Manager, or Linux Secret Service. Wrap it in a helper that raises (rather than returning `None`) when the key is absent, so a missing key fails fast at connection time rather than silently producing a wrong-key error one statement later. The worked example below shows the canonical shape.
 
-def get_db_key(service_name: str, account_name: str) -> str:
-    """
-    Load the database key from the OS credential store.
-    Returns the passphrase string for PRAGMA key.
-    Raises RuntimeError if the key is not found.
-    """
-    key = keyring.get_password(service_name, account_name)
-    if key is None:
-        raise RuntimeError(
-            f"Database key not found in credential store "
-            f"({service_name}/{account_name}). "
-            "Provision it with: keyring.set_password(service_name, account_name, key)"
-        )
-    return key
-```
+**Opening a SQLCipher connection (Python, using `sqlcipher3` — community-maintained; `pysqlcipher3` is an equivalent alternative).** The shape of the helper:
 
-**Opening a SQLCipher connection (Python, using `sqlcipher3`):**
+1. Open the connection (vanilla `sqlcipher3.connect(path)`).
+2. Set `PRAGMA key` as the *first* statement. **`PRAGMA key` does not accept bound parameters** — you must inline the key, and you must escape any embedded `'` characters. See the worked example below for the `_quote_sql_literal` helper and the full PRAGMA block (`cipher_page_size`, `kdf_iter`, `cipher_hmac_algorithm`, `cipher_kdf_algorithm`, plus the standard `journal_mode`/`foreign_keys`/`busy_timeout`).
+3. Issue a smoke query (`SELECT count(*) FROM sqlite_master`) to fail fast on a wrong key — SQLCipher reports a wrong key as `SQLITE_NOTADB` on the first real read, not on the `PRAGMA key` call itself.
 
-```python
-import sqlcipher3  # pip install sqlcipher3 (or pysqlcipher3)
-
-def open_encrypted_db(path: str, key: str) -> sqlcipher3.Connection:
-    """
-    Open an encrypted SQLite database.
-    The PRAGMA key MUST be the first statement executed on the connection.
-    All other PRAGMAs follow.
-    """
-    conn = sqlcipher3.connect(path)
-    # Key MUST be set first — before any read or write.
-    conn.execute(f"PRAGMA key = '{key}'")
-    # Verify the connection works.
-    conn.execute("SELECT count(*) FROM sqlite_master").fetchone()
-    # Production PRAGMAs.
-    conn.execute("PRAGMA cipher_page_size = 4096")
-    conn.execute("PRAGMA kdf_iter = 256000")
-    conn.execute("PRAGMA cipher_hmac_algorithm = HMAC_SHA512")
-    conn.execute("PRAGMA cipher_kdf_algorithm = PBKDF2_HMAC_SHA512")
-    conn.execute("PRAGMA journal_mode = WAL")
-    conn.execute("PRAGMA foreign_keys = ON")
-    conn.execute("PRAGMA busy_timeout = 5000")
-    return conn
-```
-
-The four `cipher_*` PRAGMAs are idempotent on SQLCipher 4.x where they match the defaults, but setting them explicitly documents your intent and guards against a library version that ships different defaults.
+The four `cipher_*` PRAGMAs are idempotent on SQLCipher 4.x where they match the defaults, but setting them explicitly documents your intent and guards against a library version that ships different defaults. The full helper appears in the worked example.
 
 ## Key rotation: rekey
 
@@ -141,61 +101,36 @@ The four `cipher_*` PRAGMAs are idempotent on SQLCipher 4.x where they match the
 
 The operation is proportional to database size and holds an exclusive write lock for its duration. For databases over ~500 MB, plan a maintenance window or perform rotation offline.
 
-**Safe rekey procedure:**
+**Safe rekey procedure** (four steps; see the full implementation in the worked example below):
 
-```python
-import shutil
-from pathlib import Path
+1. **Backup first** — `shutil.copy2(db, db.bak)`. If anything goes wrong, you restore from this and the operation was a no-op.
+2. **Open with the current key**, apply PRAGMAs, run a smoke query to confirm the current key is correct, then `PRAGMA rekey = '<new_key>'`. The same quoting hazard applies to `rekey` as to `key`: escape `'` in the new passphrase, or use the hex form.
+3. **Verify the new key** by closing the connection and reopening with the new key plus a smoke query.
+4. **Only after verification**, delete the backup and update the credential store. If verification fails, restore from backup and raise.
 
-def rotate_db_key(
-    db_path: str,
-    current_key: str,
-    new_key: str,
-) -> None:
-    """
-    Rotate the database encryption key.
-    Uses backup-first discipline: if rekey fails, the original is intact.
-    """
-    db_path = Path(db_path)
-    backup_path = db_path.with_suffix(".db.bak")
+**Removing encryption** (converting an encrypted file to plaintext) uses `PRAGMA rekey = ''` — an empty string passphrase, which SQLCipher interprets as "no encryption" and rewrites the file as a vanilla SQLite database.
 
-    # Step 1: Backup first.
-    shutil.copy2(db_path, backup_path)
-
-    conn = sqlcipher3.connect(str(db_path))
-    try:
-        conn.execute(f"PRAGMA key = '{current_key}'")
-        # Verify the current key works.
-        conn.execute("SELECT count(*) FROM sqlite_master").fetchone()
-
-        # Step 2: Rekey. This re-encrypts every page.
-        conn.execute(f"PRAGMA rekey = '{new_key}'")
-
-        # Step 3: Verify the new key works by re-opening.
-        conn.close()
-        conn = sqlcipher3.connect(str(db_path))
-        conn.execute(f"PRAGMA key = '{new_key}'")
-        conn.execute("SELECT count(*) FROM sqlite_master").fetchone()
-        conn.close()
-
-    except Exception:
-        conn.close()
-        # Restore backup on failure.
-        shutil.copy2(backup_path, db_path)
-        raise
-
-    # Step 4: Remove backup only after successful verification.
-    backup_path.unlink()
-```
-
-**Removing encryption** (converting an encrypted file to plaintext) uses `PRAGMA rekey = ''` — an empty string. The inverse (encrypting a plaintext SQLite file) uses `sqlcipher3_export` or `ATTACH`:
+**Encrypting an existing plaintext SQLite database** is the inverse and uses `sqlcipher_export`. The direction matters and is easy to get backwards — `sqlcipher_export` exports the contents of the *main* connection into the *attached* database, so the *main* connection determines the source and the *attached* database determines the destination:
 
 ```sql
--- Attach plaintext DB, export into encrypted DB.
+-- Source: plaintext main connection. Destination: encrypted attachment.
+-- (Opened from a SQLCipher-aware client with NO PRAGMA key on the main.)
+ATTACH DATABASE 'encrypted.db' AS encrypted KEY 'new-passphrase';
+SELECT sqlcipher_export('encrypted');
+DETACH DATABASE encrypted;
+```
+
+**Decrypting an encrypted SQLCipher database to a plaintext file** is the mirror — main is encrypted, attachment is plaintext (`KEY ''` means no key on the attached database):
+
+```sql
+-- Source: encrypted main connection. Destination: plaintext attachment.
+-- (Opened from a SQLCipher-aware client WITH PRAGMA key on the main.)
 ATTACH DATABASE 'plain.db' AS plaintext KEY '';
 SELECT sqlcipher_export('plaintext');
 DETACH DATABASE plaintext;
 ```
+
+The two snippets differ only in which side has the key — but the operational consequence is opposite. Read the comment header carefully before running either.
 
 ## Building SQLCipher wheels
 
@@ -293,6 +228,8 @@ encrypted_db.py — SQLCipher connection management.
 Requires: pip install sqlcipher3 keyring
 """
 import contextlib
+import shutil
+from pathlib import Path
 from typing import Generator
 import sqlcipher3
 import keyring
@@ -308,20 +245,37 @@ def _load_key() -> str:
     return key
 
 
+def _quote_sql_literal(value: str) -> str:
+    """
+    Escape a string for safe inlining into a SQL single-quoted literal.
+    SQLCipher's PRAGMA key / PRAGMA rekey do NOT accept bound parameters,
+    so the passphrase must be inlined. A passphrase containing an
+    apostrophe will otherwise terminate the literal early and either
+    raise a syntax error or — worse — appear as a wrong-key error.
+
+    If your key sourcing guarantees high-entropy hex (no apostrophes
+    possible), you can use the raw-key form instead:
+        PRAGMA key = "x'<64-hex-chars>'"
+    """
+    return value.replace("'", "''")
+
+
 def _apply_pragmas(conn: sqlcipher3.Connection, key: str) -> None:
     """
     Apply PRAGMA key and all cipher configuration.
     Must be called immediately after opening the connection,
     before any other statement.
     """
-    conn.execute(f"PRAGMA key = '{key}'")
+    quoted = _quote_sql_literal(key)
+    conn.execute(f"PRAGMA key = '{quoted}'")
     # Explicit cipher configuration — do not rely on defaults surviving a
     # library upgrade or a file created on a different platform.
     conn.execute("PRAGMA cipher_page_size = 4096")
     conn.execute("PRAGMA kdf_iter = 256000")
     conn.execute("PRAGMA cipher_hmac_algorithm = HMAC_SHA512")
     conn.execute("PRAGMA cipher_kdf_algorithm = PBKDF2_HMAC_SHA512")
-    # Verify the key is correct. If wrong, this raises OperationalError.
+    # Verify the key is correct. If wrong, this raises OperationalError
+    # (SQLITE_NOTADB) on the first real read.
     conn.execute("SELECT count(*) FROM sqlite_master").fetchone()
     # Standard production PRAGMAs.
     conn.execute("PRAGMA journal_mode = WAL")
@@ -354,26 +308,26 @@ def rotate_key(path: str, new_key: str) -> None:
     """
     Rotate the database key. Updates the OS keychain after successful rekey.
     Call this during a scheduled maintenance window for large databases.
-    """
-    import shutil
-    from pathlib import Path
 
+    Backup-first discipline: if anything fails, the original file is
+    restored and the keychain is not updated.
+    """
     db = Path(path)
     backup = db.with_suffix(".db.bak")
     current_key = _load_key()
+    new_key_quoted = _quote_sql_literal(new_key)
 
     shutil.copy2(db, backup)
     conn = sqlcipher3.connect(str(db))
     try:
         _apply_pragmas(conn, current_key)
-        conn.execute(f"PRAGMA rekey = '{new_key}'")
+        conn.execute(f"PRAGMA rekey = '{new_key_quoted}'")
         conn.close()
         # Verify the new key before updating the keychain.
         conn = sqlcipher3.connect(str(db))
-        conn.execute(f"PRAGMA key = '{new_key}'")
-        conn.execute("SELECT count(*) FROM sqlite_master").fetchone()
+        _apply_pragmas(conn, new_key)
         conn.close()
-        # Key verified — update the keychain.
+        # Key verified — update the keychain, remove backup.
         keyring.set_password(_SERVICE, _ACCOUNT, new_key)
         backup.unlink()
     except Exception:
@@ -381,6 +335,8 @@ def rotate_key(path: str, new_key: str) -> None:
         shutil.copy2(backup, db)
         raise
 ```
+
+**Logging discipline.** Notice that no helper above ever interpolates the key into a log message or an exception. If `_apply_pragmas` raises (wrong key, mismatched page size), the traceback contains the SQL text — `PRAGMA key = '<quoted>'` — with the key visible. Wrap callers in a `try/except` that catches `sqlcipher3.OperationalError`, strips the SQL text, and re-raises as a sanitised error type (e.g., `class DatabaseKeyError(Exception): pass`) before any log handler sees the original exception.
 
 ## Anti-patterns
 
