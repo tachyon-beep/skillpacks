@@ -80,9 +80,9 @@ If your input is "we have (or want) an embedded database and need it to be produ
 
 ## Anti-Patterns This Pack Closes
 
-1. **Opening one connection per request and inheriting it across threads.** SQLite connections are not thread-safe by default; sharing a connection across threads without explicit serialisation produces data races that `SQLITE_BUSY` does not fully describe. *(sqlite-fundamentals)*
+1. **Opening one connection per request and inheriting it across threads.** Sharing a single connection across threads without explicit serialisation produces transaction interleaving and `SQLITE_BUSY` races even though SQLite's default compile (`SQLITE_THREADSAFE=1`) protects its internal state. *(sqlite-fundamentals)*
 
-2. **Default `journal_mode=DELETE` in a multi-reader workload.** Rollback-journal mode takes a shared lock on every read to prevent a writer from starting mid-read; WAL mode avoids this entirely and is the correct default for any workload with concurrent readers. *(pragma-discipline)*
+2. **Default `journal_mode=DELETE` in a multi-reader workload.** In rollback-journal mode, a writer cannot commit — cannot acquire an EXCLUSIVE lock — while any reader holds a SHARED lock; WAL mode eliminates this contention by allowing readers and writers to proceed concurrently. *(pragma-discipline)*
 
 3. **`ALTER TABLE … DROP COLUMN` ignoring SQLite's pre-3.35 limitation.** SQLite did not support `DROP COLUMN` until 3.35.0 (2021-03-12); migrations written against that assumption silently fail or corrupt schema state on older installs. *(schema-migrations)*
 
@@ -98,7 +98,7 @@ If your input is "we have (or want) an embedded database and need it to be produ
 
 9. **FTS5 virtual table out of sync with its content table (no trigger).** An FTS5 content-table configuration defers index maintenance to the application; without `AFTER INSERT / UPDATE / DELETE` triggers on the content table, the full-text index silently diverges from the data it is supposed to index. *(fts5-full-text-search)*
 
-10. **OLAP scan over a million rows in SQLite when DuckDB would do it in 1/50th the time.** SQLite is a row-store optimised for OLTP point queries; aggregate scans over large result sets pay row-at-a-time overhead that DuckDB's columnar engine eliminates structurally. *(duckdb-for-analytics)*
+10. **OLAP scan over a million rows in SQLite when DuckDB would do it structurally faster by eliminating row-at-a-time overhead.** SQLite is a row-store optimised for OLTP point queries; aggregate scans over large result sets pay row-at-a-time overhead that DuckDB's columnar engine eliminates structurally. *(duckdb-for-analytics)*
 
 11. **SQLCipher keyed with a static string in source code.** A static key in source is a key in every build artefact, every log that prints the connection string, and every developer's laptop. SQLCipher provides at-rest encryption; a static embedded key turns it into obfuscation. *(encryption-with-sqlcipher)*
 
@@ -133,7 +133,7 @@ This pack does **not** cover:
 
 **Route to**: [`pragma-discipline.md`](pragma-discipline.md), specifically the `wal_autocheckpoint` and `PRAGMA wal_checkpoint(TRUNCATE)` sections.
 
-**Why**: The WAL grows when readers hold open snapshots that prevent checkpointing. Long-running read transactions, read connections never closed, or `synchronous=OFF` causing premature returns — all prevent the WAL from shrinking. Setting `wal_autocheckpoint` and ensuring readers close promptly is the fix.
+**Why**: The WAL grows when readers hold open snapshots that prevent checkpointing. Long-running read transactions, read connections never closed, or `wal_autocheckpoint` set to 0 disabling automatic checkpointing — all prevent the WAL from shrinking. Setting `wal_autocheckpoint` and ensuring readers close promptly is the fix.
 
 ### "Schema migration is breaking on upgrade"
 
