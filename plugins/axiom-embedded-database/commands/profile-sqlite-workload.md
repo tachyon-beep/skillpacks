@@ -164,18 +164,7 @@ if len(samples) >= 2:
 
 SQLite's page cache keeps recently accessed database pages in memory to avoid re-reading them from disk. A low cache hit rate means the working set exceeds the configured cache size (`PRAGMA cache_size`), and reads are hitting the OS page cache or disk on every access.
 
-**Check current cache usage via PRAGMA.** `PRAGMA cache_used` returns the number of pages currently in the page cache for the connection:
-
-```python
-conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
-cache_used = conn.execute("PRAGMA cache_used").fetchone()[0]
-cache_size = conn.execute("PRAGMA cache_size").fetchone()[0]
-# cache_size is negative = KiB limit; positive = page count limit
-print(f"Cache used: {cache_used} pages")
-print(f"Cache size: {cache_size} (negative = KiB, positive = page count)")
-```
-
-`PRAGMA cache_size` with a negative value sets a KiB ceiling (e.g., `-2000` = 2 MB); with a positive value it sets a page-count ceiling. The default is 2000 pages (typically 8 MB with a 4096-byte page size, per `PRAGMA page_size`).
+**Check current cache configuration via PRAGMA.** `PRAGMA cache_size` with a negative value sets a KiB ceiling (e.g., `-2000` = 2 MB); with a positive value it sets a page-count ceiling. The default is 2000 pages (typically 8 MB with a 4096-byte page size, per `PRAGMA page_size`). Read it to confirm the connection's configured ceiling before drawing any conclusions about whether the cache is undersized.
 
 **Limitation: hit rate not measurable from Python's `sqlite3`.** The C-level functions `sqlite3_status(SQLITE_STATUS_PAGECACHE_HIT, ...)` and `sqlite3_db_status(SQLITE_DBSTATUS_CACHE_HIT, ...)` expose cache hit and miss counters, but Python's stdlib `sqlite3` module does not bind these functions. Cache hit rate cannot be measured directly without a C extension, `ctypes`, or an alternative driver such as `apsw` (which exposes `apsw.Connection.status()`).
 
@@ -247,7 +236,7 @@ Emit findings as structured JSON:
       "eqp_detail": "SCAN TABLE events",
       "scan_cost_estimate": "full scan of ~2400000 rows",
       "remediation": "Add index: CREATE INDEX idx_events_user_created ON events (user_id, created_at)",
-      "sheet": "json1-and-structured-data.md"
+      "sheet": "sqlite-fundamentals.md"
     }
   ],
   "temp_btree_findings": [
@@ -255,7 +244,7 @@ Emit findings as structured JSON:
       "query": "SELECT * FROM orders ORDER BY created_at DESC LIMIT 20",
       "eqp_detail": "USE TEMP B-TREE FOR ORDER BY",
       "remediation": "Add index on (created_at DESC) or a covering index matching the WHERE + ORDER BY",
-      "sheet": "pragma-discipline.md"
+      "sheet": "sqlite-fundamentals.md"
     }
   ],
   "slow_queries": [
