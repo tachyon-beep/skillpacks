@@ -1,7 +1,7 @@
 {
   "name": "lyra-ux-designer",
-  "version": "1.2.0",
-  "description": "UX design fundamentals - visual design, WCAG 2.2 accessibility, modern web platform primitives, iOS 17+/Material 3 mobile, AI-experience patterns - 12 reference sheets, 3 commands, 2 agents",
+  "version": "1.3.0",
+  "description": "UX design fundamentals - visual design, WCAG 2.2 accessibility, modern web platform primitives, iOS 17+/Material 3 mobile, AI-experience patterns, first-principles audience-derived needs analysis - 12 reference sheets, 3 commands, 3 agents (ux-critic, accessibility-auditor, ux-theorist)",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"
