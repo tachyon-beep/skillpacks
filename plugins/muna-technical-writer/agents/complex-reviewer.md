@@ -1,6 +1,6 @@
 ---
 description: Independently verify complex edits applied to large files (≥2000 lines) — documentation OR source code, cross-language. Checks intent fit, scope discipline, structural integrity, cross-reference / call-site preservation, orphan / dead-code detection, and behavior preservation in refactors. Follows SME Agent Protocol with confidence/risk assessment.
-model: sonnet
+model: opus
 ---
 
 # Complex Reviewer Agent

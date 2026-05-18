@@ -1,6 +1,6 @@
 ---
 description: Surgically edit large files (≥2000 lines) — multi-section coordinated changes, refactors, restructures — in documentation OR source code, while preserving cross-references, structural invariants, and call-site / link integrity. Cross-language. Follows SME Agent Protocol with confidence/risk assessment.
-model: sonnet
+model: opus
 ---
 
 # Complex Writer Agent
