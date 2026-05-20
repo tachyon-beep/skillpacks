@@ -1,6 +1,6 @@
 ---
 name: using-static-analysis-engineering
-description: Use when designing or extending a static analyzer — a linter, a taint tracker, a contract checker, an entity extractor, a governance rule engine, or any tool that reads source code and produces verdicts about it without running the program. Use when adding typed dataflow (taint, ownership, capability) to a system that currently does pattern matching, when an inherited analyzer cannot be extended cleanly, when suppressions are growing faster than rules, or when choosing between static and runtime enforcement of a property. Engineering pack: how to build the analyzer. For consuming an existing analyzer's output to map a codebase, use `/system-archaeologist` instead.
+description: Use when designing or extending a static analyzer — a linter, a taint tracker, a contract checker, an entity extractor, a governance rule engine, or any tool that reads source code and produces verdicts about it without running the program. Use when adding typed dataflow (taint, ownership, capability) to a system that currently does pattern matching, when an inherited analyzer cannot be extended cleanly, when suppressions are growing faster than rules, or when choosing between static and runtime enforcement of a property. Engineering pack — how to build the analyzer. For consuming an existing analyzer's output to map a codebase, use `/system-archaeologist` instead.
 ---
 
 # Using Static Analysis Engineering
