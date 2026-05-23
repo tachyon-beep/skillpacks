@@ -1,6 +1,6 @@
 {
   "name": "axiom-embedded-database",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "SQLite and DuckDB as application-embedded databases at production scale — PRAGMA discipline, schema migrations under SQLite's ALTER constraints (12-step rebuild-table), WAL tuning, transactions and isolation (DEFERRED/IMMEDIATE/EXCLUSIVE), single-writer concurrency with portable cross-process locking, optimistic locking and claim leases, parameterized-SQL enforcement, JSON1 and FTS5, DuckDB for OLAP, SQLCipher encryption, online backup and corruption recovery, and the boundary at which an in-process database stops earning its cost. Router + 13 sheets, 3 commands, 2 agents.",
   "author": {
     "name": "tachyon-beep",

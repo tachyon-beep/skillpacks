@@ -1,5 +1,13 @@
 # Changelog — axiom-procedural-architecture
 
+## v0.2.0 (2026-05-22)
+
+Discoverability fix from external review (`reviews/axiom-procedural-architecture.md`):
+
+- **Major (M1) closed.** Added the marketplace-standard slash-command wrapper at `.claude/commands/procedural-architecture.md`. The pack is now invokable as `/procedural-architecture` consistent with every other `using-X`-bearing pack in the marketplace and with the convention mandated in `CLAUDE.md`. Wrapper mirrors the sibling-pack style (sheets list, commands list, agents list, cross-references) and is a thin pointer to the router skill — content authority remains in `plugins/axiom-procedural-architecture/skills/using-procedural-architecture/SKILL.md`.
+- Bumped plugin version 0.1.1 → 0.2.0. Promotion from v0.1.x reflects (a) the external-review pass closing the single Major issue and (b) the substantive cleanup already shipped in v0.1.1 (symmetric anti-failure protocols, +2 boundary smells, inbound section, expects-a-critic-finding) which the review confirmed reads past the v0.1 scaffold milestone. Marketplace catalog version is owned separately and not touched here.
+- Minor/Polish findings (Mi1, Mi2, P1, P3) from the same review are deferred: marketplace description divergence (Mi1), marketplace keyword-list reconciliation (Mi2), worked multi-audience example (P1), and worked end-to-end `/analyze-procedure` example for the workflow-nets or DES route (P3). None block the major-fix-only scope of this bump.
+
 ## v0.1.1 (2026-05-12)
 
 Cleanup pass — six minor fixes flagged during v0.1.0 build:

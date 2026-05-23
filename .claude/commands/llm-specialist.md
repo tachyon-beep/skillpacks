@@ -1,209 +1,53 @@
+---
+description: LLM application engineering - chat / instruct prompting, reasoning models (o-series / Claude extended thinking / DeepSeek-R1 / Gemini thinking / Qwen QwQ), agentic patterns + MCP, RAG, fine-tuning (SFT / DPO / IPO / KTO / SimPO / ORPO / GRPO + LoRA family), context engineering and prompt caching, inference optimization (vLLM / SGLang / TensorRT-LLM), evaluation (incl. LLM-as-judge bias controls and capability suites), and safety (OWASP LLM Top 10 2025). Calibrated to 2026-05 with capability-tier vocabulary (frontier-reasoning / frontier-general / fast-cheap / on-device) instead of hardcoded model IDs.
+---
 
-# Using LLM Specialist
+# LLM Specialist Routing
 
-**You are an LLM engineering specialist.** This skill routes you to the right specialized skill based on the user's LLM-related task.
+**Chat / instruct models and reasoning models are different categories. Prompting rules, evaluation rules, and cost models diverge between them — the router's Step 0 is the reasoning-vs-chat gate, not an afterthought. Model IDs rotate quarterly; this pack uses capability tiers (`frontier-reasoning`, `frontier-general`, `fast-cheap`, `on-device`) so guidance ages gracefully. For training infrastructure use `/training-optimization`; for production serving use `/ml-production`; for adversarial-ML threat modeling use `/security-architect`.**
 
-## When to Use This Skill
+Use the `using-llm-specialist` skill from the `yzmir-llm-specialist` plugin to route to the right specialist sheet. Content authority lives in `plugins/yzmir-llm-specialist/skills/using-llm-specialist/SKILL.md` - this wrapper is a thin pointer.
 
-Use this skill when the user needs help with:
-- Prompt engineering and optimization
-- Fine-tuning LLMs (full, LoRA, QLoRA)
-- Building RAG systems
-- Evaluating LLM outputs
-- Managing context windows
-- Optimizing LLM inference
-- LLM safety and alignment
+## Routing entry point
 
-## Routing Decision Tree
+**Step 0 (do this first):** Is the target a reasoning model (OpenAI o-series, Claude extended thinking, DeepSeek-R1 and distillations, Gemini "thinking", Qwen QwQ)? If yes, go to `reasoning-models` *before* any other sheet — generic prompting advice misroutes here.
 
-### Step 1: Identify the task category
+**Step 1:** Otherwise, identify the task category and route below.
 
-**Prompt Engineering** → Use `prompt-engineering-patterns`
-- Writing effective prompts
-- Few-shot learning
-- Chain-of-thought prompting
-- System message design
-- Output formatting
-- Prompt optimization
+## Sheets
 
-**Fine-tuning** → Use `llm-finetuning-strategies`
-- When to fine-tune vs prompt engineering
-- Full fine-tuning vs LoRA vs QLoRA
-- Dataset preparation
-- Hyperparameter selection
-- Evaluation and validation
-- Catastrophic forgetting prevention
+- **reasoning-models** - o-series / Claude extended thinking / DeepSeek-R1 / Gemini thinking / Qwen QwQ; reasoning-effort budgets, thinking-token economics, when NOT to add explicit chain-of-thought, reasoning-model evaluation specifics
+- **prompt-engineering-patterns** - chat / instruct prompting: instruction clarity, few-shot, chain-of-thought (Wei 2022 / Kojima 2022), system message design, output formatting, prompt optimization; also covers general multimodal principles
+- **agentic-patterns-and-mcp** - agent loops (ReAct, planner / executor), tool selection and error recovery, Model Context Protocol (MCP) servers and clients, structured output (provider features + Outlines + Instructor), multi-agent orchestration, agent observability; prompt-injection-via-tool-results named as a first-class hazard
+- **context-engineering-and-prompt-caching** - four-provider caching comparison (Anthropic explicit / OpenAI automatic / Gemini implicit / Gemini explicit), cache-prefix anchoring rule (stable prefix first, volatile suffix last), long-context layout, cost / latency math, cache-vs-RAG-vs-fine-tune decision
+- **rag-architecture-patterns** - RAG architecture, retrieval strategies (dense / sparse / hybrid), chunking, re-ranking, context injection, RAG evaluation; cross-routes to caching for small / static corpora and to reasoning-models for pure reasoning
+- **llm-finetuning-strategies** - modern preference-tuning lineage (PPO → DPO → IPO / KTO / SimPO / ORPO → GRPO), LoRA family (LoRA / QLoRA / DoRA / rsLoRA / LoftQ / LongLoRA), dataset preparation, hyperparameters, catastrophic-forgetting prevention, premature-fine-tune gates
+- **context-window-management** - 128k-200k baseline vs 1M+ tier honesty with RULER recall caveat, summarization strategies, sliding window, hierarchical context, token counting, lost-in-the-middle mitigation
+- **llm-evaluation-metrics** - task metrics, human evaluation, LLM-as-judge with bias controls (Zheng 2023; Dubois 2024), capability suites (Inspect AI / OLMES / OpenAI Evals / lm-evaluation-harness), reasoning-model eval (thinking-token tracking), red-teaming primer (PAIR / GCG / AutoDAN), golden-set discipline and contamination checks
+- **llm-inference-optimization** - latency reduction, throughput, batching, KV cache, quantization (INT8 / INT4), speculative decoding, serving stacks (vLLM / SGLang / TensorRT-LLM)
+- **llm-safety-alignment** - OWASP LLM Top 10 (2025 edition) leads, structural prompt-injection defenses (not just sanitization), jailbreak detection, content filtering, bias mitigation, hallucination reduction, agentic safety when tools are in play, guardrails
 
-**RAG (Retrieval-Augmented Generation)** → Use `rag-architecture-patterns`
-- RAG system architecture
-- Retrieval strategies (dense, sparse, hybrid)
-- Chunking strategies
-- Re-ranking
-- Context injection
-- RAG evaluation
+## Commands
 
-**Evaluation** → Use `llm-evaluation-metrics`
-- Task-specific metrics (classification, generation, summarization)
-- Human evaluation
-- LLM-as-judge
-- Benchmark selection
-- A/B testing
-- Quality assurance
+- `/yzmir-llm-specialist:debug-generation` - diagnose poor LLM output quality with symptom-triage table and decision tree; rejects premature-fine-tune; user-explicit entry point
+- `/yzmir-llm-specialist:optimize-inference` - systematic latency / throughput / cost optimization across caching, parallelization, model routing, quantization
+- `/yzmir-llm-specialist:rag-audit` - audit an existing RAG system against retrieval / chunking / re-ranking / evaluation discipline
 
-**Context Management** → Use `context-window-management`
-- Context window limits (4k, 8k, 32k, 128k tokens)
-- Summarization strategies
-- Sliding window
-- Hierarchical context
-- Token counting
-- Context pruning
+## Agents
 
-**Inference Optimization** → Use `llm-inference-optimization`
-- Reducing latency
-- Increasing throughput
-- Batching strategies
-- KV cache optimization
-- Quantization (INT8, INT4)
-- Speculative decoding
+- `llm-diagnostician` (sonnet) - SME reviewer for LLM output-quality issues; dispatched autonomously where `/debug-generation` is for explicit invocation; declines safety work and hands off
+- `llm-safety-reviewer` (opus) - SME reviewer for safety / alignment / prompt-injection / jailbreak surfaces; declines performance work and hands off
 
-**Safety & Alignment** → Use `llm-safety-alignment`
-- Prompt injection prevention
-- Jailbreak detection
-- Content filtering
-- Bias mitigation
-- Hallucination reduction
-- Guardrails
+Both agents follow the SME Agent Protocol with Confidence / Risk / Information Gaps / Caveats sections.
 
-## Routing Examples
+## Cross-references
 
-### Example 1: User asks about prompts
-**User:** "My LLM isn't following instructions consistently. How can I improve my prompts?"
+- Top-level AI/ML routing → `/ai-engineering`
+- Production serving, deployment, monitoring infrastructure → `/ml-production`
+- Pretraining and fine-tuning at scale (FSDP2 / FP8 / optimizer sharding / muP) → `/training-optimization`
+- Adversarial-ML threat modeling, supply-chain risk, defense-in-depth → `/security-architect`
+- PyTorch-level debugging (NaN / OOM / autograd) → `/pytorch-engineering`
 
-**Route to:** `prompt-engineering-patterns`
-- Covers instruction clarity, few-shot examples, format specification
+## Known gap
 
-### Example 2: User asks about fine-tuning
-**User:** "I have 10,000 examples of customer support conversations. Should I fine-tune a model or use prompts?"
-
-**Route to:** `llm-finetuning-strategies`
-- Covers when to fine-tune vs prompt engineering
-- Dataset preparation
-- LoRA vs full fine-tuning
-
-### Example 3: User asks about RAG
-**User:** "I want to build a Q&A system over my company's documentation. How do I give the LLM access to this information?"
-
-**Route to:** `rag-architecture-patterns`
-- Covers RAG architecture
-- Chunking strategies
-- Retrieval methods
-
-### Example 4: User asks about evaluation
-**User:** "How do I measure if my LLM's summaries are good quality?"
-
-**Route to:** `llm-evaluation-metrics`
-- Covers summarization metrics (ROUGE, BERTScore)
-- Human evaluation
-- LLM-as-judge
-
-### Example 5: User asks about context limits
-**User:** "My documents are 50,000 tokens but my model only supports 8k context. What do I do?"
-
-**Route to:** `context-window-management`
-- Covers summarization, chunking, hierarchical context
-
-### Example 6: User asks about speed
-**User:** "My LLM inference is too slow (500ms per request). How can I make it faster?"
-
-**Route to:** `llm-inference-optimization`
-- Covers quantization, batching, KV cache, speculative decoding
-
-### Example 7: User asks about safety
-**User:** "Users are trying to jailbreak my LLM to bypass content filters. How do I prevent this?"
-
-**Route to:** `llm-safety-alignment`
-- Covers prompt injection prevention, jailbreak detection, guardrails
-
-## Multiple Skills May Apply
-
-Sometimes multiple skills are relevant:
-
-**Example:** "I'm building a RAG system and need to evaluate retrieval quality."
-- Primary: `rag-architecture-patterns` (RAG architecture)
-- Secondary: `llm-evaluation-metrics` (retrieval metrics: MRR, NDCG)
-
-**Example:** "I'm fine-tuning an LLM but context exceeds 4k tokens."
-- Primary: `llm-finetuning-strategies` (fine-tuning process)
-- Secondary: `context-window-management` (handling long contexts)
-
-**Example:** "My RAG system is slow and I need better prompts for the generation step."
-- Primary: `rag-architecture-patterns` (RAG architecture)
-- Secondary: `llm-inference-optimization` (speed optimization)
-- Tertiary: `prompt-engineering-patterns` (generation prompts)
-
-**Approach:** Start with the primary skill, then reference secondary skills as needed.
-
-## Common Task Patterns
-
-### Pattern 1: Building an LLM application
-1. Start with **prompt-engineering-patterns** (get prompt right first)
-2. If prompts insufficient → **llm-finetuning-strategies** (customize model)
-3. If need external knowledge → **rag-architecture-patterns** (add retrieval)
-4. Validate quality → **llm-evaluation-metrics** (measure performance)
-5. Optimize speed → **llm-inference-optimization** (reduce latency)
-6. Add safety → **llm-safety-alignment** (guardrails)
-
-### Pattern 2: Improving existing LLM system
-1. Identify bottleneck:
-   - Quality issue → **prompt-engineering-patterns** or **llm-finetuning-strategies**
-   - Knowledge gap → **rag-architecture-patterns**
-   - Context overflow → **context-window-management**
-   - Slow inference → **llm-inference-optimization**
-   - Safety concern → **llm-safety-alignment**
-2. Apply specialized skill
-3. Measure improvement → **llm-evaluation-metrics**
-
-### Pattern 3: LLM research/experimentation
-1. Design evaluation → **llm-evaluation-metrics** (metrics first!)
-2. Baseline: prompt engineering → **prompt-engineering-patterns**
-3. If insufficient: fine-tuning → **llm-finetuning-strategies**
-4. Compare: RAG vs fine-tuning → Both skills
-5. Optimize best approach → **llm-inference-optimization**
-
-## Quick Reference
-
-| Task | Primary Skill | Common Secondary Skills |
-|------|---------------|------------------------|
-| Better outputs | prompt-engineering-patterns | llm-evaluation-metrics |
-| Customize behavior | llm-finetuning-strategies | prompt-engineering-patterns |
-| External knowledge | rag-architecture-patterns | context-window-management |
-| Quality measurement | llm-evaluation-metrics | - |
-| Long documents | context-window-management | rag-architecture-patterns |
-| Faster inference | llm-inference-optimization | - |
-| Safety/security | llm-safety-alignment | prompt-engineering-patterns |
-
-## Default Routing Logic
-
-If task is unclear, ask clarifying questions:
-1. "What are you trying to achieve with the LLM?" (goal)
-2. "What problem are you facing?" (bottleneck)
-3. "Have you tried prompt engineering?" (start simple)
-
-Then route to the most relevant skill.
-
-## Summary
-
-**This is a meta-skill that routes to specialized LLM engineering skills.**
-
-**The 7 specialized skills:**
-1. **prompt-engineering-patterns**: Effective prompting techniques
-2. **llm-finetuning-strategies**: When and how to fine-tune
-3. **rag-architecture-patterns**: Building retrieval-augmented systems
-4. **llm-evaluation-metrics**: Measuring LLM quality
-5. **context-window-management**: Handling long contexts
-6. **llm-inference-optimization**: Speed and efficiency
-7. **llm-safety-alignment**: Safety, security, alignment
-
-**When multiple skills apply:** Start with the primary skill, reference others as needed.
-
-**Default approach:** Start simple (prompts), add complexity only when needed (fine-tuning, RAG, optimization).
+Multimodal prompting has no dedicated sheet yet. General principles transfer via `prompt-engineering-patterns`; provider-specific image-token economics, resolution settings, multimodal jailbreaks, and multimodal evals are flagged as forthcoming. Do not freelance in this gap.

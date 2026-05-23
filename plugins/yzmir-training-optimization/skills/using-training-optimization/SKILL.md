@@ -1,6 +1,6 @@
 ---
 name: using-training-optimization
-description: Router to training optimization skills based on symptoms and training problems
+description: Use when encountering training problems (loss not decreasing, instability, NaN, overfitting, slow training) or selecting training dynamics (optimizer / LR / schedule / batch / precision / clipping / regularization) — routes to specialist sheets for the 2026-era landscape (Lion, Sophia, Muon, AdEMAMix, Schedule-Free, Prodigy, AdamW8bit, paged optimizers, WSD schedules, FP8 / BF16 precision, muP / mu-Transfer, ZeRO/FSDP strategy).
 ---
 
 # Using Training Optimization

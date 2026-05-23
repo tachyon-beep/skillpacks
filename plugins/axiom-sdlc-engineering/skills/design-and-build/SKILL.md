@@ -11,8 +11,6 @@ This skill implements the **Technical Solution (TS)**, **Product Integration (PI
 
 **Core principle**: Architecture decisions require documentation (ADRs). Emergency shortcuts require retrospective documentation. "Best practice" is never justification - requirements are.
 
-**Reference**: See `docs/sdlc-prescription-cmmi-levels-2-4.md` Section 3.2 for complete policy and practice definitions.
-
 ---
 
 ## When to Use

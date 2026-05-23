@@ -25,7 +25,7 @@ Do NOT use this skill for:
 - Discrete action spaces (route to value-based-methods for Q-learning/DQN)
 - Pure policy gradient without value baseline (route to policy-gradient-methods)
 - Model-based RL (route to model-based-rl)
-- Offline RL (route to offline-rl-methods)
+- Offline RL (route to offline-rl)
 - Theory foundations (route to rl-foundations)
 
 

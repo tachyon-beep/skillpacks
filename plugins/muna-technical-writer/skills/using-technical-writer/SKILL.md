@@ -1,6 +1,6 @@
 ---
 name: using-technical-writer
-description: Router for documentation tasks - routes to ADRs, APIs, runbooks, security docs, or governance docs
+description: Use when writing or improving documentation - ADRs, APIs, runbooks, READMEs, architecture docs, security/compliance docs, post-mortems, register review or translation (technical/policy/government/public-facing/executive/academic), fact-checking research papers, or surgical edits on large (>=2000 line) files
 ---
 
 # Using Technical Writer
@@ -486,25 +486,6 @@ Your routing:
 
 ---
 
-## Phase 1 Note
-
-**Currently Available** (Phase 1):
-- ✅ `using-technical-writer` (this skill)
-- ✅ `documentation-structure` (in progress)
-
-**Coming Soon** (Phases 2-3):
-- `clarity-and-style`
-- `diagram-conventions`
-- `documentation-testing`
-- `security-aware-documentation`
-- `incident-response-documentation`
-- `itil-and-governance-documentation`
-- `operational-acceptance-documentation`
-
-**For Phase 1**: Focus on documentation-structure as primary skill. Reference other skills by name even though not implemented yet - this tests routing logic.
-
----
-
 ## Summary
 
 **This skill maps documentation tasks → specific writing skills to load.**
@@ -538,3 +519,7 @@ After routing, load the appropriate specialist skill for detailed guidance:
 7. [itil-and-governance-documentation.md](itil-and-governance-documentation.md) - ITIL processes, change management, governance frameworks, policy documentation
 8. [operational-acceptance-documentation.md](operational-acceptance-documentation.md) - SSP/SAR structure, POA&M templates, government authorization, compliance artifacts
 9. [editorial-registers.md](editorial-registers.md) - Writing register definitions (technical, policy, government, public-facing, executive, academic), register relationships, custom register template
+
+### Leaf Skills (Invoked Explicitly)
+
+10. `fact-checking` (sibling skill) - Dual-verified fact-checking of research papers / documents. Invoked via `/fact-check <file-paths>` slash command. Token-intensive; do not invoke speculatively.

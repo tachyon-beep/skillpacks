@@ -140,6 +140,54 @@ Only tune after Phases 1-3 verified:
 
 ### Recommended Fix
 [Specific fix, NOT algorithm change unless Phases 1-2 verified]
+
+---
+
+## Confidence Assessment
+
+**Overall Confidence:** [High | Moderate | Low | Insufficient Data]
+
+| Finding | Confidence | Basis |
+|---------|------------|-------|
+| Environment diagnosis | [Level] | [Evidence: file:line or inference] |
+| Reward diagnosis | [Level] | [Evidence] |
+| Algorithm-match diagnosis | [Level] | [Evidence] |
+| Root cause attribution | [Level] | [Evidence] |
+
+---
+
+## Risk Assessment
+
+**Implementation Risk:** [Low | Medium | High | Critical]
+**Reversibility:** [Easy | Moderate | Difficult]
+
+| Risk | Severity | Mitigation |
+|------|----------|------------|
+| [Potential issue with recommended fix] | [Level] | [Action needed] |
+| [Compute/time cost of re-training] | [Level] | [Mitigation] |
+
+---
+
+## Information Gaps
+
+The following would improve this diagnosis:
+1. [ ] [Missing artefact — e.g. full training script, environment source, reward log]
+2. [ ] [Missing metric — e.g. episode reward curve, value loss, entropy]
+3. [ ] [Reproducibility evidence — seed sweep, ablation]
+
+---
+
+## Caveats & Required Follow-ups
+
+**Before applying the recommended fix:**
+- [ ] [Verification step — e.g. unit-test the env, plot reward histogram]
+- [ ] [Sanity check — e.g. random-policy baseline]
+
+**Assumptions made:**
+- [What this diagnosis assumes about env determinism, reward range, action space]
+
+**Not analyzed:**
+- [What wasn't checked and why — e.g. distributed training mechanics, GPU utilization]
 ```
 
 ## Scope Boundaries

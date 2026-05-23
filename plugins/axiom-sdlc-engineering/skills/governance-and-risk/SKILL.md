@@ -15,8 +15,6 @@ This skill implements the **Decision Analysis & Resolution (DAR)** and **Risk Ma
 - **Reactive**: Handle problems when they occur (expensive, stressful, compounding)
 - **Proactive**: Identify and mitigate problems before they occur (cheap, controlled, preventive)
 
-**Reference**: See `docs/sdlc-prescription-cmmi-levels-2-4.md` Sections 3.4.1 (DAR) and 3.4.2 (RSKM) for complete policy.
-
 ---
 
 ## When to Use

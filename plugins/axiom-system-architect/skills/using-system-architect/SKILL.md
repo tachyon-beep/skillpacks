@@ -277,9 +277,9 @@ Do you have architecture documentation?
 What do you need?
 ├─ Quality assessment → Use: assessing-architecture-quality
 ├─ Technical debt catalog → Use: identifying-technical-debt
-├─ Refactoring strategy → (Future: recommending-refactoring-strategies)
-├─ Priority roadmap → (Future: prioritizing-improvements)
-└─ Effort estimates → (Future: estimating-refactoring-effort)
+├─ Priority roadmap → Use: prioritizing-improvements
+├─ Refactoring strategy → Out of scope (use /security-architect for security remediation strategy; use /solution-architect for forward design)
+└─ Effort estimates → Out of scope (defer to project-management tooling; not provided by this pack)
 ```
 
 ## Common Patterns
@@ -302,7 +302,7 @@ What do you need?
 1. Read existing architecture docs
 2. Use: identifying-technical-debt
 3. Present catalog to stakeholders
-4. (Future) Use: prioritizing-improvements for roadmap
+4. Use: prioritizing-improvements for roadmap
 ```
 
 ---
@@ -313,7 +313,7 @@ What do you need?
 1. /system-archaeologist
 2. Use: assessing-architecture-quality
 3. Identify patterns and anti-patterns
-4. (Future) Use: documenting-architecture-decisions for ADRs
+4. For ADRs, hand off to `/technical-writer` (muna-technical-writer:create-adr) or `/solution-architect`
 ```
 
 ---
@@ -326,15 +326,15 @@ What do you need?
 | Technical debt catalog | identifying-technical-debt |
 | Priority roadmap | prioritizing-improvements |
 
-## Status
-
-**Current Status:** Complete (v1.0.0) - 3 specialist skills + router
+## Scope Rationale
 
 **Production-ready skills:**
-- ✅ assessing-architecture-quality (TDD validated)
-- ✅ identifying-technical-debt (TDD validated)
-- ✅ prioritizing-improvements (TDD validated)
-- ✅ using-system-architect (router)
+- assessing-architecture-quality (TDD validated)
+- identifying-technical-debt (TDD validated)
+- prioritizing-improvements (TDD validated)
+- using-system-architect (router)
+
+(Version is tracked in `plugin.json`, not here.)
 
 **Why only 3 skills?**
 

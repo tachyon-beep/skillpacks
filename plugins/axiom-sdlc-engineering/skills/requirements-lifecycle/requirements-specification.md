@@ -735,5 +735,3 @@ Signature: _______________
 **Cross-references**:
 - `platform-integration` skill - GitHub/Azure DevOps issue templates
 - `governance-and-risk` skill - ADR process for major decisions
-
-**Prescription reference**: See `docs/sdlc-prescription-cmmi-levels-2-4.md` Section 3.1.1 (Requirements Development - SP 1.2 Develop Customer Requirements, SP 1.3 Establish Product Requirements)

@@ -107,7 +107,7 @@ After gathering information:
 
 ### Next Steps
 1. Load [algorithm-skill].md for implementation details
-2. Use `/deep-rl:new-experiment --algorithm=[name]` to scaffold
+2. Use `/deep-rl:scaffold-experiment --algorithm=[name]` to scaffold
 3. Follow rl-debugging if training issues arise
 ```
 

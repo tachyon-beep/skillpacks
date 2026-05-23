@@ -1,7 +1,7 @@
 {
   "name": "yzmir-llm-specialist",
-  "version": "1.2.0",
-  "description": "LLM applications - prompting (incl. reasoning models), RAG, fine-tuning (SFT/DPO/GRPO), agentic patterns + MCP, context engineering and prompt caching, inference optimization (vLLM/SGLang/TensorRT-LLM), evaluation, and safety. 10 reference sheets, 3 commands, 2 agents.",
+  "version": "1.3.0",
+  "description": "LLM applications - prompting (incl. reasoning models: o-series / Claude extended thinking / DeepSeek-R1 / Gemini thinking / Qwen QwQ), RAG, fine-tuning (SFT/DPO/IPO/KTO/SimPO/ORPO/GRPO + LoRA family), agentic patterns + MCP, context engineering and prompt caching, inference optimization (vLLM/SGLang/TensorRT-LLM), evaluation (LLM-as-judge bias controls + capability suites), and safety (OWASP LLM Top 10 2025). Calibrated to 2026-05 with capability-tier vocabulary (frontier-reasoning / frontier-general / fast-cheap / on-device) instead of hardcoded model IDs. 10 reference sheets, 3 commands, 2 agents.",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

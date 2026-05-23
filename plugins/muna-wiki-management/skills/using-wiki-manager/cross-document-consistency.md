@@ -387,7 +387,7 @@ defect:
   related_registry: "The registry entry that is violated, if applicable (e.g., 'terminology: verification-tier' or 'claim: breaking-change-count'). Omit if no registry entry is involved."
 ```
 
-### The 10 Defect Types
+### The 11 Defect Types
 
 | Type | Definition | Typical Severity |
 |---|---|---|
@@ -401,6 +401,7 @@ defect:
 | `path-dead-end` | A persona's reading path terminates before the persona can complete their task — the path does not reach a terminal state | error |
 | `phantom-content` | A derivative contains a claim or assertion that does not appear in any root document — the derivative has originated content it should not have | error |
 | `self-sufficiency-failure` | A derivative section cannot be understood or acted on without opening the root document — the self-sufficiency contract is violated | error |
+| `recipe-missing` | A derivative section exists in the manifest but lacks a declared derivation recipe (source root, mode, depth target, propagation list) — the derivation lineage is undocumented and the section cannot be audited for fidelity | warning |
 
 ### Worked Example: A Defect Record
 

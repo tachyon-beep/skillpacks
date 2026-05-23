@@ -27,6 +27,8 @@ Don't guess hyperparameters. Use task-appropriate defaults, then adjust based on
 
 ### Step 2: Choose Optimizer
 
+**Boring-correct default (2026-05): AdamW + cosine schedule + BF16 mixed precision.** This template starts there. Modern alternatives below are *symptom-driven* — pick them only when you have a documented reason, not because they are newer. For the full comparison and decision criteria, load `optimization-algorithms.md` via the `using-training-optimization` router.
+
 **Default Recommendations:**
 
 | Task | Optimizer | Why |
@@ -36,6 +38,21 @@ Don't guess hyperparameters. Use task-appropriate defaults, then adjust based on
 | Transformers/LLMs | AdamW | Standard for attention models |
 | Fine-tuning | AdamW | Lower LR, works well |
 | RL | Adam | Standard for policy gradients |
+
+**Modern alternatives (consider with cause; not blanket upgrades):**
+
+| Optimizer | Consider when | Route to |
+|-----------|---------------|----------|
+| Lion | Memory-constrained AdamW workload (Lion stores 1 state tensor vs 2); decoupled-update tolerant | optimization-algorithms.md |
+| Sophia | Pretraining at scale where Hessian-aware preconditioning is worth the second-order cost | optimization-algorithms.md |
+| Muon | Hidden-layer matmul weights in transformers (often paired with AdamW for embeddings/biases) | optimization-algorithms.md |
+| AdEMAMix / Schedule-Free | Very long pretraining runs where dual-momentum or schedule-free behavior beats cosine | optimization-algorithms.md + learning-rate-scheduling.md |
+| Prodigy | Wanted: adaptive learning rate that finds its own scale (limits tuning surface) | optimization-algorithms.md + hyperparameter-tuning.md |
+| AdamW8bit / paged AdamW | Memory-constrained fine-tune (e.g. LoRA on consumer GPU); optimizer state dominates VRAM | optimization-algorithms.md + batch-size-and-memory-tradeoffs.md |
+
+**Schedule reminder:** cosine is the default. **WSD (warmup-stable-decay)** is the modern alternative when the run is long, resumable, or continual; see `learning-rate-scheduling.md`.
+
+**Precision reminder:** BF16 mixed precision is the default on Ampere/Hopper/Blackwell. FP8 (E4M3 / E5M2) is for Hopper/Blackwell training at scale with careful loss-scaling discipline; see `batch-size-and-memory-tradeoffs.md` (precision section).
 
 **Optimizer Configuration:**
 

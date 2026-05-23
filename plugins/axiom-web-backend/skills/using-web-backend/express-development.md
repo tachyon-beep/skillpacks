@@ -21,7 +21,7 @@ Use when encountering:
 - **Security**: Helmet, rate limiting, CORS, input sanitization
 
 **DO NOT use for**:
-- General TypeScript patterns (use `axiom-python-engineering` equivalents)
+- General TypeScript / Node language patterns — out of scope for this pack
 - API design principles (use `rest-api-design`)
 - Database-agnostic patterns (use `database-integration`)
 

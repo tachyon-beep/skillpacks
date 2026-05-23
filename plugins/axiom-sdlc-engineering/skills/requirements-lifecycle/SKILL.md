@@ -19,8 +19,6 @@ This skill guides the complete **requirements lifecycle** from elicitation throu
 - Manage requirements volatility with impact analysis
 - Scale practices from Level 2 (user stories) → Level 3 (templates) → Level 4 (metrics)
 
-**Reference**: See `docs/sdlc-prescription-cmmi-levels-2-4.md` Section 3.1 (Requirements Phase) for complete CMMI policy.
-
 ---
 
 ## When to Use This Skill

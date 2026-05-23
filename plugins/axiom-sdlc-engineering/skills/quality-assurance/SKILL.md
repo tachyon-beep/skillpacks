@@ -15,8 +15,6 @@ This skill implements the **Verification (VER)** and **Validation (VAL)** proces
 - **Verification**: "Did we build the product right?" (tests, reviews, inspections)
 - **Validation**: "Did we build the right product?" (user acceptance, stakeholder approval)
 
-**Reference**: See `docs/sdlc-prescription-cmmi-levels-2-4.md` Section 3.3 for complete VER/VAL policy.
-
 ---
 
 ## When to Use

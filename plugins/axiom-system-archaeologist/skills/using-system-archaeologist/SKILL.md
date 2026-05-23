@@ -293,6 +293,36 @@ Follow contract in documentation-contracts.md:
 
 **Key principle:** Scoped analysis with documented limitations > complete analysis done wrong.
 
+### Resuming Prior Work (Sunk-Cost Discipline)
+
+**Common scenario:** "We started this analysis last week, finish it."
+
+Prior work is a *hypothesis*, not a foundation. Validate before continuing.
+
+**Checklist:**
+
+1. **Find existing workspace** - Look in `docs/arch-analysis-*/`.
+2. **Read the coordination log** (`00-coordination.md`) - Understand what was done, what remains, and why work stopped.
+3. **Assess quality** - Is the prior catalog/diagram/report contract-compliant? Are confidence levels documented? Were validation gates passed?
+4. **Make an EXPLICIT continue/archive/salvage decision:**
+   - **Continue** - Prior work passes contract + validation. Resume from the last checkpoint. Update coordination log.
+   - **Archive** - Prior work is structurally flawed (wrong scope, wrong contract, no validation). Archive the old workspace (`mv docs/arch-analysis-OLD docs/arch-analysis-OLD.archived-$(date +%Y-%m-%d)`), start fresh, document why.
+   - **Salvage** - Mixed quality. Keep good artifacts (e.g., discovery findings), redo bad ones (e.g., un-validated catalog). Document salvage decisions in the new coordination log.
+5. **For incremental analysis on a moving codebase** (prior analysis was complete but the code has since changed), use the delta-analysis path - see [incremental-analysis.md](incremental-analysis.md).
+
+**DO NOT** assume prior work is correct just because it exists. **DO NOT** silently continue without recording a decision.
+
+**Coordination log entry:**
+
+```markdown
+## Resume Decision - [timestamp]
+- Detected existing workspace: docs/arch-analysis-2026-05-15-1430/
+- Last completed step: 02-subsystem-catalog.md (validated APPROVED)
+- Assessment: Catalog contract-compliant, 11/14 subsystems analyzed
+- Decision: SALVAGE - keep catalog, redo diagrams (3 missing subsystems), continue from Step 7
+- Reasoning: Validator approved catalog; diagrams were skipped at original session end
+```
+
 ### Extreme Pressure Handling
 
 **If user requests something genuinely impossible** (e.g., "Complete 15-plugin analysis in 1 hour"):

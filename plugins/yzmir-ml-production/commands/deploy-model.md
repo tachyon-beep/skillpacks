@@ -1,6 +1,6 @@
 ---
 description: Deploy ML model to production with proper serving patterns, rollout strategy, and monitoring
-allowed-tools: ["Read", "Bash", "Glob", "Grep", "Write", "AskUserQuestion"]
+allowed-tools: ["Read", "Bash", "Glob", "Grep", "Write", "AskUserQuestion", "Skill"]
 argument-hint: "[model_path_or_name]"
 ---
 

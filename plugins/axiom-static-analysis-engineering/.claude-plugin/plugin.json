@@ -1,6 +1,6 @@
 {
   "name": "axiom-static-analysis-engineering",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Building static analyzers as engines, not running them as users. AST → IR → analysis → reporting pipelines: visitation patterns, abstract-domain (taint lattice) design, three-phase inference (variable → function → callgraph), plugin architecture for rules, false-positive economics with auditable suppression, the static-vs-runtime boundary, callgraph construction (resolution rungs, dynamic features), cross-module flow with stub libraries, decorator-as-assertion (runtime + static dual enforcement), manifest-driven configuration with coherence validation, SARIF / CI integration, incremental analysis at scale, and LLM-assisted finding explanations as a pattern. Router + 13 sheets, 3 commands (/scaffold-analyzer, /design-tier-model, /design-rule-set), 2 agents (rule-designer, false-positive-analyst). Pattern pack — applies wherever you build an analyzer (linting, taint, contracts, governance, entity extraction).",
   "author": {
     "name": "tachyon-beep",

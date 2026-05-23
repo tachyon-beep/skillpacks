@@ -1,6 +1,6 @@
 ---
 name: using-python-engineering
-description: Routes to appropriate Python specialist skill based on symptoms and problem type
+description: Use when working on a Python task and unsure which specialist to load - routes to type-system, mypy-resolution, project-tooling, delinting, testing, async, scientific-computing, ML-workflows, debugging-and-profiling, or Textual-TUI specialists based on symptoms
 ---
 
 # Using Python Engineering

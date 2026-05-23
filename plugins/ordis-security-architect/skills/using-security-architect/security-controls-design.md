@@ -24,7 +24,7 @@ Load this skill when:
 
 **Don't use for**:
 - Threat modeling (use `ordis/security-architect/threat-modeling` first)
-- Code-level security patterns (use `ordis/security-architect/secure-code-patterns`)
+- Code-level secure-coding patterns (use `ordis/security-architect/secure-by-design-patterns`)
 - Reviewing existing designs (use `ordis/security-architect/security-architecture-review`)
 
 ## Core Methodology: Trust Boundaries First

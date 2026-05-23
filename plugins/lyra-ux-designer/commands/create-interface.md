@@ -51,6 +51,23 @@ Design for constraints first, then enhance. This creates interfaces that work fo
 - Readability during action
 - Performance impact consideration
 
+### Step 2a: AI Surface Detection (if applicable)
+
+**Trigger** if the component is a chat assistant, AI copilot, agent loop, RAG result panel, streaming-output surface, citation hover-card, or a tool-action preview/confirm dialog.
+
+**Action**: Additionally load `ai-experience-patterns.md` (sibling sheet in this pack) and specify the component against the AI-UX Trust Stack:
+
+- **Legibility** — explicit "you are talking to an AI" framing; model identity + limits visible; streaming-state visually distinct from final state
+- **Grounding** — citations linked to source spans (hover/click reveals provenance); "I don't know" is a designed state, not a fallback bug
+- **Steering** — stop button, regenerate, edit previous turn, scope control ("only this document")
+- **Refusal & Recovery** — refusal copy explains what is allowed instead, with one-tap rephrase
+- **Reversibility** — any destructive tool action (send, charge, delete, refund) routes through a preview-then-confirm with visible undo window
+- **Calibration** — confidence framing matches actual accuracy; avoid hedged-but-confident copy
+
+**WCAG 2.2 for AI surfaces**: `aria-live="polite"` with token buffering for streaming text; `prefers-reduced-motion` on streaming-cursor animation; SC 3.3.8 — never gate AI features behind cognitive-function authentication tests.
+
+Skip this section if the component is not an AI surface.
+
 ### Step 3: Apply Core Competencies
 
 **Visual Design:**

@@ -492,4 +492,3 @@ Source: Customer Service Lead mentioned users call support asking "did my passwo
 - `governance-and-risk.md` - Stakeholder management for conflicting requirements
 - `level-scaling.md` - Determine appropriate elicitation formality for project
 
-**Prescription reference**: See `docs/sdlc-prescription-cmmi-levels-2-4.md` Section 3.1.1 (Requirements Development - SP 1.1 Elicit Needs)

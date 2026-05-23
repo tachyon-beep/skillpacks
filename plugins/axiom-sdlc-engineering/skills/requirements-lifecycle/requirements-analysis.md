@@ -577,5 +577,3 @@ Action: Sprint 13-14 show sustained 35% change rate (above 30% threshold)
 **Cross-references**:
 - `governance-and-risk.md` - DAR process for major conflicts, ADR templates
 - `level-scaling.md` - Determine appropriate analysis rigor for project
-
-**Prescription reference**: See `docs/sdlc-prescription-cmmi-levels-2-4.md` Section 3.1.1 (Requirements Development - SP 2.1 Establish Requirements, SP 3.1 Analyze Requirements)

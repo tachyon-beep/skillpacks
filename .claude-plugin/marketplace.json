@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, solution architecture, game development, security, documentation, site design, and UX skills for Claude Code - 34 complete skillpacks with 208+ TDD-validated skills",
-    "version": "3.17.2",
+    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, solution architecture, game development, security, documentation, site design, and UX skills for Claude Code - 42 complete skillpacks with 400+ TDD-validated skills and reference sheets",
+    "version": "3.18.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -64,7 +64,7 @@
     {
       "name": "axiom-solution-architect",
       "source": "./plugins/axiom-solution-architect",
-      "description": "Forward solution architecture: brief/HLD/epic \u2192 traceable artifact set (ADRs, C4, NFRs, RTM, integration/migration, risks, TOGAF/ArchiMate, consolidated SAD). 9 skills, 2 agents, 2 commands.",
+      "description": "Forward solution architecture: brief/HLD/epic → traceable artifact set (ADRs, C4, NFRs, RTM, integration/migration, risks, TOGAF/ArchiMate, consolidated SAD). 9 skills, 2 agents, 2 commands.",
       "keywords": [
         "axiom",
         "solution-architect",
@@ -322,6 +322,27 @@
       "category": "development"
     },
     {
+      "name": "axiom-mcp-engineering",
+      "source": "./plugins/axiom-mcp-engineering",
+      "description": "Engineering MCP (Model Context Protocol) servers as production-grade agent interfaces — tool API surface, idempotency and atomic claim semantics, structured error envelopes, schema versioning across model drift, stdio/HTTP transport, output-shape discipline (pagination, truncation), the four MCP primitives (tools/resources/prompts/sampling), composition across servers, observability, and golden-conversation testing. Two roles (architect/critic). Router + 13 sheets (scaffold; v0.1.0 ships router only).",
+      "keywords": [
+        "axiom",
+        "mcp",
+        "model-context-protocol",
+        "agent-tools",
+        "tool-api-design",
+        "idempotency",
+        "claim-leases",
+        "error-envelopes",
+        "schema-versioning",
+        "stdio-transport",
+        "agent-interface",
+        "tool-call-observability",
+        "golden-conversation-testing"
+      ],
+      "category": "development"
+    },
+    {
       "name": "bravos-simulation-tactics",
       "source": "./plugins/bravos-simulation-tactics",
       "description": "Game simulation implementation patterns and tactics - 11 skills",
@@ -432,7 +453,7 @@
     {
       "name": "muna-panel-review",
       "source": "./plugins/muna-panel-review",
-      "description": "Simulated audience panel review \u2014 persona-driven editorial intelligence for document suites. 3 agents (persona-reader, panel-synthesiser, persona-designer), 1 orchestration skill, 3 slash commands",
+      "description": "Simulated audience panel review — persona-driven editorial intelligence for document suites. 3 agents (persona-reader, panel-synthesiser, persona-designer), 1 orchestration skill, 3 slash commands",
       "keywords": [
         "muna",
         "panel",

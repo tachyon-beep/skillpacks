@@ -1,6 +1,6 @@
 ---
 name: using-ux-designer
-description: Route to the right UX skill based on your task and platform context
+description: Use when starting any UX/UI design task — visual design, IA, interaction, accessibility (WCAG 2.2), user research across mobile, web, desktop, game, and AI surfaces, plus first-principles audience-derived needs analysis. Routes to 11 specialist sheets.
 ---
 
 # Using UX Designer
@@ -20,7 +20,7 @@ Load this skill when:
 - You need to create a new interface or feature
 - User asks about UX principles or concepts
 
-**Don't use for**: Backend logic, database design, pure technical implementation without UX implications
+**Don't use for**: Backend logic, database design, pure technical implementation without UX implications. For static documentation or marketing sites (developer-tool docs, landing pages, OSS project sites), route to the sibling `lyra-site-designer` pack instead — this pack is for **application** UI (interactive web apps, mobile, desktop, game, AI surfaces).
 
 ---
 
@@ -285,6 +285,15 @@ When you see a link like `[ux-fundamentals.md](ux-fundamentals.md)`, read the fi
 
 ---
 
+### Lyra UX + Lyra Site (sibling pack)
+
+**When the surface is a static documentation site or marketing page** (not an interactive application):
+- Hand off to `lyra-site-designer` — owns information architecture, HTML/CSS, design tokens, and developer-UX patterns for docs-first frameworks (Starlight / VitePress / Docusaurus).
+
+**This pack stays in scope** for: SaaS dashboards, web applications, mobile apps, desktop tools, game UI, AI / chat / agent surfaces.
+
+---
+
 ### Lyra + Ordis (Security Architect)
 
 **When designing secure interfaces**:
@@ -351,7 +360,7 @@ User Request
 **Focused expertise**: Load only what's needed for the task
 **Clear boundaries**: Each skill has distinct responsibility
 **Composable**: Combine skills for complex scenarios
-**Efficient**: Avoid loading all 12 reference sheets at once
+**Efficient**: Avoid loading all 11 specialist sheets at once
 **Explicit**: User sees which skills are active
 
 ---

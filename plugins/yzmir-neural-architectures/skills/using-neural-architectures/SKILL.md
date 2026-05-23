@@ -1,6 +1,6 @@
 ---
 name: using-neural-architectures
-description: The architecture selection router for CNNs, Transformers, RNNs, GANs, GNNs by data modality and constraints
+description: Use when selecting or comparing neural architectures - routes by data modality (vision / sequence / graph / generative / multimodal) and constraints (dataset size, compute, latency); covers CNNs (ConvNeXt v2 / EfficientNetV2), Transformers + MoE (Mixtral / DeepSeek), SSM/Mamba, modern diffusion (SDXL/FLUX/DiT), multimodal (CLIP/SigLIP/LLaVA), SAM/SAM-2, equivariant GNNs, normalization, attention variants
 ---
 
 # Using Neural Architectures: Architecture Selection Router

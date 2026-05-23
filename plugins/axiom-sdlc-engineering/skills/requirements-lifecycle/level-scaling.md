@@ -789,5 +789,3 @@ Month 10-12: Full Level 4 Adoption
 **External references**:
 - `governance-and-risk` skill - Organizational process definition (Level 3)
 - `platform-integration` skill - Tool configuration for each level
-
-**Prescription reference**: See `docs/sdlc-prescription-cmmi-levels-2-4.md` Sections 3.1.1 (Requirements Development) and 3.1.2 (Requirements Management) for complete CMMI process area guidance

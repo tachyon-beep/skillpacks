@@ -15,8 +15,6 @@ This skill guides **incremental CMMI adoption** on existing projects without hal
 - **Right-sizing practices**: Scaling from 2-person teams to large organizations
 - **Managing transitions**: Tool migrations, process changes, audit preparation
 
-**Reference**: See `docs/sdlc-prescription-cmmi-levels-2-4.md` Section 9 (Adoption Guide) for complete policy.
-
 ### When to Use This Skill
 
 Use this skill when:

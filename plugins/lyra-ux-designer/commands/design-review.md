@@ -91,6 +91,23 @@ High contrast helps in sunlight. Large touch targets help when distracted. Clear
 - Visible focus indicators
 - All functions keyboard accessible
 
+### 3a. AI-Surface Assessment (if applicable)
+
+**Trigger** if the artefact under review is a chat assistant, AI copilot, agent loop, RAG UI, streaming-output panel, or any surface where model output is presented to the user.
+
+**Action**: Additionally load `ai-experience-patterns.md` (sibling sheet in this pack) and apply the AI-UX Trust Stack:
+
+- **Legibility** — does the user always know whether they are talking to a model, what model, what its limits are? Streaming-cursor distinct from final state?
+- **Grounding** — citations linked to source spans, not free-floating; hover/click reveals provenance; "I don't know" is a first-class response
+- **Steering** — user can interrupt, redirect, edit prior turn, set scope ("only use this document")
+- **Refusal & Recovery** — refusals explain what is allowed instead; one-tap rephrase / report
+- **Reversibility** — destructive tool actions (send, delete, charge, refund) require preview-then-confirm, with a visible undo window
+- **Calibration** — confidence framing matches actual accuracy; no false certainty; uncertainty signalled when present
+
+**WCAG 2.2 traps specific to AI surfaces**: `aria-live` token buffering during streaming, `prefers-reduced-motion` on streaming cursor, SC 3.3.8 (don't gate AI features behind cognitive-function authentication tests).
+
+If the surface is **not** an AI artefact, skip this section.
+
 ### 4. Accessibility Assessment
 
 **Universal Access Model (6 dimensions):**
@@ -164,11 +181,25 @@ High contrast helps in sunlight. Large touch targets help when distracted. Clear
 
 ## Accessibility
 
-### WCAG Compliance
+### WCAG 2.2 AA Compliance
 - [ ] 1.4.3 Contrast (AA): [Pass/Fail]
 - [ ] 2.1.1 Keyboard: [Pass/Fail]
 - [ ] 2.4.7 Focus Visible: [Pass/Fail]
+- [ ] 2.4.11 Focus Not Obscured (Minimum, new in 2.2): [Pass/Fail]
+- [ ] 2.5.7 Dragging Movements (new in 2.2): [Pass/Fail]
+- [ ] 2.5.8 Target Size Minimum 24px (new in 2.2): [Pass/Fail]
+- [ ] 3.2.6 Consistent Help (new in 2.2): [Pass/Fail]
+- [ ] 3.3.7 Redundant Entry (new in 2.2): [Pass/Fail]
+- [ ] 3.3.8 Accessible Authentication Minimum (new in 2.2): [Pass/Fail]
 - [ ] 4.1.2 Name/Role/Value: [Pass/Fail]
+
+### AI Trust Stack (if AI surface)
+- [ ] Legibility: [Pass/Fail]
+- [ ] Grounding (citations linked to sources): [Pass/Fail]
+- [ ] Steering (user can interrupt / scope): [Pass/Fail]
+- [ ] Refusal & Recovery: [Pass/Fail]
+- [ ] Reversibility (preview-then-confirm for tool actions): [Pass/Fail]
+- [ ] Calibration (confidence matches accuracy): [Pass/Fail]
 
 ### Issues
 [Same table format]

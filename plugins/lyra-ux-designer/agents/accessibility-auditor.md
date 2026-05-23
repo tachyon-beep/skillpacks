@@ -147,7 +147,7 @@ Test with NVDA (Windows) or VoiceOver (macOS):
 
 **Audited:** [Design/URL]
 **Date:** [Date]
-**Standard:** WCAG 2.1 AA
+**Standard:** WCAG 2.2 AA
 
 ### Executive Summary
 
@@ -215,6 +215,16 @@ Test with NVDA (Windows) or VoiceOver (macOS):
 | 2.4.6 Headings and Labels | Pass/Fail | [Details] |
 | 2.4.7 Focus Visible | Pass/Fail | [Details] |
 
+#### Level AA (New in WCAG 2.2)
+| Criterion | Status | Notes |
+|-----------|--------|-------|
+| 2.4.11 Focus Not Obscured (Minimum) | Pass/Fail | Sticky chrome must not fully hide focused element |
+| 2.5.7 Dragging Movements | Pass/Fail | Single-pointer alternative to any drag interaction |
+| 2.5.8 Target Size (Minimum) | Pass/Fail | Pointer targets ≥ 24×24 CSS px (inline/UA/essential exceptions) |
+| 3.2.6 Consistent Help | Pass/Fail | Help mechanism in same relative location across pages |
+| 3.3.7 Redundant Entry | Pass/Fail | Previously-entered information auto-populated or selectable |
+| 3.3.8 Accessible Authentication (Minimum) | Pass/Fail | No cognitive-function test required (puzzle/transcription) unless alternative exists |
+
 ### Remediation Plan
 
 **Priority 1: Critical (Fix Immediately)**
@@ -250,6 +260,12 @@ Test with NVDA (Windows) or VoiceOver (macOS):
 | Placeholder as label | 3.3.2 | Add visible label |
 | Auto-playing video | 1.4.2 | Add pause controls |
 | Color-only indicators | 1.4.1 | Add icon + text |
+| Focused element hidden under sticky header | 2.4.11 | Scroll-padding for focus or reposition sticky chrome |
+| Drag-only reorder / slider | 2.5.7 | Provide button or numeric-input alternative |
+| 16×16 icon button | 2.5.8 | Increase to ≥ 24×24 CSS px (44×44 still preferred for touch) |
+| Help link / chat widget in different place per page | 3.2.6 | Pin to same relative location across pages |
+| Re-typing address / email already given | 3.3.7 | Auto-populate or offer picker |
+| CAPTCHA puzzle gating login | 3.3.8 | Offer passkey / WebAuthn / OAuth / password-manager paste |
 
 ## Severity Definitions
 
@@ -271,7 +287,7 @@ Test with NVDA (Windows) or VoiceOver (macOS):
 ## Scope Boundaries
 
 **I audit:**
-- Full WCAG 2.1 AA compliance
+- Full WCAG 2.2 AA compliance
 - Universal Access Model (6 dimensions)
 - Remediation prioritization
 - Compliance documentation

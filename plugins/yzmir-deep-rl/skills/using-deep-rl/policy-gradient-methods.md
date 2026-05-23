@@ -23,7 +23,7 @@ Do NOT use this skill for:
 
 - Value-based methods like DQN (route to value-based-methods)
 - Model-based RL (route to model-based-rl)
-- Offline RL (route to offline-rl-methods)
+- Offline RL (route to offline-rl)
 - Theory foundations (route to rl-foundations)
 - Advanced variants (route to advanced-rl-topics)
 
@@ -1603,7 +1603,7 @@ values = value_network(states)  # Compute all at once
 Example: Robot learning from limited real-world rollouts
 - Policy gradients: on-policy, need lots of data
 - Better: Offline RL, DQN with replay buffer
-- Switch to: offline-rl-methods skill
+- Switch to: offline-rl skill
 ```
 
 **Discrete Action Space + Limited Data**:
@@ -1640,5 +1640,5 @@ Example: Model-based planning where you have world model
 | Discrete actions + huge sample budget → Can't improve | DQN or Rainbow (value-based-methods) |
 | Sparse rewards, no progress → Can't reward learning | Curiosity or hindsight (exploration methods) |
 | Have access to world model → Not using it | Model-based planning (model-based-rl) |
-| Need off-policy data efficiency → On-policy slow | Offline RL or DQN (offline-rl-methods or value-based) |
+| Need off-policy data efficiency → On-policy slow | Offline RL or DQN (offline-rl or value-based) |
 | Multimodal solution space → Single mode explored | Evolutionary algorithms or diverse policies |

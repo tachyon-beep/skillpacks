@@ -282,9 +282,9 @@ See [routing-scenarios.md](routing-scenarios.md) for 22 detailed examples:
 
 ---
 
-## Systems as Experience Specialist Skills Catalog
+## Systems as Experience Specialist Reference Sheets
 
-After routing, load the appropriate specialist skill for detailed guidance:
+After routing, load the appropriate specialist sheet for detailed guidance. **8 specialist sheets:**
 
 1. [emergent-gameplay-design.md](emergent-gameplay-design.md) - FOUNDATIONAL ⭐: Orthogonal systems, emergence, simulation over scripting
 2. [sandbox-design-patterns.md](sandbox-design-patterns.md) - Open worlds, creative tools, freedom within constraints
@@ -294,7 +294,10 @@ After routing, load the appropriate specialist skill for detailed guidance:
 6. [player-driven-narratives.md](player-driven-narratives.md) - Emergent stories, systemic consequences
 7. [modding-and-extensibility.md](modding-and-extensibility.md) - Mod support, community content
 8. [community-meta-gaming.md](community-meta-gaming.md) - Theorycrafting, shared knowledge ecosystems
-9. [routing-scenarios.md](routing-scenarios.md) - 22 game type routing examples
+
+### Auxiliary references (not specialist sheets)
+
+- [routing-scenarios.md](routing-scenarios.md) - 22 game-type routing examples (router-support, not a skill)
 
 ---
 

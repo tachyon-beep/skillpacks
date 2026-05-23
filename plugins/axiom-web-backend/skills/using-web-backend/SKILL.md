@@ -50,6 +50,7 @@ When you see a link like `[fastapi-development.md](fastapi-development.md)`, rea
 | Microservices, service mesh, boundaries | [microservices-architecture.md](microservices-architecture.md) | Service design, communication, consistency |
 | Message queues, RabbitMQ, Kafka, events | [message-queues.md](message-queues.md) | Queue patterns, reliability, event-driven |
 | JWT, OAuth2, API keys, auth | [api-authentication.md](api-authentication.md) | Auth patterns, token management, security |
+| Rate limiting, throttling, quotas | [api-authentication.md](api-authentication.md) | Security hardening section — token-bucket, per-tenant quotas |
 | Database connections, ORM, migrations | [database-integration.md](database-integration.md) | Connection pooling, query optimization, migrations |
 | API testing, integration tests, mocking | [api-testing.md](api-testing.md) | Testing strategies, contract testing, mocking |
 | OpenAPI, Swagger, API docs | [api-documentation.md](api-documentation.md) | API docs (also see: muna-technical-writer) |

@@ -1,27 +1,54 @@
 ---
-description: Workshop-voiced craft pack for prose narrative — fiction and creative nonfiction. Three explicit modes (draft / critique / plan); the router refuses to work without a declared mode. v0.1 ships router + 13 sheets + 3 commands + 8 agents.
+description: Workshop-voiced craft pack for prose narrative — fiction and creative nonfiction. Three explicit modes (draft / critique / plan); the router refuses to work without a declared mode. v0.2 ships router + 22 sheets (13 craft + 9 genre) + 3 commands + 11 agents.
 ---
 
 # Creative Writing Routing
 
-**Prose narrative only at v0.1 (fiction + creative nonfiction). Poetry, scripts, plays, comics, songwriting, and interactive fiction are scheduled for v0.4.**
+**Prose narrative only (fiction + creative nonfiction). Poetry, scripts, plays, comics, songwriting, and interactive fiction are scheduled for v0.4. The router will not begin work until you declare a mode — draft, critique, or plan.**
 
-Use the `using-creative-writing` skill from the `lyra-creative-writing` plugin. The router enforces mode declaration: it asks whether you want to **draft**, **critique**, or **plan** before doing any work. To skip the mode prompt, invoke a dedicated command directly:
+Use the `using-creative-writing` skill from the `lyra-creative-writing` plugin to route to the right specialist sheet. Content authority lives in `plugins/lyra-creative-writing/skills/using-creative-writing/SKILL.md` — this wrapper is a thin pointer.
 
-- **`/draft-scene`** — Claude generates new prose from a brief. Drafter mode. Outputs prose only with optional craft-notes appendix; will not auto-critique its own output, will not modify your existing prose.
-- **`/critique-prose`** — Claude diagnoses prose you paste. Coach mode. Fans out five coach-mode agents in parallel (`developmental-reviewer`, `line-reviewer`, `pov-and-distance-auditor`, `dialogue-doctor`, `continuity-checker`), then synthesises through `revision-coach` into a prioritised revision-pass plan. Will not rewrite, regardless of follow-up requests.
-- **`/plan-story`** — Claude consults on premise, outline, structural lens. Consultant mode. Returns outline + weak-spots + lens caveat. Will not draft prose, will not prescribe a single structural lens as universal.
+## When to Use
 
-## v0.1 sheets (13)
+- Drafting fiction or creative-nonfiction prose from a scene brief
+- Getting craft critique on prose you have already written
+- Planning premise, outline, or structural lens for a longer work
+- Working within a specific genre's reader contract (mystery, thriller, sf, fantasy, horror, romance, literary fiction, memoir, literary journalism)
 
-`pov-and-voice`, `scene-construction`, `dialogue`, `pacing-and-tension`, `character-interiority`, `showing-vs-telling`, `prose-rhythm-and-style`, `story-structure-and-arc`, `research-and-verisimilitude`, `worldbuilding-by-implication`, `revision-and-cutting`, `openings-and-endings`, `creative-nonfiction-craft`. The router loads one to three sheets per session based on the conversation; it does not load all thirteen.
+**Don't use** for: beta-reader simulation (use `/panel-review`), technical writing (use `/technical-writer`), poetry/scripts/comics/songwriting (deferred to v0.4).
+
+## Sheets
+
+### Craft sheets (13)
+
+`pov-and-voice`, `scene-construction`, `dialogue`, `pacing-and-tension`, `character-interiority`, `showing-vs-telling`, `prose-rhythm-and-style`, `story-structure-and-arc`, `research-and-verisimilitude`, `worldbuilding-by-implication`, `revision-and-cutting`, `openings-and-endings`, `creative-nonfiction-craft`.
+
+### Genre annex (9)
+
+`mystery`, `thriller`, `sf`, `fantasy`, `horror`, `romance`, `literary-fiction`, `memoir-and-personal-essay`, `literary-journalism`. Each presents conventions through a reader-contract frame: name the contract, name the cost of breaking, name books worth the cost.
+
+The router loads one to three sheets per session based on the conversation; it does not load all twenty-two.
+
+## Commands
+
+- `/draft-scene` — drafter mode: generate new prose from a brief; will not auto-critique its own output, will not modify existing prose
+- `/critique-prose` — coach mode: fan out five coach-mode agents in parallel, synthesise through `revision-coach` into a prioritised pass plan; will not rewrite
+- `/plan-story` — consultant mode: premise, outline, structural lens; returns outline + weak-spots + lens caveat; will not draft prose
+
+## Agents
+
+Coach: `developmental-reviewer`, `line-reviewer`, `pov-and-distance-auditor`, `dialogue-doctor`, `continuity-checker`, `opening-and-ending-doctor`.
+Drafter: `scene-drafter`.
+Consultant: `outline-architect`, `worldbuilding-consultant`, `premise-stress-tester`, `revision-coach`.
+
+All eleven enforce the mode-discipline contract in their own boundary sections.
 
 ## Composition
 
-Beta-reader panels and simulated-reader reactions live in `muna-panel-review` (`/panel-review`). The router defers there rather than reinventing reader simulation. Technical writing — different voice, different goals — lives in `muna-technical-writer`; not a substitute.
+- Beta-reader simulation and reader-panel reactions → `/panel-review` (`muna-panel-review`)
+- Technical writing — different voice, different goals → `/technical-writer` (`muna-technical-writer`)
 
 ## Roadmap
 
-- **v0.2** — genre annex sheets (mystery, romance, sf/f, horror, literary fiction, memoir, literary journalism), plus `worldbuilding-consultant`, `opening-and-ending-doctor`, `premise-stress-tester` agents.
-- **v0.3** — other craft lineages: structuralist (Save the Cat, Story Grid), genre-mechanical, pluralist (named-traditions-side-by-side).
-- **v0.4** — format expansion: poetry, screenwriting/teleplay, stage plays, comics scripting, songwriting/lyrics, interactive fiction.
+- **v0.3** — other craft lineages: structuralist (Save the Cat, Story Grid), genre-mechanical, pluralist (named-traditions-side-by-side)
+- **v0.4** — format expansion: poetry, screenwriting/teleplay, stage plays, comics scripting, songwriting/lyrics, interactive fiction

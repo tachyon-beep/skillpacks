@@ -1,6 +1,6 @@
 ---
 name: fact-checking
-description: Dual-verified research paper fact-checking with structured JSON output and exception reports
+description: Use when fact-checking a research paper or document - dual-verified web search with claim extraction, independent researcher and adversarial verifier, structured JSON output and human-readable exception report. Invoke explicitly via /fact-check; expensive operation.
 ---
 
 # Research Paper Fact-Checker

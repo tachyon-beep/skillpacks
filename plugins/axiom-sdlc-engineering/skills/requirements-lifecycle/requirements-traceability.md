@@ -618,5 +618,3 @@ def verify_links():
 **For advanced implementation**:
 - See `platform-integration` skill for GitHub/Azure DevOps advanced patterns
 - See `quantitative-management` skill for Level 4 metrics and SPC
-
-**Prescription reference**: See `docs/sdlc-prescription-cmmi-levels-2-4.md` Section 3.1.2 (Requirements Management - SP 1.4 Maintain Bidirectional Traceability)

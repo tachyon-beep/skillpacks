@@ -15,8 +15,6 @@ This skill provides concrete implementation guidance for mapping CMMI process ar
 - **GitHub** - Issues, PRs, Actions, Projects for CMMI implementation
 - **Azure DevOps** - Work Items, Repos, Pipelines, Boards for CMMI implementation
 
-**Reference**: See `docs/sdlc-prescription-cmmi-levels-2-4.md` for CMMI process area definitions.
-
 ---
 
 ## When to Use

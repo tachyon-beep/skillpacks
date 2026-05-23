@@ -21,7 +21,7 @@ Do NOT use this skill for:
 - Continuous action spaces (route to actor-critic-methods)
 - Policy gradients (route to policy-gradient-methods)
 - Model-based RL (route to model-based-rl)
-- Offline RL (route to offline-rl-methods)
+- Offline RL (route to offline-rl)
 - Theory foundations (route to rl-foundations)
 
 
@@ -1247,7 +1247,7 @@ Start with Priority 1, only adjust Priority 2-3 if unstable.
 - Need policy regularization
 - Exploration by stochasticity useful
 
-### Route to offline-rl-methods if
+### Route to offline-rl if
 
 - No environment access (batch learning)
 - Learning from logged data only

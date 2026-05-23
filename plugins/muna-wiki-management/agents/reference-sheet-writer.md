@@ -30,7 +30,6 @@ Executive briefs are the highest-risk documents for lazy deferral. This agent's 
 </example>
 
 model: opus
-color: green
 tools: ["Read", "Write", "Grep", "Glob"]
 ---
 

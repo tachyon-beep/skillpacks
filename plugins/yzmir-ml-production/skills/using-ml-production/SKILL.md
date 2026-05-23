@@ -467,8 +467,7 @@ After routing, load the appropriate specialist skill for detailed guidance. **Th
 
 ## References
 
-- See design doc: `docs/plans/2025-10-30-ml-production-pack-design.md`
-- Primary router: `yzmir/ai-engineering-expert/using-ai-engineering`
+- Primary router: `plugins/yzmir-ai-engineering-expert/skills/using-ai-engineering/SKILL.md`
 - Sister packs (bidirectional):
   - `yzmir-llm-specialist/using-llm-specialist` — generation quality, prompt/RAG/agent/eval/safety design (10 sheets including `reasoning-models.md`, `agentic-patterns-and-mcp.md`, `context-engineering-and-prompt-caching.md`)
   - `yzmir-training-optimization/using-training-optimization` — training-phase convergence and speed

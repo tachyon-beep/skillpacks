@@ -319,3 +319,61 @@ and the 'when not to use a reasoning model' decision matrix."
 **DON'T**: Route to `training-optimization` ("extended thinking failure" sounds like a training symptom but it isn't), and don't route to `neural-architectures` ("reasoning model architecture" is the provider's, not yours).
 
 **Rationale**: Reasoning models are a 2025+ paradigm; older prompt-engineering intuition often makes them worse, not better. Naming this trap explicitly prevents the misroute.
+
+---
+
+## Example 16: Morphogenetic RL vs Dynamic Architectures
+
+**User**: "I'm designing an RL controller that decides when to grow a neural network during training - add a layer, widen a block, prune a head. Where do I start?"
+
+**Trap**: The query mentions "grow a neural network" → easy mis-route to `dynamic-architectures`. It also mentions "RL controller" → easy mis-route to `deep-rl`. Both are wrong.
+
+**Distinction**:
+- `dynamic-architectures` owns the *grown network* — how a network that mutates topology actually trains (gradient isolation, modular composition, EWC, replay buffers, adapter merging, MoE routing, PEFT).
+- `deep-rl` owns *generic* RL controllers — policy gradients, value methods, MARL, offline RL, exploration.
+- `yzmir-morphogenetic-rl` owns the *controller designing growth* — action space over topology mutations, observations from training state, reward shaping where rollback is signal, governor / safety-gate discipline (you cannot let the controller break the host network), deterministic morphogenesis for reproducibility, and growth-aware ablation under a changing topology.
+
+**DO**: Route to morphogenetic-rl first, with companion routing.
+
+```
+"This is the morphogenetic-RL pattern - an RL controller whose action space is topology
+mutations on the network it's training. Three packs in dependency order:
+
+1. yzmir-morphogenetic-rl - the controller itself: action/observation/reward design,
+   governor and safety gates (so the controller can't bork the host net), rollback-as-signal,
+   deterministic morphogenesis, growth-aware ablation.
+2. yzmir-dynamic-architectures - HOW the grown network trains under topology change
+   (gradient isolation, modular composition, lifecycle).
+3. yzmir-deep-rl - generic RL machinery if you need a specific algorithm under the controller
+   (PPO, SAC, off-policy buffers)."
+```
+
+**Route**: `morphogenetic-rl` → `dynamic-architectures` → `deep-rl` (in that order).
+
+**Rationale**: "Grow a network" and "RL controller" both look like keyword anchors for the wrong packs. The disambiguator is *who owns the controller as an artifact*: that is morphogenetic-rl. Dynamic-architectures gets the grown network; deep-rl gets the underlying RL algorithm if needed. Mis-routing to dynamic-architectures alone misses controller / governor / rollback discipline; mis-routing to deep-rl alone misses every topology-mutation pattern.
+
+---
+
+## Example 17: PEFT Method Choice (DoRA vs QLoRA)
+
+**User**: "DoRA vs QLoRA for adapter fine-tuning a 70B model on a single A100. Which?"
+
+**Recognize**: This is a *PEFT method comparison*. Adapter method selection is owned by `yzmir-dynamic-architectures` (its plugin description explicitly names LoRA / QLoRA / DoRA / VeRA / PiSSA / LoftQ / LoRA+ / rsLoRA / LongLoRA). The fine-tuning workflow itself sits in `yzmir-llm-specialist`.
+
+**DO**: Cross-pack route.
+
+```
+"Adapter-method selection (LoRA vs QLoRA vs DoRA vs PiSSA vs LoftQ etc.) is owned by
+yzmir-dynamic-architectures - the comparison matrix, memory math, and merging discipline
+live there. The fine-tuning workflow itself (data, eval, RLHF/DPO/GRPO if relevant) is
+yzmir-llm-specialist.
+
+Order:
+1. dynamic-architectures - pick the PEFT method against your VRAM and quality targets.
+2. llm-specialist - execute the fine-tune (data prep, eval, alignment).
+3. ml-production - if you also need to serve the result quantized."
+```
+
+**Route**: `dynamic-architectures` → `llm-specialist` (→ `ml-production` if serving).
+
+**Rationale**: Keyword anchor "fine-tune LLM" pulls toward llm-specialist, but the *adapter-method* choice is a lifecycle/architecture question that the dynamic-architectures pack owns by design. Either pack alone leaves a gap.

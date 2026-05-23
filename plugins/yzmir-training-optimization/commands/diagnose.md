@@ -85,7 +85,7 @@ Ask or determine which pattern matches:
 
 **Diagnostic Questions:**
 - When did NaN appear? (Epoch, step)
-- Using mixed precision (AMP)?
+- Using mixed precision? Which dtype — FP16, BF16, or FP8 (E4M3 / E5M2)?
 - Any custom loss functions?
 
 **Common Causes:**
@@ -94,10 +94,11 @@ Ask or determine which pattern matches:
 |---------|-------|-----|
 | NaN at start | Initialization issue or LR too high | Check weight init, reduce LR |
 | NaN after N epochs | Gradient explosion | Add gradient clipping (max_norm=1.0) |
-| Using AMP | Gradient scaling issue | Use GradScaler properly |
+| Using FP16 AMP | Gradient scaling issue (overflow / scale collapse) | Use GradScaler properly; consider switching to BF16 (wider exponent, no scaler needed) |
+| Using FP8 (E4M3 / E5M2) | Underflow in attention / loss; per-tensor or delayed-scaling miscalibration; activation outliers in long-context layers | Verify scaling factor recipe (delayed vs current), keep loss/softmax/LayerNorm in BF16 (mixed-precision policy), shorten amax history, consider hybrid E4M3-fwd / E5M2-bwd |
 | Custom loss | Numerical instability | Add epsilon to log(), clamp values |
 
-**Route to:** gradient-management.md (PRIMARY) + loss-functions-and-objectives.md
+**Route to:** gradient-management.md (PRIMARY) + loss-functions-and-objectives.md + batch-size-and-memory-tradeoffs.md (precision section, for any FP8/AMP-related row above)
 
 ### Step 2E: Overfitting
 

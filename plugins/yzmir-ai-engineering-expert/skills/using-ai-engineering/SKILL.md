@@ -64,7 +64,8 @@ Before routing, if query contains ANY of these ambiguous patterns, ASK ONE clari
 | Diffusion, flow matching, DiT, Stable Diffusion, image / video / audio generation | **neural-architectures** | Generative-media architecture |
 | Which architecture, CNN vs transformer, Mamba vs attention, model selection | **neural-architectures** | Architecture choice |
 | Deploy, serve, production, quantize, inference, latency, mobile, vLLM, SGLang, TensorRT-LLM, observability, drift | **ml-production** | Deployment |
-| Network grows / prunes during training, continual learning, catastrophic forgetting, modular composition, MoE routing, adapter merging | **dynamic-architectures** | Networks that change topology over time |
+| Network grows / prunes during training, continual learning, catastrophic forgetting, modular composition, MoE routing, adapter merging, PEFT (LoRA / QLoRA / DoRA / VeRA / PiSSA / LoftQ / LoRA+ / rsLoRA / LongLoRA) | **dynamic-architectures** | Networks that change topology / adapter composition over time |
+| RL controller that decides WHEN / HOW to mutate a network's topology during training, growth actions, governor / safety gates, rollback-as-RL-signal, deterministic morphogenesis, ablation under topology change | **morphogenetic-rl** | The *controller* designing growth actions, not the network being grown (companion to dynamic-architectures) |
 | ODE, integrator, physics sim, determinism, stability, replay, time-step, numerical methods | **simulation-foundations** | Simulation mathematics (often underpins RL environments) |
 | Causal loop, feedback dynamics, leverage points, system archetypes, stock-flow, behavior-over-time | **systems-thinking** | Whole-system reasoning |
 
@@ -82,6 +83,7 @@ When task spans domains, route to ALL relevant packs in execution order:
 | "RL training unstable" | training-optimization + deep-rl | General training first |
 | "RL env determinism / replay broken" | simulation-foundations + deep-rl | Sim correctness before agent |
 | "Continual-learning model forgets old tasks" | dynamic-architectures + training-optimization | Lifecycle design first, then training schedule |
+| "RL controller decides when to grow my net, but the grown net trains badly" | morphogenetic-rl + dynamic-architectures (+ training-optimization) | Controller design first; HOW the grown net trains second; convergence tuning third |
 | "Reasoning model is slow / expensive" | llm-specialist + ml-production | Application strategy first, serving second |
 | "Build an agent that uses tools and a vector store" | llm-specialist (agentic + RAG) | Often single-pack; bring in `axiom-engineering-foundations` for system design if scope grows |
 | "Diffusion model training diverges" | training-optimization + neural-architectures | General training first, architecture second |
@@ -104,6 +106,8 @@ When task spans domains, route to ALL relevant packs in execution order:
 | "Replay diverges between machines" | deep-rl | simulation-foundations FIRST | Determinism / numerics problem |
 | "o3 / extended thinking gives bad answers" | (guess) | llm-specialist (reasoning models sheet) | Reasoning-model prompting and eval differs from chat |
 | "Build an MCP server / tool-using agent" | (none) | llm-specialist (agentic patterns) | Agent design lives with LLM applications |
+| "RL agent that decides when to grow a network" | deep-rl | morphogenetic-rl FIRST | This is the controller-design pack; deep-rl alone misses governor/safety-gate/rollback patterns |
+| "DoRA vs QLoRA for my 70B fine-tune" | llm-specialist | dynamic-architectures (PEFT comparison) + llm-specialist (fine-tune workflow) | Adapter method choice is the lifecycle pack's domain |
 
 ---
 
@@ -238,7 +242,8 @@ Identify problem type:
     - LLM application (prompt, RAG, fine-tune, reasoning, agent, MCP)? → llm-specialist
     - Architecture choice (CNN/transformer/Mamba/diffusion)? → neural-architectures
     - Production deployment / serving / observability? → ml-production
-    - Network grows/prunes / continual learning / MoE composition? → dynamic-architectures
+    - Network grows/prunes / continual learning / PEFT (LoRA/QLoRA/DoRA/...) / MoE composition? → dynamic-architectures
+    - RL controller deciding WHEN/HOW to grow a network (governor, safety gates, rollback)? → morphogenetic-rl
     - Simulation math / determinism / ODEs? → simulation-foundations
     - Whole-system feedback / causal loops / leverage? → systems-thinking
     ↓
@@ -265,7 +270,7 @@ See [routing-examples.md](routing-examples.md) for detailed worked examples:
 
 ## AI Engineering Plugin Router Catalog
 
-This meta-router directs you to the appropriate Yzmir AI/ML plugin. The Yzmir faction ships **9 specialist packs** plus this router:
+This meta-router directs you to the appropriate Yzmir AI/ML plugin. The Yzmir faction ships **10 specialist packs** plus this router:
 
 1. **yzmir-pytorch-engineering** — PyTorch framework: CUDA, memory, FSDP/`torch.compile`, distributed, tensor operations.
 2. **yzmir-training-optimization** — Training problems: optimizers, schedules, precision (BF16/FP8), gradients, convergence, hyperparameters.
@@ -273,9 +278,10 @@ This meta-router directs you to the appropriate Yzmir AI/ML plugin. The Yzmir fa
 4. **yzmir-llm-specialist** — LLM applications: prompting, RAG, fine-tuning (SFT/DPO/GRPO), reasoning models, agentic patterns / MCP, multimodal use, prompt caching, evaluation, safety.
 5. **yzmir-neural-architectures** — Architecture selection: CNN / transformer / Mamba / GNN / diffusion / DiT / multimodal fusion, capacity and depth-width tradeoffs.
 6. **yzmir-ml-production** — Production: vLLM / SGLang / TensorRT-LLM serving, quantization (`torch.ao.quantization`, AWQ, GPTQ, FP8), MLOps, observability (Phoenix / Langfuse / OTel GenAI), drift, scaling.
-7. **yzmir-dynamic-architectures** — Networks that grow / prune / adapt: continual learning, gradient isolation, modular composition, MoE routing, adapter merging, lifecycle.
-8. **yzmir-simulation-foundations** — Simulation mathematics: ODEs, integrators, stability, control theory, determinism — often the foundation under RL environments and physics-based systems.
-9. **yzmir-systems-thinking** — Systems thinking methodology: causal loops, leverage points, archetypes, stocks-flows, behavior-over-time graphs.
+7. **yzmir-dynamic-architectures** — Networks that grow / prune / adapt: continual learning, gradient isolation, modular composition, MoE routing, adapter merging, PEFT (LoRA / QLoRA / DoRA / VeRA / PiSSA / LoftQ / LoRA+ / rsLoRA / LongLoRA), lifecycle. *Owns the HOW: how the growable / adaptable network trains.*
+8. **yzmir-morphogenetic-rl** — RL controllers that decide WHEN and HOW to mutate a network's topology during training: action/observation/reward design for the controller, governor and safety gates, rollback-as-RL-signal, deterministic morphogenesis, growth-aware ablation. *Companion to dynamic-architectures: owns the CONTROLLER that drives growth, not the network being grown.*
+9. **yzmir-simulation-foundations** — Simulation mathematics: ODEs, integrators, stability, control theory, determinism — often the foundation under RL environments and physics-based systems.
+10. **yzmir-systems-thinking** — Systems thinking methodology: causal loops, leverage points, archetypes, stocks-flows, behavior-over-time graphs.
 
 **Adjacent (non-Yzmir) routers worth knowing about:**
 - `axiom-engineering-foundations` — general software-engineering rigor for AI systems (debugging, refactoring, code review).

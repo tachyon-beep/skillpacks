@@ -158,134 +158,27 @@ opt-level = 2                  # Faster tests in CI without full release cost
 
 Run with: `cargo test --profile ci`.
 
-## Workspaces
+## Workspaces — Out of Scope (Redirect)
 
-A workspace groups multiple crates under a single `Cargo.lock` and shared `target/` directory. Use a workspace when you have two or more crates that version together or share heavy dependencies (otherwise you rebuild e.g. `serde` for each crate separately).
+**This pack is single-crate-shaped. Workspace-scope material lives in the sibling pack `axiom-rust-workspaces`. Load `/rust-workspaces` instead of trying to apply this sheet to a multi-crate setup.**
 
-### Canonical Workspace Layout
+If your question involves any of these, you are in the wrong sheet:
 
-```
-my-project/
-├── Cargo.toml              # Workspace manifest (no [package])
-├── Cargo.lock              # Shared lock (commit by default — see policy section)
-├── rust-toolchain.toml     # Shared toolchain pin
-├── deny.toml               # cargo-deny policy
-├── clippy.toml             # Shared clippy config
-├── rustfmt.toml            # Shared format config
-├── .cargo/
-│   └── config.toml         # Cargo configuration (aliases, build targets)
-├── crates/
-│   ├── my-core/            # Library with domain logic
-│   │   ├── Cargo.toml
-│   │   └── src/
-│   ├── my-server/          # Binary that depends on my-core
-│   │   ├── Cargo.toml
-│   │   └── src/
-│   └── my-cli/             # Another binary
-│       ├── Cargo.toml
-│       └── src/
-└── examples/
-    └── demo/
-        ├── Cargo.toml
-        └── src/main.rs
-```
+| Symptom / topic | Sheet in `/rust-workspaces` |
+|-----------------|------------------------------|
+| Multi-crate layout, `members = [...]`, virtual manifest, where `crates/` lives | `workspace-structure-patterns` |
+| `[workspace.dependencies]`, central version pinning, resolver-2 vs resolver-3, feature-graph unification | `workspace-dependencies-and-resolver` |
+| `[workspace.lints]`, root `clippy.toml`, inheritance with `[lints] workspace = true` | `workspace-lints-and-clippy-config` |
+| `deny.toml` at workspace scope, supply-chain policy, waiver lifecycle | `workspace-deny-config` |
+| Two member crates pinning the same dep at different versions | `feature-unification-gotchas` |
+| Public-vs-internal crate partition, internal-traits-crate, sealed-trait | `crate-visibility-and-internal-traits` |
+| Synchronised vs independent versioning, cargo-release / release-plz | `release-flow-for-workspaces` |
+| Per-crate vs workspace integration tests, fixtures crate, nextest at workspace scope | `test-organisation-at-workspace-scope` |
+| Workspace anti-patterns (single-crate `[workspace]` block, accidental publishing, etc.) | `workspace-anti-patterns` |
 
-### Workspace Manifest
+**Why no orientation snippet here?** Earlier revisions of this sheet inlined ~130 lines of workspace examples (canonical layout, full workspace manifest, `[workspace.dependencies]`, `[workspace.lints]`, resolver-2/3 table, virtual manifests). That material was removed in v1.1.0 because it duplicated `axiom-rust-workspaces` content and could drift silently as the sibling pack evolves. The sibling pack is the single source of truth.
 
-```toml
-# Cargo.toml (workspace root — no [package] section)
-[workspace]
-members  = ["crates/*", "examples/*"]
-resolver = "3"                  # 2024-edition resolver; required for edition 2024
-
-# Shared package metadata inherited by all members
-[workspace.package]
-version    = "0.1.0"
-edition    = "2024"
-license    = "MIT OR Apache-2.0"
-repository = "https://github.com/org/my-project"
-rust-version = "1.87"
-
-# Centralized dependency versions — members pin here, not individually
-[workspace.dependencies]
-anyhow      = "1"
-serde       = { version = "1", features = ["derive"] }
-tokio       = { version = "1", features = ["rt-multi-thread", "macros"] }
-tracing     = "0.1"
-thiserror   = "2"
-
-# Internal crates are also listed here for consistent inter-crate version pins
-my-core     = { path = "crates/my-core", version = "0.1.0" }
-
-# Shared lint config — ALL workspace members inherit this
-[workspace.lints.rust]
-unsafe_code     = "deny"
-missing_docs    = "warn"
-
-[workspace.lints.clippy]
-all           = { level = "warn", priority = -1 }
-pedantic      = { level = "warn", priority = -1 }
-unwrap_used   = "deny"    # test modules should override this with
-                          # `#![allow(clippy::unwrap_used)]` at the mod head —
-                          # see systematic-delinting.md
-expect_used   = "warn"
-```
-
-### Member Cargo.toml (inheriting workspace values)
-
-```toml
-[package]
-name    = "my-server"
-version.workspace   = true      # Inherits from [workspace.package]
-edition.workspace   = true
-license.workspace   = true
-repository.workspace = true
-rust-version.workspace = true
-
-[dependencies]
-# Use workspace = true to pin version at workspace level
-anyhow.workspace  = true
-serde.workspace   = true
-tokio.workspace   = true
-my-core.workspace = true
-
-# Member-specific deps not in workspace
-axum = "0.8"
-
-[lints]
-workspace = true                # Inherit all [workspace.lints] settings
-```
-
-**Why `[workspace.dependencies]`?** Without it, two member crates can independently declare `tokio = "1"` and pull different patch versions, causing duplicate compilations and subtle incompatibilities. With central pinning, the entire workspace resolves to a single version.
-
-### `resolver = "2"` vs `resolver = "3"`
-
-| Resolver | Edition | Key Behavior |
-|----------|---------|--------------|
-| `"1"` | 2015, 2018 | Legacy; unifies features across targets/dev-deps/build-deps, which can pull extra features into your production build |
-| `"2"` | 2021 default | Fixes feature unification — dev-dependencies and build-dependencies no longer contaminate the normal dependency feature set |
-| `"3"` | 2024 default | Adds MSRV-aware resolution on top of resolver 2 (`incompatible-rust-versions` defaults to `fallback`); requires Rust 1.84+ |
-
-Always set `resolver = "3"` for new projects. Edition 2024 defaults to resolver 3 (you don't *have* to set it explicitly), but setting it makes the intent clear.
-
-### Virtual Manifests
-
-A **virtual manifest** is a workspace root with no `[package]` — only `[workspace]`. Use it when the workspace root is not itself a crate:
-
-```toml
-# Virtual manifest: workspace-only root
-[workspace]
-members  = ["crates/*"]
-resolver = "3"
-
-[workspace.package]
-# ...
-
-[workspace.dependencies]
-# ...
-```
-
-Virtual manifests are the norm for multi-crate projects. They prevent the root from accidentally becoming a published crate.
+**Boundary rule.** Each crate in a workspace passes *this* pack's bar (the rest of this sheet — Cargo basics, `Cargo.toml` anatomy, build profiles, `Cargo.lock` policy below — applies to every crate, member or standalone). The workspace as a whole passes `/rust-workspaces`'s gate.
 
 ## Feature Flags
 

@@ -1,6 +1,6 @@
 ---
 name: using-wiki-manager
-description: Manage complex document sets as wikis - architecture, reading paths, derivation, consistency, evolution, and governance for multi-document collections
+description: Use when managing multi-document sets as wikis - manifest-driven architecture, reading paths, derivation discipline, terminology/claim consistency, change evolution, and governance for standards suites, policy frameworks, and technical documentation collections
 ---
 
 # Using Wiki Manager
@@ -50,11 +50,11 @@ When you see a link like `[content-derivation.md](content-derivation.md)`, read 
 
 **Use command**: `/onboard-docset` if available, or follow this sequence manually.
 
-**Route to**: Skills in order:
-1. [document-set-architecture.md](document-set-architecture.md) — inventory documents, classify root/derivative, assign tiers, build manifest
-2. [reading-path-design.md](reading-path-design.md) — discover implicit personas and paths
-3. [cross-document-consistency.md](cross-document-consistency.md) — bootstrap minimum viable registries (terminology, claims)
-4. [document-governance.md](document-governance.md) — assign ownership
+**Route to**: Skills in order (matches `/onboard-docset` step sequence):
+1. [document-set-architecture.md](document-set-architecture.md) — inventory documents, classify root/derivative, discover derivation lineage, assign depth tiers, build manifest
+2. [cross-document-consistency.md](cross-document-consistency.md) — bootstrap **minimum viable registries** (15-30 terminology entries, 10-20 claims) by harvesting from the existing documents. This step is load-bearing — skipping it leaves the audit phase with no objective standard to check against
+3. [reading-path-design.md](reading-path-design.md) — discover implicit personas and reading paths, build coverage matrix
+4. [document-governance.md](document-governance.md) — assign ownership, define review triggers, plan the baseline audit
 
 The onboarding workflow builds registries *from* the documents rather than requiring them upfront. Start with minimum viable versions and grow through use.
 

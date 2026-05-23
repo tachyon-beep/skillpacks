@@ -724,5 +724,3 @@ Decision: DEFER until 3rd-party provider decision made (requires budget approval
 **Cross-references**:
 - `governance-and-risk` skill - ADR process for major architectural changes
 - `platform-integration` skill - GitHub/Azure DevOps change tracking workflows
-
-**Prescription reference**: See `docs/sdlc-prescription-cmmi-levels-2-4.md` Section 3.1.2 (Requirements Management - SP 1.3 Manage Requirements Changes)

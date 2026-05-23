@@ -1,6 +1,6 @@
 ---
 name: using-security-architect
-description: Routes to security architecture skills - threat modeling, controls, compliance, authorization
+description: Use when designing or reviewing security architecture - threat modeling (STRIDE), defense-in-depth controls, secure-by-design patterns, LLM/AI security (OWASP LLM Top 10, MITRE ATLAS), supply-chain security (SLSA/SBOM/Sigstore), compliance mapping (NIST CSF/ISO 27001/PCI-DSS/GDPR), classified-systems MLS, and government authorization (ATO/RMF/FedRAMP).
 ---
 
 # Using Security Architect
@@ -210,7 +210,7 @@ Is this security-related?
 
 What's the situation?
 ├─ New system design → threat-modeling + secure-by-design-patterns + security-controls-design
-├─ Reviewing existing → architecture-security-review
+├─ Reviewing existing → security-architecture-review
 ├─ Documenting security → documenting-threats-and-controls + muna/technical-writer/documentation-structure
 └─ Domain-specific → See "Specific Security Domains" above
 
@@ -253,7 +253,7 @@ You: Loading threat-modeling + secure-by-design-patterns + security-controls-des
 ### Pattern 2: Design Review
 ```
 User: "Review this plugin security design"
-You: Loading architecture-security-review
+You: Loading security-architecture-review
 ```
 
 ### Pattern 3: Classified System
@@ -293,9 +293,9 @@ You: Loading documenting-threats-and-controls + muna/technical-writer/documentat
 | Task Type | Load These Skills | Notes |
 |-----------|------------------|-------|
 | **New system design** | threat-modeling, secure-by-design-patterns, security-controls-design | Load in order |
-| **Design review** | architecture-security-review | Add threat-modeling if no threat analysis exists |
+| **Design review** | security-architecture-review | Add threat-modeling if no threat analysis exists |
 | **Authentication** | threat-modeling, secure-by-design-patterns | Consider authorization-and-accreditation if ATO needed |
-| **API security** | threat-modeling, architecture-security-review | Apply STRIDE to endpoints |
+| **API security** | threat-modeling, security-architecture-review | Apply STRIDE to endpoints |
 | **Classified data** | classified-systems-security + core skills | Extension required |
 | **Compliance** | compliance-awareness-and-mapping + core skills | Extension for regulatory contexts |
 | **Government ATO** | security-authorization-and-accreditation + core skills | Extension for ATO/AIS |
@@ -359,7 +359,7 @@ User: "Review architecture for system handling SECRET and UNCLASSIFIED data"
 Your routing:
 1. Recognize: Classified context (SECRET mentioned) + review task
 2. Load: classified-systems-security (MLS patterns required)
-3. Load: architecture-security-review (review process)
+3. Load: security-architecture-review (review process)
 4. Load: threat-modeling (if threats not already modeled)
 ```
 

@@ -167,7 +167,7 @@ Test with:
 
 **Audited:** [Design/URL]
 **Date:** [Date]
-**Standard:** WCAG 2.1 AA
+**Standard:** WCAG 2.2 AA
 
 ## Executive Summary
 
@@ -244,6 +244,16 @@ Test with:
 | 3.3.3 Error Suggestion | Pass/Fail | [Details] |
 | 3.3.4 Error Prevention | Pass/Fail | [Details] |
 
+### Level AA (New in WCAG 2.2)
+| Criterion | Status | Notes |
+|-----------|--------|-------|
+| 2.4.11 Focus Not Obscured (Minimum) | Pass/Fail | Sticky headers / cookie banners must not fully hide focused element |
+| 2.5.7 Dragging Movements | Pass/Fail | Any drag interaction has a single-pointer alternative (tap, button) |
+| 2.5.8 Target Size (Minimum) | Pass/Fail | Pointer targets ≥ 24×24 CSS pixels (exceptions: inline, user-agent, essential) |
+| 3.2.6 Consistent Help | Pass/Fail | Help mechanisms (contact, chat, FAQ) appear in same relative order across pages |
+| 3.3.7 Redundant Entry | Pass/Fail | Information previously entered is auto-populated or selectable (not re-typed) |
+| 3.3.8 Accessible Authentication (Minimum) | Pass/Fail | No cognitive-function test required to authenticate (puzzles, transcription) unless alternative exists |
+
 ## Remediation Plan
 
 ### Priority 1: Critical (Fix Immediately)
@@ -281,11 +291,17 @@ Test with:
 | Placeholder as label | 3.3.2 | Add visible label |
 | Auto-playing video | 1.4.2 | Add pause controls |
 | Color-only indicators | 1.4.1 | Add icon + text |
+| Focused element hidden under sticky header | 2.4.11 | Scroll-padding for focus, or reposition sticky chrome |
+| Drag-only reorder / slider | 2.5.7 | Provide up/down buttons or numeric input alternative |
+| 16×16 icon button hit area | 2.5.8 | Increase to ≥ 24×24 CSS px (44×44 still preferred for touch) |
+| Help link / chat widget in different place per page | 3.2.6 | Pin help to the same relative location across pages |
+| Re-typing email/address already given in flow | 3.3.7 | Auto-populate, offer "same as billing" / picker |
+| CAPTCHA puzzle gating login | 3.3.8 | Offer passkey / WebAuthn / OAuth / paste-from-password-manager path |
 
 ## Scope Boundaries
 
 **This command covers:**
-- Full WCAG 2.1 AA audit
+- Full WCAG 2.2 AA audit (including the six SCs added in WCAG 2.2: 2.4.11, 2.5.7, 2.5.8, 3.2.6, 3.3.7, 3.3.8)
 - Universal Access Model assessment
 - Remediation planning
 - Compliance documentation
