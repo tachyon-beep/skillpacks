@@ -1,3 +1,6 @@
+---
+description: Use when running a reader panel review on a document suite — spawns simulated readers (one per audience), captures chapter-by-chapter mood journals, produces editorial intelligence on where the document lands or loses each audience. Token-intensive; confirm panel size first.
+---
 
 # Run a Reader Panel Review
 

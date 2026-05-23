@@ -1,3 +1,6 @@
+---
+description: Use when designing a reader panel config from a set of documents — dispatches the persona-designer agent to analyse documents, identify audiences and decision chains, and write a complete panel review config with persona specs, scenario framing, and panel controls
+---
 
 # Design a Reader Panel from Documents
 

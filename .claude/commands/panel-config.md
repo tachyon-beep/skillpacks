@@ -1,3 +1,6 @@
+---
+description: Use when writing a panel review config interactively — defines the document suite, designs personas across the decision chain, drafts scenario framing, and configures panel controls (control persona, unreliable narrator, collision pairings). For automated config generation from documents use /panel-designer instead.
+---
 
 # Create a Panel Review Config
 

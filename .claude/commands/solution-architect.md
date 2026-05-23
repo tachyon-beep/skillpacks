@@ -1,3 +1,7 @@
+---
+description: Use when producing forward-design solution artifacts from a brief, HLD, epic, or brownfield change — triaging input maturity, quantifying NFRs, resisting tech/scope creep, writing rigorous ADRs, maintaining requirements traceability, designing for integration/migration, optional TOGAF/ArchiMate mapping, and assembling the SAD. Forward-design counterpart to /system-architect (existing-system critique) and /system-archaeologist (existing-system documentation).
+---
+
 # Using Solution Architect
 
 <!-- Content authority lives in plugins/axiom-solution-architect/skills/using-solution-architect/SKILL.md. Do not add inline router content to this command. -->
