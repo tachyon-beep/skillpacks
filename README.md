@@ -2,7 +2,7 @@
 
 ## Professional AI/ML, Python & Rust engineering, web backend, DevOps, SDLC, solution architecture, game development, security, documentation, and UX skills for Claude Code
 
-38 complete skillpacks • 200+ skills • Install what you need
+44 complete skillpacks • 200+ skills • Install what you need
 
 > **Recent additions (May 2026)**: 6 new packs — `yzmir-morphogenetic-rl`,
 > `axiom-determinism-and-replay`, `axiom-audit-pipelines`,
@@ -191,6 +191,46 @@ cd skillpacks
 - Leans on `axiom-planning` (implementation plans) and `axiom-sdlc-engineering`
   (process maturity, traceability, formal governance)
 - `/plugin install axiom-program-management`
+
+**axiom-product-management** - router + 8 sheets, 3 commands, 2 agents _(new — June 2026)_
+
+- Product management as **standing ownership** — take control of a software
+  product and own it end-to-end across sessions
+- A git-versioned product workspace (vision, intent-roadmap, Product Decision
+  Records, current-state, falsifiable metrics) + a resume→decide→dispatch→accept→
+  checkpoint loop + an authority boundary that escalates anything irreversible
+- Discovery & opportunity, vision/strategy/positioning, PRDs with falsifiable
+  acceptance criteria, delivery orchestration & acceptance, product-value metrics
+- Orchestrates, doesn't reimplement: routes sequencing/WSJF to
+  `axiom-program-management`, plans to `axiom-planning`, solution design to
+  `axiom-solution-architect`, research method to `lyra-ux-designer`
+- `/plugin install axiom-product-management`
+
+**axiom-embedded-database** - router + 13 sheets, 3 commands, 2 agents
+
+- SQLite & DuckDB as application-embedded databases at production scale
+- PRAGMA discipline, migrations under SQLite's ALTER constraints, WAL tuning,
+  transactions & isolation, single-writer concurrency, optimistic locking
+- Parameterized-SQL enforcement, JSON1, FTS5, DuckDB for OLAP, SQLCipher,
+  online backup & corruption recovery
+- `/plugin install axiom-embedded-database`
+
+**axiom-procedural-architecture** - router + 13 sheets, 3 commands, 2 agents
+
+- Structural reasoning for staged procedures — design, critique, and analyze
+  decompositions into composable stages with explicit dependencies, decision
+  points, and flow properties
+- Pattern pack for wizards, troubleshooting trees, training curricula,
+  configuration flows, decision pipelines, and workflows
+- `/plugin install axiom-procedural-architecture`
+
+**axiom-mcp-engineering** - router skill _(early access)_
+
+- Engineering MCP (Model Context Protocol) servers as production-grade agent
+  interfaces — tool API surface design, idempotency & atomic claim semantics
+  under agent retry, structured error envelopes, schema versioning, transport
+  reliability
+- `/plugin install axiom-mcp-engineering`
 
 **axiom-engineering-foundations** - 6 skills
 
