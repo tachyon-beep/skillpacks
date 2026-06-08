@@ -71,11 +71,11 @@ Monte-Carlo forecasting answers "when?" by *replaying your own history thousands
 
 | Trial | Sampled weekly throughputs (cumulative) | Weeks to reach 30 |
 |-------|------------------------------------------|-------------------|
-| 1 | 6, 5, 4, 6, 5, 4 → 30 | **6** |
+| 1 | 6, 4, 5, 3, 5, 4, 3 → 30 | **7** |
 | 2 | 3, 2, 4, 3, 3, 5, 4, 3, 3 → 30 | **9** |
 | 3 | 4, 3, 3, 4, 2, 6, 3, 5 → 30 | **8** |
 
-Three trials already spread across 6–9 weeks. Run 10,000 and the spread fills in. For a history like this the distribution typically lands with **P50 ≈ 8 weeks, P85 ≈ 9 weeks, P95 ≈ 10 weeks**. Now compare to the naive average answer: `30 ÷ 3.75 = 8 weeks`. **The single number a manager would quote by dividing the backlog by average throughput lands right at P50 — the coin-flip date.** This is the date-theatre thesis proven arithmetically: summing/dividing does not give you a *safe* date, it gives you the date you will *miss half the time*. The P85 (9 weeks) is what an honest commitment uses — over a week of buffer the naive method would have promised away with a straight face, and the P95 (10 weeks) is 25% further out still for when the downside is expensive.
+Three trials already spread across 7–9 weeks. Run 10,000 and the spread fills in. For a history like this the distribution typically lands with **P50 ≈ 8 weeks, P85 ≈ 9 weeks, P95 ≈ 10 weeks**. Now compare to the naive average answer: `30 ÷ 3.75 = 8 weeks`. **The single number a manager would quote by dividing the backlog by average throughput lands at roughly P50 — the coin-flip date.** That is not a coincidence: `N ÷ average-throughput` approximates the *mean* completion time, and because the completion-time distribution is right-skewed the mean sits slightly *above* the median — so the naive number lands about at P50, often a hair to the safe side of it, never the comfortable margin it is mistaken for. The thesis holds either way: summing and dividing does not buy a *safe* date, it buys a date you will *miss roughly half the time*. The P85 (9 weeks) is what an honest commitment uses — over a week of buffer the naive method would have promised away with a straight face, and the P95 (10 weeks) is 25% further out still for when the downside is expensive.
 
 **Variant B — "how many items can we deliver by date D?"** Invert the loop:
 
@@ -124,7 +124,7 @@ Never pad the number secretly to feel safe. Padding hides the confidence level i
 
 ## Anti-Patterns
 
-1. **A committed date built by summing point estimates.** The pack's spine anti-pattern. Estimates are not probabilities; summing them and quoting the total discards every bit of variance and yields a number whose hit-rate is ~50% at best — and, as the walkthrough shows, the naive `N ÷ average throughput` lands *exactly at P50*, the date you miss half the time. *Fix: forecast from the distribution of historical throughput (Monte-Carlo), commit at P85, and name the confidence level.*
+1. **A committed date built by summing point estimates.** The pack's spine anti-pattern. Estimates are not probabilities; summing them and quoting the total discards every bit of variance and yields a number whose hit-rate is ~50% at best — and, as the walkthrough shows, the naive `N ÷ average throughput` lands at roughly P50 (it approximates the mean completion time, which for a right-skewed distribution sits just above the median), the date you miss about half the time. *Fix: forecast from the distribution of historical throughput (Monte-Carlo), commit at P85, and name the confidence level.*
 
 2. **A single-point date with no confidence interval.** Any date quoted without a confidence attached is undefined — it could be a P50 or a P95 and the listener cannot tell, so they assume certainty that does not exist. *Fix: quote a range and a confidence (P50/P85 pair, or "85% confident by D"); a date with no interval is not a forecast.*
 
