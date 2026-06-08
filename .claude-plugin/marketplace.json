@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, solution architecture, game development, security, documentation, site design, and UX skills for Claude Code - 43 complete skillpacks with 400+ TDD-validated skills and reference sheets",
-    "version": "3.19.0",
+    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, product management, solution architecture, game development, security, documentation, site design, and UX skills for Claude Code - 44 complete skillpacks with 400+ TDD-validated skills and reference sheets",
+    "version": "3.20.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -680,6 +680,29 @@
         "wsjf",
         "dependency-management",
         "program-governance"
+      ],
+      "category": "development"
+    },
+    {
+      "name": "axiom-product-management",
+      "source": "./plugins/axiom-product-management",
+      "description": "Product management as standing ownership - for a Claude that takes control of a software product and owns it end-to-end across many sessions. Built on a structured operating system: a git-versioned product workspace (vision, intent-roadmap, append-only Product Decision Records, current-state brief, falsifiable metrics) and a resume/orient/decide/dispatch/accept/checkpoint loop, governed by an explicit authority boundary that escalates anything irreversible or outward-facing to the human owner. Owns the product disciplines: discovery and opportunity assessment (JTBD, problem validation, business case), vision/strategy/positioning and intent-roadmapping, PRDs with falsifiable acceptance criteria, delivery orchestration and acceptance (decide the bet, dispatch it, verify value landed), product-value metrics and experimentation, and the product anti-pattern catalog (build trap, feature factory, vanity metrics, HiPPO capture, autonomy overreach). Orchestrates rather than reimplements: hands sequencing/flow/WSJF to axiom-program-management, implementation plans to axiom-planning, solution/architecture to axiom-solution-architect, and research method to lyra-ux-designer. Router + 8 sheets, 3 commands, 2 agents.",
+      "keywords": [
+        "axiom",
+        "product-management",
+        "product-ownership",
+        "product-discovery",
+        "jobs-to-be-done",
+        "product-strategy",
+        "product-roadmap",
+        "prd",
+        "acceptance-criteria",
+        "product-metrics",
+        "north-star-metric",
+        "experimentation",
+        "build-trap",
+        "feature-factory",
+        "delivery-orchestration"
       ],
       "category": "development"
     }
