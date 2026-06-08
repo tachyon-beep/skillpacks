@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is the **Skillpacks Marketplace** - a modular collection of 16 professional skillpacks providing 144 production-ready skills for Claude Code across AI/ML, Python engineering, game development, security, documentation, UX design, and solution architecture.
+This is the **Skillpacks Marketplace** - a modular collection of 44 professional skillpacks (55 router/skill files plus 430+ reference sheets, 110+ commands, 90+ agents) for Claude Code across AI/ML, Python & Rust engineering, web backend, DevOps, SDLC and program/product management, solution architecture, game development, security, documentation, and UX design.
 
-**Status**: v1.2.0 - Production ready, CC BY-SA 4.0 licensed, publicly available
+**Status**: Marketplace v3.20.0 - Production ready, CC BY-SA 4.0 licensed, publicly available
 
 ## Architecture
 
@@ -15,8 +15,8 @@ This is the **Skillpacks Marketplace** - a modular collection of 16 professional
 ```plaintext
 skillpacks/
 ├── .claude-plugin/
-│   └── marketplace.json          # Marketplace catalog defining all 15 plugins
-├── plugins/                       # 15 independent plugin directories
+│   └── marketplace.json          # Marketplace catalog defining all 44 plugins
+├── plugins/                       # 44 independent plugin directories
 │   ├── [plugin-name]/
 │   │   ├── .claude-plugin/
 │   │   │   └── plugin.json       # Plugin metadata (name, version, description)
@@ -29,33 +29,32 @@ skillpacks/
 
 ### Plugin Categories
 
-1. **Python Engineering (Axiom faction)** - 3 plugins, 24 skills
-   - `axiom-python-engineering` (10 skills)
-   - `axiom-system-archaeologist` (5 skills - router + specialists)
-   - `axiom-solution-architect` (9 skills - router + specialists, forward design)
+Packs are grouped by faction prefix. Most modern packs follow a **router + reference-sheets** shape (a `using-X` router `SKILL.md` plus numbered sheets, slash commands, and SME agents), so the count that matters per pack is sheets/commands/agents rather than "skills". See `FACTIONS.md` for the thematic per-pack catalog and `.claude-plugin/marketplace.json` for the canonical list.
 
-2. **AI/ML (Yzmir faction)** - 8 plugins, 70 skills
-   - `yzmir-ai-engineering-expert` (router)
-   - `yzmir-pytorch-engineering`
-   - `yzmir-training-optimization`
-   - `yzmir-deep-rl`
-   - `yzmir-neural-architectures`
-   - `yzmir-llm-specialist`
-   - `yzmir-ml-production`
-   - `yzmir-simulation-foundations`
+1. **Engineering & process (Axiom faction)** - 20 plugins
+   - Python/Rust: `axiom-python-engineering`, `axiom-rust-engineering`, `axiom-rust-workspaces`, `axiom-pyo3-interop`
+   - Backend & data: `axiom-web-backend`, `axiom-embedded-database`, `axiom-mcp-engineering` (early access)
+   - Architecture & analysis: `axiom-system-architect`, `axiom-system-archaeologist`, `axiom-solution-architect`, `axiom-procedural-architecture`
+   - Process & delivery: `axiom-engineering-foundations`, `axiom-planning`, `axiom-sdlc-engineering`, `axiom-program-management`, `axiom-product-management`, `axiom-devops-engineering`
+   - Specialized discipline: `axiom-static-analysis-engineering`, `axiom-determinism-and-replay`, `axiom-audit-pipelines`
 
-3. **Game Development (Bravos faction)** - 2 plugins, 20 skills
-   - `bravos-simulation-tactics`
-   - `bravos-systems-as-experience`
+2. **AI/ML (Yzmir faction)** - 11 plugins
+   - `yzmir-ai-engineering-expert` (router), `yzmir-pytorch-engineering`, `yzmir-training-optimization`, `yzmir-deep-rl`, `yzmir-neural-architectures`, `yzmir-llm-specialist`, `yzmir-ml-production`, `yzmir-simulation-foundations`, `yzmir-dynamic-architectures`, `yzmir-morphogenetic-rl`, `yzmir-systems-thinking`
 
-4. **UX Design (Lyra faction)** - 1 plugin, 11 skills
-   - `lyra-ux-designer`
+3. **Game Development (Bravos faction)** - 2 plugins
+   - `bravos-simulation-tactics`, `bravos-systems-as-experience`
 
-5. **Security (Ordis faction)** - 1 plugin, 9 skills
-   - `ordis-security-architect`
+4. **Design & creative (Lyra faction)** - 3 plugins
+   - `lyra-ux-designer`, `lyra-site-designer`, `lyra-creative-writing`
 
-6. **Documentation (Muna faction)** - 1 plugin, 9 skills
-   - `muna-technical-writer`
+5. **Documentation (Muna faction)** - 4 plugins
+   - `muna-technical-writer`, `muna-document-designer`, `muna-wiki-management`, `muna-panel-review`
+
+6. **Security & quality (Ordis faction)** - 2 plugins
+   - `ordis-security-architect`, `ordis-quality-engineering`
+
+7. **Meta (cross-faction)** - 2 plugins
+   - `meta-sme-protocol`, `meta-skillpack-maintenance`
 
 ### Slash Commands (Router Skills)
 
@@ -77,7 +76,7 @@ To use a router skill, invoke it as a slash command:
 - Faster loading
 - Better control flow
 
-See [.claude/SLASH_COMMANDS.md](.claude/SLASH_COMMANDS.md) for complete list of all 15 router commands.
+See [.claude/SLASH_COMMANDS.md](.claude/SLASH_COMMANDS.md) for the complete list of router commands.
 
 ### Skill File Format
 
@@ -94,7 +93,7 @@ Several plugins use "using-X" router skills that direct users to appropriate spe
 - `axiom-system-archaeologist/using-system-archaeologist/SKILL.md` → `/system-archaeologist` - Routes to architecture analysis specialists
 - `yzmir-ai-engineering-expert/using-ai-engineering/SKILL.md` → `/ai-engineering` - Routes to all AI/ML packs
 - `yzmir-deep-rl/using-deep-rl/SKILL.md` → `/deep-rl` - Routes to 12 RL algorithm skills
-- Similar routers exist for all 15 plugins (see `.claude/SLASH_COMMANDS.md` for complete list)
+- Similar routers exist for most plugins (see `.claude/SLASH_COMMANDS.md` for complete list)
 
 ## Installation & Testing
 
@@ -143,7 +142,7 @@ Each plugin has independent versioning in `.claude-plugin/plugin.json`:
 
 ### Marketplace Versioning
 
-The marketplace catalog (`.claude-plugin/marketplace.json`) coordinates all 13 plugins:
+The marketplace catalog (`.claude-plugin/marketplace.json`) coordinates all 44 plugins:
 
 - Lists all plugins with their source paths
 - Maintains marketplace metadata (version, homepage)
@@ -210,10 +209,11 @@ This repository uses a unique testing methodology:
 
 ## File Manifest
 
-**Total**: 201+ production files
+**Total**: 700+ production files
 
-- 144 skill files (SKILL.md)
-- 15 plugin metadata files (plugin.json)
+- 55 router/skill files (SKILL.md) + 430+ reference sheets
+- 110+ slash commands, 90+ SME agents
+- 44 plugin metadata files (plugin.json)
 - 1 marketplace catalog (marketplace.json)
 - Core documentation (README, LICENSE, CLAUDE.md, FACTIONS.md, CONTRIBUTING.md, LICENSE_ADDENDUM.md)
 - TDD artifacts (test scenarios, baseline results, methodology documentation)
@@ -279,7 +279,7 @@ for dir in plugins/*/; do
 done
 
 # Count total skills
-find plugins -name "SKILL.md" | wc -l  # Should be 144
+find plugins -name "SKILL.md" | wc -l  # Should be 55
 ```
 
 ## Important Notes

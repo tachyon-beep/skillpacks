@@ -71,6 +71,23 @@ The Yzmir's mastery of hidden knowledge and systematic exploration of the unknow
 - Stability analysis predicting future states
 - Control theory as shaping outcomes through understanding
 
+**yzmir-neural-architectures** complements two further schools of living knowledge:
+
+**yzmir-dynamic-architectures** - *Living Grimoires*
+
+- Neural networks that grow, prune, and adapt their topology during training
+- Continual learning and PEFT (LoRA family), MoE/adapter composition
+
+**yzmir-morphogenetic-rl** - *The Self-Shaping Mind*
+
+- RL controllers that decide when and how to mutate a network's topology
+- Governor and safety gates, rollback-as-signal, deterministic morphogenesis
+
+**yzmir-systems-thinking** - *The Web of Causes*
+
+- Causal-loop and stock-flow modeling, system archetypes
+- Leverage-point analysis after Meadows' twelve-level hierarchy
+
 The Yzmir approach: **Systematic mastery through deep understanding of fundamental principles.** Every spell must be understood, every model's behavior explained, every optimization justified by theory.
 
 ---
@@ -134,6 +151,16 @@ The Lyra's focus on transformation, emotional resonance, and experiencing the wo
 - Accessibility as ensuring all can feel the art
 - Mobile/web/desktop/game UI as different forms of expression
 - User research as understanding souls through empathy
+
+**lyra-creative-writing** - *The Storyteller's Loom*
+
+- Workshop-voiced craft for prose narrative — fiction and creative nonfiction
+- Three explicit modes: draft, critique, plan; reader-contract discipline
+
+**lyra-site-designer** - *The Wandering Showcase*
+
+- Static site design for developer tools, open-source projects, and docs
+- Information architecture, design tokens, developer-UX patterns
 
 The Lyra approach: **Design as art, interfaces as emotional journeys, every pixel a brushstroke in service of transcendent experience.** The user doesn't click buttons - they feel, they experience, they are transformed.
 
@@ -201,6 +228,18 @@ The Muna's focus on harmony, connection, and making knowledge accessible to all 
 - ITIL and governance as cultivating long-term ecosystem health
 - Documentation testing as verifying the connections hold
 
+**muna-document-designer** - *The Illuminated Page*
+
+- Professional document design with Pandoc and Typst — typography, layout, branded systems
+
+**muna-wiki-management** - *The Living Library*
+
+- Document sets as wikis: manifest-driven architecture, derivation discipline, terminology & link consistency
+
+**muna-panel-review** - *The Council of Readers*
+
+- Simulated audience-panel review: persona readers surface where a document lands or loses each audience
+
 The Muna approach: **Documentation as cultivation, every guide a thread in the great tapestry, every diagram a map of connections.** Knowledge must flow freely yet remain rooted in truth.
 
 ---
@@ -231,7 +270,97 @@ The Axiom's dedication to making technology accessible through systematic proces
 - ML engineering workflows and reproducibility
 - Debugging methodology and systematic troubleshooting
 
+**axiom-engineering-foundations** - *The Apprentice's Codex*
+
+- Language-agnostic engineering methodology: systematic debugging, safe refactoring, code review, incident response, technical-debt triage
+
+**axiom-rust-engineering** - *The Forge of Safe Steel*
+
+- Modern Rust (2024 edition): ownership, borrowing, lifetimes, traits & generics, async (tokio), clippy/cargo tooling
+
+**axiom-rust-workspaces** - *The Master Assembly*
+
+- Rust at workspace scope: multi-crate structure, shared dependencies, release coordination
+
+**axiom-pyo3-interop** - *The Bridgeworks*
+
+- Production-grade Python ↔ Rust interop via PyO3: the FFI boundary, GIL release, NumPy buffers, packaging
+
+**axiom-web-backend** - *The Public Works*
+
+- Web backend: FastAPI, Django, Express, REST/GraphQL, microservice boundaries
+
+**axiom-mcp-engineering** - *The Tool-Smith's Interface* (early access)
+
+- Engineering MCP servers as production-grade agent interfaces: tool API surface, idempotency, structured errors
+
+**axiom-embedded-database** - *The Vault*
+
+- SQLite & DuckDB at production scale: PRAGMA discipline, migrations, WAL tuning, transactions, backup & recovery
+
+**axiom-system-architect** - *The Master Surveyor*
+
+- Architectural assessment of existing codebases — quality, debt, prioritized improvement
+
+**axiom-system-archaeologist** - *The Excavators*
+
+- Deep architectural analysis of unknown codebases through layered, evidence-based exploration
+
+**axiom-solution-architect** - *The Blueprint Hall*
+
+- Forward solution architecture: a traceable artifact set (ADRs, C4, NFRs, RTM) from brief, HLD, or brownfield change
+
+**axiom-planning** - *The Drafting Table*
+
+- TDD-validated implementation planning with a four-reviewer plan-review quality gate
+
+**axiom-sdlc-engineering** - *The Guild Charter*
+
+- CMMI-based SDLC (Levels 2–4): requirements lifecycle, governance, traceability, quality assurance
+
+**axiom-program-management** - *The Works Manager*
+
+- Project & program delivery discipline: flow metrics, forecasting, RAID, now/next/later roadmaps, governance
+
+**axiom-product-management** - *The Master Builder*
+
+- Product management as standing ownership: decide the bet, specify it, dispatch it, verify value landed — across sessions
+
+**axiom-procedural-architecture** - *The Mechanism Designer*
+
+- Structural reasoning for staged procedures: decomposition, dependencies, decision points, flow properties
+
+**axiom-static-analysis-engineering** - *The Inspection Engine*
+
+- Building static analyzers as engines: lattices, dataflow, rule design, false-positive economics
+
+**axiom-determinism-and-replay** - *The Perfect Recorder*
+
+- Architecture-level determinism & replay: seed governance, RNG isolation, snapshots, divergence detection
+
+**axiom-audit-pipelines** - *The Ledger Works*
+
+- Audit-grade decision pipelines: canonical encoding (RFC 8785), append-only logs, fingerprint chains, signed exports
+
+**axiom-devops-engineering** - *The Assembly Line*
+
+- DevOps & deployment automation: CI/CD pipelines, zero-downtime rollout, verification gates, rollback
+
 The Axiom approach: **Quality through testing, clarity through types, accessibility through documentation.** Every tool is systematic, every process repeatable, every technique shareable.
+
+---
+
+## Meta - The Common Craft
+
+Two packs belong to no single faction; they are the shared discipline every faction's artisans hold in common — the standards by which all the others are built and maintained.
+
+**meta-sme-protocol** - *The Artisan's Oath*
+
+- The SME (Subject Matter Expert) Agent Protocol every specialist agent follows: fact-finding, output contracts, confidence and risk assessment
+
+**meta-skillpack-maintenance** - *The Curators*
+
+- Systematic maintenance of the skillpacks themselves: structure review, domain analysis, skill-quality testing
 
 ---
 
