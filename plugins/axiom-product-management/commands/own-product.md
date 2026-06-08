@@ -1,5 +1,5 @@
 ---
-description: Take or resume standing ownership of a software product — runs the RESUME + ORIENT half of the operating loop against a git-versioned product workspace (default docs/product/). Branches on whether the workspace exists: if ABSENT, scans the repo, tracker, git history, and README/docs and CONSTRUCTS the five standing artifacts (vision.md, roadmap.md, metrics.md, current-state.md, decisions/), proposing an authority grant for the human to confirm; if PRESENT, LOADS the workspace and RECONCILES it against current reality (repo state, tracker, metrics), emitting a current-state brief, proposed next bets, and any drift. Always ends by surfacing the authority grant for explicit confirmation. Writes real files — never a copy-paste block.
+description: Take or resume standing ownership of a software product — the RESUME + ORIENT half of the ownership loop, run against a git-versioned product workspace (default docs/product/). If the workspace is absent it bootstraps the five standing artifacts from the repo, tracker, and git history and proposes an authority grant to confirm; if present it loads and reconciles them against reality, emitting a current-state brief, proposed next bets, and any drift. Writes real files (never a copy-paste block) and always surfaces the authority grant for explicit confirmation.
 allowed-tools: ["Read", "Grep", "Glob", "Bash", "AskUserQuestion", "Write"]
 argument-hint: "[product_path]"
 ---
@@ -18,9 +18,10 @@ The **first action** is an existence check on the workspace path. Everything dow
 - **PRESENT** (the workspace exists) → **RESUME**. Load the five artifacts, reconcile them against current reality, surface drift. Do not re-derive strategy from the prompt; the workspace is the source of truth about the product's own past.
 
 ```bash
-# Settle the branch
-PRODUCT_PATH="${1:-docs/product}"
-test -f "$PRODUCT_PATH/vision.md" && echo "PRESENT — resume" || echo "ABSENT — bootstrap"
+# Settle the branch — PRODUCT_DIR defaults to docs/product/; override it with the
+# path passed as the command argument if one was given.
+PRODUCT_DIR="${PRODUCT_DIR:-docs/product}"
+test -f "$PRODUCT_DIR/vision.md" && echo "PRESENT — resume" || echo "ABSENT — bootstrap"
 ```
 
 If only *some* artifacts exist (a partial or hand-started workspace), treat it as RESUME for what is present and BOOTSTRAP the missing files — reconcile, do not overwrite, what the human already wrote.
