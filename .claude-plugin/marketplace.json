@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, solution architecture, game development, security, documentation, site design, and UX skills for Claude Code - 42 complete skillpacks with 400+ TDD-validated skills and reference sheets",
-    "version": "3.18.1",
+    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, solution architecture, game development, security, documentation, site design, and UX skills for Claude Code - 43 complete skillpacks with 400+ TDD-validated skills and reference sheets",
+    "version": "3.19.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -659,6 +659,29 @@
         "optimization"
       ],
       "category": "ai-ml"
+    },
+    {
+      "name": "axiom-program-management",
+      "source": "./plugins/axiom-program-management",
+      "description": "Project and program management as a delivery discipline - lean/agile-leaning, honest about where program scale needs predictive structure. Project tier: flow (cadence, WIP, cycle-time/throughput, Monte-Carlo forecasting), scope/backlog control, lean estimation, stakeholder management, operational RAID logs, honest RAG/watermelon-resistant reporting, dependency coordination. Program tier: program structure and governance, benefits realization and OKRs, now/next/later roadmapping with WSJF/cost-of-delay, cross-project dependency and integration management, capacity/funding flow with stable teams, scaling/operating-model selection without framework dogma. Leans on axiom-planning (implementation planning) and axiom-sdlc-engineering (process maturity, traceability, formal governance). Router + 13 sheets, 3 commands, 2 agents.",
+      "keywords": [
+        "axiom",
+        "program-management",
+        "project-management",
+        "agile",
+        "lean",
+        "flow-metrics",
+        "monte-carlo-forecasting",
+        "raid-log",
+        "status-reporting",
+        "benefits-realization",
+        "okrs",
+        "roadmapping",
+        "wsjf",
+        "dependency-management",
+        "program-governance"
+      ],
+      "category": "development"
     }
   ]
 }

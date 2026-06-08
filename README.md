@@ -92,7 +92,7 @@ cd skillpacks
 - Derivation tracking, consistency auditing, evolution management
 - `/plugin install muna-wiki-management`
 
-### 🔬 Development (Axiom) - 15 Packs
+### 🔬 Development (Axiom) - 16 Packs
 
 **axiom-python-engineering** - 10 skills
 
@@ -177,6 +177,20 @@ cd skillpacks
 - Plan review spawns 4 parallel reviewers (reality, architecture, quality, systems) + synthesizer
 - Catches hallucinations, convention violations, and risks before code execution
 - `/plugin install axiom-planning`
+
+**axiom-program-management** - router + 13 sheets, 3 commands, 2 agents _(new — June 2026)_
+
+- Project & program management as a delivery discipline — lean/agile-leaning,
+  honest about where program scale needs predictive structure
+- Project tier: flow metrics & WIP, scope/backlog control, Monte-Carlo
+  forecasting, stakeholder management, operational RAID logs, watermelon-resistant
+  status reporting, dependency coordination
+- Program tier: governance, benefits realization & OKRs, now/next/later
+  roadmapping with WSJF, cross-project dependencies, capacity & stable teams,
+  scaling without framework dogma
+- Leans on `axiom-planning` (implementation plans) and `axiom-sdlc-engineering`
+  (process maturity, traceability, formal governance)
+- `/plugin install axiom-program-management`
 
 **axiom-engineering-foundations** - 6 skills
 
