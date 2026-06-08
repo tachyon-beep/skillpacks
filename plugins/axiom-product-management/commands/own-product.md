@@ -37,9 +37,9 @@ grep -rl -i "vision\|mission\|purpose\|north.star\|roadmap\|metric\|objective" R
 # Observed direction from history — what has actually been built lately
 git log --oneline -30 2>/dev/null
 
-# Tracker reality via the adapter (product-state-and-continuity.md) — detect the tracker, do not assume
-command -v filigree >/dev/null && filigree list --status=open 2>/dev/null
-command -v gh >/dev/null && gh issue list --state open 2>/dev/null
+# Tracker reality via the adapter (product-state-and-continuity.md): detect the product's
+# issue / case-management system and list its open items through that tool's own CLI or MCP.
+# The adapter is tracker-agnostic — do not assume a specific tool; bind to whatever exists.
 ```
 
 From that evidence, draft the five artifacts to the **exact schemas in `product-state-and-continuity.md`** — do not invent shapes:

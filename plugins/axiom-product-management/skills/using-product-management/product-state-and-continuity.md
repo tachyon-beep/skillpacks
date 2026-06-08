@@ -69,8 +69,8 @@ This is the *file schema*, not the roadmapping discipline. The Now/Next/Later ba
 > schedule. Do not compute WSJF here; hand the committed bet over for sequencing.
 
 ## Now  (committed, in-flight)
-- **<theme / outcome bet>** — why it's the bet · tracker: filigree #M-12 · metric: north-star
-- **<theme>** — ... · tracker: GH #240
+- **<theme / outcome bet>** — why it's the bet · tracker: #142 · metric: north-star
+- **<theme>** — ... · tracker: #240
 
 ## Next (shaped, decreasing certainty)
 - **<theme>** — ... (not yet sequenced)
@@ -125,7 +125,7 @@ This is the single file RESUME reads first, CHECKPOINT rewrites last, and `/own-
 One line: the Now theme and the metric it's meant to move.
 
 ## In flight
-- <workstream> — status — tracker: filigree #M-12 (3 open, 1 in-review) — dispatched to /axiom-planning
+- <workstream> — status — tracker: #142 (3 open, 1 in-review) — dispatched to /axiom-planning
 - <workstream> — awaiting acceptance against PRD-0006 criteria
 
 ## Open questions / blocked-on-owner
@@ -179,18 +179,17 @@ update(id, fields)        → change status/fields/dependencies
 close(id, reason)         → resolve with a reason string
 ```
 
-Concrete mappings. Filigree's CLI is verified; `gh` is standard. Linear and Jira are mapped at the operation and ID-format level — use the tool's own CLI/MCP for exact flags rather than trusting a flag string here.
+The five operations are deliberately tracker-agnostic — virtually every issue or case-management system exposes them, whether through a CLI, a REST API, or an MCP server. Bind the adapter once to whatever the product already uses; the workspace never needs to know *which* system it is, only the stable ID format that system issues.
 
-| Operation | filigree | GitHub Issues | Linear | Jira |
-|-----------|----------|---------------|--------|------|
-| read | `filigree show <id>` | `gh issue view <n>` | get issue `LIN-123` | get issue `PROJ-456` |
-| list | `filigree list --status=open` | `gh issue list --state open` | list by team/status | JQL search |
-| create | `filigree create "..." --type=task` | `gh issue create -t "..."` | create issue | create issue |
-| update | `filigree batch-update` / `start-work` | `gh issue edit <n>` | update issue | transition/edit |
-| close | `filigree close <id> --reason="..."` | `gh issue close <n>` | set state Done | transition to Done |
-| ID format | `#M-12`, `#123` | `#123` | `LIN-123` | `PROJ-456` |
+| Operation | Generic case-management call | Must return / do |
+|-----------|------------------------------|------------------|
+| read   | get one item by its ID            | full detail: title, status, dependencies |
+| list   | query items by a filter           | items matching status / label / milestone |
+| create | open a new item                   | the new item's stable ID |
+| update | edit fields, status, dependencies | confirmation that the item moved |
+| close  | resolve with a reason             | the item closed, the reason recorded |
 
-Workspace files cite these IDs verbatim (`tracker: GH #240`). The rule never bends: if you find yourself pasting a task list into `roadmap.md` or `current-state.md`, stop — link the IDs and let the tracker own the detail. Two sources of truth for one backlog is how the workspace and the tracker silently diverge.
+Bind these to the product's tracker through its own CLI or MCP — confirm exact flags and verbs against that tool's help, never trust a string memorised here. Whatever the system, workspace files cite items by its stable ID format verbatim (e.g. `#142` or `TRK-142`). The rule never bends: if you find yourself pasting a task list into `roadmap.md` or `current-state.md`, stop — link the IDs and let the tracker own the detail. Two sources of truth for one backlog is how the workspace and the tracker silently diverge.
 
 ## The RESUME protocol
 

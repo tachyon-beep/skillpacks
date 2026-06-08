@@ -20,10 +20,10 @@ The product of decomposition is a short dispatch manifest — generic shape:
 
 | Unit | Owner pack | What it is | Acceptance criterion (traces to PDR) | Tracker |
 |------|-----------|------------|--------------------------------------|---------|
-| Spec the metered checkout flow | `/write-prd` → `/axiom-planning` | PRD + implementation plan for the top slice | criterion C1: activation-within-24h ≥ TARGET | filigree #M-12 |
+| Spec the metered checkout flow | `/write-prd` → `/axiom-planning` | PRD + implementation plan for the top slice | criterion C1: activation-within-24h ≥ TARGET | #142 |
 | Sequence the slices | `/axiom-program-management` | flow/forecast/WSJF across the slices | n/a (delivery, not value) | (program owns) |
-| Shape the data model | `/axiom-solution-architect` | solution/architecture + ADR for the metering store | n/a (design, not value) | GH #240 |
-| Build slice 1 | language-engineering pack via the plan | the code | criterion C1 again — verified at ACCEPT | filigree #M-13 |
+| Shape the data model | `/axiom-solution-architect` | solution/architecture + ADR for the metering store | n/a (design, not value) | #240 |
+| Build slice 1 | language-engineering pack via the plan | the code | criterion C1 again — verified at ACCEPT | #143 |
 
 Two things this manifest is *not*. It is not a duplicate of the backlog — the tracker owns the task detail (`product-state-and-continuity.md`); the manifest holds only the linkage. And it is not a plan — no files, no code, no sequence; those belong to the packs in the "Owner pack" column. The owner's authorship ends at "this unit, that pack, this meaning of done."
 
@@ -41,7 +41,7 @@ DISPATCH is the load-bearing seam, and the discipline is mechanical: **match eac
 
 The order matters: typically `/write-prd` produces the spec, `/axiom-planning` turns its top item into a plan, `/axiom-solution-architect` shapes the *how* when the bet needs design before a plan is sensible, and `/axiom-program-management` sequences the slices and gives the defensible "when." These run in parallel where they are independent — sequencing the slices does not wait on the architecture ADR landing — and the owner's job is to fire each route, not to do the work behind it.
 
-What DISPATCH *records* is the linkage only: in `current-state.md`, each in-flight unit gets a line naming its tracker ID and its owning sibling (`<unit> — dispatched to /axiom-planning — tracker: filigree #M-13`); in the bet's PDR, the dispatch decision and its acceptance criteria. The tracker-adapter contract (`product-state-and-continuity.md`) is how those IDs are created and read — `create(title, type)` to open a unit, `update(id, fields)` as it moves, the stable ID format cited verbatim in the workspace. The rule never bends: the workspace points at the tracker; it does not hold a copy of what the tracker owns.
+What DISPATCH *records* is the linkage only: in `current-state.md`, each in-flight unit gets a line naming its tracker ID and its owning sibling (`<unit> — dispatched to /axiom-planning — tracker: #143`); in the bet's PDR, the dispatch decision and its acceptance criteria. The tracker-adapter contract (`product-state-and-continuity.md`) is how those IDs are created and read — `create(title, type)` to open a unit, `update(id, fields)` as it moves, the stable ID format cited verbatim in the workspace. The rule never bends: the workspace points at the tracker; it does not hold a copy of what the tracker owns.
 
 ## Tracking dispatched work without owning the flow
 
