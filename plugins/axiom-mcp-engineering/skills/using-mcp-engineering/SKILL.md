@@ -121,7 +121,7 @@ The architect and the critic share the corpus of 13 sheets. They do not share ep
 
 **If architect and critic always agree, the pipeline is broken.** A typical pass produces at least one substantive disagreement: the architect proposes `update_issue` as a single tool with a partial-update payload; the critic finds that under retry-after-network-blip, the partial update may apply twice with different intermediate states, and demands an explicit `update_issue` + `expected_version` parameter or a separate `claim_issue` lease. Resolving that disagreement is the work this pack exists to do. A run that produces no disagreement is evidence the critic is reading the surface the way the architect wrote it — same blind spots, same defaults — and the audit is theatre. Treat zero-disagreement runs as a defect of the critic, not as a virtue of the architect.
 
-The architect's slash command will be `/design-mcp-server`. The critic's slash command will be `/review-mcp-server`. A tool-surface-focused command, `/audit-mcp-tools`, runs the critic over an existing server's tool catalog without re-deriving the full design. The two SME agents will be `mcp-server-architect` (architect) and `mcp-server-critic` (critic); both will follow the SME Agent Protocol and emit **finding / severity / evidence** triples where they make claims. *(Commands and agents are roadmap for v0.2.0; the v0.1.0 ship is router + sheets.)*
+The architect's slash command is `/design-mcp-server`. The critic's slash command is `/review-mcp-server`. A tool-surface-focused command, `/audit-mcp-tools`, runs the critic over an existing server's tool catalog without re-deriving the full design. The two SME agents are `mcp-server-architect` (architect) and `mcp-server-critic` (critic); both follow the SME Agent Protocol and emit **finding / severity / evidence** triples where they make claims. *(Commands and agents are shipped in v0.2.0, alongside the router and all 13 sheets.)*
 
 ## Start Here
 
@@ -171,7 +171,7 @@ Symptom phrased in the user's own words on the left; sheet to read on the right.
 | "tool X took 40 seconds last Tuesday — was that one execution or four?" | [observability-for-tool-calls.md](observability-for-tool-calls.md) |
 | "the team wants to expose user-credentials-as-resource and I am not sure that is safe" | [authentication-and-trust.md](authentication-and-trust.md) |
 | "this surface has a smell I cannot name" | [mcp-server-smells.md](mcp-server-smells.md) |
-| "is this question really for this pack, or is it `/web-backend` / `/llm-specialist`?" | [mcp-boundary-and-handoffs.md](mcp-boundary-and-handoffs.md) |
+| "is this question really for this pack, or is it `/web-backend` / `/llm-specialist`?" | Boundary question — see the **Do Not Use This Pack When** section above; route to `/web-backend`, `/llm-specialist`, `/procedural-architecture`, or `/audit-pipelines`. |
 
 ## How to Access Reference Sheets
 
@@ -204,22 +204,21 @@ The 13 sheets:
 12. [observability-for-tool-calls.md](observability-for-tool-calls.md) — per-call telemetry, retry visibility, idempotency-key tracing, surfacing of duplicate execution, dashboards that answer "was that one execution or four?"
 13. [mcp-server-smells.md](mcp-server-smells.md) — catalogued anti-patterns: overlapping-tools, tool-as-CRUD-mirror, error-as-stack-trace, parameter-the-agent-cannot-fill, return-shape-that-blows-budget, retry-amplification, schema-drift-without-bump, namespace-collision, resource-that-should-be-a-tool, tool-that-should-be-a-resource
 
-**Boundary sheet** *(absorbed into the routing table for v0.1.0; promoted to its own sheet if the routing question becomes a recurrent ask):* mcp-boundary-and-handoffs — where this pack stops; cross-pack handoffs to `/web-backend`, `/llm-specialist`, `/procedural-architecture`, `/audit-pipelines`.
+**Boundary sheet** *(absorbed into the routing table as of v0.2.0; promoted to its own sheet if the routing question becomes a recurrent ask):* mcp-boundary-and-handoffs — where this pack stops; cross-pack handoffs to `/web-backend`, `/llm-specialist`, `/procedural-architecture`, `/audit-pipelines`.
 
-## v0.1.0 Scope
+## v0.2.0 Scope
 
-This is the **scaffold release**. Shipped:
+This is the **feature-complete release**. Shipped:
 
 - This router (`using-mcp-engineering/SKILL.md`).
+- The 13 reference sheets (listed under *How to Access Reference Sheets*).
+- The three slash commands (`/design-mcp-server`, `/review-mcp-server`, `/audit-mcp-tools`).
+- The two SME agents (`mcp-server-architect`, `mcp-server-critic`), both following the SME Agent Protocol.
 - Plugin metadata (`plugin.json`).
 
-Not yet shipped (roadmap for v0.2.0+):
+What may come next: promotion of the boundary sheet (`mcp-boundary-and-handoffs`) from the routing table to its own file if cross-pack routing becomes a recurrent ask; deeper coverage of emerging transport modes and capability-negotiation patterns as the protocol evolves; and additional smell-catalog entries surfaced by real-world critic passes.
 
-- The 13 reference sheets.
-- The three slash commands (`/design-mcp-server`, `/review-mcp-server`, `/audit-mcp-tools`).
-- The two SME agents (`mcp-server-architect`, `mcp-server-critic`).
-
-The router is intentionally self-supporting: a producer or critic can extract substantial value from the routing table, role architecture, and consistency gate below before any sheet is written. Sheets exist to deepen the discipline, not to substitute for thinking about it.
+The router remains self-supporting: a producer or critic can extract substantial value from the routing table, role architecture, and consistency gate before opening a single sheet. Sheets deepen the discipline; they do not substitute for thinking about it.
 
 ## Consistency Gate
 
