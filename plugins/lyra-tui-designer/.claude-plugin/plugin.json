@@ -1,0 +1,9 @@
+{
+  "name": "lyra-tui-designer",
+  "version": "0.1.0",
+  "description": "Terminal UI (TUI) design best practice - design-led and framework-agnostic (ratatui, Textual, Bubble Tea, Ink, notcurses). Event-loop architecture, responsive layout, redraw discipline, input/focus, color/theming with NO_COLOR + capability fallback, affordances, async feedback, terminal accessibility, signal-safe terminal restoration, golden-frame testing, cross-environment delivery - 1 router + 13 sheets, 3 commands, 2 agents (tui-design-reviewer, tui-architect)",
+  "author": { "name": "tachyon-beep", "url": "https://github.com/tachyon-beep" },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": ["lyra", "tui", "terminal", "design", "ratatui", "textual", "bubbletea", "accessibility"]
+}
