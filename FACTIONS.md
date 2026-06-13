@@ -162,6 +162,13 @@ The Lyra's focus on transformation, emotional resonance, and experiencing the wo
 - Static site design for developer tools, open-source projects, and docs
 - Information architecture, design tokens, developer-UX patterns
 
+**lyra-tui-designer** - *The Living Terminal*
+
+- Terminal UI design as experience — framework-agnostic across ratatui, Textual, Bubble Tea, Ink, and notcurses
+- Event-loop architecture, responsive layout, and redraw discipline so the interface never flickers or lags
+- Input and focus, color/theming with NO_COLOR and capability fallback, async feedback, and terminal accessibility
+- Signal-safe terminal restoration so a crash never wrecks the user's shell — a TUI that corrupts the terminal is a UX failure
+
 The Lyra approach: **Design as art, interfaces as emotional journeys, every pixel a brushstroke in service of transcendent experience.** The user doesn't click buttons - they feel, they experience, they are transformed.
 
 ---

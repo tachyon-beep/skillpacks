@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, product management, solution architecture, game development, security, documentation, site design, and UX skills for Claude Code - 44 complete skillpacks with 400+ TDD-validated skills and reference sheets",
-    "version": "3.20.0",
+    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, product management, solution architecture, game development, security, documentation, site design, and UX skills for Claude Code - 45 complete skillpacks with 400+ TDD-validated skills and reference sheets",
+    "version": "3.21.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -412,6 +412,22 @@
         "css",
         "documentation",
         "developer-tools"
+      ],
+      "category": "user-experience"
+    },
+    {
+      "name": "lyra-tui-designer",
+      "source": "./plugins/lyra-tui-designer",
+      "description": "Terminal UI (TUI) design best practice - design-led and framework-agnostic (ratatui, Textual, Bubble Tea, Ink, notcurses). Event-loop architecture, responsive layout, redraw discipline, input/focus, color/theming with NO_COLOR + capability fallback, affordances, async feedback, terminal accessibility, signal-safe terminal restoration, golden-frame testing, cross-environment delivery - 1 router + 13 sheets, 3 commands, 2 agents (tui-design-reviewer, tui-architect)",
+      "keywords": [
+        "lyra",
+        "tui",
+        "terminal",
+        "design",
+        "ratatui",
+        "textual",
+        "bubbletea",
+        "accessibility"
       ],
       "category": "user-experience"
     },

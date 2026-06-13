@@ -2,7 +2,7 @@
 
 ## Professional AI/ML, Python & Rust engineering, web backend, DevOps, SDLC, solution architecture, game development, security, documentation, and UX skills for Claude Code
 
-44 complete skillpacks • 200+ skills • Install what you need
+45 complete skillpacks • 200+ skills • Install what you need
 
 > **Recent additions (May 2026)**: 6 new packs — `yzmir-morphogenetic-rl`,
 > `axiom-determinism-and-replay`, `axiom-audit-pipelines`,
@@ -356,7 +356,7 @@ cd skillpacks
 - Emergent gameplay, player-driven narratives, strategic depth
 - `/plugin install bravos-systems-as-experience`
 
-### 🎨 UX, Site Design & Creative Writing (Lyra) - 3 Packs
+### 🎨 UX, Site Design & Creative Writing (Lyra) - 4 Packs
 
 **lyra-creative-writing** - 1 router + 13 craft + 9 genre sheets, 3 commands, 11 agents _(v0.2 genre annex — May 2026)_
 
@@ -386,6 +386,18 @@ cd skillpacks
 - Developer UX patterns: code blocks, dark mode, search, responsive layouts
 - Static site tooling guidance (Hugo, Astro, Eleventy)
 - `/plugin install lyra-site-designer`
+
+**lyra-tui-designer** - 1 router + 13 sheets, 3 commands, 2 agents
+
+- Terminal UI design as experience — framework-agnostic across ratatui (Rust),
+  Textual + Rich (Python), Bubble Tea (Go), Ink (JS), and notcurses
+- Event-loop architecture, responsive layout, and redraw discipline so the
+  interface never flickers or lags
+- Input and focus handling, color/theming with NO_COLOR and capability fallback,
+  affordances, async feedback, and terminal accessibility
+- Signal-safe terminal restoration so a crash never wrecks the user's shell,
+  golden-frame testing, and cross-environment delivery
+- `/plugin install lyra-tui-designer`
 
 **lyra-ux-designer** - 12 reference sheets _(refreshed for 2026)_
 
@@ -532,7 +544,7 @@ I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO
 ## What's Inside
 
 - **200+ Skills**: Production-ready guidance across 7 domains
-- **38 Packs**: Install only what you need
+- **45 Packs**: Install only what you need
 - **Per-Pack Plugins**: Independent versioning, clean dependencies
 - **Complete Coverage**: Design → Foundation → Training → Production
 
@@ -544,10 +556,10 @@ I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO
 skillpacks/
 ├── .claude-plugin/
 │   └── marketplace.json       # Marketplace catalog
-├── plugins/                   # All 38 skillpacks
-│   ├── axiom-*/               # Development (15 packs)
+├── plugins/                   # All 45 skillpacks
+│   ├── axiom-*/               # Development (16 packs)
 │   ├── bravos-*/              # Game development (2 packs)
-│   ├── lyra-*/                # UX & site design (2 packs)
+│   ├── lyra-*/                # UX, site, TUI & creative writing (4 packs)
 │   ├── meta-*/                # Meta utilities (2 packs)
 │   ├── muna-*/                # Documentation (4 packs)
 │   ├── ordis-*/               # Quality & security (2 packs)

@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is the **Skillpacks Marketplace** - a modular collection of 44 professional skillpacks (55 router/skill files plus 430+ reference sheets, 110+ commands, 90+ agents) for Claude Code across AI/ML, Python & Rust engineering, web backend, DevOps, SDLC and program/product management, solution architecture, game development, security, documentation, and UX design.
+This is the **Skillpacks Marketplace** - a modular collection of 45 professional skillpacks (56 router/skill files plus 430+ reference sheets, 110+ commands, 90+ agents) for Claude Code across AI/ML, Python & Rust engineering, web backend, DevOps, SDLC and program/product management, solution architecture, game development, security, documentation, and UX design.
 
-**Status**: Marketplace v3.20.0 - Production ready, CC BY-SA 4.0 licensed, publicly available
+**Status**: Marketplace v3.21.0 - Production ready, CC BY-SA 4.0 licensed, publicly available
 
 ## Architecture
 
@@ -15,8 +15,8 @@ This is the **Skillpacks Marketplace** - a modular collection of 44 professional
 ```plaintext
 skillpacks/
 ├── .claude-plugin/
-│   └── marketplace.json          # Marketplace catalog defining all 44 plugins
-├── plugins/                       # 44 independent plugin directories
+│   └── marketplace.json          # Marketplace catalog defining all 45 plugins
+├── plugins/                       # 45 independent plugin directories
 │   ├── [plugin-name]/
 │   │   ├── .claude-plugin/
 │   │   │   └── plugin.json       # Plugin metadata (name, version, description)
@@ -44,8 +44,8 @@ Packs are grouped by faction prefix. Most modern packs follow a **router + refer
 3. **Game Development (Bravos faction)** - 2 plugins
    - `bravos-simulation-tactics`, `bravos-systems-as-experience`
 
-4. **Design & creative (Lyra faction)** - 3 plugins
-   - `lyra-ux-designer`, `lyra-site-designer`, `lyra-creative-writing`
+4. **Design & creative (Lyra faction)** - 4 plugins
+   - `lyra-ux-designer`, `lyra-site-designer`, `lyra-tui-designer`, `lyra-creative-writing`
 
 5. **Documentation (Muna faction)** - 4 plugins
    - `muna-technical-writer`, `muna-document-designer`, `muna-wiki-management`, `muna-panel-review`
@@ -142,7 +142,7 @@ Each plugin has independent versioning in `.claude-plugin/plugin.json`:
 
 ### Marketplace Versioning
 
-The marketplace catalog (`.claude-plugin/marketplace.json`) coordinates all 44 plugins:
+The marketplace catalog (`.claude-plugin/marketplace.json`) coordinates all 45 plugins:
 
 - Lists all plugins with their source paths
 - Maintains marketplace metadata (version, homepage)
@@ -211,9 +211,9 @@ This repository uses a unique testing methodology:
 
 **Total**: 700+ production files
 
-- 55 router/skill files (SKILL.md) + 430+ reference sheets
+- 56 router/skill files (SKILL.md) + 430+ reference sheets
 - 110+ slash commands, 90+ SME agents
-- 44 plugin metadata files (plugin.json)
+- 45 plugin metadata files (plugin.json)
 - 1 marketplace catalog (marketplace.json)
 - Core documentation (README, LICENSE, CLAUDE.md, FACTIONS.md, CONTRIBUTING.md, LICENSE_ADDENDUM.md)
 - TDD artifacts (test scenarios, baseline results, methodology documentation)
@@ -279,7 +279,7 @@ for dir in plugins/*/; do
 done
 
 # Count total skills
-find plugins -name "SKILL.md" | wc -l  # Should be 55
+find plugins -name "SKILL.md" | wc -l  # Should be 56
 ```
 
 ## Important Notes

@@ -29,6 +29,8 @@ All router skills from the 18 plugins are now available as slash commands:
 
 ### UX Design (Lyra)
 - **`/ux-designer`** - Routes to UX design, accessibility, and user research
+- **`/site-designer`** - Routes to static site design for developer tools and documentation
+- **`/tui-designer`** - Routes to terminal UI (TUI) design across ratatui, Textual, Bubble Tea, Ink, notcurses
 
 ### Documentation (Muna)
 - **`/technical-writer`** - Routes to technical documentation and API docs
@@ -69,6 +71,8 @@ The router will then guide you to the appropriate specialized skill for your tas
 | axiom-web-backend | using-web-backend | /web-backend |
 | bravos-simulation-tactics | using-simulation-tactics | /simulation-tactics |
 | bravos-systems-as-experience | using-systems-as-experience | /systems-as-experience |
+| lyra-site-designer | using-site-designer | /site-designer |
+| lyra-tui-designer | using-tui-designer | /tui-designer |
 | lyra-ux-designer | using-ux-designer | /ux-designer |
 | muna-technical-writer | using-technical-writer | /technical-writer |
 | muna-wiki-management | using-wiki-manager | /wiki-manager |
