@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is the **Skillpacks Marketplace** - a modular collection of 45 professional skillpacks (56 router/skill files plus 430+ reference sheets, 110+ commands, 90+ agents) for Claude Code across AI/ML, Python & Rust engineering, web backend, DevOps, SDLC and program/product management, solution architecture, game development, security, documentation, and UX design.
 
-**Status**: Marketplace v3.21.0 - Production ready, CC BY-SA 4.0 licensed, publicly available
+**Status**: Marketplace v3.22.0 - Production ready, CC BY-SA 4.0 licensed, publicly available
 
 ## Architecture
 
@@ -33,7 +33,7 @@ Packs are grouped by faction prefix. Most modern packs follow a **router + refer
 
 1. **Engineering & process (Axiom faction)** - 20 plugins
    - Python/Rust: `axiom-python-engineering`, `axiom-rust-engineering`, `axiom-rust-workspaces`, `axiom-pyo3-interop`
-   - Backend & data: `axiom-web-backend`, `axiom-embedded-database`, `axiom-mcp-engineering` (early access)
+   - Backend & data: `axiom-web-backend`, `axiom-embedded-database`, `axiom-mcp-engineering`
    - Architecture & analysis: `axiom-system-architect`, `axiom-system-archaeologist`, `axiom-solution-architect`, `axiom-procedural-architecture`
    - Process & delivery: `axiom-engineering-foundations`, `axiom-planning`, `axiom-sdlc-engineering`, `axiom-program-management`, `axiom-product-management`, `axiom-devops-engineering`
    - Specialized discipline: `axiom-static-analysis-engineering`, `axiom-determinism-and-replay`, `axiom-audit-pipelines`

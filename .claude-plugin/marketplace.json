@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, product management, solution architecture, game development, security, documentation, site design, and UX skills for Claude Code - 45 complete skillpacks with 400+ TDD-validated skills and reference sheets",
-    "version": "3.21.0",
+    "version": "3.22.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -94,7 +94,7 @@
     {
       "name": "axiom-devops-engineering",
       "source": "./plugins/axiom-devops-engineering",
-      "description": "DevOps and deployment automation expertise - CI/CD pipeline architecture, deployment strategies, zero-downtime deployments, and infrastructure reliability patterns - TDD-validated with RED-GREEN-REFACTOR testing",
+      "description": "DevOps and platform engineering — the path from commit to healthy production: CI/CD pipelines and verification gates, zero-downtime deployment, infrastructure as code, container build hygiene, orchestration runtime, observability (metrics/logs/traces, SLI/SLO), incident response and on-call, release management and rollback, secrets and configuration, environment parity, DevSecOps and software supply-chain security, GitOps, and SRE/reliability. Router + 13 reference sheets, 3 commands (design-deployment, review-pipeline, audit-deployment), and 2 agents (deployment-strategist, pipeline-reviewer).",
       "keywords": [
         "axiom",
         "devops",
@@ -324,7 +324,7 @@
     {
       "name": "axiom-mcp-engineering",
       "source": "./plugins/axiom-mcp-engineering",
-      "description": "Engineering MCP (Model Context Protocol) servers as production-grade agent interfaces — tool API surface, idempotency and atomic claim semantics, structured error envelopes, schema versioning across model drift, stdio/HTTP transport, output-shape discipline (pagination, truncation), the four MCP primitives (tools/resources/prompts/sampling), composition across servers, observability, and golden-conversation testing. Two roles (architect/critic). Router + 13 sheets (scaffold; v0.1.0 ships router only).",
+      "description": "Engineering MCP (Model Context Protocol) servers as production-grade agent interfaces — tool API surface, idempotency and atomic claim semantics, structured error envelopes, schema versioning across model drift, stdio/HTTP transport, output-shape discipline (pagination, truncation), the four MCP primitives (tools/resources/prompts/sampling), composition across servers, observability, and golden-conversation testing. Router + 13 reference sheets, 3 commands (design-mcp-server, review-mcp-server, audit-mcp-tools), and 2 agents (mcp-server-architect, mcp-server-critic).",
       "keywords": [
         "axiom",
         "mcp",

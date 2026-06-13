@@ -157,10 +157,11 @@ cd skillpacks
 - API testing, documentation, production deployment
 - `/plugin install axiom-web-backend`
 
-**axiom-devops-engineering** - 1 skill
+**axiom-devops-engineering** - router + 13 sheets, 3 commands, 2 agents
 
-- CI/CD pipeline architecture, deployment strategies
-- Zero-downtime deployments, infrastructure reliability
+- The path from commit to healthy production: CI/CD pipelines & verification gates, zero-downtime deployment, IaC, containers, orchestration
+- Observability (SLI/SLO), incident response & on-call, release management & rollback, secrets, environment parity, DevSecOps/supply chain, GitOps, SRE
+- Commands: `/design-deployment`, `/review-pipeline`, `/audit-deployment`; agents: deployment-strategist, pipeline-reviewer
 - `/plugin install axiom-devops-engineering`
 
 **axiom-sdlc-engineering** - 8 skills + 4 agents
@@ -224,12 +225,14 @@ cd skillpacks
   configuration flows, decision pipelines, and workflows
 - `/plugin install axiom-procedural-architecture`
 
-**axiom-mcp-engineering** - router skill _(early access)_
+**axiom-mcp-engineering** - router + 13 sheets, 3 commands, 2 agents
 
 - Engineering MCP (Model Context Protocol) servers as production-grade agent
   interfaces — tool API surface design, idempotency & atomic claim semantics
   under agent retry, structured error envelopes, schema versioning, transport
-  reliability
+  reliability, output-shape discipline, the four MCP primitives, composition,
+  observability, golden-conversation testing
+- Commands: `/design-mcp-server`, `/review-mcp-server`, `/audit-mcp-tools`; agents: mcp-server-architect, mcp-server-critic
 - `/plugin install axiom-mcp-engineering`
 
 **axiom-engineering-foundations** - 6 skills

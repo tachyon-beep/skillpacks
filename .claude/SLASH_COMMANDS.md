@@ -19,6 +19,10 @@ All router skills from the 18 plugins are now available as slash commands:
 
 ### Web Backend Development (Axiom)
 - **`/web-backend`** - Routes to web backend development (FastAPI, Django, Express, APIs, microservices)
+- **`/mcp-engineering`** - Routes to MCP (Model Context Protocol) server engineering (tool API design, idempotency, error envelopes, transport, testing)
+
+### DevOps & Platform Engineering (Axiom)
+- **`/devops-engineering`** - Routes to DevOps reference sheets (CI/CD, deployment, IaC, containers, orchestration, observability, incident response, rollback, secrets, GitOps, reliability)
 
 ### SDLC Engineering (Axiom)
 - **`/sdlc-engineering`** - Routes to CMMI process areas: requirements, design, quality, governance, risk, metrics, platform integration
@@ -64,6 +68,8 @@ The router will then guide you to the appropriate specialized skill for your tas
 
 | Plugin | Original Skill | Slash Command |
 |--------|----------------|---------------|
+| axiom-devops-engineering | using-devops-engineering | /devops-engineering |
+| axiom-mcp-engineering | using-mcp-engineering | /mcp-engineering |
 | axiom-python-engineering | using-python-engineering | /python-engineering |
 | axiom-sdlc-engineering | using-sdlc-engineering | /sdlc-engineering |
 | axiom-system-archaeologist | using-system-archaeologist | /system-archaeologist |

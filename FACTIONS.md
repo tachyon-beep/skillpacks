@@ -297,9 +297,9 @@ The Axiom's dedication to making technology accessible through systematic proces
 
 - Web backend: FastAPI, Django, Express, REST/GraphQL, microservice boundaries
 
-**axiom-mcp-engineering** - *The Tool-Smith's Interface* (early access)
+**axiom-mcp-engineering** - *The Tool-Smith's Interface*
 
-- Engineering MCP servers as production-grade agent interfaces: tool API surface, idempotency, structured errors
+- Engineering MCP servers as production-grade agent interfaces: tool API surface, idempotency, structured errors, schema drift, transport, the four MCP primitives, golden-conversation testing (router + 13 sheets, 3 commands, 2 agents)
 
 **axiom-embedded-database** - *The Vault*
 
@@ -351,7 +351,7 @@ The Axiom's dedication to making technology accessible through systematic proces
 
 **axiom-devops-engineering** - *The Assembly Line*
 
-- DevOps & deployment automation: CI/CD pipelines, zero-downtime rollout, verification gates, rollback
+- DevOps & platform engineering — commit to healthy production: CI/CD & verification gates, zero-downtime rollout, IaC, containers, orchestration, observability, incident response, rollback, secrets, GitOps, SRE (router + 13 sheets, 3 commands, 2 agents)
 
 The Axiom approach: **Quality through testing, clarity through types, accessibility through documentation.** Every tool is systematic, every process repeatable, every technique shareable.
 
