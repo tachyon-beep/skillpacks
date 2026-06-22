@@ -37,7 +37,7 @@ Components are process documentation. Test if they guide Claude correctly, not i
 - Watch for rationalized shortcuts
 - Document exact phrasing of rationalizations
 
-### C. Adversarial Edge Cases (Test Robustness)
+### B. Adversarial Edge Cases (Test Robustness)
 
 **Test if component provides guidance for corner cases.**
 
@@ -47,7 +47,7 @@ Components are process documentation. Test if they guide Claude correctly, not i
 - **Missing information:** When component doesn't cover needed knowledge
 - **Tool limitations:** When environment doesn't support the approach
 
-### B. Real-World Complexity (Validate Utility)
+### C. Real-World Complexity (Validate Utility)
 
 **Test if component works in realistic scenarios.**
 
@@ -139,7 +139,7 @@ For **reference skills** (API docs, guides):
 
 ### Per-Component Workflow
 
-1. **Select scenario** from gauntlet (prioritize A → C → B)
+1. **Select scenario** from gauntlet (prioritize A → B → C)
 2. **Execute test** - run component with challenging input
 3. **Observe behavior** - compliance, rationalizations, failures
 4. **Assess result:**

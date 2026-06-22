@@ -1,4 +1,3 @@
-
 # Systematic Delinting
 
 ## Overview

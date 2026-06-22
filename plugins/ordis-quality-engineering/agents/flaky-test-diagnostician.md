@@ -28,7 +28,7 @@ Trigger: STOP. Diagnose root cause first. Retries mask symptoms.
 
 <example>
 User asks about test architecture or coverage
-DO NOT trigger: Use test-suite-reviewer or /quality:audit instead
+DO NOT trigger: Use test-suite-reviewer or /ordis-quality-engineering:audit instead
 </example>
 
 ## Core Principle
@@ -205,7 +205,7 @@ Look for:
 ### Defer to Other Areas
 
 **Test Architecture Questions:**
-→ Use `/quality:analyze-pyramid` command or test-suite-reviewer agent
+→ Use `/ordis-quality-engineering:analyze-pyramid` command or test-suite-reviewer agent
 
 **Python-Specific Testing:**
 Check: `Glob` for `plugins/axiom-python-engineering/.claude-plugin/plugin.json`

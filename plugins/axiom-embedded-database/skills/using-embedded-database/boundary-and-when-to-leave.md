@@ -51,6 +51,16 @@ DuckDB does not have a leave-signal equivalent to SQLite's "you misconfigured it
 
 For the hybrid OLTP+OLAP pattern, the correct architecture is SQLite for writes and DuckDB for reads — not DuckDB replacing SQLite for both. Reach the DuckDB leave signal by needing cross-host OLAP at warehouse scale, not by pushing it into a write path it was never designed for.
 
+## The rung before a server database
+
+Leaving SQLite is not a binary "embedded or Postgres" choice. Between stock SQLite's single-writer ceiling and a full server database there is an intermediate rung: SQLite forks and experimental concurrency branches that keep the file-based, low-operational-cost model while relaxing one specific constraint. Consider this rung *before* committing to a server migration, but only after the audit in `When NOT to leave` confirms the constraint is real and not a misconfiguration.
+
+- **libSQL / Turso** — a SQLite fork (Apache-2.0) that keeps the on-disk format and SQL surface but adds embedded replication and a server/HTTP access mode. The escape hatch it opens is *cross-host reads from a single writer*: embedded replicas read locally and stream changes from a primary, which directly addresses the read-fanout and single-host-read-only limits without an OLTP rewrite. It does not turn SQLite into a multi-host multi-writer engine — the single logical writer remains.
+- **rqlite** — a distributed system that wraps SQLite behind a Raft consensus layer, exposing an HTTP API. It trades SQLite's microsecond in-process latency for network-hop latency and Raft commit cost, and in return gives you replication and automatic failover across hosts. Reach for it when the leave driver is high availability of a *modest-write* dataset, not when it is raw write throughput — Raft serialises writes through a leader, so it does not lift the single-writer ceiling either.
+- **WAL2 and `BEGIN CONCURRENT`** — experimental branches of upstream SQLite (not in the default release build) aimed at the multi-writer ceiling itself. `BEGIN CONCURRENT` lets non-conflicting write transactions proceed in parallel and detects page-level conflicts at commit; WAL2 reduces checkpoint stalls under sustained write load. These are the only options on this rung that target write *throughput* rather than topology — but they require a custom SQLite build and carry the maintenance and audit burden of running off the mainline release. Treat them as a deliberate, owned dependency, not a free PRAGMA.
+
+If none of these relax the *specific* constraint the leave signal names — cross-host **writes** at sustained throughput, database-layer RBAC, or cross-region failover — then the rung does not apply and the server-database migration below is the right move.
+
 ## Migration paths
 
 ### SQLite → PostgreSQL

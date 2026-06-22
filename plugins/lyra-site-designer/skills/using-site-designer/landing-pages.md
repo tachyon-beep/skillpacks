@@ -143,6 +143,43 @@ Only include if genuine. Options:
 
 Skip this section entirely if the project is new. An empty social proof section is worse than none.
 
+## SEO and Social Cards
+
+The landing page is the front door, and most of its visitors arrive from a search result or a shared link — so the `<head>` does as much work as the visible markup. This is the one place generic "marketing" guidance is correct: ship the metadata.
+
+```html
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Core SEO -->
+  <title>Project Name — static type checker for Python</title>
+  <meta name="description" content="One clear sentence about what it does and for whom. Under 160 characters; this is the search-result snippet.">
+  <link rel="canonical" href="https://project.dev/">
+
+  <!-- Open Graph (Slack, Discord, LinkedIn, Facebook) -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://project.dev/">
+  <meta property="og:title" content="Project Name — static type checker for Python">
+  <meta property="og:description" content="Same one-sentence value statement as the page.">
+  <meta property="og:image" content="https://project.dev/social-card.png">
+
+  <!-- Twitter/X card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://project.dev/social-card.png">
+</head>
+```
+
+Rules that keep this honest rather than spammy:
+
+- **Reuse the value statement.** `og:title` / `og:description` should match the on-page copy, not invent new marketing claims. One source of truth.
+- **Absolute URLs only** for `og:url`, `og:image`, and `canonical` — relative paths break when the card is unfurled on another origin.
+- **Ship a real social card image** (1200×630, under ~1 MB). A card with no image gets a tiny, ignorable preview. The image can be a static export of the hero — project name, tagline, logo on the brand background — not a screenshot in window chrome.
+- **Set `canonical`** so the apex domain, `www`, and any trailing-slash variant don't get indexed as duplicates.
+- Skip `keywords` meta (ignored by every modern search engine) and skip per-page `robots` directives unless you actually need to deindex something.
+
+For docs-first generators (Starlight, VitePress, Docusaurus 3) these tags are emitted from page frontmatter — set the site-wide defaults once in config and override per page; don't hand-write `<head>` on every route.
+
 ## Styling Patterns
 
 ### Feature Card Grid
@@ -289,4 +326,6 @@ In addition to the base quality checklist, verify:
 - [ ] Page loads and renders fully without JavaScript
 - [ ] Primary CTA (Get Started) is visible without scrolling
 - [ ] No broken links to docs, GitHub, or external resources
+- [ ] `<title>`, `description`, canonical, Open Graph, and Twitter card tags are present with absolute URLs
+- [ ] A real 1200×630 social-card image exists and unfurls correctly when the URL is shared
 - [ ] Page looks good at both 1440px and 375px widths

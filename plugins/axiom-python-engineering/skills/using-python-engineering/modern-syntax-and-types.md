@@ -1,4 +1,3 @@
-
 # Modern Python Syntax and Types
 
 ## Overview
@@ -605,15 +604,16 @@ exclude = [
 mypy to a specific version in CI prevents the "new mypy release surfaced 50
 errors overnight" problem.
 
-### Emerging Type Checkers (Preview — track but don't depend on yet)
+### Rust-Implemented Type Checkers (ty, pyrefly)
 
-Two new Rust-implemented type checkers are landing in late 2024 / 2025. Both
-target the same problem mypy has — speed at scale — by following pyright's
-architecture but pushing further.
+Two Rust-implemented type checkers, first previewed in 2024/2025, have since
+matured. Both target the same problem mypy has — speed at scale — by following
+pyright's architecture but pushing further. By 2026 they are real options, not
+just experiments.
 
-**`ty` (Astral)** — from the makers of ruff and uv. Goal: a type checker that
-runs at ruff-like speed on a millions-of-lines codebase, with the same tight
-editor feedback loop.
+**`ty` (Astral)** — from the makers of ruff and uv. A type checker that runs at
+ruff-like speed on a millions-of-lines codebase, with the same tight editor
+feedback loop and an LSP server for IDE integration.
 
 ```bash
 uvx ty check src/
@@ -627,31 +627,37 @@ pip install pyrefly
 pyrefly check src/
 ```
 
-**Status (as of 2025): both are pre-1.0 and labelled preview.**
+**Status (as of 2026): both have matured past their preview phase and are
+viable in CI.** They remain younger than mypy/pyright, so plugin ecosystem and
+edge-case inference coverage still lag the incumbents.
 
 **Use them when:**
-- Mypy is the bottleneck on a large codebase (>500k LoC) and you can absorb
-  rough edges.
-- You want to evaluate them in parallel with mypy in CI (don't replace yet).
+- Mypy is the bottleneck on a large codebase and the speed-up is worth it.
+- You want fast local/editor feedback while keeping mypy or pyright as the
+  authoritative CI gate.
 
-**Do not use them as your only type checker** until at least the upstream
-projects declare 1.0 / production-ready. Stick to mypy and/or pyright for now.
+**Migration discipline:** when adopting a Rust checker, run it alongside your
+existing checker first and reconcile the diff before switching the CI gate.
+Different checkers disagree on inference edge cases, and a silent gate swap can
+mask or invent errors. Pin the checker version in CI for reproducibility.
 
-### Python 3.13 Notes
+### Python 3.13 / 3.14 Notes
 
-Python 3.13 (Oct 2024) introduced two major experimental features the type
-system does not yet have polished support for:
+Python 3.13 (Oct 2024, now GA and widely supported) and 3.14 (Oct 2025)
+introduced features that affect runtime more than the type-syntax surface:
 
-- **Free-threaded build (PEP 703)** — `python3.13t`. Removes the GIL. Most
-  mainstream type checkers and many C-extension wheels are still catching up;
-  treat it as experimental and not the default for production.
+- **Free-threaded build (PEP 703)** — `python3.13t` / `python3.14t`. Removes
+  the GIL. Tooling and C-extension wheel support have improved substantially
+  since 3.13's release but are still maturing; verify your dependency stack
+  before relying on it in production.
 - **Experimental JIT (PEP 744)** — opt-in JIT compiler. Doesn't affect typing
-  but may shift performance recommendations in the future.
+  but may shift performance recommendations.
 
-For type-system purposes, write code as you would for 3.12. The 3.12 type
-syntax (PEP 695) remains the modern baseline; 3.13 mainly polishes error
-messages and removes some long-deprecated stdlib modules (PEP 594). Default
-new projects to 3.12 unless you have a specific reason to chase 3.13.
+For type-system purposes, the PEP 695 syntax introduced in 3.12 remains the
+modern baseline; 3.13/3.14 mainly polish error messages and the deferred-
+annotation story (PEP 649/749) and remove long-deprecated stdlib modules
+(PEP 594). Default new projects to a current stable release (3.13 or 3.14)
+unless a dependency pins you lower.
 
 ### Dealing with Untyped Libraries
 

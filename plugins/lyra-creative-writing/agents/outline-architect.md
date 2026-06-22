@@ -2,6 +2,7 @@
 name: outline-architect
 description: Use when developing or interrogating an outline from premise, logline, or partial outline. Supports multiple structural lenses without prescribing one. Does NOT draft prose.
 tools: Read, Grep, Glob
+model: sonnet
 ---
 
 # Outline Architect Agent

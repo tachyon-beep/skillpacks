@@ -2,6 +2,7 @@
 name: revision-coach
 description: Use when synthesising five coach-mode agent reports into a prioritised revision-pass plan ("Pass 1 structural, Pass 2 line, Pass 3 polish"). Does NOT do the revising itself. Does NOT critique anew.
 tools: Read, Grep, Glob
+model: sonnet
 ---
 
 # Revision Coach

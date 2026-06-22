@@ -380,7 +380,7 @@ Every defect found during any audit (consistency, derivation, reading path, link
 ```yaml
 defect:
   location: "document-id §section-name"
-  type: "one of the 10 defect types listed below"
+  type: "one of the 11 defect types listed below"
   severity: "error or warning"
   description: "What is wrong, stated precisely enough that someone unfamiliar with the audit can understand the problem."
   suggested_fix: "A concrete action to resolve the defect, not a restatement of the problem."

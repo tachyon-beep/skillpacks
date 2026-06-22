@@ -1,6 +1,6 @@
 {
   "name": "yzmir-ml-production",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Production ML: quantization (torch.ao.quantization, AWQ/GPTQ/AQLM/FP8), LLM serving stacks (vLLM/SGLang/TensorRT-LLM/TGI/Triton), MLOps (Prefect/Dagster/Flyte/Airflow), observability (Phoenix/Langfuse/OTel GenAI), deployment, monitoring, debugging. 10 reference sheets, 3 commands, 2 agents.",
   "author": {
     "name": "tachyon-beep",

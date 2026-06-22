@@ -1,6 +1,6 @@
 {
   "name": "muna-wiki-management",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Document set management as wikis - 1 router skill + 6 reference sheets, 4 commands, 2 agents for architecture, derivation, consistency, evolution, and governance of multi-document collections",
   "author": {
     "name": "tachyon-beep",

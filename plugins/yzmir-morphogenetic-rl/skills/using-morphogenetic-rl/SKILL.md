@@ -236,6 +236,7 @@ FSM design with safety overrides?                → safety-gated-seed-fsm
 | "I'll compare runs by final loss" | Different shapes, different parameter counts, comparison is meaningless | See `evaluation-under-topology-change` for fair comparison protocols |
 | "Morphogenesis is always worth trying" | Many domains have a known small optimal architecture; morphogenesis adds variance for no return | See `when-not-to-grow` first |
 | "A bigger reward signal will fix the controller" | Larger reward magnitudes amplify shaping bugs; honest sparse signal beats dense distorted signal | See `rl-controller-for-morphogenesis` on reward decomposition |
+| "More seeds growing at once is more progress" | K independent policies drift toward "everyone grows always" and blow the parameter budget in a single step | One factored joint policy + a governor that arbitrates simultaneous proposals — see `multi-seed-coordination-rl` |
 
 ### Red Flags Checklist
 

@@ -252,6 +252,25 @@ If the workspace contains a *mix* of published and unpublished crates, the `vers
 
 Record the publish split in `06-crate-visibility-and-internals.md` and the path-dep version policy in `02-`.
 
+## `[patch.crates-io]`: Overriding a Transitive Dep
+
+When a transitive dep needs a fix that is not yet released (an upstream PR awaiting a crates.io publish, a local fork, a security backport), `[patch.crates-io]` redirects *every* resolution of that crate across the whole graph to your replacement — without editing the dependents that pulled it in. It belongs at workspace root and applies workspace-wide:
+
+```toml
+# workspace-root Cargo.toml
+[patch.crates-io]
+# Replace the registry serde with a git branch carrying an unreleased fix.
+serde = { git = "https://github.com/serde-rs/serde", branch = "fix-1234" }
+# Or with a local checkout while you bisect.
+# serde = { path = "../forks/serde" }
+```
+
+Discipline points:
+
+- **The patch version must satisfy the existing requirements.** `[patch]` does not relax version requirements; the replacement crate's `version` in its own `Cargo.toml` must still match what dependents requested, or cargo errors with `patch ... did not resolve to any crates`. Patch swaps the *source*, not the *requirement*.
+- **A patch on a crate nothing depends on is a hard error** (`unused patches`), which makes a stale patch self-announce when the dependency is dropped.
+- **It is a temporary measure, not a pinning strategy.** A `[patch.crates-io]` is invisible to consumers of any *published* member crate — patches do not propagate through crates.io — so a published workspace must not rely on one for correctness. Treat every patch as carrying an exit condition (the upstream release that retires it) and record that condition next to the patch.
+
 ## What `02-workspace-dependencies-and-resolver.md` Must Contain
 
 A complete `02-` artifact:
@@ -281,7 +300,7 @@ A complete `02-` artifact:
 - `04-workspace-deny-config.md` — every dep declared here is subject to deny-policy review (licence, advisory, source).
 - `13-workspace-anti-patterns.md` — the version-drift anti-pattern is the failure mode this sheet prevents.
 - `axiom-rust-engineering:audit` — single-crate `cargo audit` / `cargo deny` flow. At workspace scope, those commands run from workspace root and consume this sheet's declarations.
-- *Planned for v0.2.0:* `feature-unification-gotchas.md` will go deeper on the cases where features are *not* additive (dev-dep contamination edge cases on resolver-2, mutually-exclusive features across crates, default-features pinning conflicts).
+- `feature-unification-gotchas.md` — goes deeper on the cases where features are *not* additive (dev-dep contamination edge cases on resolver-2, mutually-exclusive features across crates, default-features pinning conflicts).
 
 ## The Bottom Line
 

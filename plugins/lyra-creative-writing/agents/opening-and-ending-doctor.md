@@ -2,6 +2,7 @@
 name: opening-and-ending-doctor
 description: Use when the writer wants focused diagnosis on the first 5 pages or last 5 pages of a manuscript — promise-setting at the front, promise-keeping at the back. Coach mode; does NOT rewrite.
 tools: Read, Grep, Glob
+model: sonnet
 ---
 
 # Opening and Ending Doctor

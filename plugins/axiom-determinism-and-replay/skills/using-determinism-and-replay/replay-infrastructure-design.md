@@ -170,7 +170,7 @@ A recorded run's inputs include:
 - External effects: clock readings, IO results, network responses, third-party API outputs.
 - RNG draws (or the seed and derivation that produces them).
 
-For replay to work, every recorded input must be replayable: the original action, *and* the original clock reading, *and* the original network response. External effects substitution is its own design problem — see planned `10-external-effects-substitution.md`. For v0.1.0:
+For replay to work, every recorded input must be replayable: the original action, *and* the original clock reading, *and* the original network response. External effects substitution is its own design problem — see `external-effects-substitution.md` (spec artifact `10-external-effects-substitution.md`):
 
 - If the system's only "external effect" is RNG, seed governance + RNG isolation are sufficient.
 - If the system reads the clock, makes IO calls, or talks to external services, the replay needs a *substitution layer* that records original outputs and replays them. Without that layer, every external effect is a divergence source.

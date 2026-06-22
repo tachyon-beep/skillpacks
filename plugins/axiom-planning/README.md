@@ -1,6 +1,6 @@
 # Axiom Planning
 
-**Version:** 1.1.0
+**Version:** 1.2.1
 **Category:** Software Engineering
 **License:** CC BY-SA 4.0
 
@@ -186,6 +186,18 @@ Found a rationalization pattern not covered? Discovered a new loophole?
 4. Submit PR with evidence
 
 ## Version History
+
+**1.2.1** (2026-06-22)
+- Documented the plan-revision loop: `implementation-planning` now back-links `/review-plan` and adds a "Revising After CHANGES_REQUESTED" section closing the revise → re-review cycle
+- Synced README version banner and history with plugin metadata
+
+**1.2.0** (2026-05-23)
+- All 5 review agents now follow `meta-sme-protocol:sme-agent-protocol` (Confidence/Risk/Information-Gaps/Caveats envelope; explicit `model:` + `allowed-tools:`)
+- Synthesizer aggregates reviewer confidence and carries information-gaps forward into the JSON verdict
+- Added `axiom-planning` slash wrapper as the declared routing surface
+
+**1.1.1** (2026-05-22)
+- Maintenance pass: documentation and metadata alignment
 
 **1.1.0** (2026-02-03)
 - Added plan-review skill - quality gate between planning and execution

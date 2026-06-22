@@ -179,6 +179,48 @@ Players learn through:
 **Designed interactions**: [Count]
 **Expected emergent combos**: [Count]
 **Target ratio**: > 1.5x
+
+## Confidence Assessment
+
+**Overall Confidence:** [High | Moderate | Low | Insufficient Data]
+
+| Design claim | Confidence | Basis |
+|--------------|------------|-------|
+| [e.g. "Fire×Oil cascade is reachable"] | High | Verified against stated mechanics |
+| [e.g. "Players will discover combo X"] | Moderate | Pattern from comparable systems, untested |
+| [e.g. "Loop stays stable at scale"] | Low | Inference, no playtest data |
+
+## Risk Assessment
+
+**Design Risk:** [Low | Medium | High | Critical]
+**Reversibility:** [Easy | Moderate | Difficult | Irreversible]
+
+| Risk | Severity | Likelihood | Mitigation |
+|------|----------|------------|------------|
+| [e.g. degenerate dominant combo] | High | Medium | [Add counter-interaction / negative loop] |
+| [e.g. runaway positive loop] | High | Low | [Cap or pair with stabilizer] |
+
+## Information Gaps
+
+The following would improve this design:
+
+1. [ ] **[Specific item]**: [Why it would help — e.g. existing mechanic list, playtest data]
+2. [ ] **[Specific item]**: [Why it would help]
+
+## Caveats & Required Follow-ups
+
+### Before Relying on This Design
+
+- [ ] Playtest the interaction matrix for unintended dominant strategies
+- [ ] Validate the emergent:designed ratio against actual play, not just the count
+
+### Assumptions Made
+
+- [Assumption about player behavior / mechanic scope]
+
+### Limitations
+
+- This design does NOT cover numeric balance or implementation feasibility
 ```
 
 ## Design Patterns

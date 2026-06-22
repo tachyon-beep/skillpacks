@@ -1,5 +1,11 @@
 # Changelog — axiom-procedural-architecture
 
+## v0.2.1 (2026-06-22)
+
+Polish fix from report-card review (`reviews/report-cards/axiom-procedural-architecture.md`):
+
+- **Mi1 closed.** Corrected the self-description on both discovery surfaces from "Two roles (producer/critic)" to "Three roles (producer/critic/analyst)". The analyst role (analyst cluster sheets 9–12, `/analyze-procedure`) has shipped since v0.1.x but was invisible on the marketing surface. `plugin.json` updated in-pack; the matching `marketplace.json` catalog description change is requested separately (catalog file is owned outside this pack).
+
 ## v0.2.0 (2026-05-22)
 
 Discoverability fix from external review (`reviews/axiom-procedural-architecture.md`):

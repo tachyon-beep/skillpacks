@@ -1,5 +1,6 @@
 ---
 description: Design a lifecycle state machine for managing neural module growth, training, and integration
+argument-hint: "[optional: brief description of the architecture or lifecycle to design]"
 allowed-tools: ["Read", "Glob", "Grep", "AskUserQuestion"]
 ---
 

@@ -356,20 +356,20 @@ check_device_consistency(model, batch['input'], batch['target'])
 **2. Mixed Precision Context Management**
 
 ```python
-from torch.cuda.amp import autocast, GradScaler
+from torch.amp import autocast, GradScaler
 
 # ❌ WRONG: Inconsistent autocast usage
-scaler = GradScaler()
+scaler = GradScaler("cuda")
 for batch in dataloader:
-    with autocast():
+    with autocast("cuda"):
         output = model(batch)
     loss = criterion(output, target)  # ❌ Loss computed outside autocast!
     scaler.scale(loss).backward()
 
 # ✅ CORRECT: Consistent autocast context
-scaler = GradScaler()
+scaler = GradScaler("cuda")
 for batch in dataloader:
-    with autocast():
+    with autocast("cuda"):
         output = model(batch)
         loss = criterion(output, target)  # ✅ Loss inside autocast
     scaler.scale(loss).backward()
@@ -858,21 +858,21 @@ def forward(x):
 **Scenario:** Nested autocast contexts (e.g., custom training loop with autocast, calling library that also uses autocast)
 
 ```python
-from torch.cuda.amp import autocast
+from torch.amp import autocast
 
 # ❌ POTENTIAL ISSUE: Nested autocast with different settings
-with autocast():  # Outer context
+with autocast("cuda"):  # Outer context
     output1 = model1(x)
-    with autocast(enabled=False):  # Inner context disables
+    with autocast("cuda", enabled=False):  # Inner context disables
         output2 = model2(output1)  # Back to float32
     # output1 is float16, output2 is float32
     loss = criterion(output1, output2)  # Type mismatch possible!
 
 # ✅ CORRECT: Be aware of autocast nesting
-with autocast():
+with autocast("cuda"):
     output1 = model1(x)
     # If you need float32 for specific operation:
-    with autocast(enabled=False):
+    with autocast("cuda", enabled=False):
         output2_float32 = model2(output1.float())  # Explicit cast
     loss = criterion(output1, output2_float32.half())  # Explicit cast back
 ```
@@ -951,13 +951,13 @@ if epoch % 10 == 0:
 ```python
 import torch
 import torch.nn as nn
-from torch.cuda.amp import autocast, GradScaler
+from torch.amp import autocast, GradScaler
 
 # Setup
 device = torch.device("cuda:0")
 model = MyModel().to(device)
 optimizer = torch.optim.Adam(model.parameters())
-scaler = GradScaler()  # For mixed precision
+scaler = GradScaler("cuda")  # For mixed precision
 dataloader = DataLoader(dataset, pin_memory=True, num_workers=4)
 
 # Pre-allocate if using fixed-size buffers (example)
@@ -975,7 +975,7 @@ for epoch in range(num_epochs):
         optimizer.zero_grad(set_to_none=True)
 
         # 3. Forward pass with mixed precision
-        with autocast():
+        with autocast("cuda"):
             output = model(data)
             loss = criterion(output, target)
 

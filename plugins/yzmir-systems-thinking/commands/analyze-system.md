@@ -207,19 +207,7 @@ For each proposed intervention:
 
 ## Cross-Pack Discovery
 
-```python
-import glob
-
-# For simulation implementation
-sim_pack = glob.glob("plugins/yzmir-simulation-foundations/plugin.json")
-if sim_pack:
-    print("Available: yzmir-simulation-foundations for implementing models")
-
-# For architecture analysis
-arch_pack = glob.glob("plugins/axiom-system-architect/plugin.json")
-if arch_pack:
-    print("Available: axiom-system-architect for code architecture assessment")
-```
+If the analysis needs to move beyond conceptual systems thinking, hand off to a sibling pack: `/simulation-foundations` (yzmir-simulation-foundations) for numerically implementing stock/flow models, and `/system-architect` (axiom-system-architect) for code-level architecture assessment.
 
 ## Red Flags - Stop and Reconsider
 

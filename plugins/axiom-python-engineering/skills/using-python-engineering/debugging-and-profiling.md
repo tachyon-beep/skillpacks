@@ -1,4 +1,3 @@
-
 # Debugging and Profiling
 
 ## Overview

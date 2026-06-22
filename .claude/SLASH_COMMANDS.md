@@ -27,6 +27,12 @@ All router skills from the 18 plugins are now available as slash commands:
 ### SDLC Engineering (Axiom)
 - **`/sdlc-engineering`** - Routes to CMMI process areas: requirements, design, quality, governance, risk, metrics, platform integration
 
+### Product Management (Axiom)
+- **`/product-management`** - Routes to product ownership, discovery, PRDs, delivery acceptance, metrics, experimentation, and continuity
+
+### Program Management (Axiom)
+- **`/program-management`** - Routes to delivery flow, forecasting, scope, RAID, status, dependencies, governance, benefits, and program coordination
+
 ### Game Development (Bravos)
 - **`/simulation-tactics`** - Routes to simulation and game development tactics
 - **`/systems-as-experience`** - Routes to game systems design and player experience
@@ -70,6 +76,8 @@ The router will then guide you to the appropriate specialized skill for your tas
 |--------|----------------|---------------|
 | axiom-devops-engineering | using-devops-engineering | /devops-engineering |
 | axiom-mcp-engineering | using-mcp-engineering | /mcp-engineering |
+| axiom-product-management | using-product-management | /product-management |
+| axiom-program-management | using-program-management | /program-management |
 | axiom-python-engineering | using-python-engineering | /python-engineering |
 | axiom-sdlc-engineering | using-sdlc-engineering | /sdlc-engineering |
 | axiom-system-archaeologist | using-system-archaeologist | /system-archaeologist |

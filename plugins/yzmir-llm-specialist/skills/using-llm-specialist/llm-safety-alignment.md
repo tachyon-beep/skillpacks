@@ -1,7 +1,7 @@
 
 # LLM Safety and Alignment Skill
 
-## When to Use This Skill
+## Context
 
 Use this skill when:
 - Building LLM applications serving end-users

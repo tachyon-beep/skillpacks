@@ -1,6 +1,6 @@
 {
   "name": "yzmir-ai-engineering-expert",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Primary router for all 10 Yzmir AI/ML engineering skillpacks - covers framework, training, RL, LLM applications (incl. reasoning, agentic/MCP, multimodal, RAG), neural architectures, ML production, dynamic architectures, morphogenetic RL (RL-controlled topology growth), simulation foundations, and systems thinking",
   "author": {
     "name": "tachyon-beep",

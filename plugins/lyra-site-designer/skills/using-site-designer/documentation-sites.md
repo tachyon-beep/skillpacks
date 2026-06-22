@@ -110,6 +110,40 @@ For old versions, add a banner at the top of every page:
 </div>
 ```
 
+### URL Migration and Redirects
+
+A v1→v2 docs refactor almost always moves or renames pages, and every moved page is a live URL someone has bookmarked, linked from a blog post, or had indexed by Google. Restructuring without redirects turns those into 404s — the single most common self-inflicted docs regression. Decide the redirect strategy *before* you move files.
+
+**1. Build a redirect map.** One source of truth, old path → new path. Many generators consume this directly:
+
+```
+# redirects.txt — old → new
+/docs/setup/                /docs/getting-started/installation/
+/docs/api/v1/auth/          /docs/reference/authentication/
+/guide/intro/               /docs/getting-started/
+```
+
+**2. Emit real 301s where the host allows it.** A `301 Moved Permanently` preserves search ranking and updates browser bookmarks; a client-side redirect does neither well.
+
+```
+# Netlify _redirects (also: Vercel vercel.json "redirects", Cloudflare _redirects)
+/docs/setup/*   /docs/getting-started/installation/:splat   301
+```
+
+GitHub Pages can't serve 301s, so fall back to a meta-refresh stub at the old path:
+
+```html
+<!-- /docs/setup/index.html -->
+<link rel="canonical" href="https://project.dev/docs/getting-started/installation/">
+<meta http-equiv="refresh" content="0; url=/docs/getting-started/installation/">
+```
+
+The `canonical` tag matters here — it tells search engines the new URL is authoritative even though the host can only do a soft redirect.
+
+**3. Catch what you missed in CI.** Crawl the *old* sitemap against the new build and fail on any path that 404s without a redirect. This is the automated form of the "preserves page path where possible" quality check — turn "where possible" into "always, or the build fails."
+
+**4. Don't recycle slugs with new meaning.** If `/docs/config/` meant one thing in v1 and something unrelated in v2, redirect the old slug and mint a fresh URL for the new content rather than silently changing what an existing link resolves to.
+
 ## Search
 
 ### Static Search (No Server)
@@ -215,6 +249,7 @@ In addition to the base quality checklist, verify:
 - [ ] Previous/next links follow the logical reading order
 - [ ] Search indexes all content and returns relevant results
 - [ ] Version selector switches correctly and preserves page path where possible
+- [ ] Every moved/renamed page from a restructure has a redirect (301 where the host allows it, meta-refresh + canonical otherwise), verified by crawling the old sitemap in CI
 - [ ] Old version pages show deprecation banners
 - [ ] API reference entries have consistent formatting (all have parameters, returns, examples)
 - [ ] Code examples in docs actually work (test them)

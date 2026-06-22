@@ -24,7 +24,7 @@ Use this sheet when:
 
 Do not use this sheet for:
 
-- Choosing the canonical *byte form* of the snapshot (use planned `11-canonical-state-encoding.md`; this sheet decides *what* to capture, that one decides *how* to encode).
+- Choosing the canonical *byte form* of the snapshot (use `canonical-state-encoding-for-replay.md`; this sheet decides *what* to capture, that one decides *how* to encode).
 - Designing the divergence comparison protocol (use `divergence-detection-and-localisation.md`).
 
 ## Core Principle
@@ -40,7 +40,7 @@ A snapshot of a system at time `t` must capture every piece of state that influe
 | **Domain state** | Entity positions, agent inventories, simulator clock | Per-frame caches treated as "regenerable" but actually carry decision-relevant aggregates |
 | **RNG state** | Every Generator's bit-generator state (see `rng-isolation-patterns.md`) | The "I'll just re-seed" pattern loses mid-run draws |
 | **Component state** | Policy network weights, optimiser state, replay buffer contents | Optimiser momentum or running averages; replay buffer write pointer |
-| **External-effect bindings** | Recorded clock offsets, IO replay positions, network call recordings | Anything from planned `external-effects-substitution.md` |
+| **External-effect bindings** | Recorded clock offsets, IO replay positions, network call recordings | Anything from `external-effects-substitution.md` |
 | **Schedule state** | Pending events in a priority queue, next-event timestamps, scheduler position | Round-robin index; RNG used to break ties |
 | **Lazy initialisation flags** | "Have I called `expensive_setup()` yet?" markers | Lazy init that runs differently on a fresh process vs a rehydrated one |
 
@@ -100,13 +100,13 @@ Three primary encodings, each with a different cost profile.
 
 **When to use:** RL training (the event stream is small; the policy weights are large but recoverable from events + initial state); systems where the event stream is already kept for other reasons; systems where state size makes full snapshots prohibitive.
 
-**Discipline required:** event recording must be exhaustive. Any input not in the event stream is a non-replayable input. See planned `external-effects-substitution.md`.
+**Discipline required:** event recording must be exhaustive. Any input not in the event stream is a non-replayable input. See `external-effects-substitution.md`.
 
 ### Hybrid: Periodic Full + Event Stream
 
 A common pattern: full snapshots at low cadence (every 1000 ticks, or per episode), event stream between snapshots. Rehydrating tick `t` finds the most recent full snapshot before `t`, then replays events from there.
 
-This combines the rehydration-cost-bound of full snapshots with the storage efficiency of event sourcing. It is the default choice for most v0.1.0-tier systems. Define the cadence and the event-stream format in `04-`.
+This combines the rehydration-cost-bound of full snapshots with the storage efficiency of event sourcing. It is the default choice for most systems. Define the cadence and the event-stream format in `04-`.
 
 ## Cadence: Per-Tick vs Per-Decision vs Per-Episode
 

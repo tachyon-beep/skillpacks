@@ -147,7 +147,7 @@ The seed is part of the run's identity. The run record includes:
 
 ## Seeds Across Workers
 
-Distributed systems multiply seed-governance failures. The sheet covers the v0.1.0-relevant patterns; full concurrency determinism is in planned `07-concurrency-determinism-spec.md`.
+Distributed systems multiply seed-governance failures. This sheet covers the seed-derivation patterns; full concurrency determinism is in `determinism-under-concurrency.md` (spec artifact `07-concurrency-determinism-spec.md`).
 
 **The rule:** every worker has its own derived seed, derived from the master + worker rank (or worker name). No worker generates a seed locally; no worker shares an RNG with another.
 

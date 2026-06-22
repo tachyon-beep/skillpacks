@@ -1,4 +1,3 @@
-
 # Textual TUI Development
 
 ## Overview

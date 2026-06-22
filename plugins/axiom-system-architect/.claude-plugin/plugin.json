@@ -1,6 +1,6 @@
 {
   "name": "axiom-system-architect",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "TDD-validated architectural assessment of existing codebases (router + 3 specialist sheets, 3 commands, 2 SME agents) - enforces professional discipline against diplomatic softening, analysis paralysis, and security-priority compromise under stakeholder pressure",
   "author": {
     "name": "tachyon-beep",

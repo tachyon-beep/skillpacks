@@ -381,6 +381,26 @@ After routing, load the appropriate specialist skill for detailed guidance:
 10. [game-ui-design.md](game-ui-design.md) - HUD design, diegetic UI, controller navigation, immersion vs visibility
 11. [ai-experience-patterns.md](ai-experience-patterns.md) - Conversational assistants, agent loops, RAG UIs, streaming output, citation/grounding, refusal UX, calibrated confidence, preview-then-confirm for tool actions
 
+---
+
+## Commands
+
+This pack ships three slash commands that wrap common workflows over the sheets above:
+
+- `/lyra-ux-designer:design-review` - multi-competency critique across visual, IA, interaction, and accessibility; add `ai-experience-patterns` when the surface is a chat / agent / AI interface
+- `/lyra-ux-designer:create-interface` - design a new component with platform-aware patterns and accessibility built in; add `ai-experience-patterns` when the component is an AI surface
+- `/lyra-ux-designer:accessibility-audit` - full WCAG 2.2 AA audit using the 6-dimension Universal Access Model, including the new 2.2 success criteria (2.4.11, 2.5.7, 2.5.8, 3.2.6, 3.3.7, 3.3.8)
+
+## Agents
+
+Three SME agents are available for delegated review work; all follow the SME Agent Protocol with Confidence / Risk / Information Gaps / Caveats sections:
+
+- `ux-critic` - multi-competency design review against best practice (visual + IA + interaction + accessibility); the default critic
+- `accessibility-auditor` - WCAG 2.2 AA compliance specialist applying the Universal Access Model; produces remediation-prioritised findings
+- `ux-theorist` - first-principles needs derivation; invoke BEFORE design review when prior reviews keep waving inherited decisions through (premise relitigation)
+
+---
+
 **Cross-faction**:
 - `muna/technical-writer/*` - Documentation UX and microcopy
 - `ordis/security-architect/*` - Security-aware interface design

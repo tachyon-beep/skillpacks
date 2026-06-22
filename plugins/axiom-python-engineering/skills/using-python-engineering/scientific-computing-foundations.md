@@ -1,4 +1,3 @@
-
 # Scientific Computing Foundations
 
 ## Overview
@@ -291,6 +290,16 @@ df.loc[df['value'] > 0.5, 'result'] = df['value'] * 2
 ```
 
 **Why this matters**: `iterrows()` is the single biggest DataFrame performance killer. ALWAYS look for vectorized alternatives.
+
+**The "I depend on the previous row" rationalization**: the most common excuse
+for keeping a row loop is needing the prior (or next) row — lag features,
+diffs, cumulative state. This is *not* an exception to vectorization. The
+standard counter is `shift()` for lag/lead, `diff()` for differences, and
+`cumsum()`/`cummax()`/`expanding()`/`groupby().cumcount()` for cumulative state
+(see Time Series Operations below). Reach for a Python loop only when each row's
+result genuinely depends on a *computed* result from the previous iteration in a
+way none of these express — and even then, prefer `numba`/`numpy` over
+`iterrows()`.
 
 ### Efficient Filtering and Selection
 

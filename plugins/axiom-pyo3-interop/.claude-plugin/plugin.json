@@ -1,6 +1,6 @@
 {
   "name": "axiom-pyo3-interop",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Production-grade Python ↔ Rust interop via PyO3 — the FFI-boundary discipline, not single-crate Rust nor pure-Python work. v0.1 ships router + 13 sheets, 3 commands, 1 agent. Covers PyO3 fundamentals (`Bound<'py, T>`, GIL tokens), abi3 vs native, maturin inside a Cargo workspace, GIL release patterns, batched FFI, zero-copy NumPy, Gymnasium environments backed by Rust, error mapping with traceback fidelity, lifecycle and teardown, async across the boundary, packaging and wheels, debugging the boundary, and the cost-of-crossing performance model. Sibling to `axiom-rust-engineering` (single-crate) and `axiom-rust-workspaces` (multi-crate); composes with both — the FFI surface lives in one crate, that crate usually lives in a workspace.",
   "author": {
     "name": "tachyon-beep",

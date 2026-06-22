@@ -2,6 +2,7 @@
 name: worldbuilding-consultant
 description: Use when working on SF/fantasy worldbuilding at the world abstraction — magic system rule-checks, mythopoeic coherence, technological extrapolation, geography/economy/politics consistency. Does NOT outline story, does NOT draft prose.
 tools: Read, Grep, Glob
+model: sonnet
 ---
 
 # Worldbuilding Consultant

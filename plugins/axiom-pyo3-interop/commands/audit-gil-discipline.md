@@ -1,6 +1,6 @@
 ---
 description: Sweep a PyO3 binding crate for GIL-discipline violations — places where the GIL is held longer than necessary, where `Python::allow_threads` is missing in compute-bound paths, or where the GIL-held window is interleaved with releases in ways that subvert the phased-function pattern from `axiom-pyo3-interop:gil-release-patterns.md`. Produces a structured findings list, severity-ranked, with each finding citing the line in source and the sheet that closes the gap. Operates on a binding crate inside a workspace; uses static analysis (grep, rust-analyzer if available) plus heuristic body-size measurement.
-allowed-tools: ["Read", "Grep", "Glob", "Bash", "Task", "Write", "Edit", "AskUserQuestion"]
+allowed-tools: ["Read", "Grep", "Glob", "Bash", "Task", "AskUserQuestion"]
 argument-hint: "[crate_path]"
 ---
 

@@ -17,7 +17,7 @@ Spawns a panel of simulated readers â€” each representing a distinct audience â€
 - A config file defining your document suite, personas, and optional scenario framing
 - The document files at accessible paths
 - See `plugins/muna-panel-review/config-template.md` for the config format
-- See `plugins/muna-panel-review/config.md` for a worked 13-persona example
+- See `plugins/muna-panel-review/config.md` for a worked 6-persona example
 
 ## How to invoke
 

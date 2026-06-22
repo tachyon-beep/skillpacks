@@ -1,4 +1,3 @@
-
 # Resolving Mypy Errors
 
 ## Overview

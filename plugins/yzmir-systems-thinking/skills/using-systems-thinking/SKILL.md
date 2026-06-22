@@ -1,6 +1,6 @@
 ---
 name: using-systems-thinking
-description: Router for systems thinking methodology - patterns, leverage points, archetypes, stocks-flows, causal loops, BOT graphs
+description: Use when a problem keeps recurring despite fixes, when interventions produce side effects or backfire, or when you need to find high-leverage interventions in a complex system - routes to systems-thinking methodology (patterns, leverage points, archetypes, stocks-flows, causal loops, BOT graphs)
 ---
 
 # Using Systems-Thinking (Meta-Skill Router)

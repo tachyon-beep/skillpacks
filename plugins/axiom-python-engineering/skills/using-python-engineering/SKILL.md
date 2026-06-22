@@ -349,7 +349,7 @@ If you catch yourself about to:
 | "Just need quick syntax" | Syntax without context leads to misuse. | Route to get syntax + patterns + anti-patterns |
 | "User sounds experienced" | Experience in one area ≠ expertise in all Python. | Route based on symptoms, not perceived skill |
 | "Already tried X" | May have done X wrong or incompletely. | Route to specialist to verify X properly |
-| "Too many skills" | 8 focused skills > 1 overwhelming wall of text. | Use router to navigate - that's its purpose |
+| "Too many skills" | 10 focused skills > 1 overwhelming wall of text. | Use router to navigate - that's its purpose |
 
 **If you catch yourself thinking ANY of these, STOP and route to the specialist.**
 
@@ -434,9 +434,8 @@ After routing, load the appropriate specialist skill for detailed guidance:
 
 ## Integration Notes
 
-**Phase 1 - Standalone**: Python skills are self-contained
+Python skills are self-contained, but pair well with cross-cutting methodology packs:
 
-**Future cross-references**:
 - superpowers:test-driven-development (TDD methodology before implementing)
 - superpowers:systematic-debugging (systematic debugging before profiling)
 

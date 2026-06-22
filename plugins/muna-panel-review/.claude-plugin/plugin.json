@@ -1,6 +1,6 @@
 {
   "name": "muna-panel-review",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Simulated audience panel review \u2014 persona-driven editorial intelligence for document suites. 3 agents (persona-reader, panel-synthesiser, persona-designer), 1 orchestration skill, 3 slash commands.",
   "author": {
     "name": "tachyon-beep",

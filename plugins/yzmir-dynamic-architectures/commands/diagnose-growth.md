@@ -1,5 +1,6 @@
 ---
 description: Diagnose issues with dynamic architecture growth, pruning, or integration
+argument-hint: "[optional: the symptom or growth/pruning issue you are seeing]"
 allowed-tools: ["Read", "Glob", "Grep", "Bash", "WebSearch"]
 ---
 

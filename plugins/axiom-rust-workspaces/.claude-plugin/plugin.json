@@ -1,6 +1,6 @@
 {
   "name": "axiom-rust-workspaces",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Rust at workspace scope — multi-crate composition, not single-crate engineering. API-stable: router + 13 sheets, 3 commands, 1 agent. Covers workspace structure, `[workspace.dependencies]` + resolver-2/3, `[workspace.lints]` + workspace-scope `clippy.toml`, workspace-scope `deny.toml`, public-vs-internal crate boundaries, feature-unification gotchas, Miri on the unsafe-bearing subset, test organisation, rustdoc + mdbook architecture, release flow, task-runner patterns, workspace-scope coverage, and the workspace anti-pattern refusal list. Sibling to `axiom-rust-engineering` — that pack is single-crate-shaped; this pack composes those concerns at workspace scale.",
   "author": {
     "name": "tachyon-beep",

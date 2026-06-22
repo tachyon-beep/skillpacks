@@ -1,6 +1,6 @@
 {
   "name": "lyra-ux-designer",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "UX design fundamentals - visual design, WCAG 2.2 accessibility, modern web platform primitives, iOS 17+/Material 3 mobile, AI-experience patterns (Trust Stack), first-principles audience-derived needs analysis - 11 specialist sheets, 3 commands, 3 agents (ux-critic, accessibility-auditor, ux-theorist)",
   "author": {
     "name": "tachyon-beep",

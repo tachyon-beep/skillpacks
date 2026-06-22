@@ -64,7 +64,7 @@ Action: Do NOT activate — that is `tech-selection-critic`, not a package revie
 | `17-risk-register.md`                         | yes        |                 |                 |
 | `archimate-model/`, `togaf-deliverable-map.md`|            |                 | yes             |
 
-If an expected artifact is missing, flag it as a Critical finding under failure mode check 1 (file presence).
+If an expected artifact is missing, flag it as a Critical finding in the file-presence pre-check (this inventory step is a precondition to the eleven failure-mode checks below, not one of them).
 
 ## Review Protocol
 

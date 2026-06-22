@@ -206,9 +206,34 @@ These thoughts mean incomplete plan:
 
 **If you catch yourself using these rationalizations, STOP and add the missing details.**
 
+## Validate Before Execution
+
+For high-risk or high-complexity work, validate the plan against codebase reality before any execution:
+
+**RECOMMENDED SUB-SKILL:** Run `/review-plan docs/plans/<filename>.md` (plan-review skill).
+
+It spawns reality/architecture/quality/systems reviewers and returns one of three verdicts:
+
+- **APPROVED** — proceed to Execution Handoff.
+- **APPROVED_WITH_WARNINGS** — proceed, but address the noted warnings during execution.
+- **CHANGES_REQUESTED** — do not execute. Revise the plan first (see below).
+
+Skip review only for low-risk, low-complexity plans; reserve it for work where a wrong assumption is expensive.
+
+## Revising After CHANGES_REQUESTED
+
+When `/review-plan` returns `CHANGES_REQUESTED`, treat it as a revision loop, not a one-shot gate:
+
+1. Work the findings in priority order (the synthesizer ranks them by `Severity × Likelihood × Reversibility`).
+2. For each finding, edit the affected task in place — apply the same Quality Standards as the original plan (exact paths, complete code, exact commands). Do not paper over a hallucinated symbol or wrong path with a vague step.
+3. Note unresolved findings explicitly if a reviewer flagged an information gap you cannot close — record the assumption in the plan rather than hiding it.
+4. Re-run `/review-plan` on the revised plan. Repeat until the verdict is `APPROVED` or `APPROVED_WITH_WARNINGS`.
+
+Only then proceed to Execution Handoff.
+
 ## Execution Handoff
 
-After saving the plan, offer execution choice:
+After the plan is saved (and reviewed, for high-risk work), offer execution choice:
 
 **"Plan complete and saved to `docs/plans/<filename>.md`. Two execution options:**
 

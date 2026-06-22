@@ -1,4 +1,3 @@
-
 # Async Patterns and Concurrency
 
 ## Overview

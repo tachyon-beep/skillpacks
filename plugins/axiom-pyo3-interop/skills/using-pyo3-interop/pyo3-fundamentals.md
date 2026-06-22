@@ -189,6 +189,7 @@ Notes that bite:
 - `#[pyclass]` defaults to `frozen = false` and `unsendable`. To make instances send-able across threads (necessary for some patterns) declare `#[pyclass(unsendable = false)]` and ensure all fields are `Send`. To make them effectively immutable (no `&mut self` methods, no interior mutation through PyO3) declare `#[pyclass(frozen)]` — frozen pyclasses can be `Sync` and avoid the runtime `RefCell` borrow check.
 - `#[pyclass(eq, ord, hash, str)]` derives the dunder methods from `PartialEq`, `Ord`, `Hash`, `Display` — much less boilerplate than writing `__eq__`, `__lt__`, etc. by hand. Available since 0.22.
 - `#[new]` is a constructor (`Counter()` in Python). It is *not* the same as Rust `new`; the macro registers it as the class's `__init__` equivalent.
+- **Submodules** are nested `#[pymodule]` functions added to the parent with `m.add_submodule(&child)?`. Since PyO3 does not register submodules in `sys.modules`, `from mymod.sub import x` fails unless you also insert it manually: `py.import("sys")?.getattr("modules")?.set_item("mymod.sub", child)?`. Without that step the submodule is reachable as an attribute (`mymod.sub`) but not as an importable path.
 
 ## Argument Conversion: `FromPyObject` and `IntoPyObject`
 

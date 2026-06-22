@@ -2,6 +2,7 @@
 name: scene-drafter
 description: Use when drafting a new scene from beats, voice samples, and POV/distance constraints. Outputs prose only with optional craft-notes appendix. Does NOT modify user's existing prose, does NOT critique briefs, does NOT auto-critique its own output.
 tools: Read, Grep, Glob
+model: sonnet
 ---
 
 # Scene Drafter Agent

@@ -168,6 +168,14 @@ The pack produces a numbered artifact set in a `pyo3-interop/` workspace:
 
 **Why**: This is a one-way door — switching after release breaks downstream pinning. Decide explicitly with the binary-size and forward-compat math in front of you.
 
+### "do I still need to release the GIL on free-threaded CPython?" / "3.13t / no-GIL build"
+
+**Symptoms**: targeting free-threaded CPython (3.13t / `Py_GIL_DISABLED`); unsure whether `Python::allow_threads` is still required; abi3 wheels don't cover the free-threaded ABI; "is my extension free-threaded-safe?"
+
+**Route to**: [`gil-release-patterns.md`](gil-release-patterns.md) (the `allow_threads` no-op caveat) and [`abi3-vs-native-extensions.md`](abi3-vs-native-extensions.md) (ABI coverage)
+
+**Why**: On 3.13t `allow_threads` is a no-op, but writing it remains correct and forward-compatible — the discipline is unchanged; what changes is that the runtime no longer serializes you. Free-threaded builds also need their own wheel (abi3 does not yet cover the free-threaded ABI), and a `#[pyclass]` shared across threads must actually be `Send + Sync`, not merely declared so.
+
 ### "maturin develop works locally but CI can't import the module" / "the workspace breaks editable installs"
 
 **Symptoms**: hybrid layout with a `python/` source tree and a `crates/<name>-py/` Rust crate; `pip install -e` only sees one or the other; `maturin develop` works but `pytest` can't find the module; the workspace's shared `target/` confuses maturin.
@@ -322,7 +330,7 @@ A pack that fails the gate at one or more rows is not ready; load the relevant s
 - `axiom-audit-pipelines` — wheel signing, SBOM, supply-chain evidence. cibuildwheel emits the artifacts; that pack governs how they are retained and trusted.
 - `axiom-determinism-and-replay` — for simulation / RL workloads where reproducibility matters across the FFI boundary (RNG seeds, deterministic scheduling, replayable episodes).
 - `yzmir-deep-rl` — for RL policy training that consumes a Rust-backed Gymnasium environment via this pack.
-- `yzmir-pytorch-engineering` — for PyTorch-side concerns (CUDA streams, memory pools) that interact with Rust-side numerical kernels.
+- `yzmir-pytorch-engineering` — for PyTorch-side concerns (CUDA streams, memory pools) that interact with Rust-side numerical kernels. For zero-copy tensor sharing across the boundary, expose `__dlpack__` / `__dlpack_device__` on the Rust side (the DLPack protocol `torch.from_dlpack` consumes) rather than going through the NumPy buffer protocol — DLPack carries device (CPU/CUDA) and stream metadata that the buffer protocol cannot.
 
 ## Commands
 

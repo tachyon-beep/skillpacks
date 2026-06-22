@@ -170,7 +170,7 @@ Use `agent: tech-selection-critic`. Red-teams a tech choice against requirements
 
 The pack includes two agents that review or critique designs without producing artifacts:
 
-- **`agent: solution-design-reviewer`** — Critiques an existing design package (`99-solution-architecture-document.md` or numbered artifact set) for the ten canonical failure modes (tech-before-problem, NFR handwaving, untraceable design, etc.). Invoked via `/review-solution-design`.
+- **`agent: solution-design-reviewer`** — Critiques an existing design package (`99-solution-architecture-document.md` or numbered artifact set) for the eleven canonical failure modes (tech-before-problem, NFR handwaving, untraceable design, etc.). Invoked via `/review-solution-design`.
 - **`agent: tech-selection-critic`** — Red-teams a single tech choice (datastore, messaging, language, platform) against requirements and alternatives. Invoke when you have a proposed choice and want to validate it before recording in `05-` or an ADR.
 
 **Agents vs. skills:** Skills *produce* artifacts end-to-end (triage → assembly). Agents *review or critique* existing artifacts or decisions. Invoke an agent when the work is in review or validation; load a skill when you are producing.

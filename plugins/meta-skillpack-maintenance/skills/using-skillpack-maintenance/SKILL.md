@@ -36,6 +36,8 @@ Systematic maintenance of Claude Code plugins including skills, commands, agents
 - Creating new plugins from scratch (design first)
 - Creating brand new skills (use `superpowers:writing-skills`)
 
+**External dependency.** This workflow treats `superpowers:writing-skills` as the mandatory authoring path for every NEW skill (Stage 4/5). That skill ships in the `superpowers` plugin, which is **not part of this marketplace** — confirm it is installed before relying on it. If it is unavailable, do not author skills inline as a workaround; instead pause and surface the gap to the user (install `superpowers`, or hand skill-authoring off explicitly), because new skills require their own RED-GREEN-REFACTOR loop that this pack does not reimplement. Maintenance of existing components (commands, agents, hooks, reference sheets, version bumps) has no external dependency.
+
 ---
 
 ## Reference Sheet Location
@@ -48,6 +50,8 @@ All reference sheets are in this skill's directory:
 
 When reading `analyzing-pack-domain.md`, find it at:
   `skills/using-skillpack-maintenance/analyzing-pack-domain.md`
+
+**Test corpus.** This pack ships a deliberately flawed plugin at `.test-fixtures/flawed-plugin/` (a vague-description skill, the duplicate pair `data-stuff`/`data-things`, and a command missing `allowed-tools`). It exists so the structure-review and behavioral-testing methodology can be exercised against known defects — point the gauntlet at it to confirm the workflow actually catches what it claims to. It is a fixture, not example output to copy.
 
 ---
 

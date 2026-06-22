@@ -71,11 +71,11 @@ Analyze existing codebases through coordinated subagent exploration to produce c
 When this skill is loaded from:
   `skills/using-system-archaeologist/SKILL.md`
 
-Reference sheets like `subsystem-discovery.md` are at:
-  `skills/using-system-archaeologist/subsystem-discovery.md`
+Reference sheets like `analyzing-unknown-codebases.md` are at:
+  `skills/using-system-archaeologist/analyzing-unknown-codebases.md`
 
 NOT at:
-  `skills/subsystem-discovery.md` ← WRONG PATH
+  `skills/analyzing-unknown-codebases.md` ← WRONG PATH
 
 ---
 

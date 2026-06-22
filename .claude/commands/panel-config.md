@@ -31,5 +31,5 @@ Alternatively, if you have the documents ready and want automated panel design, 
 ## References
 
 - `plugins/muna-panel-review/config-template.md` — config format with field descriptions
-- `plugins/muna-panel-review/config.md` — fully worked 13-persona example
+- `plugins/muna-panel-review/config.md` — fully worked 6-persona example
 - `plugins/muna-panel-review/process.md` Phase 1 — panel design principles

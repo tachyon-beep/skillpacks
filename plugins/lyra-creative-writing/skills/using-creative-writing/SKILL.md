@@ -7,7 +7,7 @@ description: Use when the user wants to draft fiction or creative nonfiction pro
 
 ## Overview
 
-A workshop-voiced craft pack for prose narrative — fiction (all major genres) and creative nonfiction (memoir, literary journalism, lyric and personal essay, narrative nonfiction). Sibling to `lyra-ux-designer` under the Lyra (arts, beauty) faction. v0.1 covers prose narrative only; poetry, scripts, plays, comics, songwriting, and interactive fiction are scheduled for v0.4.
+A workshop-voiced craft pack for prose narrative — fiction (all major genres) and creative nonfiction (memoir, literary journalism, lyric and personal essay, narrative nonfiction). Sibling to `lyra-ux-designer` under the Lyra (arts, beauty) faction. v0.2 covers prose narrative only; poetry, scripts, plays, comics, songwriting, and interactive fiction are scheduled for v0.4.
 
 Three modes, one router. The router enforces mode discipline because most failures of writing assistance are mode failures: the writer wanted critique and got a rewrite, wanted a plan and got a draft, wanted a draft and got a lecture about pacing.
 
@@ -56,7 +56,7 @@ Four hard rules, in this order:
 
 v0.2 adds nine genre-specific sheets covering the major prose-narrative genres: `mystery`, `thriller`, `sf`, `fantasy`, `horror`, `romance`, `literary-fiction`, `memoir-and-personal-essay`, `literary-journalism`. Each presents conventions through a uniform reader-contract discipline: name the contract → name the cost of breaking → name books worth the cost. The router loads on demand — typically one genre sheet per session, two when the project is genuinely cross-genre (literary thriller, romantasy, memoir-as-essay-collection). For three-genre projects, the router asks which to focus on rather than loading three at once.
 
-Genre sheets reference the v0.1 craft sheets rather than re-explaining universal craft. If a genre question turns out to be a craft question (pacing, POV, dialogue), defer to the craft sheet.
+Genre sheets reference the 13 craft sheets rather than re-explaining universal craft. If a genre question turns out to be a craft question (pacing, POV, dialogue), defer to the craft sheet.
 
 The sheets do **not** rank genres against each other. Literary fiction is one mode among nine, with its own contract and its own breaking-costs — not the unmarked default the others deviate from. The literary-vs-genre debate is named honestly inside `literary-fiction.md` rather than left as subtext.
 

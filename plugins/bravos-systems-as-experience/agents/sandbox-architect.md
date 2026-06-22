@@ -197,6 +197,48 @@ discovery: [What they learn by doing]
 | Explorers | [Behavior] | [Support] |
 | Optimizers | [Behavior] | [Support] |
 | Socializers | [Behavior] | [Support] |
+
+## Confidence Assessment
+
+**Overall Confidence:** [High | Moderate | Low | Insufficient Data]
+
+| Design claim | Confidence | Basis |
+|--------------|------------|-------|
+| [e.g. "Constraint set forces interesting choices"] | High | Verified against stated player fantasy |
+| [e.g. "Layer-1 teaches core loop in 30 min"] | Moderate | Pattern from comparable sandboxes, untested |
+| [e.g. "Failure cost is low enough to encourage play"] | Low | Inference, no playtest data |
+
+## Risk Assessment
+
+**Design Risk:** [Low | Medium | High | Critical]
+**Reversibility:** [Easy | Moderate | Difficult | Irreversible]
+
+| Risk | Severity | Likelihood | Mitigation |
+|------|----------|------------|------------|
+| [e.g. too few constraints → sameness] | High | Medium | [Add meaningful limits] |
+| [e.g. tutorial wall kills discovery] | High | Low | [Convert to environmental teaching] |
+
+## Information Gaps
+
+The following would improve this design:
+
+1. [ ] **[Specific item]**: [Why it would help — e.g. target player types, existing mechanic list]
+2. [ ] **[Specific item]**: [Why it would help]
+
+## Caveats & Required Follow-ups
+
+### Before Relying on This Design
+
+- [ ] Playtest progressive revelation against real first-session behavior
+- [ ] Confirm constraints produce varied playstyles, not one optimal path
+
+### Assumptions Made
+
+- [Assumption about player fantasy / engagement window]
+
+### Limitations
+
+- This design does NOT cover numeric balance, content authoring, or implementation
 ```
 
 ## Design Patterns

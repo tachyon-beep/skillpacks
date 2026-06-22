@@ -11,6 +11,8 @@ This protocol applies to all Subject Matter Expert agents—those that analyze, 
 
 **Core principle:** SME agents provide MORE value when they investigate BEFORE advising. Generic advice wastes everyone's time. Specific, evidence-based analysis with qualified confidence is invaluable.
 
+> **Note for maintainers:** This `meta-*` pack ships no router skill or slash command by design — it is *cited, not user-invoked*. Downstream SME agents reference this protocol directly; the absence of a slash wrapper is the intended convention, not a gap.
+
 ---
 
 ## The SME Contract
@@ -393,6 +395,7 @@ When adding this protocol to an SME agent:
 
 ## Changelog
 
+- **1.1.1** (2026-06-22) — Cosmetic. Realigned the Summary ASCII box right border; added a maintainer note documenting the deliberate "cited, not user-invoked — no slash wrapper" `meta-*` convention. No behavioral change; downstream agents need no edits.
 - **1.1.0** (2026-05-05) — Additive refresh. Modernized tool examples (dropped `firecrawl` and generic `LSP` references; added `WebSearch`, `Agent`-tool subagent dispatch, MCP-server examples). Added §1.3 router-skill guidance, §1.6 subagent dispatch, §3.5 OPTIONAL machine-readable JSON summary, §3.6 OPTIONAL subagent-dispatch context, and a Rust anti-pattern example. **The four required output sections (§3.1–§3.4) and confidence/risk vocabulary are unchanged from 1.0.x — downstream agents need no edits.**
 - **1.0.1** — Minor edits (no behavioral change).
 - **1.0.0** — Initial published protocol.

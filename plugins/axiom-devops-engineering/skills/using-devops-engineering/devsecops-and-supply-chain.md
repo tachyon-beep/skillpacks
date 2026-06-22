@@ -137,7 +137,7 @@ grype sbom:sbom.cdx.json --vex vex.json --fail-on high
 
 SBOM answers *what is inside*. **Provenance** answers *how it was made* — which source commit, which builder, which parameters — as a signed, tamper-evident attestation. The framework is **SLSA v1.0**; the bar that matters is **Build Level 3** (the U.S. federal-procurement floor):
 
-| SLSA Build Level | Guarantee | What it demands |
+| SLSA v1.0 Build Level | Guarantee | What it demands |
 |---|---|---|
 | L0 | Nothing | — |
 | L1 | Provenance exists | Build emits a provenance document |

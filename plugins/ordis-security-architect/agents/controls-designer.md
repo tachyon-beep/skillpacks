@@ -173,6 +173,22 @@ For critical operations:
 |-----------|----------|---------|
 | Production deploy | 2 approvals | PR + security review |
 | User deletion | 2 admins | Initiator + approver |
+
+### Confidence Assessment
+
+[High/Medium/Low] — [what the design rests on; which layers are fully specified vs. dependent on unknowns]
+
+### Risk Assessment
+
+[Residual risk after the proposed controls; threats only partially mitigated and why]
+
+### Information Gaps
+
+- [Missing threat analysis, boundary detail, or platform constraint that would change the control choices]
+
+### Caveats
+
+- [Assumptions about the runtime/platform, controls deferred to implementation, conditions under which fail-secure behavior changes]
 ```
 
 ## Control Patterns by Boundary Type

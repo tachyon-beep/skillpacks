@@ -333,7 +333,7 @@ A complete `06-` artifact:
 - `04-workspace-deny-config.md` — the licence allow-list often differs between published and internal; per-crate exceptions live there.
 - `13-workspace-anti-patterns.md` — the leaky-internal-API anti-pattern, the publish-by-default trap, the god-traits-crate.
 - `axiom-solution-architect:design-solution` — the public-API ADR for every public crate; the stability tier (experimental / beta / stable) per crate.
-- *Planned for v0.2.0:* `release-flow-for-workspaces.md` will go deeper on independent vs synchronised versioning across the public-crate set; this sheet partitions the set, that sheet times the releases.
+- `release-flow-for-workspaces.md` — goes deeper on independent vs synchronised versioning across the public-crate set; this sheet partitions the set, that sheet times the releases.
 
 ## The Bottom Line
 

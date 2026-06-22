@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, product management, solution architecture, game development, security, documentation, site design, and UX skills for Claude Code - 45 complete skillpacks with 400+ TDD-validated skills and reference sheets",
-    "version": "3.22.0",
+    "version": "3.22.1",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
     {
       "name": "axiom-python-engineering",
       "source": "./plugins/axiom-python-engineering",
-      "description": "Modern Python 3.12+ engineering: types, testing, async, scientific computing, ML workflows - 10 skills",
+      "description": "Modern Python 3.12+ engineering: types, testing, async, scientific computing, ML workflows, Textual TUI - 10 reference sheets, 4 commands, 3 agents",
       "keywords": [
         "axiom",
         "python",
@@ -51,7 +51,7 @@
     {
       "name": "axiom-system-architect",
       "source": "./plugins/axiom-system-architect",
-      "description": "TDD-validated architectural assessment enforcing professional discipline - prevents diplomatic softening, analysis paralysis, and security priority compromise - 3 specialist skills + router",
+      "description": "TDD-validated architectural assessment enforcing professional discipline - prevents diplomatic softening, analysis paralysis, and security priority compromise - router + 3 specialist sheets, 3 commands, 2 SME agents",
       "keywords": [
         "axiom",
         "architecture",
@@ -78,7 +78,7 @@
     {
       "name": "axiom-web-backend",
       "source": "./plugins/axiom-web-backend",
-      "description": "Web backend development expertise across FastAPI, Django, Express, REST/GraphQL APIs, microservices, and production deployment patterns - router + specialist skills for modern web APIs",
+      "description": "Web backend development expertise across FastAPI, Django, Express, REST/GraphQL APIs, microservices, and framework-level production patterns - router + specialist skills for modern web APIs (deployment/CI-CD lives in axiom-devops-engineering)",
       "keywords": [
         "axiom",
         "web",
@@ -108,7 +108,7 @@
     {
       "name": "axiom-engineering-foundations",
       "source": "./plugins/axiom-engineering-foundations",
-      "description": "Universal software engineering methodology - systematic debugging, safe refactoring, code review, incident response, technical debt triage, codebase confidence building - 6 language-agnostic skills",
+      "description": "Universal software engineering methodology - systematic debugging, safe refactoring, code review, incident response, technical debt triage, codebase confidence building - 6 language-agnostic reference sheets",
       "keywords": [
         "axiom",
         "debugging",
@@ -289,7 +289,7 @@
     {
       "name": "axiom-procedural-architecture",
       "source": "./plugins/axiom-procedural-architecture",
-      "description": "Structural reasoning for staged procedures — design, critique, and analyze decompositions of any procedure into composable stages, dependencies, decision points, and flow properties. Two roles (producer/critic) over one shared corpus. Router + 13 sheets, 3 commands, 2 agents.",
+      "description": "Structural reasoning for staged procedures — design, critique, and analyze decompositions of any procedure into composable stages, dependencies, decision points, and flow properties. Three roles (producer/critic/analyst) over one shared corpus. Router + 13 sheets, 3 commands, 2 agents.",
       "keywords": [
         "axiom",
         "procedural-architecture",
@@ -345,7 +345,7 @@
     {
       "name": "bravos-simulation-tactics",
       "source": "./plugins/bravos-simulation-tactics",
-      "description": "Game simulation implementation patterns and tactics - 11 skills",
+      "description": "Game simulation implementation patterns and tactics - router + 13 reference sheets, 3 commands, 2 agents",
       "keywords": [
         "bravos",
         "simulation",
@@ -356,7 +356,7 @@
     {
       "name": "bravos-systems-as-experience",
       "source": "./plugins/bravos-systems-as-experience",
-      "description": "Emergent gameplay and systemic game design - 9 skills",
+      "description": "Emergent gameplay and systemic game design - router + 8 specialist reference sheets, 3 commands, 2 agents",
       "keywords": [
         "bravos",
         "systems",
@@ -402,7 +402,7 @@
     {
       "name": "lyra-site-designer",
       "source": "./plugins/lyra-site-designer",
-      "description": "Static site design and implementation for developer tools and documentation - information architecture, modern CSS (container queries, :has(), OKLCH, light-dark(), View Transitions), design tokens, docs-first frameworks (Starlight, VitePress, Docusaurus 3), developer UX patterns - 1 skill, 1 agent, 1 command, 6 reference sheets",
+      "description": "Static site design and implementation for developer tools, open-source projects, and technical documentation sites - information architecture, modern CSS (container queries, :has(), OKLCH, light-dark(), View Transitions), design tokens, docs-first frameworks (Starlight, VitePress, Docusaurus 3), developer UX patterns - 1 skill, 1 agent, 1 command, 6 reference sheets",
       "keywords": [
         "lyra",
         "site",
@@ -434,7 +434,7 @@
     {
       "name": "lyra-ux-designer",
       "source": "./plugins/lyra-ux-designer",
-      "description": "UX design fundamentals - visual design, WCAG 2.2 accessibility, modern web platform primitives (dialog/popover/:has/container queries), iOS 17+ and Material 3 mobile, AI-experience patterns - 12 reference sheets",
+      "description": "UX design fundamentals - visual design, WCAG 2.2 accessibility, modern web platform primitives (dialog/popover/:has/container queries), iOS 17+ and Material 3 mobile, AI-experience patterns (Trust Stack), first-principles audience-derived needs analysis - 11 specialist sheets, 3 commands, 3 agents (ux-critic, accessibility-auditor, ux-theorist)",
       "keywords": [
         "lyra",
         "designer"
@@ -498,7 +498,7 @@
     {
       "name": "muna-technical-writer",
       "source": "./plugins/muna-technical-writer",
-      "description": "Documentation structure, clarity, security-aware docs - 10 skills, 4 commands, 3 agents",
+      "description": "Documentation structure, clarity, register translation, security-aware docs, fact-checking, complex large-file edit pair - router + 9 sheets + 1 leaf skill, 4 commands, 5 agents",
       "keywords": [
         "muna",
         "technical",
@@ -509,7 +509,7 @@
     {
       "name": "muna-wiki-management",
       "source": "./plugins/muna-wiki-management",
-      "description": "Document set management as wikis - architecture, derivation, consistency, evolution, governance for multi-document collections - 7 skills, 4 commands, 2 agents",
+      "description": "Document set management as wikis - architecture, derivation, consistency, evolution, governance for multi-document collections - 1 router + 6 reference sheets, 4 commands, 2 agents",
       "keywords": [
         "muna",
         "wiki",
@@ -523,7 +523,7 @@
     {
       "name": "ordis-quality-engineering",
       "source": "./plugins/ordis-quality-engineering",
-      "description": "E2E testing, performance testing, chaos engineering, test automation - 21 quality engineering skills",
+      "description": "E2E, API, integration, performance, chaos, flaky-test, observability, mutation, coverage-gap, and modern supply-chain (Trivy/OSV/Syft/Cosign/SLSA) testing - 21 reference sheets, 5 commands, 3 agents",
       "keywords": [
         "ordis",
         "quality",
@@ -563,17 +563,23 @@
     {
       "name": "yzmir-deep-rl",
       "source": "./plugins/yzmir-deep-rl",
-      "description": "Reinforcement learning - DQN, PPO, SAC, reward shaping, exploration - 13 skills",
+      "description": "Reinforcement learning - DQN/Rainbow/BBF, PPO/GRPO, SAC/TD3/REDQ, DreamerV3/TD-MPC2 model-based, CQL/IQL/Decision Transformer offline, MAPPO/IPPO multi-agent, exploration, reward shaping, counterfactual credit assignment - 13 sheets, 3 commands, 2 agents",
       "keywords": [
         "yzmir",
-        "deep"
+        "deep-rl",
+        "reinforcement-learning",
+        "ppo",
+        "sac",
+        "dqn",
+        "reward-shaping",
+        "counterfactual"
       ],
       "category": "ai-ml"
     },
     {
       "name": "yzmir-dynamic-architectures",
       "source": "./plugins/yzmir-dynamic-architectures",
-      "description": "Dynamic/morphogenetic neural networks - grow, prune, adapt topology during training. Continual learning, gradient isolation, modular composition, lifecycle orchestration - 6 skills, 1 agent, 2 commands",
+      "description": "Dynamic/morphogenetic neural networks - grow, prune, adapt topology during training. Continual learning, gradient isolation, modular composition, lifecycle orchestration - 7 reference sheets, 1 agent, 2 commands",
       "keywords": [
         "yzmir",
         "dynamic",
@@ -602,7 +608,7 @@
     {
       "name": "yzmir-llm-specialist",
       "source": "./plugins/yzmir-llm-specialist",
-      "description": "LLM techniques - fine-tuning, RLHF, inference optimization - 8 skills",
+      "description": "LLM applications - prompting (incl. reasoning models), RAG, fine-tuning (SFT/DPO/GRPO + LoRA family), agentic patterns + MCP, context engineering, inference optimization (vLLM/SGLang), evaluation, and OWASP-LLM-2025 safety - 10 reference sheets, 3 commands, 2 agents",
       "keywords": [
         "yzmir",
         "llm",
@@ -613,7 +619,7 @@
     {
       "name": "yzmir-ml-production",
       "source": "./plugins/yzmir-ml-production",
-      "description": "Production ML - quantization, serving, MLOps, monitoring, debugging - 11 skills",
+      "description": "Production ML - quantization, serving, MLOps, monitoring, debugging - 10 reference sheets, 3 commands, 2 agents",
       "keywords": [
         "yzmir",
         "production"
@@ -623,7 +629,7 @@
     {
       "name": "yzmir-neural-architectures",
       "source": "./plugins/yzmir-neural-architectures",
-      "description": "Neural architectures - CNNs, Transformers, RNNs, selection guidance - 9 skills",
+      "description": "Neural architectures - CNNs (ConvNeXt v2 / EfficientNetV2), Transformers, SSM/Mamba, MoE (Mixtral/DeepSeek), modern diffusion (SDXL/FLUX/DiT), multimodal (CLIP/SigLIP/LLaVA), SAM/SAM-2, equivariant GNNs - 9 reference sheets, 3 commands, 2 agents",
       "keywords": [
         "yzmir",
         "neural",
@@ -634,7 +640,7 @@
     {
       "name": "yzmir-pytorch-engineering",
       "source": "./plugins/yzmir-pytorch-engineering",
-      "description": "PyTorch mastery - tensors, modules, distributed training, profiling - 9 skills",
+      "description": "PyTorch mastery - tensors, modules, distributed training, profiling - 8 reference sheets + 1 router, 3 commands, 2 agents",
       "keywords": [
         "yzmir",
         "pytorch",
@@ -645,7 +651,7 @@
     {
       "name": "yzmir-simulation-foundations",
       "source": "./plugins/yzmir-simulation-foundations",
-      "description": "Game simulation mathematics - ODEs, stability, control theory - 9 skills",
+      "description": "Game simulation mathematics - ODEs, stability, control theory - router + 8 sheets, 3 commands, 2 agents",
       "keywords": [
         "yzmir",
         "simulation",
@@ -656,7 +662,7 @@
     {
       "name": "yzmir-systems-thinking",
       "source": "./plugins/yzmir-systems-thinking",
-      "description": "Systems thinking methodology - patterns, leverage points, archetypes, modeling, visualization - 6 TDD-validated skills",
+      "description": "Systems thinking methodology - patterns, leverage points, archetypes, modeling, visualization - router + 6 TDD-validated reference sheets",
       "keywords": [
         "yzmir",
         "systems-thinking",
@@ -668,7 +674,7 @@
     {
       "name": "yzmir-training-optimization",
       "source": "./plugins/yzmir-training-optimization",
-      "description": "Training stability - optimizers, learning rates, convergence, debugging - 11 skills",
+      "description": "Training stability - modern optimizers (AdamW/Lion/Sophia/Muon/AdEMAMix/Schedule-Free/Prodigy/8-bit Adam), schedules (cosine/WSD), precision (BF16/FP8 E4M3/E5M2), batch sizing (B_crit, Chinchilla), gradients, convergence, hyperparameters (incl. muP), debugging. 11 skills + 3 commands + 2 agents.",
       "keywords": [
         "yzmir",
         "training",

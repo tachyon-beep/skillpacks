@@ -136,7 +136,7 @@ Archaeologist → Architect → (Future: Project Manager)
 ```
 Read archaeologist outputs
 → Use: assessing-architecture-quality
-→ Produces: 05-architecture-assessment.md
+→ Produces: 05-quality-assessment.md
 ```
 
 **Step 3:** Catalog technical debt
@@ -171,11 +171,11 @@ Read assessment
 ```
 1. Archaeologist: document architecture
 2. Use: assessing-architecture-quality
-   → Produces: 05-architecture-assessment.md
+   → Produces: 05-quality-assessment.md
 3. Use: identifying-technical-debt
    → Produces: 06-technical-debt-catalog.md
 4. Use: prioritizing-improvements
-   → Produces: 09-improvement-roadmap.md
+   → Produces: 07-improvement-roadmap.md
 ```
 
 ---
@@ -246,7 +246,7 @@ Architect identifies Python-specific issues
 2. **Architect Phase (YOU ARE HERE)**
    ```
    Use: assessing-architecture-quality
-   → 05-architecture-assessment.md
+   → 05-quality-assessment.md
 
    Use: identifying-technical-debt
    → 06-technical-debt-catalog.md

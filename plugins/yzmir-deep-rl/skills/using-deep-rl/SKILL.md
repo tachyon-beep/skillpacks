@@ -1,6 +1,6 @@
 ---
 name: using-deep-rl
-description: Routes to appropriate deep-RL skills based on problem type and algorithm family
+description: Use when training, debugging, or selecting a deep-RL algorithm — value-based (DQN/Rainbow/BBF), policy-gradient (PPO/GRPO), actor-critic (SAC/TD3/REDQ), model-based (DreamerV3/TD-MPC2), offline (CQL/IQL/Decision Transformer), multi-agent (MAPPO/IPPO), exploration, reward shaping, or counterfactual credit assignment. Routes to the matching specialist sheet by problem type and algorithm family.
 ---
 
 # Using Deep RL Meta-Skill

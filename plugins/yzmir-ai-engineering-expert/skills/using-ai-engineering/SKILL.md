@@ -1,6 +1,6 @@
 ---
 name: using-ai-engineering
-description: Route AI/ML tasks to correct Yzmir pack - frameworks, training, RL, LLMs, architectures, production
+description: Use when you have an AI/ML task but aren't sure which Yzmir pack handles it - routes frameworks, training, RL, LLMs, architectures, and production to the correct specialist pack and clarifies before guessing
 ---
 
 # Using AI Engineering

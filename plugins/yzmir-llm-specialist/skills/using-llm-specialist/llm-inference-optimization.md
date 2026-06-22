@@ -1,7 +1,7 @@
 
 # LLM Inference Optimization Skill
 
-## When to Use This Skill
+## Context
 
 Use this skill when:
 - Building production LLM applications with latency requirements

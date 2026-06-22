@@ -70,7 +70,8 @@ Action: Do NOT activate - quantitative task, use stock-flow modeling
 |---------|-----------------|
 | Fix works then problem returns worse | Fixes that Fail |
 | Quick fix prevents real solution | Shifting the Burden |
-| Two parties making it worse | Escalation or Accidental Adversaries |
+| Two parties in a tit-for-tat threat spiral | Escalation |
+| Two parties unintentionally undermining each other | Accidental Adversaries |
 | Winner gets more resources | Success to the Successful |
 | Shared resource degrading | Tragedy of the Commons |
 | Standards lowering from complacency | Drifting Goals |

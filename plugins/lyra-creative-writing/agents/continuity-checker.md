@@ -2,6 +2,7 @@
 name: continuity-checker
 description: Use when checking a manuscript for factual contradictions — names, ages, timeline, geography, established facts, eye/hair colour, prior-scene callbacks. Outputs a contradiction ledger. Pure factual tracking, no craft judgement.
 tools: Read, Grep, Glob
+model: sonnet
 ---
 
 # Continuity Checker

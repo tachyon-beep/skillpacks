@@ -2,6 +2,7 @@
 name: pov-and-distance-auditor
 description: Use when auditing prose for point-of-view consistency, narrative distance, head-hopping, knowledge violations, and free-indirect-discourse mechanics. Outputs a POV ledger keyed by location. Does NOT comment on dialogue, structure, or prose rhythm.
 tools: Read, Grep, Glob
+model: sonnet
 ---
 
 # POV and Distance Auditor

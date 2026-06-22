@@ -1,7 +1,7 @@
 
 # LLM Evaluation Metrics Skill
 
-## When to Use This Skill
+## Context
 
 Use this skill when:
 - Building any LLM application (classification, generation, summarization, RAG, chat)

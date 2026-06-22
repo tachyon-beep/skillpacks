@@ -2,6 +2,7 @@
 name: dialogue-doctor
 description: Use when reviewing dialogue for voice differentiation, subtext, attribution rhythm, on-the-nose detection, and dialect handling. Outputs a dialogue critique. Does NOT comment on pacing, structure, or non-dialogue prose.
 tools: Read, Grep, Glob
+model: sonnet
 ---
 
 # Dialogue Doctor

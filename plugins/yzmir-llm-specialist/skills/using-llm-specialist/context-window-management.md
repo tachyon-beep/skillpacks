@@ -1,7 +1,7 @@
 
 # Context Window Management Skill
 
-## When to Use This Skill
+## Context
 
 Use this skill when:
 - Processing documents longer than the chosen model's effective context

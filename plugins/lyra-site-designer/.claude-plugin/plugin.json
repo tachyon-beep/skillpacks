@@ -1,6 +1,6 @@
 {
   "name": "lyra-site-designer",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Static site design and implementation for developer tools, open-source projects, and technical documentation sites - information architecture, modern CSS (container queries, :has(), OKLCH, light-dark(), View Transitions), design tokens, docs-first frameworks (Starlight, VitePress, Docusaurus 3), developer UX patterns - 1 skill, 1 agent, 1 command, 6 reference sheets",
   "author": {
     "name": "tachyon-beep",

@@ -16,7 +16,7 @@ This is the sheet that prevents the pack from being read as "always do all of th
 Use this sheet when:
 
 - The team is debating whether to enter the pack at all.
-- A v0.1.0 spec is in place and the team wants to know what the next perf budget looks like.
+- A determinism spec is in place and the team wants to know what the next perf budget looks like.
 - A stakeholder is pushing for "bit-exact across architectures" without understanding what that costs.
 - The pack's discipline is being relaxed under deadline and the team needs to record what they are giving up.
 - A subsystem cannot meet its perf budget *and* the determinism class — the trade has to be named.

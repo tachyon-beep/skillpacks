@@ -2,6 +2,7 @@
 name: line-reviewer
 description: Use when reviewing prose at sentence, paragraph, and word level. Outputs annotated line edits keyed to text excerpts. Does NOT comment on structure, character arc, plot, or facts.
 tools: Read, Grep, Glob
+model: sonnet
 ---
 
 # Line Reviewer

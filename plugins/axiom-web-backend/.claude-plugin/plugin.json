@@ -1,7 +1,7 @@
 {
   "name": "axiom-web-backend",
-  "version": "1.2.1",
-  "description": "Web backend: FastAPI, Django, Express, REST/GraphQL, microservices. 11 reference sheets, 3 commands, 2 agents.",
+  "version": "1.2.2",
+  "description": "Web backend: FastAPI, Django, Express, REST/GraphQL, microservices, auth, and framework-level production patterns. Router + specialist reference sheets for modern web APIs.",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

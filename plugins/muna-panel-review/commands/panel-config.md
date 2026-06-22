@@ -29,7 +29,7 @@ If the user is in pre-document planning, or wants to author the config by hand, 
 2. **Who the audiences are** — who reads it, who decides based on it, who is affected by it
 3. **Institutional context** (optional) — how readers received the documents, what status they have, what the document is meant to accomplish
 
-Then help them draft a config following `plugins/muna-panel-review/config-template.md`. Reference `plugins/muna-panel-review/config.md` (worked 13-persona cloud-migration example) for shape and tone.
+Then help them draft a config following `plugins/muna-panel-review/config-template.md`. Reference `plugins/muna-panel-review/config.md` (worked 6-persona cloud-migration example) for shape and tone.
 
 ## Design principles (carry these through both routes)
 

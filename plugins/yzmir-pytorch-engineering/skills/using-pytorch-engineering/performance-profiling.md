@@ -1162,7 +1162,7 @@ def diagnose_gpu_bottleneck(model, sample_input):
         print("\n🎯 Bottleneck: Convolution operations")
         print("Solutions:")
         print("  1. Check input dimensions for Tensor Core alignment (multiples of 8)")
-        print("  2. Use mixed precision (torch.cuda.amp)")
+        print("  2. Use mixed precision (torch.amp)")
         print("  3. Consider depthwise separable convolutions")
         print("  4. Profile with different batch sizes")
 
@@ -1187,9 +1187,9 @@ def diagnose_gpu_bottleneck(model, sample_input):
 
 ```python
 # Solution 1: Mixed precision
-from torch.cuda.amp import autocast
+from torch.amp import autocast
 
-with autocast():
+with autocast("cuda"):
     output = model(data)
     loss = criterion(output, target)
 # 2-3x speedup for large models

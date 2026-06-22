@@ -1393,10 +1393,10 @@ def forward(self, x):
     return x
 
 # Solution 4: Mixed precision (half memory for activations)
-from torch.cuda.amp import autocast, GradScaler
+from torch.amp import autocast, GradScaler
 
-scaler = GradScaler()
-with autocast():
+scaler = GradScaler("cuda")
+with autocast("cuda"):
     output = model(batch)
     loss = criterion(output, target)
 scaler.scale(loss).backward()
@@ -1631,7 +1631,7 @@ with torch.no_grad():
 ```python
 # Match debugging mode to production mode
 model.train()  # Same mode as production
-with autocast():  # Same precision as production
+with autocast("cuda"):  # Same precision as production
     output = model(x)
 # Now bug appears and can be debugged
 ```

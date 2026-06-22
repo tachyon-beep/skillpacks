@@ -164,6 +164,22 @@ ROOT: [Attacker Goal]
 | Threat | Mitigation | Priority |
 |--------|------------|----------|
 | THREAT-001 | [Fix] | Critical |
+
+### Confidence Assessment
+
+[High/Medium/Low] — [what the assessment rests on; coverage of components STRIDE'd vs. skipped]
+
+### Risk Assessment
+
+[Residual risk if the critical threats are left unmitigated; what an attacker most likely exploits first]
+
+### Information Gaps
+
+- [Missing architecture detail, trust boundary, or data-flow that would change the analysis]
+
+### Caveats
+
+- [Assumptions made, components out of scope, conditions under which findings no longer hold]
 ```
 
 ## Patterns That Intuition Misses

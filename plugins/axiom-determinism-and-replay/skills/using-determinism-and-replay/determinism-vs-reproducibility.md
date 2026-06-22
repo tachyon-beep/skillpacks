@@ -45,8 +45,8 @@ Without a predicate, every claim of determinism is a claim about the speaker's m
 - Pinned floating-point semantics (no FMA contraction surprises, fixed reduction order)
 - Pinned library versions (a `libm` upgrade is a class-breaking event)
 - Pinned hardware ISA (cross-architecture bit-exactness is rare and expensive; SSE vs AVX vs ARM NEON differ in transcendentals)
-- GPU determinism (cuDNN deterministic mode, no atomic-add reductions, fixed algorithm choice — see planned `gpu-determinism.md`)
-- Canonical state encoding (see planned `canonical-state-encoding-for-replay.md`; cross-links audit pack)
+- GPU determinism (cuDNN deterministic mode, no atomic-add reductions, fixed algorithm choice — see `gpu-determinism.md`)
+- Canonical state encoding (see `canonical-state-encoding-for-replay.md`; cross-links audit pack)
 
 **When you actually need it:**
 - CI that verifies a replay matches a recorded fingerprint exactly.
@@ -171,7 +171,7 @@ The sheet's deliverable answers, in order:
 
 1. **Class chosen** — Class 1, Class 2, Class 3, or a multi-class breakdown by named subsystem.
 2. **Equivalence predicate** — single sentence: "Two runs are equivalent iff [precise predicate]."
-3. **For Class 1:** the canonical encoding rule (cross-link to planned `11-canonical-state-encoding.md` and to `axiom-audit-pipelines:canonical-encoding-for-fingerprinting`), the floating-point policy (cross-link to planned `08-floating-point-policy.md`), the cross-architecture support claim (and its CI evidence).
+3. **For Class 1:** the canonical encoding rule (cross-link to `11-canonical-state-encoding.md` and to `axiom-audit-pipelines:canonical-encoding-for-fingerprinting`), the floating-point policy (cross-link to `08-floating-point-policy.md`), the cross-architecture support claim (and its CI evidence).
 4. **For Class 2:** the decision-boundary quantisation rule (what gets rounded to what precision before any comparison or argmax), how it is enforced, where it is tested.
 5. **For Class 3:** `epsilon`, `N`, the statistical test, the distributional summary metric, the seed set used to compute it.
 6. **Reproducibility axis:** is the system targeting determinism only, reproducibility only, or both? If both, the test for cross-party reproducibility.

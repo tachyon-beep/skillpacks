@@ -190,8 +190,8 @@ def restore(snap: dict) -> Run:
 
 Two requirements this places on the RNG choice:
 
-1. **The Generator's state must be serialisable and rehydratable.** `numpy.random.Generator` provides `bit_generator.state` (a dict). Python's `random` module provides `getstate()`/`setstate()`. PyTorch RNGs need `torch.Generator.get_state()`/`set_state()`. CUDA RNGs need extra care — see planned `gpu-determinism.md`.
-2. **The Generator's state encoding must be canonical.** A dict that serialises to a different byte representation on Linux vs macOS produces a different snapshot hash, breaking Class 1 fingerprints. Apply the canonical encoding rules from planned `11-canonical-state-encoding.md` (cross-link to `axiom-audit-pipelines:canonical-encoding-for-fingerprinting` for the bytes-level gotcha catalog).
+1. **The Generator's state must be serialisable and rehydratable.** `numpy.random.Generator` provides `bit_generator.state` (a dict). Python's `random` module provides `getstate()`/`setstate()`. PyTorch RNGs need `torch.Generator.get_state()`/`set_state()`. CUDA RNGs need extra care — see `gpu-determinism.md`.
+2. **The Generator's state encoding must be canonical.** A dict that serialises to a different byte representation on Linux vs macOS produces a different snapshot hash, breaking Class 1 fingerprints. Apply the canonical encoding rules from `canonical-state-encoding-for-replay.md` (cross-link to `axiom-audit-pipelines:canonical-encoding-for-fingerprinting` for the bytes-level gotcha catalog).
 
 ## Library Choice
 
@@ -204,7 +204,7 @@ Different RNG libraries have different determinism guarantees. Pick consciously 
 | `numpy.random` global | Reseeding affects all callers | Forbidden in deterministic systems |
 | `random` (stdlib Mersenne Twister) | Cross-platform; serialisable | Slower than PCG64; fine for non-hot paths |
 | `torch.Generator` (CPU) | Deterministic per-device; state serialisable | Each device has its own generator; do not assume CPU and CUDA share |
-| `torch.Generator` (CUDA) | Deterministic only with `torch.use_deterministic_algorithms(True)` and CUBLAS env vars | See planned `gpu-determinism.md` |
+| `torch.Generator` (CUDA) | Deterministic only with `torch.use_deterministic_algorithms(True)` and CUBLAS env vars | See `gpu-determinism.md` |
 | Tensorflow RNG | Stateful vs stateless API have different guarantees | Use `tf.random.stateless_*` for determinism |
 
 **Pin the library version in `03-rng-isolation-spec.md`.** A library upgrade that changes the underlying bit-generator algorithm (numpy did this between 1.16 and 1.17) is a class-breaking event whether you noticed or not.

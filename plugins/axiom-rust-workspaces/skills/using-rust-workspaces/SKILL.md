@@ -110,10 +110,10 @@ The pack produces a numbered artifact set in a `workspace-engineering/` workspac
 | 13 | `workspace-anti-patterns.md` | `workspace-anti-patterns` |
 | 99 | `workspace-engineering-specification.md` | router-owned consolidation |
 
-**Shipped commands (v0.2.0):** `/scaffold-workspace`, `/audit-workspace-deps`, `/validate-workspace-config`.
-**Shipped agents (v0.2.0):** `workspace-reviewer`.
+**Shipped commands:** `/scaffold-workspace`, `/audit-workspace-deps`, `/validate-workspace-config`.
+**Shipped agents:** `workspace-reviewer`.
 
-The artifact numbering is stable across v0.1.0 → v0.2.0 — no renumbering — so `99-` consolidations from v0.1.0 still cite the same slot numbers.
+The artifact numbering is stable across releases — no renumbering — so `99-` consolidations still cite the same slot numbers.
 
 ## Spec Dependency Graph
 
@@ -414,7 +414,7 @@ If you build a *workspace-scope* clippy lint or a custom analyzer that runs acro
 
 ## Rust-Workspaces Specialist Skills Catalog
 
-After routing, load the appropriate specialist sheet for detailed guidance. v0.2.0 is feature-complete: 13 sheets, 3 commands, 1 agent.
+After routing, load the appropriate specialist sheet for detailed guidance. This pack is feature-complete: 13 sheets, 3 commands, 1 agent.
 
 **Architectural spine:**
 

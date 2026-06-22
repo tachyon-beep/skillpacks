@@ -1,6 +1,6 @@
 {
   "name": "axiom-devops-engineering",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "DevOps and platform engineering — the path from commit to healthy production: CI/CD pipelines and verification gates, zero-downtime deployment, infrastructure as code, container build hygiene, orchestration runtime, observability (metrics/logs/traces, SLI/SLO), incident response and on-call, release management and rollback, secrets and configuration, environment parity, DevSecOps and software supply-chain security, GitOps, and SRE/reliability. Router + 13 reference sheets, 3 commands (design-deployment, review-pipeline, audit-deployment), and 2 agents (deployment-strategist, pipeline-reviewer).",
   "author": {
     "name": "tachyon-beep",

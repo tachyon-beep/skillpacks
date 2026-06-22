@@ -154,7 +154,7 @@ plugins/muna-panel-review/
 ├── .claude-plugin/
 │   └── plugin.json
 ├── process.md                    # Full methodology (agents read at runtime)
-├── config.md                     # Worked 13-persona example
+├── config.md                     # Worked 6-persona example
 ├── config-template.md            # Config format reference
 ├── ARCHITECTURE.md               # This file
 ├── skills/

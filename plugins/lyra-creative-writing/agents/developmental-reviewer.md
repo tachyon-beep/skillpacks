@@ -2,6 +2,7 @@
 name: developmental-reviewer
 description: Use when reviewing prose for structural, character-arc, plot-logic, scene-level cause/effect, or manuscript-wide pacing issues. Outputs a developmental memo. Does NOT rewrite, line-edit, or fact-check.
 tools: Read, Grep, Glob
+model: sonnet
 ---
 
 # Developmental Reviewer

@@ -231,14 +231,7 @@ Variable A --+/o--> Variable B
 
 ## Cross-Pack Discovery
 
-```python
-import glob
-
-# For simulation implementation
-sim_pack = glob.glob("plugins/yzmir-simulation-foundations/plugin.json")
-if sim_pack:
-    print("Available: yzmir-simulation-foundations for numerical simulation")
-```
+To turn a conceptual stock/flow model into a runnable numerical simulation, hand off to `/simulation-foundations` (yzmir-simulation-foundations).
 
 ## Scope Boundaries
 

@@ -1,6 +1,6 @@
 ---
 name: using-simulation-tactics
-description: Router skill - analyze requirements and direct to appropriate tactics
+description: Use when implementing or debugging game simulation - deciding what to simulate vs fake (scrutiny-based LOD), designing in-engine systems (physics, AI agents, pathfinding, economy, ecosystem, crowds, weather/time), optimising simulation under frame budget, or tracing chaos/desyncs/explosions. Routes to 10 specialist sheets + 3 router-support sheets, 3 commands, 2 SME agents. For numerical-methods math and stability proofs use /simulation-foundations; for architecture-level record/replay use /determinism-and-replay; for game-feel and sandbox design use /systems-as-experience.
 ---
 
 # Using Simulation Tactics: The Router Meta-Skill
