@@ -1,5 +1,5 @@
 ---
-description: Use when managing delivery of work rather than building it: running projects or programs, making forecasts defensible, keeping dependencies, RAID, status, and scope honest, and coordinating multiple projects toward one outcome
+description: "Use when managing delivery of work rather than building it: running projects or programs, making forecasts defensible, keeping dependencies, RAID, status, and scope honest, and coordinating multiple projects toward one outcome"
 ---
 
 # Using Program Management

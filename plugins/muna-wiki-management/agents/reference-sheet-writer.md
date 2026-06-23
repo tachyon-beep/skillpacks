@@ -1,34 +1,35 @@
 ---
+
 name: reference-sheet-writer
-description: Use this agent when writing or updating reference sheet content for the muna-wiki-management plugin, or when writing any derivative document that must be self-sufficient. This agent enforces anti-laziness discipline — it will not defer to source documents when the content must stand alone. Examples:
+description: |
+  Use this agent when writing or updating reference sheet content for the muna-wiki-management plugin, or when writing any derivative document that must be self-sufficient. This agent enforces anti-laziness discipline — it will not defer to source documents when the content must stand alone. Examples:
 
-<example>
-Context: Implementing the muna-wiki-management plugin. A reference sheet needs to be written from a spec.
-user: "Write the content-derivation reference sheet from the spec"
-assistant: "I'll use the reference-sheet-writer agent to write this — it enforces self-sufficiency and won't take shortcuts by deferring to the spec."
-<commentary>
-The reference sheet must stand alone as production guidance. A general-purpose agent would be tempted to write thin prose with "see the spec for details." This agent prevents that.
-</commentary>
-</example>
+  <example>
+  Context: Implementing the muna-wiki-management plugin. A reference sheet needs to be written from a spec.
+  user: "Write the content-derivation reference sheet from the spec"
+  assistant: "I'll use the reference-sheet-writer agent to write this — it enforces self-sufficiency and won't take shortcuts by deferring to the spec."
+  <commentary>
+  The reference sheet must stand alone as production guidance. A general-purpose agent would be tempted to write thin prose with "see the spec for details." This agent prevents that.
+  </commentary>
+  </example>
 
-<example>
-Context: A derivative document needs updating after a root document changed.
-user: "Update the CISO Assessment based on the new paper section"
-assistant: "I'll use the reference-sheet-writer agent — it enforces the derivation discipline so the output will synthesize the content inline rather than deferring to the paper."
-<commentary>
-Any task that requires faithful content reduction from a source document benefits from this agent's anti-laziness enforcement.
-</commentary>
-</example>
+  <example>
+  Context: A derivative document needs updating after a root document changed.
+  user: "Update the CISO Assessment based on the new paper section"
+  assistant: "I'll use the reference-sheet-writer agent — it enforces the derivation discipline so the output will synthesize the content inline rather than deferring to the paper."
+  <commentary>
+  Any task that requires faithful content reduction from a source document benefits from this agent's anti-laziness enforcement.
+  </commentary>
+  </example>
 
-<example>
-Context: Writing a summary document that must be independently actionable.
-user: "Create an executive brief from this technical analysis"
-assistant: "I'll use the reference-sheet-writer agent to ensure the brief actually contains the argument, not just links back to the analysis."
-<commentary>
-Executive briefs are the highest-risk documents for lazy deferral. This agent's self-audit step catches shortcuts.
-</commentary>
-</example>
-
+  <example>
+  Context: Writing a summary document that must be independently actionable.
+  user: "Create an executive brief from this technical analysis"
+  assistant: "I'll use the reference-sheet-writer agent to ensure the brief actually contains the argument, not just links back to the analysis."
+  <commentary>
+  Executive briefs are the highest-risk documents for lazy deferral. This agent's self-audit step catches shortcuts.
+  </commentary>
+  </example>
 model: opus
 tools: ["Read", "Write", "Grep", "Glob"]
 ---

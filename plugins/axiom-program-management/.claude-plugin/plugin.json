@@ -1,6 +1,6 @@
 {
   "name": "axiom-program-management",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Project and program management as a delivery discipline — lean/agile-leaning, honest about where program scale needs predictive structure. Owns flow (cadence, WIP, cycle-time/throughput, Monte-Carlo forecasting), scope and backlog control, lean estimation, stakeholder and communication management, operational RAID logs and escalation, honest RAG status and flow-metric reporting, and cross-team dependency coordination at project scale; at program scale adds program structure and governance cadence, benefits realization and outcomes (OKRs, benefits mapping), now/next/later roadmapping and WSJF/cost-of-delay prioritization, cross-project dependency and integration management, capacity and funding flow with stable teams, and scaling/operating-model selection without framework dogma. Leans on axiom-planning for implementation planning and axiom-sdlc-engineering for process maturity, requirements traceability, and formal governance. Router + 13 sheets, 3 commands, 2 agents.",
   "author": {
     "name": "tachyon-beep",

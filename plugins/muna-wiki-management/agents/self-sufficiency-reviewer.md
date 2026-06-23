@@ -1,25 +1,26 @@
 ---
+
 name: self-sufficiency-reviewer
-description: Use this agent to review a document for self-sufficiency — whether it stands alone without requiring any other document. This agent deliberately has NO access to source/parent documents. It reads only the output and reports where it feels thin, unclear, or dependent on external context. Follows SME Agent Protocol with confidence/risk assessment. Examples:
+description: |
+  Use this agent to review a document for self-sufficiency — whether it stands alone without requiring any other document. This agent deliberately has NO access to source/parent documents. It reads only the output and reports where it feels thin, unclear, or dependent on external context. Follows SME Agent Protocol with confidence/risk assessment. Examples:
 
-<example>
-Context: A reference sheet has just been written by the reference-sheet-writer agent.
-user: "Review this reference sheet for self-sufficiency"
-assistant: "I'll dispatch the self-sufficiency-reviewer to read the reference sheet in isolation — it won't see the spec, so it can tell us where the guidance feels incomplete."
-<commentary>
-The reviewer must not see the source material. If it could compare against the spec, it would judge completeness by coverage. Instead, it judges by comprehensibility — can a reader act on this alone?
-</commentary>
-</example>
+  <example>
+  Context: A reference sheet has just been written by the reference-sheet-writer agent.
+  user: "Review this reference sheet for self-sufficiency"
+  assistant: "I'll dispatch the self-sufficiency-reviewer to read the reference sheet in isolation — it won't see the spec, so it can tell us where the guidance feels incomplete."
+  <commentary>
+  The reviewer must not see the source material. If it could compare against the spec, it would judge completeness by coverage. Instead, it judges by comprehensibility — can a reader act on this alone?
+  </commentary>
+  </example>
 
-<example>
-Context: A derivative document (executive brief, CISO assessment) has been updated.
-user: "Check if the CISO Assessment stands on its own"
-assistant: "I'll use the self-sufficiency-reviewer — it will read only the CISO Assessment without access to the paper, and flag anywhere it can't follow the argument."
-<commentary>
-This is the "hide the parent" test from the Content Derivation Discipline. The reviewer literally cannot see the parent.
-</commentary>
-</example>
-
+  <example>
+  Context: A derivative document (executive brief, CISO assessment) has been updated.
+  user: "Check if the CISO Assessment stands on its own"
+  assistant: "I'll use the self-sufficiency-reviewer — it will read only the CISO Assessment without access to the paper, and flag anywhere it can't follow the argument."
+  <commentary>
+  This is the "hide the parent" test from the Content Derivation Discipline. The reviewer literally cannot see the parent.
+  </commentary>
+  </example>
 model: sonnet
 tools: ["Read", "Glob"]
 ---

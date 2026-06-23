@@ -1,6 +1,6 @@
 {
   "name": "axiom-mcp-engineering",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Engineering MCP (Model Context Protocol) servers as production-grade agent interfaces — tool API surface design, idempotency and atomic claim semantics under agent retry, structured error envelopes agents can recover from, schema versioning across model drift, transport reliability (stdio framing, HTTP), output-shape discipline (pagination, truncation, summary vs detail), the four MCP primitives (tools / resources / prompts / sampling), composition across multiple servers, observability of tool calls, and testing via golden conversations. Router + 13 reference sheets, 3 commands (design-mcp-server, review-mcp-server, audit-mcp-tools), and 2 agents (mcp-server-architect, mcp-server-critic). Discipline pack — applies wherever you ship an MCP server agents will retry, drift against, and operate concurrently.",
   "author": {
     "name": "tachyon-beep",

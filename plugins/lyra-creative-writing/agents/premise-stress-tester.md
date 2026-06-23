@@ -1,6 +1,6 @@
 ---
 name: premise-stress-tester
-description: Use BEFORE outlining when the writer has a premise or logline they want pressure-tested. Adversarial: asks what the story engine is, whether the conflict is load-bearing, where this premise sits in prior art. Does NOT develop the outline.
+description: "Use BEFORE outlining when the writer has a premise or logline they want pressure-tested. Adversarial: asks what the story engine is, whether the conflict is load-bearing, where this premise sits in prior art. Does NOT develop the outline."
 tools: Read, Grep, Glob
 model: sonnet
 ---
