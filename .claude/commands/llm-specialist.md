@@ -1,5 +1,5 @@
 ---
-description: LLM application engineering - chat / instruct prompting, reasoning models (o-series / Claude extended thinking / DeepSeek-R1 / Gemini thinking / Qwen QwQ), agentic patterns + MCP, RAG, fine-tuning (SFT / DPO / IPO / KTO / SimPO / ORPO / GRPO + LoRA family), context engineering and prompt caching, inference optimization (vLLM / SGLang / TensorRT-LLM), evaluation (incl. LLM-as-judge bias controls and capability suites), and safety (OWASP LLM Top 10 2025). Calibrated to 2026-05 with capability-tier vocabulary (frontier-reasoning / frontier-general / fast-cheap / on-device) instead of hardcoded model IDs.
+description: Use when doing LLM application engineering - chat / instruct prompting, reasoning models (o-series / Claude extended thinking / DeepSeek-R1 / Gemini thinking / Qwen QwQ), agentic patterns + MCP, RAG, fine-tuning (SFT / DPO / IPO / KTO / SimPO / ORPO / GRPO + LoRA family), context engineering and prompt caching, inference optimization (vLLM / SGLang / TensorRT-LLM), evaluation (incl. LLM-as-judge bias controls and capability suites), and safety (OWASP LLM Top 10 2025). Calibrated to 2026-05 with capability-tier vocabulary (frontier-reasoning / frontier-general / fast-cheap / on-device) instead of hardcoded model IDs.
 ---
 
 # LLM Specialist Routing

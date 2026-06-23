@@ -1,0 +1,30 @@
+{
+  "milestone": {
+    "title": "Sprint 3 — Auth & Dashboard",
+    "priority": 1
+  },
+  "phases": [
+    {
+      "title": "Backend API",
+      "steps": [
+        {"title": "Auth endpoint (JWT token issuance)", "priority": 1},
+        {"title": "User CRUD endpoints", "priority": 2, "deps": [0]},
+        {"title": "Rate limiting middleware", "priority": 2, "deps": [0]}
+      ]
+    },
+    {
+      "title": "Frontend",
+      "steps": [
+        {"title": "Login page", "priority": 1, "deps": ["0.0"]},
+        {"title": "Dashboard layout", "priority": 2, "deps": ["0.1"]}
+      ]
+    },
+    {
+      "title": "Integration & QA",
+      "steps": [
+        {"title": "End-to-end auth flow test", "priority": 1, "deps": ["1.0"]},
+        {"title": "Load test rate limiter", "priority": 3, "deps": ["0.2"]}
+      ]
+    }
+  ]
+}

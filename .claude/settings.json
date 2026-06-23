@@ -1,0 +1,32 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__filigree__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/john/.local/bin/filigree ensure-dashboard",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/john/.local/bin/filigree session-context",
+            "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "/home/john/.local/bin/filigree ensure-dashboard",
+            "timeout": 5000
+          }
+        ]
+      }
+    ]
+  }
+}

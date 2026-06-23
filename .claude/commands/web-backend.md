@@ -1,5 +1,5 @@
 ---
-description: Routes web backend questions to specialist skills (FastAPI, Django, Express, REST, GraphQL, microservices, auth, deployment)
+description: Routes web backend questions to specialist skills (FastAPI, Django, Express, REST, GraphQL, microservices, auth, framework-level production patterns)
 ---
 
 # Web Backend Routing
@@ -25,3 +25,4 @@ Use the `using-web-backend` skill from the `axiom-web-backend` plugin to route w
 - API UX → `lyra-ux-designer`
 - Python patterns → `axiom-python-engineering`
 - Documentation → `muna-technical-writer`
+- Deployment / CI/CD → `axiom-devops-engineering`

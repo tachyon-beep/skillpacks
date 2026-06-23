@@ -25,8 +25,12 @@ Use the `using-mcp-engineering` skill from the `axiom-mcp-engineering` plugin to
 **Commands:** `/design-mcp-server`, `/review-mcp-server`, `/audit-mcp-tools`
 **Agents:** mcp-server-architect, mcp-server-critic
 
+Boundary concerns (siblings, contrasts, downstream consumers) are absorbed into the router's own Pipeline Position section rather than a separate sheet.
+
 **Cross-references to other packs:**
 - General REST/GraphQL API design → `/web-backend`
 - Client-side prompt engineering & tool loops → `/llm-specialist`
-- General in-process plugin architecture → `/system-architect`
+- General in-process plugin architecture → `/system-architect` or `/procedural-architecture`
+- Multi-stage agent workflows expressed as tool sequences → `/procedural-architecture`
 - Cryptographic-provenance audit trails → `/audit-pipelines`
+- Whole-system deterministic replay (vs golden-conversation replay) → `/determinism-and-replay`

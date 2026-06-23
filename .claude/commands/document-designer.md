@@ -24,7 +24,7 @@ Use the `using-document-designer` skill from the `muna-document-designer` plugin
 
 ## Agents
 
-- `document-designer` — specialist subagent combining graphic-design sensibility with typesetting engineering (Typst, Pandoc filters, typography, layout systems, branded templates). Follows SME Agent Protocol with confidence/risk assessment.
+- `document-designer` — specialist subagent combining graphic-design sensibility with typesetting engineering (Typst, Pandoc filters, typography, layout systems, branded templates). An executor: it builds and renders documents, surfaces design assumptions (e.g. ambiguous brand palette), and runs a MANDATORY build-and-verify loop on table layouts before delivering.
 
 ## Cross-references
 

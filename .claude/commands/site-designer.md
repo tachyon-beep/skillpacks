@@ -25,7 +25,7 @@ Use the `using-site-designer` skill from the `lyra-site-designer` plugin. Conten
 
 ## Agents
 
-- `site-designer` — specialist subagent combining information architecture, CSS craftsmanship, and developer UX expertise (design tokens, theming systems, docs-first frameworks, content strategy for developer audiences). Follows SME Agent Protocol with confidence/risk assessment.
+- `site-designer` — specialist subagent combining information architecture, CSS craftsmanship, and developer UX expertise (design tokens, theming systems, docs-first frameworks, content strategy for developer audiences). A producer agent that generates IA, CSS, and layout directly against the pack's quality checklists.
 
 ## Cross-references
 
