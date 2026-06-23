@@ -1,0 +1,43 @@
+{
+  "name": "axiom-distributed-systems",
+  "version": "0.1.0",
+  "description": "Architecture-level distributed systems design: consistency models and CAP/PACELC per operation, failure models and the eight fallacies, replication and quorums, consensus and coordination, partitioning and sharding, time/clocks/ordering, idempotency and deduplication, sagas and distributed transactions (with the outbox/inbox pattern), delivery and ordering semantics, resilience patterns, backpressure and flow control, fault-injection/linearizability/deterministic-simulation testing, and cost-and-when-not-to-distribute accounting. Frames correctness-under-partition as a load-bearing architectural property, not an effort. Ships a router + 13 specialist sheets, 3 commands (/design-distributed-system, /review-distributed-design, /analyze-failure-modes), and 2 SME-protocol-conformant agents (distributed-design-reviewer, failure-scenario-analyst).",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "axiom",
+    "distributed-systems",
+    "consistency-models",
+    "linearizability",
+    "cap-theorem",
+    "pacelc",
+    "replication",
+    "quorum",
+    "consensus",
+    "raft",
+    "paxos",
+    "partitioning",
+    "sharding",
+    "idempotency",
+    "exactly-once",
+    "sagas",
+    "distributed-transactions",
+    "outbox-pattern",
+    "delivery-semantics",
+    "message-ordering",
+    "vector-clocks",
+    "hybrid-logical-clocks",
+    "resilience",
+    "circuit-breaker",
+    "backpressure",
+    "load-shedding",
+    "fault-injection",
+    "jepsen",
+    "deterministic-simulation-testing",
+    "architecture"
+  ]
+}

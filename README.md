@@ -2,7 +2,7 @@
 
 ## Professional AI/ML, Python & Rust engineering, web backend, DevOps, SDLC, solution architecture, game development, security, documentation, and UX skills for Claude Code
 
-45 complete skillpacks • 200+ skills • Install what you need
+46 complete skillpacks • 200+ skills • Install what you need
 
 > **Recent additions (May 2026)**: 6 new packs — `yzmir-morphogenetic-rl`,
 > `axiom-determinism-and-replay`, `axiom-audit-pipelines`,
@@ -260,6 +260,19 @@ cd skillpacks
 - External-effects substitution, canonical state encoding, property tests,
   cost-of-determinism accounting
 - `/plugin install axiom-determinism-and-replay`
+
+**axiom-distributed-systems** - router + 13 sheets, 3 commands, 2 agents _(new — June 2026)_
+
+- Architecture-level correctness under partial failure for systems that span
+  more than one process, machine, or failure domain
+- Consistency models & CAP/PACELC per operation, failure models & the eight
+  fallacies, replication & quorums, consensus & coordination, partitioning &
+  sharding, time/clocks/ordering
+- Idempotency & deduplication, sagas & distributed transactions (outbox/inbox),
+  delivery & ordering semantics, resilience patterns, backpressure & flow control
+- Fault-injection / linearizability / deterministic-simulation testing, and
+  cost-and-when-not-to-distribute accounting
+- `/plugin install axiom-distributed-systems`
 
 **axiom-static-analysis-engineering** - router + 13 sheets, 3 commands, 2 agents _(new — May 2026, v0.2)_
 
@@ -559,7 +572,7 @@ I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO
 skillpacks/
 ├── .claude-plugin/
 │   └── marketplace.json       # Marketplace catalog
-├── plugins/                   # All 45 skillpacks
+├── plugins/                   # All 46 skillpacks
 │   ├── axiom-*/               # Development (16 packs)
 │   ├── bravos-*/              # Game development (2 packs)
 │   ├── lyra-*/                # UX, site, TUI & creative writing (4 packs)

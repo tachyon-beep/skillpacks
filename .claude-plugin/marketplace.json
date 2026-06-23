@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, product management, solution architecture, game development, security, documentation, site design, and UX skills for Claude Code - 45 complete skillpacks with 400+ TDD-validated skills and reference sheets",
-    "version": "3.22.1",
+    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, product management, solution architecture, distributed systems, game development, security, documentation, site design, and UX skills for Claude Code - 46 complete skillpacks with 400+ TDD-validated skills and reference sheets",
+    "version": "3.23.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -725,6 +725,38 @@
         "build-trap",
         "feature-factory",
         "delivery-orchestration"
+      ],
+      "category": "development"
+    },
+    {
+      "name": "axiom-distributed-systems",
+      "source": "./plugins/axiom-distributed-systems",
+      "description": "Architecture-level distributed systems design (router + 13 specialist sheets, 3 commands, 2 agents) - consistency models and CAP/PACELC per operation, failure models and the eight fallacies, replication and quorums, consensus and coordination, partitioning and sharding, time/clocks/ordering, idempotency and deduplication, sagas and distributed transactions (with the outbox/inbox pattern), delivery and ordering semantics, resilience patterns, backpressure and flow control, fault-injection/linearizability/deterministic-simulation testing, and cost-and-when-not-to-distribute accounting; frames correctness-under-partition as a load-bearing architectural property. Composes with axiom-web-backend, axiom-devops-engineering, and axiom-determinism-and-replay; the most glaring architecture gap that those packs only graze",
+      "keywords": [
+        "axiom",
+        "distributed-systems",
+        "consistency-models",
+        "linearizability",
+        "cap-theorem",
+        "pacelc",
+        "replication",
+        "quorum",
+        "consensus",
+        "raft",
+        "partitioning",
+        "sharding",
+        "idempotency",
+        "exactly-once",
+        "sagas",
+        "distributed-transactions",
+        "outbox-pattern",
+        "delivery-semantics",
+        "vector-clocks",
+        "resilience",
+        "circuit-breaker",
+        "backpressure",
+        "fault-injection",
+        "architecture"
       ],
       "category": "development"
     }

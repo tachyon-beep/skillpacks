@@ -345,6 +345,10 @@ The Axiom's dedication to making technology accessible through systematic proces
 
 - Architecture-level determinism & replay: seed governance, RNG isolation, snapshots, divergence detection
 
+**axiom-distributed-systems** - *The Quorum Works*
+
+- Architecture-level correctness under partial failure: consistency & CAP/PACELC, replication & quorums, consensus, partitioning, sagas & the outbox, delivery semantics, resilience, backpressure (router + 13 sheets, 3 commands, 2 agents)
+
 **axiom-audit-pipelines** - *The Ledger Works*
 
 - Audit-grade decision pipelines: canonical encoding (RFC 8785), append-only logs, fingerprint chains, signed exports
