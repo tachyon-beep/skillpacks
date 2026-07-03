@@ -29,7 +29,7 @@ Use the `using-ux-designer` skill from the `lyra-ux-designer` plugin to route to
 - **user-research-and-validation** — interviews, usability testing, mental models, journey mapping (5-phase User Understanding Model)
 
 ### Platform Extensions
-- **mobile-design-patterns** — iOS 17+ HIG, Material 3, touch targets, gestures, thumb zones, platform conventions
+- **mobile-design-patterns** — iOS 26 Liquid Glass HIG, Material 3 Expressive, touch targets, gestures, thumb zones, platform conventions
 - **web-application-design** — SaaS / dashboards, data tables, command palette, responsive, progressive enhancement (not for marketing sites)
 - **desktop-software-design** — multi-window, keyboard-first, workspace customisation, power-user paths (Windows / macOS / Linux / Electron)
 - **game-ui-design** — HUD, diegetic UI, controller / gamepad, immersion-vs-visibility, performance

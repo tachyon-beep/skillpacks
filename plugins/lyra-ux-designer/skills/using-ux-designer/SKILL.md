@@ -277,11 +277,10 @@ When you see a link like `[ux-fundamentals.md](ux-fundamentals.md)`, read the fi
 ### Lyra + Muna (Technical Writer)
 
 **When designing documentation UX**:
-- `lyra/ux-designer/information-architecture` (organize docs)
-- `muna/technical-writer/documentation-structure` (content structure)
-- `muna/technical-writer/clarity-and-style` (microcopy, UI text)
+- [information-architecture.md](information-architecture.md) (organize content for findability)
+- `/technical-writer` (content structure, microcopy, UI text)
 
-**Example**: "Design documentation site navigation" → Load IA + documentation-structure
+**Example**: "Design documentation site navigation" → Load IA here; route the writing-side structure to `/technical-writer`. If the surface is a static docs *site*, hand off to `/site-designer` (next section).
 
 ---
 
@@ -297,10 +296,10 @@ When you see a link like `[ux-fundamentals.md](ux-fundamentals.md)`, read the fi
 ### Lyra + Ordis (Security Architect)
 
 **When designing secure interfaces**:
-- `lyra/ux-designer/visual-design-foundations` (secure feedback, error states)
-- `ordis/security-architect/threat-modeling` (authentication UX threats)
+- [visual-design-foundations.md](visual-design-foundations.md) (secure feedback, error states)
+- `/security-architect` (threat modelling for authentication UX)
 
-**Example**: "Design login with MFA" → Load interaction-patterns + threat-modeling
+**Example**: "Design login with MFA" → Load [interaction-design-patterns.md](interaction-design-patterns.md) + route threat modelling to `/security-architect`
 
 ---
 
@@ -402,5 +401,5 @@ Three SME agents are available for delegated review work; all follow the SME Age
 ---
 
 **Cross-faction**:
-- `muna/technical-writer/*` - Documentation UX and microcopy
-- `ordis/security-architect/*` - Security-aware interface design
+- `/technical-writer` - Documentation UX and microcopy
+- `/security-architect` - Security-aware interface design

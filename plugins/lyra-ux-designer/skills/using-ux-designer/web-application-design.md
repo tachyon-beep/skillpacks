@@ -20,9 +20,9 @@ This skill provides **The Web Application Usability Framework**, a systematic 4-
 
 **Don't use this skill for:**
 - Marketing websites or landing pages (simpler content-focused design, not workflow-driven)
-- Mobile-native apps (use `lyra/ux-designer/mobile-design-patterns`)
-- Desktop-native software (use `lyra/ux-designer/desktop-software-design`)
-- Simple forms or single-purpose pages (use `lyra/ux-designer/interaction-design-patterns`)
+- Mobile-native apps (use `mobile-design-patterns.md`)
+- Desktop-native software (use `desktop-software-design.md`)
+- Simple forms or single-purpose pages (use `interaction-design-patterns.md`)
 
 
 ## The Web Application Usability Framework
@@ -1957,19 +1957,19 @@ Use these natively-supported features instead of rebuilding them in JavaScript. 
 ## Related Skills
 
 **Core Lyra Skills:**
-- **`lyra/ux-designer/visual-design-foundations`**: Visual hierarchy for dashboards, typography for dense data, color for status indicators
-- **`lyra/ux-designer/information-architecture`**: Navigation structure for complex apps, IA for multi-level hierarchies
-- **`lyra/ux-designer/interaction-design-patterns`**: Keyboard shortcuts, button states, feedback patterns, loading states
-- **`lyra/ux-designer/accessibility-and-inclusive-design`**: Keyboard navigation, screen reader support, WCAG compliance for web apps
-- **`lyra/ux-designer/user-research-and-validation`**: Usability testing for workflows, A/B testing for dashboards
+- **`visual-design-foundations.md`**: Visual hierarchy for dashboards, typography for dense data, color for status indicators
+- **`information-architecture.md`**: Navigation structure for complex apps, IA for multi-level hierarchies
+- **`interaction-design-patterns.md`**: Keyboard shortcuts, button states, feedback patterns, loading states
+- **`accessibility-and-inclusive-design.md`**: Keyboard navigation, screen reader support, WCAG compliance for web apps
+- **`user-research-and-validation.md`**: Usability testing for workflows, A/B testing for dashboards
 
 **Platform Skills:**
-- **`lyra/ux-designer/mobile-design-patterns`**: Mobile-responsive considerations (<768px breakpoint), touch targets, gestures
-- **`lyra/ux-designer/desktop-software-design`**: Keyboard-first workflows, power user patterns, dense information displays
+- **`mobile-design-patterns.md`**: Mobile-responsive considerations (<768px breakpoint), touch targets, gestures
+- **`desktop-software-design.md`**: Keyboard-first workflows, power user patterns, dense information displays
 
 **Cross-Faction:**
-- **`muna/technical-writer/clarity-and-style`**: Microcopy for UI, error messages, empty states
-- **`ordis/security-architect/secure-authentication-patterns`**: Auth flows for SaaS, session management, secure forms
+- **`/technical-writer`**: Microcopy for UI, error messages, empty states
+- **`/security-architect`**: Auth flows for SaaS, session management, secure forms
 
 
 ## Additional Resources

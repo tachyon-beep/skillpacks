@@ -1266,18 +1266,18 @@ The correct primitive for Windows High Contrast and Win 11 Contrast Themes. The 
 ## Related Skills
 
 **Core UX Skills:**
-- `lyra/ux-designer/visual-design-foundations` - Visual feedback, button styling, state colors
-- `lyra/ux-designer/accessibility-and-inclusive-design` - Keyboard navigation, focus indicators, touch target sizing
-- `lyra/ux-designer/ux-fundamentals` - Interaction design principles, affordances, feedback concepts
+- `visual-design-foundations.md` - Visual feedback, button styling, state colors
+- `accessibility-and-inclusive-design.md` - Keyboard navigation, focus indicators, touch target sizing
+- `ux-fundamentals.md` - Interaction design principles, affordances, feedback concepts
 
 **Platform Extensions:**
-- `lyra/ux-designer/mobile-design-patterns` - Touch targets (44x44pt iOS, 48x48dp Android), gestures, platform interactions
-- `lyra/ux-designer/web-application-design` - Keyboard shortcuts, hover states, responsive interactions
-- `lyra/ux-designer/desktop-software-design` - Keyboard-first workflows, focus management, window interactions
-- `lyra/ux-designer/game-ui-design` - Gamepad navigation, immediate feedback, performance-optimized interactions
+- `mobile-design-patterns.md` - Touch targets (44x44pt iOS, 48x48dp Android), gestures, platform interactions
+- `web-application-design.md` - Keyboard shortcuts, hover states, responsive interactions
+- `desktop-software-design.md` - Keyboard-first workflows, focus management, window interactions
+- `game-ui-design.md` - Gamepad navigation, immediate feedback, performance-optimized interactions
 
 **Cross-Faction:**
-- `ordis/security-architect/threat-modeling` - Secure interaction patterns (prevent double-submit, rate limiting UI)
+- `/security-architect` - Secure interaction patterns (prevent double-submit, rate limiting UI)
 
 
 ## Additional Resources

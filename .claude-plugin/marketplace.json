@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, product management, solution architecture, distributed systems, game development, security, documentation, site design, and UX skills for Claude Code - 46 complete skillpacks with 400+ TDD-validated skills and reference sheets",
-    "version": "3.23.2",
+    "version": "3.23.3",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -434,7 +434,7 @@
     {
       "name": "lyra-ux-designer",
       "source": "./plugins/lyra-ux-designer",
-      "description": "UX design fundamentals - visual design, WCAG 2.2 accessibility, modern web platform primitives (dialog/popover/:has/container queries), iOS 17+ and Material 3 mobile, AI-experience patterns (Trust Stack), first-principles audience-derived needs analysis - 11 specialist sheets, 3 commands, 3 agents (ux-critic, accessibility-auditor, ux-theorist)",
+      "description": "UX design fundamentals - visual design, WCAG 2.2 accessibility, modern web platform primitives (dialog/popover/:has/container queries), iOS 26 Liquid Glass and Material 3 Expressive mobile, AI-experience patterns (Trust Stack), first-principles audience-derived needs analysis - 11 specialist sheets, 3 commands, 3 agents (ux-critic, accessibility-auditor, ux-theorist)",
       "keywords": [
         "lyra",
         "designer"

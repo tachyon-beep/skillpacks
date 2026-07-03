@@ -1370,17 +1370,17 @@ Related Issues: [Links to other findings]
 ## Related Skills
 
 **Core UX Skills:**
-- `lyra/ux-designer/information-architecture` - Research validates IA structure (card sorting, tree testing)
-- `lyra/ux-designer/accessibility-and-inclusive-design` - Research with users with disabilities, accessibility audits
-- `lyra/ux-designer/visual-design-foundations` - Research informs visual hierarchy, usability testing validates designs
-- `lyra/ux-designer/interaction-design-patterns` - Research validates interaction clarity and feedback
+- `information-architecture.md` - Research validates IA structure (card sorting, tree testing)
+- `accessibility-and-inclusive-design.md` - Research with users with disabilities, accessibility audits
+- `visual-design-foundations.md` - Research informs visual hierarchy, usability testing validates designs
+- `interaction-design-patterns.md` - Research validates interaction clarity and feedback
 
 **Meta Skills:**
-- `lyra/ux-designer/using-ux-designer` - Routes to this skill when research/validation needed
-- `lyra/ux-designer/ux-fundamentals` - Explains research terminology and principles
+- `SKILL.md` (the using-ux-designer router) - Routes to this skill when research/validation needed
+- `ux-fundamentals.md` - Explains research terminology and principles
 
 **Platform Extensions:**
 - All platform skills benefit from research findings (validates platform-specific patterns)
 
 **Cross-Faction:**
-- `muna/technical-writer/*` - Research methods apply to documentation usability testing
+- `/technical-writer` - Research methods apply to documentation usability testing

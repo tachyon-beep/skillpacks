@@ -815,20 +815,20 @@ Common navigation solutions with rationale:
 
 **Cross-references to other Lyra skills:**
 
-- `lyra/ux-designer/user-research-and-validation` - Card sorting, tree testing, mental model research methods for IA validation
-- `lyra/ux-designer/interaction-design-patterns` - Navigation interactions (menus, dropdowns, tabs) and micro-interactions for nav elements
-- `lyra/ux-designer/visual-design-foundations` - Visual hierarchy to emphasize navigation, typography for readable labels
-- `lyra/ux-designer/accessibility-and-inclusive-design` - Keyboard navigation, screen reader compatibility for nav systems
-- `lyra/ux-designer/ux-fundamentals` - Core IA principles and terminology
+- `user-research-and-validation.md` - Card sorting, tree testing, mental model research methods for IA validation
+- `interaction-design-patterns.md` - Navigation interactions (menus, dropdowns, tabs) and micro-interactions for nav elements
+- `visual-design-foundations.md` - Visual hierarchy to emphasize navigation, typography for readable labels
+- `accessibility-and-inclusive-design.md` - Keyboard navigation, screen reader compatibility for nav systems
+- `ux-fundamentals.md` - Core IA principles and terminology
 
 **Platform-specific IA:**
 
-- `lyra/ux-designer/mobile-design-patterns` - Mobile navigation patterns (bottom tabs, hamburger menus, gestures)
-- `lyra/ux-designer/web-application-design` - Complex web nav systems (mega-menus, breadcrumbs, responsive patterns)
-- `lyra/ux-designer/desktop-software-design` - Desktop navigation (menu bars, toolbars, keyboard shortcuts)
-- `lyra/ux-designer/game-ui-design` - Game navigation (radial menus, contextual prompts, minimal UI)
+- `mobile-design-patterns.md` - Mobile navigation patterns (bottom tabs, hamburger menus, gestures)
+- `web-application-design.md` - Complex web nav systems (mega-menus, breadcrumbs, responsive patterns)
+- `desktop-software-design.md` - Desktop navigation (menu bars, toolbars, keyboard shortcuts)
+- `game-ui-design.md` - Game navigation (radial menus, contextual prompts, minimal UI)
 
 **Cross-faction references:**
 
-- `muna/technical-writer/documentation-structure` - IA for documentation sites (organizing docs for findability)
-- `muna/technical-writer/clarity-and-style` - Writing clear labels and navigation copy
+- `/site-designer` - IA for static documentation and marketing sites (docs-first frameworks, findability)
+- `/technical-writer` - Writing clear labels and navigation copy

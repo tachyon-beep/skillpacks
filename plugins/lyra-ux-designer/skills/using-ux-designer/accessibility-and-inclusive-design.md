@@ -1320,8 +1320,8 @@ WCAG 2.2 became a W3C Recommendation in October 2023 and is the current standard
 - Android: 48x48dp minimum
 
 **References:**
-- iOS: Accessibility > lyra/ux-designer/mobile-design-patterns
-- Android: Accessibility > lyra/ux-designer/mobile-design-patterns
+- iOS: Accessibility > mobile-design-patterns.md
+- Android: Accessibility > mobile-design-patterns.md
 
 
 ### Web Applications
@@ -1339,7 +1339,7 @@ WCAG 2.2 became a W3C Recommendation in October 2023 and is the current standard
 - Form validation errors announced
 
 **References:**
-- Web accessibility > lyra/ux-designer/web-application-design
+- Web accessibility > web-application-design.md
 
 
 ### Desktop Software
@@ -1357,7 +1357,7 @@ WCAG 2.2 became a W3C Recommendation in October 2023 and is the current standard
 - macOS: Increase Contrast setting
 
 **References:**
-- Desktop accessibility > lyra/ux-designer/desktop-software-design
+- Desktop accessibility > desktop-software-design.md
 
 
 ### Game UI
@@ -1376,7 +1376,7 @@ WCAG 2.2 became a W3C Recommendation in October 2023 and is the current standard
 - Assist modes for motor accessibility
 
 **References:**
-- Game UI accessibility > lyra/ux-designer/game-ui-design
+- Game UI accessibility > game-ui-design.md
 
 
 ## Common Accessibility Mistakes & Fixes
@@ -1435,19 +1435,19 @@ WCAG 2.2 became a W3C Recommendation in October 2023 and is the current standard
 ## Related Skills
 
 **Core UX Skills:**
-- `lyra/ux-designer/visual-design-foundations` - Color contrast, typography readability (Dimension 1, 5)
-- `lyra/ux-designer/interaction-design-patterns` - Keyboard navigation, focus states, touch targets (Dimension 2, 4)
-- `lyra/ux-designer/information-architecture` - Logical structure, clear navigation (Dimension 3, 4)
-- `lyra/ux-designer/ux-fundamentals` - Accessibility principles and terminology
+- `visual-design-foundations.md` - Color contrast, typography readability (Dimension 1, 5)
+- `interaction-design-patterns.md` - Keyboard navigation, focus states, touch targets (Dimension 2, 4)
+- `information-architecture.md` - Logical structure, clear navigation (Dimension 3, 4)
+- `ux-fundamentals.md` - Accessibility principles and terminology
 
 **Platform Skills:**
-- `lyra/ux-designer/mobile-design-patterns` - Touch target sizing, platform accessibility APIs
-- `lyra/ux-designer/web-application-design` - ARIA, semantic HTML, keyboard shortcuts
-- `lyra/ux-designer/desktop-software-design` - Keyboard-first design, system accessibility settings
-- `lyra/ux-designer/game-ui-design` - Colorblind modes, subtitle/caption systems
+- `mobile-design-patterns.md` - Touch target sizing, platform accessibility APIs
+- `web-application-design.md` - ARIA, semantic HTML, keyboard shortcuts
+- `desktop-software-design.md` - Keyboard-first design, system accessibility settings
+- `game-ui-design.md` - Colorblind modes, subtitle/caption systems
 
 **Cross-Faction:**
-- `muna/technical-writer/clarity-and-style` - Plain language, 8th grade reading level (Dimension 3)
+- `/technical-writer` - Plain language, 8th grade reading level (Dimension 3)
 
 
 ## Further Resources

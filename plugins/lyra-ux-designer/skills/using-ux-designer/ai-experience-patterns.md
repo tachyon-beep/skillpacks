@@ -6,7 +6,7 @@ This skill covers UX patterns for interfaces built around large language models,
 
 **Core Principle:** AI is a probabilistic collaborator, not a button. Design for legibility (what is the system doing?), grounding (where did this answer come from?), and reversibility (can I undo a confident-sounding mistake?).
 
-> **Scope note:** this skill covers *interface* design. Prompt engineering, evaluation harnesses, and model selection live in `yzmir/llm-specialist`. Safety review (jailbreaks, PII exfiltration) lives in `ordis/security-architect` and `yzmir/llm-specialist`.
+> **Scope note:** this skill covers *interface* design. Prompt engineering, evaluation harnesses, and model selection live in `/llm-specialist`. Safety review (jailbreaks, PII exfiltration) lives in `/security-architect` and `/llm-specialist`.
 
 ## When to Use
 
@@ -361,14 +361,14 @@ Patterns that have measurably destroyed user trust at scale, in production:
 ## Related Skills
 
 **Core UX:**
-- `lyra/ux-designer/interaction-design-patterns` — feedback timing, streaming animation primitives, modal patterns
-- `lyra/ux-designer/accessibility-and-inclusive-design` — WCAG 2.2, aria-live regions, cognitive load
-- `lyra/ux-designer/visual-design-foundations` — confidence chips, source-card hierarchy
+- `interaction-design-patterns.md` — feedback timing, streaming animation primitives, modal patterns
+- `accessibility-and-inclusive-design.md` — WCAG 2.2, aria-live regions, cognitive load
+- `visual-design-foundations.md` — confidence chips, source-card hierarchy
 
 **Cross-faction:**
-- `yzmir/llm-specialist/*` — prompt engineering, RAG quality, evaluation harnesses (the "is the model actually right" side of the question)
-- `ordis/security-architect/*` — prompt-injection defense, PII exfiltration, supply-chain risk for agent tools
-- `muna/technical-writer/*` — tone of voice for AI assistant copy, error-message language
+- `/llm-specialist` — prompt engineering, RAG quality, evaluation harnesses (the "is the model actually right" side of the question)
+- `/security-architect` — prompt-injection defense, PII exfiltration, supply-chain risk for agent tools
+- `/technical-writer` — tone of voice for AI assistant copy, error-message language
 
 ---
 

@@ -808,7 +808,7 @@ Layout flow determines how users scan the interface. Good flow guides attention 
 - **Typography**: 16px+ to prevent iOS auto-zoom
 - **Layout**: Single-column flow, thumb-friendly placement
 
-**Reference**: lyra/ux-designer/mobile-design-patterns for platform-specific details
+**Reference**: mobile-design-patterns.md for platform-specific details
 
 ### Web Application
 
@@ -819,7 +819,7 @@ Layout flow determines how users scan the interface. Good flow guides attention 
 - **Typography**: Fluid type scaling, max-width for readability
 - **Layout**: Multi-column on desktop, single-column mobile
 
-**Reference**: lyra/ux-designer/web-application-design for responsive patterns
+**Reference**: web-application-design.md for responsive patterns
 
 ### Desktop Software
 
@@ -830,7 +830,7 @@ Layout flow determines how users scan the interface. Good flow guides attention 
 - **Typography**: 14px+ body text, allow user font size adjustment
 - **Layout**: Multi-column, panels, customizable workspaces
 
-**Reference**: lyra/ux-designer/desktop-software-design for desktop patterns
+**Reference**: desktop-software-design.md for desktop patterns
 
 ### Game UI
 
@@ -841,7 +841,7 @@ Layout flow determines how users scan the interface. Good flow guides attention 
 - **Typography**: Bold, clear fonts (readable at distance, during action)
 - **Layout**: Corners for HUD, center for critical alerts
 
-**Reference**: lyra/ux-designer/game-ui-design for game-specific patterns
+**Reference**: game-ui-design.md for game-specific patterns
 
 
 ## Practical Application Steps
@@ -982,15 +982,15 @@ Note where dimensions conflict:
 ## Related Skills
 
 **Core UX Skills**:
-- **lyra/ux-designer/accessibility-and-inclusive-design**: Color contrast, typography readability, visual accessibility requirements (WCAG 2.2 AA)
-- **lyra/ux-designer/interaction-design-patterns**: Visual feedback for interactions, button states, visual affordances
-- **lyra/ux-designer/ux-fundamentals**: Core principles (progressive disclosure, aesthetic & minimalist design, visual hierarchy concepts)
+- **accessibility-and-inclusive-design.md**: Color contrast, typography readability, visual accessibility requirements (WCAG 2.2 AA)
+- **interaction-design-patterns.md**: Visual feedback for interactions, button states, visual affordances
+- **ux-fundamentals.md**: Core principles (progressive disclosure, aesthetic & minimalist design, visual hierarchy concepts)
 
 **Platform Extensions**:
-- **lyra/ux-designer/mobile-design-patterns**: Platform-specific visual conventions (iOS HIG vs Material Design), mobile constraints
-- **lyra/ux-designer/web-application-design**: Responsive design patterns, complex data visualization
-- **lyra/ux-designer/desktop-software-design**: Desktop visual conventions, themes (light/dark mode)
-- **lyra/ux-designer/game-ui-design**: Visual coherence with game art style, HUD design for readability
+- **mobile-design-patterns.md**: Platform-specific visual conventions (iOS HIG vs Material Design), mobile constraints
+- **web-application-design.md**: Responsive design patterns, complex data visualization
+- **desktop-software-design.md**: Desktop visual conventions, themes (light/dark mode)
+- **game-ui-design.md**: Visual coherence with game art style, HUD design for readability
 
 **Cross-Faction**:
-- **muna/technical-writer/clarity-and-style**: Writing clear UI copy and microcopy that supports visual hierarchy
+- **/technical-writer**: Writing clear UI copy and microcopy that supports visual hierarchy

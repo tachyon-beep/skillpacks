@@ -20,8 +20,8 @@ This skill provides **The Desktop Application Workflow Model**, a systematic 4-d
 - User mentions: "desktop app", "keyboard shortcuts", "menu bar", "workspace", "power user", "panels"
 
 **Don't use this skill for:**
-- Web applications (use `lyra/ux-designer/web-application-design`)
-- Mobile apps (use `lyra/ux-designer/mobile-design-patterns`)
+- Web applications (use `web-application-design.md`)
+- Mobile apps (use `mobile-design-patterns.md`)
 - Simple utility tools (may not need full desktop complexity)
 - Kiosk or public terminal interfaces (different interaction model)
 
@@ -1849,18 +1849,18 @@ Search Google for "[selection]"
 ## Related Skills
 
 **Core Lyra Skills:**
-- **`lyra/ux-designer/visual-design-foundations`**: Visual hierarchy for complex interfaces, typography for dense data, color for status indicators
-- **`lyra/ux-designer/information-architecture`**: Menu structure, panel organization, command categorization
-- **`lyra/ux-designer/interaction-design-patterns`**: Keyboard shortcuts, button states, feedback patterns, focus indicators
-- **`lyra/ux-designer/accessibility-and-inclusive-design`**: Keyboard navigation, screen reader support, focus management, WCAG compliance
+- **`visual-design-foundations.md`**: Visual hierarchy for complex interfaces, typography for dense data, color for status indicators
+- **`information-architecture.md`**: Menu structure, panel organization, command categorization
+- **`interaction-design-patterns.md`**: Keyboard shortcuts, button states, feedback patterns, focus indicators
+- **`accessibility-and-inclusive-design.md`**: Keyboard navigation, screen reader support, focus management, WCAG compliance
 
 **Platform Skills:**
-- **`lyra/ux-designer/web-application-design`**: Shared patterns (command palette, keyboard shortcuts), responsive considerations for Electron apps
-- **`lyra/ux-designer/mobile-design-patterns`**: Touch considerations if desktop app has touch support (Surface, touchscreen laptops)
+- **`web-application-design.md`**: Shared patterns (command palette, keyboard shortcuts), responsive considerations for Electron apps
+- **`mobile-design-patterns.md`**: Touch considerations if desktop app has touch support (Surface, touchscreen laptops)
 
 **Cross-Faction:**
-- **`muna/technical-writer/clarity-and-style`**: Microcopy for menus, tooltips, error messages, help documentation
-- **`ordis/security-architect/secure-authentication-patterns`**: Desktop auth flows, credential storage, session management
+- **`/technical-writer`**: Microcopy for menus, tooltips, error messages, help documentation
+- **`/security-architect`**: Desktop auth flows, credential storage, session management
 
 
 ## Additional Resources

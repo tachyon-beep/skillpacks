@@ -214,7 +214,7 @@ Load this skill when:
 
 **Definition**: Organizing and labeling content for findability
 
-**Related skill**: `lyra/ux-designer/information-architecture`
+**Related skill**: `information-architecture.md`
 
 **Key aspects**: Navigation structure, labeling, categorization, search
 
@@ -223,7 +223,7 @@ Load this skill when:
 
 **Definition**: Defining how users interact with system (clicks, gestures, feedback)
 
-**Related skill**: `lyra/ux-designer/interaction-design-patterns`
+**Related skill**: `interaction-design-patterns.md`
 
 **Key aspects**: Touch targets, micro-interactions, state changes, animations
 
@@ -232,7 +232,7 @@ Load this skill when:
 
 **Definition**: Arranging elements to guide attention in order of importance
 
-**Related skill**: `lyra/ux-designer/visual-design-foundations`
+**Related skill**: `visual-design-foundations.md`
 
 **Key aspects**: Size, color, contrast, spacing, typography
 
@@ -241,7 +241,7 @@ Load this skill when:
 
 **Definition**: Designing for people with disabilities (visual, motor, cognitive)
 
-**Related skill**: `lyra/ux-designer/accessibility-and-inclusive-design`
+**Related skill**: `accessibility-and-inclusive-design.md`
 
 **Key aspects**: WCAG compliance, screen readers, keyboard navigation, color contrast
 
@@ -252,7 +252,7 @@ Load this skill when:
 
 **Measured by**: Task success rate, time on task, error rate, satisfaction
 
-**Related skill**: `lyra/ux-designer/user-research-and-validation` (testing)
+**Related skill**: `user-research-and-validation.md` (testing)
 
 
 ### User Journey / User Flow
@@ -261,7 +261,7 @@ Load this skill when:
 
 **Includes**: Entry point → Steps → Decision points → Outcome
 
-**Related skill**: `lyra/ux-designer/user-research-and-validation` (journey mapping)
+**Related skill**: `user-research-and-validation.md` (journey mapping)
 
 
 ### Personas
@@ -270,7 +270,7 @@ Load this skill when:
 
 **Includes**: Demographics, goals, behaviors, pain points, context
 
-**Related skill**: `lyra/ux-designer/user-research-and-validation` (research methods)
+**Related skill**: `user-research-and-validation.md` (research methods)
 
 
 ### Wireframe
@@ -297,7 +297,7 @@ Load this skill when:
 
 **Common framework**: Nielsen's 10 Usability Heuristics
 
-**Related skill**: `lyra/ux-designer/user-research-and-validation` (validation methods)
+**Related skill**: `user-research-and-validation.md` (validation methods)
 
 
 ## Design Thinking Process
@@ -308,7 +308,7 @@ Load this skill when:
 
 **Methods**: Interviews, observations, diary studies
 
-**Related skill**: `lyra/ux-designer/user-research-and-validation`
+**Related skill**: `user-research-and-validation.md`
 
 **Output**: User insights, pain points, opportunity areas
 
@@ -348,7 +348,7 @@ Load this skill when:
 
 **Methods**: Usability testing, A/B testing, analytics
 
-**Related skill**: `lyra/ux-designer/user-research-and-validation`
+**Related skill**: `user-research-and-validation.md`
 
 **Output**: Insights for iteration, validated design decisions
 
@@ -364,21 +364,21 @@ Load this skill when:
 
 ## When to Use Each Lyra Skill
 
-### lyra/ux-designer/using-ux-designer (Meta)
+### SKILL.md — the using-ux-designer router (Meta)
 
 **When**: Starting any UX task, unsure which skill to load
 
 **Purpose**: Routes to appropriate skills based on context
 
 
-### lyra/ux-designer/ux-fundamentals (This Skill)
+### ux-fundamentals.md (This Skill)
 
 **When**: "What is...?", "Explain...", learning UX concepts
 
 **Purpose**: Teaching and foundational knowledge
 
 
-### lyra/ux-designer/visual-design-foundations
+### visual-design-foundations.md
 
 **When**: Color, typography, hierarchy, spacing, contrast issues
 
@@ -387,7 +387,7 @@ Load this skill when:
 **Framework**: 6-dimension Visual Hierarchy Analysis (Contrast, Scale, Spacing, Color, Typography, Layout Flow)
 
 
-### lyra/ux-designer/information-architecture
+### information-architecture.md
 
 **When**: Navigation confusing, content organization, findability issues
 
@@ -396,7 +396,7 @@ Load this skill when:
 **Framework**: 4-layer Navigation & Discoverability Model (Mental Models, Navigation Systems, Information Scent, Discoverability)
 
 
-### lyra/ux-designer/interaction-design-patterns
+### interaction-design-patterns.md
 
 **When**: Touch targets, feedback, micro-interactions, button states
 
@@ -405,7 +405,7 @@ Load this skill when:
 **Framework**: 5-dimension Interaction Clarity Framework (Affordances, Feedback, Micro-interactions, State Changes, Touch Targets)
 
 
-### lyra/ux-designer/accessibility-and-inclusive-design
+### accessibility-and-inclusive-design.md
 
 **When**: WCAG compliance, colorblind-safe, keyboard nav, screen readers
 
@@ -414,7 +414,7 @@ Load this skill when:
 **Framework**: 6-dimension Universal Access Model (Visual, Motor, Cognitive, Screen Reader, Temporal, Situational)
 
 
-### lyra/ux-designer/user-research-and-validation
+### user-research-and-validation.md
 
 **When**: Need to understand users, test designs, validate decisions
 
@@ -423,7 +423,7 @@ Load this skill when:
 **Framework**: 5-phase User Understanding Model (Discovery, Generative, Evaluative, Validation, Post-Launch)
 
 
-### lyra/ux-designer/mobile-design-patterns
+### mobile-design-patterns.md
 
 **When**: iOS/Android app design, touch interactions
 
@@ -432,7 +432,7 @@ Load this skill when:
 **Framework**: Mobile Interaction Evaluation Model (Reachability, Gesture Conventions, Platform Consistency, Performance Perception)
 
 
-### lyra/ux-designer/web-application-design
+### web-application-design.md
 
 **When**: Web app, dashboard, SaaS, data visualization
 
@@ -441,7 +441,7 @@ Load this skill when:
 **Framework**: Web Application Usability Framework (Data Clarity, Workflow Efficiency, Responsive Adaptation, Progressive Enhancement)
 
 
-### lyra/ux-designer/desktop-software-design
+### desktop-software-design.md
 
 **When**: Desktop app, Electron, multi-window, keyboard-first
 
@@ -450,7 +450,7 @@ Load this skill when:
 **Framework**: Desktop Application Workflow Model (Window Organization, Keyboard Efficiency, Workspace Customization, Expert Paths)
 
 
-### lyra/ux-designer/game-ui-design
+### game-ui-design.md
 
 **When**: Game, HUD, menu system, in-game interface
 
@@ -585,8 +585,8 @@ Load this skill when:
 **All Lyra UX Designer skills**: This teaching skill references concepts explained in detail by specialized skills
 
 **Cross-faction**:
-- `muna/technical-writer/clarity-and-style` - Writing clear UI copy
-- `ordis/security-architect/threat-modeling` - Security implications of UX decisions
+- `/technical-writer` - Writing clear UI copy
+- `/security-architect` - Security implications of UX decisions
 
 
 ## Further Learning

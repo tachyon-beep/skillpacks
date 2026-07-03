@@ -7,7 +7,7 @@ This skill provides **The Mobile Interaction Evaluation Model**: a systematic 4-
 
 **Core Principle**: Mobile design requires balancing platform conventions with usability under real-world constraints (one-handed use, variable connectivity, outdoor viewing, interruptions). Success means feeling native to the platform while remaining accessible to the human hand and thumb.
 
-**Platform Focus**: iOS (Human Interface Guidelines) and Android (Material Design), with guidance on when to unify or differentiate.
+**Platform Focus**: iOS (Human Interface Guidelines — iOS 26 Liquid Glass era) and Android (Material 3 / M3 Expressive), with guidance on when to unify or differentiate.
 
 ## When to Use This Skill
 
@@ -20,11 +20,11 @@ This skill provides **The Mobile Interaction Evaluation Model**: a systematic 4-
 - User mentions: "mobile app", "iOS", "Android", "touch targets", "gestures", "native design"
 
 **Don't use this skill for:**
-- Desktop software (use `lyra/ux-designer/desktop-software-design`)
-- Responsive web design (use `lyra/ux-designer/web-application-design`)
-- Game UI (use `lyra/ux-designer/game-ui-design`)
-- Visual hierarchy alone (use `lyra/ux-designer/visual-design-foundations`)
-- Accessibility evaluation (use `lyra/ux-designer/accessibility-and-inclusive-design`, though it complements this skill)
+- Desktop software (use `desktop-software-design.md`)
+- Responsive web design (use `web-application-design.md`)
+- Game UI (use `game-ui-design.md`)
+- Visual hierarchy alone (use `visual-design-foundations.md`)
+- Accessibility evaluation (use `accessibility-and-inclusive-design.md`, though it complements this skill)
 
 
 ## The Mobile Interaction Evaluation Model
@@ -509,7 +509,7 @@ SF Pro (System Font):
 - System colors: Adapt to light/dark mode automatically
 - Tint color: Single accent color for interactive elements (default #007AFF)
 - Gray scale: #F2F2F7 (light gray) to #1C1C1E (dark gray)
-- Support both light and dark modes (table stakes since iOS 13; iOS 18 also supports tinted Home Screen icons via the `tintedIconColor` slot)
+- Support both light and dark modes (table stakes since iOS 13; iOS 18+ adds a tinted Home Screen icon variant, and iOS 26 adds clear "glass" icon appearances — ship layered icons covering all variants)
 
 **iOS Components:**
 
@@ -544,7 +544,25 @@ SF Pro (System Font):
 - Respects Reduce Motion accessibility setting
 - Duration: 200-300ms typical
 
-#### iOS 16+ / 17 / 18 Platform Surfaces
+#### iOS 26 Liquid Glass (2025 redesign)
+
+> **Version note:** Apple jumped from iOS 18 straight to **iOS 26** (September 2025), aligning version numbers with the year across all its platforms (iOS / iPadOS / macOS / watchOS / tvOS 26). iOS 26 shipped **Liquid Glass** — the first system-wide visual redesign since iOS 7 — and it changes what "feels native" on iOS.
+
+**What Liquid Glass is:**
+- A translucent "glass" material applied across system chrome: tab bars, navigation bars, buttons, menus, alerts, widgets, and the Lock Screen
+- Real-time lighting — glass surfaces refract and reflect the content behind them instead of using a flat blur
+- Floating, content-first chrome: controls sit in glass layers above content and recede on scroll (tab bars shrink, toolbars thin out), letting content run edge-to-edge
+- Standard SwiftUI/UIKit components adopt it automatically when built against the iOS 26 SDK; custom chrome needs explicit adoption (`glassEffect` and related APIs)
+
+**Design rules for glass surfaces:**
+- **Legibility beats translucency.** The iOS 26 rollout drew sustained criticism for hard-to-read transparent menus (Music, Control Center), and Apple reduced transparency in point releases. Verify text and control contrast (WCAG 1.4.3 / 1.4.11) against worst-case backgrounds — busy photos, scrolling video — not just flat mockup fills.
+- **Design for the full transparency range.** iOS 27 (announced WWDC June 2026, ships fall 2026) adds a user-facing slider from clear to opaque, and the existing Reduce Transparency / Increase Contrast accessibility settings flatten glass toward solid. Your layout must communicate identically at every point on that range — never encode meaning in the glass effect itself.
+- **Use system materials; don't hand-fake glass.** Hand-built blur/alpha stacks won't respect the accessibility settings or the iOS 27 transparency slider and won't receive the refraction lighting. If you must support pre-26 releases, degrade to the older system materials rather than simulating glass.
+- **App icons are now multi-appearance:** default, dark, clear (glass), and tinted variants. Ship layered icons (Apple's Icon Composer) so the system can render all appearances; a flat pre-26 icon looks out of place on an iOS 26 Home Screen.
+
+**Practical implication:** treat Liquid Glass the way you treat safe areas — a system property you inherit, not a style you opt into. Spend your design effort on content hierarchy and on verifying legibility over real content; let the system draw the glass.
+
+#### iOS 16+ Platform Surfaces
 
 The iOS HIG since 2022 has expanded beyond "the app screen". Modern iOS UX assumes apps integrate with several ambient surfaces:
 
@@ -572,7 +590,7 @@ The iOS HIG since 2022 has expanded beyond "the app screen". Modern iOS UX assum
 - Three sizes: rectangular, circular, inline
 - Always-On dims content; verify your widget remains useful (and does not flicker / animate) in low-power render
 
-**Control Center (iOS 18):**
+**Control Center (iOS 18+):**
 - Third-party Controls API — apps can publish Controls into Control Center for one-tap actions
 - Treat as another interactive surface, not just an in-app feature
 
@@ -580,7 +598,7 @@ The iOS HIG since 2022 has expanded beyond "the app screen". Modern iOS UX assum
 
 ### Android Material Design (Material 3 / Material You)
 
-> **Material version:** Material 3 (M3 / "Material You") is the current default — it has been the system style since Android 12 (2021) and is the default for new Compose / Jetpack apps. Material 2 is in maintenance only; design new work in M3 unless you must extend an existing M2 codebase. The reference site is `m3.material.io`.
+> **Material version:** Material 3 (M3 / "Material You") is the baseline — the system style since Android 12 (2021) and the default for new Compose / Jetpack apps. **Material 3 Expressive** (rolled out 2025 alongside Android 16) is the current evolution of M3: a spring-physics motion system (smooth detach, haptic-paired dismissals), 15 new or refreshed components (button groups, split buttons, toolbars, loading indicators, FAB menu), larger emphasized type, and richer dynamic-color tonal separation. Design new Android work in M3 Expressive where your Compose component versions support it; plain M3 remains correct for existing apps, and Material 2 is maintenance-only. The reference site is `m3.material.io`.
 
 **Material 3 Typography (type scale):**
 
@@ -722,7 +740,7 @@ Light and dark themes are derived from the same tonal palette automatically. Imp
 ### Supporting Both Light and Dark Modes
 
 **iOS:**
-- **Required:** All apps must support dark mode (table stakes since iOS 13; iOS 18 adds a third "Tinted" variant for Home Screen icons that designers should also accommodate)
+- **Required:** All apps must support dark mode (table stakes since iOS 13; iOS 18+ adds a "Tinted" Home Screen icon variant and iOS 26 adds "Clear" glass appearances — design layered icons that survive all four appearance modes)
 - **System colors:** Use UIColor.label, .systemBackground, etc. (adapt automatically)
 - **Custom colors:** Define light and dark variants in asset catalog
 - **Test:** Switch in Settings → Developer → Dark Appearance
@@ -1612,23 +1630,23 @@ Desktop: > 1024px (multi-column, side nav)
 ## Related Skills
 
 **Core Lyra UX Skills:**
-- **`lyra/ux-designer/visual-design-foundations`**: Visual hierarchy, contrast, typography, color (applies to mobile, but mobile has specific constraints like high outdoor contrast)
-- **`lyra/ux-designer/interaction-design-patterns`**: Touch targets (44x44pt iOS, 48x48dp Android), button states, feedback, animations (mobile is touch-first subset of general interactions)
-- **`lyra/ux-designer/information-architecture`**: Navigation structure, hierarchy (mobile requires simpler, flatter IA due to smaller screen)
-- **`lyra/ux-designer/accessibility-and-inclusive-design`**: Touch target sizing (WCAG 44px min), VoiceOver/TalkBack, high contrast, large text support (critical for mobile)
-- **`lyra/ux-designer/user-research-and-validation`**: Usability testing on mobile devices, thumb zone validation, one-handed use testing
+- **`visual-design-foundations.md`**: Visual hierarchy, contrast, typography, color (applies to mobile, but mobile has specific constraints like high outdoor contrast)
+- **`interaction-design-patterns.md`**: Touch targets (44x44pt iOS, 48x48dp Android), button states, feedback, animations (mobile is touch-first subset of general interactions)
+- **`information-architecture.md`**: Navigation structure, hierarchy (mobile requires simpler, flatter IA due to smaller screen)
+- **`accessibility-and-inclusive-design.md`**: Touch target sizing (WCAG 44px min), VoiceOver/TalkBack, high contrast, large text support (critical for mobile)
+- **`user-research-and-validation.md`**: Usability testing on mobile devices, thumb zone validation, one-handed use testing
 
 **Other Platform Skills:**
-- **`lyra/ux-designer/web-application-design`**: Responsive web differs from native mobile (no native gestures, different navigation patterns)
-- **`lyra/ux-designer/desktop-software-design`**: Desktop has opposite constraints (mouse precision, large screen, keyboard-first)
-- **`lyra/ux-designer/game-ui-design`**: Games on mobile have unique constraints (performance, gamepad or touch controls)
+- **`web-application-design.md`**: Responsive web differs from native mobile (no native gestures, different navigation patterns)
+- **`desktop-software-design.md`**: Desktop has opposite constraints (mouse precision, large screen, keyboard-first)
+- **`game-ui-design.md`**: Games on mobile have unique constraints (performance, gamepad or touch controls)
 
 **Meta-Skill:**
-- **`lyra/ux-designer/using-ux-designer`**: Routes to appropriate UX skill based on user's question (mentions "mobile", "iOS", "Android" → routes here)
+- **`SKILL.md` (the using-ux-designer router)**: Routes to appropriate UX skill based on user's question (mentions "mobile", "iOS", "Android" → routes here)
 
 **Cross-Faction:**
-- **`muna/technical-writer/clarity-and-style`**: Clear UI copy, error messages, microcopy (especially important on mobile where space is limited)
-- **`ordis/security-architect/secure-authentication-patterns`**: Biometric authentication (Face ID, Touch ID, Android Biometric), secure mobile auth flows
+- **`/technical-writer`**: Clear UI copy, error messages, microcopy (especially important on mobile where space is limited)
+- **`/security-architect`**: Biometric authentication (Face ID, Touch ID, Android Biometric), secure mobile auth flows
 
 
 ## Additional Resources

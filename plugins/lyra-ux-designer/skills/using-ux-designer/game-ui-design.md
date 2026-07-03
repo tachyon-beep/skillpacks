@@ -22,7 +22,7 @@ This skill provides **The Game UI Integration Framework**: a systematic 4-dimens
 
 **Don't use this skill for:**
 - Non-game applications (use appropriate platform skill: web, mobile, desktop)
-- Game engines themselves (use `lyra/ux-designer/desktop-software-design`)
+- Game engines themselves (use `desktop-software-design.md`)
 - Simple 2D casual games with minimal UI (framework may be overkill)
 - Game design mechanics (use game design resources)
 
@@ -1800,18 +1800,18 @@ Step-by-step workflows for common game UI design scenarios.
 ## Related Skills
 
 **Core Lyra UX Skills:**
-- **`lyra/ux-designer/visual-design-foundations`**: Visual hierarchy, contrast, color theory, typography (apply to game UI, but games have unique constraints like genre aesthetics and TV viewing distance)
-- **`lyra/ux-designer/interaction-design-patterns`**: Button states, touch targets (44x44pt iOS, 48x48dp Android, 60x60px games), feedback timing, animations (games require faster feedback <100ms for responsive feel)
-- **`lyra/ux-designer/accessibility-and-inclusive-design`**: Colorblind modes, text sizing, control remapping, subtitle support (critical for games, often legally required)
-- **`lyra/ux-designer/information-architecture`**: Menu structure, navigation flow (games have complex nested menus - inventory, skills, settings - need clear hierarchy)
+- **`visual-design-foundations.md`**: Visual hierarchy, contrast, color theory, typography (apply to game UI, but games have unique constraints like genre aesthetics and TV viewing distance)
+- **`interaction-design-patterns.md`**: Button states, touch targets (44x44pt iOS, 48x48dp Android, 60x60px games), feedback timing, animations (games require faster feedback <100ms for responsive feel)
+- **`accessibility-and-inclusive-design.md`**: Colorblind modes, text sizing, control remapping, subtitle support (critical for games, often legally required)
+- **`information-architecture.md`**: Menu structure, navigation flow (games have complex nested menus - inventory, skills, settings - need clear hierarchy)
 
 **Platform Skills:**
-- **`lyra/ux-designer/mobile-design-patterns`**: Touch controls, thumb zones, on-screen controls (mobile games overlap with mobile app patterns but with game-specific needs like virtual joysticks)
-- **`lyra/ux-designer/desktop-software-design`**: Keyboard shortcuts, hotkeys (PC games use extensive keyboard shortcuts like MMO hotbars 1-9, modifier keys)
+- **`mobile-design-patterns.md`**: Touch controls, thumb zones, on-screen controls (mobile games overlap with mobile app patterns but with game-specific needs like virtual joysticks)
+- **`desktop-software-design.md`**: Keyboard shortcuts, hotkeys (PC games use extensive keyboard shortcuts like MMO hotbars 1-9, modifier keys)
 
 **Cross-Faction:**
-- **`muna/technical-writer/clarity-and-style`**: UI copy, error messages, tutorial text (games need concise, flavorful text that fits genre and doesn't break immersion)
-- **`ordis/security-architect/secure-authentication-patterns`**: Account systems, login flows (multiplayer games need secure authentication without disrupting game experience)
+- **`/technical-writer`**: UI copy, error messages, tutorial text (games need concise, flavorful text that fits genre and doesn't break immersion)
+- **`/security-architect`**: Account systems, login flows (multiplayer games need secure authentication without disrupting game experience)
 
 
 ## Additional Resources
