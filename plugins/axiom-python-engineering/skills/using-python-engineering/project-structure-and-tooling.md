@@ -463,6 +463,11 @@ pip/Poetry, manages Python interpreter installation, project lockfile, and dev
 dependency groups (PEP 735) in one tool. Use it unless you have a specific
 reason to pick something else.
 
+**Ownership note (2026):** OpenAI announced its acquisition of Astral (uv,
+ruff, ty) in March 2026, with the tools remaining open source. The
+recommendation stands — but if your organization tracks supply-chain
+ownership, record the vendor change.
+
 ### uv (Default for new projects)
 
 **Install:**

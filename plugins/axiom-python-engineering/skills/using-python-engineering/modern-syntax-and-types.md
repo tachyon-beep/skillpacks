@@ -606,35 +606,44 @@ errors overnight" problem.
 
 ### Rust-Implemented Type Checkers (ty, pyrefly)
 
-Two Rust-implemented type checkers, first previewed in 2024/2025, have since
-matured. Both target the same problem mypy has — speed at scale — by following
-pyright's architecture but pushing further. By 2026 they are real options, not
-just experiments.
+Two Rust-implemented type checkers, first previewed in 2024/2025, target the
+same problem mypy has — speed at scale — by following pyright's architecture
+and pushing further. By mid-2026 their maturity has diverged: one is stable,
+one is still beta.
 
-**`ty` (Astral)** — from the makers of ruff and uv. A type checker that runs at
-ruff-like speed on a millions-of-lines codebase, with the same tight editor
-feedback loop and an LSP server for IDE integration.
+**`pyrefly` (Meta)** — Meta's open-source successor to pyre, rewritten in Rust.
+Reached **stable 1.0 in May 2026** and ships monthly minor releases. Scores
+higher than mypy and ty on the typing-spec conformance suite (>90% at 1.0),
+checks ~1.85M lines/second, and is the default checker for Instagram (~20M
+LOC) with adoption at PyTorch and JAX. It is now a first-class CI option, not
+an experiment — though its plugin ecosystem is still younger than mypy's
+(no Django/SQLAlchemy-grade plugin depth yet).
+
+```bash
+uv tool install pyrefly   # or: pip install pyrefly
+pyrefly check src/
+```
+
+**`ty` (Astral)** — from the ruff/uv team (whose acquisition by OpenAI was
+announced March 2026, with the tools remaining open source). Still **beta**
+(0.0.x versioning; 1.0 targeted for 2026). Its incremental engine is the
+fastest available — millisecond-scale re-checks on PyTorch-sized codebases —
+which makes it a superb editor/LSP feedback loop, but diagnostics and API may
+break between releases and its typing-spec conformance still trails pyrefly's.
 
 ```bash
 uvx ty check src/
 ```
 
-**`pyrefly` (Meta)** — Meta's open-source successor to pyre, rewritten in Rust.
-Targets the same scale Meta hits internally on Python monorepos.
-
-```bash
-pip install pyrefly
-pyrefly check src/
-```
-
-**Status (as of 2026): both have matured past their preview phase and are
-viable in CI.** They remain younger than mypy/pyright, so plugin ecosystem and
-edge-case inference coverage still lag the incumbents.
+**Status (as of mid-2026):** pyrefly is stable and CI-ready; ty is beta —
+excellent as a local/editor checker, but keep mypy, pyright, or pyrefly as the
+authoritative CI gate until ty ships 1.0.
 
 **Use them when:**
-- Mypy is the bottleneck on a large codebase and the speed-up is worth it.
-- You want fast local/editor feedback while keeping mypy or pyright as the
-  authoritative CI gate.
+- Mypy is the bottleneck on a large codebase and the speed-up is worth it
+  (pyrefly can take over the CI gate — see migration discipline below).
+- You want fast local/editor feedback (ty excels here) while an incumbent
+  checker remains the authoritative CI gate.
 
 **Migration discipline:** when adopting a Rust checker, run it alongside your
 existing checker first and reconcile the diff before switching the CI gate.

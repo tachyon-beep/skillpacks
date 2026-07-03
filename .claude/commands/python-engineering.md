@@ -21,7 +21,7 @@ Use the `using-python-engineering` skill from the `axiom-python-engineering` plu
 
 ## Sheets
 
-- **modern-syntax-and-types** - type hints, mypy/pyright/ty/pyrefly, Python 3.10-3.12 features, generics, protocols
+- **modern-syntax-and-types** - type hints, mypy/pyright/ty/pyrefly, Python 3.10-3.14 features, generics, protocols
 - **resolving-mypy-errors** - systematic mypy error resolution, `type: ignore` discipline, typing legacy code
 - **project-structure-and-tooling** - pyproject.toml, uv, ruff, pre-commit, dependency management, packaging, src vs flat layout
 - **systematic-delinting** - process for fixing lint warnings without disabling or over-refactoring
