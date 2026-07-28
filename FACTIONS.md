@@ -124,6 +124,15 @@ The Bravos' focus on pushing beyond limits, facing dangers head-on, and creating
 - Optimization as play - the endless pursuit of perfection
 - Discovery through experimentation - no two heroes' paths alike
 
+**bravos-game-design** - *The Champion's Forge*
+
+- Experience hypotheses as quests declared before the trial begins
+- Mechanics as weapons proven in combat, not trophies on display
+- Playtests as trials by ordeal - evidence over acclaim
+- Local ideas traced to global glory: moment, decision, loop, session, saga
+- Balance as ensuring every strategy earns a worthy adversary
+- Safety and access as the code of honor that makes the contest real
+
 The Bravos approach: **Excel through action, learn through challenge, improve through failure.** Every bug is a boss to defeat, every performance issue a mountain to climb, every system a frontier to explore.
 
 ---

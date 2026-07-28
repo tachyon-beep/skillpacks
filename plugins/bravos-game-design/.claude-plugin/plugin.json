@@ -1,0 +1,18 @@
+{
+  "name": "bravos-game-design",
+  "version": "0.1.0",
+  "description": "End-to-end critical game design across digital, tabletop, live/embodied, social, educational, and asynchronous play - router + 15 specialist reference sheets",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "bravos",
+    "game-design",
+    "mechanics",
+    "playtesting",
+    "balance"
+  ]
+}

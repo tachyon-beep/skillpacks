@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, product management, solution architecture, distributed systems, game development, security, documentation, site design, and UX skills for Claude Code - 46 complete skillpacks with 400+ TDD-validated skills and reference sheets",
-    "version": "3.23.4",
+    "version": "3.24.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -361,6 +361,30 @@
         "bravos",
         "systems",
         "experience"
+      ],
+      "category": "game-development"
+    },
+    {
+      "name": "bravos-game-design",
+      "source": "./plugins/bravos-game-design",
+      "description": "End-to-end critical game design (router + 15 specialist reference sheets) - experience hypotheses before mechanics, decision/dynamics mapping, diagnosis before prescription, causally distinct alternatives, local-to-global coherence tracing at five scales (moment, decision, loop, session, whole game), balance and economies, social/narrative/embodied play, accessibility-safety-ethics as design not polish, four medium adapters (selection-and-translation, digital/asynchronous, tabletop/facilitated, live/physical), learning-and-training games, prototyping and playtesting with evidence discipline, and creation/test/review deliverables. Covers digital, board and card, TTRPG, LARP/live-embodied, physical and social, educational and training, asynchronous, and hybrid games. Composes with bravos-systems-as-experience (emergence as the experience), bravos-simulation-tactics (in-engine simulation), and lyra-ux-designer (game UI)",
+      "keywords": [
+        "bravos",
+        "game-design",
+        "mechanics",
+        "core-loop",
+        "ruleset",
+        "playtesting",
+        "prototyping",
+        "balance",
+        "game-economy",
+        "board-games",
+        "tabletop",
+        "ttrpg",
+        "larp",
+        "serious-games",
+        "educational-games",
+        "player-experience"
       ],
       "category": "game-development"
     },

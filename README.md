@@ -360,7 +360,7 @@ cd skillpacks
   adapter merging (TIES/DARE/SLERP/MergeKit)
 - `/plugin install yzmir-dynamic-architectures`
 
-### 🎮 Game Development (Bravos) - 2 Packs
+### 🎮 Game Development (Bravos) - 3 Packs
 
 **bravos-simulation-tactics** - 11 skills
 
@@ -371,6 +371,13 @@ cd skillpacks
 
 - Emergent gameplay, player-driven narratives, strategic depth
 - `/plugin install bravos-systems-as-experience`
+
+**bravos-game-design** - 1 router + 15 reference sheets _(v0.1 — July 2026)_
+
+- Critical co-designer for end-to-end game design: experience hypothesis → mechanics → coherence → balance → cheapest valid test → disposition
+- Digital, board/card, TTRPG, LARP/live-embodied, physical/social, educational/training, asynchronous, and hybrid games
+- Evidence discipline: diagnosis before prescription, five-scale coherence tracing, accessibility/safety/ethics as design not polish
+- `/plugin install bravos-game-design`
 
 ### 🎨 UX, Site Design & Creative Writing (Lyra) - 4 Packs
 
@@ -572,9 +579,9 @@ I'm using yzmir/deep-rl/policy-gradient-methods to implement PPO
 skillpacks/
 ├── .claude-plugin/
 │   └── marketplace.json       # Marketplace catalog
-├── plugins/                   # All 46 skillpacks
+├── plugins/                   # All 47 skillpacks
 │   ├── axiom-*/               # Development (16 packs)
-│   ├── bravos-*/              # Game development (2 packs)
+│   ├── bravos-*/              # Game development (3 packs)
 │   ├── lyra-*/                # UX, site, TUI & creative writing (4 packs)
 │   ├── meta-*/                # Meta utilities (2 packs)
 │   ├── muna-*/                # Documentation (4 packs)
