@@ -1,7 +1,7 @@
 {
   "name": "bravos-game-design",
-  "version": "0.1.0",
-  "description": "End-to-end critical game design across digital, tabletop, live/embodied, social, educational, and asynchronous play - router + 15 specialist reference sheets",
+  "version": "0.2.0",
+  "description": "End-to-end critical game design across digital, tabletop, live/embodied, social, educational, and asynchronous play - router + 15 specialist reference sheets, 3 commands, 2 agents",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

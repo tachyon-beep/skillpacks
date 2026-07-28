@@ -33,6 +33,17 @@ Use the `using-game-design` skill from the `bravos-game-design` plugin to route 
 - **design-deliverables** - experience thesis, mechanic candidates, causal trace, loop ladder, playable ruleset, balance model
 - **test-and-review-deliverables** - prototype card, playtest plan, evidence diagnosis, reviews, disposition ledger
 
+## Commands
+
+- `/design-game` - dispatch the game-design-architect agent: brief → experience thesis, causally distinct routes, closed ruleset, responsibility screen, cheapest valid test with precommitted decision rule
+- `/review-game-design` - dispatch the game-design-critic agent: severity-rated critique against the failure-mode catalog, each finding citing the resolving sheet
+- `/plan-playtest` - design the cheapest valid test: riskiest assumption, claim classification, lowest-fidelity capable prototype, precommitted Keep/Rewire/Simplify/Shelve/Kill/Retest mapping
+
+## Agents
+
+- `game-design-architect` - producer-side forward design SME; treats fun as a hypothesis, ends every package in a falsifiable test
+- `game-design-critic` - critic-side SME; severity by experience blast radius (dominance collapse, fake dynamics, welfare-adverse monetization, evidence laundering); critiques, never redesigns
+
 ## Cross-references
 
 - Emergence-forward systemic design as the experience → `/systems-as-experience`

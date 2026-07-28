@@ -372,11 +372,12 @@ cd skillpacks
 - Emergent gameplay, player-driven narratives, strategic depth
 - `/plugin install bravos-systems-as-experience`
 
-**bravos-game-design** - 1 router + 15 reference sheets _(v0.1 — July 2026)_
+**bravos-game-design** - 1 router + 15 reference sheets, 3 commands, 2 agents _(v0.2 — July 2026)_
 
 - Critical co-designer for end-to-end game design: experience hypothesis → mechanics → coherence → balance → cheapest valid test → disposition
 - Digital, board/card, TTRPG, LARP/live-embodied, physical/social, educational/training, asynchronous, and hybrid games
 - Evidence discipline: diagnosis before prescription, five-scale coherence tracing, accessibility/safety/ethics as design not polish
+- SME agents: game-design-architect (forward design), game-design-critic (failure-mode critique)
 - `/plugin install bravos-game-design`
 
 ### 🎨 UX, Site Design & Creative Writing (Lyra) - 4 Packs
