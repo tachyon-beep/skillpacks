@@ -21,9 +21,11 @@ W' = W + ΔW = W + BA
 
 Where:
 - W: Original frozen weight (d × k)
-- B: Trainable down-projection (d × r)
-- A: Trainable up-projection (r × k)
+- A: Trainable **down-projection** (r × k) — projects the input down to rank r; init random
+- B: Trainable **up-projection** (d × r) — projects back up to the output dim; init zeros
 - r: Rank (typically 4-64, much smaller than d or k)
+
+(Order matters: x flows through A first, then B, so A is the down-projection even though B is written leftmost in `BA`. B = 0 at init is what makes ΔW = 0 at step 0.)
 ```
 
 Parameter savings: Instead of d×k parameters, train only r×(d+k).
@@ -155,7 +157,14 @@ model = get_peft_model(base_model, lora_config)
 
 # Check trainable parameters
 model.print_trainable_parameters()
-# Output: trainable params: 294,912 || all params: 6,738,415,616 || trainable%: 0.0044
+# Output: trainable params: 4,194,304 || all params: 6,742,609,920 || trainable%: 0.0622
+#
+# Sanity-check the arithmetic rather than trusting a remembered number:
+#   r * (d_in + d_out) per adapted matrix
+#   = 8 * (4096 + 4096) = 65,536 for one q_proj or v_proj on a 4096-dim 6.7B model
+#   × 2 target modules × 32 layers = 4,194,304 trainable parameters.
+# If print_trainable_parameters() disagrees with that by an order of magnitude,
+# your target_modules did not match the layers you think they did.
 ```
 
 ---
@@ -426,9 +435,11 @@ model.add_weighted_adapter(
 
 ## Adapter Variants
 
-### Comparison Table (2024+)
+### Comparison Table (post-LoRA variants, surveyed through ~2024)
 
-Order is roughly chronological / capability-tier. "Std." entries are well-supported in `peft >= 0.10`; "Newer" entries may require nightly or research code.
+Order is roughly chronological / capability-tier. "Std." entries have first-class support in a current `peft`; "Newer" entries may require research code or a standalone repo. Deliberately no per-method version numbers — the exact release a feature landed in moves faster than this sheet does, so check your installed `peft`'s docs (`peft.__version__`, then the method's page) rather than trusting a pinned number here.
+
+> **Knowledge-calibration note.** This sheet's method survey reflects the PEFT landscape through roughly **2024**, with no systematic sweep of 2025-26 work. The *mechanics* below (low-rank topology, init strategies, scaling rules, merge semantics, serving considerations) are stable and still correct; the *coverage* is not guaranteed current, and "modern"/"(2024+)" here means "post-original-LoRA", not "state of the art as of your today". Before selecting a method for a new project, check what has landed since — expect new init/scaling variants and merging methods rather than a change to the underlying LoRA topology.
 
 | Method | Trainable Location | Parameters per adapted layer | Best For | Status |
 |--------|-------------------|------------------------------|----------|--------|
@@ -438,15 +449,15 @@ Order is roughly chronological / capability-tier. "Std." entries are well-suppor
 | AdaLoRA (Zhang et al., 2023) | Adaptive rank via SVD pruning | Dynamic | Auto rank selection | Std. |
 | IA³ (Liu et al., 2022) | Element-wise rescaling vectors | 3×d per layer | Extreme efficiency | Std. |
 | LoRA+ (Hayou et al., 2024) | LoRA with η_B / η_A ratio ≈ 16× | Same as LoRA | Free quality bump for LoRA | Std. |
-| VeRA (Kopiczko et al., 2024) | Shared random A,B + per-layer scaling vectors b,d | (d+k) per layer | 10× fewer params than LoRA | Std. |
+| VeRA (Kopiczko et al., 2024) | Shared random A,B + per-layer scaling vectors b,d | d_out + r per layer | 10× fewer params than LoRA | Std. |
 | PiSSA (Meng et al., 2024) | LoRA initialised from top-r SVD of W | Same as LoRA | Faster convergence than LoRA | Std. |
 | LoftQ (Li et al., 2024) | Joint quantisation + LoRA init | Same as QLoRA | Closes QLoRA quantisation gap | Std. |
 | rsLoRA (Kalajdzievski, 2023) | LoRA with α/√r scaling (not α/r) | Same as LoRA | Stable training at high rank | Std. |
-| LongLoRA (Chen et al., 2024) | LoRA + shifted-sparse attention during FT | Same as LoRA | Context-window extension | Std. |
+| LongLoRA (Chen et al., 2024) | LoRA + shifted-sparse attention during FT | Same as LoRA | Context-window extension | Partial — the LoRA half is standard, but S²-Attn is **not** in `peft`; it needs the authors' repo or your own attention patch |
 | OLoRA (Büyükakyüz, 2024) | LoRA initialised via QR of W | Same as LoRA | Faster, more stable than vanilla | Newer |
 | MoLE / X-LoRA (Wu et al., 2024) | Gated mixture over LoRA experts | k × LoRA | Multi-skill composition | Newer |
 
-### Modern PEFT Variants (2024+)
+### Post-LoRA PEFT Variants
 
 These post-LoRA techniques mostly tweak **initialisation** or **scaling**; the LoRA topology (B·A added in parallel to a linear) is unchanged. The pay-off is usually faster convergence, less rank sensitivity, or 5–10× parameter reduction at iso-quality.
 
@@ -466,7 +477,17 @@ optimizer = AdamW([
     {"params": lora_A_params, "lr": 1e-4},
     {"params": lora_B_params, "lr": 16e-4},  # lr_ratio = 16
 ])
-# peft >= 0.10 supports loraplus_lr_ratio in TrainingArguments
+
+# peft ships this as an optimizer factory, NOT a TrainingArguments field:
+from peft.optimizers import create_loraplus_optimizer
+
+optimizer = create_loraplus_optimizer(
+    model=model,
+    optimizer_cls=torch.optim.AdamW,
+    lr=1e-4,
+    loraplus_lr_ratio=16,     # argument to the helper, not to TrainingArguments
+)
+# Pass the result to Trainer via `optimizers=(optimizer, scheduler)`.
 ```
 
 When to use: free quality bump for any LoRA training run; keep all other hyperparameters the same.
@@ -476,11 +497,16 @@ When to use: free quality bump for any LoRA training run; keep all other hyperpa
 VeRA (Kopiczko et al., 2024, "VeRA: Vector-based Random Matrix Adaptation") freezes a single pair of random matrices (A, B) shared across **all** adapted layers, and learns only two small per-layer vectors b, d.
 
 ```
-ΔW_l = diag(b_l) · B · diag(d_l) · A      # B, A frozen and shared
+ΔW_l = Λ_b · B · Λ_d · A                  # B, A frozen and shared
+  A: (r, d_in),  B: (d_out, r)            # one shared random pair for the whole model
+  Λ_d = diag(d_l), d_l ∈ R^r              # scales the r rank channels  -> RANK-sized
+  Λ_b = diag(b_l), b_l ∈ R^{d_out}        # scales the output units     -> OUTPUT-sized
 
-Trainable per layer: d + k (two diagonal vectors), independent of rank.
+Trainable per layer: d_out + r  (NOT d_in + d_out, and NOT rank-independent —
+the d vector is rank-sized, so the count grows with r, just very slowly).
 Compared to LoRA at r=8 on a 7B model: ~10x fewer trainable parameters at
-comparable quality on instruction-following benchmarks.
+comparable quality on instruction-following benchmarks. The saving comes from
+LoRA's r·(d_in + d_out) collapsing to d_out + r, not from removing rank.
 ```
 
 Implementation outline:
@@ -497,18 +523,27 @@ class VeRALinear(nn.Module):
         self.weight = base_linear.weight  # frozen
         self.weight.requires_grad = False
         # Share via buffer references; A_shared/B_shared live on the parent
-        self.register_buffer("A", A_shared, persistent=False)
-        self.register_buffer("B", B_shared, persistent=False)
+        self.register_buffer("A", A_shared, persistent=False)   # (r, in)
+        self.register_buffer("B", B_shared, persistent=False)   # (out, r)
+        rank = A_shared.shape[0]
 
-        # Per-layer trainable vectors. b initialised to 0 (so ΔW=0 at init).
+        # Per-layer trainable vectors:
+        #   b ∈ R^out  scales the output units
+        #   d ∈ R^r    scales the RANK channels (this is the bit people get wrong —
+        #              d is rank-sized, not in_features-sized)
+        # b initialised to 0 so ΔW = 0 at init; d to a small constant.
         self.b = nn.Parameter(torch.zeros(base_linear.out_features))
-        self.d = nn.Parameter(torch.ones(base_linear.in_features))
+        self.d = nn.Parameter(torch.full((rank,), 0.1))
 
     def forward(self, x):
         # ΔW · x  =  b ⊙ (B (d ⊙ (A x)))
-        Ax = F.linear(x * self.d, self.A)            # (..., r)
+        Ax = F.linear(x, self.A)                     # (..., r)
+        Ax = Ax * self.d                             # Λ_d applied in rank space
         BAx = F.linear(Ax, self.B)                   # (..., out)
         return F.linear(x, self.weight) + self.b * BAx
+
+# Trainable count per layer == out_features + rank (verify before believing a
+# "10× fewer parameters" claim on your own shapes).
 ```
 
 When to use: parameter-budget extreme — many concurrent adapters, on-device personalisation, or storing thousands of user-specific deltas.
@@ -581,7 +616,7 @@ class RSLoRALinear(LoRALinear):
         self.scaling = alpha / (rank ** 0.5)
 
 # In peft:
-LoraConfig(use_rslora=True, r=64, lora_alpha=16, ...)
+LoraConfig(use_rslora=True, r=64, lora_alpha=16)   # plus your usual args
 ```
 
 Use rsLoRA whenever **r ≥ 32**. At low rank the difference is negligible; at high rank it can be the difference between converging and stalling.
@@ -599,6 +634,9 @@ LoraConfig(
     target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
     modules_to_save=["embed_tokens", "norm"],  # full FT for these
 )
+# NOTE: this config gives you ingredient 2 only. S²-Attn is an attention-kernel
+# change and is not implemented in `peft` — take it from the LongLoRA repo or
+# patch the attention module yourself. A LoraConfig alone does not make LongLoRA.
 ```
 
 Combined with RoPE θ-base scaling (e.g. ABF, NTK-aware), pushes 4k → 32k+ at modest cost. For larger context jumps (32k → 1M), see YaRN / LongRoPE.
@@ -734,15 +772,17 @@ def verify_peft_setup(model):
 
 ---
 
-## Multi-LoRA Serving (Pointer)
+## Multi-LoRA Serving (Out of Scope Here)
 
 Training many adapters per base model raises a *serving* question, not a training one: how do you batch requests that target different LoRAs without one-LoRA-per-replica memory blowup? That's S-LoRA / LoRAX / Punica territory — heterogeneous batched matmul over a pool of adapters with paged adapter memory.
 
-For **production serving** of multi-tenant LoRA deployments, see:
+**No sheet in this pack covers multi-tenant adapter serving**, and as of this writing no sibling pack does either — go to the primary sources:
 
-- `yzmir-ml-production` → inference serving sheets — covers S-LoRA (Sheng et al., 2024), LoRAX, Punica (Chen et al., 2024), and how to plumb adapters through vLLM / TGI.
+- Sheng, Y. et al. (2024). *S-LoRA: Serving Thousands of Concurrent LoRA Adapters.* MLSys.
+- Chen, L. et al. (2024). *Punica: Multi-Tenant LoRA Serving.* MLSys.
+- Predibase LoRAX, plus the multi-LoRA support in vLLM / TGI, for the deployed-system view.
 
-This pack owns the *training* and *composition* of adapters; production *serving* of pools of adapters lives there.
+This pack owns the *training* and *composition* of adapters; treat production serving of adapter pools as an explicit gap rather than a pointer.
 
 ---
 
@@ -766,7 +806,7 @@ LoRA family (foundations):
 - Zhang, Q. et al. (2023). *AdaLoRA: Adaptive Budget Allocation for Parameter-Efficient Fine-Tuning.* ICLR.
 - Liu, H. et al. (2022). *Few-Shot Parameter-Efficient Fine-Tuning is Better and Cheaper than In-Context Learning* (IA³). NeurIPS.
 
-Modern PEFT (2023–2024):
+Post-LoRA PEFT (2023–2024):
 - Hayou, S., Ghosh, N. & Yu, B. (2024). *LoRA+: Efficient Low Rank Adaptation of Large Models.* ICML.
 - Kopiczko, D. J., Blankevoort, T. & Asano, Y. M. (2024). *VeRA: Vector-based Random Matrix Adaptation.* ICLR.
 - Meng, F., Wang, Z. & Zhang, M. (2024). *PiSSA: Principal Singular Values and Singular Vectors Adaptation of Large Language Models.* NeurIPS.

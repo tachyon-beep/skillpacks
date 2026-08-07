@@ -157,9 +157,16 @@ with torch.no_grad():
 
 # 2. tensor.detach(): Creates new tensor without grad connection
 output = model(x)
-detached = output.detach()  # Breaks gradient chain
-loss = criterion(detached, target)
-loss.backward()  # Gradients stop at detach point
+detached = output.detach()   # Breaks the gradient chain back to `model`
+head_out = head(detached)    # `head` is downstream of the cut and still trains
+loss = criterion(head_out, target)
+loss.backward()              # Gradients reach `head`, stop dead at the detach point
+
+# CAUTION: a loss computed ONLY from detached tensors has nothing to
+# differentiate — `criterion(detached, target).backward()` raises
+#   RuntimeError: element 0 of tensors does not require grad and does not have a grad_fn
+# It does not "silently stop gradients". If you see that error, you cut the
+# graph above every trainable parameter in the loss, not just the ones you meant to.
 
 # 3. tensor.detach() for isolation
 host_out = host(x)

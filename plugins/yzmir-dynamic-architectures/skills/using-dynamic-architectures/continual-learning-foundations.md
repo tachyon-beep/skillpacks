@@ -25,7 +25,7 @@ evaluate(model, task_A_data)               # Performance collapsed
 
 ### The Stability-Plasticity Dilemma
 
-Formalized by Abraham & Robins (2005):
+Named in Grossberg's Adaptive Resonance Theory work (1980); Abraham & Robins (2005) is a widely cited later review, not the origin:
 
 - **Stability**: Preserve existing knowledge (resist weight changes)
 - **Plasticity**: Learn new information (allow weight changes)
@@ -54,7 +54,7 @@ Loss landscape after training on A, then moving toward B
 **Backward Transfer (BWT)**: Performance change on old tasks after learning new ones
 
 ```python
-BWT = (1/T-1) * sum(R[T,j] - R[j,j] for j in range(T-1))
+BWT = (1 / (T - 1)) * sum(R[T,j] - R[j,j] for j in range(T-1))
 # R[i,j] = accuracy on task j after training through task i
 # Negative BWT = forgetting
 ```
@@ -62,7 +62,7 @@ BWT = (1/T-1) * sum(R[T,j] - R[j,j] for j in range(T-1))
 **Forward Transfer (FWT)**: How much prior learning helps new tasks
 
 ```python
-FWT = (1/T-1) * sum(R[i-1,i] - b[i] for i in range(1, T))
+FWT = (1 / (T - 1)) * sum(R[i-1,i] - b[i] for i in range(1, T))
 # b[i] = baseline accuracy on task i without prior training
 # Positive FWT = beneficial transfer
 ```
@@ -136,40 +136,58 @@ def compute_fisher(model, data):
 
 ```python
 class SynapticIntelligence:
+    """
+    SI needs TWO parameter snapshots, and conflating them is the classic bug:
+
+      prev_step_params  — refreshed EVERY optimizer step; used only to get the
+                          per-step displacement for the path integral.
+      task_start_params — frozen for the whole task; it is both the denominator
+                          reference (TOTAL displacement over the task) and the
+                          anchor θ* the quadratic penalty pulls back toward.
+
+    Use one dict for both and you get omega ≈ path_integral / ε (the denominator
+    becomes a single step's displacement) and a penalty that is ~0 always
+    (because the anchor is where you were one step ago).
+    """
     def __init__(self, model, c=0.1, epsilon=1e-3):
         self.c = c
         self.epsilon = epsilon
-        self.omega = {}  # Importance per parameter
-        self.old_params = {}
-        self.path_integral = {}  # Running importance
+        self.omega = {}              # Accumulated importance per parameter
+        self.prev_step_params = {}   # θ at the previous optimizer step
+        self.task_start_params = {}  # θ* — start of current task / end of previous
+        self.path_integral = {}      # Running -g · Δθ for this task
 
         for n, p in model.named_parameters():
             self.omega[n] = torch.zeros_like(p)
-            self.old_params[n] = p.clone().detach()
+            self.prev_step_params[n] = p.clone().detach()
+            self.task_start_params[n] = p.clone().detach()
             self.path_integral[n] = torch.zeros_like(p)
 
     def update_during_training(self, model):
         """Call after each optimizer step"""
         for n, p in model.named_parameters():
             if p.grad is not None:
-                # Accumulate: how much did this param contribute to loss reduction?
-                delta = p.detach() - self.old_params[n]
+                # Per-step contribution to loss reduction
+                delta = p.detach() - self.prev_step_params[n]
                 self.path_integral[n] += -p.grad.detach() * delta
-                self.old_params[n] = p.clone().detach()
+            self.prev_step_params[n] = p.clone().detach()   # step-local ONLY
 
     def update_omega_at_task_end(self, model):
         """Call when task finishes"""
         for n, p in model.named_parameters():
-            delta = (p.detach() - self.old_params[n])**2 + self.epsilon
-            self.omega[n] += self.path_integral[n] / delta
+            # Denominator: TOTAL displacement over the task, not one step's
+            total_delta = (p.detach() - self.task_start_params[n])**2 + self.epsilon
+            self.omega[n] += (self.path_integral[n] / total_delta).clamp(min=0)
             self.path_integral[n].zero_()
-            self.old_params[n] = p.clone().detach()
+            # New anchor for the next task's penalty
+            self.task_start_params[n] = p.clone().detach()
+            self.prev_step_params[n] = p.clone().detach()
 
     def penalty(self, model):
-        """SI regularization term"""
+        """SI regularization term — anchored at the END of the previous task"""
         loss = 0
         for n, p in model.named_parameters():
-            loss += (self.omega[n] * (p - self.old_params[n])**2).sum()
+            loss = loss + (self.omega[n] * (p - self.task_start_params[n])**2).sum()
         return self.c * loss
 ```
 
@@ -288,54 +306,97 @@ class ProgressiveNet(nn.Module):
 
 **Core idea:** Prune network after each task, use freed capacity for next task.
 
+**The invariant that makes PackNet work:** parameters owned by earlier tasks are **frozen, never modified**. Forgetting is zero because those weights are bit-identical after later training — not because they are masked out at the end. The common implementation bug is to *zero* previous tasks' weights ("masking" read as "erase"), which destroys exactly the knowledge the method claims to preserve. Freeze via gradient masking; leave the values alone.
+
 ```python
 class PackNet:
+    """
+    Mallya & Lazebnik, 2018.
+
+    Invariant: once task t's parameters are elected, they are frozen forever.
+    Verify it — after training task t+1, assert task t's owned parameters are
+    unchanged. If they moved, the implementation is wrong, not the method.
+    """
     def __init__(self, model, prune_ratio=0.75):
         self.model = model
         self.prune_ratio = prune_ratio
-        self.masks = {}  # Binary masks per task
+        self.masks = {}   # task_id -> {param_name: 1.0 where OWNED by that task}
 
-    def train_task(self, task_id, train_data):
-        # 1. Train on task (only using free parameters)
-        self._apply_mask(task_id - 1)  # Mask previous tasks' params
-        train(self.model, train_data)
+    def _owned_before(self, task_id):
+        """Union of masks for all tasks < task_id (1 = owned and frozen)."""
+        owned = {}
+        for t, mask in self.masks.items():
+            if t >= task_id:
+                continue
+            for n, m in mask.items():
+                owned[n] = m.clone() if n not in owned else torch.maximum(owned[n], m)
+        for n, p in self.model.named_parameters():
+            owned.setdefault(n, torch.zeros_like(p))
+        return owned
 
-        # 2. Prune: keep top (1-prune_ratio) of parameters
-        mask = self._compute_mask(self.prune_ratio)
-        self.masks[task_id] = mask
+    def _restrict_updates_to(self, trainable):
+        """
+        Gradient hooks: only parameters with a 1 in `trainable` receive updates.
+        This is the freeze — weight VALUES are never touched.
+        Note: with momentum/weight-decay optimizers, also confirm the optimizer
+        cannot move a zero-gradient parameter (decoupled weight decay can).
+        """
+        return [p.register_hook(lambda g, keep=trainable[n]: g * keep)
+                for n, p in self.model.named_parameters()]
 
-        # 3. Retrain with pruned network
-        self._apply_mask(task_id)
-        train(self.model, train_data)
-
-    def _compute_mask(self, prune_ratio):
-        """Keep largest magnitude parameters"""
+    def _compute_mask(self, owned):
+        """Elect this task's parameters: largest-magnitude among the FREE ones."""
         masks = {}
         for n, p in self.model.named_parameters():
-            threshold = torch.quantile(p.abs(), prune_ratio)
-            masks[n] = (p.abs() > threshold).float()
+            free = 1.0 - owned[n]
+            k = int((1.0 - self.prune_ratio) * free.sum().item())   # how many to keep
+            if k < 1:
+                masks[n] = torch.zeros_like(p)      # no capacity left for this tensor
+                continue
+            scores = (p.detach().abs() * free).flatten()
+            threshold = scores.topk(k).values.min()
+            masks[n] = ((p.detach().abs() >= threshold) & (free > 0)).float()
         return masks
 
-    def _apply_mask(self, task_id):
-        """Zero out parameters used by previous tasks"""
-        combined = {}
-        for t in range(task_id + 1):
-            if t in self.masks:
-                for n, m in self.masks[t].items():
-                    if n not in combined:
-                        combined[n] = torch.zeros_like(m)
-                    combined[n] = torch.maximum(combined[n], m)
+    def train_task(self, task_id, train_data):
+        owned = self._owned_before(task_id)
 
-        for n, p in self.model.named_parameters():
-            if n in combined:
-                p.data *= (1 - combined[n])  # Zero masked params
+        # 1. Train on the FREE parameters only (earlier tasks frozen by hook)
+        free = {n: 1.0 - owned[n] for n in owned}
+        handles = self._restrict_updates_to(free)
+        train(self.model, train_data)
+        for h in handles:
+            h.remove()
+
+        # 2. Prune: elect the top (1 - prune_ratio) of the free parameters
+        mask = self._compute_mask(owned)
+        self.masks[task_id] = mask
+
+        # 3. Zero only the free parameters this task did NOT elect (they return to
+        #    the free pool for future tasks). Owned + elected weights are untouched.
+        with torch.no_grad():
+            for n, p in self.model.named_parameters():
+                p.mul_(owned[n] + mask[n])
+
+        # 4. Retrain to recover pruning damage — updating THIS task's weights only.
+        handles = self._restrict_updates_to(mask)
+        train(self.model, train_data)
+        for h in handles:
+            h.remove()
+
+    def active_mask_for_inference(self, task_id):
+        """At test time on task t, use the union of masks for tasks <= t."""
+        return self._owned_before(task_id + 1)
 ```
+
+Applied to a two-task toy problem, this holds the invariant: every parameter elected by task 1 is bit-identical after task 2 trains, and the two tasks' masks are disjoint. In practice mask only weight tensors (biases and norm parameters are usually shared or handled separately), and note that inference requires knowing which task you are on — PackNet is a task-incremental, not class-incremental, method.
 
 **Trade-offs:**
 - (+) Fixed parameter count (no growth)
-- (+) Zero forgetting (parameters are masked, not changed)
+- (+) Zero forgetting — but only because earlier tasks' weights are frozen, not zeroed
 - (-) Capacity limit (eventually runs out of free parameters)
 - (-) Pruning ratio is a hyperparameter
+- (-) Needs the task identity at inference time to pick the right mask
 
 ### Dynamically Expandable Networks (DEN)
 
@@ -450,18 +511,25 @@ Instead of random sampling, select maximally informative samples.
 
 ```python
 def select_coreset(data, model, k):
-    """Select k samples that maximize coverage"""
+    """Select k samples that maximize coverage (greedy farthest-point sampling)"""
     # Compute embeddings
     embeddings = [model.encode(x) for x, y in data]
 
-    # Greedy farthest-point sampling
     selected = [random.randint(0, len(data) - 1)]
-    for _ in range(k - 1):
-        distances = [
-            min(dist(embeddings[i], embeddings[j]) for j in selected)
-            for i in range(len(data)) if i not in selected
-        ]
-        selected.append(distances.index(max(distances)))
+    remaining = set(range(len(data))) - set(selected)
+
+    for _ in range(min(k, len(data)) - 1):
+        # Track the ORIGINAL index alongside the distance. Building a filtered
+        # list and then using `distances.index(max(...))` returns a position in
+        # the filtered list, which is a *different* sample once anything has
+        # been removed — a silent wrong-sample bug that still "works".
+        best_idx, best_dist = None, -float("inf")
+        for i in remaining:
+            d = min(dist(embeddings[i], embeddings[j]) for j in selected)
+            if d > best_dist:
+                best_idx, best_dist = i, d
+        selected.append(best_idx)
+        remaining.discard(best_idx)
 
     return [data[i] for i in selected]
 ```
@@ -472,7 +540,7 @@ def select_coreset(data, model, k):
 
 ### Seeds as Task-Specific Columns
 
-Morphogenetic systems like Esper use "seeds" - new modules that:
+Morphogenetic RL systems use "seeds" - new modules that:
 1. Train in isolation (like Progressive columns)
 2. Connect to existing host (like lateral connections)
 3. Get frozen when integrated (like PackNet masking)

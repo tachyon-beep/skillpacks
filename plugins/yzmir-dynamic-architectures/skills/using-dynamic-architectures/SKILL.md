@@ -73,14 +73,14 @@ Key tensions:
 | "Model forgets old tasks when I train new ones" | continual-learning-foundations |
 | "New module destabilizes existing weights" | gradient-isolation-techniques |
 | "Fine-tune LLM efficiently without full training" | peft-adapter-techniques |
-| "Pick a modern PEFT variant (VeRA / LoRA+ / PiSSA / LoftQ / rsLoRA)" | peft-adapter-techniques |
+| "Pick a post-LoRA PEFT variant (VeRA / LoRA+ / PiSSA / LoftQ / rsLoRA)" | peft-adapter-techniques |
 | "When should I add more capacity?" | dynamic-architecture-patterns |
 | "How do module outputs combine?" | modular-neural-composition |
 | "Merge several fine-tuned checkpoints (TIES / DARE / SLERP / MergeKit)" | modular-neural-composition |
 | "Production-grade MoE (Switch / Mixtral / DeepSeek-MoE / Expert Choice)" | modular-neural-composition |
 | "How do I manage the grow/train/integrate cycle?" | ml-lifecycle-orchestration |
 | "How do I warm up new modules safely?" | progressive-training-strategies |
-| "Serve many LoRAs in one process (S-LoRA / LoRAX / Punica)" | → yzmir-ml-production |
+| "Serve many LoRAs in one process (S-LoRA / LoRAX / Punica)" | *not covered by this pack* — see the primary sources listed in peft-adapter-techniques.md |
 
 ---
 
@@ -146,10 +146,10 @@ Key tensions:
 - LoRA (low-rank adaptation) fundamentals
 - QLoRA (quantized base + LoRA adapters)
 - DoRA (weight-decomposed adaptation)
-- Modern PEFT (2024+): LoRA+, VeRA, PiSSA, LoftQ, rsLoRA, LongLoRA
+- Post-LoRA PEFT variants (surveyed through ~2024): LoRA+, VeRA, PiSSA, LoftQ, rsLoRA, LongLoRA — see the knowledge-calibration note in the sheet before treating the list as current
 - Adapter placement and rank-selection strategies
 - Merging adapters into base model
-- Multiple adapter management (with pointer to S-LoRA serving in `yzmir-ml-production`)
+- Multiple adapter management (multi-tenant *serving* of adapter pools is out of scope — named as a gap, with primary sources)
 
 **When to Use:**
 - Fine-tuning LLMs on limited compute
@@ -332,11 +332,11 @@ Watch for these signs of incorrect approach:
 | "Evaluate architecture changes without mutation" | yzmir-deep-rl/counterfactual-reasoning | Counterfactual simulation |
 | "Debug PyTorch gradient flow" | yzmir-pytorch-engineering | Low-level PyTorch debugging |
 | "Optimize training loop performance" | yzmir-training-optimization | General training optimization |
-| "FSDP2 + QLoRA, FP8 training, MoE dispatch kernels" | yzmir-training-optimization | Distributed/low-precision throughput |
+| "FSDP2 + QLoRA, FP8 / low-precision training" | yzmir-training-optimization | Distributed/low-precision throughput |
 | "Apply PEFT recipes to LLMs (instruction tuning, RLHF)" | yzmir-llm-specialist | PEFT *applied to LLMs in production* |
 | "Design transformer architecture" | yzmir-neural-architectures | Static architecture design |
 | "Deploy morphogenetic model" | yzmir-ml-production | Production deployment |
-| "Serve many LoRAs in one process (S-LoRA / LoRAX / Punica)" | yzmir-ml-production | Multi-tenant adapter serving |
+| "Serve many LoRAs in one process (S-LoRA / LoRAX / Punica)" | *no pack* | Multi-tenant adapter serving is an acknowledged gap — go to the S-LoRA / Punica papers directly |
 
 **Intersection with deep-rl + morphogenetic-rl:** If using RL to control architecture decisions (when to grow/prune), the canonical home for that work is `yzmir-morphogenetic-rl` (controller, governor, rollback shaping). Compose with `yzmir-deep-rl`'s policy gradient / actor-critic methods for the algorithm side, and this pack's lifecycle orchestration for the network-training side.
 

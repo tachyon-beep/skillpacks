@@ -89,39 +89,78 @@ class SlottedNetwork(nn.Module):
 
 Add neurons/channels to existing layers without losing learned features.
 
+**Function preservation is a two-layer property.** Duplicating a unit in layer N doubles how much that feature contributes downstream. Net2Net stays exact *only* if layer N+1's incoming weights for every replicated unit are divided by how many copies of it now exist. Widening layer N alone changes the function — silently, in a way that looks like it worked.
+
 ```python
-def widen_layer(layer, new_width, noise_std=0.01):
+def widen_layer(layer, new_width, noise_std=0.0):
     """
-    Widen a linear layer while preserving function.
-    Based on Net2Net (Chen et al., 2015)
+    Widen a linear layer's OUTPUT by replicating units (Net2Net, Chen et al., 2015).
+
+    This is only HALF of Net2Net. It returns the replication map so the caller
+    can fix up layer N+1 via `rescale_next_layer`; without that call, the
+    network's function CHANGES.
+
+    noise_std defaults to 0.0: any noise breaks exact preservation. Use a small
+    value only when you accept an approximate transform in exchange for
+    symmetry-breaking (identical copies get identical gradients otherwise).
     """
     old_width = layer.out_features
     if new_width <= old_width:
-        return layer
+        return layer, {}
 
-    # Create new wider layer
     new_layer = nn.Linear(layer.in_features, new_width)
 
     # Copy existing weights
     new_layer.weight.data[:old_width] = layer.weight.data
     new_layer.bias.data[:old_width] = layer.bias.data
 
-    # New neurons: copy random existing + add noise
+    # New neurons: copy a random existing unit (+ optional symmetry-breaking noise)
+    source_map = {}                       # new_unit_idx -> source_unit_idx
     for i in range(old_width, new_width):
         source_idx = random.randint(0, old_width - 1)
+        source_map[i] = source_idx
         new_layer.weight.data[i] = layer.weight.data[source_idx].clone()
         new_layer.bias.data[i] = layer.bias.data[source_idx].clone()
-        # Add noise to break symmetry
-        new_layer.weight.data[i] += torch.randn_like(new_layer.weight.data[i]) * noise_std
-        new_layer.bias.data[i] += torch.randn_like(new_layer.bias.data[i]) * noise_std
+        if noise_std > 0:
+            new_layer.weight.data[i] += torch.randn_like(new_layer.weight.data[i]) * noise_std
+            new_layer.bias.data[i] += torch.randn_like(new_layer.bias.data[i]) * noise_std
 
-    return new_layer
+    return new_layer, source_map
 
-def widen_conv(conv, new_channels, noise_std=0.01):
-    """Widen convolutional layer"""
+
+def rescale_next_layer(next_layer, source_map, old_width, new_width):
+    """
+    The other half of Net2Net: widen layer N+1's INPUT and divide each
+    replicated unit's outgoing weights by its replication count, so the
+    summed contribution downstream is unchanged.
+    """
+    counts = {}                                   # source unit -> number of copies
+    for src in source_map.values():
+        counts[src] = counts.get(src, 0) + 1
+
+    new_next = nn.Linear(new_width, next_layer.out_features)
+    new_next.weight.data[:, :old_width] = next_layer.weight.data
+    new_next.bias.data = next_layer.bias.data.clone()
+
+    # Split each replicated unit's outgoing weight across its copies
+    for new_idx, src in source_map.items():
+        factor = counts[src] + 1                  # original + its copies
+        new_next.weight.data[:, new_idx] = next_layer.weight.data[:, src] / factor
+    for src, c in counts.items():
+        new_next.weight.data[:, src] = next_layer.weight.data[:, src] / (c + 1)
+
+    return new_next
+
+
+def widen_conv(conv, new_channels, noise_std=0.0):
+    """
+    Widen a conv layer's output channels. Same caveat as widen_layer: returns
+    the replication map; the NEXT conv's input channels must be divided by the
+    replication counts or the function changes.
+    """
     old_channels = conv.out_channels
     if new_channels <= old_channels:
-        return conv
+        return conv, {}
 
     new_conv = nn.Conv2d(
         conv.in_channels, new_channels,
@@ -133,18 +172,20 @@ def widen_conv(conv, new_channels, noise_std=0.01):
     if conv.bias is not None:
         new_conv.bias.data[:old_channels] = conv.bias.data
 
-    # New filters: copy + noise
+    source_map = {}
     for i in range(old_channels, new_channels):
         source_idx = random.randint(0, old_channels - 1)
+        source_map[i] = source_idx
         new_conv.weight.data[i] = conv.weight.data[source_idx].clone()
-        new_conv.weight.data[i] += torch.randn_like(new_conv.weight.data[i]) * noise_std
         if conv.bias is not None:
-            new_conv.bias.data[i] = conv.bias.data[source_idx] + noise_std * torch.randn(1)
+            new_conv.bias.data[i] = conv.bias.data[source_idx].clone()
+        if noise_std > 0:
+            new_conv.weight.data[i] += torch.randn_like(new_conv.weight.data[i]) * noise_std
 
-    return new_conv
+    return new_conv, source_map
 ```
 
-**Critical:** When widening layer N, must also update layer N+1's input dimension.
+**Critical:** widening layer N is never a local edit. You must (a) widen layer N+1's input dimension and (b) divide the replicated units' outgoing weights by their replication count. Verify preservation rather than assuming it — with `noise_std=0.0`, `model_wide(x)` should match `model(x)` to floating-point tolerance. If it doesn't, the outgoing-weight division is missing or wrong. Also remember anything else keyed to the width: BatchNorm/LayerNorm statistics, the optimizer's parameter groups (stale references to the replaced module), and any saved checkpoint schema.
 
 ### Depth Extension
 
@@ -303,30 +344,68 @@ Find sparse subnetwork, reset to initialization, retrain.
 
 ```python
 class LotteryTicketPruner:
+    """
+    Frankle & Carbin, 2019. Two things this depends on that are easy to omit:
+      1. Masks ACCUMULATE across rounds — each round prunes further within the
+         surviving subnetwork; recomputing a fresh mask each round lets weights
+         pruned earlier come back.
+      2. Masks are ENFORCED during training — a pruned weight with a live
+         gradient simply regrows, and you end up measuring a dense network.
+    """
     def __init__(self, model):
         self.model = model
-        # Save initial weights
+        # Save initial weights (the "winning ticket" init)
         self.initial_weights = {n: p.clone() for n, p in model.named_parameters()}
-        self.masks = None
+        # Cumulative mask: starts all-ones, only ever loses entries
+        self.masks = {n: torch.ones_like(p) for n, p in model.named_parameters()}
+
+    def _enforce_masks(self):
+        """Zero pruned weights and keep them zero by killing their gradients."""
+        handles = []
+        with torch.no_grad():
+            for n, p in self.model.named_parameters():
+                p.mul_(self.masks[n])
+        for n, p in self.model.named_parameters():
+            handles.append(p.register_hook(lambda g, m=self.masks[n]: g * m))
+        return handles
+
+    def _prune_survivors(self, fraction):
+        """Globally prune `fraction` of the weights still alive; masks are monotone."""
+        alive = torch.cat([p.detach().abs()[self.masks[n] > 0].view(-1)
+                           for n, p in self.model.named_parameters()])
+        k = int(fraction * alive.numel())
+        if k < 1:
+            return
+        threshold = alive.kthvalue(k).values
+        for n, p in self.model.named_parameters():
+            self.masks[n] = self.masks[n] * (p.detach().abs() > threshold).float()
 
     def train_and_prune(self, train_fn, prune_ratio, iterations=3):
         """Iterative magnitude pruning"""
         per_iteration_prune = 1 - (1 - prune_ratio) ** (1 / iterations)
 
         for i in range(iterations):
-            # Train
+            # Train with the current mask enforced throughout
+            handles = self._enforce_masks()
             train_fn(self.model)
+            for h in handles:
+                h.remove()
 
-            # Prune by magnitude
-            self.masks = magnitude_prune(self.model, per_iteration_prune)
+            # Prune the smallest SURVIVING weights. Ranking over all weights
+            # (as plain `magnitude_prune` does) would just re-select the
+            # already-zero ones and the subnetwork would stop shrinking.
+            self._prune_survivors(per_iteration_prune)
 
-            # Reset to initial weights (but keep mask)
-            for name, param in self.model.named_parameters():
-                param.data = self.initial_weights[name].clone()
-                param.data *= self.masks[name]
+            # Rewind surviving weights to their ORIGINAL init
+            with torch.no_grad():
+                for name, param in self.model.named_parameters():
+                    param.copy_(self.initial_weights[name] * self.masks[name])
 
-        # Final training with pruned network
+        # Final training of the winning ticket, mask still enforced
+        handles = self._enforce_masks()
         train_fn(self.model)
+        for h in handles:
+            h.remove()
 ```
 
 ### Structured vs Unstructured Pruning
@@ -376,6 +455,17 @@ class PlateauDetector:
     def should_grow(self, loss):
         """Returns True if growth is warranted"""
         return self.update(loss)
+
+    def reset(self):
+        """
+        Clear patience after acting on a plateau. Callers (e.g. GrowAsNeeded
+        below) depend on this existing — without it the detector keeps firing
+        every step after the first plateau, and you grow on every step.
+        Best_loss is re-armed to the current best so post-growth improvement
+        is measured against where growth actually started.
+        """
+        self.wait = 0
+        self.best_loss = self.history[-1] if self.history else float('inf')
 ```
 
 ### Contribution Metrics

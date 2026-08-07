@@ -108,11 +108,11 @@ class AdditiveComposition(nn.Module):
     def __init__(self, base, modules):
         super().__init__()
         self.base = base
-        self.modules = nn.ModuleList(modules)
+        self.modules_list = nn.ModuleList(modules)
 
     def forward(self, x):
         output = self.base(x)
-        for module in self.modules:
+        for module in self.modules_list:
             output = output + module(x)  # Or module(output) for sequential
         return output
 ```
@@ -187,7 +187,7 @@ class MultiBlend(nn.Module):
     """
     def __init__(self, modules, learnable_weights=True):
         super().__init__()
-        self.modules = nn.ModuleList(modules)
+        self.modules_list = nn.ModuleList(modules)
         n = len(modules)
         if learnable_weights:
             self.weight_logits = nn.Parameter(torch.zeros(n))
@@ -196,7 +196,7 @@ class MultiBlend(nn.Module):
 
     def forward(self, x):
         weights = F.softmax(self.weight_logits, dim=0)
-        outputs = [module(x) for module in self.modules]
+        outputs = [module(x) for module in self.modules_list]
         return sum(w * o for w, o in zip(weights, outputs))
 ```
 
@@ -345,9 +345,10 @@ The Shazeer-2017 sketch above is *pedagogically* fine, but production MoE has mo
 | 2021 | Switch Transformer (Fedus et al.) | **k=1** (single expert per token), expert capacity factor, simpler aux loss |
 | 2021 | GShard (Lepikhin et al.) | Distributed MoE — token-level all-to-all between expert-parallel shards |
 | 2022 | Expert Choice (Zhou et al.) | **Experts pick tokens** (not tokens pick experts) — guarantees perfect load balance |
-| 2024 | Mixtral 8×7B (Mistral) | Top-2 routing on the FFN, dense self-attention, 8 experts shared across layers |
+| 2024 | Mixtral 8×7B (Mistral) | Top-2 routing on the FFN, dense self-attention; **8 experts *per layer*** (each of the 32 layers has its own expert set — they are not shared across layers) |
 | 2024 | DeepSeek-MoE / V3 | **Fine-grained experts** (many small) + **shared experts** (always active) + **auxiliary-loss-free** balancing |
-| 2024 | OLMoE / sparse upcycling | Convert a dense checkpoint into MoE by replicating FFNs as experts |
+| 2023 | Sparse upcycling (Komatsuzaki et al.) | Convert a dense checkpoint into MoE by replicating FFNs as experts |
+| 2024 | OLMoE (Muennighoff et al.) | Fully open MoE trained **from scratch**; ablations found upcycling worse than from-scratch at their compute budget |
 
 The pseudo-code dispatch in `SparseMoE.forward` above is `O(num_experts)` Python loops — fine for teaching, dead in production. Real systems use **grouped GEMM** (Megablocks, NVIDIA TransformerEngine) or **block-sparse kernels** so the cost scales with *active* parameters, not expert count.
 
@@ -416,10 +417,14 @@ def expert_choice_route(gate_logits: torch.Tensor, k_per_expert: int):
     Returns: per-expert list of (token_idx, weight).
     """
     N, E = gate_logits.shape
-    # Transpose: experts ranking tokens
-    expert_token_scores = gate_logits.t()                       # (E, N)
-    weights, token_idx = expert_token_scores.topk(k_per_expert, dim=-1)
-    weights = F.softmax(weights, dim=-1)                        # over chosen tokens
+    # Gate weights are a per-TOKEN softmax over experts (as in Zhou et al.);
+    # only the *selection* is done expert-wise.
+    probs = F.softmax(gate_logits, dim=-1)                      # (N, E)
+
+    # Transpose: each expert ranks tokens by that same affinity
+    expert_token_scores = probs.t()                             # (E, N)
+    _, token_idx = expert_token_scores.topk(k_per_expert, dim=-1)   # (E, k)
+    weights = probs.t().gather(1, token_idx)                    # (E, k) — per-token gate weights
     return token_idx, weights                                   # (E, k), (E, k)
 ```
 
@@ -446,9 +451,12 @@ class AuxLossFreeRouter(nn.Module):
 
     def forward(self, x):
         # x: (N, D)
-        logits = self.gate(x) + self.expert_bias                 # bias only used for routing
-        probs = F.softmax(logits, dim=-1)
-        top_probs, top_idx = probs.topk(self.top_k, dim=-1)
+        affinity = self.gate(x)                                  # unbiased affinity scores
+        probs = F.softmax(affinity, dim=-1)                      # gate weights come from THESE
+
+        # Bias affects *selection only* — never the weights fed to the weighted sum.
+        _, top_idx = (affinity + self.expert_bias).topk(self.top_k, dim=-1)
+        top_probs = probs.gather(-1, top_idx)                    # unbiased weights for chosen experts
 
         if self.training:
             # Update bias: increase for under-used experts, decrease for over-used
@@ -460,7 +468,7 @@ class AuxLossFreeRouter(nn.Module):
         return top_idx, top_probs
 ```
 
-Key detail: the bias is **only added to routing logits**, not to the gate weights used in the weighted-sum output. That preserves gradient signal while shifting load.
+Key detail: the bias is **only used to pick the top-k**, never to compute the gate weights in the weighted-sum output — those come from the unbiased affinity (DeepSeek-V3 uses a sigmoid affinity renormalised over the selected experts; the softmax above is the same idea in the more familiar form). Getting this wrong — softmaxing the biased logits and using *those* as gate weights — silently turns a load-balancing knob into a magnitude knob on the layer's output.
 
 #### Fine-Grained + Shared Experts (DeepSeek-MoE)
 
@@ -478,9 +486,9 @@ Empirically: equal-FLOPs DeepSeek-MoE beats standard MoE because (a) finer granu
 
 Komatsuzaki et al. (2023, "Sparse Upcycling: Training Mixture-of-Experts from Dense Checkpoints"): take a trained *dense* model, replicate its FFN K times as initial expert weights, add a fresh router, and continue training. Reaches MoE quality at a fraction of from-scratch cost. This is the "dynamic architecture" angle on MoE: the MoE *is* a grown topology — see `dynamic-architecture-patterns.md` for the broader growth-pattern frame.
 
-#### Production Dispatch (Pointer)
+#### Production Dispatch (Out of Scope Here)
 
-For the dispatch kernel itself (grouped GEMM, megablocks, dropless MoE, capacity-aware all-to-all), see `yzmir-training-optimization`. This pack covers the *composition* logic; that pack covers *throughput*.
+The dispatch kernel itself — grouped GEMM, block-sparse MoE, dropless routing, capacity-aware all-to-all — is a *throughput* problem, and **no sheet in this pack covers it**; go to the primary sources (Gale et al., 2023 for Megablocks; the GShard paper for all-to-all expert parallelism; NVIDIA TransformerEngine / Megatron-Core for production kernels). This pack owns the *composition* logic only.
 
 ```python
 # Pseudocode for what production dispatch looks like
@@ -573,12 +581,12 @@ class ResidualStream(nn.Module):
     def __init__(self, dim, modules):
         super().__init__()
         self.dim = dim
-        self.modules = nn.ModuleList(modules)
+        self.modules_list = nn.ModuleList(modules)
 
     def forward(self, x):
         stream = x  # Initial stream state
 
-        for module in self.modules:
+        for module in self.modules_list:
             # Module reads stream, writes residual
             residual = module(stream)
             stream = stream + residual
@@ -710,11 +718,11 @@ Modules don't interact, just combine outputs.
 class IndependentEnsemble(nn.Module):
     def __init__(self, modules, combiner='mean'):
         super().__init__()
-        self.modules = nn.ModuleList(modules)
+        self.modules_list = nn.ModuleList(modules)
         self.combiner = combiner
 
     def forward(self, x):
-        outputs = [m(x) for m in self.modules]
+        outputs = [m(x) for m in self.modules_list]
         if self.combiner == 'mean':
             return torch.stack(outputs).mean(dim=0)
         elif self.combiner == 'sum':
@@ -731,7 +739,7 @@ Only one module's output is used.
 class CompetitiveModules(nn.Module):
     def __init__(self, modules, selector):
         super().__init__()
-        self.modules = nn.ModuleList(modules)
+        self.modules_list = nn.ModuleList(modules)
         self.selector = selector  # Decides which module wins
 
     def forward(self, x):
@@ -742,8 +750,8 @@ class CompetitiveModules(nn.Module):
         winner_idx = scores.argmax(dim=-1)  # (batch,)
 
         # Compute outputs only for winners (efficiency)
-        output = torch.zeros_like(self.modules[0](x))
-        for i, module in enumerate(self.modules):
+        output = torch.zeros_like(self.modules_list[0](x))
+        for i, module in enumerate(self.modules_list):
             mask = (winner_idx == i)
             if mask.any():
                 output[mask] = module(x[mask])
@@ -762,7 +770,7 @@ class AttentiveEnsemble(nn.Module):
     """
     def __init__(self, modules, input_dim, hidden_dim):
         super().__init__()
-        self.modules = nn.ModuleList(modules)
+        self.modules_list = nn.ModuleList(modules)
         self.n_modules = len(modules)
 
         # Attention over modules
@@ -771,7 +779,7 @@ class AttentiveEnsemble(nn.Module):
 
     def forward(self, x):
         # Compute module outputs
-        outputs = torch.stack([m(x) for m in self.modules], dim=1)
+        outputs = torch.stack([m(x) for m in self.modules_list], dim=1)
         # outputs: (batch, n_modules, dim)
 
         # Compute attention weights
@@ -856,9 +864,9 @@ def slerp(theta_0: torch.Tensor, theta_1: torch.Tensor, t: float, eps: float = 1
 
 Used widely in the open-source LLM merging community (especially through MergeKit) for two-model merges. For >2 models, fall back to TIES or DARE.
 
-### TIES-Merging (Yadav et al., 2024)
+### TIES-Merging (Yadav et al., 2023)
 
-TIES — "TrIm, Elect Sign, Disjoint Merge" (Yadav et al., 2024, NeurIPS, "TIES-Merging: Resolving Interference When Merging Models") — is the canonical fix for **task-vector interference**. Three steps applied to the deltas τ_i:
+TIES — "TrIm, Elect Sign, Disjoint Merge" (Yadav et al., NeurIPS 2023, "TIES-Merging: Resolving Interference When Merging Models", arXiv:2306.01708) — is the canonical fix for **task-vector interference**. Three steps applied to the deltas τ_i:
 
 1. **Trim** — for each τ_i, keep only the top-k% of parameters by magnitude; zero the rest. Removes "redundant" updates that are mostly noise.
 2. **Elect Sign** — for each parameter position, look at the sign each surviving τ_i wants. Pick the sign with the larger total magnitude.
@@ -870,19 +878,23 @@ def ties_merge(
     task_vectors: list[dict],
     density: float = 0.2,           # keep top 20% per task vector
     weights: list[float] | None = None,
+    lambda_scale: float = 1.0,      # global scaling of the merged delta
 ) -> dict:
     """
-    TIES-Merging (Yadav et al., 2024).
+    TIES-Merging (Yadav et al., NeurIPS 2023).
 
     Args:
         base:         base model state dict (θ_base).
         task_vectors: list of τ_i = θ_FT_i - θ_base.
         density:      fraction of parameters retained per τ_i in trim step.
-        weights:      per-task scaling, default uniform.
+        weights:      per-task relative importance, default uniform (1.0 each).
+                      These are *relative* weights inside the disjoint MEAN —
+                      do not pre-divide by T, or the merged delta comes out
+                      T× too small. Use `lambda_scale` for global magnitude.
 
-    Returns merged state dict θ_base + Σ w_i · τ_i  (after trim/sign/merge).
+    Returns merged state dict θ_base + λ · disjoint_mean(trimmed, elected sign).
     """
-    weights = weights or [1.0 / len(task_vectors)] * len(task_vectors)
+    weights = weights if weights is not None else [1.0] * len(task_vectors)
     merged = {}
 
     for k in base:
@@ -899,11 +911,14 @@ def ties_merge(
         sign_mass = trimmed.sign() * trimmed.abs()
         elected_sign = sign_mass.sum(dim=0).sign()              # (*param_shape)
 
-        # 3. DISJOINT MERGE — average only matching-sign entries
-        agree = trimmed.sign() == elected_sign.unsqueeze(0)
-        weighted = trimmed * torch.tensor(weights).view(-1, *([1] * (trimmed.dim() - 1)))
-        n_agree = agree.float().sum(dim=0).clamp(min=1.0)
-        merged_delta = (weighted * agree.float()).sum(dim=0) / n_agree
+        # 3. DISJOINT MERGE — MEAN over the agreeing entries only.
+        #    Normalise by the *weight mass that agreed*, not by T: dividing a
+        #    uniform-1/T weighting by n_agree as well would double-normalise
+        #    and shrink the merged delta by ~T×.
+        agree = (trimmed.sign() == elected_sign.unsqueeze(0)).float()
+        w = torch.tensor(weights, dtype=trimmed.dtype).view(-1, *([1] * (trimmed.dim() - 1)))
+        denom = (w * agree).sum(dim=0).clamp(min=1e-8)
+        merged_delta = lambda_scale * (trimmed * w * agree).sum(dim=0) / denom
 
         merged[k] = base[k] + merged_delta
 
@@ -931,12 +946,14 @@ def dare(tau: dict, drop_rate: float = 0.9) -> dict:
         out[k] = v * mask / keep
     return out
 
-def dare_ties_merge(base, task_vectors, drop_rate=0.9, density=0.2, weights=None):
+def dare_ties_merge(base, task_vectors, drop_rate=0.9, density=0.2,
+                    weights=None, lambda_scale=1.0):
     sparsified = [dare(tv, drop_rate) for tv in task_vectors]
-    return ties_merge(base, sparsified, density=density, weights=weights)
+    return ties_merge(base, sparsified, density=density,
+                      weights=weights, lambda_scale=lambda_scale)
 ```
 
-The drop ratio is per-task-vector independent, so collisions between task vectors at the same parameter become rare — which is the actual mechanism preventing interference. DARE-TIES is the current default in MergeKit.
+The drop ratio is per-task-vector independent, so collisions between task vectors at the same parameter become rare — which is the actual mechanism preventing interference. DARE-TIES is a popular choice in the MergeKit community, but MergeKit has **no default**: `merge_method` is a required field in the config, and you pick it deliberately.
 
 ### MergeKit — The Practical Toolkit
 
@@ -1043,7 +1060,7 @@ Modular composition / MoE:
 Adapter merging / task arithmetic:
 - Wortsman, M. et al. (2022). *Model soups: averaging weights of multiple fine-tuned models improves accuracy without increasing inference time.* ICML.
 - Ilharco, G. et al. (2023). *Editing Models with Task Arithmetic.* ICLR.
-- Yadav, P. et al. (2024). *TIES-Merging: Resolving Interference When Merging Models.* NeurIPS.
+- Yadav, P. et al. (2023). *TIES-Merging: Resolving Interference When Merging Models.* NeurIPS. arXiv:2306.01708.
 - Yu, L. et al. (2024). *Language Models are Super Mario: Absorbing Abilities from Homologous Models as a Free Lunch* (DARE). ICML.
 - Goddard, C. et al. (2024). *Arcee's MergeKit: A Toolkit for Merging Large Language Models.* EMNLP (Industry Track).
 - Huang, C. et al. (2024). *LoraHub: Efficient Cross-Task Generalization via Dynamic LoRA Composition.* COLM.

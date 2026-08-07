@@ -65,14 +65,15 @@ class ModuleLifecycle:
         self.state_history = []
         self.metrics = {}
 
-    def transition(self, new_state, reason=None):
+    def transition(self, new_state, reason=None, step=None):
         old_state = self.state
         self.state = new_state
         self.state_history.append({
             'from': old_state,
             'to': new_state,
             'reason': reason,
-            'timestamp': time.time()
+            'step': step,               # training step — what guards compare against
+            'timestamp': time.time(),   # wall clock — for logs/forensics only
         })
 ```
 
@@ -110,10 +111,10 @@ class StateMachine:
 
         return True, None
 
-    def transition(self, lifecycle, to_state, metrics):
+    def transition(self, lifecycle, to_state, metrics, step=None):
         can, reason = self.can_transition(lifecycle, to_state, metrics)
         if can:
-            lifecycle.transition(to_state, reason="Guards passed")
+            lifecycle.transition(to_state, reason="Guards passed", step=step)
             return True
         return False
 ```
@@ -492,8 +493,18 @@ class HysteresisGuard:
         self.transition_history = []
 
     def can_transition(self, lifecycle, current_step):
-        # Minimum time in current state
-        time_in_state = current_step - lifecycle.state_history[-1]['timestamp']
+        # Minimum time in current state, measured in STEPS.
+        # `state_history` records both a wall-clock 'timestamp' and a training
+        # 'step'; compare steps against a step threshold. Subtracting a
+        # time.time() value from a step counter is a unit error that yields a
+        # huge negative number, so the guard silently never fires.
+        last_step = lifecycle.state_history[-1].get('step')
+        if last_step is None:
+            raise ValueError(
+                "state_history entry has no 'step' — record the training step at "
+                "transition time, or this guard cannot enforce a step budget"
+            )
+        time_in_state = current_step - last_step
         if time_in_state < self.min_time_in_state:
             return False, "Too soon since last transition"
 
