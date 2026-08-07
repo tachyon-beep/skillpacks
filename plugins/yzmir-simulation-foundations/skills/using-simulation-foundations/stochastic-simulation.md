@@ -564,23 +564,26 @@ print(f"Std: {np.std(ou_path):.2f}")  # ~sqrt(σ²/2θ) = ~0.2
 # J = jump size, N(λ) = Poisson process (λ jumps per unit time)
 
 def jump_diffusion(X0=100, mu=0.05, sigma=0.2, lambda_=1,
-                   jump_mean=-0.1, jump_std=0.05, T=1.0, steps=252):
+                   jump_mean=-0.1, jump_std=0.05, T=1.0, steps=252, rng=None):
+    # mu, sigma and lambda_ are ANNUAL rates; T is in years.
+    rng = rng if rng is not None else np.random.default_rng()
     dt = T / steps
     X = np.zeros(steps)
     X[0] = X0
     for i in range(1, steps):
-        dW = np.random.normal(0, np.sqrt(dt))
+        dW = rng.normal(0, np.sqrt(dt))
         # Diffusion part
         dX = mu * X[i-1] * dt + sigma * X[i-1] * dW
         # Jump part: Poisson rate λ
-        jump_count = np.random.poisson(lambda_ * dt)
+        jump_count = rng.poisson(lambda_ * dt)
         if jump_count > 0:
-            jump = X[i-1] * np.random.normal(jump_mean, jump_std, jump_count).sum()
+            jump = X[i-1] * rng.normal(jump_mean, jump_std, jump_count).sum()
             dX += jump
         X[i] = max(0, X[i-1] + dX)
     return X
 
-jd_path = jump_diffusion(X0=100, lambda_=2, jump_mean=-0.05, jump_std=0.02)
+jd_path = jump_diffusion(X0=100, lambda_=2, jump_mean=-0.05, jump_std=0.02,
+                         rng=np.random.default_rng(42))
 print(f"Path includes random crashes (jumps)")
 print(f"Min: {np.min(jd_path):.1f}")
 print(f"Max: {np.max(jd_path):.1f}")
@@ -653,44 +656,84 @@ import numpy as np
 # Problem: 20% crit rate with ±0.8s variance feels unfair
 # Solution: Use variance reduction with "guaranteed crit every N hits"
 
+from scipy.optimize import brentq
+
 class CritSystem:
-    def __init__(self, crit_rate=0.20, guaranteed_every=5):
+    """Crit with a pity counter, calibrated so the LONG-RUN rate matches crit_rate."""
+
+    def __init__(self, crit_rate=0.20, guaranteed_every=10, rng=None):
         self.crit_rate = crit_rate
         self.guaranteed_every = guaranteed_every
         self.attacks_since_crit = 0
+        self.rng = rng if rng is not None else np.random.default_rng()
+        self.roll_rate = self._solve_roll_rate()
+
+    def _expected_attacks_per_crit(self, p):
+        """Mean cycle length: crit on attack k<N with prob p(1-p)^(k-1), else forced at N."""
+        N = self.guaranteed_every
+        return sum(k * p * (1 - p) ** (k - 1) for k in range(1, N)) + N * (1 - p) ** (N - 1)
+
+    def _solve_roll_rate(self):
+        """Find the per-attack roll probability whose overall rate == crit_rate."""
+        floor_rate = 1.0 / self.guaranteed_every    # pity alone already delivers this
+        if floor_rate >= self.crit_rate:
+            raise ValueError(
+                f"guaranteed_every={self.guaranteed_every} forces a rate of "
+                f"{floor_rate:.3f}, at or above the target {self.crit_rate:.3f}. "
+                "The pity counter alone over-delivers; raise guaranteed_every.")
+        return brentq(lambda p: 1.0 / self._expected_attacks_per_crit(p) - self.crit_rate,
+                      1e-12, self.crit_rate)
 
     def try_crit(self):
         self.attacks_since_crit += 1
-
-        # Guarantee: every Nth hit
         if self.attacks_since_crit >= self.guaranteed_every:
             self.attacks_since_crit = 0
             return True
-
-        # Otherwise: random with reduced rate
-        # Adjust rate so expected hits match original
-        effective_rate = self.crit_rate - (1 / self.guaranteed_every)
-        if np.random.random() < effective_rate:
+        if self.rng.random() < self.roll_rate:
             self.attacks_since_crit = 0
             return True
-
         return False
 
-# Simulate 1000 battles with 20 attacks each
-crit_sys = CritSystem(crit_rate=0.20, guaranteed_every=5)
-crit_counts = []
+rng = np.random.default_rng(20260808)
+crit_sys = CritSystem(crit_rate=0.20, guaranteed_every=10, rng=rng)
+print(f"Solved roll rate: {crit_sys.roll_rate:.4f}")
 
-for battle in range(1000):
-    crits = sum(1 for _ in range(20) if crit_sys.try_crit())
-    crit_counts.append(crits)
+pity = np.array([sum(1 for _ in range(20) if crit_sys.try_crit()) for _ in range(100_000)])
+plain = (rng.random((100_000, 20)) < 0.20).sum(axis=1)
 
-print(f"Crits per 20-attack battle:")
-print(f"  Mean: {np.mean(crit_counts):.1f}")  # Should be ~4 (20% of 20)
-print(f"  Std: {np.std(crit_counts):.1f}")   # Reduced variance!
-print(f"  Min/Max: {min(crit_counts)}/{max(crit_counts)}")
-# With guarantee: 1-7 crits (tighter than pure 0-12)
-# Without guarantee: 0-12 crits (includes dry spells)
+for name, d in [("With pity", pity), ("Pure 20% ", plain)]:
+    print(f"{name}: mean {d.mean():.3f}  std {d.std():.3f}  "
+          f"min {d.min()}  max {d.max()}  P(0 crits) {np.mean(d == 0):.4f}")
 ```
+
+Output (recomputed, 100,000 battles of 20 attacks):
+
+```
+Solved roll rate: 0.1683
+With pity: mean 4.001  std 1.379  min 2  max 12  P(0 crits) 0.0000
+Pure 20% : mean 3.999  std 1.787  min 0  max 13  P(0 crits) 0.0113
+```
+
+**What this buys you**: identical mean (4.0 crits), 23% lower standard deviation,
+and — the part players actually feel — the **zero-crit battle is eliminated
+entirely**, down from 1.13% of battles. That 1-in-88 dry streak is what generates
+"this game is rigged" threads.
+
+**Two traps in the naive version of this code:**
+
+1. **`effective_rate = crit_rate - 1/guaranteed_every` is wrong.** It treats two
+   overlapping mechanisms as additive. The pity counter only fires when the roll
+   *hasn't*, so the correct relation is through the mean cycle length, which is
+   what `_solve_roll_rate` computes. Here the naive formula gives 0.1683 vs
+   0.20 − 0.10 = 0.10, which would ship a 15.4% crit rate advertised as 20%.
+
+2. **`guaranteed_every=5` with `crit_rate=0.20` has no solution at all.** A crit
+   every 5 attacks *is* 20% on its own, so the roll rate must be 0 and the
+   system becomes fully deterministic — crit on attacks 5, 10, 15, 20, every
+   battle, std = 0. The naive formula silently produces exactly this
+   (`0.20 - 1/5 = 0.0`) and the dead `if rng.random() < 0.0` branch hides it.
+   The `ValueError` above makes it loud. **Rule: `guaranteed_every` must be
+   strictly greater than `1/crit_rate`, or the pity counter is your whole system.**
 
 #### Procedural Generation: Stochastic Patterns
 
@@ -1001,8 +1044,8 @@ print(f"Antithetic std: {np.std(estimates_antithetic):.4f}")
 def bad_crit(n_attacks=10, rate=0.20):
     return sum(1 for _ in range(n_attacks) if random.random() < rate)
 
-# GOOD: Variance reduction with pity
-def good_crit(n_attacks=10, rate=0.20, guaranteed_every=5):
+# STILL BAD: pity counter with a hand-fudged roll rate
+def sloppy_crit(n_attacks=10, rate=0.20, guaranteed_every=5):
     crit_count = 0
     hits_since_crit = 0
     for _ in range(n_attacks):
@@ -1010,24 +1053,50 @@ def good_crit(n_attacks=10, rate=0.20, guaranteed_every=5):
         if hits_since_crit >= guaranteed_every:
             crit_count += 1
             hits_since_crit = 0
-        elif random.random() < rate * 0.8:  # Reduced rate
+        elif random.random() < rate * 0.8:  # <- where did 0.8 come from?
             crit_count += 1
             hits_since_crit = 0
     return crit_count
+# Two mechanisms now produce crits, and nothing reconciles them. The
+# ADVERTISED rate is 20%; the DELIVERED rate is whatever falls out.
+# Worse: guaranteed_every=5 alone already delivers 20%, so every roll on
+# top is pure overshoot.
+
+# GOOD: solve the roll rate from the pity interval — see the calibrated
+# CritSystem in section 6. Rules that survive review:
+#   1. guaranteed_every MUST exceed 1/rate, or pity IS the whole system
+#   2. Solve the roll rate; never guess a multiplier
+#   3. Measure the delivered rate over 100k+ trials before shipping
 ```
 
 **Pitfall 2: Using Bad RNG Generators**
 
 ```python
-# BAD: Python's default random (Mersenne Twister, low period in some dimensions)
+# WEAK: Python's `random` module (Mersenne Twister / MT19937)
 import random
 seed_value = random.getrandbits(32)
 
-# GOOD: NumPy's generators with modern algorithms
+# GOOD: NumPy's Generator API with a modern bit generator
 import numpy as np
 rng = np.random.default_rng(seed=42)  # Uses PCG64
 value = rng.uniform(0, 1)
 ```
+
+**Be accurate about *why* MT19937 is the weaker choice** — it is not the period.
+MT19937's period is 2^19937 - 1 and it is 623-dimensionally equidistributed to
+32-bit accuracy; you will never exhaust it. The real reasons to prefer PCG64:
+
+| Concern | MT19937 | PCG64 |
+|---|---|---|
+| **Predictability** | 624 consecutive outputs fully reveal the internal state — trivially extrapolated. Players *will* do this to predict loot | Much harder; not a CSPRNG either, but no cheap state recovery |
+| **Statistical quality** | Fails some TestU01 BigCrush tests (notably linear-complexity) | Passes BigCrush |
+| **State size** | 2496 bytes — expensive to snapshot per entity, and per-entity streams are what you want for replay | 16 bytes — cheap to store per entity |
+| **Streams** | No principled independent-stream mechanism | Native independent streams via `SeedSequence.spawn()` |
+
+For anything a player can farm — loot tables, crit rolls, card draws — the
+**predictability** row is the one that matters. Use `default_rng()`, and use
+`SeedSequence.spawn()` to give each subsystem its own stream so adding a
+particle effect doesn't shift the loot sequence.
 
 **Pitfall 3: Ignoring Time-Dependence**
 
@@ -1056,12 +1125,18 @@ class SpawnerWithState:
 ```python
 # GOOD: Always verify distribution matches claims
 def verify_drop_rates(rate, samples=100000):
-    from scipy.stats import binom_test
+    # scipy.stats.binom_test was REMOVED in SciPy 1.12 (Jan 2024).
+    # The replacement is binomtest(), which returns a result OBJECT.
+    from scipy.stats import binomtest
 
     successes = sum(1 for _ in range(samples) if random.random() < rate)
 
     # Binomial test: is observed count statistically consistent with rate?
-    p_value = binom_test(successes, samples, rate, alternative='two-sided')
+    result = binomtest(successes, samples, rate, alternative='two-sided')
+    p_value = result.pvalue
+    # result.proportion_ci(0.95) also gives a confidence interval, which is
+    # more useful than the p-value: it tells you the precision of your estimate,
+    # not just whether you failed to disprove it.
 
     if p_value > 0.05:
         print(f"Distribution OK: {successes/samples:.4f} ≈ {rate:.4f}")
@@ -1077,18 +1152,28 @@ def verify_drop_rates(rate, samples=100000):
 
 ```python
 import numpy as np
-from scipy.stats import binom_test
+from scipy.stats import binomtest   # binom_test was removed in SciPy 1.12
 
 def test_crit_rate():
-    """Verify critical strike rate matches expected"""
-    crit_sys = CritSystem(crit_rate=0.20)
+    """Verify the DELIVERED critical strike rate matches the advertised one."""
+    crit_sys = CritSystem(crit_rate=0.20, guaranteed_every=10,
+                          rng=np.random.default_rng(12345))   # seed it: tests must not flake
 
-    crit_count = sum(1 for _ in range(10000) if crit_sys.try_crit())
-    expected = 2000  # 20% of 10000
+    n = 100_000
+    crit_count = sum(1 for _ in range(n) if crit_sys.try_crit())
 
-    # Allow 2% deviation (reasonable for randomness)
-    assert abs(crit_count - expected) < 200, \
-        f"Crit count {crit_count} != expected {expected}"
+    # Principled tolerance instead of a magic +/- 200.
+    result = binomtest(crit_count, n, 0.20, alternative='two-sided')
+    assert result.pvalue > 0.001, (
+        f"Delivered rate {crit_count/n:.4f} is inconsistent with the advertised "
+        f"0.20 (p={result.pvalue:.2e})")
+
+    # NOTE: the pity counter makes the true variance LOWER than binomial, so a
+    # binomial test is CONSERVATIVE here — it will not false-alarm, but it is
+    # also less sensitive than it looks. It still catches the failure that
+    # matters: a miscalibrated roll rate shifting the mean.
+    # Seed the RNG. An unseeded statistical test fails ~0.1% of CI runs and
+    # teaches the team to re-run red builds until they go green.
 
 def test_loot_distribution():
     """Verify loot rates across many players"""
@@ -1214,17 +1299,75 @@ def test_crit_streak_fairness():
 **Metrics**: Mean return, volatility, crash probability
 **Implementation**:
 ```python
-def market_simulation():
-    # Use Geometric Brownian Motion + jump-diffusion
-    # Track price path, verify statistical properties
-    prices = jump_diffusion(X0=100, mu=0.05, sigma=0.15, lambda_=0.5)
-    returns = np.diff(np.log(prices))
+MU, SIGMA, LAM = 0.05, 0.15, 0.5     # ANNUAL drift, ANNUAL vol, jumps/year
+T, STEPS = 1.0, 252                  # one year of trading days
+DT = T / STEPS
 
-    # Verify properties
-    assert abs(np.mean(returns) - 0.05) < 0.01  # Drift matches
-    assert abs(np.std(returns) - 0.15) < 0.02   # Volatility matches
-    assert np.sum(prices < 50) > 0              # Crashes occur
+def market_simulation(n_paths=2000, rng=None):
+    """Verify statistical properties. Note every unit conversion below."""
+    rng = rng or np.random.default_rng()
+    drift_est, vol_est, path_mins = [], [], []
+
+    for _ in range(n_paths):
+        prices = jump_diffusion(X0=100, mu=MU, sigma=SIGMA, lambda_=LAM,
+                                T=T, steps=STEPS, rng=rng)
+        r = np.diff(np.log(np.maximum(prices, 1e-12)))   # PER-STEP log returns
+
+        # ANNUALISE before comparing to annual parameters.
+        #   E[r_step]  = (mu - sigma^2/2) * dt     -> /dt, then add sigma^2/2
+        #   sd[r_step]  = sigma * sqrt(dt)          -> /sqrt(dt)
+        drift_est.append(r.mean() / DT + SIGMA**2 / 2)
+        vol_est.append(r.std(ddof=1) / np.sqrt(DT))
+        path_mins.append(prices.min())
+
+    return map(np.asarray, (drift_est, vol_est, path_mins))
+
+drift_est, vol_est, path_mins = market_simulation(rng=np.random.default_rng(20260808))
+
+# Volatility IS estimable from one year of daily data — assert on it.
+# Jumps add variance on top of sigma, so the target is a band, not a point.
+assert 0.15 <= vol_est.mean() <= 0.20, vol_est.mean()
+
+# Drift is NOT estimable from one year — assert on the ensemble, not a path.
+# Jumps drag the drift by lambda*E[jump] = 0.5 * (-0.1) = -0.05/yr.
+assert abs(drift_est.mean() - (MU + LAM * -0.1)) < 0.02, drift_est.mean()
+
+# "Crashes occur" must be a probability statement, not a per-path assertion.
+assert (path_mins < 80).mean() > 0.10
 ```
+
+Output (recomputed, 2000 paths):
+
+```
+annualised drift est: mean  0.0034  (naive target 0.05; jump-adjusted target 0.00)
+                      sd across paths 0.1768   <-- 52x the quantity being estimated
+annualised vol   est: mean  0.1685  (target 0.15, inflated by jumps), sd 0.0342
+per-step log-return mean -0.000031  (vs annual mu = 0.05)
+per-step log-return std   0.010615  (vs annual sigma = 0.15)
+fraction of paths ever below 50: 0.0010   fraction below 80: 0.1920
+```
+
+⚠️ **Three assertion bugs this replaces — all of them ship silently:**
+
+1. **Unit mismatch.** `assert abs(mean(returns) - 0.05) < 0.01` compares a
+   *per-step* log return to an *annual* drift. The measured per-step mean is
+   −0.000031; the annual parameter is 0.05. They differ by a factor of ~1600 and
+   the assertion can never pass. Same for volatility: 0.0106 per step vs 0.15
+   annual, a factor of `√252 = 15.9`. **Always annualise before comparing to
+   annual parameters** — or state your parameters per step.
+
+2. **Estimating drift from one path.** Even correctly annualised, the drift
+   estimate has a standard deviation of **0.177 across paths** while the quantity
+   itself is 0.05. One year of daily data cannot distinguish a 5% drift from a
+   −30% one. Volatility, by contrast, is estimated tightly (sd 0.034). This is a
+   real property of diffusions, not a simulation artefact: variance is estimable
+   from high-frequency data, drift is not.
+
+3. **`assert np.sum(prices < 50) > 0` fails 99.9% of the time.** Only 0.1% of
+   paths ever touch 50 under these parameters (the deepest of 2000 paths reached
+   47.9). A rare-event assertion on a single path is a coin flip dressed as a
+   test. Assert on the *ensemble frequency* and pick a threshold your parameters
+   actually reach.
 
 #### Scenario 6: Weather System
 **Goal**: Realistic weather patterns with seasonal variation
@@ -1605,8 +1748,8 @@ def comprehensive_randomness_audit(system_name, rng_function, expected_rate=None
     # Test 1: Frequency analysis
     if expected_rate:
         observed_rate = sum(1 for r in results if r) / len(results)
-        from scipy.stats import binom_test
-        p_val = binom_test(sum(results), len(results), expected_rate)
+        from scipy.stats import binomtest   # binom_test removed in SciPy 1.12
+        p_val = binomtest(sum(results), len(results), expected_rate).pvalue
         assert p_val > 0.05, f"Distribution significantly different: p={p_val}"
         print(f"{system_name}: Rate {observed_rate:.6f} == {expected_rate:.6f} ✓")
 

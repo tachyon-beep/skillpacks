@@ -59,19 +59,23 @@ for step in range(1000):
     x, v = explicit_euler_step(x, v, a, dt)
     energy = 0.5 * k * x**2 + 0.5 * mass * v**2
     drift = (energy - energy_initial) / energy_initial * 100
-    if step % 100 == 0:
-        print(f"Step {step}: Energy drift = {drift:.1f}%")
+    if step % 200 == 0 or step == 999:
+        print(f"Step {step}: Energy drift = {drift:.4g}%")
 ```
 
-**Output shows growing error**:
+**Output shows exponentially growing error** (recomputed, not illustrative):
 ```
-Step 0: Energy drift = 0.0%
-Step 100: Energy drift = 8.2%
-Step 500: Energy drift = 47.3%
-Step 999: Energy drift = 103.4%
+Step 0: Energy drift = 1%
+Step 200: Energy drift = 638.9%
+Step 400: Energy drift = 5306%
+Step 600: Energy drift = 3.945e+04%
+Step 800: Energy drift = 2.892e+05%
+Step 999: Energy drift = 2.096e+06%
 ```
 
-**Why**: Explicit Euler uses position at time `n`, velocity at time `n`, but acceleration changes during the timestep. It systematically adds energy.
+**Why**: Explicit Euler advances position with the *old* velocity and velocity with the *old* acceleration. For a harmonic oscillator the total energy is multiplied by exactly `1 + (ω·dt)²` every single step — here `ω = √(k/m) = 10 rad/s`, `ω·dt = 0.1`, so energy grows by 1% per step and compounds: `1.01^1000 ≈ 2.1×10⁴`, i.e. the ~2,000,000% above.
+
+**The important part**: this is *geometric growth, not slow drift*. Explicit Euler on an undamped oscillator is unstable at **every** timestep — shrinking `dt` only slows the blow-up (`(1+(ω·dt)²)^(T/dt) ≈ e^(ω²·dt·T)`), it never removes it. There is no "small enough `dt`" that makes explicit Euler energy-stable here; you need a different integrator.
 
 ### Recognizing Instability
 
@@ -92,16 +96,18 @@ Three failure modes of naive integrators:
 
 ```python
 def explicit_euler(state, acceleration_fn, dt):
-    """Simplest integrator. Energy drifts. Use only as baseline."""
+    """Simplest integrator. Energy grows. Use only as baseline."""
     position, velocity = state
-    new_velocity = velocity + acceleration_fn(position, velocity) * dt
-    new_position = position + new_velocity * dt
+    acceleration = acceleration_fn(position, velocity)
+    # BOTH updates use the OLD state — that is what makes it explicit.
+    new_position = position + velocity * dt
+    new_velocity = velocity + acceleration * dt
     return (new_position, new_velocity)
 ```
 
 **Trade-offs**:
 - ✅ Simple, fast, intuitive
-- ❌ Energy drifts (worst for long simulations)
+- ❌ Energy grows geometrically on oscillators — unstable at *every* `dt`
 - ❌ Unstable for stiff equations
 - ❌ First-order accurate (O(dt) error)
 
@@ -145,7 +151,7 @@ def implicit_euler_step(position, velocity, acceleration_fn, dt, iterations=3):
 
 ```python
 def semi_implicit_euler(position, velocity, acceleration_fn, dt):
-    """Energy-conserving. Fast. Use this for most simulations."""
+    """Bounded (non-growing) energy error. Fast. Use this for most simulations."""
     # Update velocity using current position
     acceleration = acceleration_fn(position, velocity)
     new_velocity = velocity + acceleration * dt
@@ -157,9 +163,9 @@ def semi_implicit_euler(position, velocity, acceleration_fn, dt):
 ```
 
 **Why this fixes energy drift**:
-- Explicit Euler: uses `v(t)` for position, causing energy to increase
-- Semi-implicit: uses `v(t+dt)` for position, causing energy to decrease
-- Net effect: drift cancels out in spring oscillators
+- Explicit Euler: uses `v(t)` for position — energy is multiplied by `1 + (ω·dt)²` every step, so it compounds without bound
+- Semi-implicit: uses `v(t+dt)` for position — the map is *symplectic*, so it exactly conserves a nearby "shadow" energy
+- Net effect: true energy **oscillates within a fixed band** instead of growing. Stable for `ω·dt < 2`.
 
 ```python
 # Spring oscillator with semi-implicit Euler
@@ -172,19 +178,30 @@ for step in range(1000):
     v += a * dt  # Update velocity first
     x += v * dt  # Use new velocity
     energy = 0.5 * k * x**2 + 0.5 * m * v**2
-    if step % 100 == 0:
+    if step % 200 == 0 or step == 999:
         drift = (energy - energy_initial) / energy_initial * 100
-        print(f"Step {step}: Drift = {drift:.3f}%")
+        print(f"Step {step}: Drift = {drift:+.3f}%")
 
-# Output: Drift stays <1% for entire simulation
+# Output (recomputed):
+# Step 0:   Drift = -0.990%
+# Step 200: Drift = -2.471%
+# Step 400: Drift = +5.188%
+# Step 600: Drift = -3.736%
+# Step 800: Drift = +0.729%
+# Step 999: Drift = +4.264%
+#
+# Drift OSCILLATES in a band of about ±5% (peak +5.26%, trough -4.76%)
+# and never grows. The band is ~±(ω·dt)/2: halve dt and it halves too
+# (dt=0.005 → ±2.5%). Compare explicit Euler's +2,096,000% at step 999.
 ```
 
 **Trade-offs**:
-- ✅ Energy conserving (symplectic = preserves phase space volume)
+- ✅ Symplectic: preserves phase-space volume, so energy error stays in a **bounded band** (≈ ±ω·dt/2 relative) instead of accumulating — it does *not* conserve energy exactly
 - ✅ Fast (no matrix solves)
 - ✅ Simple to implement
-- ✅ Still first-order (O(dt) local error, but global error bounded)
+- ✅ Still first-order (O(dt) global error, but global energy error bounded)
 - ❌ Less accurate than RK4 for smooth trajectories
+- ❌ Conditionally stable: requires `ω·dt < 2`
 
 **When to use**: Default for physics simulations. Cloth, springs, particles, orbital mechanics.
 
@@ -214,7 +231,7 @@ def rk2_midpoint(position, velocity, acceleration_fn, dt):
 ```
 
 **Trade-offs**:
-- ✅ Second-order accurate (O(dt²) local error)
+- ✅ Second-order accurate (O(dt²) global error; O(dt³) per step)
 - ✅ Cheaper than RK4
 - ✅ Better stability than explicit Euler
 - ❌ Not symplectic (energy drifts, but slower)
@@ -264,7 +281,7 @@ def rk4(position, velocity, acceleration_fn, dt):
 ```
 
 **Trade-offs**:
-- ✅ Fourth-order accurate (O(dt⁴) local error)
+- ✅ Fourth-order accurate (O(dt⁴) global error; O(dt⁵) per step)
 - ✅ Smooth, stable trajectories
 - ✅ Works for diverse systems
 - ❌ Four force evaluations (expensive)
@@ -280,7 +297,7 @@ def rk4(position, velocity, acceleration_fn, dt):
 
 ```python
 def symplectic_verlet(position, velocity, acceleration_fn, dt):
-    """Preserve energy exactly for conservative forces."""
+    """Bounded energy error for conservative forces. Second-order accurate."""
     # Half-step velocity update
     half_v = velocity + acceleration_fn(position, velocity) * (dt / 2)
 
@@ -293,17 +310,28 @@ def symplectic_verlet(position, velocity, acceleration_fn, dt):
     return new_position, new_velocity
 ```
 
-**Why it preserves energy**:
-- Velocity and position updates are interleaved
-- Energy loss from position update is recovered by velocity update
-- Net effect: zero long-term drift
+**Why its energy error stays bounded**:
+- Velocity and position updates are interleaved, making the step map symplectic
+- A symplectic map exactly conserves a *shadow* Hamiltonian that is O(dt²) away from the true one
+- Net effect: true energy oscillates in a fixed band, with **no secular drift** — it does not grow with simulation length
+
+Measured for the same oscillator (`k=100, m=1, x₀=1`), over 20 s:
+
+| `dt` | `ω·dt` | Energy band |
+|---|---|---|
+| 0.02 | 0.20 | −1.00% … 0% |
+| 0.01 | 0.10 | −0.25% … 0% |
+| 0.005 | 0.05 | −0.0625% … 0% |
+
+The band is `≈ (ω·dt)²/4` — quartering when `dt` halves (second order), versus semi-implicit Euler's `≈ ω·dt/2` (first order). Neither is exact; both are drift-free.
 
 **Trade-offs**:
-- ✅ Symplectic (energy conserving)
+- ✅ Symplectic (energy error bounded, no secular drift)
+- ✅ Second-order accurate — tighter energy band than semi-implicit Euler for the same `dt`
 - ✅ Simple and fast
 - ✅ Works great for Hamiltonian systems
 - ❌ Requires storing half-velocities
-- ❌ Can be less stable with damping forces
+- ❌ Conditionally stable (`ω·dt < 2`), and the symplectic guarantee is lost once velocity-dependent (damping, drag) forces are added
 
 **When to use**: Orbital mechanics, N-body simulations, cloth where energy preservation is critical.
 
@@ -368,16 +396,35 @@ k = 10000.0  # spring constant
 c = 10.0     # damping
 m = 1.0      # mass
 
-# Natural frequency: omega = sqrt(k/m) = 100 rad/s
-# Damping ratio: zeta = c / (2*sqrt(k*m)) = 0.05
-
-# Explicit Euler stability requires: dt < 2 / (c/m + omega)
-# Max stable dt ~ 2 / 100 = 0.02
-
-# But the system settles in ~0.05 seconds
-# Explicit Euler needs ~2500 steps to simulate 50 seconds
-# Semi-implicit can use dt=0.1, needing only ~500 steps
+# Natural frequency: omega = sqrt(k/m) = 100 rad/s   <- FAST timescale
+# Damping ratio:     zeta  = c / (2*sqrt(k*m)) = 0.05
+# Envelope decay:    zeta*omega = 5 /s                <- SLOW timescale
+# Timescale separation = omega / (zeta*omega) = 1/zeta = 20x
+#
+# Eigenvalues of [[0, 1], [-k/m, -c/m]]: -5 +/- 99.87j
+#
+# Explicit Euler is stable only where |1 + dt*lambda| <= 1 for BOTH eigenvalues.
+#   |1 + dt*lambda|^2 = 1 - (c/m)*dt + (k/m)*dt^2 <= 1
+#   -> dt <= c/k = 10/10000 = 0.001            <- NOT 2/omega
+# Verified: spectral radius 1.0000 at dt=0.001, 1.0003 at dt=0.00105,
+# 2.19 at dt=0.02 (a 0.8 s run at dt=0.02 reaches |x| ~ 1e13).
+#
+# Semi-implicit Euler is stable for omega*dt < 2  ->  dt < 0.02.
+# Verified: spectral radius 0.900 at dt=0.019, 1.740 at dt=0.02.
+# (dt=0.1 gives omega*dt = 10: x = -99, 9801, -970299, ... it explodes by step 3.)
+#
+# The transient lasts ~4/(zeta*omega) = 0.8 s (not 0.05 s).
+#   Explicit Euler:  0.8 / 0.001 = 800 steps
+#   Semi-implicit:   0.8 / 0.01  =  80 steps at a safe dt (20x margin)
+# That 10x step-count gap IS the cost of stiffness: stability is dictated by
+# the fast mode you do not care about, not by the slow mode you are watching.
 ```
+
+**The general rule**: for a lightly damped oscillator, explicit Euler's stability
+limit is `dt < 2ζ/ω = c/k`, which collapses to zero as damping goes to zero — it
+is *unconditionally* unstable at `c = 0`. Semi-implicit and Verlet get `dt < 2/ω`,
+which is independent of damping. Reaching for "a smaller `dt`" is a losing move
+against explicit Euler; reaching for a symplectic integrator is not.
 
 ### When You Hit Stiffness
 
@@ -511,13 +558,29 @@ def constraint_projection(position, velocity, constraints, dt):
 ```python
 # WRONG: Springs with k=10000, dt=0.1
 k, m, dt = 10000.0, 1.0, 0.1
-omega = np.sqrt(k/m)  # ~100 rad/s
-# Stable dt_max ~ 2/omega ~ 0.02
-# dt=0.1 is 5x too large: UNSTABLE
+omega = np.sqrt(k/m)  # 100 rad/s
+# For SEMI-IMPLICIT / VERLET: stable dt_max = 2/omega = 0.02
+# dt=0.1 gives omega*dt = 10, five times over the limit: UNSTABLE
+# (x = -99, 9801, -970299, ... blown up by step 3)
 
-# RIGHT: Use semi-implicit (more stable) or reduce dt
+# RIGHT: Use semi-implicit AND respect its limit — dt <= 0.01 gives 2x margin
+# OR use an implicit / stiff solver (unconditionally stable, no dt limit)
 # OR use adaptive timestep
 ```
+
+**`2/ω` is the *symplectic* bound, not a universal one.** Attach the criterion to
+the integrator you are actually running:
+
+| Integrator | Stability condition (undamped oscillator, `ω = √(k/m)`) |
+|---|---|
+| **Explicit Euler** | **None — unstable at every `dt`.** `\|1 + iω·dt\| = √(1+(ω·dt)²) > 1` always. Adding damping `c` buys `dt < c/k`, which vanishes as `c → 0`. |
+| **Semi-implicit (symplectic) Euler** | `ω·dt < 2` |
+| **Velocity Verlet** | `ω·dt < 2` |
+| **RK4** | `ω·dt < 2√2 ≈ 2.83` (stable, but not symplectic — energy still drifts secularly) |
+| **Implicit Euler** | Unconditionally stable (and artificially damped) |
+
+If you "fixed" an explicit-Euler blow-up by shrinking `dt`, you did not fix it —
+you moved the blow-up past the end of your test run.
 
 ### Pitfall 2: Confusing Stability with Accuracy
 
@@ -888,7 +951,7 @@ def test_stiff_stability(integrator, dt):
 
 **Naive Euler destroys energy. Choose the right integrator:**
 
-1. **Semi-implicit Euler** (default): Fast, energy-conserving, simple
+1. **Semi-implicit Euler** (default): Fast, bounded energy error, simple
 2. **Symplectic Verlet** (orbital/cloth): Explicit energy preservation
 3. **RK4** (research): High accuracy, not symplectic
 4. **Implicit Euler** (stiff): Stable under high stiffness

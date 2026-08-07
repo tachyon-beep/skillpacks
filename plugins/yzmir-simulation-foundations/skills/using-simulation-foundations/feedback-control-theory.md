@@ -665,30 +665,81 @@ Classical control gives you the **root locus** — a plot of how closed-loop pol
 - **Gain margin (GM)**: how much the open-loop gain can increase before the closed loop becomes unstable. Rule of thumb: > 6 dB.
 - **Phase margin (PM)**: how much extra phase lag the open loop can absorb before instability. Rule of thumb: > 30°, comfortable > 45°.
 
-You don't need to compute these by hand. SciPy will do it:
+You don't need to compute these by hand — but note **`scipy.signal` has no `margin`
+function**. Margins live in [`python-control`](https://python-control.readthedocs.io)
+(`pip install control`), or you can read them straight off a `scipy.signal.bode`
+sweep. Both are shown; the SciPy version adds no dependency.
 
 ```python
-from scipy.signal import lti, bode, margin
-
-# Plant: 1 / (s^2 + 2s + 5)
-plant = lti([1.0], [1.0, 2.0, 5.0])
-# PID: Kd*s^2 + Kp*s + Ki, all over s
-kp, ki, kd = 2.0, 1.5, 0.5
-controller = lti([kd, kp, ki], [1.0, 0.0])
-
-# Open-loop transfer function = controller * plant
-# (multiply numerators, multiply denominators)
 import numpy as np
-ol_num = np.polymul(controller.num, plant.num)
-ol_den = np.polymul(controller.den, plant.den)
-ol = lti(ol_num, ol_den)
+from scipy.signal import lti, bode
 
-gm, pm, wg, wp = margin(ol)
-print(f"Gain margin: {gm:.2f} (linear), {20*np.log10(gm):.1f} dB at {wg:.2f} rad/s")
-print(f"Phase margin: {pm:.1f}° at {wp:.2f} rad/s")
+def open_loop(kp, ki, kd, plant_num, plant_den):
+    """Open loop L(s) = C(s)*G(s) for a parallel PID C = (Kd s^2 + Kp s + Ki)/s."""
+    return lti(np.polymul([kd, kp, ki], plant_num),
+               np.polymul([1.0, 0.0], plant_den))
+
+def margins(sys_lti, w=None):
+    """Gain and phase margin from a Bode sweep. Returns (gm_db, pm_deg, w_pc, w_gc)."""
+    w = np.logspace(-2, 3, 200_001) if w is None else w
+    w, mag_db, phase_deg = bode(sys_lti, w)
+
+    def crossings(y, target):
+        d = y - target
+        idx = np.nonzero(np.sign(d[:-1]) != np.sign(d[1:]))[0]
+        return np.array([w[i] + (w[i+1]-w[i]) * (-d[i]) / (d[i+1]-d[i]) for i in idx])
+
+    w_gc = crossings(mag_db, 0.0)        # |L| = 0 dB   -> phase margin lives here
+    w_pc = crossings(phase_deg, -180.0)  # ∠L = -180°   -> gain margin lives here
+
+    pm = 180.0 + np.interp(w_gc[0], w, phase_deg) if w_gc.size else np.inf
+    gm = -np.interp(w_pc[0], w, mag_db) if w_pc.size else np.inf
+    return gm, pm, (w_pc[0] if w_pc.size else np.inf), (w_gc[0] if w_gc.size else np.inf)
+
+plant = ([1.0], [1.0, 2.0, 5.0])  # 1 / (s^2 + 2s + 5)
+
+for label, (kp, ki, kd) in [("conservative", (2.0, 1.5, 0.5)),
+                            ("aggressive",   (50.0, 40.0, 2.0))]:
+    gm, pm, w_pc, w_gc = margins(open_loop(kp, ki, kd, *plant))
+    lag = np.deg2rad(pm) / w_gc          # dead time that eats the whole phase margin
+    print(f"{label:12s} GM={'inf' if np.isinf(gm) else f'{gm:.1f} dB'}  "
+          f"PM={pm:.1f}° @ {w_gc:.2f} rad/s  tolerable dead time={lag*1000:.0f} ms")
 ```
 
-If gain margin is 1.0 (0 dB) or phase margin is 0°, the closed loop is on the edge of instability — back off `Kp` or add `Kd`.
+Output (recomputed):
+
+```
+conservative GM=inf  PM=106.4° @ 0.32 rad/s  tolerable dead time=5791 ms
+aggressive   GM=inf  PM=27.2° @ 7.33 rad/s  tolerable dead time=65 ms
+```
+
+With `python-control` the same numbers are one call — note it returns gain margin
+as a **linear factor**, not dB:
+
+```python
+import control
+kp, ki, kd = 50.0, 40.0, 2.0
+L = control.tf(np.polymul([kd, kp, ki], [1.0]), np.polymul([1.0, 0.0], [1.0, 2.0, 5.0]))
+gm_linear, pm_deg, w_pc, w_gc = control.margin(L)   # gm in ABSOLUTE units, not dB
+gm_db = 20 * np.log10(gm_linear)                    # convert if you want dB
+# -> gm_linear = inf, pm_deg = 27.2, w_gc = 7.33
+```
+
+**Read that output carefully — it contains the trap.** Both tunings have
+**infinite gain margin**: a PID's two zeros pull the phase back up, so `∠L` never
+reaches −180° for this plant, and no amount of extra gain alone destabilises it.
+An infinite GM looks like a clean bill of health and is not one. The aggressive
+tune still has only 27° of phase margin, and it spends it at a 23× higher
+crossover frequency (7.33 vs 0.32 rad/s). Since dead time costs `ω_gc·T` radians
+of phase, the two effects multiply: the aggressive tune tolerates **89× less
+delay** (3.9× less margin × 23× higher crossover). It goes unstable on a 65 ms
+link — an ordinary internet round trip. The conservative tune survives almost
+6 seconds.
+
+Rules of thumb: PM > 30°, comfortable > 45°; GM > 6 dB *when it is finite*. If
+either margin is at zero the closed loop is on the edge of instability — back off
+`Kp` or add `Kd`. And always check both margins plus the crossover frequency; any
+one of the three alone will mislead you.
 
 ### Why You Care for Games
 
@@ -920,20 +971,30 @@ This is exponential decay with a frame-rate-dependent time constant. Same root c
 **GREEN**: PID on the velocity error. Output is acceleration.
 
 ```csharp
-PIDController velocityPid = new PIDController {
+// ONE CONTROLLER PER AXIS. A PID carries state (integral, prevMeasurement);
+// calling one instance for x then y makes the derivative term differentiate
+// the difference between the Y velocity and the previous X velocity — pure
+// garbage, and it looks like "mysterious diagonal drift" in play.
+PIDController pidX = new PIDController {
     Kp = 5f, Ki = 0f, Kd = 0.5f,
     outputMin = -50f, outputMax = 50f,  // max acceleration
 };
+PIDController pidY = new PIDController {
+    Kp = 5f, Ki = 0f, Kd = 0.5f,
+    outputMin = -50f, outputMax = 50f,
+};
 
 void FixedUpdate() {
-    float ax = velocityPid.Update(setpoint: targetVelocity.x, measurement: rb.velocity.x, dt: Time.fixedDeltaTime);
-    float ay = velocityPid.Update(setpoint: targetVelocity.y, measurement: rb.velocity.y, dt: Time.fixedDeltaTime);
+    float dt = Time.fixedDeltaTime;
+    float ax = pidX.Update(setpoint: targetVelocity.x, measurement: rb.velocity.x, dt: dt);
+    float ay = pidY.Update(setpoint: targetVelocity.y, measurement: rb.velocity.y, dt: dt);
     rb.AddForce(new Vector2(ax, ay) * rb.mass);  // F = m·a
 }
 ```
 
 **Tuning notes**:
 
+- **Same gains, separate instances.** Identical `Kp/Ki/Kd` across axes is fine and usually correct; *shared state* never is. See the anti-pattern table below — this is the "one PID class shared across instances" trap, and a two-axis damper is where it most often sneaks in.
 - For pure damping (`targetVelocity = 0`), `Ki = 0`. Adding integral action would make the object actively push against any disturbance, which usually isn't what you want.
 - Run in `FixedUpdate` so `dt` is constant — physics PID controllers are especially sensitive to variable `dt`.
 - `Kd` here counters PID's tendency to overshoot zero velocity (which would manifest as the object oscillating around its rest state). Small but nonzero.

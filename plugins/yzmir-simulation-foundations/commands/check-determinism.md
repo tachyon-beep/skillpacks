@@ -321,7 +321,7 @@ def replay_and_compare(sim_factory, inputs_file, expected_checksum):
 import glob
 
 # For debugging simulation chaos
-tactics_pack = glob.glob("plugins/bravos-simulation-tactics/plugin.json")
+tactics_pack = glob.glob("plugins/bravos-simulation-tactics/.claude-plugin/plugin.json")
 if not tactics_pack:
     print("Recommend: bravos-simulation-tactics for replay/debug patterns")
 

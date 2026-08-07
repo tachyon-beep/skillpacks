@@ -45,7 +45,9 @@ Load this skill when:
 
 ## RED: Where Chaos Bites
 
-The failure cases below come from real (and lightly disguised) shipped systems. Each shows a different *flavour* of sensitive dependence: classical chaos in the dynamics, floating-point divergence across hardware, RNG state corruption masquerading as chaos, and order-of-iteration effects that look stochastic but aren't.
+The failure cases below are **constructed teaching scenarios**, not incident reports. Where a shipped title is named it is a genre placeholder ("the kind of desync a StarCraft-like RTS gets"), not a claim about what that studio built or what went wrong for it; the parameter values and timelines are invented to make the maths concrete. The *maths* is real and recomputed; the *anecdotes* are illustrative fiction.
+
+Each shows a different *flavour* of sensitive dependence: classical chaos in the dynamics, floating-point divergence across hardware, RNG state corruption masquerading as chaos, and order-of-iteration effects that look stochastic but aren't.
 
 
 #### Failure 1: Competitive Multiplayer Butterfly Effect (StarCraft AI Desync)
@@ -92,14 +94,19 @@ update_all_units(dt);
 **What Chaos Analysis Would Have Shown**:
 ```
 Unit collision system is CHAOTIC:
-  - Two trajectories, separated by ε = 10^-6 in initial position
-  - After 1000 frames: separation grows to ε' ≈ 0.001
-  - After 2000 frames: separation ≈ 0.1 (units in different tiles)
-  - After 3000 frames: separation ≈ 1.0 (different formations)
+  Lyapunov exponent λ ≈ 0.0046 per frame (≈ 0.28/s at 60 fps)
+  → divergence: ε(t) = ε₀ * e^(λ*t), i.e. TWO DECADES per 1000 frames
 
-Lyapunov exponent λ ≈ 0.0001 per frame
-  → divergence rate: ε(t) ≈ ε₀ * e^(λ*t)
-  → after t=4000 frames, initial error of 10^-6 grows to 10^0
+  Starting from ε₀ = 10^-6 (one float ulp of positional disagreement):
+  - After 1000 frames: ε ≈ 10^-4  (sub-pixel, invisible)
+  - After 2000 frames: ε ≈ 10^-2  (a centimetre — pathing starts to differ)
+  - After 3000 frames: ε ≈ 10^0   (a metre — units in different tiles)
+  - After 4000 frames: ε ≈ 10^2   (formations unrecognisably different)
+
+  Sanity-check any such table before you trust it: exponential growth means
+  EQUAL MULTIPLICATION per equal interval. A table that goes ×1000, then
+  ×100, then ×10 per 1000 frames is not exponential and does not correspond
+  to any λ. That arithmetic error will make you sync far too rarely.
 
 Deterministic ≠ Synchronizable without exact state transmission
 ```
@@ -134,10 +141,12 @@ for frame in range(10000):
 - Server A: float precision = IEEE 754 single
 - Server B: double precision for intermediate calculations
 - Frame 1: identical results
-- Frame 10: difference in 7th decimal place
-- Frame 100: difference in 3rd decimal place
-- Frame 500: temperature differs by 2 degrees
-- Frame 1000: completely different storm patterns
+- Frame 10: separation 9.1e-8 — 7th decimal place (measured)
+- Frame 100: separation 4.8e-8 — still the 7th decimal; it even briefly
+  SHRANK, because the trajectory passed through a contracting region
+- Frame 500: separation 8.5e-6 — 5th decimal
+- Frame 1000: separation 3.7e-3 — visible temperature difference
+- Frame ~1170: separation 1.0 — completely different storm patterns
 - Players on different servers experience different weather
 - Crops die in one region, thrive in another
 - Economy becomes unbalanced
@@ -145,8 +154,10 @@ for frame in range(10000):
 
 **Why No One Predicted It**:
 - Assumed: "same seed = same weather"
-- The Lorenz system has Lyapunov exponent λ ≈ 0.9 (highly chaotic)
-- Even 10^-7 precision differences grow to 1.0 in ~40 timesteps
+- The Lorenz system has Lyapunov exponent λ ≈ 0.906 (highly chaotic)
+- Even a 10^-7 precision difference reaches 1.0 in ~11.7 TIME UNITS — with
+  the code's dt = 0.01 that is ~1170 integration steps, not 40. Keep "time
+  units" and "steps" apart or your sync budget will be off by 1/dt.
 - No sensitivity testing across platforms/compilers
 
 **What Chaos Analysis Would Have Shown**:
@@ -156,12 +167,23 @@ Lorenz system (ρ=28, σ=10, β=8/3):
   → System is CHAOTIC (largest exponent > 0)
   → Initial separation grows as ε(t) ≈ ε₀ * e^(0.906 * t)
 
-With ε₀ = 10^-7 (single vs double precision):
-  At t = 16: ε(t) ≈ 10^-5 (measurable difference)
-  At t = 40: ε(t) ≈ 1.0 (completely different trajectory)
+With ε₀ = 10^-7 (single vs double precision), λ = 0.906:
+  Analytic estimate  ε = 10^-5 at t = ln(100)/0.906    = 5.1
+  Analytic estimate  ε = 1.0   at t = ln(10^7)/0.906   = 17.8
 
-Synchronization window: ~30 timesteps before divergence
-Solution: Broadcast full state every 20 frames, not just seed
+  MEASURED (integrating the system above, dt = 0.01, started on the attractor):
+    ε = 10^-5 at t = 5.48  (step  548)
+    ε = 10^-3 at t = 8.54  (step  854)
+    ε = 1.0   at t = 11.69 (step 1169)
+
+  Measured divergence beats the analytic estimate because λ is an ASYMPTOTIC
+  AVERAGE — local stretching rates along the attractor vary a lot, and the
+  linear ε₀·e^(λt) model breaks down once ε approaches the attractor's own
+  size (~30 here). Use the analytic number to budget, then MEASURE.
+
+Synchronization window: ~1170 steps (t ≈ 11.7) to total divergence.
+Solution: Broadcast full state well inside that — every ~500 steps (t ≈ 5,
+where the two servers still agree to ~10^-5) — not just the seed.
 ```
 
 
@@ -331,11 +353,17 @@ Physics accumulation system has Lyapunov exponent λ ≈ 0.001-0.01
   (modest chaos, but still exponential divergence)
 
 Client and server start with ε₀ = 0 (deterministic)
-But floating-point rounding gives ε_actual = 10^-7 per frame
-After 1000 frames: ε(1000) ≈ 10^-7 * e^(0.005 * 1000) ≈ 10^-7 * 148 ≈ 1.48e-5
-After 10000 frames: ε(10000) ≈ 10^-7 * e^(50) ≈ 10^13 (diverged)
+But floating-point rounding seeds ε₀ ≈ 10^-7
+Take λ = 0.005 per frame:
+After  1000 frames: ε ≈ 10^-7 * e^5  = 10^-7 * 148   ≈ 1.5e-5
+After  2763 frames: ε ≈ 10^-7 * e^13.8              ≈ 0.1  (visible)
+After 10000 frames: ε ≈ 10^-7 * e^50 = 10^-7 * 5.2e21 ≈ 5e14
+                    (i.e. long since saturated at world scale)
 
-Window of trust: ~100-200 frames before desync is visible
+Window of trust: t = ln(0.1 / 10^-7) / 0.005 ≈ 2763 frames ≈ 46 s @ 60 fps
+before a 0.1 m desync is visible. Sync at half that (~1380 frames ≈ 23 s)
+for margin. This is the SAME number derived in the sync-budget code later
+in this sheet — if your two derivations disagree, one of them is wrong.
 Solution: Periodic state correction from server
          Or: Use fixed-point arithmetic (no floating-point error)
 ```
@@ -424,17 +452,17 @@ for i in range(10):
     x = chaotic_map(x)
     print(f"{i}: {x:.10f}")
 
-# Output:
+# Output (recomputed):
 # 0: 0.3600000000
 # 1: 0.9216000000
-# 2: 0.2890399999
-# 3: 0.8199482560
-# 4: 0.5904968192
-# 5: 0.9702458556
-# 6: 0.1152926817
-# 7: 0.4093697097
-# 8: 0.9316390272
-# 9: 0.2538937563
+# 2: 0.2890137600
+# 3: 0.8219392261
+# 4: 0.5854205387
+# 5: 0.9708133262
+# 6: 0.1133392473
+# 7: 0.4019738493
+# 8: 0.9615634951
+# 9: 0.1478365599
 
 # Try x = 0.1000001 (tiny difference)
 x = 0.1000001
@@ -442,19 +470,23 @@ for i in range(10):
     x = chaotic_map(x)
     print(f"{i}: {x:.10f}")
 
-# Output:
-# 0: 0.3600036000
-# 1: 0.9215968256
-# 2: 0.2890651946
-# 3: 0.8198632635
-# 4: 0.5906768633
-# 5: 0.9701184960
-# 6: 0.1157095754
-# 7: 0.4088159297
-# 8: 0.9321299357
-# 9: 0.2525868195
+# Output (recomputed):
+# 0: 0.3600003200
+# 1: 0.9216003584
+# 2: 0.2890125512
+# 3: 0.8219371858
+# 4: 0.5854257937
+# 5: 0.9708097351
+# 6: 0.1133527733
+# 7: 0.4020156883
+# 8: 0.9615962986
+# 9: 0.1477154283
 
-# Different after 1 iteration! Tiny ε₀ becomes diverged.
+# Read the divergence honestly: the traces differ in the 7th decimal at
+# iteration 0 and only the 4th by iteration 9 — ε₀ = 10^-7 has grown ~500x
+# (λ = ln 2 per iteration → 2^9 = 512), exactly as predicted. It is NOT
+# "completely different after 1 iteration". Total divergence (ε ≈ 0.1)
+# arrives around iteration 20. Chaos is fast, but it obeys arithmetic.
 ```
 
 **Myth 2: "Chaos Can't Be Harnessed"**
@@ -593,14 +625,28 @@ int main() {
     return 0;
 }
 
-// Output:
+// Output (recomputed by simulating this system, dt = 0.01,
+//  both trajectories started on the attractor):
 // Initial separation: 1e-05
-// Step 1: separation = 0.000015, growth_rate = 0.405
-// Step 5: separation = 0.00014, growth_rate = 0.405
-// Step 10: separation = 0.0024, growth_rate = 0.405
-// Step 20: separation = 0.067, growth_rate = 0.405
-// Step 30: separation = 1.9, growth_rate = 0.405
+// Step 100:  separation = 4.78728e-06, growth rate = -0.737
+// Step 200:  separation = 3.24513e-05, growth rate = 0.589
+// Step 400:  separation = 0.00017415,  growth rate = 0.714
+// Step 600:  separation = 0.00122097,  growth rate = 0.801
+// Step 800:  separation = 0.0104729,   growth rate = 0.869
+// Step 1000: separation = 0.368926,    growth rate = 1.052
+// Step 1121: separation = 1.06479,     growth rate = 1.033
 // Trajectories completely diverged!
+//
+// TWO things to notice, both of which people get wrong:
+//
+// 1. It takes ~1121 STEPS, i.e. t = 11.2 time units — not 30 steps. The
+//    growth rate printed here is PER TIME UNIT (the code divides by
+//    step*0.01). Reporting a per-time λ next to a per-step timeline is the
+//    single most common way to be wrong by a factor of 1/dt (100x here).
+//
+// 2. The instantaneous rate is NEGATIVE at step 100 and overshoots 1.0
+//    later. λ ≈ 0.906 is a LONG-RUN AVERAGE over the attractor; local
+//    stretching varies. Never conclude "not chaotic" from a short window.
 ```
 
 
@@ -648,16 +694,24 @@ def logistic_map_step(x, dt):
 
 lambda_logistic = calculate_lyapunov_exponent(logistic_map_step, [0.1], 1.0)
 print(f"Logistic map Lyapunov exponent: {lambda_logistic:.3f}")
-# Output: Logistic map Lyapunov exponent: 1.386
+# Output: Logistic map Lyapunov exponent: 0.693
+#
+# This matches the exact analytic result for the logistic map at r=4:
+# λ = ln 2 = 0.6931. Separation DOUBLES per iteration (2^10 ≈ 1000, so
+# roughly three decades of error growth per 10 iterations).
+# A value of 1.386 = ln 4 is the classic doubling mistake — it is what you
+# get from summing ln|f'(x)| with a factor-of-two slip. Check any logistic
+# λ against ln 2 before building a sync budget on it.
 
 # Interpretation:
 #   λ > 0: CHAOTIC (trajectories diverge exponentially)
 #   λ = 0: BIFURCATION (boundary between order and chaos)
 #   λ < 0: STABLE (trajectories converge)
 
-# For weather (Lorenz): λ ≈ 0.9
-# For logistic map at r=4: λ ≈ 1.386
-# For multiplayer physics: λ ≈ 0.001 (slow chaos, but inevitable)
+# For weather (Lorenz): λ ≈ 0.906 per TIME UNIT
+# For logistic map at r=4: λ = ln 2 ≈ 0.693 per ITERATION (exact)
+# For multiplayer physics: λ ≈ 0.001-0.005 per FRAME (slow chaos, but inevitable)
+# Always carry the unit. λ alone is meaningless.
 ```
 
 **Game-Relevant Interpretation**:
@@ -686,7 +740,7 @@ void main() {
     SystemCharacterization phys_system{0.005f, 0};
     phys_system.prediction_horizon = phys_system.time_until_visible_error(0.5f);
     cout << "Physics desync window: " << phys_system.prediction_horizon << " frames\n";
-    // Output: ~3300 frames @ 60fps = 55 seconds before visible desync
+    // Output: ln(0.5/1e-7)/0.005 = 3085 frames @ 60fps = 51 s before visible desync
 
     // Weather (high chaos)
     SystemCharacterization weather_system{0.9f, 0};
@@ -695,10 +749,10 @@ void main() {
     // Output: ~18 timesteps before complete divergence (if dt=1 second, ~18 seconds)
 
     // Logistic map (extreme chaos)
-    SystemCharacterization logistic{1.386f, 0};
+    SystemCharacterization logistic{0.693f, 0};   // ln 2, exact for r=4
     logistic.prediction_horizon = logistic.time_until_visible_error(0.1f);
     cout << "Logistic map prediction: " << logistic.prediction_horizon << " iterations\n";
-    // Output: ~5 iterations before completely wrong
+    // Output: ln(0.1/1e-7)/0.693 = ~20 iterations before completely wrong
 }
 ```
 
@@ -1006,7 +1060,7 @@ public:
 #### Pattern 3: Chaos Budgeting
 
 ```rust
-struct ChaossBudget {
+struct ChaosBudget {
     frames_until_resync: i32,
     error_threshold: f32,
     current_accumulated_error: f32,
@@ -1553,6 +1607,3 @@ class ChaoticAIBehavior {
 5. **Bounded Chaos is Useful**: Chaotic attractors give natural variation within bounds
 
 6. **Test at Scale**: Desyncs appear at 100+ units, not 10-unit tests
-
-### File Paths for Reference
-- `/home/john/skillpacks/source/yzmir/simulation-foundations/chaos-and-sensitivity/SKILL.md`

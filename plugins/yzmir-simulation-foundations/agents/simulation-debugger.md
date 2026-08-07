@@ -156,11 +156,27 @@ def test_timestep_stability(sim_factory, dt_values, steps=1000):
     # If explodes at dt but stable at dt/2, timestep too large
 ```
 
-**Critical timestep (harmonic oscillator):**
+**Critical timestep (harmonic oscillator, ω = √(k/m)) — the bound depends on the
+integrator, and attaching it to the wrong one is the most common error here:**
+
+| Integrator | Stability bound |
+|---|---|
+| **Explicit (forward) Euler** | **NONE — unstable at every `dt`.** `\|1 + iω·dt\| > 1` for all `dt > 0`; energy is multiplied by `1 + (ω·dt)²` per step. With damping `c` you get `dt < c/k`, which vanishes as `c → 0`. Shrinking `dt` postpones the blow-up, never removes it |
+| **Semi-implicit (symplectic) Euler** | `ω·dt < 2` |
+| **Velocity Verlet** | `ω·dt < 2` |
+| **RK4** | `ω·dt < 2√2 ≈ 2.83` (stable but not symplectic — energy still drifts secularly) |
+| **Implicit (backward) Euler** | Unconditionally stable (adds artificial damping) |
+
 ```
-dt_critical = 2/ω for Explicit Euler (UNSTABLE boundary)
-dt_safe = 0.1/ω for general accuracy
+dt_critical = 2/ω     <- SYMPLECTIC / VERLET bound, NOT explicit Euler's
+dt_safe     = 0.1/ω   <- general accuracy target (20x margin)
 ```
+
+**Diagnostic consequence**: if the sweep above shows the sim stable at small `dt`
+and exploding at large `dt`, you have a *conditionally stable* method (symplectic,
+Verlet, RK4) and reducing `dt` is a real fix. If energy grows at **every** `dt`,
+just more slowly as `dt` shrinks, you are on explicit Euler and no `dt` will save
+you — change the integrator.
 
 ### Phase 5: Determinism Check
 
@@ -215,13 +231,30 @@ def verify_determinism(sim_factory, seed, steps=1000):
 
 ```python
 # BEFORE (Explicit Euler - BAD)
+# Position is advanced with the velocity from the START of the step.
+# Snapshot it, because the very next line overwrites it.
+old_velocity = velocity
 velocity += acceleration * dt
-position += velocity * dt  # Uses OLD velocity
+position += old_velocity * dt        # <-- OLD velocity
 
-# AFTER (Semi-Implicit Euler - GOOD)
+# AFTER (Semi-Implicit / Symplectic Euler - GOOD)
 velocity += acceleration * dt
-position += velocity * dt  # Uses NEW velocity (order matters!)
+position += velocity * dt            # <-- NEW velocity (already updated above)
 ```
+
+**Read the diff, not the comment.** In Python and C++ the in-place form
+
+```python
+velocity += acceleration * dt
+position += velocity * dt
+```
+
+is *already* semi-implicit — `velocity` was rebound on the previous line. A
+"before/after" pair whose code is byte-identical and whose comments disagree is
+mislabelled, not a fix. Explicit Euler requires you to **keep the old velocity**,
+which is why real explicit-Euler code has an extra variable (or computes position
+first). Verify empirically: explicit Euler's energy grows every step; semi-implicit
+oscillates within a fixed band (≈ ±ω·dt/2) forever.
 
 ### Add Energy Monitoring
 
@@ -321,7 +354,7 @@ import glob
 # Route to stability-analyst agent in this pack
 
 # For game implementation patterns
-tactics_pack = glob.glob("plugins/bravos-simulation-tactics/plugin.json")
+tactics_pack = glob.glob("plugins/bravos-simulation-tactics/.claude-plugin/plugin.json")
 if not tactics_pack:
     print("Recommend: bravos-simulation-tactics for replay/debug visualization")
 ```

@@ -265,7 +265,7 @@ import glob
 # Use /select-integrator command in this pack
 
 # For game implementation patterns
-tactics_pack = glob.glob("plugins/bravos-simulation-tactics/plugin.json")
+tactics_pack = glob.glob("plugins/bravos-simulation-tactics/.claude-plugin/plugin.json")
 if not tactics_pack:
     print("Recommend: bravos-simulation-tactics for game physics patterns")
 ```

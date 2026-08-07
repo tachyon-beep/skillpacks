@@ -71,13 +71,32 @@ def velocity_verlet(pos, vel, acc_func, dt):
 - RK4: Energy drifts (no long-term stability guarantee)
 - Verlet: Energy bounded, oscillates around true value
 
-**Energy comparison over 10,000 steps (harmonic oscillator):**
+**Energy comparison over 10,000 steps (harmonic oscillator, ω = √(k/m)):**
 ```
-Explicit Euler:    E(t) = E₀ × (1 + ωdt)^(2t/dt) → ∞
-Semi-Implicit:     E(t) ≈ E₀ (bounded oscillation)
-Verlet:            E(t) = E₀ ± O(dt²) (tight bound)
-RK4:               E(t) = E₀ + O(t × dt⁴) (drift)
+Explicit Euler:  E(t) = E₀ × (1 + (ω·dt)²)^(t/dt) → ∞
+                 exactly one factor of (1 + (ω·dt)²) PER STEP, and there are
+                 t/dt steps. Unstable at every dt; no dt makes it bounded.
+                 Worked example: ω·dt = 0.1 over 1000 steps → 1.01^1000 ≈ 2.1e4,
+                 i.e. energy drift of +2,096,000%. (Recomputed.)
+
+Semi-Implicit:   E(t) = E₀ ± O(ω·dt)   bounded band, NO secular drift
+                 measured band ≈ ±(ω·dt)/2 — first order, halves when dt halves
+                 (ω·dt = 0.1 → +5.26%/-4.76%; ω·dt = 0.05 → +2.56%/-2.44%)
+
+Verlet:          E(t) = E₀ ± O((ω·dt)²)  bounded band, NO secular drift
+                 measured band ≈ (ω·dt)²/4 — second order, QUARTERS when dt
+                 halves (ω·dt = 0.2 → -1.00%; 0.1 → -0.25%; 0.05 → -0.0625%)
+
+RK4:             E(t) = E₀ + O(t × dt⁴)  SECULAR drift, grows without bound
+                 measured on an eccentric Kepler orbit: -1.8e-3 at 60 orbits,
+                 -1.8e-2 at 600, -1.9e-1 at 6000 — 10x per 10x duration.
+                 Accurate per step, but the error never stops accumulating.
 ```
+
+Neither symplectic method conserves energy *exactly* — both conserve a nearby
+"shadow" Hamiltonian, which is what keeps the true energy in a fixed band. The
+distinction that matters for long runs is **bounded vs secular**, not small vs
+large: Verlet is less accurate than RK4 at 60 orbits and ten times better at 6000.
 
 ### Constraint: Accuracy (Research/Validation)
 
@@ -253,7 +272,7 @@ import glob
 # Use /analyze-stability command in this pack
 
 # For game implementation patterns
-tactics_pack = glob.glob("plugins/bravos-simulation-tactics/plugin.json")
+tactics_pack = glob.glob("plugins/bravos-simulation-tactics/.claude-plugin/plugin.json")
 if not tactics_pack:
     print("Recommend: bravos-simulation-tactics for game physics patterns")
 ```

@@ -83,7 +83,7 @@ class GameState:
 
 **Scenario**: An RTS player discovers that with a specific 8-action build order they can field a tier-3 unit at minute 4 — three minutes faster than the designer thought possible. The combination breaks competitive balance.
 
-**The state-space lesson**: The designer was reasoning about *typical* trajectories through the build state space. Reachability analysis would have *enumerated* all reachable states at minute 4 from the start state and exposed the outlier. RTS tech trees are finite-branching graphs; modern hardware can search them exhaustively to depths of 40+ actions in seconds.
+**The state-space lesson**: The designer was reasoning about *typical* trajectories through the build state space. Reachability analysis would have *enumerated* all reachable states at minute 4 from the start state and exposed the outlier. RTS tech trees are finite-branching graphs, and *with aggressive pruning* — dominance tests on resource vectors, symmetry reduction over order-independent actions, memoisation on the canonical state key — depths of tens of actions are reachable offline. Quote no blanket depth figure: raw breadth-first search at branching factor `b` costs `b^d`, so `b = 8` dies around depth 8-10 in seconds and depth ~15 in hours. **The reachable depth is a property of your branching factor and your pruning, and you must measure it on your own tech tree before promising coverage.**
 
 ## GREEN Phase: State-Space Formulation
 
@@ -711,37 +711,33 @@ class Pendulum:
         self.gravity = 9.8
         self.damping = 0.1
 
-    def derivatives(self):
-        """State derivatives: d/dt [theta, omega]"""
-        dtheta_dt = self.omega
-        domega_dt = -(self.gravity / self.length) * np.sin(self.theta) \
-                    - self.damping * self.omega
+    def derivatives(self, state):
+        """State derivatives: d/dt [theta, omega]. PURE — takes state, no self mutation."""
+        theta, omega = state
+        dtheta_dt = omega
+        domega_dt = -(self.gravity / self.length) * np.sin(theta) \
+                    - self.damping * omega
         return np.array([dtheta_dt, domega_dt])
 
     def simulate(self, duration=10.0, dt=0.01):
+        state = np.array([self.theta, self.omega], dtype=float)
         trajectory = []
-        t = 0
+        t = 0.0
 
         while t < duration:
-            trajectory.append([self.theta, self.omega])
+            trajectory.append(state.copy())
 
-            # RK4 integration (better than Euler for visualization)
-            k1 = self.derivatives()
-
-            theta_temp = self.theta + 0.5 * dt * k1[0]
-            omega_temp = self.omega + 0.5 * dt * k1[1]
-            self.theta, self.omega = theta_temp, omega_temp
-            k2 = self.derivatives()
-
-            # ... (full RK4)
-
-            # Simpler: Euler
-            deriv = self.derivatives()
-            self.omega += deriv[1] * dt
-            self.theta += self.omega * dt
+            # Full RK4 — all four stages evaluated from the SAME starting state
+            f = self.derivatives
+            k1 = f(state)
+            k2 = f(state + 0.5 * dt * k1)
+            k3 = f(state + 0.5 * dt * k2)
+            k4 = f(state + dt * k3)
+            state = state + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
 
             t += dt
 
+        self.theta, self.omega = state
         return np.array(trajectory)
 
 # Simulate multiple initial conditions
@@ -755,6 +751,12 @@ for theta0 in np.linspace(-3, 3, 10):
 plt.xlabel('Angle θ (rad)', fontsize=12)
 plt.ylabel('Angular Velocity ω (rad/s)', fontsize=12)
 plt.title('Damped Pendulum Phase Space\n(All trajectories spiral to origin)', fontsize=14)
+# Verified: with damping=0.1 the envelope decays as e^(-0.05 t), so 20 s leaves
+# visible oscillation (amplitude ~37% of initial) and 200 s reaches |theta| < 1e-4.
+# theta0 = ±3 rad does NOT go over the top: mgl(1-cos 3) = 19.50 < 2mgl = 19.6.
+# Nudge damping or theta0 and some trajectories WILL escape to a different
+# equilibrium (theta = ±2π) — the "all spiral to origin" claim is a property of
+# these parameters, not of damped pendulums.
 plt.grid(True, alpha=0.3)
 plt.plot(0, 0, 'ro', markersize=15, label='Attractor (equilibrium)')
 plt.legend()

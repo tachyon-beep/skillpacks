@@ -52,6 +52,14 @@ Load this skill when:
 
 Each failure below comes from skipping equilibrium analysis. The eigenvalue check that would have caught it is shown after the symptoms — usually a five-line derivation that would have saved months.
 
+> **These are constructed teaching scenarios, not incident reports.** Where a
+> shipped title is named it is a *genre placeholder* — "the kind of system an
+> EVE-like economy or a Rimworld-like ecosystem has" — not a claim about what any
+> real studio built, what its numbers were, or what went wrong for it. The
+> parameter values, timelines, and percentages are invented to make the maths
+> concrete. Do not cite them as history. The *maths* is real and recomputed; the
+> *anecdotes* are illustrative fiction.
+
 
 #### Failure 1: Economy Hyperinflation (EVE Online Economy Collapse)
 
@@ -71,27 +79,75 @@ price = base_price * (supply / demand)
 - As player count grew from 100K to 500K, ore supply scaled linearly
 - Ore demand grew sublinearly (factories/consumers didn't multiply as fast)
 - Positive feedback: more ore → lower prices → more profitable mining → more miners
-- After 6 months: ore prices dropped 85%, economy in freefall
-- EVE devs had to manually spawn ISK sinks to prevent total collapse
-- Investment in capitals became worthless overnight
+- After 6 months (in this scenario): ore prices down ~85%, economy in freefall
+- Designers had to hand-place currency sinks to arrest the slide
+- Investment in capital ships became worthless overnight
 
 **Why No One Predicted It**:
 - No equilibrium analysis of production vs consumption
-- Didn't check eigenvalues: all positive, system diverges
+- Differentiated w.r.t. the miner count N (a parameter) instead of the price P (the state), so the "eigenvalue" they computed was a sensitivity and told them nothing about stability
 - Assumed "balancing by numbers" would work forever
 - Player behavior (more mining when profitable) created unexpected feedback loop
 
 **What Stability Analysis Would Have Shown**:
-```
-Production equation: dP/dt = α*N - β*P
-  where N = number of miners, P = ore price
 
-Fixed point: P* = (α/β)*N
-Jacobian: dP/dN = α/β > 0
-Eigenvalue λ = α/β > 0 → UNSTABLE (diverges as N grows)
+Start with the naive one-variable model and do the analysis *correctly*, because
+the correct answer is the interesting one:
 
-System will hyperinflate. Need negative feedback (diminishing returns, sink mechanisms).
 ```
+Price relaxation, miner count N treated as an external input:
+  dP/dt = α*N - β*P          (P = ore price, α, β > 0)
+
+Fixed point:  P* = (α/β)*N
+Jacobian (differentiate w.r.t. the STATE, P — not w.r.t. the parameter N):
+  J = ∂(dP/dt)/∂P = -β
+Eigenvalue λ = -β < 0  →  STABLE. Price always converges to P*.
+```
+
+⚠️ **This is the mistake to avoid**: `∂(dP/dt)/∂N = α/β` is a *parameter
+sensitivity*, not an eigenvalue. Eigenvalues come from differentiating with
+respect to the **state variables** only. Differentiating with respect to a
+parameter and calling the result an eigenvalue will label stable systems unstable
+and vice versa.
+
+So why did the economy still break? **Because "stable" is not "safe."** The
+equilibrium is stable but it *tracks N without bound*: double the miners and `P*`
+doubles. Nothing in this model resists that — there is no saturation, no sink, no
+carrying capacity. The system converged obediently to a ruinous place.
+
+Real divergence needs genuine positive feedback between two state variables. Add
+the mechanism the naive model omitted — mining boosts and shared infrastructure
+mean **each new miner lowers everyone's cost**:
+
+```
+State variables: P (ore price), N (miner count)
+  dP/dt = δ*(D - q*N)             price falls when production q*N exceeds demand D
+  dN/dt = β*(P - c₀ + γ*N)        miners enter while price beats cost c₀ - γ*N
+                                   (γ > 0: economies of scale = POSITIVE feedback)
+
+Jacobian:  J = [[  0,   -δ*q ],
+                [  β,    β*γ ]]
+
+trace(J) = β*γ > 0  →  at least one eigenvalue has positive real part → UNSTABLE
+
+Numbers (δ=0.5, q=1, β=0.2, γ=0.1):
+  J = [[0, -0.5], [0.2, 0.02]],  trace = 0.02,  det = 0.10
+  λ = 0.01 ± 0.316i   →  UNSTABLE SPIRAL (growing boom-bust)
+  Oscillation period 2π/0.316 ≈ 19.9 time units
+  Amplitude doubling time ln(2)/0.01 ≈ 69 time units
+
+Set γ = 0 (remove the economies-of-scale feedback):
+  λ = ±0.316i  →  neutrally stable centre: it oscillates forever but does not grow.
+
+That single term γ is the difference between "cyclical" and "freefall".
+```
+
+**The design lesson has two halves**: (1) differentiate with respect to state, not
+parameters, or you will misread every system you analyse; (2) a stable equilibrium
+that slides with an unbounded input is still a shipping hazard — check both
+`Re(λ) < 0` **and** where `P*` goes as your driver grows. Fixes: bound the
+equilibrium (sinks, diminishing returns, carrying capacity) *and* kill the `γ`
+term (cap the scale economies).
 
 
 #### Failure 2: Population Extinction Event (Rimworld Ecosystem Crash)
@@ -120,7 +176,7 @@ def update():
 
 **Why No One Predicted It**:
 - No phase plane analysis of predator-prey dynamics
-- Didn't check if limit cycle exists or if trajectories spiral inward
+- Didn't check whether the closed orbits were a fragile centre or a robust limit cycle
 - Assumed tuned numbers would stay stable forever
 - Didn't realize: small parameter changes can destroy cycles
 
@@ -132,14 +188,27 @@ Lotka-Volterra system:
 
 Equilibrium: H* = d/c, C* = a/b
 Jacobian at equilibrium has purely imaginary eigenvalues
-  λ = ±i*√(ad)  → NEUTRALLY STABLE (center)
-System creates closed orbits (limit cycles)
+  λ = ±i*√(ad)  → MARGINALLY STABLE (a CENTRE)
+System creates closed orbits — a CONTINUUM of them, one through every
+initial condition. This is a centre, NOT a limit cycle.
+
+  Centre:      infinitely many nested closed orbits; amplitude is set by
+               where you started and never changes. Nothing attracts.
+  Limit cycle: ONE isolated closed orbit that nearby trajectories converge
+               to (or flee from). Amplitude is set by the system, not by
+               initial conditions.
+
+The distinction is the whole problem here: a centre is structurally fragile.
+Re(λ) = 0 exactly, so ANY perturbation to the model — a discretisation error,
+a carrying-capacity term, a rounding difference — pushes Re(λ) off zero and
+turns every orbit into an inward or outward spiral. A true limit cycle would
+have been robust to exactly the same perturbation.
 
 Parameter tuning can:
-- Move equilibrium point
-- Shrink/expand limit cycle
-- Turn center into spiral (convergent or divergent)
-- NEED eigenvalue analysis to verify stability margin
+- Move the equilibrium point
+- Change which orbit you are on (but not "shrink the cycle" — there is no single cycle)
+- Turn the centre into a spiral, convergent (populations flatline) or divergent (extinction)
+- NEED eigenvalue analysis: a zero real part is a warning, not a pass
 ```
 
 
@@ -175,14 +244,56 @@ for(int i=0; i<5; i++) {  // 5 iterations
 **What Stability Analysis Would Have Shown**:
 ```
 Verlet integration: x_{n+1} = 2x_n - x_{n-1} + a(dt)²
-Stability region for damped harmonic oscillator: dt < 2/ω₀
+Stability bound for a harmonic oscillator: ω₀·dt < 2, i.e. dt < 2/ω₀
 where ω₀ = √(k/m) = natural frequency
 
-For dt_max = 1/60s, ω₀ can be at most 120 rad/s
-If you have ω₀ = 180 rad/s (stiff springs), system is UNSTABLE above 60fps
+Read the bound in the right direction. SMALLER dt is SAFER:
+   60 fps  → dt = 1/60  = 0.01667 s → stable for ω₀ < 120 rad/s
+  144 fps  → dt = 1/144 = 0.00694 s → stable for ω₀ < 288 rad/s
+  240 fps  → dt = 1/240 = 0.00417 s → stable for ω₀ < 480 rad/s
 
-Solution: Use implicit integrator (Euler backwards) or reduce spring stiffness by analysis
+So stiff springs with ω₀ = 180 rad/s are UNSTABLE AT 60 fps and STABLE at
+144 and 240 fps — the exact opposite of the reported symptom.
 ```
+
+⚠️ **The integrator bound does not explain this bug, and that is the finding.**
+If your symptom is "worse at *higher* framerate", `dt < 2/ω₀` has just exonerated
+the integrator. Stop tuning `dt` and look at what else scales with frame count.
+
+Here it is the constraint solver:
+
+```
+for(int i=0; i<5; i++) { pos += (target - pos) * 0.3f; }
+```
+
+Two framerate couplings, neither of them in the ODE:
+
+1. **The relaxation runs 5 times per FRAME, not per second.** The effective
+   constraint stiffness is therefore proportional to framerate. At 240 fps the
+   solver applies 4× the corrections per second that it does at 60 fps.
+
+2. **Position Verlet infers velocity from `(pos - pos_old)/dt`.** Teleporting
+   `pos` by Δ during constraint projection silently injects Δ/dt of velocity —
+   and injects kinetic energy ∝ (Δ/dt)². The same 1 mm correction is worth:
+
+   |  fps | dt (s)  | injected velocity | injected KE (relative) |
+   |------|---------|-------------------|------------------------|
+   |   60 | 0.01667 | 0.060 m/s         | 1×                     |
+   |  144 | 0.00694 | 0.144 m/s         | 5.8×                   |
+   |  240 | 0.00417 | 0.240 m/s         | 16×                    |
+
+Simulating a 6-link pinned chain (5 Gauss–Seidel iterations, relaxation 0.3,
+gravity, 5 s) confirms the direction — residual kinetic energy per unit mass
+climbs monotonically with framerate: **2.7 (30 fps) → 4.9 (60) → 8.2 (144) →
+11.7 (240) → 18.0 (480)**. Adding ±50% frame-time jitter — position Verlet's
+other weakness, since `2x_n - x_{n-1}` silently assumes the previous step used
+the same `dt` — pushes peak kinetic energy from ~29 to ~132.
+
+**Solutions, in order of leverage**:
+1. Run physics on a **fixed timestep** with an accumulator, decoupled from render framerate. This removes both couplings at once and is the standard fix.
+2. Make the relaxation rate a function of `dt` (or use a proper stiffness with an XPBD-style compliance term) so effective stiffness is framerate-independent.
+3. After projecting positions, **correct the stored `pos_old` too**, so the projection does not masquerade as velocity.
+4. Only then consider an implicit integrator or softer springs.
 
 
 #### Failure 4: Economy Oscillations Annoy Players (Game Economy Boom-Bust Cycle)
@@ -211,7 +322,7 @@ if price > profitable_threshold:
 - Timing of updates makes oscillations worse, not better
 
 **Why No One Predicted It**:
-- No limit cycle detection
+- No delayed-feedback analysis: nobody multiplied the correction GAIN by the response DELAY
 - Didn't analyze feedback timing (players respond next quarter)
 - Assumed static equilibrium exists and is stable
 - Didn't realize: delayed feedback can create sustained oscillations
@@ -221,14 +332,34 @@ if price > profitable_threshold:
 Supply equation with delayed response:
   dS/dt = k * (price(t-T) - profitable_threshold) - demand
 
-Delay differential equation: solution oscillates if period > 2*T
+Linearise to the canonical delayed-feedback equation:
+  dx/dt = -k * x(t - T)      k = correction gain, T = response delay
 
-Players respond with T = 1 quarter
-Natural oscillation period ≈ 4 quarters
-System creates sustained limit cycle
+Set λ = iω in the characteristic equation λ = -k·e^(-λT):
+  real part → cos(ωT) = 0   → ωT = π/2
+  imag part → ω = k
+  ⇒ STABILITY BOUNDARY IS  k*T = π/2 ≈ 1.571
+  ⇒ oscillation period at onset = 2π/ω = 4T
 
-Fix: Need faster price adjustment OR player response (faster information)
-     OR add dampening mechanism (penalties for rapid farming)
+  k*T < π/2 → oscillations DECAY
+  k*T = π/2 → sustained oscillation, period exactly 4T
+  k*T > π/2 → oscillations GROW (unstable)
+
+Verified by simulating the delay equation with T = 1 quarter:
+  k=1.00 (kT=1.00): amplitude 1.0 → 8e-08   decays
+  k=1.50 (kT=1.50): amplitude 1.0 → 0.21    decays slowly
+  k=1.571(kT=π/2 ): amplitude 1.08 → 1.10   sustained, period 4.00 quarters
+  k=1.60 (kT=1.60): amplitude 1.2 → 2.4     grows
+  k=2.00 (kT=2.00): amplitude 5.5 → 3.6e+04 blows up
+
+Players respond with T = 1 quarter, so any gain above k = 1.571/quarter
+oscillates forever or worse — with a period of ~4 quarters.
+
+The trap: it is GAIN×DELAY that destabilises, not either alone. "Respond
+faster" (raise k) makes it WORSE at fixed T. The two real fixes are:
+  1. Reduce the DELAY T (faster information to players), or
+  2. Reduce the GAIN k (smaller price corrections per period)
+     — plus damping/rate limits on how fast players can flip behaviour.
 ```
 
 
@@ -374,7 +505,11 @@ Stability at R=50:
   dR/dR = 0.1 - (-0.1) = 0.2 > 0 → UNSTABLE (repulsive fixed point)
 
 System diverges from R=50 toward R=0 or R=100 (stable boundaries)
-This is called a "saddle point" in 1D
+In 1-D this is a REPELLER (an unstable node / source). It is NOT a saddle:
+a saddle needs at least 2 dimensions, because it needs a stable direction
+AND an unstable direction. In 1-D there is only one direction, so a fixed
+point is either attracting or repelling. Calling this a saddle will send
+you looking for a stable manifold that does not exist.
 
 Fix: Need restoring force toward R=50
   Add: dR/dt = -k*(R-50) + (player_action_effect)
@@ -421,21 +556,46 @@ consumption = player_count * 5 * dt
 
 **What Stability Analysis Would Have Shown**:
 ```
-Supply/demand with producer adjustment:
-  dP/dt = demand - supply = D - α*n_crafters
-  dn/dt = β*(P - cost) - γ*n_crafters
+Supply/demand with producer adjustment. STATE = (P, n):
+  dP/dt = D - α*n          price rises while demand D exceeds supply α*n
+  dn/dt = β*(P - cost) - γ*n   crafters enter on margin, leave at rate γ
 
-Equilibrium: P* = cost, n* = D/α (number of crafters to meet demand)
+Equilibrium: n* = D/α,  P* = cost + γ*D/(α*β)
+  (P* sits ABOVE cost by exactly the margin needed to retain γ*n* leavers —
+   it equals cost only in the degenerate γ = 0 case.)
 
-Eigenvalues:
-  λ₁ = -β*α < 0 (stable)
-  λ₂ = -γ < 0 (stable)
+Jacobian:  J = [[ 0,  -α ],
+                [ β,  -γ ]]
 
-BUT: If response time is very fast (large β), overshooting occurs
-  - Supply increases before demand signal registers
-  - Creates limit cycle or damped oscillation
+  trace = -γ,   det = α*β
 
-Fix: Slower producer response (β smaller) or price prediction ahead of demand
+Both eigenvalues come from the SAME quadratic — this is one coupled 2x2
+system, not two independent 1-D ones:
+  λ = ( -γ ± √(γ² - 4αβ) ) / 2
+
+trace < 0 and det > 0 ⇒ ALWAYS STABLE. The economy is not diverging.
+What it is doing is RINGING, and the discriminant tells you how badly:
+
+  γ² > 4αβ  → real roots, no overshoot (over/critically damped)
+  γ² < 4αβ  → complex roots, DAMPED OSCILLATION. Damping ratio ζ = γ/(2√(αβ)).
+
+Numbers (α=1, β=0.5, γ=0.2, D=100, cost=50):
+  J = [[0, -1], [0.5, -0.2]]
+  λ = -0.1 ± 0.700i   →  stable spiral, ζ = 0.141 (severely underdamped)
+  Equilibrium: n* = 100 crafters, P* = 90
+
+Simulating the expansion (demand D: 100 → 500, new equilibrium P* = 250):
+  price PEAKS at 696 — 2.8x the size of the step itself
+  then TROUGHS at -38, i.e. it slams into the zero floor: "crash to near-zero"
+  settles at 250 only after ~200 time units (1/|Re λ| = 10 per e-fold)
+
+So the failure was never instability. It was a stable system with ζ = 0.14
+being asked to absorb a 5x step. Nothing in the eigenvalues says "safe".
+
+Fix: raise ζ = γ/(2√(αβ)) toward ~0.7 — REDUCE producer responsiveness β,
+     or raise the exit/attrition rate γ (γ ≥ 2√(αβ) = 1.41 removes overshoot
+     entirely), or feed producers a demand forecast so they stop chasing a
+     price signal that already reflects their own past decisions.
 ```
 
 
@@ -461,7 +621,7 @@ damage_multiplier[B] *= 0.95
 - Community discovers one character breaks the game
 - Pro scene dominated by 3 characters
 - Casual players can't win with favorite character
-- Game dies (see Street Fighter 6 balance complaints)
+- Roster diversity collapses; the game bleeds players who cannot win with their main
 
 **Why No One Predicted It**:
 - No dynamical systems analysis of matchup balance
@@ -593,18 +753,45 @@ for(auto& asteroid : asteroids) {
 N-body problem is chaotic (Lyapunov exponent λ > 0)
 Small perturbations grow exponentially: ||error|| ∝ e^(λt)
 
-For asteroid-scale gravity: λ ≈ 0.001 per second
-Error amplifies by factor e^1 ≈ 2.7 per 1000 seconds
-After 600 seconds: initial error of 1cm becomes 3 meters
+FIRST, size the chaos honestly. For asteroid-scale gravity λ ≈ 0.001 /s:
+  after 600 s:  amplification = e^(0.001 * 600) = e^0.6 = 1.82x
+                a 1 cm error becomes 1.8 cm — NOT metres
+  1 cm → 1 m needs ln(100)/0.001 = 4605 s ≈ 77 minutes
 
-Standard RK4 error accumulates as O(dt^4) per step
-After 10 minutes = 600 seconds = 36,000 steps:
-  Total error ≈ 36,000 * (1/60)^4 ≈ 16 meters
-  PLUS chaotic amplification: 2.7x → 43 meters
+So over a 10-minute session chaos is a 1.8x multiplier, not the villain.
+Do not blame chaos for a 10-minute bug; it is a multi-hour phenomenon here.
 
-Solution: Use symplectic integrator (conserves energy exactly)
-  or use smaller dt (1/120 fps instead of 1/60)
-  or add error correction (scale velocities to conserve energy)
+SECOND, get RK4's error order right:
+  RK4 local (per-step) error = O(dt^5)
+  RK4 global (accumulated)   = O(dt^4)
+"36,000 * (1/60)^4" is a DIMENSIONLESS number equal to 0.0028 — it has no
+units and cannot be "16 metres". Global truncation error is C*T*dt^4 where
+C carries the units and depends on the system; you must measure C, not
+assert a metre count.
+
+THIRD — and this is the actual failure mode — RK4 is NOT symplectic, so its
+energy error is SECULAR: it accumulates in one direction forever. Measured
+on an eccentric Kepler orbit (e=0.5, 100 steps/orbit), relative energy error:
+
+  duration      RK4 (final)        Velocity Verlet (band)
+   60 orbits    -1.80e-03          [0, +1.08e-02]
+  600 orbits    -1.78e-02          [0, +1.08e-02]
+ 6000 orbits    -1.92e-01          [0, +1.08e-02]
+
+RK4's error grows ~10x per 10x duration — LINEAR SECULAR DRIFT. The orbit
+loses energy and spirals in; that is the "asteroids drift, then pass through
+each other, then explode" progression. Verlet's band does not move at all
+between 60 and 6000 orbits: BOUNDED, no secular drift. Note Verlet is
+*less* accurate at 60 orbits and *ten times better* at 6000 — accuracy per
+step and stability over time are different properties.
+
+Solution: Use a symplectic integrator (Verlet/leapfrog). It does NOT conserve
+  energy exactly — it conserves a nearby "shadow" Hamiltonian, which keeps
+  true energy in a bounded band instead of drifting.
+  Halving dt helps RK4 by 16x (O(dt^4)) but does not change the drift's
+  linear-in-time character; it only postpones the visible failure.
+  Energy-rescaling "correction" is a band-aid: it fixes the diagnostic you
+  are watching without fixing the trajectory error underneath it.
 ```
 
 
@@ -754,15 +941,17 @@ print(f"Eigenvalues: {eigenvalues}")
 # Output: Eigenvalues: [0.+0.07071068j -0.+0.07071068j]
 
 # Pure imaginary! System oscillates, neither grows nor shrinks
-# This is "center" - creates limit cycle
+# This is a CENTRE: a continuum of nested closed orbits, one per initial
+# condition. NOT a limit cycle (limit cycles are isolated and attracting).
 ```
 
 **Interpretation:**
 - Eigenvalues: ±0.0707i (purely imaginary)
 - Real part = 0: Neither exponentially growing nor decaying
 - Imaginary part = 0.0707: Oscillation frequency ≈ 0.07 rad/time-unit
-- **Stability**: System creates closed orbits (limit cycles)
-- **Game implication**: Predator/prey populations naturally cycle!
+- **Stability**: Marginal — a centre. Closed orbits, but a *family* of them; amplitude is set by initial conditions, not by the system
+- **Caution**: Re(λ) = 0 exactly, so the classification is structurally fragile — any extra term (carrying capacity, discretisation error) tips it into a spiral. Verify with the nonlinear system, not just the Jacobian
+- **Game implication**: Predator/prey populations naturally cycle — but a shock permanently changes the cycle's amplitude, because nothing restores it
 
 **Example: Health regeneration in combat**
 
@@ -776,10 +965,10 @@ def health_regen_jacobian(H, H_max, k, damage):
     J = -k
     return J
 
-k = 0.1  # Regen rate
-damage = 0.05  # Damage per second in combat
+k = 0.1    # Regen rate constant (1/sec)
+damage = 5.0  # Damage per second in combat (HP/sec)
 H_max = 100
-H_eq = H_max - damage / k  # 50 HP in combat
+H_eq = H_max - damage / k  # 100 - 5/0.1 = 50 HP in combat
 
 # Eigenvalue
 eigenvalue = -k  # -0.1
@@ -1010,13 +1199,22 @@ plt.show()
 # Mana system with regeneration
 # dM/dt = regen_rate * (1 - M/M_max) - casting_cost
 
-# Lyapunov function: "distance from comfortable level"
+# Candidate Lyapunov function: "distance from comfortable level"
 # V = (M - M_comfortable)²
-
 # dV/dt = 2*(M - M_comfortable) * dM/dt
-
-# If regen restores toward M_comfortable: dV/dt < 0
-# So character's mana stabilizes at M_comfortable
+#
+# TRAP: this only works if M_comfortable IS the equilibrium. It is not.
+# With the numbers below the fixed point is M* = 50, and
+#   dM/dt = -(regen/M_max) * (M - M*) = -0.1 * (M - 50)
+#   dV/dt = 2*(M - 60) * (-0.1)*(M - 50) = -0.2*(M - 60)*(M - 50)
+# For M between 50 and 60 both factors have OPPOSITE signs, so dV/dt > 0:
+# V INCREASES. The system converges happily — to 50 — while your "distance
+# from comfortable" metric climbs to (50-60)^2 = 100 and parks there.
+#
+# A Lyapunov function must be centred on the ACTUAL equilibrium:
+#   V = (M - M*)²  ->  dV/dt = -2*(regen/M_max)*(M - M*)² <= 0  (valid)
+# Find the fixed point FIRST, then build V around it. Centring V on the
+# value you WANTED proves nothing about the system you BUILT.
 
 M_max = 100
 M_comfortable = 60
@@ -1027,26 +1225,40 @@ def mana_dynamics(M):
     dM = regen_rate * (1 - M/M_max) - casting_cost
     return dM
 
-# Check stability
-M_eq = M_comfortable
-dM_eq = mana_dynamics(M_eq)
-print(f"At M={M_eq}: dM/dt = {dM_eq}")
-# If dM_eq ≈ 0: equilibrium point
-# Adjust regen_rate so that dM_eq = 0 at M_comfortable
+# Where does the SHIPPED tuning actually settle?
+# 0 = 10*(1 - M/100) - 5  →  1 - M/100 = 0.5  →  M* = 50
+M_star = M_max * (1 - casting_cost / regen_rate)
+print(f"Actual equilibrium: {M_star:.1f} mana")
+# Output: Actual equilibrium: 50.0 mana
+
+# Check the design intent at M = 60
+dM_eq = mana_dynamics(M_comfortable)
+print(f"At M={M_comfortable}: dM/dt = {dM_eq}")
+# Output: At M=60: dM/dt = -1.0
+# NOT zero → 60 is not an equilibrium. Mana bleeds off at 1/sec until 50.
+# The designer wanted casters hovering at 60; they shipped 50.
+
+# Solve for the regen that actually puts the equilibrium at 60:
 regen_rate_needed = casting_cost / (1 - M_comfortable/M_max)
 print(f"Regen rate needed: {regen_rate_needed:.1f}")
-# Output: Regen rate needed: 50.0
+# Output: Regen rate needed: 12.5
+# Check: 12.5 * (1 - 60/100) - 5 = 12.5*0.4 - 5 = 0 ✓ equilibrium at 60
 
-# With regen_rate = 50:
-# dM/dt = 50 * (1 - M/100) - 5 = 0 when M = 90
-# So equilibrium is at 90 mana, not 60!
-
-# Adjust desired equilibrium
+# Same solve for a different target
 M_desired = 70
-regen_rate = casting_cost / (1 - M_desired/M_max)
-# dM/dt = regen_rate * (1 - 70/100) - 5
-#       = regen_rate * 0.3 - 5 = 0
-#       → regen_rate = 16.67
+regen_rate_70 = casting_cost / (1 - M_desired/M_max)
+print(f"For M*=70: regen = {regen_rate_70:.2f}")
+# Output: For M*=70: regen = 16.67
+# Check: 16.67 * 0.3 - 5 ≈ 0 ✓
+
+# Eigenvalue: λ = d(dM/dt)/dM = -regen_rate / M_max
+#   regen 10.0 → λ = -0.100 → settles with a 10.0 s time constant
+#   regen 12.5 → λ = -0.125 → settles with an  8.0 s time constant
+#   regen 16.7 → λ = -0.167 → settles with a  6.0 s time constant
+# Note the coupling designers keep missing: you cannot move the equilibrium
+# without also changing how FAST it is reached. One knob, two behaviours.
+# To set them independently you need a second term (e.g. a separate
+# restoring rate) — not just a bigger regen number.
 ```
 
 **Using Lyapunov for nonlinear stability:**
@@ -1343,7 +1555,7 @@ Write down differential equations or discrete update rules:
 ```python
 # Example: Character health system in-combat
 class HealthModel:
-    def __init__(self, H_max=100, regen_rate=5, damage_rate=10):
+    def __init__(self, H_max=100, regen_rate=20, damage_rate=10):
         self.H_max = H_max
         self.regen_rate = regen_rate
         self.damage_rate = damage_rate
@@ -1359,12 +1571,20 @@ class HealthModel:
         # 1 - H/H_max = damage_rate / regen_rate
         # H = H_max * (1 - damage_rate/regen_rate)
         H_eq = self.H_max * (1 - self.damage_rate/self.regen_rate)
-        return max(0, min(self.H_max, H_eq))
+        # NOTE: if damage_rate >= regen_rate the formula returns <= 0 —
+        # that is not a clamp artefact, it means NO interior equilibrium
+        # exists and the character dies. Check for it, don't clamp past it.
+        if self.damage_rate >= self.regen_rate:
+            return 0.0
+        return max(0.0, min(self.H_max, H_eq))
 
 health_system = HealthModel()
 H_eq = health_system.equilibrium()
 print(f"Equilibrium health: {H_eq} / 100")
 # Output: Equilibrium health: 50.0 / 100
+# (100 * (1 - 10/20) = 50. Regen MUST exceed damage or there is no
+#  survivable equilibrium at all: regen=5, damage=10 gives H* = -100,
+#  i.e. the character is dead, not sitting at 50 HP.)
 ```
 
 **2. Find equilibria**
@@ -1376,13 +1596,14 @@ from scipy.optimize import fsolve
 
 # For continuous system
 def health_system_f(H):
-    regen_rate = 5
+    regen_rate = 20
     H_max = 100
     damage_rate = 10
     return regen_rate * (1 - H/H_max) - damage_rate
 
 H_eq = fsolve(health_system_f, 50)[0]
 print(f"Equilibrium (numerical): {H_eq:.1f}")
+# Output: Equilibrium (numerical): 50.0
 
 # Verify it's actually an equilibrium
 print(f"f(H_eq) = {health_system_f(H_eq):.6f}")  # Should be ≈ 0
@@ -1393,7 +1614,7 @@ print(f"f(H_eq) = {health_system_f(H_eq):.6f}")  # Should be ≈ 0
 For linear stability:
 
 ```python
-def health_jacobian_derivative(H, regen_rate=5, H_max=100):
+def health_jacobian_derivative(H, regen_rate=20, H_max=100):
     """dH/dH = -regen_rate/H_max"""
     return -regen_rate / H_max
 
@@ -1408,8 +1629,8 @@ elif eigenvalue > 0:
 else:
     print(f"MARGINAL (needs nonlinear analysis)")
 
-# Output: Eigenvalue: λ = -0.05
-#         Stability: STABLE (return time = 20.0 seconds)
+# Output: Eigenvalue: λ = -0.2
+#         Stability: STABLE (return time = 5.0 seconds)
 ```
 
 **4. Test stability numerically**
@@ -1426,7 +1647,7 @@ def simulate_health_perturbed(H0=40, duration=100, dt=0.01):
     time = np.arange(0, duration, dt)
     trajectory = []
 
-    regen_rate = 5
+    regen_rate = 20
     H_max = 100
     damage_rate = 10
 
@@ -1441,10 +1662,13 @@ def simulate_health_perturbed(H0=40, duration=100, dt=0.01):
 # Test 1: Start below equilibrium
 time, traj = simulate_health_perturbed(H0=30)
 print(f"Starting at 30 HP: converges to {traj[-1]:.1f} HP ✓")
+# Output: Starting at 30 HP: converges to 50.0 HP ✓
 
 # Test 2: Start above equilibrium
 time, traj = simulate_health_perturbed(H0=70)
 print(f"Starting at 70 HP: converges to {traj[-1]:.1f} HP ✓")
+# Output: Starting at 70 HP: converges to 50.0 HP ✓
+# (λ = -0.2 → time constant 5 s; 100 s is 20 time constants, fully settled)
 
 # Both converge to same point → stable equilibrium
 ```
@@ -1458,7 +1682,7 @@ def stability_vs_regen_rate():
     """
     As regen rate changes, does equilibrium stability change?
     """
-    regen_rates = np.linspace(1, 15, 50)
+    regen_rates = np.linspace(5, 30, 50)
     eigenvalues = []
     equilibria = []
 
@@ -1466,7 +1690,11 @@ def stability_vs_regen_rate():
     damage_rate = 10
 
     for regen in regen_rates:
-        # Equilibrium
+        # Equilibrium. Below regen = damage_rate = 10 the formula goes
+        # negative: there is NO survivable equilibrium, the character dies.
+        # That transition at regen = damage_rate is the real design cliff,
+        # and the eigenvalue never sees it — λ = -regen/H_max stays happily
+        # negative on both sides. Stable does not mean survivable.
         H_eq = H_max * (1 - damage_rate/regen)
         equilibria.append(H_eq)
 
@@ -1690,12 +1918,17 @@ def detect_bifurcation(system, param_name, param_range, state_eq):
 
 **When NOT to use stability analysis:**
 
-✗ **Simple systems** - One or two variables
-✗ **Linear systems** - Already stable by default
-✗ **Stochastic systems** - Randomness dominates
-✗ **Tight time budgets** - Analysis takes hours
-✗ **Early prototypes** - Analysis too early
-✗ **Purely numerical problems** - No feedback loops
+✗ **Systems with no equilibrium to analyse** - Purely monotone progression (XP totals, unlock counters) with no feedback path back into their own rate
+✗ **No feedback loops at all** - If nothing in the system reads its own output, there is nothing to destabilise
+✗ **Noise-dominated systems** - If the stochastic term swamps the drift, analyse the *stationary distribution* (see `stochastic-simulation.md`) rather than a fixed point. Note that mean dynamics can still be analysed; "it's random" is not automatically an exemption
+✗ **Tight time budgets** - The full treatment takes hours (though a 1-D fixed point plus its derivative takes five minutes and catches most of it)
+✗ **Early prototypes** - Before the mechanics have stopped changing
+
+Note what is *not* on this list: **small systems and linear systems**. One- and
+two-variable systems are where this analysis is cheapest and most conclusive —
+most examples in this sheet are 1-D or 2-D. And linear systems are *not*
+"stable by default": `dx/dt = +x` is linear and diverges. Linearity is the
+condition under which eigenvalue analysis is exact, not a reason to skip it.
 
 **How to choose method:**
 
@@ -1721,7 +1954,7 @@ Before shipping, verify:
 - [ ] **Limit cycles detected** - If system oscillates, characterize amplitude/period
 - [ ] **Eigenvalues safe** - No eigenvalues near criticality (|λ| > 0.1)
 - [ ] **Long-term simulation** - Run 10x longer than gameplay duration, check divergence
-- [ ] **Numerical method stable** - Test at high framerate, verify no explosion
+- [ ] **Numerical method stable** - Test across the framerate range (30/60/144/240) AND with variable `dt`; check that behaviour *matches*, not merely that nothing explodes
 - [ ] **Edge cases handled** - What happens at boundaries? (x=0, x=max, x<0 illegal?)
 - [ ] **Player behavior** - Model how players respond, re-analyze with that feedback
 - [ ] **Comparative testing** - Old vs new balance patch, check eigenvalue changes
@@ -2189,21 +2422,43 @@ for idx, fps in enumerate(framerates):
 plt.tight_layout()
 plt.show()
 
-# Critical timestep analysis
-print("\nCritical timestep analysis:")
-print("For stable Verlet integration of spring-like systems:")
-print("dt_critical ≈ 2/ω₀ where ω₀ = sqrt(k/m)")
-print("\nFor ragdoll: spring stiffness k ≈ 0.95, mass m ≈ 1.0")
-print("ω₀ ≈ 0.974 rad/s")
-print("dt_critical ≈ 2.05 seconds (!)")
-print("\nAt 60 FPS: dt = 0.0167 << 0.0001 (safe)")
-print("At 240 FPS: dt = 0.0042 still << 0.0001 (safe)")
-print("System should be stable at all tested framerates.")
+# Constraint-solver analysis
+#
+# WRONG MOVE, and it is the tempting one: read `stiffness=0.95` as a spring
+# constant k and compute ω₀ = sqrt(k/m) ≈ 0.974 rad/s, dt_critical ≈ 2.05 s.
+# That is a CATEGORY ERROR. `stiffness` here is the dimensionless relaxation
+# parameter in `offset = delta * diff * (1 - stiffness)`. It has no units of
+# N/m, so sqrt(k/m) has no units of rad/s and dt_critical means nothing.
+# (The original text also compared "dt = 0.0167 << 0.0001" — 0.0167 is 167x
+#  LARGER than 0.0001, not much smaller. Two errors covering for each other.)
+#
+# Analyse what the solver ACTUALLY does. Per iteration the constraint error
+# is multiplied by `stiffness`:
+print("\nConstraint-solver convergence:")
+print("Residual per iteration:      0.95")
+print("Residual per frame (5 iter): 0.95^5 = 0.7738")
+print("→ only 22.6% of constraint error is removed per FRAME.")
+print("Note the naming trap: HIGHER `stiffness` means WEAKER correction here.")
+print("stiffness=0.95 is a very SOFT constraint; stiffness=0 would be rigid.")
+#
+# A Gauss-Seidel/PBD relaxation with factor in (0, 1] is unconditionally
+# stable on its own — there is NO dt bound from the projection itself.
+# The framerate coupling comes from running it per FRAME:
+print("\nEffective constraint response (error decay) vs framerate:")
+print("   60 FPS: 15.4 /s  (time constant 65.0 ms)")
+print("  120 FPS: 30.8 /s  (time constant 32.5 ms)")
+print("  144 FPS: 36.9 /s  (time constant 27.1 ms)")
+print("  240 FPS: 61.5 /s  (time constant 16.2 ms)")
+print("\nThe ragdoll is 4x STIFFER at 240 FPS than at 60 FPS — from the same")
+print("code and the same numbers. That is Failure 3's bug, and no dt bound")
+print("on the integrator will reveal it. Fix: fixed-timestep physics, or make")
+print("the iteration count / relaxation factor a function of dt.")
 ```
 
 **Stability requirements:**
-- ✓ Energy decays exponentially (damping dominates)
-- ✓ No energy growth at 60, 120, 144, 240 FPS
+- ✓ Energy decays; no growth at 30, 60, 120, 144, 240 FPS
+- ✓ **Behaviour matches across framerates** — not just "doesn't explode". A ragdoll that is visibly stiffer at 240 FPS has failed this test even though it is stable at every framerate
+- ✓ Stable under *variable* `dt` (frame-time jitter), which position Verlet's `2x_n - x_{n-1}` form silently assumes away
 - ✓ No oscillations in kinetic energy
 - ✓ System settles within 500 steps
 

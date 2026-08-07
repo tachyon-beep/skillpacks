@@ -772,12 +772,14 @@ def wrong_discrete_accumulation():
             create_item()
             accumulator = 0  # WRONG: Loses fractional part
 
-    # After 100 steps: lost ~3.3 items due to rounding
+    # After 100 steps: 25 items emitted, not 30. FIVE lost (16.7% of output).
+    # The loop reaches 1.2, emits one item and throws 0.2 away, every 4 steps.
+    # 100 steps / 4 = 25 items. The loss is systematic, not rounding noise.
 ```
 
 **Fix**:
 ```python
-# CORRECT: Preserve fractional overflow
+# BETTER: Preserve fractional overflow
 def right_discrete_accumulation():
     accumulator = 0.0
 
@@ -789,8 +791,39 @@ def right_discrete_accumulation():
             create_items(items)
             accumulator -= items  # Keep fractional part
 
-    # After 100 steps: exactly 30 items, perfect
+    # After 100 steps: 29 items emitted, accumulator = 0.9999999999999998
 ```
+
+Twenty-nine, not thirty — and this is the *fixed* version. Adding `0.3` a hundred
+times in binary floating point lands at `0.9999999999999998`, which fails
+`>= 1.0` by one ulp, so the 30th item never fires. Nothing is lost (it is still
+in the accumulator, and the 101st step releases it), but a player watching a
+counter sees it stall one short of a round number, and any test asserting
+`== 30` fails.
+
+**Best: don't accumulate floats at all.** Keep the counter in integer units of
+the smallest increment:
+
+```python
+# CORRECT: integer accumulation, exact by construction
+def exact_discrete_accumulation():
+    accumulator = 0          # in TENTHS of an item
+    RATE = 3                 # 0.3 items/step == 3 tenths/step
+
+    for _ in range(100):
+        accumulator += RATE
+        items, accumulator = divmod(accumulator, 10)
+        if items:
+            create_items(items)
+
+    # After 100 steps: exactly 30 items, accumulator == 0. Every time.
+    # Also: bit-identical across platforms — see chaos-and-sensitivity.md
+```
+
+The three versions emit **25 / 29 / 30** items from identical inputs. Rank the
+bugs by how they present: the first is a systematic 17% shortfall nobody notices
+until an economy audit; the second is an off-by-one that only appears at round
+numbers; the third has no failure mode.
 
 
 ## 9. Testing Continuous vs Discrete

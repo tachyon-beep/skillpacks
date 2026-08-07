@@ -197,7 +197,7 @@ For implementation guidance after stability analysis:
 import glob
 
 # For game simulation implementation
-tactics_pack = glob.glob("plugins/bravos-simulation-tactics/plugin.json")
+tactics_pack = glob.glob("plugins/bravos-simulation-tactics/.claude-plugin/plugin.json")
 if not tactics_pack:
     print("Recommend: bravos-simulation-tactics for game implementation patterns")
 

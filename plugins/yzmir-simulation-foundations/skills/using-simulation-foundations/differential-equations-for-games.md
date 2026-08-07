@@ -1842,11 +1842,18 @@ class RimworldEcosystem:
         self.herbivores = 50.0  # Deer
         self.predators = 8.0    # Wolves
 
-        # Biologist-approved parameters
-        self.alpha = 0.12      # Deer birth rate (realistic)
+        # Parameters SOLVED BACKWARDS from the target equilibrium.
+        # Design targets: H* = 50 deer, P* = 6 wolves, K = 150.
+        #   H* = gamma/(delta*beta)          -> gamma = H* * delta * beta
+        #                                            = 50 * 0.25 * 0.015 = 0.1875
+        #   P* = (alpha/beta) * (1 - H*/K)   -> alpha = P* * beta / (1 - H*/K)
+        #                                            = 6 * 0.015 / (2/3) = 0.135
+        # Do NOT tune these by hand and hope. Pick the equilibrium you want,
+        # then invert the formulas.
+        self.alpha = 0.135     # Deer birth rate
         self.beta = 0.015      # Predation rate
         self.delta = 0.25      # Wolf efficiency
-        self.gamma = 0.08      # Wolf death rate
+        self.gamma = 0.1875    # Wolf death rate
         self.K = 150           # Map carrying capacity
 
     def update(self, dt):
@@ -1882,13 +1889,29 @@ ecosystem.herbivores = 200  # Overpopulation event
 for day in range(1000):
     ecosystem.update(1.0)
 print(f"After perturbation: {ecosystem.herbivores:.1f} deer, {ecosystem.predators:.1f} wolves")
+
+# Output (recomputed):
+# Theoretical equilibrium: 50.0 deer, 6.0 wolves
+# Actual equilibrium: 50.0 deer, 6.0 wolves
+# After perturbation: 50.0 deer, 6.0 wolves
 ```
 
 **Result**:
-- ✅ Populations converge to equilibrium (50 deer, 6 wolves)
-- ✅ Recovers from perturbations
+- ✅ Theory and simulation agree to the printed precision: **50.0 deer, 6.0 wolves**
+- ✅ Recovers from a 4x overpopulation shock back to the same point
 - ✅ Designer can predict behavior without playtesting
 - ✅ Parameters have ecological meaning
+
+**Verify the dynamics, not just the fixed point.** The Jacobian at (50, 6) has
+eigenvalues `-0.0225 ± 0.128i` — a **stable spiral**: populations converge, but
+by *damped oscillation*, with a ~49-day cycle and a ~44-day decay time. Players
+will see boom-bust waves for roughly the first in-game year after any shock. If
+you want that visible, keep it; if you want a quiet ecosystem, you need a larger
+`|Re λ|` (faster wolf attrition, or a lower `K`), not different starting counts.
+
+**Always print both numbers.** If the theoretical and simulated equilibria
+disagree, your formula and your update loop have diverged — that mismatch is the
+single most useful test in this whole file.
 
 **RED Failure Resolved**: System self-regulates. No more extinction/explosion bugs.
 
