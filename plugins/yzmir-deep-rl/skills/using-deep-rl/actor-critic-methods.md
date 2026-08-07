@@ -260,19 +260,25 @@ for episode in range(num_episodes):
 
         state = next_state
 
-    # Advantage estimation (GAE)
-    advantages = compute_gae(rewards, values, next_value, gamma, lambda)
+    # Bootstrap value for the state after the last stored step
+    # (0 if the episode actually terminated; V(s_T) if it was just cut off)
+    next_value = 0.0 if terminated else critic(state)
+
+    # Advantage estimation (GAE) — one advantage per stored timestep
+    # (`lam` not `lambda`: lambda is a Python keyword)
+    values = np.array(values)                              # shape [horizon]
+    advantages = np.array(compute_gae(rewards, values, next_value, gamma, lam))
 
     # Actor loss (policy gradient with baseline)
     actor_loss = -log_prob(actions, actor(states)) * advantages
     actor.update(actor_loss)
 
     # Critic loss (value function learning)
-    # Target = advantage + baseline, i.e. the same returns GAE was built from.
-    # Do NOT add gamma*V(s') a second time — the bootstrap is already inside
-    # advantages via compute_gae's final next_value term.
-    critic_targets = advantages + values
-    critic_loss = (critic(states) - critic_targets)^2
+    # Target = advantage + baseline = the GAE-λ return, elementwise over the
+    # SAME horizon as `values`. Do NOT add gamma*V(s') a second time — the
+    # bootstrap already lives inside `advantages` via compute_gae's next_value.
+    critic_targets = advantages + values                   # shape [horizon]
+    critic_loss = ((critic(states) - critic_targets) ** 2).mean()
     critic.update(critic_loss)
 ```
 

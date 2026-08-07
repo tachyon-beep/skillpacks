@@ -825,6 +825,7 @@ Gymnasium **v1.0 (Oct 2024) changed this, and removed `info['final_observation']
 
 ```python
 # Gymnasium >= 1.0 — NEXT_STEP autoreset (the default)
+just_autoreset = np.zeros(num_envs, dtype=bool)   # MUST exist before the loop
 obs, rewards, terminateds, truncateds, infos = envs.step(actions)
 
 # When terminateds[i] or truncateds[i] is True:
@@ -1280,6 +1281,7 @@ obs, rewards, terminateds, truncateds, infos = envs.step(actions)
 # Storing it teaches the agent that its action did nothing.
 
 # Solution: skip the step following a done. The done step's obs IS terminal.
+# `just_autoreset` must be initialised to all-False BEFORE the rollout loop.
 for i in range(num_envs):
     if not just_autoreset[i]:
         buffer.add(prev_obs[i], actions[i], rewards[i], obs[i], terminateds[i])
@@ -1584,12 +1586,12 @@ class TrainingLoop:
             # obs on a done step IS the terminal obs — store it.
             # The step AFTER a done is the autoreset step: its action was
             # ignored and its reward is 0, so it must NOT be stored.
-            if just_autoreset.any():
-                pass  # skip storing those envs' transitions this iteration
+            store_mask = ~just_autoreset
             just_autoreset = np.logical_or(terminated, truncated)
 
-            # Store experience
-            self.store_experience(obs, reward, terminated, truncated, info)
+            # Store experience — only for envs that were NOT just auto-reset
+            self.store_experience(obs, reward, terminated, truncated, info,
+                                  mask=store_mask)
 
             total_reward += np.mean(reward) if isinstance(reward, np.ndarray) else reward
             steps += 1
@@ -1600,16 +1602,20 @@ class TrainingLoop:
 
         return total_reward / steps
 
-    def store_experience(self, obs, reward, terminated, truncated, info):
-        """Correct experience storage"""
+    def store_experience(self, obs, reward, terminated, truncated, info, mask=None):
+        """Correct experience storage. `mask[i] == False` skips env i."""
         # Handle vectorized case (obs, reward are arrays)
         if isinstance(reward, np.ndarray):
             for i in range(len(reward)):
+                if mask is not None and not mask[i]:
+                    continue  # env i was just auto-reset — the action did nothing
                 self.replay_buffer.add(
                     obs=obs[i] if isinstance(obs, np.ndarray) else obs,
                     action=None,  # Set before storing
                     reward=reward[i],
-                    done=terminated[i] or truncated[i],
+                    # Bootstrap on `terminated` only — a time-limit truncation
+                    # is not a real terminal state
+                    done=terminated[i],
                     next_obs=obs[i] if isinstance(obs, np.ndarray) else obs,
                 )
 ```
@@ -1647,6 +1653,7 @@ store_in_replay_buffer(prev_obs, actions, reward, obs, terminated)
 # agent a false transition.
 
 # CORRECT: the done step's obs IS terminal — store it. Skip the NEXT step.
+# just_autoreset = np.zeros(num_envs, dtype=bool)  <-- before the rollout loop
 obs, reward, terminated, truncated, info = envs.step(actions)
 for i in range(num_envs):
     if not just_autoreset[i]:

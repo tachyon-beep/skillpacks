@@ -1584,17 +1584,22 @@ Result: CQL(ρ) is less conservative on wide-support datasets; CQL(H) is
         the safer default when the behavior policy is unknown.
 ```
 
-**Weighted CQL for Reward Maximization**:
+**Return-weighted CQL** (a plausible variant, NOT from the paper — treat as untested):
 
 ```
-Modify target to emphasize high-reward trajectories:
+Idea: weight the "push back up" term by trajectory return, so the regularizer
+defends the good actions in the dataset harder than the mediocre ones:
 
-CQL loss = -α * E[weight(r) * Q(s,a)] + E[(Q - target)²]
+  L = α * ( logsumexp_a Q(s,a) - E_{a~β}[ w(G) * Q(s,a) ] ) + L_TD
 
-where weight(r) = high if r is high, low if r is low
+where w(G) rises with the return of the trajectory the transition came from,
+normalized so E[w] = 1 (otherwise you have silently rescaled α).
 
-Result: Faster learning from expert demonstrations
-Trade-off: Less conservative, more risk of overestimation
+Result: faster improvement when the dataset mixes expert and novice trajectories
+Trade-off: less conservative — the lower-bound guarantee of Thm 3.2 no longer
+           holds, because the second expectation is no longer under β
+Note: if you want return-conditioned behaviour with an actual result behind it,
+      use Decision Transformer or RvS (Part 6) rather than bending CQL.
 ```
 
 ### Topic 2: Offline RL with Function Approximation Errors
