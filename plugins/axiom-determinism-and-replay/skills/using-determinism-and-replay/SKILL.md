@@ -362,6 +362,8 @@ The two packs share canonical-encoding hygiene: `04-snapshot-strategy.md` and `1
 
 If a system needs both — replay-debuggable AND audit-of-decisions — both packs apply. The audit pack's `08-replay-capability.md` (partial replay from trail) is a different thing from this pack's `06-replay-infrastructure-spec.md` (full execution machine); the former replays *log entries*, the latter replays *the system that emitted them*.
 
+A third sibling, `axiom-contract-engineering`, governs the records themselves: the typed cross-boundary contracts that a replayable system records and replays — schema versioning that fails closed, silent-default elimination, pure resolvers over recorded inputs, canonical content-addressed identity. Its `deterministic-resolution.md` sheet is the contract-layer slice of this pack's discipline; load it when the non-determinism you are chasing lives in what the records *say* rather than in how the execution *runs*.
+
 ### Solution architecture (axiom-solution-architect)
 
 ```

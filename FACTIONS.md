@@ -368,6 +368,10 @@ The Axiom's dedication to making technology accessible through systematic proces
 
 - Architecture-level determinism & replay: seed governance, RNG isolation, snapshots, divergence detection
 
+**axiom-contract-engineering** - *The Boundary Stone*
+
+- Typed cross-boundary contracts: silent-default elimination, fail-closed versioning, deterministic resolution, blinding by construction, canonical identity, contract testing (router + 10 sheets, 3 commands, 2 agents)
+
 **axiom-distributed-systems** - *The Quorum Works*
 
 - Architecture-level correctness under partial failure: consistency & CAP/PACELC, replication & quorums, consensus, partitioning, sagas & the outbox, delivery semantics, resilience, backpressure (router + 13 sheets, 3 commands, 2 agents)

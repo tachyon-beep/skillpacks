@@ -2,7 +2,7 @@
 
 ## Professional AI/ML, Python & Rust engineering, web backend, DevOps, SDLC, solution architecture, game development, security, documentation, and UX skills for Claude Code
 
-50 complete skillpacks • 200+ skills • Install what you need
+51 complete skillpacks • 200+ skills • Install what you need
 
 > **Recent additions (May 2026)**: 6 new packs — `yzmir-morphogenetic-rl`,
 > `axiom-determinism-and-replay`, `axiom-audit-pipelines`,
@@ -290,6 +290,17 @@ cd skillpacks
 - Fault-injection / linearizability / deterministic-simulation testing, and
   cost-and-when-not-to-distribute accounting
 - `/plugin install axiom-distributed-systems`
+
+**axiom-contract-engineering** - router + 10 sheets, 3 commands, 2 agents _(new — August 2026)_
+
+- The engineering discipline of typed cross-boundary contracts — the records that
+  cross subsystem boundaries and the discipline that keeps them honest
+- Silent-default elimination (absent ≠ zero, validity masks, fail-loud readers),
+  schema versioning where meaning changes fail closed, deterministic resolution
+  with no covert channels, blinding by construction, canonical identity
+- Versioned policy parameters, definition lifecycle (draft → approved → locked),
+  contract testing (golden fixtures, canonicalisation properties, authority tests)
+- `/plugin install axiom-contract-engineering`
 
 **axiom-tensor-compiler-engineering** - router + 12 sheets, 3 commands, 2 agents _(new — August 2026, v0.1)_
 
