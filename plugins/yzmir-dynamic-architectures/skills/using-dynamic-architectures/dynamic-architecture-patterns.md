@@ -133,6 +133,11 @@ def rescale_next_layer(next_layer, source_map, old_width, new_width):
     The other half of Net2Net: widen layer N+1's INPUT and divide each
     replicated unit's outgoing weights by its replication count, so the
     summed contribution downstream is unchanged.
+
+    Assumes a SINGLE widening pass — every entry in source_map points at an
+    original unit. For repeated widening, recompute the counts against the
+    current layer, or a second round that copies a copy will divide by the
+    wrong factor.
     """
     counts = {}                                   # source unit -> number of copies
     for src in source_map.values():
@@ -351,6 +356,11 @@ class LotteryTicketPruner:
          pruned earlier come back.
       2. Masks are ENFORCED during training — a pruned weight with a live
          gradient simply regrows, and you end up measuring a dense network.
+
+    Scope caveat: for brevity this masks every named parameter. Frankle &
+    Carbin prune weight tensors only — filter to `'weight' in name` (and skip
+    norm layers) before using this on a real model, or your reported sparsity
+    counts biases that were never meant to be pruned.
     """
     def __init__(self, model):
         self.model = model
