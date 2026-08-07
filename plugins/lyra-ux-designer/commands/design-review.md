@@ -251,12 +251,12 @@ If the surface is **not** an AI artefact, skip this section.
 import glob
 
 # For documentation UX
-writer_pack = glob.glob("plugins/muna-technical-writer/plugin.json")
+writer_pack = glob.glob("plugins/muna-technical-writer/.claude-plugin/plugin.json")
 if writer_pack:
     print("Available: muna-technical-writer for microcopy review")
 
 # For security concerns
-security_pack = glob.glob("plugins/ordis-security-architect/plugin.json")
+security_pack = glob.glob("plugins/ordis-security-architect/.claude-plugin/plugin.json")
 if security_pack:
     print("Available: ordis-security-architect for auth flow review")
 ```

@@ -189,12 +189,12 @@ grep -r "raise HTTPException" "$API_DIR" --include="*.py" | grep -v "detail="
 import glob
 
 # For security review
-security_pack = glob.glob("plugins/ordis-security-architect/plugin.json")
+security_pack = glob.glob("plugins/ordis-security-architect/.claude-plugin/plugin.json")
 if security_pack:
     print("For deeper security review: use ordis-security-architect")
 
 # For API testing
-quality_pack = glob.glob("plugins/ordis-quality-engineering/plugin.json")
+quality_pack = glob.glob("plugins/ordis-quality-engineering/.claude-plugin/plugin.json")
 if quality_pack:
     print("For API testing patterns: use ordis-quality-engineering")
 ```

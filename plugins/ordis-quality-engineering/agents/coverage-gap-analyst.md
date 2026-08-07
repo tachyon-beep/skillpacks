@@ -244,12 +244,12 @@ After Priority 2: +Y% → Z%
 import glob
 
 # For Python testing patterns
-python_pack = glob.glob("plugins/axiom-python-engineering/plugin.json")
+python_pack = glob.glob("plugins/axiom-python-engineering/.claude-plugin/plugin.json")
 if python_pack:
     print("For pytest patterns: load axiom-python-engineering")
 
 # For security testing
-security_pack = glob.glob("plugins/ordis-security-architect/plugin.json")
+security_pack = glob.glob("plugins/ordis-security-architect/.claude-plugin/plugin.json")
 if security_pack:
     print("For security test patterns: load ordis-security-architect")
 ```

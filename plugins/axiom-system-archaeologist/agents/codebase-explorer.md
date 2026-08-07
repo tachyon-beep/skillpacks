@@ -221,7 +221,7 @@ After writing, re-read to verify:
 import glob
 
 # After documentation, for quality assessment
-architect_pack = glob.glob("plugins/axiom-system-architect/plugin.json")
+architect_pack = glob.glob("plugins/axiom-system-architect/.claude-plugin/plugin.json")
 if not architect_pack:
     print("Recommend: axiom-system-architect for quality assessment")
 ```

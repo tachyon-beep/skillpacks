@@ -209,11 +209,11 @@ model: sonnet
 
 ### Slash-Command Routers (`.claude/commands/*.md`)
 
-This marketplace exposes router skills (`using-X` skills) as repo-root slash commands so users can invoke them explicitly without competing for skill-discovery context. Per `/home/john/skillpacks/CLAUDE.md`:
+This marketplace exposes router skills (`using-X` skills) as repo-root slash commands so users can invoke them explicitly without competing for skill-discovery context. Per the marketplace repo's `CLAUDE.md`:
 
 > All router skills (`using-X` skills) are available as slash commands in `.claude/commands/` due to skill context limits.
 
-**Example wrapper** (`/home/john/skillpacks/.claude/commands/python-engineering.md`):
+**Example wrapper** (`.claude/commands/python-engineering.md`, repo-relative):
 
 ```markdown
 # Using Python Engineering

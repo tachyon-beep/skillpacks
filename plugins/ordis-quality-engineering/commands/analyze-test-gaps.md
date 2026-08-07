@@ -218,12 +218,12 @@ Estimated coverage improvement: X% → Y%
 import glob
 
 # For Python-specific testing patterns
-python_pack = glob.glob("plugins/axiom-python-engineering/plugin.json")
+python_pack = glob.glob("plugins/axiom-python-engineering/.claude-plugin/plugin.json")
 if python_pack:
     print("Available: axiom-python-engineering for pytest patterns")
 
 # For security testing
-security_pack = glob.glob("plugins/ordis-security-architect/plugin.json")
+security_pack = glob.glob("plugins/ordis-security-architect/.claude-plugin/plugin.json")
 if security_pack:
     print("Available: ordis-security-architect for security test design")
 ```

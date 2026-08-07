@@ -281,12 +281,12 @@ discovery: [What player learns by doing]
 import glob
 
 # For UX onboarding patterns
-ux_pack = glob.glob("plugins/lyra-ux-designer/plugin.json")
+ux_pack = glob.glob("plugins/lyra-ux-designer/.claude-plugin/plugin.json")
 if ux_pack:
     print("Available: lyra-ux-designer for onboarding flow design")
 
 # For emergent gameplay
-emergence_pack = glob.glob("plugins/bravos-systems-as-experience/plugin.json")
+emergence_pack = glob.glob("plugins/bravos-systems-as-experience/.claude-plugin/plugin.json")
 if emergence_pack:
     print("Available: /design-emergence for mechanic interaction design")
 ```

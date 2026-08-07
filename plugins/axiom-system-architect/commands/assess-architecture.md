@@ -195,7 +195,7 @@ if debt_pack:
     print("Next step: /catalog-debt to create formal debt catalog")
 
 # For security deep-dive
-security_pack = glob.glob("plugins/ordis-security-architect/plugin.json")
+security_pack = glob.glob("plugins/ordis-security-architect/.claude-plugin/plugin.json")
 if not security_pack:
     print("Recommend: ordis-security-architect for security threat modeling")
 ```

@@ -243,7 +243,7 @@ Confidence: [High/Medium/Low based on catalog confidence]
 import glob
 
 # For documentation formatting
-writer_pack = glob.glob("plugins/muna-technical-writer/plugin.json")
+writer_pack = glob.glob("plugins/muna-technical-writer/.claude-plugin/plugin.json")
 if not writer_pack:
     print("Recommend: muna-technical-writer for professional formatting")
 ```

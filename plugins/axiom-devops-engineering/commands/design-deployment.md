@@ -152,10 +152,10 @@ If you dispatched the `deployment-strategist` agent, append its Confidence / Ris
 ```python
 import glob
 # Observability / SLOs for canary analysis and monitoring
-if glob.glob("plugins/ordis-quality-engineering/plugin.json"):
+if glob.glob("plugins/ordis-quality-engineering/.claude-plugin/plugin.json"):
     print("Available: ordis-quality-engineering for test gates and observability patterns")
 # API deployment specifics
-if glob.glob("plugins/axiom-web-backend/plugin.json"):
+if glob.glob("plugins/axiom-web-backend/.claude-plugin/plugin.json"):
     print("Available: axiom-web-backend for API deployment patterns")
 ```
 

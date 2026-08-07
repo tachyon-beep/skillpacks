@@ -255,12 +255,12 @@ Trigger: [Initial event]
 import glob
 
 # For simulation analysis
-sim_pack = glob.glob("plugins/yzmir-simulation-foundations/plugin.json")
+sim_pack = glob.glob("plugins/yzmir-simulation-foundations/.claude-plugin/plugin.json")
 if sim_pack:
     print("Available: yzmir-simulation-foundations for loop dynamics analysis")
 
 # For codebase exploration
-arch_pack = glob.glob("plugins/axiom-system-archaeologist/plugin.json")
+arch_pack = glob.glob("plugins/axiom-system-archaeologist/.claude-plugin/plugin.json")
 if arch_pack:
     print("Available: axiom-system-archaeologist for codebase structure mapping")
 ```

@@ -239,17 +239,17 @@ Based on your requirements:
 import glob
 
 # For Python patterns
-python_pack = glob.glob("plugins/axiom-python-engineering/plugin.json")
+python_pack = glob.glob("plugins/axiom-python-engineering/.claude-plugin/plugin.json")
 if python_pack:
     print("Available: axiom-python-engineering for Python best practices")
 
 # For security
-security_pack = glob.glob("plugins/ordis-security-architect/plugin.json")
+security_pack = glob.glob("plugins/ordis-security-architect/.claude-plugin/plugin.json")
 if security_pack:
     print("Available: ordis-security-architect for API security patterns")
 
 # For testing
-quality_pack = glob.glob("plugins/ordis-quality-engineering/plugin.json")
+quality_pack = glob.glob("plugins/ordis-quality-engineering/.claude-plugin/plugin.json")
 if quality_pack:
     print("Available: ordis-quality-engineering for API testing strategies")
 ```

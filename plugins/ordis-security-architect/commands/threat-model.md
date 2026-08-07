@@ -254,7 +254,7 @@ ROOT: [Attacker Goal]
 import glob
 
 # For documenting threats
-doc_pack = glob.glob("plugins/muna-technical-writer/plugin.json")
+doc_pack = glob.glob("plugins/muna-technical-writer/.claude-plugin/plugin.json")
 if doc_pack:
     print("Available: muna-technical-writer for threat documentation")
 

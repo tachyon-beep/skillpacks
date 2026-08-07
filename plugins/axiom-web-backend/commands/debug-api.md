@@ -240,12 +240,12 @@ ps aux | grep uvicorn | awk '{print $4}'
 import glob
 
 # For database debugging
-python_pack = glob.glob("plugins/axiom-python-engineering/plugin.json")
+python_pack = glob.glob("plugins/axiom-python-engineering/.claude-plugin/plugin.json")
 if python_pack:
     print("For Python debugging patterns: use axiom-python-engineering")
 
 # For performance testing
-quality_pack = glob.glob("plugins/ordis-quality-engineering/plugin.json")
+quality_pack = glob.glob("plugins/ordis-quality-engineering/.claude-plugin/plugin.json")
 if quality_pack:
     print("For load testing: use ordis-quality-engineering")
 ```

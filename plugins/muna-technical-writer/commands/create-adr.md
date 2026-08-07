@@ -247,7 +247,7 @@ We will use PostgreSQL 15+ as our primary database.
 import glob
 
 # For security-related ADRs
-security_pack = glob.glob("plugins/ordis-security-architect/plugin.json")
+security_pack = glob.glob("plugins/ordis-security-architect/.claude-plugin/plugin.json")
 if security_pack:
     print("Available: ordis-security-architect for security ADRs")
 ```

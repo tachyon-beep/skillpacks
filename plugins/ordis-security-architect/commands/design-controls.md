@@ -282,7 +282,7 @@ if threat_ref:
     print("Available: threat-modeling.md for identifying threats to control")
 
 # For documentation
-doc_pack = glob.glob("plugins/muna-technical-writer/plugin.json")
+doc_pack = glob.glob("plugins/muna-technical-writer/.claude-plugin/plugin.json")
 if doc_pack:
     print("Available: muna-technical-writer for documenting controls")
 ```

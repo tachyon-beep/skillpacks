@@ -311,7 +311,7 @@ import glob
 # Use performance-optimization-for-sims skill in this pack
 
 # For mathematical foundations
-foundations_pack = glob.glob("plugins/yzmir-simulation-foundations/plugin.json")
+foundations_pack = glob.glob("plugins/yzmir-simulation-foundations/.claude-plugin/plugin.json")
 if not foundations_pack:
     print("Recommend: yzmir-simulation-foundations for integrator selection")
 ```

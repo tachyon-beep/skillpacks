@@ -198,7 +198,7 @@ if glob.glob("plugins/lyra-ux-designer/agents/accessibility-auditor.md"):
     print("Recommend: accessibility-auditor for full WCAG audit")
 
 # For documentation UX
-if glob.glob("plugins/muna-technical-writer/plugin.json"):
+if glob.glob("plugins/muna-technical-writer/.claude-plugin/plugin.json"):
     print("Available: muna-technical-writer for microcopy review")
 ```
 

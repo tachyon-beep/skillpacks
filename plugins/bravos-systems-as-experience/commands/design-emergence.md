@@ -220,12 +220,12 @@ solutions:
 import glob
 
 # For simulation foundations
-sim_pack = glob.glob("plugins/yzmir-simulation-foundations/plugin.json")
+sim_pack = glob.glob("plugins/yzmir-simulation-foundations/.claude-plugin/plugin.json")
 if sim_pack:
     print("Available: yzmir-simulation-foundations for feedback loop mathematics")
 
 # For game balance
-tactics_pack = glob.glob("plugins/bravos-simulation-tactics/plugin.json")
+tactics_pack = glob.glob("plugins/bravos-simulation-tactics/.claude-plugin/plugin.json")
 if tactics_pack:
     print("Available: bravos-simulation-tactics for balance tuning")
 ```

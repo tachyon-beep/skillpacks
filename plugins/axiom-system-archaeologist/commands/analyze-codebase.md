@@ -199,12 +199,12 @@ docs/arch-analysis-YYYY-MM-DD-HHMM/
 import glob
 
 # For architecture assessment after documentation
-architect_pack = glob.glob("plugins/axiom-system-architect/plugin.json")
+architect_pack = glob.glob("plugins/axiom-system-architect/.claude-plugin/plugin.json")
 if not architect_pack:
     print("Recommend: axiom-system-architect for quality assessment")
 
 # For security analysis
-security_pack = glob.glob("plugins/ordis-security-architect/plugin.json")
+security_pack = glob.glob("plugins/ordis-security-architect/.claude-plugin/plugin.json")
 if not security_pack:
     print("Recommend: ordis-security-architect for threat modeling")
 ```

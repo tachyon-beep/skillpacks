@@ -194,11 +194,11 @@ if glob.glob("plugins/lyra-tui-designer/skills/using-tui-designer/*.md"):
     print("input-keyboard-mouse-and-focus, accessibility-in-the-terminal, degradation/distribution, testing-tuis")
 
 # For broader (non-terminal) UX competency review of the resulting design
-if glob.glob("plugins/lyra-ux-designer/plugin.json"):
+if glob.glob("plugins/lyra-ux-designer/.claude-plugin/plugin.json"):
     print("Available: lyra-ux-designer for general interaction/accessibility critique")
 
 # To hand off implementation
-if glob.glob("plugins/axiom-rust-engineering/plugin.json"):
+if glob.glob("plugins/axiom-rust-engineering/.claude-plugin/plugin.json"):
     print("Available: axiom-rust-engineering for ratatui implementation")
 ```
 

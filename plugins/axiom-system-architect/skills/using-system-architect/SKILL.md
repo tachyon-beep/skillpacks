@@ -352,7 +352,6 @@ Comprehensive baseline testing showed agents naturally:
 
 ## Related Documentation
 
-- **Intent document:** `/home/john/skillpacks/docs/future-axiom-improvement-pipeline-intent.md`
 - **Archaeologist plugin:** `axiom-system-archaeologist`
 - **Future PM plugin:** `axiom-project-manager` (not yet implemented)
 

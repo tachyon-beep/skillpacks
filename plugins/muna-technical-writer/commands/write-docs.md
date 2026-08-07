@@ -213,7 +213,7 @@ Create documentation in the appropriate pattern, then provide:
 import glob
 
 # For security documentation
-security_pack = glob.glob("plugins/ordis-security-architect/plugin.json")
+security_pack = glob.glob("plugins/ordis-security-architect/.claude-plugin/plugin.json")
 if security_pack:
     print("Available: ordis-security-architect for threat model documentation")
 
