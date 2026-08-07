@@ -3,6 +3,21 @@
 **Graded:** 2026-06-22 · **Method:** `reviews/RUBRIC.md` applied per-pack by subagent (batches of 4), layered (pack overall + worst-component sub-grades). Full per-pack cards in `reviews/report-cards/<pack>.md`.
 **Scale:** S (reference-grade) · A (ship with pride) · B (solid, minor fixes) · C (usable but flawed) · D (deficient) · F (failing). Subjects: **Su**bstance / **Us**efulness / **Di**scipline / **Fo**rm. Track: **H**ard / **S**oft / **P**rocess.
 
+> ## ⚠ These grades are stale as of 2026-08-08 — read this before using them to triage
+>
+> Every card below was graded **2026-06-22**. Two large remediation waves have landed since, and the cards do not reflect either. **Do not use a letter here to decide what needs work without checking the item against this list first.**
+>
+> **1. The 2026-08 currency sweep (epic `skillpacks-d9f5d6fa29`, closed).** One Fable reviewer per pack across 13 ML/AI packs (12 Yzmir + `axiom-tensor-compiler-engineering`), then one fix agent per pack: **~200 findings fixed**, including algorithm-level teaching errors, reproduced code crashes, and 10+ fabricated numeric outputs. Substance and Discipline sub-grades for those 13 packs were assigned *before* those defects were known and *before* they were fixed — they are unreliable in both directions.
+>
+> **2. Cross-reference remediation (2026-08-08).** Verified fixed since grading:
+> - **All three C+ packs were capped solely by a missing slash wrapper** (Gate 1, discoverability). `product-management.md`, `program-management.md` and `skillpack-maintenance.md` all now exist in `.claude/commands/` and are registered in `SLASH_COMMANDS.md`. **The gating defect is cleared for all three.** Each card states its own consequence ("that single addition lifts Form to A and the overall to A") — but the regrade has not been run, so the C+ letters below are retained as *unverified* rather than silently promoted.
+> - **`ordis-security-architect`'s recorded top fix** ("add inline Confidence/Risk/Information Gaps/Caveats to the two agents' Output Format blocks") **is done** — and so is the same fix across **41 agents in 24 packs** that cited the SME Agent Protocol while omitting its required output sections.
+> - 201 dead slash-command references (`/axiom-solution-architect` and similar faction-prefixed forms that resolve to nothing) were corrected across 36 files; two stale "future pack" pointers now name the packs that shipped; one vacuous validator verdict and one `NameError` were fixed.
+>
+> **3. Four packs have never been graded** — see the *Ungraded* section below. They are absent from the distribution table, so the counts below describe 46 of 50 packs.
+>
+> `scripts/check_marketplace_integrity.py` now guards the mechanical half of Subject D (Form) continuously; a future grading pass should treat a clean run as the floor, not the finding.
+
 > **Caveat on distribution.** Grades cluster at A-tier. Two real drivers: (1) most of the 2026-05-22 review's *Major* verdicts were missing-slash-wrapper or count-drift defects since fixed or resolved by recent refurbs (mcp v0.2, devops v1.2, etc.); (2) the marketplace's content was already substantively strong. Read the compression as "few broken packs, much polish-tier drift" — the signal is in the **subject sub-grades and the C-tier tail**, not the headline letter.
 
 ## Verdict distribution
@@ -63,6 +78,19 @@
 | [axiom-product-management](report-cards/axiom-product-management.md) | S | **C+** | S- | S- | S- | C | Best-in-class product-ownership content (novel PM-as-stateful-ownership reframing, falsifiability discipline end-to-e… |
 | [axiom-program-management](report-cards/axiom-program-management.md) | S | **C+** | S- | A | A | C | Reference-grade delivery-management content capped at C by the single missing /program-management slash wrapper that … |
 | [meta-skillpack-maintenance](report-cards/meta-skillpack-maintenance.md) | P | **C+** | A- | A | A | C | Reference-grade maintenance methodology with strong discipline and actionability, capped at C by the one defect it te… |
+
+## Ungraded — no report card exists
+
+These four packs postdate the 2026-06-22 grading pass and have never been assessed. They are **not** in the distribution table or the master table above. A grade is deliberately withheld rather than estimated: the cards in this directory carry their weight because they cite executed verification runs, and a letter assigned without one would be indistinguishable from a real grade while being worth nothing.
+
+| Pack | Shipped | Status |
+|------|---------|--------|
+| `axiom-distributed-systems` | v0.1.0, 2026-06-23 | Ungraded. Built via multi-agent workflow; no behavioral verification on record in `reviews/`. |
+| `axiom-tensor-compiler-engineering` | v0.1.0, 2026-08-08 | Ungraded. Had a pre-commit Fable review (falsified its own cross-layout-exact claim, fixed 4 code bugs) plus a currency pass — the strongest evidence base of the four, but not scored against the rubric. |
+| `yzmir-counterfactual-statistics` | v0.1.0, 2026-08-08 | Ungraded. Pre-commit Fable review re-executed ~40 quoted numbers and fixed 4 statistical defects. |
+| `yzmir-structure-synthesis` | v0.1.1, 2026-08-08 | Ungraded. Two adversarial review passes; the canonicaliser false-split survived the first fix and needed structhash-v3. Residual open as `skillpacks-0c43154bbe`. |
+
+Grading these is a discrete task: four rubric passes with the behavioral runs that make a card credible.
 
 ## The tail — packs at C or below (need real work)
 
