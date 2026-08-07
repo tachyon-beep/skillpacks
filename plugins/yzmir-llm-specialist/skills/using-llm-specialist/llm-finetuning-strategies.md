@@ -105,7 +105,7 @@ Want SFT + preference in one training run?                      → ORPO
 Preferences are noisy or ties are common?                       → IPO
 ```
 
-All of these are implemented in [TRL](https://huggingface.co/docs/trl) under their respective trainers (`DPOTrainer`, `KTOTrainer`, `ORPOTrainer`, `SimPO` via DPOTrainer with reference-free flags), in [Axolotl](https://github.com/axolotl-ai-cloud/axolotl), and in [Unsloth](https://github.com/unslothai/unsloth).
+All of these are implemented in [TRL](https://huggingface.co/docs/trl) under their respective trainers (`DPOTrainer`, `KTOTrainer`, `ORPOTrainer`; SimPO ships inside [`CPOTrainer`](https://huggingface.co/docs/trl/cpo_trainer) as a loss variant, *not* under DPO), in [Axolotl](https://github.com/axolotl-ai-cloud/axolotl), and in [Unsloth](https://github.com/unslothai/unsloth).
 
 ### GRPO — the algorithm behind reasoning-model RL
 
@@ -382,7 +382,7 @@ lora = LoraConfig(
 
 # Stage 1 — SFT
 sft = SFTTrainer(
-    model=model, peft_config=lora, tokenizer=tok,
+    model=model, peft_config=lora, processing_class=tok,  # `tokenizer=` was renamed in TRL 0.12
     train_dataset=sft_train, eval_dataset=sft_val,
     args=SFTConfig(
         output_dir="ckpt-sft",
@@ -403,7 +403,7 @@ sft.train()
 dpo = DPOTrainer(
     model="ckpt-sft",                # SFT checkpoint as starting policy
     ref_model=None,                  # TRL infers a frozen ref from policy
-    tokenizer=tok,
+    processing_class=tok,            # `tokenizer=` was renamed in TRL 0.12
     train_dataset=pref_train,
     args=DPOConfig(
         output_dir="ckpt-dpo",
@@ -419,7 +419,7 @@ dpo = DPOTrainer(
 dpo.train()
 ```
 
-For SimPO, set `loss_type="simpo"` in `DPOConfig` and use a target reward margin. For ORPO, swap to `ORPOTrainer` and skip the SFT stage. Always validate on a held-out preference set during DPO; reward hacking on the eval set is real.
+For SimPO, swap to `CPOTrainer` with `CPOConfig(loss_type="simpo", cpo_alpha=0.0, simpo_gamma=...)` — TRL implements SimPO as a CPO loss variant, so `cpo_alpha=0.0` disables the CPO behaviour-cloning regularizer and gives you pure SimPO, while a non-zero `cpo_alpha` gives the CPO-SimPO hybrid. `simpo_gamma` is the target reward margin (TRL default 0.5). For ORPO, swap to `ORPOTrainer` and skip the SFT stage. Always validate on a held-out preference set during DPO; reward hacking on the eval set is real.
 
 
 ## Evaluation

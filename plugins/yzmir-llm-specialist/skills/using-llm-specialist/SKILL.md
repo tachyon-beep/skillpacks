@@ -1,6 +1,6 @@
 ---
 name: using-llm-specialist
-description: Use when working on LLM applications — chat / instruct prompting, reasoning models (o-series / Claude extended thinking / DeepSeek-R1 / Gemini thinking / Qwen QwQ), agentic patterns + MCP, RAG, fine-tuning (SFT / DPO / IPO / KTO / SimPO / ORPO / GRPO + LoRA family), context engineering and prompt caching, inference optimization (vLLM / SGLang / TensorRT-LLM), evaluation (incl. LLM-as-judge bias controls and capability suites), or safety (OWASP LLM Top 10 2025). Calibrated to 2026-05 with capability-tier vocabulary (frontier-reasoning / frontier-general / fast-cheap / on-device) instead of hardcoded model IDs. Routes to the right specialist sheet.
+description: Use when working on LLM applications — chat / instruct prompting, reasoning models (o-series / Claude extended thinking / DeepSeek-R1 / Gemini thinking / Qwen QwQ), agentic patterns + MCP, RAG, fine-tuning (SFT / DPO / IPO / KTO / SimPO / ORPO / GRPO + LoRA family), context engineering and prompt caching, inference optimization (vLLM / SGLang / TensorRT-LLM), evaluation (incl. LLM-as-judge bias controls and capability suites), or safety (OWASP LLM Top 10, 2025 + 2026 renumbering). Calibrated to 2026-05 with capability-tier vocabulary (frontier-reasoning / frontier-general / fast-cheap / on-device) instead of hardcoded model IDs. Routes to the right specialist sheet.
 ---
 
 # Using LLM Specialist

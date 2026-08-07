@@ -76,7 +76,7 @@ grep -rn "max_tokens\|context" --include="*.py"  # Token limits
 grep -rn "messages\[" --include="*.py"           # Message construction
 
 # Check model selection
-grep -rn "gpt-4\|gpt-3.5\|claude" --include="*.py"  # Model used
+grep -rn "model\s*=" --include="*.py"  # Which model/tier is actually being called
 ```
 
 ### Phase 3: Root Cause Analysis
@@ -113,7 +113,7 @@ Question: {query}"""
 
 # Lower temperature
 response = client.chat.completions.create(
-    model="gpt-4",
+    model=MODEL_FOR_TIER["frontier-general"],  # resolve IDs from config, never inline
     messages=messages,
     temperature=0  # Deterministic
 )
@@ -140,7 +140,7 @@ grep -rn "seed\|top_p" --include="*.py"
 ```python
 # For consistent outputs
 response = client.chat.completions.create(
-    model="gpt-4",
+    model=MODEL_FOR_TIER["frontier-general"],  # resolve IDs from config, never inline
     messages=messages,
     temperature=0,
     seed=42  # Optional: same seed = same output
@@ -223,13 +223,37 @@ Text: {input_text}
 
 JSON:"""
 
-# Use response_format for supported models
+# Constrain the output with a strict schema, not free-form JSON mode.
+# response_format={"type": "json_object"} is the legacy form: it guarantees
+# *syntactically valid* JSON and nothing about the shape, so field names, types,
+# and required keys can still drift. json_schema with strict=True constrains
+# decoding to the schema itself and eliminates the whole malformed-output class.
 response = client.chat.completions.create(
-    model="gpt-4-turbo",
+    model=MODEL_FOR_TIER["frontier-general"],  # resolve IDs from config, never inline
     messages=messages,
-    response_format={"type": "json_object"}
+    response_format={
+        "type": "json_schema",
+        "json_schema": {
+            "name": "extraction",
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "name":   {"type": "string"},
+                    "date":   {"type": "string"},
+                    "amount": {"type": "number"},
+                },
+                "required": ["name", "date", "amount"],
+                "additionalProperties": False,
+            },
+        },
+    },
 )
 ```
+
+If the output still doesn't validate under a strict schema, the fault is upstream —
+ambiguous instructions or a task the tier can't do — not the format specification.
+See `agentic-patterns-and-mcp.md` for structured-output discipline.
 
 ### Phase 4: Decision Tree
 
@@ -315,16 +339,16 @@ For related issues:
 import glob
 
 # For RAG quality issues
-llm_pack = glob.glob("plugins/yzmir-llm-specialist/plugin.json")
+llm_pack = glob.glob("plugins/yzmir-llm-specialist/.claude-plugin/plugin.json")
 # Already in this pack - use /rag-audit command
 
 # For PyTorch/model issues
-pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/plugin.json")
+pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/.claude-plugin/plugin.json")
 if not pytorch_pack:
     print("Recommend: yzmir-pytorch-engineering for model-level debugging")
 
 # For training issues
-training_pack = glob.glob("plugins/yzmir-training-optimization/plugin.json")
+training_pack = glob.glob("plugins/yzmir-training-optimization/.claude-plugin/plugin.json")
 if not training_pack:
     print("Recommend: yzmir-training-optimization for fine-tuning issues")
 ```

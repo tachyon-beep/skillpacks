@@ -46,10 +46,11 @@ Source: [Anthropic prompt caching docs](https://platform.claude.com/docs/en/buil
 
 ### OpenAI — automatic prefix caching
 
-No explicit markers. The platform automatically caches prefixes ≥1024 tokens; on a subsequent request that shares that prefix, the cached portion is discounted (typically 50% off input tokens, model-dependent). The minimum 1024-token threshold is documented in the [OpenAI prompt-caching guide](https://platform.openai.com/docs/guides/prompt-caching) and [OpenAI prompt-caching announcement](https://openai.com/index/api-prompt-caching/).
+No explicit markers. The platform automatically caches prefixes ≥1024 tokens; on a subsequent request that shares that prefix, the cached portion is discounted. The minimum 1024-token threshold is documented in the [OpenAI prompt-caching guide](https://platform.openai.com/docs/guides/prompt-caching) and [OpenAI prompt-caching announcement](https://openai.com/index/api-prompt-caching/).
 
 - **Trigger:** ≥1024 tokens of shared prefix.
-- **Discount:** typically 50% on input tokens for cached portion (model-dependent — verify in current pricing page).
+- **Discount:** 50–90% on the cached input portion, **model-dependent** — current flagship tiers discount 90% (0.1× input), older models 50%. Verify on the current pricing page before building cost models on it.
+- **Cache writes:** historically free; the newest models bill cache writes at 1.25× base input. Check whether your target model does.
 - **Caller-side observability:** response includes `usage.prompt_tokens_details.cached_tokens` so you can monitor hit rate.
 - **No TTL guarantees** beyond "recent prompts get cached"; treat it as best-effort.
 
@@ -57,7 +58,7 @@ No explicit markers. The platform automatically caches prefixes ≥1024 tokens; 
 
 Two modes ([Gemini context caching docs](https://ai.google.dev/gemini-api/docs/caching)):
 
-- **Implicit caching** (default for Gemini 2.5 and later): automatic, opt-in only via consenting to the discount. Minimum sizes are model-dependent — for Gemini 2.5 Flash, ~1024 tokens; for 2.5 Pro, ~2048 tokens. Cost: discount applied on hits with no storage charge.
+- **Implicit caching** (enabled by default on Gemini 2.5 and later — no opt-in, no API flag): automatic prefix caching with the discount applied on hits. Minimum sizes are model-dependent — for Gemini 2.5 Flash, ~1024 tokens; for 2.5 Pro, ~2048 tokens. Cost: discount on hits, no storage charge.
 - **Explicit caching:** you create a cache via API, get a cache name, and reference it in subsequent requests. Default TTL is 60 minutes; configurable via `ttl` or `expire_time`. Cost: input-token discount (90% on Gemini 2.5+, 75% on 2.0) plus a storage charge proportional to cache size and TTL.
 
 Use implicit when the workload pattern is unpredictable; use explicit when you have a known stable context (e.g., a corpus, a long doc) referenced across many queries.
@@ -67,7 +68,7 @@ Use implicit when the workload pattern is unpredictable; use explicit when you h
 | Provider | Trigger | TTL | Pricing on hit | Pricing on write |
 |---|---|---|---|---|
 | Anthropic | Explicit `cache_control` breakpoint | 5 min default; 1 hr extended | 0.1× input | 1.25× (5min) / 2× (1hr) |
-| OpenAI | Automatic, ≥1024 token prefix | Best-effort, undocumented | ~0.5× input (model-dependent) | None (automatic) |
+| OpenAI | Automatic, ≥1024 token prefix | Best-effort, undocumented | 0.1×–0.5× input (0.1× on current flagships) | Usually none; 1.25× on newest models |
 | Gemini implicit | Automatic, model-dependent min | Best-effort | Discounted | None |
 | Gemini explicit | Explicit `cache.create()` | Default 60 min, configurable | 0.1× input (2.5+) | Storage charge per token-hour |
 
@@ -261,7 +262,7 @@ Treat your context like source code:
 
 **Provider models differ:**
 - Anthropic: explicit `cache_control` breakpoints, 5-min default / 1-hr extended TTL, 0.1× read.
-- OpenAI: automatic prefix caching ≥1024 tokens, ~50% discount on hit.
+- OpenAI: automatic prefix caching ≥1024 tokens; 50–90% discount on hit depending on model (90% on current flagships), newest models bill writes at 1.25×.
 - Gemini: implicit (default in 2.5+) plus explicit `cache.create()` with configurable TTL.
 
 **Cache-aware structure:** stable prefix first (system, tools, examples, stable docs), volatile suffix last (history, current query). Never put timestamps or request IDs in the cached prefix.
@@ -281,7 +282,7 @@ Treat your context like source code:
 - [rag-architecture-patterns.md](rag-architecture-patterns.md) — RAG-vs-cache decision in detail
 - [context-window-management.md](context-window-management.md) — token counting, the 1M-token tier, "lost in the middle"
 - [llm-evaluation-metrics.md](llm-evaluation-metrics.md) — eval-pinning prompts; monitoring prompt regressions
-- [yzmir-ml-production](../../yzmir-ml-production/) — serving stack ops, cache hit rate as production metric
+- [yzmir-ml-production](../../../yzmir-ml-production/) — serving stack ops, cache hit rate as production metric
 
 ---
 

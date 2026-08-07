@@ -84,13 +84,14 @@ Each provider exposes thinking control differently. Verify the current parameter
 
 ### Google — Gemini thinking
 
-- Gemini 2.5: `thinkingBudget` (integer 0–24576, where 0 disables thinking).
+- Gemini 2.5: `thinkingBudget` (integer), **range and disable-ability differ by variant** — Flash accepts 0–24576 and `0` disables thinking entirely; Pro accepts 128–32768 and **cannot** have thinking disabled. Setting `-1` requests dynamic budgeting. Don't write one budget value across both variants.
 - Gemini 3+: `thinking_level` with discrete levels (e.g., `LOW | MEDIUM | HIGH`), defaulting to dynamic high. ([Gemini API: Thinking](https://ai.google.dev/gemini-api/docs/thinking)).
 
 ### DeepSeek — `deepseek-reasoner`
 
-- Set `model=deepseek-reasoner`; thinking is on by default with `effort=high`. Some agent contexts (Claude Code, OpenCode) auto-bump to `max`.
+- Set `model=deepseek-reasoner`; thinking is **on by default**, at effort `high`. Graded effort is exposed as `reasoning_effort`, which accepts `high` and `max` where supported (other OpenAI-style values are folded in for compatibility: `xhigh` → `max`, `low`/`medium` → `high`). In OpenAI-compatible clients, thinking is toggled via `extra_body.thinking` alongside the top-level `reasoning_effort`.
 - Thinking content is returned in a separate `reasoning_content` field at the same level as `content` ([DeepSeek API docs: Thinking Mode](https://api-docs.deepseek.com/guides/thinking_mode)).
+- **Tool-call trap:** on multi-turn tool-calling in thinking mode you must preserve and pass `reasoning_content` back with the assistant turn; dropping it can return a 400.
 
 ### Qwen — Qwen3 / Qwen3-thinking / QwQ
 
@@ -161,7 +162,7 @@ The thinking tax is the extra cost and latency you pay for thinking on tasks a c
 - Measure: accuracy delta, cost delta, p50/p95 latency delta.
 - If accuracy delta is < 5pp on tasks worth < $X each, the thinking tax is not worth it.
 
-> **Cross-ref:** [yzmir-ml-production](../../yzmir-ml-production/) covers serving-stack ops including KV-cache strategy, batching, and the cost monitoring that makes the thinking tax visible.
+> **Cross-ref:** [yzmir-ml-production](../../../yzmir-ml-production/) covers serving-stack ops including KV-cache strategy, batching, and the cost monitoring that makes the thinking tax visible.
 
 
 ## Evaluation: Reason About the Reason
@@ -314,8 +315,8 @@ Reasoning models change agent-loop dynamics. They:
 - [agentic-patterns-and-mcp.md](agentic-patterns-and-mcp.md) — reasoning models in tool-use loops
 - [context-engineering-and-prompt-caching.md](context-engineering-and-prompt-caching.md) — caching reasoning prompts
 - [llm-evaluation-metrics.md](llm-evaluation-metrics.md) — eval discipline for reasoning quality
-- [yzmir-ml-production](../../yzmir-ml-production/) — serving cost monitoring, the thinking-tax dashboard
-- [yzmir-training-optimization](../../yzmir-training-optimization/) — preference-tuning training dynamics behind RL-on-verifiable-rewards models
+- [yzmir-ml-production](../../../yzmir-ml-production/) — serving cost monitoring, the thinking-tax dashboard
+- [yzmir-training-optimization](../../../yzmir-training-optimization/) — preference-tuning training dynamics behind RL-on-verifiable-rewards models
 
 ---
 

@@ -55,15 +55,18 @@ Search the codebase for optimization opportunities:
 
 ```bash
 # Sequential API calls (parallelize!)
-grep -rn "openai\." --include="*.py" | grep -v "async"
+grep -rn "completions\.create\|messages\.create\|models\.generate_content" --include="*.py" | grep -v "await"
 
 # Missing caching
-grep -rn "ChatCompletion.create\|messages.create" --include="*.py"
-# Check if any caching layer exists
+grep -rn "completions\.create\|messages\.create" --include="*.py"
+# Check if any caching layer exists (provider prompt cache AND response cache)
 
-# Model usage (could use cheaper models?)
-grep -rn "gpt-4\|claude-3-opus" --include="*.py"
-# Evaluate if GPT-3.5/Haiku would suffice
+# Hardcoded model IDs (should resolve through a tier/config layer)
+grep -rnE "model\s*=\s*[\"'][a-zA-Z0-9._-]+[\"']" --include="*.py"
+# For each hit: is a frontier tier doing work a fast-cheap tier could serve?
+
+# Legacy SDK surface (openai<1.0 was removed in Nov 2023 — these raise APIRemovedInV1)
+grep -rn "openai\.ChatCompletion\|openai\.Completion\|openai\.Batch\b" --include="*.py"
 
 # Streaming disabled
 grep -rn "stream=False\|stream.*=.*False" --include="*.py"
@@ -118,79 +121,111 @@ class LLMCache:
 # Cache hit = $0 cost, <10ms latency
 ```
 
-### Optimization 3: Model Routing (10× cost reduction)
+### Optimization 3: Tier Routing (order-of-magnitude cost reduction)
+
+Route by *capability tier*, never by hardcoded model ID — provider lineups rotate
+quarterly and pinned IDs get retired. See `llm-inference-optimization.md` (Part 3)
+for the full router.
 
 ```python
-def route_to_model(query, task_type):
-    """Route to cheapest model that can handle the task."""
+import os
 
-    # Simple tasks → cheap models
-    simple_tasks = ['classification', 'extraction', 'summarization', 'translation']
-    if task_type in simple_tasks:
-        return 'gpt-3.5-turbo'  # or claude-3-haiku
+def route_to_tier(task_type: str) -> str:
+    """Route to the cheapest capability tier that can handle the task."""
 
-    # Complex tasks → capable models
-    complex_tasks = ['reasoning', 'code_generation', 'creative']
-    if task_type in complex_tasks:
-        return 'gpt-4-turbo'  # or claude-3-sonnet
+    # Simple tasks → fast-cheap tier
+    if task_type in ('classification', 'extraction', 'summarization', 'translation'):
+        return "fast-cheap"
 
-    return 'gpt-3.5-turbo'  # default to cheaper
+    # Multi-step logic / math / planning → reasoning tier
+    if task_type == 'reasoning':
+        return "frontier-reasoning"
 
-# GPT-4: $30/1M tokens vs GPT-3.5: $1.50/1M = 20× cheaper
-# 80% of tasks can use cheaper model → 80% cost savings
+    # Other complex work → frontier-general
+    if task_type in ('code_generation', 'creative'):
+        return "frontier-general"
+
+    return "fast-cheap"  # default to cheaper
+
+
+# Resolve tier → current model ID through config, never inline.
+MODEL_FOR_TIER = {
+    "frontier-reasoning": os.getenv("MODEL_FRONTIER_REASONING"),
+    "frontier-general":   os.getenv("MODEL_FRONTIER_GENERAL"),
+    "fast-cheap":         os.getenv("MODEL_FAST_CHEAP"),
+}
+
+# Frontier-general input typically costs ~10-30× fast-cheap on the same provider;
+# frontier-reasoning adds hidden thinking tokens on top. Verify current ratios on
+# the provider's pricing page — they move quarterly.
+# If 80% of tasks route to fast-cheap → ~80% cost reduction.
 ```
 
 ### Optimization 4: Streaming (Better UX)
 
 ```python
-def stream_response(prompt, model="gpt-4"):
-    """Stream tokens as they're generated."""
-    response = openai.ChatCompletion.create(
+from openai import OpenAI
+
+client = OpenAI()
+
+def stream_response(prompt: str, model: str):
+    """Stream tokens as they're generated (openai>=1.0 client)."""
+    stream = client.chat.completions.create(
         model=model,
         messages=[{"role": "user", "content": prompt}],
-        stream=True
+        stream=True,
     )
 
-    for chunk in response:
-        if chunk.choices[0].delta.get("content"):
-            yield chunk.choices[0].delta.content
+    for chunk in stream:
+        delta = chunk.choices[0].delta
+        if delta.content:          # delta is a pydantic model, not a dict
+            yield delta.content
 
+# Note: openai.ChatCompletion.create is the pre-1.0 form, removed Nov 2023 —
+# calling it raises APIRemovedInV1.
+#
 # Without streaming: User waits 20s, sees nothing
 # With streaming: First token in 0.5s, continuous output
-# Bounce rate: 40% → 5%
 ```
 
-### Optimization 5: Batch API (50% cost reduction for offline)
+### Optimization 5: Batch API (~50% cost reduction for offline)
 
 ```python
-# For non-real-time workloads (batch processing, analysis)
-# OpenAI Batch API: 50% discount, 24h completion window
+# For non-real-time workloads (bulk processing, offline analysis).
+# OpenAI Batch API: ~50% discount vs synchronous, 24h completion window.
 
-batch_job = openai.Batch.create(
-    input_file_id=uploaded_file.id,
+batch_input = client.files.create(file=open("requests.jsonl", "rb"), purpose="batch")
+
+batch_job = client.batches.create(
+    input_file_id=batch_input.id,
     endpoint="/v1/chat/completions",
-    completion_window="24h"
+    completion_window="24h",
 )
 
-# Real-time: $10 for 1M tokens
-# Batch API: $5 for 1M tokens (50% savings!)
+# Real-time: 1× input price
+# Batch API: ~0.5× input price
+# (openai.Batch.create is the removed pre-1.0 form.)
 ```
 
 ## Phase 4: Evaluate Trade-offs
 
 Use Pareto analysis to find optimal configuration:
 
-| Configuration | Latency P95 | Cost/1k | Quality |
-|---------------|-------------|---------|---------|
-| GPT-4, no cache | 2.5s | $30 | 0.95 |
-| GPT-3.5, no cache | 0.8s | $1.50 | 0.85 |
-| GPT-3.5 + cache | 0.1s | $0.60 | 0.85 |
-| GPT-3.5 + cache + routing | 0.2s | $0.40 | 0.88 |
+| Configuration | Latency P95 | Relative cost/1k | Quality |
+|---------------|-------------|------------------|---------|
+| frontier-general, no cache | 2.5s | 20× | 0.95 |
+| fast-cheap, no cache | 0.8s | 1× (baseline) | 0.85 |
+| fast-cheap + response cache | 0.1s | 0.4× | 0.85 |
+| fast-cheap + cache + tier routing | 0.2s | 0.27× | 0.88 |
+
+Costs are expressed *relative to the fast-cheap baseline*, not in dollars —
+absolute prices go stale within a quarter. The ~20× frontier-vs-fast-cheap spread
+is the order of magnitude to expect; measure your own workload.
 
 **Selection criteria:**
-- Latency-critical: GPT-3.5 + cache
-- Quality-critical: GPT-4 + cache
-- Cost-critical: GPT-3.5 + cache + routing + batch
+- Latency-critical: fast-cheap + cache
+- Quality-critical: frontier tier + cache
+- Cost-critical: fast-cheap + cache + tier routing + batch
 
 ## Phase 5: Monitor Production
 
@@ -233,7 +268,7 @@ For PyTorch/model-level optimization:
 
 ```python
 import glob
-pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/plugin.json")
+pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/.claude-plugin/plugin.json")
 if not pytorch_pack:
     print("Recommend: yzmir-pytorch-engineering for model-level profiling")
 ```

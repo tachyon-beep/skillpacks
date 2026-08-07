@@ -973,21 +973,23 @@ def aggregate_annotations(annotations, method='majority'):
 **1. Define Variants:**
 
 ```python
-# Example: Testing fine-tuned model vs base model
+# Example: fine-tuned model vs base model vs a tier upgrade.
+# Model IDs resolve from config by capability tier — never inline them here, or the
+# experiment record rots the moment the provider retires the ID.
 variants = {
     'A_baseline': {
-        'model': 'gpt-3.5-turbo',
-        'description': 'Current production model',
+        'model': MODEL_FOR_TIER['fast-cheap'],
+        'description': 'Current production model (fast-cheap tier)',
         'traffic_percentage': 70  # Majority on stable baseline
     },
     'B_finetuned': {
-        'model': 'ft:gpt-3.5-turbo:...',
+        'model': FINETUNED_MODEL_ID,   # your fine-tune of the fast-cheap base
         'description': 'Fine-tuned on customer data',
         'traffic_percentage': 15
     },
-    'C_gpt4': {
-        'model': 'gpt-4-turbo',
-        'description': 'Upgrade to GPT-4',
+    'C_tier_upgrade': {
+        'model': MODEL_FOR_TIER['frontier-general'],
+        'description': 'Upgrade to frontier-general tier',
         'traffic_percentage': 15
     }
 }
@@ -1124,7 +1126,7 @@ def test_significance(baseline_scores, treatment_scores, alpha=0.05):
 
 # Example
 baseline_csat = [3.7, 3.9, 3.8, 3.6, 4.0, 3.8, 3.9, 3.7, 3.8, 3.9]  # Baseline
-treatment_csat = [4.2, 4.3, 4.1, 4.4, 4.2, 4.0, 4.3, 4.2, 4.1, 4.3]  # GPT-4
+treatment_csat = [4.2, 4.3, 4.1, 4.4, 4.2, 4.0, 4.3, 4.2, 4.1, 4.3]  # treatment: frontier-general tier
 
 result = test_significance(baseline_csat, treatment_csat)
 
@@ -1461,7 +1463,7 @@ When evaluating any LLM application:
 
 **☐ 6. Compare to Baselines**
 - Rule-based baseline (e.g., keyword matching)
-- Zero-shot baseline (e.g., GPT-3.5 with prompt)
+- Zero-shot baseline (e.g., fast-cheap tier with a plain prompt)
 - Previous model (current production system)
 - Ensure new model outperforms all baselines
 
@@ -1655,7 +1657,7 @@ Why it matters:
 For domains where the *justification* matters (math proofs, legal reasoning, medical triage, code review), grade the reasoning trace as well as the final answer:
 
 - **Step-correctness rate.** What fraction of intermediate steps are sound, given the prior steps?
-- **Faithfulness.** Does the final answer follow from the stated reasoning? Use an NLI model (Part 4 RAG faithfulness recipe).
+- **Faithfulness.** Does the final answer follow from the stated reasoning? Use an NLI model (Part 1's `evaluate_rag_faithfulness` recipe).
 - **Reasoning-rubric LLM judge.** A separate judge that scores only the chain-of-thought, not the final answer.
 
 Note: many providers do not expose the internal chain-of-thought from reasoning models. When the trace is hidden, you're limited to grading the final answer plus inferring from token counts.

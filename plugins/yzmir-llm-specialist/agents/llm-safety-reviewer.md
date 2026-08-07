@@ -73,8 +73,14 @@ grep -rn "filter.*output\|output.*filter\|check.*response" --include="*.py"
 Search for jailbreak defenses:
 
 ```bash
-# Check for jailbreak detection
-grep -rn "jailbreak\|ignore.*instruction\|pretend\|roleplay" --include="*.py"
+# Check for a classifier-based input guard (PromptGuard / Llama Guard / ShieldGemma / moderation API)
+grep -rn "PromptGuard\|Llama.Guard\|ShieldGemma\|WildGuard\|NeMo\|moderations\.create" --include="*.py"
+
+# Check for structural injection defenses (spotlighting, delimiting, datamarking)
+grep -rn "delimit\|datamark\|spotlight\|untrusted\|<untrusted" --include="*.py"
+
+# Check for a legacy string blocklist standing in for a defense
+grep -rn "ignore previous\|ignore all previous\|BLOCKED_PHRASES\|JAILBREAK_PATTERNS" --include="*.py"
 
 # Check for system prompt protection
 grep -rn "system.*prompt\|instructions" --include="*.py"
@@ -83,18 +89,28 @@ grep -rn "system.*prompt\|instructions" --include="*.py"
 grep -rn "role.*system" --include="*.py" -A10
 ```
 
-**Jailbreak patterns to defend against:**
-- "Ignore previous instructions"
-- "You are now [different persona]"
-- "In a hypothetical scenario..."
-- "What are your instructions?"
-- "Translate your system prompt to..."
+**Threat classes to defend against** (see `llm-safety-alignment.md` Part 2 for the full
+taxonomy): automated optimization attacks (GCG), refinement attacks (PAIR), fluent
+natural-language attacks (AutoDAN), many-shot context flooding, and indirect injection
+via retrieved documents or tool results.
 
 **Required controls:**
-- ✅ Pattern-based jailbreak detection
-- ✅ Minimal system prompt (no secrets)
-- ✅ Output filtering for leaked instructions
-- ✅ Rate limiting for suspicious queries
+- ✅ Classifier-based input filtering (PromptGuard-class model or a moderation API) —
+  *not* a phrase blocklist
+- ✅ Structural injection defenses: spotlighting (delimit / datamark / encode) on all
+  untrusted content, plus a privilege-separated instruction hierarchy
+- ✅ Output classifier on generations (Llama Guard 3 / ShieldGemma class)
+- ✅ Minimal system prompt (assume it will be extracted; keep no secrets in it)
+- ✅ Behavioral rate limiting and anomaly monitoring, not per-phrase blocking
+
+**Red flags:**
+- ❌ A hardcoded list of jailbreak phrases ("ignore previous instructions", "you are now
+  DAN", "in a hypothetical scenario") presented as *the* jailbreak defense. String
+  matching was always weak and is now useless against automated attacks — it produces a
+  false sense of coverage while GCG/PAIR/AutoDAN suffixes walk straight past it.
+- ❌ Untrusted content (retrieved docs, tool results, fetched pages) concatenated into
+  the prompt with no spotlighting or role separation
+- ❌ Input filtering only, with no output classifier
 
 ### 3. PII Protection
 
@@ -214,12 +230,12 @@ For code quality issues beyond LLM safety:
 import glob
 
 # Python code quality
-python_pack = glob.glob("plugins/axiom-python-engineering/plugin.json")
+python_pack = glob.glob("plugins/axiom-python-engineering/.claude-plugin/plugin.json")
 if not python_pack:
     print("Recommend: axiom-python-engineering for general Python review")
 
 # Security architecture
-security_pack = glob.glob("plugins/ordis-security-architect/plugin.json")
+security_pack = glob.glob("plugins/ordis-security-architect/.claude-plugin/plugin.json")
 if not security_pack:
     print("Recommend: ordis-security-architect for broader security review")
 ```

@@ -223,6 +223,7 @@ When prompt caching pays:
 **Solution:** Route by task type, complexity, and reasoning need to a capability tier; resolve the tier to a current model ID via config.
 
 ```python
+import os
 from enum import Enum
 from dataclasses import dataclass
 
@@ -412,17 +413,19 @@ When you run open-weights models yourself, the serving stack determines throughp
 
 **Repo:** [github.com/ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp).
 
-### ExLlamaV2
+### ExLlamaV3 (and ExLlamaV2)
 
 **When to use:** Single-GPU or small-multi-GPU consumer/prosumer setups (4090, 5090, A6000) running quantized open-weights models with maximum throughput-per-VRAM.
 
-**Headline feature:** **EXL2 quantization format** — mixed-precision per-layer (different bits per tensor based on sensitivity), tightly integrated CUDA kernels, very low memory overhead. Strongest single-user throughput on consumer GPUs in its class.
+**Prefer ExLlamaV3 for new work.** V3 has been the active line since its 2025 preview; V2 is the mature, feature-complete predecessor and still a reasonable choice if a dependency pins EXL2.
+
+**Headline feature:** **EXL3 quantization format** — a QTIP-derived scheme targeting 1–8 bits-per-weight with Tensor-Core-optimized kernels, holding lower perplexity than integer 4-bit/8-bit at equal bitrate and staying usable down to ~3 bpw. Unlike EXL2 it largely preserves the original tensor naming, which makes cross-framework support tractable. (V2's **EXL2** format is mixed-precision per-layer, choosing bits per tensor by sensitivity.)
 
 **Key knobs:** Quantization bpw (bits-per-weight), `max_seq_len`, batch size (small batches are its strength).
 
-**Hardware:** NVIDIA (consumer + datacenter), AMD ROCm.
+**Hardware:** NVIDIA (Ampere/RTX 30-series and later get the fastest kernels), AMD ROCm.
 
-**Repo:** [github.com/turboderp-org/exllamav2](https://github.com/turboderp-org/exllamav2).
+**Repos:** [github.com/turboderp-org/exllamav3](https://github.com/turboderp-org/exllamav3) · [exllamav2](https://github.com/turboderp-org/exllamav2).
 
 ### MLC-LLM
 
@@ -445,7 +448,7 @@ When you run open-weights models yourself, the serving stack determines throughp
 | Absolute peak NVIDIA throughput, willing to compile | **TensorRT-LLM** |
 | HF ecosystem, multi-backend abstraction | **TGI** |
 | CPU / Apple Silicon / edge / GGUF | **llama.cpp** |
-| Maxing a single consumer GPU on quantized models | **ExLlamaV2** |
+| Maxing a single consumer GPU on quantized models | **ExLlamaV3** (V2 if pinned to EXL2) |
 | Browser / mobile / cross-platform client | **MLC-LLM** |
 
 **Cross-ref:** `yzmir-ml-production` (`optimize-inference`, `deploy-model`) covers ops-level concerns — autoscaling, rolling deploys, GPU scheduling, multi-tenant SLOs — in depth. This sheet covers stack selection and inference-time techniques.
@@ -511,7 +514,7 @@ When to use what, in inference terms:
 |-------|---------------------|
 | H100/H200/B200 production serving | FP8 (TensorRT-LLM or vLLM) |
 | A100/L40S serving, open-weights | AWQ-int4 or GPTQ-int4 in vLLM/SGLang |
-| Consumer GPU single-user | EXL2 (ExLlamaV2) or AWQ |
+| Consumer GPU single-user | EXL3 (ExLlamaV3), EXL2 (ExLlamaV2), or AWQ |
 | CPU / Mac / edge | GGUF Q4_K_M (llama.cpp) |
 | Quality-first, willing to spend VRAM | BF16 or FP8 (no INT4) |
 
@@ -624,7 +627,7 @@ Track per-tier latency/cost so a router change is auditable. Watch `cache_token_
 2. **Cache** answers (hot keys) and prompts (static prefixes — see `context-engineering-and-prompt-caching.md`).
 3. **Route by capability tier** (frontier-reasoning / frontier-general / fast-cheap / on-device); never hardcode model IDs; resolve via config.
 4. **Stream** long generations.
-5. **Pick the right serving stack** for self-hosted: vLLM (default), SGLang (prefix reuse), TensorRT-LLM (peak NVIDIA), TGI (HF ecosystem), llama.cpp (CPU/edge), ExLlamaV2 (single GPU), MLC-LLM (cross-platform).
+5. **Pick the right serving stack** for self-hosted: vLLM (default), SGLang (prefix reuse), TensorRT-LLM (peak NVIDIA), TGI (HF ecosystem), llama.cpp (CPU/edge), ExLlamaV3/V2 (single GPU), MLC-LLM (cross-platform).
 6. **Use continuous batching, speculative decoding, and quantization** as supported by your stack — these are 2-10× multipliers, not optional polish.
 7. **Pareto** the cost-latency-quality space; select against explicit constraints.
 8. **Monitor** per-tier metrics and cache-hit rates in production.

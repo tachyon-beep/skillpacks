@@ -21,22 +21,60 @@ Without active safety measures, even competent applications regularly produce po
 
 **Formula:** Content moderation (filter harmful) + Bias testing (ensure fairness) + Jailbreak resistance (modern taxonomy) + Prompt-injection defenses (structural, not just sanitization) + PII protection + Agentic safety (when tools are in play) + Monitoring + Threat modeling = Responsible production AI.
 
-## Threat-Modeling First: OWASP LLM Top 10 (2025)
+## Threat-Modeling First: OWASP LLM Top 10
 
-Before designing controls, map your application against the OWASP Top 10 for LLM Applications (2025 edition):
+Before designing controls, map your application against the OWASP Top 10 for LLM Applications.
 
-1. **LLM01 Prompt Injection** — direct, indirect (via documents, web pages, tool outputs), multimodal.
-2. **LLM02 Sensitive Information Disclosure** — PII, secrets, training data, RAG-source leakage.
-3. **LLM03 Supply Chain** — model/dataset/plugin provenance, fine-tune integrity.
-4. **LLM04 Data and Model Poisoning** — training, fine-tuning, RAG corpus, embedding-store tampering.
-5. **LLM05 Improper Output Handling** — XSS/SSRF/SQLi via model output passed unsanitized to downstream systems.
-6. **LLM06 Excessive Agency** — over-permissioned tools, missing human-in-the-loop.
-7. **LLM07 System Prompt Leakage** — guarded secrets in the system prompt; inevitable extraction.
-8. **LLM08 Vector and Embedding Weaknesses** — embedding inversion, retrieval-poisoning, cross-tenant leakage.
-9. **LLM09 Misinformation** — hallucination at scale, especially with authoritative-sounding outputs.
-10. **LLM10 Unbounded Consumption** — runaway loops, token-cost DoS, prompt-injection-driven amplification.
+> **Edition warning.** The enumeration below is the **2025 edition**. OWASP published the
+> **GenAI LLM Top 10 2026** on 2026-08-04, and while the *risk categories* are substantially
+> the same, **the LLM03–LLM10 numbering changed** — see "2026 edition renumbering" below.
+> Cite an edition explicitly (`LLM06:2025`, not bare `LLM06`) or your control matrix will
+> silently mean two different things to two different readers.
+
+### 2025 edition (enumeration used throughout this sheet)
+
+1. **LLM01:2025 Prompt Injection** — direct, indirect (via documents, web pages, tool outputs), multimodal.
+2. **LLM02:2025 Sensitive Information Disclosure** — PII, secrets, training data, RAG-source leakage.
+3. **LLM03:2025 Supply Chain** — model/dataset/plugin provenance, fine-tune integrity.
+4. **LLM04:2025 Data and Model Poisoning** — training, fine-tuning, RAG corpus, embedding-store tampering.
+5. **LLM05:2025 Improper Output Handling** — XSS/SSRF/SQLi via model output passed unsanitized to downstream systems.
+6. **LLM06:2025 Excessive Agency** — over-permissioned tools, missing human-in-the-loop.
+7. **LLM07:2025 System Prompt Leakage** — guarded secrets in the system prompt; inevitable extraction.
+8. **LLM08:2025 Vector and Embedding Weaknesses** — embedding inversion, retrieval-poisoning, cross-tenant leakage.
+9. **LLM09:2025 Misinformation** — hallucination at scale, especially with authoritative-sounding outputs.
+10. **LLM10:2025 Unbounded Consumption** — runaway loops, token-cost DoS, prompt-injection-driven amplification.
 
 Source: [OWASP Top 10 for LLM Applications 2025](https://genai.owasp.org/llm-top-10/) ([PDF](https://owasp.org/www-project-top-10-for-large-language-model-applications/assets/PDF/OWASP-Top-10-for-LLMs-v2025.pdf)).
+
+### 2026 edition renumbering (published 2026-08-04)
+
+The 2026 edition introduced incident data (thousands of real-world cases) at ~25% weight
+alongside the practitioner vote, which reshuffled everything below the top two. The
+**categories** barely changed; the **ordering** did.
+
+Confirmed across multiple independent reports:
+
+- **LLM01 Prompt Injection** and **LLM02 Sensitive Information Disclosure** — unchanged.
+- **Excessive Agency** rose from LLM06 to **LLM03** — production incidents cluster on
+  agentic systems whose output autonomously runs commands, calls APIs, or writes to stores.
+- **Unbounded Consumption** rose four places to **LLM06**, now explicitly covering
+  extended-thinking and multimodal inference as denial-of-wallet surfaces.
+- **Misinformation** rose to **LLM07**.
+- **System Prompt Leakage** was renamed and broadened to **Hidden Context Exposure**
+  (**LLM08**) — covering *all* non-user-visible context: system instructions, RAG schemas,
+  hidden policy logic.
+- **Improper Output Handling** fell from LLM05 to **LLM10**.
+
+Reported but single-sourced at time of writing — **verify against the OWASP publication
+before citing these three IDs**: LLM04 Supply Chain, LLM05 Data and Model Poisoning,
+LLM09 Vector and Embedding Weaknesses.
+
+Source: [OWASP GenAI LLM Top 10 2026](https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/).
+
+**What actually changes for you:** nothing about the controls in this sheet — every category
+below still needs the same defenses. What changes is *citation hygiene*. If a compliance
+artifact, a control matrix, or a ticket references bare `LLMnn` IDs, stamp the edition on
+them now, before the two numbering schemes get mixed in the same document.
 
 **Cross-ref:** `ordis-security-architect` covers full STRIDE-style threat modeling, attack trees, and security architecture for LLM systems. This sheet covers the application-layer controls.
 
@@ -391,7 +429,7 @@ If the agent runs code, run it in a sandbox: ephemeral container, no host networ
 
 ### Confused-Deputy Risks
 
-Indirect prompt injection (LLM02 / LLM01 in OWASP terms) becomes a confused-deputy attack the moment the model has tools. A web page the agent fetches can contain instructions that cause the agent — running with the user's authority — to take an action the page's author wanted, not the user. **Defenses:**
+Indirect prompt injection (LLM01 in OWASP terms, both editions) becomes a confused-deputy attack the moment the model has tools. A web page the agent fetches can contain instructions that cause the agent — running with the user's authority — to take an action the page's author wanted, not the user. **Defenses:**
 
 - Spotlight (datamark / delimit / encode) all retrieved/fetched content.
 - Privilege-separate user instructions (system/developer roles) from fetched content (user role at most).
@@ -476,7 +514,7 @@ What to monitor in production:
 - **Output classifier flag rate.** Should be near zero on normal traffic; movement is signal.
 - **Injection-filter flag rate.** Trend up = automated probing.
 - **Tool-call pattern anomalies.** Tools called outside session scope, unusual sequences, repeated retries.
-- **Token-cost anomalies (LLM10 Unbounded Consumption).** A single user spending 100× normal tokens is either a power user or an attack — alert and rate-limit.
+- **Token-cost anomalies (Unbounded Consumption — LLM10:2025 / LLM06:2026).** A single user spending 100× normal tokens is either a power user or an attack — alert and rate-limit.
 
 ## Part 8: Refusal Tuning and Calibration
 
@@ -494,7 +532,7 @@ WildGuard's refusal-rate output is a useful signal during evaluation. Periodic a
 
 **Safety and alignment are mandatory for production LLM applications, and the playbook has matured.**
 
-1. **Threat-model first** against the OWASP LLM Top 10 (2025); document controls per item.
+1. **Threat-model first** against the OWASP LLM Top 10; document controls per item, and *stamp the edition* on every ID you record — 2026 renumbered LLM03–LLM10.
 2. **Content moderation** in *and* out — OpenAI Moderation, Llama Guard 3, ShieldGemma, WildGuard, NeMo Guardrails. Match tool to need.
 3. **Modern jailbreak resistance** — assume GCG, PAIR, AutoDAN, and many-shot are in attacker toolkits. Defense-in-depth, not pattern lists.
 4. **Structural prompt-injection defenses** — spotlighting (Hines et al.), instruction hierarchy (Wallace et al.), signed prompts. PromptGuard for fast input filtering.

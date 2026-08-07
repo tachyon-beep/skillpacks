@@ -99,7 +99,8 @@ grep -rn "rerank\|cross.encoder\|CrossEncoder" --include="*.py"
 results = vectorstore.similarity_search(query, k=5)
 
 # GOOD: Hybrid search with re-ranking
-from langchain.retrievers import EnsembleRetriever, BM25Retriever
+from langchain.retrievers import EnsembleRetriever
+from langchain_community.retrievers import BM25Retriever
 
 # Hybrid retrieval
 dense_retriever = vectorstore.as_retriever(search_kwargs={'k': 20})
@@ -109,8 +110,9 @@ hybrid = EnsembleRetriever(
     weights=[0.5, 0.5]
 )
 
-# Over-retrieve then re-rank
-initial_results = hybrid.get_relevant_documents(query)[:20]
+# Over-retrieve then re-rank. Use .invoke() — get_relevant_documents() was
+# deprecated in langchain-core 0.1.46 and removed in langchain 1.0.
+initial_results = hybrid.invoke(query)[:20]
 final_results = rerank(query, initial_results, top_k=5)
 ```
 
@@ -124,7 +126,7 @@ def audit_retrieval(retriever, test_queries, ground_truth):
     recall_scores = []
 
     for query, relevant_docs in zip(test_queries, ground_truth):
-        results = retriever.get_relevant_documents(query)
+        results = retriever.invoke(query)
         result_ids = [r.metadata.get('id') for r in results[:5]]
 
         # MRR: Position of first relevant result
@@ -182,12 +184,18 @@ grep -rn "compress\|summarize\|ContextualCompression" --include="*.py"
 # Place most important info at START and END
 
 def order_for_attention(chunks):
-    """Order chunks to avoid 'lost in the middle' problem."""
+    """Order chunks to avoid 'lost in the middle'.
+
+    `chunks` is relevance-sorted, most-relevant first. Second-best goes FIRST and
+    the best goes LAST, so both attention edges carry a strong chunk and the
+    recency edge gets the strongest. Matches order_for_lost_in_middle() in
+    rag-architecture-patterns.md — keep the two in step.
+    """
     if len(chunks) <= 2:
         return chunks
 
-    # Best at start, second-best at end
-    return [chunks[0]] + chunks[2:-1] + [chunks[1]]
+    best, second, *rest = chunks
+    return [second, *rest, best]
 ```
 
 ## Phase 4: Generation Audit

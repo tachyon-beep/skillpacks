@@ -419,7 +419,7 @@ Provider prices change. Frame trade-offs in *ratios*, not dollars:
 - **Long context is roughly proportional in cost to its token count.** Doubling the context roughly doubles the input bill (modulo caching).
 - **Cached input ≈ 10% of normal input price** on Anthropic; comparable order on other providers. Verify current numbers in provider docs.
 - **Latency scales with prompt length.** First-token-latency grows approximately with input length on most engines (prefill cost). Cached prefixes dramatically cut prefill time as well as bill.
-- **Output tokens are typically 3-5× the price of input tokens.** Be especially careful with reasoning models that consume output budget on hidden thinking.
+- **Output tokens cost several times what input tokens cost** — commonly 4-10× on current flagship models, and the multiplier varies by provider and tier, so read it off the pricing page rather than assuming. Be especially careful with reasoning models, which spend output budget on hidden thinking.
 
 Cost-optimization heuristics:
 

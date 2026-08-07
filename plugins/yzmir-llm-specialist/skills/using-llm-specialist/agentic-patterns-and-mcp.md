@@ -172,7 +172,7 @@ Use in-process tool calls when:
 
 MCP servers run in the security context the host gave them. If a host launches an MCP server with broad filesystem access, the server has it. The protocol does not constrain what a server can do — the *host* must decide what to expose and what to forbid. The user-consent UX (install-time approval, per-tool approval prompts) is a host concern, not a protocol concern.
 
-This pushes the threat-modeling burden onto host implementers. See [ordis-security-architect](../../ordis-security-architect/) for sandboxing, capability-based authorization, and confused-deputy patterns. Cross-ref also: prompt-injection-via-tool-results below.
+This pushes the threat-modeling burden onto host implementers. See [ordis-security-architect](../../../ordis-security-architect/) for sandboxing, capability-based authorization, and confused-deputy patterns. Cross-ref also: prompt-injection-via-tool-results below.
 
 
 ## Multi-Agent Orchestration
@@ -218,7 +218,7 @@ Computer use is a specialization of tool use where the "tool" is a virtual compu
 - Run in a sandbox (VM or container) with no production credentials.
 - Cap turns aggressively — agents loop on stuck UIs.
 - Treat every screen as untrusted (prompt-injection-by-screenshot is a real attack).
-- Cross-ref [ordis-security-architect](../../ordis-security-architect/) for sandbox design and threat modeling.
+- Cross-ref [ordis-security-architect](../../../ordis-security-architect/) for sandbox design and threat modeling.
 
 
 ## Anti-Patterns
@@ -237,7 +237,7 @@ Computer use is a specialization of tool use where the "tool" is a virtual compu
 
 **Right:** Tag retrieved content explicitly ("untrusted content follows"), strip or escape instruction-like markers, never let tool results trigger sensitive actions without explicit user re-confirmation, sandbox tool effects.
 
-**Principle:** Anything the model can read can try to instruct it. Tool results are *user input*, not *developer prompts*. Cross-ref [ordis-security-architect](../../ordis-security-architect/) for full threat modeling and the confused-deputy pattern.
+**Principle:** Anything the model can read can try to instruct it. Tool results are *user input*, not *developer prompts*. Cross-ref [ordis-security-architect](../../../ordis-security-architect/) for full threat modeling and the confused-deputy pattern.
 
 ### Anti-pattern 3: Infinite loops
 
@@ -303,8 +303,8 @@ Computer use is a specialization of tool use where the "tool" is a virtual compu
 **Cross-refs:**
 - [reasoning-models.md](reasoning-models.md) — capability tiers; reasoning models in agent loops
 - [context-engineering-and-prompt-caching.md](context-engineering-and-prompt-caching.md) — sub-agent context isolation; tool-result compaction
-- [ordis-security-architect](../../ordis-security-architect/) — tool authorization, sandboxing, confused-deputy threat modeling, prompt-injection defense
-- [axiom-engineering-foundations](../../axiom-engineering-foundations/) — surrounding system design (queues, retries, observability)
+- [ordis-security-architect](../../../ordis-security-architect/) — tool authorization, sandboxing, confused-deputy threat modeling, prompt-injection defense
+- [axiom-engineering-foundations](../../../axiom-engineering-foundations/) — surrounding system design (queues, retries, observability)
 
 ---
 

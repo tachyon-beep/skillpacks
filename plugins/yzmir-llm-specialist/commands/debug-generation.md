@@ -167,14 +167,14 @@ JSON output:"""
 ```python
 # For factual/consistent outputs
 response = client.chat.completions.create(
-    model="gpt-4",
+    model=MODEL_FOR_TIER["frontier-general"],  # resolve IDs from config, never inline
     messages=messages,
     temperature=0,  # Deterministic
 )
 
 # For creative/varied outputs
 response = client.chat.completions.create(
-    model="gpt-4",
+    model=MODEL_FOR_TIER["frontier-general"],  # resolve IDs from config, never inline
     messages=messages,
     temperature=0.7,  # Some creativity
 )

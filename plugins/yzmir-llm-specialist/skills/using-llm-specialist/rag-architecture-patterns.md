@@ -245,10 +245,13 @@ The vector-DB market keeps churning. The decision axes have not:
 | Multi-vector / late interaction | Vespa, Qdrant (multi-vector), Weaviate (ColBERT-style), LlamaIndex + ColBERT |
 
 ```python
-# Modern langchain imports (langchain >= 0.1; community split):
-from langchain_community.vectorstores import Chroma, FAISS
+# Modern langchain imports (langchain >= 0.1; community split, then per-provider
+# partner packages). Prefer the dedicated partner package where one exists —
+# langchain_community is the fallback, not the destination.
+from langchain_chroma import Chroma           # not langchain_community
 from langchain_qdrant import QdrantVectorStore
 from langchain_postgres import PGVector       # pgvector now lives here
+from langchain_community.vectorstores import FAISS   # no partner package yet
 # OLD (broken since langchain 0.1):
 # from langchain.vectorstores import Chroma   # do not use
 ```
@@ -392,12 +395,20 @@ Liu et al., 2023 — <https://arxiv.org/abs/2307.03172> — showed LLMs systemat
 
 ```python
 def order_for_lost_in_middle(reranked: list[Doc]) -> list[Doc]:
+    """`reranked` is relevance-sorted, most-relevant first.
+
+    Heuristic: second-most-relevant FIRST, most-relevant LAST. Both attention
+    edges get a strong chunk, and the recency edge — which LLMs typically weight
+    hardest — gets the best one. Everything else lands in the low-attention middle.
+    """
     if len(reranked) <= 2:
         return reranked
-    # Put the most relevant at the end (LLMs often weight the recency edge harder).
-    head, *middle, tail = reranked
-    return [head, *reversed(middle), tail]
+    best, second, *rest = reranked
+    return [second, *rest, best]
 ```
+
+The `/rag-audit` command applies this same arrangement — keep the two in step if you
+change the heuristic, or your audit will flag your own implementation.
 
 **Contextual compression** — feeding each chunk through an extractive LLM step that keeps only sentences relevant to the query — pays off when chunks are long and the retriever returns dense matches. LangChain ships `ContextualCompressionRetriever` for this; LlamaIndex has equivalent post-processors.
 
@@ -471,7 +482,7 @@ Run these in CI against a frozen eval set; that's how you catch regressions when
 ```python
 from __future__ import annotations
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Qdrant
+from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
 import voyageai, cohere
 
@@ -511,7 +522,10 @@ class ModernRAG:
             f"<document>\n{full}\n</document>\n"
             f"<chunk>\n{chunk}\n</chunk>\n"
             "Give a 1-2 sentence context situating this chunk."
-        ), model="command-r-plus").text
+        ), model=CONTEXTUALIZER_MODEL).text
+        # CONTEXTUALIZER_MODEL: a fast-cheap-tier instruct model resolved from config.
+        # Contextualization is a high-volume, low-difficulty call — do not spend a
+        # frontier tier on it. Verify the current model ID in provider docs.
 
     def retrieve(self, query: str, k: int = 8) -> list[dict]:
         q_dense = self.vo.embed(
@@ -553,7 +567,7 @@ class ModernRAG:
 | Stuffing 50 chunks into context | Costs spike, quality plateaus or regresses | Cap reranked context, order for lost-in-middle. |
 | RAG when long-context wins | Small corpus, complex synthesis, no citation requirement | Use prompt caching with full corpus; cross-ref `context-engineering-and-prompt-caching.md`. |
 | No eval harness | "Did this change make things better?" unanswerable | Frozen eval set + RAGAS/TruLens in CI. |
-| LangChain wrapper mismatch | `ImportError: cannot import name X from langchain.vectorstores` | Use `langchain_community.vectorstores` or the provider SDK. |
+| LangChain wrapper mismatch | `ImportError: cannot import name X from langchain.vectorstores` | Use the provider's partner package (`langchain_chroma`, `langchain_qdrant`, `langchain_postgres`), else `langchain_community.vectorstores`, else the provider SDK. |
 
 
 ## Summary
