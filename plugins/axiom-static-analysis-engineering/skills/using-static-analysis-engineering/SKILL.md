@@ -17,6 +17,11 @@ This is the *producer-side* counterpart to architecture analysis:
 - **`axiom-static-analysis-engineering` (this pack) builds analyzers** — designs the AST visitor, the abstract domain, the inference order, the rule plugin model, and the suppression discipline. The analyzer is the artifact; the engineer is its author.
 - **The two pair**: an archaeologist that finds a gap in coverage hands the gap to this pack; this pack ships the new rule; the archaeologist re-runs and the gap closes. Cross-link, don't duplicate.
 
+There is a third member of this family, split by *what the tool produces* rather than by what it reads:
+
+- **`axiom-tensor-compiler-engineering` transforms IR and produces executables.** This pack reads a program and emits a *verdict* about it; that pack rewrites a program and emits something that *runs*. The disciplines rhyme — both need a defined IR, both need an extension model, both live or die on trust in their output — but the trust mechanism differs: an analyzer earns trust through false-positive economics, a compiler earns it through a conformance gate that is independent of the compiler. If your tool changes the program rather than judging it → `/tensor-compiler-engineering`.
+- **The three pair naturally**: a structural verifier that says "this graph is legal and canonical" is a verdict producer (this pack); the artifact it approves is compiled and conformance-checked there.
+
 ## When to Use
 
 Use this pack when:
@@ -32,6 +37,7 @@ Do **not** use this pack when:
 
 - You want to *run* an existing analyzer (ruff, mypy, pylint, semgrep, eslint, clippy) — that is a Python/Rust/JS engineering tooling problem; use `/python-engineering`, `/rust-engineering`, or framework-specific guidance.
 - You want to *consume* an analyzer's output to build a system map → `/system-archaeologist`.
+- Your tool *rewrites* the program rather than judging it — lowering a graph IR, writing `torch.fx` passes, selecting kernels, fusing operators, or proving a compiled artifact preserves the source's semantics → `/tensor-compiler-engineering`. Verdict producers live here; executable producers live there.
 - You want a turnkey lint config — this pack designs the engine; off-the-shelf analyzers come with their own rule sets.
 - You are designing the *audit trail of decisions* an analyzer makes (who suppressed what, when, why, with what authority) → suppressions are decisions; cross-link to `/audit-pipelines`. This pack handles the *engine*; that pack handles the *evidence*.
 - You are doing rule design at the policy or compliance level (NIST control families, SOC 2 criteria) — that is a `/security-architect` or `/sdlc-engineering` problem; this pack builds the engine that *enforces* whatever policy lands.

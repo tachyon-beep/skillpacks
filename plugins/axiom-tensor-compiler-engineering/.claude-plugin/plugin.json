@@ -1,0 +1,37 @@
+{
+  "name": "axiom-tensor-compiler-engineering",
+  "version": "0.1.0",
+  "description": "Building compilers for tensor programs - lowering a canonical graph IR to executable PyTorch (torch.fx / torch.compile / AOTAutograd), operator lowering and kernel selection, fusion and memory planning, compilation manifests, artifact identity and caching - and above all conformance: proving the compiled artefact preserves canonical semantics through reference execution, gradient conformance, and cross-device/cross-layout agreement, judged by a gate independent of the compiler. Producer-side sibling of axiom-static-analysis-engineering: that pack reads code and produces verdicts; this one transforms IR and produces executables.",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "axiom",
+    "tensor-compiler",
+    "graph-ir",
+    "lowering",
+    "torch-fx",
+    "torch-compile",
+    "dynamo",
+    "inductor",
+    "aotautograd",
+    "kernel-selection",
+    "operator-fusion",
+    "memory-planning",
+    "conformance-testing",
+    "gradcheck",
+    "semantic-hash",
+    "numerical-tolerance",
+    "compilation-manifest",
+    "reproducible-builds",
+    "artifact-caching",
+    "content-addressed",
+    "miscompile",
+    "compiler-debugging",
+    "pytorch"
+  ],
+  "category": "development"
+}
