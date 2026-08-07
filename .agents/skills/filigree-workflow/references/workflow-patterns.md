@@ -3,6 +3,27 @@
 Detailed procedural patterns for common filigree workflows. Load this reference
 when facing a specific workflow challenge.
 
+## Session Recipes
+
+### Before Starting Work
+
+1. Run `filigree ready` to see available work
+2. Check `filigree critical-path` — unblocking the critical path has highest leverage
+3. Pick work that matches the current session's context (e.g., if code is already open)
+
+### When Finishing Work
+
+1. Add a comment summarising what was done and any follow-up needed
+2. Close with a reason: `filigree close <id> --reason="implemented X, tested Y"`
+3. Check if closing this issue unblocks anything: `filigree ready`
+
+### When Blocked
+
+1. Add a comment explaining the blocker
+2. Create the blocking issue if it doesn't exist
+3. Add the dependency: `filigree add-dep <blocked> <blocker>`
+4. Move to other available work
+
 ## Triage Pattern
 
 Triage turns an unsorted pile of issues into a prioritised, actionable backlog.
@@ -114,6 +135,9 @@ filigree start-work <bug-id> --assignee <name> --advance   # triage → confirme
 Without `--advance`, `start-work` on a `triage` bug returns
 `INVALID_TRANSITION` naming the next status (`confirmed`), and
 `start-next-work` skips it.
+
+`--advance` only walks *soft* transitions: missing required fields become
+warnings rather than blocks, and hard edges are never auto-walked.
 
 ### Disambiguating the wip target
 
