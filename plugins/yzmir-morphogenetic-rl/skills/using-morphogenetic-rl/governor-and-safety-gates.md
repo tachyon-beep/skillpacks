@@ -287,7 +287,10 @@ class Governor:
     grad_explosion_factor: float = 10.0
     grad_vanish_factor: float = 0.01
 
-    def __init__(self):
+    # __post_init__, not __init__: hand-writing __init__ on a @dataclass
+    # suppresses the generated one, so Governor(spike_k=6.0) would raise
+    # TypeError and every config field above would be unreachable.
+    def __post_init__(self) -> None:
         self.pending_actions: dict[ActionId, PendingAction] = {}
         self.cooldown: dict[SlotId, int] = {}
         self.event_log: list[GovEvent] = []

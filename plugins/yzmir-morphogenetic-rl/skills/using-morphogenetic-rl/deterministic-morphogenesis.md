@@ -13,7 +13,7 @@ description: Use when reproducing morphogenesis runs across topology changes —
 - Multi-rank training and ranks disagree on whether/where to grow
 - Adding a replay log for offline analysis of controller decisions
 
-For low-level numerical determinism in PyTorch (CUDA flags, deterministic algorithms), see `yzmir-simulation-foundations/check-determinism`. This sheet covers the *additional* discipline morphogenesis requires on top of normal training-determinism.
+For low-level numerical determinism in PyTorch (CUDA flags, deterministic algorithms), see `yzmir-simulation-foundations/check-determinism`. For the architecture-level treatment — determinism tiers, seed governance, replay infrastructure, and the cross-machine/floating-point questions this sheet deliberately does not re-derive — see `axiom-determinism-and-replay` (`seed-governance`, `rng-isolation-patterns`, `replay-infrastructure-design`, `floating-point-determinism`, `gpu-determinism`, `canonical-state-encoding-for-replay`, `divergence-detection-and-localisation`). This sheet covers the *additional* discipline morphogenesis requires on top of both.
 
 ---
 
@@ -51,7 +51,7 @@ These are different. Pick the one your system actually needs.
 | **Bit-reproducible** | Same trajectory regardless of hardware, CUDA version, kernel choice | Expensive. Disables many optimizations. |
 | **Replayable from log** | Trajectory can be reconstructed from a recorded decision log, even if RNG is non-deterministic | Cheap. Useful when full determinism is impractical. |
 
-For most morphogenetic research substrates, **deterministic given seed + data** is the right target. Bit-reproducibility is needed for safety-critical work; for those, see the dedicated determinism literature. Replayability is a lighter alternative if you cannot achieve full determinism — log every controller decision and replay from the log.
+For most morphogenetic research substrates, **deterministic given seed + data** is the right target. Bit-reproducibility is needed for safety-critical work; if that is your tier, `axiom-determinism-and-replay/determinism-vs-reproducibility` and `floating-point-determinism` are where the cross-machine and FP-policy questions get answered — this sheet assumes same-hardware determinism and does not re-derive them. Replayability is a lighter alternative if you cannot achieve full determinism — log every controller decision and replay from the log.
 
 A common failure: aiming for bit-reproducibility, achieving none of the three, and shipping a system that cannot be debugged.
 
@@ -104,18 +104,40 @@ The trainer's RNG state at any step is now a function of `(master_seed, step)` o
 
 If a single op needs randomness from multiple streams, that is a code smell. Pick one. Document why.
 
+**Ownership is not always enforceable by passing a generator.** `torch.nn.Dropout` and `F.dropout` take no `generator=` argument (nor do most fused CUDA kernels), so the trainer stream cannot *own* dropout the way it owns dataloader shuffling. For ops with no `generator=` parameter, isolate by scoping the global state instead:
+
+```python
+with torch.random.fork_rng(devices=[device]):
+    torch.manual_seed(trainer_epoch_seed)   # derived from the trainer stream
+    loss = model(batch)                     # dropout draws from the forked global state
+# global RNG state restored on exit; the controller's stream was never touched
+```
+
+Record every such op as an explicit exception in your stream table. Anything you can neither pass a generator to nor fork around is an un-isolated stream — log it as a known determinism gap rather than assuming the table covers it.
+
+**Draw on the generator's device.** A CUDA generator cannot seed a CPU tensor factory (`torch.randint(..., generator=cuda_gen)` raises `Expected a 'cpu' device type for generator but found 'cuda'`), and `make_streams` above builds device-resident generators. Pass `device=rng.device` at every draw site, or build the control-plane streams on CPU deliberately and document that choice.
+
 ### Per-Event Sub-Streams
 
 For replay surgery — "rerun, but skip event #17" — you need to derive a fresh sub-stream for each growth event so its randomness is independent of event ordering:
 
 ```python
+_MASK64 = 0xFFFF_FFFF_FFFF_FFFF
+_GOLDEN = 0x9E37_79B9_7F4A_7C15   # odd 64-bit constant; the multiply is a bijection mod 2^64
+
 def event_rng(parent: torch.Generator, event_id: int) -> torch.Generator:
     """Deterministic per-event RNG. Independent of how many events preceded."""
-    seed = parent.initial_seed() ^ (event_id * 0x9E37_79B9_7F4A_7C15)
+    # The mask is load-bearing, not cosmetic: `event_id * _GOLDEN` exceeds 2**64
+    # from event_id = 2 onward, and manual_seed then raises
+    # "Overflow when unpacking long long" — i.e. the run dies on its second
+    # growth event. Reduce mod 2**64 before seeding.
+    seed = (parent.initial_seed() ^ (event_id * _GOLDEN)) & _MASK64
     return torch.Generator(device=parent.device).manual_seed(seed)
 ```
 
 Now removing event #17 from the replay does not perturb event #18's randomness.
+
+The returned generator inherits the parent's device, so draws from it must name that device too — `torch.rand(n, generator=g, device=g.device)`.
 
 ---
 
@@ -178,8 +200,14 @@ def step_controller_distributed(controller, observation, world_size, rank):
     else:
         action = None
 
-    # Broadcast the decision (serialize ProposedAction first; see below)
-    action = dist.broadcast_object_list([action], src=0)[0]
+    # Broadcast the decision (serialize ProposedAction first; see below).
+    # broadcast_object_list mutates its list argument IN PLACE and returns None.
+    # Read the result back out of the buffer you passed in — subscripting the
+    # return value raises TypeError, and passing a throwaway list literal drops
+    # the broadcast result on the floor, leaving every non-src rank with None.
+    buf = [action]
+    dist.broadcast_object_list(buf, src=0)
+    action = buf[0]
 
     return action  # all ranks now have the same ProposedAction
 ```
@@ -195,10 +223,22 @@ Two subtleties:
 The governor's panic-detection inputs (loss, grad norm) are global statistics. All-reduce them before feeding the governor. Do not let rank 0's loss-spike decision drift from rank 7's.
 
 ```python
-loss_global = dist.all_reduce(loss_local, op=dist.ReduceOp.AVG)
-grad_norm_global = ...  # all-reduced gradient norm
+# all_reduce is IN PLACE and returns None (assigning its result gives you None).
+# Two further traps: reducing `loss_local` directly mutates a tensor autograd is
+# still holding, and ReduceOp.AVG is NCCL-only (Gloo rejects it). Clone off the
+# graph, reduce with SUM, divide by world_size — portable and autograd-safe.
+loss_global = loss_local.detach().clone()
+dist.all_reduce(loss_global, op=dist.ReduceOp.SUM)
+loss_global /= world_size
+
+grad_norm_global = grad_norm_local.detach().clone()
+dist.all_reduce(grad_norm_global, op=dist.ReduceOp.SUM)
+grad_norm_global /= world_size
+
 verdict = governor.post_step(state.with_global_stats(loss_global, grad_norm_global), step)
 ```
+
+The governor must see the *same* scalars on every rank. Reducing with SUM ÷ `world_size` rather than AVG also keeps the same code path working on a Gloo CPU test rig, which is where you will actually run your determinism CI.
 
 ### Action Serialization Across Ranks
 
@@ -250,9 +290,12 @@ When the test fails, the first divergence point is the bug. Walk back through th
 | Mistake | Effect | Fix |
 |---------|--------|-----|
 | Single shared RNG | Trainer trajectory diverges on first controller change | Separate streams per purpose |
-| `torch.manual_seed` only at start | Lazy CUDA init non-determinism | Use `torch.Generator` instances; pass them explicitly to ops |
+| `torch.manual_seed` only at start | Lazy CUDA init non-determinism | Use `torch.Generator` instances; pass them explicitly to every op that accepts `generator=`, and `torch.random.fork_rng` around those that do not (dropout) |
 | Logging decisions but not seeds | Replay produces different per-event randomness | Log `sampled_seed` per event |
-| Per-event seed = `master_seed + event_id` | Linear addition collides easily; predictable | Use a wide multiply or hash mix (e.g., `master_seed ^ event_id * 0x9E37...`) |
+| Per-event seed = `master_seed + event_id` | Linear addition collides easily; predictable | Use a wide multiply or hash mix, **masked to 64 bits**: `(master_seed ^ event_id * 0x9E37_79B9_7F4A_7C15) & 0xFFFF_FFFF_FFFF_FFFF` |
+| Unmasked wide-multiply seed mix | `manual_seed` raises "Overflow when unpacking long long" at the second event | `& 0xFFFF_FFFF_FFFF_FFFF` before seeding |
+| Draw from a device generator into a CPU tensor factory | `Expected a 'cpu' device type for generator but found 'cuda'` | Pass `device=rng.device` at the draw site |
+| Assigning the result of `all_reduce` / `broadcast_object_list` | Both are in-place and return `None`; the variable silently becomes `None` | Reduce/broadcast into a buffer, then read the buffer |
 | All-reduce after the controller decided | Rank 0 sampled on stale local state | All-reduce observations *before* feeding the controller |
 | Governor reads `time.time()` for cooldowns | Wall-clock ≠ deterministic | Use `step` count |
 | `random.shuffle` on a Python list as a slot tiebreak | Uses Python's RNG, not your stream | Pass an explicit `random.Random` instance |
@@ -303,6 +346,9 @@ When the test fails, the first divergence point is the bug. Walk back through th
 ## Cross-References
 
 - **Low-level training determinism (CUDA, autograd, dropout)**: `yzmir-simulation-foundations/check-determinism`
+- **Architecture-level determinism** — tier selection, seed governance, RNG isolation as a general pattern, replay infrastructure, snapshotting, divergence localisation: `axiom-determinism-and-replay` (`determinism-vs-reproducibility`, `seed-governance`, `rng-isolation-patterns`, `replay-infrastructure-design`, `snapshot-strategy`, `divergence-detection-and-localisation`)
+- **Cross-machine and floating-point determinism** (the questions this sheet declares out of scope): `axiom-determinism-and-replay/floating-point-determinism`, `axiom-determinism-and-replay/gpu-determinism`
+- **Canonical encoding of replay state** (when morphogenesis output must be byte-comparable across runs): `axiom-determinism-and-replay/canonical-state-encoding-for-replay`
 - **Controller action / observation design** (which feeds the RNG-discipline boundary): `rl-controller-for-morphogenesis.md`
 - **Governor's role in the deterministic pipeline**: `governor-and-safety-gates.md`
 - **Logging schemas that survive topology change**: `growth-telemetry-and-ablation.md`

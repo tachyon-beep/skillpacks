@@ -107,7 +107,7 @@ This pack ships eight novel sheets and two bridge sheets. Numbered artifacts are
 | Sheet | Concern |
 |-------|---------|
 | `multi-seed-coordination-rl` | Slot contention, simultaneous actions, credit assignment, factored joint actions |
-| `evaluation-under-topology-change` | The four required baselines, per-FLOP/per-param normalization, multi-seed reporting |
+| `evaluation-under-topology-change` | The four required baselines, compute-/param-equalized comparison, multi-seed reporting |
 | `when-not-to-grow` | Off-switch baseline, six failure modes where morphogenesis hurts, the discipline of stopping |
 
 **Bridges to `yzmir-dynamic-architectures`:**

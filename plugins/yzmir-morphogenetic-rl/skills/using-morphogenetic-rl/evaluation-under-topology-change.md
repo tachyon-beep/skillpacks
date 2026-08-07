@@ -116,12 +116,20 @@ When endpoint comparison is unavoidable (e.g., for a leaderboard cell), normaliz
 
 | Normalization | Definition | Use case |
 |---------------|------------|----------|
-| **Loss per param** | `loss / param_count` | Quick check; usually too crude |
-| **Loss per FLOP** | `loss / total_train_flops` | Fairer; accounts for compute |
 | **Compute-equalized loss** | Loss at fixed FLOP budget across runs | Standard for compute-controlled comparisons |
 | **Param-equalized loss** | Loss when the static baseline is shrunk/grown to match M's param count at evaluation | Standard for capacity-controlled comparisons |
 
-For a serious result, report all four and explain the disagreement (there will be disagreement). Picking one and hiding the others is a smell.
+Report **both**, and explain the disagreement (there will be disagreement). Picking one and hiding the other is a smell.
+
+### The Ratio Trap
+
+You will be tempted by `loss / param_count` and `loss / total_train_flops`. Both are inverted as fairness measures, and neither belongs in a results table.
+
+Loss is better when it is *lower*. Dividing loss by the resource makes a run that spent **more** parameters or **more** compute score better at equal loss — the ratio rewards exactly the resource it claims to control for. A morphogenetic run that grows freely and lands at the same loss as the static baseline will "win" on loss-per-FLOP purely by burning more FLOPs. That is the opposite of the comparison you wanted.
+
+If you want the resource in the denominator, put a quantity that improves with magnitude there instead — e.g. `(loss_baseline − loss_M) / extra_flops` is a genuine marginal-return-on-compute measure, and it goes negative when growth hurt, which is the behaviour you want from a fairness statistic.
+
+The raw ratios are usable as a one-directional smell test and nothing more: if `loss / param_count` collapses while loss itself is flat, the controller is buying parameters that do no work. Report that as a diagnostic observation, never as the headline comparison.
 
 ---
 
@@ -257,7 +265,7 @@ If you are sweeping reward functions across controllers, you need a 2D ablation 
 | Compare endpoints only | Hides whether morphogenesis was systematically better | Report curves |
 | Single seed per condition | Variance hidden | At least 3 for proof-of-concept, 10 for claims |
 | No fixed-schedule baseline | Cannot attribute lift to controller skill | Add Baseline 3 |
-| Loss / param_count as the only normalization | Crude; ignores compute | Add per-FLOP normalization |
+| `loss / param_count` or `loss / FLOPs` reported as the normalization | Inverted — the ratio rewards the run that spent *more* of the resource | Report compute-equalized and param-equalized loss; keep ratios as smell tests only |
 | Hide rollback events from the loss curve | Loss curve looks artificially smooth | Mark events on the curve |
 | Best-of-N reporting | Unfair to baselines that did not get the same selection | Report all seeds; if best-of-N is intentional, be explicit |
 | Compare to a "standard baseline" from the literature | Different data, different framework, meaningless | Run your own baseline in your harness |
@@ -269,7 +277,7 @@ If you are sweeping reward functions across controllers, you need a 2D ablation 
 
 | Rationalization | Reality |
 |-----------------|---------|
-| "Our morphogenetic model has more parameters and gets lower loss — that's the point" | Trivially true and trivially expected. The interesting claim is per-parameter or per-FLOP. |
+| "Our morphogenetic model has more parameters and gets lower loss — that's the point" | Trivially true and trivially expected. The interesting claim is at *equalized* parameters or *equalized* compute — not a loss/resource ratio, which flatters whichever run spent more. |
 | "We can't run all those baselines, the compute is too expensive" | Then you have a partial result. Report it as such. Not running the baseline does not mean the baseline would have lost. |
 | "The variance comes from the controller, that's a feature" | High-variance methods need more seeds, not fewer. |
 | "The static baseline didn't converge in the same time" | Fix it: equalize FLOPs, not steps. Or report at convergence. |
@@ -288,7 +296,7 @@ If you are sweeping reward functions across controllers, you need a 2D ablation 
 - [ ] **Single-seed results** — variance hidden
 - [ ] **Endpoint-only loss comparison** — full curves not shown
 - [ ] **Compute equalized by steps, not FLOPs** — bigger network gets more compute
-- [ ] **No per-FLOP or per-param normalization** — only raw loss reported
+- [ ] **No compute-equalized or param-equalized comparison** — only raw loss reported, or only a `loss / resource` ratio (which is inverted)
 - [ ] **Best-of-N selection without disclosure** — silent selection bias
 - [ ] **Rollback events hidden from loss curves** — curve looks deceptively clean
 - [ ] **Parameter-count variance across seeds not reported** — high-variance condition treated as low-variance

@@ -107,7 +107,9 @@ Check:
 - Cooldown table keyed by slot
 - Pre-flight rejects actions targeting a slot still in cooldown
 - Cooldown is configured, not learned
-- The controller does not read cooldown state from the governor (otherwise, the controller can learn to wait exactly until cooldown expires and re-propose the same bad action)
+- The controller's observation carries at most the slot's FSM *state label*. Seeing `Cooldown` in the observation is **correct and expected** — it is what stops the controller from proposing into a closed gate (see `safety-gated-seed-fsm.md`, "What the Controller May and May Not Observe"). What is a violation is a *quantity*: `cooldown_steps`, steps-remaining, an expiry step, the neighbour-cooldown graph, or any panic threshold appearing in the observation vector. Those let the policy learn to wait out expiry and re-propose the same bad action the instant the gate reopens.
+
+Concretely: flag a design if the observation schema contains a numeric cooldown/threshold field. Do **not** flag a design merely because slot FSM state (including `Cooldown`) is observable — that is mandated elsewhere in this pack, and flagging it makes this reviewer contradict the sheets.
 
 A reasonable hysteresis-violation test: scan the event log for `(rollback at step S on slot X) → (commit at step S' on slot X)` where `S' - S < cooldown_steps`. Any matches indicate a violation.
 

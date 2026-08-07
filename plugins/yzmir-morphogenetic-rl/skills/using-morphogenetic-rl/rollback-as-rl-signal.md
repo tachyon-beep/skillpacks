@@ -105,6 +105,8 @@ combined_advantages = step_advantages + event_advantages + rollback_advantages *
 
 Where `scale` is tuned so combined advantage on rollback steps is several times any step advantage but not so large that it dominates the entire batch.
 
+**Read this as a schematic, not a drop-in.** The three `compute_advantages` passes above run against one shared value head, so the baseline is subtracted three times over and the summed advantage is biased. A correct implementation computes advantages *once* over the combined reward stream and applies the per-stratum scaling to the **rewards** before that single pass — or maintains genuinely separate value heads per stratum, each trained on its own return. The transferable idea is the stratification (keep rollback magnitude out of the step-reward normalizer); the arithmetic above is illustrative.
+
 ### Option B: Reward Clipping with Wide Range
 
 Clip rewards at `[-r_max, +r_max]` where `r_max` is large enough to preserve rollback signal:
@@ -165,7 +167,7 @@ Other things happen in the watch window besides the mutation's effects: data shi
 Mitigations:
 
 - Shorter watch windows where possible (but this conflicts with `governor-and-safety-gates.md`'s panic detection requirements — there is a real trade-off here)
-- During the watch window, freeze other controller decisions (single-action watch period; full treatment planned in `multi-seed-coordination-rl.md` for v0.2.0)
+- During the watch window, freeze other controller decisions (single-action watch period; see `multi-seed-coordination-rl.md` for the full multi-seed treatment, including cross-slot hysteresis)
 - Counterfactual baselines in `r_step` reduce the confound
 
 ### TD-λ Smooths Long Horizons

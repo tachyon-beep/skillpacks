@@ -181,6 +181,23 @@ Cooldown is an FSM state. Hysteresis is enforced by the governor reading FSM sta
 
 The same reasoning applies to budgets, occupancy caps, and any other "should we even consider this slot right now" predicate. If it can veto, it lives in the governor's view of FSM state, not in the controller's policy network.
 
+### What the Controller May and May Not Observe
+
+This is the boundary that gets misread, so state it precisely. The distinction is between the *state label* and the *gate's parameters*:
+
+| Observable to the controller | Not observable to the controller |
+|------------------------------|----------------------------------|
+| The slot's FSM state label — `Dormant`, `Pending`, `Watching`, `Cooldown`, `Committed` | `cooldown_steps`, `cooldown_self`, `cooldown_neighbor`, or any configured threshold |
+| *That* a slot is currently in `Cooldown` | *When* it stops being — steps-remaining, expiry step, countdown |
+| Its own veto history as a reward/action signal | The neighbour-cooldown graph or any other gate topology |
+| | Panic-rule thresholds (`spike_k`, `sustained_k`, grad factors) |
+
+The rule behind the table: **the state label prevents wasted illegal proposals; the timer would let the policy learn to wait out expiry.** A controller that cannot see `Cooldown` proposes into a closed gate at a steady rate and learns nothing from the veto except noise. A controller that can see `cooldown_steps` or steps-remaining learns to re-propose the same bad action on the exact step the gate reopens — which is the controller-disables-gate anti-pattern arrived at by patience instead of by force.
+
+So: `Cooldown` in the observation vector is *correct and required*. A number counting down next to it is a violation.
+
+This is the canonical statement of the boundary; `governor-and-safety-gates.md`, `multi-seed-coordination-rl.md` (cross-slot hysteresis), and the `governor-design-reviewer` agent all defer to it.
+
 ---
 
 ## Common Mistakes

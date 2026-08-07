@@ -107,7 +107,11 @@ def break_tie(proposals: list[ProposedAction]) -> ProposedAction:
 def break_tie(proposals: list[ProposedAction], event_id: int,
               parent_rng: torch.Generator) -> ProposedAction:
     rng = event_rng(parent_rng, event_id)  # see deterministic-morphogenesis.md
-    idx = torch.randint(len(proposals), (1,), generator=rng).item()
+    # device=rng.device is not optional: event_rng inherits the parent stream's
+    # device, and make_streams builds device-resident generators. A CUDA
+    # generator passed to a CPU tensor factory raises at the draw site.
+    idx = torch.randint(len(proposals), (1,), generator=rng,
+                        device=rng.device).item()
     return proposals[idx]
 ```
 
@@ -226,9 +230,20 @@ def pre_flight_multi(state, proposals: list[ProposedAction], event_id: int,
     # Examples: lower-numbered slots first, or oldest-unmutated-slot first, or
     # smallest-cost first (greedy budget fill). Whichever rule you pick, document
     # it and never make it a function of policy output.
-    ordered = sorted(proposals, key=lambda p: (slot_priority(p.slot_id),
-                                                event_rng(rng, event_id)
-                                                  .random()))
+    #
+    # Draw the tie-breaks ONCE, before the sort. Constructing the generator
+    # inside the sort key re-seeds it identically for every proposal, so every
+    # key gets the same number and nothing is broken at all. (torch.Generator
+    # also has no .random() method — draw with a tensor factory.)
+    tie_rng = event_rng(rng, event_id)  # see deterministic-morphogenesis.md
+    tiebreaks = torch.rand(len(proposals), generator=tie_rng,
+                           device=tie_rng.device).tolist()
+    # Sort indices, not proposals: a final index term guarantees a total order
+    # without ever falling through to comparing ProposedAction objects.
+    order = sorted(range(len(proposals)),
+                   key=lambda i: (slot_priority(proposals[i].slot_id),
+                                  tiebreaks[i], i))
+    ordered = [proposals[i] for i in order]
     verdicts: list[Verdict] = []
     remaining = state.remaining_budget
     for p in ordered:
@@ -260,10 +275,12 @@ Single-action hysteresis (`governor-and-safety-gates.md`) prevents thrashing wit
 ```python
 @dataclass
 class MultiSlotHysteresis:
+    # Non-defaulted fields first — a dataclass field without a default after one
+    # with a default is a TypeError at class-definition time.
     last_rollback_step: dict[SlotId, int]
+    neighbor_graph: dict[SlotId, set[SlotId]]  # adjacency
     cooldown_self: int = 1000
     cooldown_neighbor: int = 200
-    neighbor_graph: dict[SlotId, set[SlotId]]  # adjacency
 
     def slot_available(self, slot: SlotId, step: int) -> bool:
         last_self = self.last_rollback_step.get(slot)
@@ -278,7 +295,7 @@ class MultiSlotHysteresis:
 
 `cooldown_neighbor` is shorter than `cooldown_self` (the related slot is less suspect than the slot that actually rolled back). Both are enforced in pre-flight, not advisory.
 
-The hysteresis rules are fixed structural inputs to the governor. The controller does not see them as observation features (or it will learn to game them); the controller experiences them only as the rate of vetoes in its action signal.
+The hysteresis *parameters* — `cooldown_self`, `cooldown_neighbor`, the neighbour graph, any steps-remaining countdown — are fixed structural inputs to the governor and never observation features, or the controller learns to time its proposals around them. The slot's FSM state *label* is a different thing and **is** observable: a controller that can see a slot sitting in `Cooldown` stops wasting proposals on it, which is the intended behaviour. See `safety-gated-seed-fsm.md`, "What the Controller May and May Not Observe", for the canonical boundary. Beyond the label, the controller experiences hysteresis only as the rate of vetoes in its action signal.
 
 ---
 

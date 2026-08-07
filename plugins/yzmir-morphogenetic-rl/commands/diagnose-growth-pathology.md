@@ -38,12 +38,32 @@ If they differ, **stop diagnosing the controller**. The non-determinism is the f
 
 #### 1.2 Schema Check
 
+The step table must be constant-width for the run's lifetime. Slicing one already-loaded DataFrame cannot test this — row slices of a frame always share its column set, so a check written that way passes unconditionally. Compare the schemas of log segments **as written**:
+
 ```python
-# Step table column count BEFORE first grow event
-n_before = len(steps.iloc[:first_grow_event_step].columns)
-# Column count AFTER
-n_after = len(steps.iloc[first_grow_event_step:].columns)
-assert n_before == n_after, "step table widened on grow — schemas wrong"
+# Preferred: the step log is written as one file (or row-group segment) per
+# interval, so segments either side of the first grow event carry their own
+# schemas on disk.
+import pyarrow.parquet as pq
+
+pre  = pq.read_schema(segment_before_first_grow)   # e.g. logs/steps_000.parquet
+post = pq.read_schema(segment_after_first_grow)    # e.g. logs/steps_007.parquet
+assert pre.names == post.names, (
+    f"step table widened on grow: "
+    f"added {set(post.names) - set(pre.names)}, "
+    f"dropped {set(pre.names) - set(post.names)}"
+)
+```
+
+```python
+# Fallback: only one consolidated step file exists. Widening then shows up as
+# columns the writer back-filled — entirely null before the first grow step,
+# populated after it.
+grew_at = events.loc[events.kind == "commit", "step"].min()
+late = [c for c in steps.columns
+        if steps.loc[steps.step < grew_at, c].isna().all()
+        and steps.loc[steps.step >= grew_at, c].notna().any()]
+assert not late, f"columns appear only after the first grow event: {late}"
 ```
 
 If schemas widened, downstream queries are broken regardless of what the controller is doing. See `growth-telemetry-and-ablation.md`.
@@ -85,14 +105,36 @@ Count rules in `_panic_check`. If under 4, you have gaps. Add the missing rules.
 
 After a rollback, the same slot must not be re-attempted within the cooldown window. Check the event log:
 
+Each `commit` on a slot must be compared against that slot's most recent *preceding* `rollback`. That needs a window ordered by `step` with a frame that excludes the current row, and the result must be filtered outside the window (a window alias cannot be referenced from `WHERE`/`HAVING`):
+
 ```sql
-SELECT slot_id, MIN(step) - LAG(MAX(step)) OVER (PARTITION BY slot_id) AS gap
-FROM events WHERE kind IN ('rollback', 'commit')
-GROUP BY slot_id, event_id
-HAVING gap < cooldown_steps;
+-- Substitute your configured cooldown for the literal below.
+WITH slot_events AS (
+  SELECT
+    slot_id,
+    step,
+    kind,
+    MAX(CASE WHEN kind = 'rollback' THEN step END) OVER (
+      PARTITION BY slot_id ORDER BY step
+      ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+    ) AS prev_rollback_step
+  FROM events
+  WHERE run_id = ? AND kind IN ('rollback', 'commit')
+)
+SELECT slot_id,
+       prev_rollback_step,
+       step AS reattempt_step,
+       step - prev_rollback_step AS gap
+FROM slot_events
+WHERE kind = 'commit'
+  AND prev_rollback_step IS NOT NULL
+  AND step - prev_rollback_step < 1000   -- cooldown_steps
+ORDER BY slot_id, reattempt_step;
 ```
 
 Any rows here are hysteresis violations. Either cooldown is not enforced or the controller has a path to bypass it.
+
+For cross-slot hysteresis (`multi-seed-coordination-rl.md`), run the same query with the partition replaced by the slot's neighbour set and the literal replaced by `cooldown_neighbor`.
 
 ### Phase 3: Controller Behavior
 
