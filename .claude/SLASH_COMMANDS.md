@@ -59,6 +59,10 @@ All router skills from the 18 plugins are now available as slash commands:
 - **`/ml-production`** - Routes to ML deployment and production
 - **`/simulation-foundations`** - Routes to simulation fundamentals
 - **`/systems-thinking`** - Routes to systems thinking methodology and modeling
+- **`/counterfactual-statistics`** - Routes to statistics for counterfactual and paired-branch ML experiments (units, pairing, splits, winner's curse, power, reporting)
+
+### Compilers & IR (Axiom)
+- **`/tensor-compiler-engineering`** - Routes to tensor-compiler engineering (graph IR, lowering, kernel selection, conformance testing)
 
 ## Usage
 
@@ -91,7 +95,9 @@ The router will then guide you to the appropriate specialized skill for your tas
 | muna-technical-writer | using-technical-writer | /technical-writer |
 | muna-wiki-management | using-wiki-manager | /wiki-manager |
 | ordis-security-architect | using-security-architect | /security-architect |
+| axiom-tensor-compiler-engineering | using-tensor-compiler-engineering | /tensor-compiler-engineering |
 | yzmir-ai-engineering-expert | using-ai-engineering | /ai-engineering |
+| yzmir-counterfactual-statistics | using-counterfactual-statistics | /counterfactual-statistics |
 | yzmir-deep-rl | using-deep-rl | /deep-rl |
 | yzmir-llm-specialist | using-llm-specialist | /llm-specialist |
 | yzmir-ml-production | using-ml-production | /ml-production |

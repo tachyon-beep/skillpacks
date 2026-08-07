@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is the **Skillpacks Marketplace** - a modular collection of 45 professional skillpacks (56 router/skill files plus 430+ reference sheets, 110+ commands, 90+ agents) for Claude Code across AI/ML, Python & Rust engineering, web backend, DevOps, SDLC and program/product management, solution architecture, game development, security, documentation, and UX design.
+This is the **Skillpacks Marketplace** - a modular collection of 49 professional skillpacks (60 router/skill files plus 525+ reference sheets, 130+ commands, 109+ agents) for Claude Code across AI/ML, Python & Rust engineering, web backend, DevOps, SDLC and program/product management, solution architecture, game development, security, documentation, and UX design.
 
-**Status**: Marketplace v3.22.0 - Production ready, CC BY-SA 4.0 licensed, publicly available
+**Status**: Marketplace v3.27.0 - Production ready, CC BY-SA 4.0 licensed, publicly available
 
 ## Architecture
 
@@ -15,8 +15,8 @@ This is the **Skillpacks Marketplace** - a modular collection of 45 professional
 ```plaintext
 skillpacks/
 ├── .claude-plugin/
-│   └── marketplace.json          # Marketplace catalog defining all 45 plugins
-├── plugins/                       # 45 independent plugin directories
+│   └── marketplace.json          # Marketplace catalog defining all 49 plugins
+├── plugins/                       # 49 independent plugin directories
 │   ├── [plugin-name]/
 │   │   ├── .claude-plugin/
 │   │   │   └── plugin.json       # Plugin metadata (name, version, description)
@@ -31,15 +31,15 @@ skillpacks/
 
 Packs are grouped by faction prefix. Most modern packs follow a **router + reference-sheets** shape (a `using-X` router `SKILL.md` plus numbered sheets, slash commands, and SME agents), so the count that matters per pack is sheets/commands/agents rather than "skills". See `FACTIONS.md` for the thematic per-pack catalog and `.claude-plugin/marketplace.json` for the canonical list.
 
-1. **Engineering & process (Axiom faction)** - 20 plugins
+1. **Engineering & process (Axiom faction)** - 21 plugins
    - Python/Rust: `axiom-python-engineering`, `axiom-rust-engineering`, `axiom-rust-workspaces`, `axiom-pyo3-interop`
    - Backend & data: `axiom-web-backend`, `axiom-embedded-database`, `axiom-mcp-engineering`
    - Architecture & analysis: `axiom-system-architect`, `axiom-system-archaeologist`, `axiom-solution-architect`, `axiom-procedural-architecture`
    - Process & delivery: `axiom-engineering-foundations`, `axiom-planning`, `axiom-sdlc-engineering`, `axiom-program-management`, `axiom-product-management`, `axiom-devops-engineering`
-   - Specialized discipline: `axiom-static-analysis-engineering`, `axiom-determinism-and-replay`, `axiom-audit-pipelines`
+   - Specialized discipline: `axiom-static-analysis-engineering`, `axiom-tensor-compiler-engineering`, `axiom-determinism-and-replay`, `axiom-audit-pipelines`
 
-2. **AI/ML (Yzmir faction)** - 11 plugins
-   - `yzmir-ai-engineering-expert` (router), `yzmir-pytorch-engineering`, `yzmir-training-optimization`, `yzmir-deep-rl`, `yzmir-neural-architectures`, `yzmir-llm-specialist`, `yzmir-ml-production`, `yzmir-simulation-foundations`, `yzmir-dynamic-architectures`, `yzmir-morphogenetic-rl`, `yzmir-systems-thinking`
+2. **AI/ML (Yzmir faction)** - 12 plugins
+   - `yzmir-ai-engineering-expert` (router), `yzmir-pytorch-engineering`, `yzmir-training-optimization`, `yzmir-deep-rl`, `yzmir-neural-architectures`, `yzmir-llm-specialist`, `yzmir-ml-production`, `yzmir-simulation-foundations`, `yzmir-dynamic-architectures`, `yzmir-morphogenetic-rl`, `yzmir-systems-thinking`, `yzmir-counterfactual-statistics`
 
 3. **Game Development (Bravos faction)** - 2 plugins
    - `bravos-simulation-tactics`, `bravos-systems-as-experience`
@@ -142,7 +142,7 @@ Each plugin has independent versioning in `.claude-plugin/plugin.json`:
 
 ### Marketplace Versioning
 
-The marketplace catalog (`.claude-plugin/marketplace.json`) coordinates all 45 plugins:
+The marketplace catalog (`.claude-plugin/marketplace.json`) coordinates all 49 plugins:
 
 - Lists all plugins with their source paths
 - Maintains marketplace metadata (version, homepage)
@@ -211,9 +211,9 @@ This repository uses a unique testing methodology:
 
 **Total**: 700+ production files
 
-- 56 router/skill files (SKILL.md) + 430+ reference sheets
-- 110+ slash commands, 90+ SME agents
-- 45 plugin metadata files (plugin.json)
+- 60 router/skill files (SKILL.md) + 525+ reference sheets
+- 130+ slash commands, 109+ SME agents
+- 49 plugin metadata files (plugin.json)
 - 1 marketplace catalog (marketplace.json)
 - Core documentation (README, LICENSE, CLAUDE.md, FACTIONS.md, CONTRIBUTING.md, LICENSE_ADDENDUM.md)
 - TDD artifacts (test scenarios, baseline results, methodology documentation)
@@ -279,7 +279,7 @@ for dir in plugins/*/; do
 done
 
 # Count total skills
-find plugins -name "SKILL.md" | wc -l  # Should be 56
+find plugins -name "SKILL.md" | wc -l  # Should be 60
 ```
 
 ## Important Notes

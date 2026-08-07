@@ -83,6 +83,11 @@ The Yzmir's mastery of hidden knowledge and systematic exploration of the unknow
 - RL controllers that decide when and how to mutate a network's topology
 - Governor and safety gates, rollback-as-signal, deterministic morphogenesis
 
+**yzmir-counterfactual-statistics** - *The Unrun Future*
+
+- What the paired branch can and cannot prove: the trajectory is the unit, the branch is a repeated measure
+- No-op anchoring, the winner's curse, leakage walls, pre-registration, reliability over units
+
 **yzmir-systems-thinking** - *The Web of Causes*
 
 - Causal-loop and stock-flow modeling, system archetypes
@@ -349,6 +354,10 @@ The Axiom's dedication to making technology accessible through systematic proces
 **axiom-static-analysis-engineering** - *The Inspection Engine*
 
 - Building static analyzers as engines: lattices, dataflow, rule design, false-positive economics
+
+**axiom-tensor-compiler-engineering** - *The Transmutation Forge*
+
+- Building compilers for tensor programs: graph IR → executable PyTorch, kernel selection, fusion, manifests, artifact identity — and conformance proving the artifact still means what the IR meant (router + 12 sheets, 3 commands, 2 agents). Producer-side sibling of *The Inspection Engine*: that one reads and judges, this one transforms and builds
 
 **axiom-determinism-and-replay** - *The Perfect Recorder*
 

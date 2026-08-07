@@ -2,7 +2,7 @@
 
 ## Professional AI/ML, Python & Rust engineering, web backend, DevOps, SDLC, solution architecture, game development, security, documentation, and UX skills for Claude Code
 
-46 complete skillpacks • 200+ skills • Install what you need
+49 complete skillpacks • 200+ skills • Install what you need
 
 > **Recent additions (May 2026)**: 6 new packs — `yzmir-morphogenetic-rl`,
 > `axiom-determinism-and-replay`, `axiom-audit-pipelines`,
@@ -19,6 +19,14 @@
 > opening-and-ending-doctor, premise-stress-tester). `axiom-system-archaeologist`
 > v1.6 — ultralarge-tier per-module track for repos >100K LOC or >12 subsystems,
 > with calibration-driven YAML-parse self-validation.
+>
+> **New (August 2026)**: `yzmir-counterfactual-statistics` — statistical
+> methodology for counterfactual and paired-branch ML experiments (matched-seed
+> comparisons, branch rollouts from a shared snapshot, ablation forests,
+> best-of-K screening). Router + 13 sheets, 3 commands, 2 SME agents. Covers the
+> independent statistical unit, cluster-robust inference, paired tests against a
+> zero-anchored no-op control, grouped splits and leakage, the winner's curse,
+> abstention calibration, pre-registration, and reliability reporting.
 
 ---
 
@@ -92,7 +100,7 @@ cd skillpacks
 - Derivation tracking, consistency auditing, evolution management
 - `/plugin install muna-wiki-management`
 
-### 🔬 Development (Axiom) - 16 Packs
+### 🔬 Development (Axiom) - 22 Packs
 
 **axiom-python-engineering** - 10 skills
 
@@ -274,6 +282,25 @@ cd skillpacks
   cost-and-when-not-to-distribute accounting
 - `/plugin install axiom-distributed-systems`
 
+**axiom-tensor-compiler-engineering** - router + 12 sheets, 3 commands, 2 agents _(new — August 2026, v0.1)_
+
+- Building compilers for tensor programs: lowering a canonical graph IR to
+  executable PyTorch, and proving the artifact still means what the IR meant
+- Compiler architecture (ingest → lower → optimise → codegen → artifact) with the
+  conformance gate placed **outside** the compiler; IR contracts and semantic
+  identity; numerical contracts with derived per-op tolerance budgets
+- Conformance testing: reference-vs-compiled execution, gradient conformance
+  (float64 gradcheck + shared-cotangent comparison), zero-influence preservation,
+  cross-device and cross-layout agreement
+- torch.fx capture and pass composition, torch.compile / dynamo guards / inductor /
+  AOTAutograd joint forward+backward capture, operator lowering and kernel
+  selection, fusion legality and memory planning over the joint graph
+- Compilation manifests and reproducible builds, content-addressed artifact
+  identity and caching, cost calibration and compile budgets with staleness, and a
+  four-class miscompile taxonomy with pass bisection and per-node localisation
+- Producer-side sibling of `axiom-static-analysis-engineering`
+- `/plugin install axiom-tensor-compiler-engineering`
+
 **axiom-static-analysis-engineering** - router + 13 sheets, 3 commands, 2 agents _(new — May 2026, v0.2)_
 
 - Building static analyzers as engines, not running them as users
@@ -321,6 +348,17 @@ cd skillpacks
 - Rollback-as-RL-signal, deterministic morphogenesis, ablation under topology change
 - Companion to `yzmir-dynamic-architectures`
 - `/plugin install yzmir-morphogenetic-rl`
+
+**yzmir-counterfactual-statistics** - router + 13 sheets, 3 commands, 2 agents _(new — August 2026)_
+
+- Statistics for counterfactual and paired-branch experiments: the independent unit
+  is the trajectory, not the branch
+- Cluster-robust inference, paired tests against a zero-anchored no-op control,
+  common random numbers as variance reduction
+- Grouped splits and the leakage taxonomy, best-of-K winner's curse, abstention
+  calibration, pre-registration, paired power analysis
+- Quality–cost–stability frontiers and the six-row reliability report
+- `/plugin install yzmir-counterfactual-statistics`
 
 **yzmir-neural-architectures** - 9 skills _(refreshed)_
 

@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, product management, solution architecture, distributed systems, game development, security, documentation, site design, and UX skills for Claude Code - 47 complete skillpacks with 400+ TDD-validated skills and reference sheets",
-    "version": "3.25.0",
+    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, product management, solution architecture, distributed systems, tensor compilers, game development, security, documentation, site design, and UX skills for Claude Code - 49 complete skillpacks with 400+ TDD-validated skills and reference sheets",
+    "version": "3.27.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -200,6 +200,37 @@
         "rl-infrastructure",
         "simulation",
         "multi-agent"
+      ],
+      "category": "development"
+    },
+    {
+      "name": "axiom-tensor-compiler-engineering",
+      "source": "./plugins/axiom-tensor-compiler-engineering",
+      "description": "Building compilers for tensor programs — lowering a canonical graph IR to executable PyTorch and proving the artifact still means what the IR meant. v0.1 ships router + 12 sheets, 3 commands (/scaffold-tensor-compiler, /verify-artifact-conformance, /diagnose-miscompile), 2 agents (tensor-compiler-architect, compiler-conformance-reviewer). Spine: compiler architecture (ingest → lower → optimise → codegen → artifact) with the conformance gate placed OUTSIDE the compiler, IR contracts and semantic identity (what a compiler may change vs must never change; carrying the semantic hash), numerical contracts with derived per-op tolerance budgets (never widened to make a test pass), and conformance testing — reference-vs-compiled execution, gradient conformance (float64 gradcheck + shared-cotangent comparison), zero-influence preservation, cross-device and cross-layout agreement. Implementation depth: torch.fx capture and pass composition (trace-time specialisation, in-place, dynamic shapes), torch.compile / dynamo guards / inductor / AOTAutograd joint forward+backward capture, operator lowering and kernel selection under a declared contract, fusion legality and memory planning over the joint graph, compilation manifests and reproducible builds, content-addressed artifact identity and caching, cost calibration and compile-time budgets with staleness policy, and a four-class miscompile taxonomy with pass bisection and per-node localisation. Producer-side sibling of axiom-static-analysis-engineering: that pack reads code and produces verdicts; this one transforms IR and produces executables.",
+      "keywords": [
+        "axiom",
+        "tensor-compiler",
+        "graph-ir",
+        "lowering",
+        "torch-fx",
+        "torch-compile",
+        "dynamo",
+        "inductor",
+        "aotautograd",
+        "kernel-selection",
+        "operator-fusion",
+        "memory-planning",
+        "conformance-testing",
+        "gradcheck",
+        "semantic-hash",
+        "numerical-tolerance",
+        "compilation-manifest",
+        "reproducible-builds",
+        "artifact-caching",
+        "content-addressed",
+        "miscompile",
+        "compiler-debugging",
+        "pytorch"
       ],
       "category": "development"
     },
@@ -626,6 +657,25 @@
         "governor",
         "rollback",
         "topology-change"
+      ],
+      "category": "ai-ml"
+    },
+    {
+      "name": "yzmir-counterfactual-statistics",
+      "source": "./plugins/yzmir-counterfactual-statistics",
+      "description": "Statistical methodology for counterfactual and paired-branch ML experiments - the independent unit (the trajectory, not the branch), cluster-robust inference, paired tests against a zero-anchored no-op control, common random numbers, grouped splits and leakage, best-of-K winner's curse, abstention calibration, pre-registration, paired power analysis, and quality-cost-stability reliability reporting - router + 13 sheets, 3 commands, 2 agents.",
+      "keywords": [
+        "yzmir",
+        "counterfactual",
+        "paired-comparison",
+        "statistical-units",
+        "pseudo-replication",
+        "selection-bias",
+        "winners-curse",
+        "calibration",
+        "data-leakage",
+        "pre-registration",
+        "power-analysis"
       ],
       "category": "ai-ml"
     },
