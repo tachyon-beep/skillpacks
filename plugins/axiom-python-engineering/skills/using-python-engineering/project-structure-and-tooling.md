@@ -142,9 +142,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.3",
-    "mypy>=1.13",
-    "ruff>=0.8",
+    "pytest>=9.1",
+    "mypy>=2.3",
+    "ruff>=0.16",
 ]
 
 [project.urls]
@@ -175,7 +175,7 @@ build-backend = "hatchling.build"
 **setuptools (traditional, still common):**
 ```toml
 [build-system]
-requires = ["setuptools>=68.0.0", "wheel"]
+requires = ["setuptools>=83.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 ```
 
@@ -555,7 +555,7 @@ dependencies = []
 
 [dependency-groups]
 dev = [
-    "pytest>=8.3",
+    "pytest>=9.1",
 ]
 
 [build-system]
@@ -610,10 +610,10 @@ pip-compile requirements.in --generate-hashes
 **File:** `requirements-dev.in`
 ```
 -c requirements.txt  # Constrain to production versions
-pytest>=8.3
-mypy>=1.13
-ruff>=0.8
-pre-commit>=4.0
+pytest>=9.1
+mypy>=2.3
+ruff>=0.16
+pre-commit>=4.6
 ```
 
 **Compile and sync:**
@@ -652,9 +652,9 @@ requests = "^2.31.0"
 pydantic = "^2.0.0"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.3"
-mypy = "^1.13"
-ruff = "^0.8"
+pytest = "^9.1"
+mypy = "^2.3"
+ruff = "^0.16"
 
 [build-system]
 requires = ["poetry-core"]
@@ -1078,17 +1078,17 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.3",
-    "pytest-cov>=5.0",
-    "mypy>=1.13",
-    "ruff>=0.8",
-    "pre-commit>=4.0",
+    "pytest>=9.1",
+    "pytest-cov>=7.1",
+    "mypy>=2.3",
+    "ruff>=0.16",
+    "pre-commit>=4.6",
     "types-requests>=2.31",
 ]
 
 # If using uv, prefer PEP 735 dependency groups instead of optional-dependencies:
 # [dependency-groups]
-# dev = ["pytest>=8.3", "pytest-cov>=5.0", "mypy>=1.13", "ruff>=0.8", "pre-commit>=4.0"]
+# dev = ["pytest>=9.1", "pytest-cov>=7.1", "mypy>=2.3", "ruff>=0.16", "pre-commit>=4.6"]
 
 [project.urls]
 Homepage = "https://github.com/username/awesome-project"

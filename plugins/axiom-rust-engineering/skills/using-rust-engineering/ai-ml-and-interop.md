@@ -30,7 +30,7 @@ version numbers below.
 >   `impl IntoPy<PyObject>` or `#[derive(ToPyObject)]` — the replacement is
 >   `impl<'py> IntoPyObject<'py> for ...`.
 > - **0.24 / 0.25 (2025)** continue the `Bound` migration, tighten the
->   GIL-token API (`Python::with_gil` is the stable entry point), finish phasing
+>   GIL-token API (`Python::attach` is the stable entry point), finish phasing
 >   out `&PyAny` / `Py<PyAny>` return types in favour of `Bound<'py, PyAny>`,
 >   and remove several forward-compat shims that existed in 0.21/0.22 (notably
 >   the `_bound`-suffixed numpy constructors). Read the CHANGELOG before
@@ -56,7 +56,7 @@ Use this sheet when:
 - "What's the right crate for N-dimensional array computation in Rust?"
 - "How do I serialize ML model weights in a Rust binary?"
 
-**Trigger keywords**: `pyo3`, `maturin`, `#[pyfunction]`, `#[pyclass]`, `candle`, `burn`, `tch-rs`, `ndarray`, `nalgebra`, `safetensors`, PyO3, GIL, `allow_threads`, `PyResult`, extension module, ONNX, tokenizer, embedding, inference server, numerical kernel, BLAS.
+**Trigger keywords**: `pyo3`, `maturin`, `#[pyfunction]`, `#[pyclass]`, `candle`, `burn`, `tch-rs`, `ndarray`, `nalgebra`, `safetensors`, PyO3, GIL, `detach`, `PyResult`, extension module, ONNX, tokenizer, embedding, inference server, numerical kernel, BLAS.
 
 ## When NOT to Use
 
@@ -126,7 +126,7 @@ Do you need to call Rust from Python, or Python from Rust?
 │     └─ PyO3 is still fine; maturin develop; don't overthink it
 └─ Rust calls Python (uncommon)
    ├─ Embed a Python interpreter inside a Rust binary
-   │  └─ PyO3 with the `auto-initialize` feature and `Python::with_gil`
+   │  └─ PyO3 with the `auto-initialize` feature and `Python::attach`
    └─ Run a subprocess and pipe data
       └─ `std::process::Command` + JSON / msgpack (no PyO3 needed)
 ```
@@ -175,7 +175,7 @@ edition = "2024"   # edition 2024 needs Rust >= 1.85; use "2021" if on older too
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-pyo3 = { version = "0.25", features = ["extension-module"] }
+pyo3 = { version = "0.29", features = ["extension-module"] }
 # Consider enabling abi3 for a single wheel that works across Python minor
 # versions (stable since PyO3 0.19):
 #   pyo3 = { version = "0.25", features = ["extension-module", "abi3-py39"] }
@@ -291,9 +291,9 @@ fn slow_compute_wrong(py: Python<'_>, data: Vec<f64>) -> Vec<f64> {
 // ✅ CORRECT: release the GIL before the heavy work
 #[pyfunction]
 fn slow_compute(py: Python<'_>, data: Vec<f64>) -> PyResult<Vec<f64>> {
-    // py.allow_threads releases the GIL for the duration of the closure.
+    // py.detach releases the GIL for the duration of the closure.
     // Other Python threads can run while we compute.
-    let result = py.allow_threads(|| -> Vec<f64> {
+    let result = py.detach(|| -> Vec<f64> {
         data.iter().map(|x| x.sqrt() * 3.14159).collect()
     });
     Ok(result)
@@ -303,14 +303,14 @@ fn slow_compute(py: Python<'_>, data: Vec<f64>) -> PyResult<Vec<f64>> {
 #[pyfunction]
 fn parallel_compute(py: Python<'_>, data: Vec<f64>) -> PyResult<Vec<f64>> {
     use rayon::prelude::*;
-    let result = py.allow_threads(|| -> Vec<f64> {
+    let result = py.detach(|| -> Vec<f64> {
         data.par_iter().map(|x| x.sqrt() * 3.14159).collect()
     });
     Ok(result)
 }
 ```
 
-**Rule**: any Rust code that runs longer than ~1ms should release the GIL via `allow_threads`. If you are unsure, release it — there is no correctness cost.
+**Rule**: any Rust code that runs longer than ~1ms should release the GIL via `detach`. If you are unsure, release it — there is no correctness cost.
 
 ### Error translation
 
@@ -381,12 +381,12 @@ fn normalize_inplace<'py>(
     // the Python-backed slice — so no borrow into Python memory crosses the
     // GIL release.
     //
-    // The rule: never `move` a reference to Python memory into `allow_threads`.
+    // The rule: never `move` a reference to Python memory into `detach`.
     // Only owned Rust values may cross. Copying is cheap for small arrays and
     // still beats the UB of a dangling borrow for large ones.
     let owned: Vec<f32> = arr.as_slice()?.to_vec();  // copy under GIL
 
-    let result: Vec<f32> = py.allow_threads(move || {  // owned data only
+    let result: Vec<f32> = py.detach(move || {  // owned data only
         let n = owned.len() as f32;
         let mean: f32 = owned.iter().sum::<f32>() / n;
         let var: f32 = owned.iter().map(|x| (x - mean).powi(2)).sum::<f32>() / n;
@@ -415,8 +415,8 @@ Add to `Cargo.toml`:
 candle-core = "0.11"           # check crates.io for the latest 0.x before pinning
 candle-nn = "0.11"
 candle-transformers = "0.11"   # optional: pre-built transformer blocks
-safetensors = "0.4"            # 0.4.x is the long-lived stable line
-tokenizers = "0.21"            # optional: Hugging Face tokenizer
+safetensors = "0.8"            # 0.4.x is the long-lived stable line
+tokenizers = "0.23"            # optional: Hugging Face tokenizer
 ```
 
 Candle is pre-1.0 and every 0.x bump is allowed to be a breaking change — pin
@@ -571,7 +571,7 @@ Burn is an alternative ML framework for Rust with a focus on backend abstraction
 
 ```toml
 [dependencies]
-burn = { version = "0.17", features = ["wgpu"] }
+burn = { version = "0.21", features = ["wgpu"] }
 # Available backends:
 #   "wgpu"    — cross-platform GPU via WebGPU (works on macOS, Linux, Windows,
 #              and browsers via wasm — this is burn's unique selling point)
@@ -670,7 +670,7 @@ Choose **burn** when: you need training in Rust, want WebGPU support, or need Vu
 # Gate behind a feature flag — most users should not need tch-rs.
 # Each tch minor is pinned to a specific libtorch version; check the tch
 # README for the required libtorch before upgrading.
-tch = { version = "0.19", optional = true }
+tch = { version = "0.24", optional = true }
 
 [features]
 libtorch = ["tch"]
@@ -744,9 +744,9 @@ Rust's two main numerical array libraries serve different use cases and should n
 
 ```toml
 [dependencies]
-ndarray = { version = "0.16", features = ["rayon"] }
-ndarray-rand = "0.15"    # optional: random initialization
-blas-src = { version = "0.10", features = ["openblas"] }  # optional: BLAS backend
+ndarray = { version = "0.17", features = ["rayon"] }
+ndarray-rand = "0.16"    # optional: random initialization
+blas-src = { version = "0.14", features = ["openblas"] }  # optional: BLAS backend
 # Note: ndarray-linalg lags ndarray releases — check crates.io for the version that
 # matches your `ndarray` version before uncommenting this line. The 0.16.x series
 # tracks ndarray 0.15; an ndarray 0.16-compatible release may still be on git only.
@@ -800,7 +800,7 @@ nalgebra's type system encodes matrix dimensions at compile time. A `Matrix3<f64
 
 ```toml
 [dependencies]
-nalgebra = "0.34"
+nalgebra = "0.35"
 ```
 
 ```rust
@@ -865,7 +865,7 @@ serde_json = "1"
 # bincode 2.x gates its serde bridge behind the "serde" feature; without it
 # `bincode::serde::encode_to_vec` is not in scope. The default features DO NOT
 # include serde — you must enable it explicitly.
-bincode = { version = "2", features = ["serde"] }
+bincode = { version = "3", features = ["serde"] }
 ```
 
 ```rust
@@ -908,7 +908,7 @@ Safetensors is the standard for sharing model weights. Key properties:
 
 ```toml
 [dependencies]
-safetensors = "0.4"
+safetensors = "0.8"
 memmap2 = "0.9"
 bytemuck = "1"   # for the f32 -> &[u8] reinterpretation in the write path
 ```
@@ -971,10 +971,10 @@ When you need versioned, schema-enforced wire format for model inputs/outputs (e
 
 ```toml
 [build-dependencies]
-prost-build = "0.13"
+prost-build = "0.14"
 
 [dependencies]
-prost = "0.13"
+prost = "0.14"
 ```
 
 ```proto
@@ -1100,7 +1100,7 @@ For most numerical Rust code, write clean scalar code and let LLVM auto-vectoriz
 ```toml
 # For stable SIMD without nightly, use the wide crate
 [dependencies]
-wide = "0.7"
+wide = "1.6"
 ```
 
 ```rust
@@ -1145,7 +1145,7 @@ fn dot_product_simd(a: &[f32], b: &[f32]) -> f32 {
 
 **Why wrong:** Python's Global Interpreter Lock (GIL) prevents multiple Python threads from running concurrently. If your Rust extension holds the GIL for a 200ms compute operation, every other Python thread blocks for 200ms. In an async Python server (asyncio, FastAPI), this can stall the entire event loop. This is the most common correctness bug in PyO3 extensions — it silently destroys concurrency.
 
-**The fix:** Call `py.allow_threads(|| { ... })` around any Rust code that takes more than ~1ms and does not need to call back into Python.
+**The fix:** Call `py.detach(|| { ... })` around any Rust code that takes more than ~1ms and does not need to call back into Python.
 
 ```rust
 // ❌ WRONG: GIL held throughout
@@ -1157,7 +1157,7 @@ fn process(py: Python<'_>, data: Vec<f32>) -> Vec<f32> {
 // ✅ CORRECT
 #[pyfunction]
 fn process(py: Python<'_>, data: Vec<f32>) -> PyResult<Vec<f32>> {
-    Ok(py.allow_threads(|| data.iter().map(|x| x.sqrt()).collect()))
+    Ok(py.detach(|| data.iter().map(|x| x.sqrt()).collect()))
 }
 ```
 
@@ -1172,7 +1172,7 @@ fn process(py: Python<'_>, data: Vec<f32>) -> PyResult<Vec<f32>> {
 ```toml
 # ✅ CORRECT: optional, feature-gated
 [dependencies]
-tch = { version = "0.19", optional = true }
+tch = { version = "0.24", optional = true }
 
 [features]
 libtorch-backend = ["tch"]
@@ -1260,7 +1260,7 @@ Before shipping a Rust component that touches ML or Python interop:
 
 - [ ] Confirmed the bottleneck is Python (profiled with cProfile or py-spy) before porting to Rust.
 - [ ] Training pipeline stays in Python; Rust handles only inference, preprocessing, or hot-loop kernels.
-- [ ] All PyO3 functions that run longer than ~1ms call `py.allow_threads`.
+- [ ] All PyO3 functions that run longer than ~1ms call `py.detach`.
 - [ ] Custom error types implement `From<MyError> for PyErr` so Python sees meaningful exception types.
 - [ ] numpy interop uses the buffer protocol or the `numpy` crate — no manual pointer arithmetic.
 - [ ] Model weights are in safetensors format; no pickle (`.pt`/`.pth`) in production paths.

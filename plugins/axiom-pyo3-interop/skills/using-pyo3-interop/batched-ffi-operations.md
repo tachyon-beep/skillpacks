@@ -77,7 +77,7 @@ fn normalise<'py>(
     std: f32,
 ) -> PyResult<Bound<'py, PyArray1<f32>>> {
     let xs = xs.as_array();
-    let result = py.allow_threads(|| {
+    let result = py.detach(|| {
         xs.mapv(|x| (x - mean) / std)
     });
     Ok(result.into_pyarray(py))
@@ -104,7 +104,7 @@ fn normalise_inplace<'py>(
     std: f32,
 ) -> PyResult<()> {
     let mut view = xs.as_array_mut();
-    py.allow_threads(|| {
+    py.detach(|| {
         view.mapv_inplace(|x| (x - mean) / std);
     });
     Ok(())
@@ -188,7 +188,7 @@ Once the API is batched, the kernel itself can use SIMD, multi-threading, or bot
 ```rust
 use rayon::prelude::*;
 
-py.allow_threads(|| {
+py.detach(|| {
     let xs_slice = xs.as_slice().unwrap();
     let mut out = vec![0f32; xs_slice.len()];
     out.par_iter_mut()
@@ -229,7 +229,7 @@ For RL workloads where the per-step output shape is known and constant, prefer r
 | Batching but copying inputs Python→Rust per call        | `to_owned()` shows up in profile                            | Use `PyReadonlyArray` (zero-copy) — see numpy-buffer-protocol |
 | Batching but allocating a fresh output per call         | Allocator pressure (`malloc`/`free` in profile)            | Reuse buffer or use in-place variant                         |
 | Batching but holding GIL during the kernel             | Python threads still starve                                 | Release the GIL inside the batched call                      |
-| Batched kernel single-threaded                         | Boundary fixed but only one core utilised                   | Parallelise inside `allow_threads` (rayon, scoped threads)   |
+| Batched kernel single-threaded                         | Boundary fixed but only one core utilised                   | Parallelise inside `detach` (rayon, scoped threads)   |
 | API exposes both per-element and batched, naming clash | User confused which to call; performance footgun           | Pick one Public API, route internally; document in stubs    |
 | Variable-length output shape                            | Cannot pre-allocate; allocator cost returns                 | Two-pass: count → allocate → fill; or chunked output         |
 | Batch size too large to fit in cache                    | Kernel slows; cache misses dominate                         | Chunk the batch internally; iterate in cache-sized blocks    |
@@ -243,7 +243,7 @@ For RL workloads where the per-step output shape is known and constant, prefer r
 | Batched in-place                          | `#[pyfunction] fn op<'py>(py, xs: PyReadwriteArray1<'py, f32>)`                              |
 | Streaming aggregator                     | `#[pyclass]` with internal buffer; flush at threshold                                        |
 | Hybrid (batch + element)                 | Two `#[pyfunction]`s; route from Python wrapper                                               |
-| Parallelised kernel                       | `py.allow_threads(|| xs.par_iter().for_each(...))`                                            |
+| Parallelised kernel                       | `py.detach(|| xs.par_iter().for_each(...))`                                            |
 
 ## Cross-References
 

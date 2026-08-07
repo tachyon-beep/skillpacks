@@ -222,14 +222,14 @@ tokio = "1"
 tokio = { version = "1", features = ["rt-multi-thread", "sync", "time"] }
 
 # Good: disable upstream defaults, add only what's needed
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls-tls"] }
 ```
 
 In a workspace, `default-features = false` on a `[workspace.dependencies]` entry applies workspace-wide:
 
 ```toml
 [workspace.dependencies]
-reqwest = { version = "0.12", default-features = false }
+reqwest = { version = "0.13", default-features = false }
 
 # Member crate adds back the features it needs
 [dependencies]
@@ -946,12 +946,12 @@ the Cargo book's recommendation.
 ```toml
 # WRONG: Intending to avoid bloat but silently pulling in all of reqwest's defaults
 [dependencies]
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.13", features = ["json"] }
 # Silently also pulls in: native-tls, blocking, cookies, gzip, deflate, brotli...
 
 # CORRECT: Opt into only what you need
 [dependencies]
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls-tls"] }
 ```
 
 **The fix:** Grep for `features = [...]` in your `Cargo.toml`. For every entry, ask: do I know what the default features are? If not, add `default-features = false` and explicitly list what you need.

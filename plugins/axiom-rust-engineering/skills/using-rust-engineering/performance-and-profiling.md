@@ -67,7 +67,7 @@ These aphorisms are not platitudes — they describe a failure mode that wastes 
 ```toml
 # Cargo.toml
 [dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.8", features = ["html_reports"] }
 
 [[bench]]
 name       = "my_bench"
@@ -347,7 +347,7 @@ samply record cargo bench --bench my_bench -- --profile-time 10
 
 ```toml
 [dependencies]
-pprof = { version = "0.14", features = ["flamegraph", "protobuf-codec"] }
+pprof = { version = "0.15", features = ["flamegraph", "protobuf-codec"] }
 ```
 
 ```rust
@@ -500,7 +500,7 @@ type, just under a different crate name.
 
 ```toml
 [dependencies]
-tikv-jemallocator = "0.6"
+tikv-jemallocator = "0.7"
 ```
 
 ```rust

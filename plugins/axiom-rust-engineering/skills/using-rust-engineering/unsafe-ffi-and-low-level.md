@@ -576,7 +576,7 @@ my-crate/
 
 ```toml
 [build-dependencies]
-bindgen = "0.70"
+bindgen = "0.72"
 
 [dependencies]
 # no extra deps needed for bindgen-generated bindings
@@ -941,7 +941,7 @@ For Cortex-M targets, `cortex-m-rt` provides the reset handler and interrupt vec
 [dependencies]
 cortex-m     = "0.7"
 cortex-m-rt  = "0.7"
-embedded-alloc = "0.5"
+embedded-alloc = "0.7"
 panic-halt   = "0.2"   # provides the panic handler with a halt loop
 ```
 

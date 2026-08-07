@@ -26,8 +26,8 @@ The bridge has to ferry futures between the two.
 
 ```toml
 [dependencies]
-pyo3 = { version = "0.25", features = ["extension-module"] }
-pyo3-async-runtimes = { version = "0.25", features = ["tokio-runtime"] }
+pyo3 = { version = "0.29", features = ["extension-module"] }
+pyo3-async-runtimes = { version = "0.29", features = ["tokio-runtime"] }
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros"] }
 ```
 
@@ -158,7 +158,7 @@ async fn long_running(n: u64) -> u64 {
 The GIL rules around async are tricky:
 
 - `future_into_py(py, future)` registers `future` on tokio's runtime. The `future` runs on tokio's threads, *not* the Python thread.
-- Inside `future`, you do **not** hold the GIL. To call back into Python, you must `Python::with_gil(|py| ...)` or use the bridge's helpers.
+- Inside `future`, you do **not** hold the GIL. To call back into Python, you must `Python::attach(|py| ...)` or use the bridge's helpers.
 - `into_future` returns a Rust future. When you `.await` it, you're not holding the GIL during the await (the future is checking on a Python event loop signal, not running Python code).
 
 ```rust
@@ -167,7 +167,7 @@ async fn process_data(data: Vec<u8>) -> PyResult<Vec<u8>> {
     let processed = pure_rust_compute(&data);
 
     // To call Python: explicitly acquire GIL.
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let logging = py.import("logging")?;
         let logger = logging.call_method1("getLogger", ("mymod",))?;
         logger.call_method1("debug", (format!("processed {} bytes", processed.len()),))?;
@@ -223,7 +223,7 @@ Pattern: `__aiter__` returns self; `__anext__` returns a future that resolves to
 
 ## When NOT to Use This
 
-- For long compute on tokio threads where Python doesn't need to await — use a regular `#[pyfunction]` with `allow_threads`. Async only adds overhead if the cancellation/composition aren't needed.
+- For long compute on tokio threads where Python doesn't need to await — use a regular `#[pyfunction]` with `detach`. Async only adds overhead if the cancellation/composition aren't needed.
 - For purely synchronous I/O — same. `requests.get()` from Python is fine.
 - For "make my synchronous Rust function async" — wrapping a sync function in an async one doesn't help; the function still blocks. If you want concurrency, the Rust side has to actually be async (use `tokio::fs`, `tokio::net`, etc.).
 
@@ -245,7 +245,7 @@ This is rarely needed. The usual pattern is one-direction: Python awaits Rust fu
 | Initialise tokio runtime                    | `tokio::runtime::Builder::new_multi_thread().enable_all().build()` + `init_with_runtime` |
 | Rust future → Python awaitable              | `future_into_py(py, async { ... })`                                      |
 | Python awaitable → Rust future              | `into_future(awaitable)?`                                                |
-| Acquire GIL inside async                    | `Python::with_gil(|py| { ... })`                                         |
+| Acquire GIL inside async                    | `Python::attach(|py| { ... })`                                         |
 | Async iterator                              | `#[pyclass]` with `__aiter__` + `__anext__`; `__anext__` returns future |
 | Yield to allow cancellation                  | `tokio::task::yield_now().await`                                          |
 | Shutdown                                    | Explicit; via `atexit` (see lifecycle sheet)                             |
@@ -255,7 +255,7 @@ This is rarely needed. The usual pattern is one-direction: Python awaits Rust fu
 | Pitfall                                              | Symptom                                                      | Fix                                                                  |
 |------------------------------------------------------|--------------------------------------------------------------|----------------------------------------------------------------------|
 | `future_into_py` without runtime init                 | Panic on first call                                           | Initialise tokio runtime in `#[pymodule]`                             |
-| Holding GIL across an `await`                         | Other Python tasks starve                                     | `await` outside `with_gil`; reacquire only for Python ops             |
+| Holding GIL across an `await`                         | Other Python tasks starve                                     | `await` outside `attach`; reacquire only for Python ops             |
 | Long synchronous loop in async function              | Cancellation doesn't propagate                                | Insert `tokio::task::yield_now().await` periodically                  |
 | Different asyncio loops for caller and bridge         | Future hangs                                                  | Keep all asyncio operations on one loop; pin caller and bridge        |
 | Rust async function that blocks                       | Defeats the async model                                       | Use `tokio::*` async APIs, not `std::*` sync ones                     |

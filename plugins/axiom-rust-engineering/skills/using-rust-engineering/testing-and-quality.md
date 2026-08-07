@@ -539,7 +539,7 @@ Criterion provides statistically rigorous microbenchmarks. It runs each benchmar
 
 ```toml
 [dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.8", features = ["html_reports"] }
 
 [[bench]]
 name = "throughput"
@@ -717,7 +717,7 @@ Mocking in Rust requires explicit seams: if a function takes a concrete type, yo
 
 ```toml
 [dev-dependencies]
-mockall = "0.13"
+mockall = "0.15"
 ```
 
 ```rust

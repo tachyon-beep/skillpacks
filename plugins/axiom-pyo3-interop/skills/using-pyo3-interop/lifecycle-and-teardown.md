@@ -30,7 +30,7 @@ When the user's process exits (or `Py_Finalize` is called), CPython does roughly
 Rust-owned `Py<T>` references whose `Drop` runs *during* steps 3–6 may try to acquire the GIL or decref — both can fail.
 
 PyO3 partially handles this:
-- `Py<T>::Drop` takes the GIL (via `Python::with_gil`) to decref. If the GIL is gone, this is undefined.
+- `Py<T>::Drop` takes the GIL (via `Python::attach`) to decref. If the GIL is gone, this is undefined.
 - PyO3 0.21+ has `pyo3::ffi::Py_IsInitialized()` checks in some paths; if the interpreter is finalised, decref is skipped (the memory leaks but the process doesn't crash).
 - Older PyO3 (0.20) had cases where `Py<T>::Drop` after `Py_Finalize` would crash. Migrate to 0.21+.
 

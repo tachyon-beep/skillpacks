@@ -103,7 +103,7 @@ For each of the 13 sheets, apply the discipline:
 
 #### Sheet 4: `gil-release-patterns` — GIL discipline
 - Apply rules R1–R8 (or read findings from `/audit-gil-discipline` if available).
-- Flag `#[pyfunction]` bodies > 50 lines without `allow_threads`.
+- Flag `#[pyfunction]` bodies > 50 lines without `detach`.
 - Flag I/O calls (`std::fs`, `std::net`, `reqwest::blocking`) inside GIL-held regions.
 
 #### Sheet 5: `batched-ffi-operations` — API shape
@@ -138,7 +138,7 @@ For each of the 13 sheets, apply the discipline:
 - `pyo3-async-runtimes` used correctly? Runtime initialised in `#[pymodule]`?
 - Futures bridged with `future_into_py` / `into_future`?
 - Cancellation: are loops yielded with `tokio::task::yield_now`?
-- GIL discipline inside async: is the GIL held only briefly inside `with_gil`?
+- GIL discipline inside async: is the GIL held only briefly inside `attach`?
 
 #### Sheet 11: `packaging-and-wheels` — distribution
 - cibuildwheel configured? Matrix matches abi3 choice?

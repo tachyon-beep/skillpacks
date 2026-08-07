@@ -85,7 +85,7 @@ impl MyEnv {
         py: Python<'py>,
         action: i32,
     ) -> PyResult<(Bound<'py, PyArray1<f32>>, f32, bool, bool, Bound<'py, PyDict>)> {
-        let (reward, terminated) = py.allow_threads(|| self.state.advance(action));
+        let (reward, terminated) = py.detach(|| self.state.advance(action));
         self.step_count += 1;
         let truncated = self.step_count >= self.max_steps;
 
@@ -167,7 +167,7 @@ impl MyEnv {
         py: Python<'py>,
         action: i32,
     ) -> PyResult<(Bound<'py, PyArray1<f32>>, f32, bool, bool, Bound<'py, PyDict>)> {
-        let (reward, terminated) = py.allow_threads(|| self.state.advance(action));
+        let (reward, terminated) = py.detach(|| self.state.advance(action));
 
         // Write into the persistent buffer.
         let bound = self.obs_buffer.bind(py).clone();
@@ -253,7 +253,7 @@ impl VecEnv {
         let mut terminated = vec![false; n];
         let mut truncated = vec![false; n];
 
-        py.allow_threads(|| {
+        py.detach(|| {
             // Parallel step over envs.
             use rayon::prelude::*;
             self.envs.par_iter_mut().enumerate().for_each(|(i, env)| {
@@ -362,7 +362,7 @@ For projects that want to keep all logic in Rust, the wrapper is optional (the `
 |----------------------------------------------------------|------------------------------------------------------------------|--------------------------------------------------------------------------------------|
 | Allocating a new obs array every step                     | Allocator dominates profile in long episodes                     | Reuse a `Py<PyArray1>` buffer; document that callers must `.copy()` to retain        |
 | Conflating `terminated` and `truncated`                   | Bootstrapping wrong; advantage estimates biased near step limits  | Return both separately; never collapse to `done`                                      |
-| GIL held through the simulation step                       | Vectorised env Python threads serialise                          | Wrap the simulation in `py.allow_threads(|| ...)`                                     |
+| GIL held through the simulation step                       | Vectorised env Python threads serialise                          | Wrap the simulation in `py.detach(|| ...)`                                     |
 | `SyncVectorEnv` over Rust env (cross-Python loop)          | Throughput < expected; per-env overhead × N                      | Implement `VecEnv` in Rust; one Python call per batched step                          |
 | Non-deterministic reset                                    | RL training non-reproducible despite `seed=`                     | Use a deterministic RNG; explicitly reseed in reset                                   |
 | `observation_space` rebuilt every call                     | Slow `env.observation_space` access                               | Cache the space object as a `Py<PyAny>` field; return cached on getter                |

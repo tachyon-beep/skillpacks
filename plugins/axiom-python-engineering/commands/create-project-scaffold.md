@@ -120,11 +120,11 @@ For the `--pip-only` path, also add (uv handles this via `[dependency-groups]`):
 ```toml
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.3",
-    "pytest-cov>=5.0",
-    "mypy>=1.13",
-    "ruff>=0.8",
-    "pre-commit>=4.0",
+    "pytest>=9.1",
+    "pytest-cov>=7.1",
+    "mypy>=2.3",
+    "ruff>=0.16",
+    "pre-commit>=4.6",
 ]
 ```
 

@@ -198,7 +198,7 @@ impl From<AppError> for PyErr {
             /* ... */
         };
         // Optionally attach the source
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             if let Some(source) = e.source() {
                 let cause = PyRuntimeError::new_err(source.to_string());
                 py_err.set_cause(py, Some(cause));
@@ -353,4 +353,4 @@ match callback.call0() {
 - [`pyo3-fundamentals.md`](pyo3-fundamentals.md) — `PyResult`, `PyErr`, exception construction
 - [`debugging-pyo3.md`](debugging-pyo3.md) — diagnosing crashes, panics, missing tracebacks
 - [`lifecycle-and-teardown.md`](lifecycle-and-teardown.md) — exceptions during shutdown are special
-- [`gil-release-patterns.md`](gil-release-patterns.md) — error handling inside `allow_threads`
+- [`gil-release-patterns.md`](gil-release-patterns.md) — error handling inside `detach`

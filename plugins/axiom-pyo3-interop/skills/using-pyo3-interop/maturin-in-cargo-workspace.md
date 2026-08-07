@@ -64,11 +64,11 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/example/my-project"
 
 [workspace.dependencies]
-pyo3 = { version = "0.25", features = ["abi3-py39"] }   # extension-module added per-crate
-numpy = "0.25"
-ndarray = "0.16"
+pyo3 = { version = "0.29", features = ["abi3-py39"] }   # extension-module added per-crate
+numpy = "0.29"
+ndarray = "0.17"
 serde = { version = "1.0", features = ["derive"] }
-thiserror = "1.0"
+thiserror = "2"
 ```
 
 ```toml
@@ -87,7 +87,7 @@ thiserror = { workspace = true }
 ndarray = { workspace = true }
 
 [dev-dependencies]
-criterion = "0.5"
+criterion = "0.8"
 
 [[bench]]
 name = "compute"

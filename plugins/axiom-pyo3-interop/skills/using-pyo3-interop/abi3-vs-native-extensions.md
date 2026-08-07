@@ -23,7 +23,7 @@ PyO3's `abi3` feature builds against `Py_LIMITED_API`. The minimum version is se
 ```toml
 # Cargo.toml — abi3 build, minimum CPython 3.9
 [dependencies]
-pyo3 = { version = "0.25", features = ["extension-module", "abi3-py39"] }
+pyo3 = { version = "0.29", features = ["extension-module", "abi3-py39"] }
 ```
 
 The wheel tag is then `cp39-abi3-<platform>` and a single wheel imports on CPython 3.9, 3.10, 3.11, 3.12, 3.13.
@@ -83,14 +83,14 @@ If you pick native, document *why* in the package's CONTRIBUTING / ARCHITECTURE 
 
 ```toml
 [dependencies]
-pyo3 = { version = "0.25", features = ["extension-module", "abi3-py39"] }
+pyo3 = { version = "0.29", features = ["extension-module", "abi3-py39"] }
 ```
 
 ### Cargo.toml — native, no abi3
 
 ```toml
 [dependencies]
-pyo3 = { version = "0.25", features = ["extension-module"] }
+pyo3 = { version = "0.29", features = ["extension-module"] }
 ```
 
 ### `pyproject.toml` (maturin) — abi3 wheel tag

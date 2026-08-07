@@ -28,7 +28,7 @@ PyO3 has three distinct ways to refer to a Python object. Mixing them up is the 
 | Type             | What it is                                                          | When to use                                                                 |
 |------------------|---------------------------------------------------------------------|-----------------------------------------------------------------------------|
 | `Bound<'py, T>`  | Borrowed reference, GIL-bound, lives within `'py`                   | Function arguments, locals, return values from synchronous calls            |
-| `Py<T>`          | Owned handle, GIL-independent, must reacquire GIL to use            | Storing in struct fields, passing to threads, holding across `allow_threads`|
+| `Py<T>`          | Owned handle, GIL-independent, must reacquire GIL to use            | Storing in struct fields, passing to threads, holding across `detach`|
 | `PyRef<'py, T>` / `PyRefMut<'py, T>` | Borrow of a `#[pyclass]` instance (like `Ref<T>` / `RefMut<T>`) | Method bodies that need typed access to `&self` / `&mut self` of a pyclass |
 
 **The two core operations**:
@@ -115,13 +115,13 @@ fn show<'py>(py: Python<'py>, x: i64) -> PyResult<Bound<'py, PyAny>> {
 }
 ```
 
-2. **`Python::with_gil`** — when you start outside the boundary (e.g., a Rust `main`, a callback from a non-Python thread):
+2. **`Python::attach`** — when you start outside the boundary (e.g., a Rust `main`, a callback from a non-Python thread):
 
 ```rust
 use pyo3::Python;
 
 fn run_a_python_call() -> PyResult<i64> {
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let math = py.import("math")?;
         let factorial: i64 = math.call_method1("factorial", (10,))?.extract()?;
         Ok(factorial)
@@ -129,16 +129,24 @@ fn run_a_python_call() -> PyResult<i64> {
 }
 ```
 
-`Python::with_gil` acquires the GIL (blocking if necessary), runs the closure, and releases. Use it sparingly — see `gil-release-patterns.md` for the inverse direction (release within a held GIL section).
+`Python::attach` acquires the GIL (blocking if necessary), runs the closure, and releases. Use it sparingly — see `gil-release-patterns.md` for the inverse direction (release within a held GIL section).
 
-### `Python::attach` (PyO3 0.24+)
+### The 0.26 rename: `attach` / `detach`
 
-`Python::with_gil` always attaches the current OS thread to the interpreter if it isn't already. PyO3 0.24+ separated this into:
+PyO3 0.26 (2025-08-29) renamed the GIL-token API to describe what it actually does — attaching an OS thread to the interpreter, rather than acquiring a global lock. The old names described a mechanism that does not exist on free-threaded builds; the new ones describe the operation that survives either way.
 
-- `Python::attach(|py| { ... })` — attaches the thread, runs the closure, detaches. The replacement for the implicit attach inside `with_gil`.
-- `Python::with_gil` still works but is now sugar over `attach` for code that does not care about the distinction.
+| Removed in 0.26 | Current name |
+|-----------------|--------------|
+| `Python::with_gil` | `Python::attach` |
+| `Python::allow_threads` | `Python::detach` |
+| `Python::with_gil_unchecked` | `Python::attach_unchecked` |
+| `Python::assume_gil_acquired` | `Python::assume_attached` |
+| `pyo3::prepare_freethreaded_python` | `Python::initialize` |
+| `GILOnceCell` (deprecated) | `PyOnceLock` |
 
-For a thread that calls Python repeatedly, attach once at thread start and reuse the attachment; do not re-attach per call. See `gil-release-patterns.md`.
+These are **renames, not deprecations** — the old names are gone from the crate, so code written against 0.25 or earlier fails to compile on 0.26+ with `no method named ...`. Most PyO3 material still in circulation predates the rename; translate the names as you read it.
+
+`Python::attach` always attaches the current OS thread to the interpreter if it isn't already. For a thread that calls Python repeatedly, attach once at thread start and reuse the attachment; do not re-attach per call. See `gil-release-patterns.md`.
 
 ## `#[pymodule]`, `#[pyclass]`, `#[pyfunction]`
 
@@ -278,17 +286,17 @@ The `'py` lifetime is the most surprising thing about PyO3 0.21+. The rules:
 1. A `Bound<'py, T>` cannot outlive its `Python<'py>` token.
 2. A `Bound<'py, T>` cannot be sent to a thread that does not hold the GIL — convert to `Py<T>` first.
 3. `Py<T>` can move freely, but to *use* it you need a `Python<'py>` and you `bind(py)` it.
-4. Inside `Python::allow_threads`, the GIL is released — no `Bound<'py, T>` is valid; only `Py<T>` is valid (and only as data, you cannot dereference it). See `gil-release-patterns.md`.
+4. Inside `Python::detach`, the GIL is released — no `Bound<'py, T>` is valid; only `Py<T>` is valid (and only as data, you cannot dereference it). See `gil-release-patterns.md`.
 
 ```rust
-// ❌ Won't compile — the Bound outlives the with_gil closure.
+// ❌ Won't compile — the Bound outlives the attach closure.
 fn bad() -> Bound<'static, PyDict> {
-    Python::with_gil(|py| PyDict::new(py))   // 'py is gone after the closure
+    Python::attach(|py| PyDict::new(py))   // 'py is gone after the closure
 }
 
 // ✅ Compiles — the Py<PyDict> is GIL-independent.
 fn ok() -> Py<PyDict> {
-    Python::with_gil(|py| PyDict::new(py).unbind())
+    Python::attach(|py| PyDict::new(py).unbind())
 }
 ```
 
@@ -316,7 +324,7 @@ For configuration objects, value types, and immutable handles, prefer `#[pyclass
 
 | Operation                                | Code                                                 |
 |------------------------------------------|------------------------------------------------------|
-| Acquire GIL from non-Python thread        | `Python::with_gil(|py| { ... })`                     |
+| Acquire GIL from non-Python thread        | `Python::attach(|py| { ... })`                     |
 | Reattach a tracked thread (0.24+)         | `Python::attach(|py| { ... })`                       |
 | Make a borrowed reference                 | `Bound::new(py, value)?` / `Bound::from(...)`        |
 | Drop the GIL tie (own the handle)         | `bound.unbind()` → `Py<T>`                           |
@@ -339,7 +347,7 @@ For configuration objects, value types, and immutable handles, prefer `#[pyclass
 | `#[pyclass]` without `#[new]`                   | Python cannot construct it. Add a `#[new]` constructor or document why not.       |
 | Unwrapping `PyResult`                           | A Python exception turns into a Rust panic, which becomes `PanicException` or aborts. Use `?` or map the error explicitly. |
 | Returning `String` when you wanted `&str`       | The `&str` would borrow from the Python heap; PyO3 returns `String` (owned) by default for safety. To return a borrowed view, use `Bound<'_, PyString>`. |
-| Mixing `with_gil` with already-held GIL          | `with_gil` is a no-op when the GIL is already held; harmless but wasted work. Pass `Python<'py>` along instead. |
+| Mixing `attach` with already-held GIL          | `attach` is a no-op when the GIL is already held; harmless but wasted work. Pass `Python<'py>` along instead. |
 
 ## Do This / Don't Do This
 
@@ -370,7 +378,7 @@ fn slow_compute(py: Python<'_>, n: u64) -> u64 {
 // ✅ Do: release for the compute, reacquire to return
 #[pyfunction]
 fn fast_compute(py: Python<'_>, n: u64) -> u64 {
-    py.allow_threads(|| expensive_pure_rust(n))
+    py.detach(|| expensive_pure_rust(n))
 }
 ```
 
@@ -390,7 +398,7 @@ struct Cache {
 
 - [`abi3-vs-native-extensions.md`](abi3-vs-native-extensions.md) — what wheel matrix this code ships in
 - [`maturin-in-cargo-workspace.md`](maturin-in-cargo-workspace.md) — how the dev loop works
-- [`gil-release-patterns.md`](gil-release-patterns.md) — `Python::allow_threads` discipline
+- [`gil-release-patterns.md`](gil-release-patterns.md) — `Python::detach` discipline
 - [`error-mapping-and-traceback-fidelity.md`](error-mapping-and-traceback-fidelity.md) — `PyResult`, `PyErr`, exception types
 - [`numpy-buffer-protocol.md`](numpy-buffer-protocol.md) — when the Python object is a NumPy array
 - `axiom-rust-engineering:ai-ml-and-interop.md` — the broader Rust-as-ML-component context

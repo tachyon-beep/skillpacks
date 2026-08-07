@@ -31,18 +31,18 @@ use pyo3::prelude::*;
 fn sum_of_squares<'py>(py: Python<'py>, xs: PyReadonlyArray2<'py, f64>) -> PyResult<f64> {
     let view = xs.as_array();   // ndarray::ArrayView2<f64>; zero-copy view of Python's buffer.
 
-    let result = py.allow_threads(|| {
+    let result = py.detach(|| {
         view.iter().map(|x| x * x).sum::<f64>()
     });
     Ok(result)
 }
 ```
 
-Wait — the `view` is borrowed from `xs`, which is `Bound<'py, _>` and not `Send`. How does it work inside `allow_threads`?
+Wait — the `view` is borrowed from `xs`, which is `Bound<'py, _>` and not `Send`. How does it work inside `detach`?
 
-The trick: `xs.as_array()` returns an `ArrayView2<'a, f64>` where `'a` is the `'py` lifetime. The `ArrayView` itself is *not* `!Send` *if* the underlying data is `Send`-able. PyO3's `numpy` crate marks `as_array()` views as `Send + Sync` because the underlying buffer pointer is just a `*const T` and Rust doesn't need the GIL to read it (Python won't move the buffer while the GIL is held by *some* thread, and `allow_threads` releases the GIL only after constructing the view).
+The trick: `xs.as_array()` returns an `ArrayView2<'a, f64>` where `'a` is the `'py` lifetime. The `ArrayView` itself is *not* `!Send` *if* the underlying data is `Send`-able. PyO3's `numpy` crate marks `as_array()` views as `Send + Sync` because the underlying buffer pointer is just a `*const T` and Rust doesn't need the GIL to read it (Python won't move the buffer while the GIL is held by *some* thread, and `detach` releases the GIL only after constructing the view).
 
-The lifetime contract: the `ArrayView` cannot outlive `xs`. Inside `allow_threads`, `xs` is still alive (it's still on the stack), so the view is fine.
+The lifetime contract: the `ArrayView` cannot outlive `xs`. Inside `detach`, `xs` is still alive (it's still on the stack), so the view is fine.
 
 **The trap**: returning the view, or storing it in a `Send` data structure that escapes the function, breaks the contract.
 
@@ -54,7 +54,7 @@ use numpy::PyReadwriteArray1;
 #[pyfunction]
 fn scale_inplace<'py>(py: Python<'py>, mut xs: PyReadwriteArray1<'py, f32>, factor: f32) -> PyResult<()> {
     let mut view = xs.as_array_mut();
-    py.allow_threads(|| {
+    py.detach(|| {
         for x in view.iter_mut() {
             *x *= factor;
         }
@@ -100,12 +100,12 @@ fn make_matrix<'py>(py: Python<'py>, n: usize) -> Bound<'py, numpy::PyArray2<f64
 | `let view = xs.as_array(); spawn_thread(view);`                   | ❌    | `view` ties to `'py`; thread may outlive the GIL → use-after-free                            |
 | `let view = xs.as_array(); store_in_pyclass(view);`               | ❌    | Pyclass field requires `'static`; the view's `'py` is not `'static`                          |
 | `let owned = xs.as_array().to_owned(); spawn_thread(owned);`       | ✅    | `to_owned()` copies; the owned `Array` is `'static`                                          |
-| `py.allow_threads(|| { compute(&xs.as_array()); })`                | ❌    | `xs` is `Bound<'py>`, cannot be captured into `Send` closure                                 |
-| `let view = xs.as_array(); py.allow_threads(|| compute(view));`   | ✅*   | The view is `Send` (PyO3's `numpy` marks it as such); the buffer is still pinned             |
+| `py.detach(|| { compute(&xs.as_array()); })`                | ❌    | `xs` is `Bound<'py>`, cannot be captured into `Send` closure                                 |
+| `let view = xs.as_array(); py.detach(|| compute(view));`   | ✅*   | The view is `Send` (PyO3's `numpy` marks it as such); the buffer is still pinned             |
 | `return xs.as_array();`                                           | ❌    | View borrows from `xs`; cannot escape the call                                               |
 | `let view = xs.as_array(); xs.do_something_modifying(); use(view);` | ❌  | Aliasing — modifying `xs` via `xs` while `view` is borrowed is UB                            |
 
-\* Safe under one critical assumption: the Python array is not freed during the `allow_threads` call. Since the `Bound<'py, _>` is on the stack of the calling function and PyO3 holds it through the call, the array is pinned even with the GIL released. *Different* threads cannot free it (they'd need the GIL to decref).
+\* Safe under one critical assumption: the Python array is not freed during the `detach` call. Since the `Bound<'py, _>` is on the stack of the calling function and PyO3 holds it through the call, the array is pinned even with the GIL released. *Different* threads cannot free it (they'd need the GIL to decref).
 
 ## Aliasing Rules
 

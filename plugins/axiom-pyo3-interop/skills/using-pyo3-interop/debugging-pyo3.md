@@ -213,7 +213,7 @@ gdb -p <pid>
 
 ### Common deadlock patterns
 
-- **GIL held in Rust, Python thread waiting** — see py-spy: most threads stuck in `PyEval_RestoreThread`. Fix: add `Python::allow_threads` to the long-running Rust call.
+- **GIL held in Rust, Python thread waiting** — see py-spy: most threads stuck in `PyEval_RestoreThread`. Fix: add `Python::detach` to the long-running Rust call.
 - **Rust thread blocked on `Mutex::lock()` while another thread holds the lock and is blocked waiting for the GIL** — classic deadlock. Fix: don't hold a Rust lock while needing the GIL; serialise access differently.
 - **`pyo3-async-runtimes` future never resolves** — see py-spy: the awaiter is in `asyncio.tasks.__step`. Fix: ensure the tokio runtime is running and the future hasn't been dropped.
 

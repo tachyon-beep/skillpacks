@@ -99,7 +99,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 <core-crate> = { path = "../<core-crate>" }   # if a core crate exists
-pyo3 = { version = "0.25", features = ["extension-module", "abi3-py39"] }
+pyo3 = { version = "0.29", features = ["extension-module", "abi3-py39"] }
 # numpy = "0.25"   # uncomment if NumPy interop needed
 # pyo3-async-runtimes = { version = "0.25", features = ["tokio-runtime"] }   # if async needed
 ```
@@ -117,7 +117,7 @@ members = [
 ]
 
 [workspace.dependencies]
-pyo3 = { version = "0.25", features = ["abi3-py39"] }
+pyo3 = { version = "0.29", features = ["abi3-py39"] }
 # numpy = "0.25"
 ```
 

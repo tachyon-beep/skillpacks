@@ -47,7 +47,7 @@ If your input is "we have (or want) a PyO3 extension and need it to be productio
 1. Read [`pyo3-fundamentals.md`](pyo3-fundamentals.md) — the `Bound<'py, T>` discipline, GIL tokens, `#[pymodule]` / `#[pyclass]` / `#[pyfunction]`, the modern (0.21+) idioms vs. the legacy `&PyAny` surface. If you are not fluent here, every later sheet's code will be subtly wrong. Emit `01-pyo3-fundamentals.md` if generating a design artifact set.
 2. Read [`abi3-vs-native-extensions.md`](abi3-vs-native-extensions.md) — pick abi3 (one wheel per platform, forward-compatible across CPython minor versions) or native (one wheel per CPython minor version, slightly faster, more API surface). The choice constrains everything downstream — wheels, CI, tests.
 3. Read [`maturin-in-cargo-workspace.md`](maturin-in-cargo-workspace.md) — the hybrid Python-package + Rust-crate layout, `maturin develop` flow inside a workspace, the target-dir / virtualenv interaction, the editable-install gotchas. This is where most "it works on my machine but not in CI" boundary bugs originate.
-4. Read [`gil-release-patterns.md`](gil-release-patterns.md) — `Python::allow_threads`, when to release, when *not* to release, the GIL-deadlock cycle, parking the GIL across long computations. The single most common production failure mode is a Rust call holding the GIL too long; this sheet is how you avoid that.
+4. Read [`gil-release-patterns.md`](gil-release-patterns.md) — `Python::detach`, when to release, when *not* to release, the GIL-deadlock cycle, parking the GIL across long computations. The single most common production failure mode is a Rust call holding the GIL too long; this sheet is how you avoid that.
 5. Read [`error-mapping-and-traceback-fidelity.md`](error-mapping-and-traceback-fidelity.md) — `PyResult`, `PyErr` construction, exception-type mapping, chained errors, traceback preservation. A Python user should see a Python exception with a useful traceback, not "ValueError: <opaque rust error>".
 6. Read [`lifecycle-and-teardown.md`](lifecycle-and-teardown.md) — interpreter shutdown order, `Drop` order on Rust-owned resources, `atexit` interactions, the segfault-on-exit class of bugs.
 7. Run the **Boundary Gate** before declaring `99-pyo3-interop-specification.md` ready: every public Python-facing function has explicit GIL discipline; every error path maps to a documented Python exception type; every Rust-owned resource has a documented teardown order; every batched API has a documented chunk size; every wheel target is declared in `00-`.
@@ -170,11 +170,11 @@ The pack produces a numbered artifact set in a `pyo3-interop/` workspace:
 
 ### "do I still need to release the GIL on free-threaded CPython?" / "3.13t / no-GIL build"
 
-**Symptoms**: targeting free-threaded CPython (3.13t / `Py_GIL_DISABLED`); unsure whether `Python::allow_threads` is still required; abi3 wheels don't cover the free-threaded ABI; "is my extension free-threaded-safe?"
+**Symptoms**: targeting free-threaded CPython (3.13t / `Py_GIL_DISABLED`); unsure whether `Python::detach` is still required; abi3 wheels don't cover the free-threaded ABI; "is my extension free-threaded-safe?"
 
-**Route to**: [`gil-release-patterns.md`](gil-release-patterns.md) (the `allow_threads` no-op caveat) and [`abi3-vs-native-extensions.md`](abi3-vs-native-extensions.md) (ABI coverage)
+**Route to**: [`gil-release-patterns.md`](gil-release-patterns.md) (the `detach` no-op caveat) and [`abi3-vs-native-extensions.md`](abi3-vs-native-extensions.md) (ABI coverage)
 
-**Why**: On 3.13t `allow_threads` is a no-op, but writing it remains correct and forward-compatible — the discipline is unchanged; what changes is that the runtime no longer serializes you. Free-threaded builds also need their own wheel (abi3 does not yet cover the free-threaded ABI), and a `#[pyclass]` shared across threads must actually be `Send + Sync`, not merely declared so.
+**Why**: On 3.13t `detach` is a no-op, but writing it remains correct and forward-compatible — the discipline is unchanged; what changes is that the runtime no longer serializes you. Free-threaded builds also need their own wheel (abi3 does not yet cover the free-threaded ABI), and a `#[pyclass]` shared across threads must actually be `Send + Sync`, not merely declared so.
 
 ### "maturin develop works locally but CI can't import the module" / "the workspace breaks editable installs"
 
@@ -190,7 +190,7 @@ The pack produces a numbered artifact set in a `pyo3-interop/` workspace:
 
 **Route to**: [`gil-release-patterns.md`](gil-release-patterns.md)
 
-**Why**: The GIL is a global lock; Rust code that does not call `Python::allow_threads` holds it through every nanosecond of its body. For any compute-bound call > a few microseconds, that is a contract violation.
+**Why**: The GIL is a global lock; Rust code that does not call `Python::detach` holds it through every nanosecond of its body. For any compute-bound call > a few microseconds, that is a contract violation.
 
 ### "we cross the FFI 10⁶ times per episode and the boundary dominates the profile"
 
@@ -292,7 +292,7 @@ Some scenarios cross several sheets. Use these as routing recipes:
 
 The pack refuses these shapes on sight. Each is unpacked in the relevant sheet; this list is the boundary-anti-pattern hit list:
 
-1. **GIL held through pure compute** — any `#[pyfunction]` body that runs > 1 ms of CPU work without `Python::allow_threads` is broken. *(gil-release-patterns)*
+1. **GIL held through pure compute** — any `#[pyfunction]` body that runs > 1 ms of CPU work without `Python::detach` is broken. *(gil-release-patterns)*
 2. **Per-element API in a hot loop** — `compute(x)` called from Python in a `for` loop over 10⁶ elements; the boundary is 99% of the cost. *(batched-ffi-operations)*
 3. **Legacy `&PyAny` / `IntoPy` surface in new code** — write `Bound<'py, T>` and `IntoPyObject` from day one. *(pyo3-fundamentals)*
 4. **NumPy view that outlives its pin** — returning a `&[f32]` view of a Python array without anchoring its lifetime to the `Bound<'py, PyArray>`. *(numpy-buffer-protocol)*
@@ -338,7 +338,7 @@ The pack ships three slash commands:
 
 - **`/scaffold-pyo3-crate`** — workspace-aware PyO3 + maturin + abi3 scaffold; emits `Cargo.toml`, `pyproject.toml`, `src/lib.rs` skeleton, `python/<package>/__init__.py`, `tests/`, `cibuildwheel` config, optionally a CI workflow.
 - **`/profile-ffi-boundary`** — measures the per-call cost of an FFI surface; runs a calibrated micro-benchmark; reports cost-per-crossing and where in the API surface it is paid.
-- **`/audit-gil-discipline`** — sweeps a PyO3 crate for places where the GIL is held longer than necessary; flags `#[pyfunction]` bodies > a configured CPU budget without `Python::allow_threads`.
+- **`/audit-gil-discipline`** — sweeps a PyO3 crate for places where the GIL is held longer than necessary; flags `#[pyfunction]` bodies > a configured CPU budget without `Python::detach`.
 
 ## Agent
 

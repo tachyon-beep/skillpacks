@@ -1,5 +1,5 @@
 ---
-description: Sweep a PyO3 binding crate for GIL-discipline violations — places where the GIL is held longer than necessary, where `Python::allow_threads` is missing in compute-bound paths, or where the GIL-held window is interleaved with releases in ways that subvert the phased-function pattern from `axiom-pyo3-interop:gil-release-patterns.md`. Produces a structured findings list, severity-ranked, with each finding citing the line in source and the sheet that closes the gap. Operates on a binding crate inside a workspace; uses static analysis (grep, rust-analyzer if available) plus heuristic body-size measurement.
+description: Sweep a PyO3 binding crate for GIL-discipline violations — places where the GIL is held longer than necessary, where `Python::detach` is missing in compute-bound paths, or where the GIL-held window is interleaved with releases in ways that subvert the phased-function pattern from `axiom-pyo3-interop:gil-release-patterns.md`. Produces a structured findings list, severity-ranked, with each finding citing the line in source and the sheet that closes the gap. Operates on a binding crate inside a workspace; uses static analysis (grep, rust-analyzer if available) plus heuristic body-size measurement.
 allowed-tools: ["Read", "Grep", "Glob", "Bash", "Task", "AskUserQuestion"]
 argument-hint: "[crate_path]"
 ---
@@ -40,14 +40,14 @@ Resolve to a single crate root (the directory containing `Cargo.toml`).
 
 Read `using-pyo3-interop:gil-release-patterns.md` (or the rendered form available in the conversation). The audit applies these rules:
 
-1. **R1**: A `#[pyfunction]` body > 50 lines without an `allow_threads` call is a likely missed release.
-2. **R2**: A `#[pymethods]` impl block with `&mut self` methods > 30 lines without `allow_threads` is similar.
-3. **R3**: A function body that calls I/O (`std::fs::*`, `std::net::*`, `tokio::*` blocking, `reqwest::blocking::*`) without `allow_threads` holds the GIL through I/O.
+1. **R1**: A `#[pyfunction]` body > 50 lines without an `detach` call is a likely missed release.
+2. **R2**: A `#[pymethods]` impl block with `&mut self` methods > 30 lines without `detach` is similar.
+3. **R3**: A function body that calls I/O (`std::fs::*`, `std::net::*`, `tokio::*` blocking, `reqwest::blocking::*`) without `detach` holds the GIL through I/O.
 4. **R4**: A function body with both Python operations (e.g., `getattr`, `call_method`, `extract`) and pure compute interleaved (no clear phase boundary) — likely sub-optimal phasing.
-5. **R5**: A `#[pyclass(unsendable)]` with methods that do compute — `unsendable` precludes `allow_threads` so this combination is performance-trapped.
-6. **R6**: A loop body inside `allow_threads` with frequent `Python::with_gil` calls (per-iteration GIL ping-pong).
+5. **R5**: A `#[pyclass(unsendable)]` with methods that do compute — `unsendable` precludes `detach` so this combination is performance-trapped.
+6. **R6**: A loop body inside `detach` with frequent `Python::attach` calls (per-iteration GIL ping-pong).
 7. **R7**: A function body with `std::thread::sleep`, `std::thread::yield_now` in the GIL-held region.
-8. **R8**: A function returning a `PyResult<()>` with no Python interactions but no `allow_threads` — likely could release for the entire body.
+8. **R8**: A function returning a `PyResult<()>` with no Python interactions but no `detach` — likely could release for the entire body.
 
 ### Step 3 — Sweep the source
 
@@ -66,7 +66,7 @@ Parse each block's body. Apply each rule (R1–R8). For each match, record:
 - Severity:
   - **HIGH**: clear performance bug or correctness risk (R1, R2, R3 with > 1ms compute estimate; R5).
   - **MEDIUM**: probable suboptimal pattern (R4, R6, R7).
-  - **LOW**: minor (R8 in a one-call function; R6 with infrequent `with_gil`).
+  - **LOW**: minor (R8 in a one-call function; R6 with infrequent `attach`).
 - Recommended fix (one-liner; cites sheet section).
 
 ### Step 4 — Generate the findings report
@@ -82,11 +82,11 @@ Parse each block's body. Apply each rule (R1–R8). For each match, record:
 
 ### Finding 1: HIGH — `compute_large` (src/lib.rs:42–87)
 
-**Rule**: R1 — `#[pyfunction]` body > 50 lines without `allow_threads`.
+**Rule**: R1 — `#[pyfunction]` body > 50 lines without `detach`.
 
 **Body length**: 46 lines of Rust between function entry and return; estimated > 1ms of compute (loop over 1M elements, no Python interaction).
 
-**Recommended fix**: Wrap the compute portion in `py.allow_threads(|| { ... })`. See `gil-release-patterns.md` — *Phased Function Pattern*.
+**Recommended fix**: Wrap the compute portion in `py.detach(|| { ... })`. See `gil-release-patterns.md` — *Phased Function Pattern*.
 
 ```rust
 #[pyfunction]
@@ -95,7 +95,7 @@ fn compute_large<'py>(py: Python<'py>, xs: ...) -> PyResult<...> {
     let xs_view = xs.as_array();
 
     // Phase 2: pure compute (GIL released)
-    let result = py.allow_threads(|| heavy_kernel(&xs_view));
+    let result = py.detach(|| heavy_kernel(&xs_view));
 
     // Phase 3: return (GIL re-acquired)
     Ok(result.into_pyarray(py))
@@ -110,7 +110,7 @@ fn compute_large<'py>(py: Python<'py>, xs: ...) -> PyResult<...> {
 
 **Detail**: lines 145, 162, 177 each call back into Python; the compute-heavy section (lines 130–144) holds the GIL.
 
-**Recommended fix**: Restructure into clear phases. Move all Python interactions to phase 1 / phase 3; compute in `allow_threads` between. See `gil-release-patterns.md` — *Phased Function Pattern*.
+**Recommended fix**: Restructure into clear phases. Move all Python interactions to phase 1 / phase 3; compute in `detach` between. See `gil-release-patterns.md` — *Phased Function Pattern*.
 
 ---
 
@@ -118,15 +118,15 @@ fn compute_large<'py>(py: Python<'py>, xs: ...) -> PyResult<...> {
 
 **Rule**: R3 — `reqwest::blocking::get` is called while the GIL is held.
 
-**Recommended fix**: Wrap the I/O in `py.allow_threads(|| reqwest::blocking::get(url))`. Or convert to async with `pyo3-async-runtimes` per `using-pyo3-interop:async-across-the-boundary.md`.
+**Recommended fix**: Wrap the I/O in `py.detach(|| reqwest::blocking::get(url))`. Or convert to async with `pyo3-async-runtimes` per `using-pyo3-interop:async-across-the-boundary.md`.
 
 ---
 
 ### Finding 4: LOW — `version` (src/lib.rs:12)
 
-**Rule**: R8 — function body has no Python operations and no `allow_threads`.
+**Rule**: R8 — function body has no Python operations and no `detach`.
 
-**Detail**: The function returns a `&'static str`. The total runtime is < 100 ns. Adding `allow_threads` would add overhead without benefit. **No action recommended.**
+**Detail**: The function returns a `&'static str`. The total runtime is < 100 ns. Adding `detach` would add overhead without benefit. **No action recommended.**
 
 ---
 
