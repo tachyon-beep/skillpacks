@@ -60,6 +60,7 @@ All router skills from the 18 plugins are now available as slash commands:
 - **`/simulation-foundations`** - Routes to simulation fundamentals
 - **`/systems-thinking`** - Routes to systems thinking methodology and modeling
 - **`/counterfactual-statistics`** - Routes to statistics for counterfactual and paired-branch ML experiments (units, pairing, splits, winner's curse, power, reporting)
+- **`/structure-synthesis`** - Routes to generative models whose outputs are graphs (typed DAG grammars, canonicalisation, equivalence detection, semantic hashing, generator/verifier/judge separation)
 
 ### Compilers & IR (Axiom)
 - **`/tensor-compiler-engineering`** - Routes to tensor-compiler engineering (graph IR, lowering, kernel selection, conformance testing)
@@ -104,6 +105,7 @@ The router will then guide you to the appropriate specialized skill for your tas
 | yzmir-neural-architectures | using-neural-architectures | /neural-architectures |
 | yzmir-pytorch-engineering | using-pytorch-engineering | /pytorch-engineering |
 | yzmir-simulation-foundations | using-simulation-foundations | /simulation-foundations |
+| yzmir-structure-synthesis | using-structure-synthesis | /structure-synthesis |
 | yzmir-systems-thinking | using-systems-thinking | /systems-thinking |
 | yzmir-training-optimization | using-training-optimization | /training-optimization |
 

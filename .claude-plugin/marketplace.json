@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, product management, solution architecture, distributed systems, tensor compilers, game development, security, documentation, site design, and UX skills for Claude Code - 49 complete skillpacks with 400+ TDD-validated skills and reference sheets",
-    "version": "3.27.0",
+    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, product management, solution architecture, distributed systems, tensor compilers, game development, security, documentation, site design, and UX skills for Claude Code - 50 complete skillpacks with 400+ TDD-validated skills and reference sheets",
+    "version": "3.28.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -676,6 +676,28 @@
         "data-leakage",
         "pre-registration",
         "power-analysis"
+      ],
+      "category": "ai-ml"
+    },
+    {
+      "name": "yzmir-structure-synthesis",
+      "source": "./plugins/yzmir-structure-synthesis",
+      "description": "Generative models whose outputs are graphs: typed DAG grammars with node/edge/cost ceilings, deterministic and latent-conditioned generation, best-of-K pools, mutation and recombination over lineages, canonicalisation to normal forms, equivalence detection, and semantic hashing. General to neural architecture search, program synthesis over typed IRs, and molecule/circuit generation. Keeps the generator honest by separating generation from structural verification from utility judgement - router + 13 sheets, 3 commands, 2 agents.",
+      "keywords": [
+        "yzmir",
+        "structure-synthesis",
+        "graph-generation",
+        "graph-grammar",
+        "typed-dag",
+        "neural-architecture-search",
+        "program-synthesis",
+        "canonicalisation",
+        "graph-isomorphism",
+        "equivalence-detection",
+        "semantic-hashing",
+        "mode-collapse",
+        "best-of-k",
+        "generator-judge-separation"
       ],
       "category": "ai-ml"
     },

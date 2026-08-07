@@ -2,7 +2,7 @@
 
 ## Professional AI/ML, Python & Rust engineering, web backend, DevOps, SDLC, solution architecture, game development, security, documentation, and UX skills for Claude Code
 
-49 complete skillpacks • 200+ skills • Install what you need
+50 complete skillpacks • 200+ skills • Install what you need
 
 > **Recent additions (May 2026)**: 6 new packs — `yzmir-morphogenetic-rl`,
 > `axiom-determinism-and-replay`, `axiom-audit-pipelines`,
@@ -27,6 +27,15 @@
 > independent statistical unit, cluster-robust inference, paired tests against a
 > zero-anchored no-op control, grouped splits and leakage, the winner's curse,
 > abstention calibration, pre-registration, and reliability reporting.
+>
+> **New (August 2026)**: `yzmir-structure-synthesis` — generative models whose
+> outputs are graphs: typed DAG grammars, deterministic and latent-conditioned
+> generation, best-of-K pools, mutation and recombination over lineages,
+> canonicalisation to normal forms, equivalence detection, and semantic hashing.
+> Router + 13 sheets, 3 commands, 2 SME agents. General to neural architecture
+> search, program synthesis over typed IRs, and molecule/circuit generation —
+> keeps the generator honest by separating generation from structural
+> verification from utility judgement.
 
 ---
 
@@ -359,6 +368,17 @@ cd skillpacks
   calibration, pre-registration, paired power analysis
 - Quality–cost–stability frontiers and the six-row reliability report
 - `/plugin install yzmir-counterfactual-statistics`
+
+**yzmir-structure-synthesis** - router + 13 sheets, 3 commands, 2 agents _(new — August 2026)_
+
+- Generative models whose outputs are graphs: typed DAG grammars with node/edge/cost
+  ceilings, deterministic and latent-conditioned generation, best-of-K pools
+- Mutation and recombination over lineages, canonicalisation to normal forms,
+  equivalence detection, and semantic hashing
+- Keeps the generator honest: separates generation from structural verification
+  from utility judgement, general to NAS, program synthesis, and molecule/circuit
+  generation
+- `/plugin install yzmir-structure-synthesis`
 
 **yzmir-neural-architectures** - 9 skills _(refreshed)_
 

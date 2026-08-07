@@ -1,0 +1,29 @@
+{
+  "name": "yzmir-structure-synthesis",
+  "version": "0.1.0",
+  "description": "Generative models whose outputs are graphs: typed DAG grammars with node/edge/cost ceilings, deterministic and latent-conditioned generation, best-of-K pools, mutation and recombination over lineages, canonicalisation to normal forms, equivalence detection, and semantic hashing. General to neural architecture search, program synthesis over typed IRs, and molecule/circuit generation. Keeps the generator honest by separating generation from structural verification from utility judgement - a generator that filters its own pool by predicted utility is grading its own examination. Ships a router + 13 specialist sheets, 3 commands (/design-graph-grammar, /scaffold-structure-generator, /audit-canonicalisation), and 2 SME-protocol-conformant agents (structure-synthesis-architect, synthesis-integrity-reviewer).",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "yzmir",
+    "structure-synthesis",
+    "graph-generation",
+    "graph-grammar",
+    "typed-dag",
+    "neural-architecture-search",
+    "program-synthesis",
+    "canonicalisation",
+    "graph-isomorphism",
+    "equivalence-detection",
+    "semantic-hashing",
+    "mode-collapse",
+    "best-of-k",
+    "mutation-and-recombination",
+    "constrained-decoding",
+    "generator-judge-separation"
+  ]
+}

@@ -88,6 +88,11 @@ The Yzmir's mastery of hidden knowledge and systematic exploration of the unknow
 - What the paired branch can and cannot prove: the trajectory is the unit, the branch is a repeated measure
 - No-op anchoring, the winner's curse, leakage walls, pre-registration, reliability over units
 
+**yzmir-structure-synthesis** - *The Grammar of Invention*
+
+- Generative models whose outputs are graphs: typed DAG grammars, canonicalisation to normal forms, semantic hashing
+- Keeps the generator honest: imagination, structural permission, and utility judgement never merge into one authority
+
 **yzmir-systems-thinking** - *The Web of Causes*
 
 - Causal-loop and stock-flow modeling, system archetypes
