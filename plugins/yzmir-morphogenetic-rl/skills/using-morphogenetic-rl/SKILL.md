@@ -270,6 +270,7 @@ This pack assumes you already chose your RL algorithm. For PPO/SAC implementatio
 | Request | Primary pack |
 |---------|--------------|
 | Continual learning, catastrophic forgetting | `yzmir-dynamic-architectures/continual-learning-foundations` |
+| Statistical validity of the comparison (what `n` is, paired tests, winner's curse, power) | `yzmir-counterfactual-statistics` |
 | Determinism in physics simulation | `yzmir-simulation-foundations:check-determinism` |
 | Debug NaN in PyTorch | `yzmir-pytorch-engineering:debug-nan` |
 | Train PPO faster (FSDP, FP8) | `yzmir-training-optimization` |

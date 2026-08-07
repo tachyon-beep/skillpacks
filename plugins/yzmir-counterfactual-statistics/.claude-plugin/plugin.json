@@ -1,0 +1,29 @@
+{
+  "name": "yzmir-counterfactual-statistics",
+  "version": "0.1.0",
+  "description": "Statistical methodology for counterfactual and paired-branch ML experiments - paired comparisons against a no-op anchor, clustered statistical units (the trajectory, not the branch), grouped splits and the leakage taxonomy, best-of-K selection-bias correction, abstention calibration, pre-registration, and quality-cost-stability frontier reporting. Router + 13 reference sheets, 3 commands, 2 SME agents.",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "yzmir",
+    "counterfactual",
+    "paired-comparison",
+    "statistical-units",
+    "clustering",
+    "pseudo-replication",
+    "selection-bias",
+    "winners-curse",
+    "best-of-k",
+    "calibration",
+    "data-leakage",
+    "pre-registration",
+    "power-analysis",
+    "multiple-comparisons",
+    "pareto-frontier",
+    "reliability-reporting"
+  ]
+}

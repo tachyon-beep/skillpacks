@@ -139,6 +139,8 @@ Morphogenetic runs are higher-variance than static runs because the controller's
 
 These numbers are conservative for static RL. For morphogenetic RL, they are floors, not targets.
 
+**Seeds are the independent unit; branches, candidates, and horizons are not.** If your harness forks matched branches from a shared snapshot, the branches are repeated measures of one seed — counting them as independent samples understates the standard error by roughly the square root of the branches-per-seed and is the most common way a morphogenetic result gets published without being real. This sheet fixes *which comparisons to run*; for what `n` is, how to test a paired difference, how to size the fleet, and how much of a best-of-K result is selection bias, see `yzmir-counterfactual-statistics`.
+
 ### What to Report Per Condition
 
 ```
