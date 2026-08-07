@@ -273,8 +273,9 @@ Substitute into (1):
   Total equilibrium = 2,999 customers
 ```
 
-**Validation**:
-- Check: 150 acquisitions = 0.15 × 1,695 = 254 exits ✓
+**Validation** - balance each stock's inflows against its outflows (NOT acquisitions against one rate; 0.15×B is B's *total* outflow, which includes upgrades that stay in the system):
+- Stock B: inflows 150 + 0.08 × 1,304 ≈ 254 = outflow 0.15 × 1,695 ≈ 254 ✓
+- Stock P: inflow 0.10 × 1,695 ≈ 170 = outflow 0.13 × 1,304 ≈ 170 ✓
 - Sanity: Total grows from 1,000 → ~3,000 over ~18 months ✓
 
 ### Stable vs Unstable Equilibria
@@ -441,6 +442,8 @@ Undercapacity → Scale up → [delay] → Overcapacity → Scale down → [dela
 
 ### Addressing Delays: Leverage Points
 
+Ordered weakest → strongest (Meadows numbering: lower number = higher leverage).
+
 **Level 12 (weakest)**: Tune parameters
 - Adjust scaling thresholds (70% vs 80% CPU)
 - Helps marginally, doesn't eliminate delay
@@ -449,13 +452,13 @@ Undercapacity → Scale up → [delay] → Overcapacity → Scale down → [dela
 - Keep warm pool of pre-started instances
 - Reduces material delay, still has information delay
 
-**Level 6**: Change information flow
-- Predictive auto-scaling (ML forecasting)
-- Eliminates information delay by anticipating
-
-**Level 10 (stronger)**: Change system structure
+**Level 10**: Change system structure
 - Scheduled scaling for known patterns
 - Feedforward control (bypass feedback loop entirely)
+
+**Level 6 (strongest of these)**: Change information flow
+- Predictive auto-scaling (ML forecasting)
+- Eliminates information delay by anticipating
 
 **Key insight**: Delays in balancing loops create most of the problem. Fixing delays is high-leverage.
 
@@ -1037,9 +1040,9 @@ M(t) = 0.10 × R(t) / $500          (marketing converts revenue to customers)
 
 ### 3. Linear Thinking in Non-Linear Systems
 
-**Mistake**: "We're at 90% CPU, add 20% more servers → 72% CPU"
+**Mistake**: "We're at 90% CPU, add 20% more servers → 75% CPU, problem solved"
 - Queuing theory: Response time is non-linear near saturation
-- 90% → 72% keeps you in degraded performance zone
+- 90% → 75% (90/1.2) keeps you in the degraded performance zone
 
 **Correct**: "Need to get below 70% CPU to escape performance cliff. Requires 2× capacity, not 1.2×."
 

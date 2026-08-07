@@ -125,30 +125,33 @@ Leverage: Implement outflow (archival strategy)
 
 ## Leverage Points (Meadows' Hierarchy)
 
-**Where to intervene** (most to least effective):
+Donella Meadows ranked 12 places to intervene in a system. Condensed view below, **strongest first** - numbers are her canonical level numbers (lower number = higher leverage). Full treatment with all 12 levels: [leverage-points-mastery.md](leverage-points-mastery.md).
 
-1. **Change system goals** - What is the system trying to do?
-2. **Change paradigms** - How do we think about this?
-3. **Add/change information flows** - Who knows what, when?
-4. **Change rules** - Incentives, constraints, feedback
-5. **Change structure** - Physical/organizational relationships
-6. **Adjust flows** - Rates of change
-7. **Adjust parameters** - Numbers in the system (least effective)
+| Level | Intervene on | Question it answers |
+|-------|--------------|---------------------|
+| **1-2** | **Paradigms** (and the ability to transcend them) | How do we think about this? |
+| **3** | **Goals** | What is the system trying to do? |
+| **4** | **Self-organization** | Can the system change its own structure? |
+| **5** | **Rules** | Incentives, constraints, permissions |
+| **6** | **Information flows** | Who knows what, when? |
+| **7-9** | **Feedback loops and delays** | How fast does the system learn and correct? |
+| **10-11** | **Structure and buffers** | Physical/organizational plumbing, reserve capacity |
+| **12** | **Parameters** | Numbers in the system (WEAKEST) |
 
-**Most people start at #7 (parameters) - least effective!**
+**Most people start at #12 (parameters) - least effective!**
 
 **Example Application:**
 
 Problem: API making too many requests
 
-| Level | Intervention | Effectiveness |
-|-------|--------------|---------------|
-| Parameter | Set rate limit to 100/hour | Low - treats symptom |
-| Flow | Add caching to reduce request rate | Medium |
-| Structure | Add webhooks so clients don't need to poll | High |
-| Information | Show users their call patterns/costs | High |
-| Rules | Charge per API call above threshold | High |
-| Paradigm | Rethink: "API is request-response" → "API is event-driven" | Highest |
+| Level | Intervention | Leverage |
+|-------|--------------|----------|
+| 12 - Parameter | Set rate limit to 100/hour | Lowest - treats symptom |
+| 11 - Buffer | Add caching to absorb repeat requests | Low |
+| 10 - Structure | Add webhooks so clients don't need to poll | Medium |
+| 6 - Information | Show users their call patterns/costs | High |
+| 5 - Rules | Charge per API call above threshold | Higher |
+| 2 - Paradigm | Rethink: "API is request-response" → "API is event-driven" | Highest |
 
 ## Predicting Unintended Consequences
 
@@ -217,7 +220,7 @@ Quick wrong action compounds problems. Spending 10 minutes mapping the system of
 
 **Team dynamics:** Seeing "Shifting the Burden" archetype (quality team) reveals why feature quality never improves - the quick fix prevents real solution.
 
-**Architecture decisions:** Using leverage point hierarchy shows why "add caching" (flow adjustment) is less effective than "add webhooks" (structure change).
+**Architecture decisions:** Using leverage point hierarchy shows why "add caching" (Level 11 - a buffer) is less effective than "add webhooks" (Level 10 - structure change).
 
 ## Related Patterns
 

@@ -165,7 +165,7 @@ This means the system will [expected behavior] unless [intervention].
 
 ## Distinguishing Similar Archetypes
 
-**Drifting Goals vs Eroding Goals:**
+**Drifting Goals vs Eroding Goals:** (one canonical archetype; this pack splits it by driver because the interventions differ - say "Drifting/Eroding Goals" outside this pack)
 - Test: "If we gave team 2 more weeks, could they hit original target?"
 - YES = Drifting (complacency) | NO = Eroding (resource pressure)
 

@@ -607,20 +607,21 @@ Variable E --|delay|--> Variable F  (with delay marking)
 ### Pattern 1: "Fixes That Fail" Structure
 
 ```
-Problem Symptom
-     ↓ (o)
-Quick Fix Applied
-     ↓ (+)
-Symptom Relief (SHORT TERM)
-     ↓ (+)
-Unintended Consequence
-     ↓ (+)
-Problem Symptom (LONG TERM, WORSE)
+B loop (SHORT TERM - symptom relief):
+Problem Symptom → (+) → Quick Fix Applied → (o) → Problem Symptom
+  Opposite links: 1 (odd) = Balancing ✓
 
-Example: Hire more engineers (fix) → Lower quality (consequence) → More bugs → More pressure → Hire more (makes it worse)
+R loop (LONG TERM - side effect):
+Quick Fix Applied → (+) → Unintended Consequence → ||delay|| → (+) → Problem Symptom → (+) → Quick Fix Applied
+  Opposite links: 0 (even) = Reinforcing ✓
+
+Example: More bugs (symptom) → hire more engineers (fix) → fewer bugs short-term (o),
+         BUT more engineers → onboarding load → lower quality → ||3 months|| → more bugs
 ```
 
-**CLD insight**: Quick fix creates balancing loop (symptom relief), BUT also creates reinforcing loop (side effects worsen root cause). The reinforcing loop dominates long-term.
+**CLD insight**: Quick fix creates a balancing loop (symptom relief), BUT also creates a reinforcing loop (side effects worsen the root cause). The delay is why the reinforcing loop dominates long-term - relief arrives first, the side effect arrives later.
+
+**Polarity check**: "More symptom → MORE fix applied" is SAME direction (+), not opposite. The (o) sits on the fix → symptom link (that's what makes the short-term loop balancing).
 
 
 ### Pattern 2: "Escalation" Structure

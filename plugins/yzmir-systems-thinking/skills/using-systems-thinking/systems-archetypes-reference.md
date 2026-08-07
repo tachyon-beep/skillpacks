@@ -23,8 +23,10 @@ Quick reference table - detailed explanations follow:
 | 6. Accidental Adversaries | Well-intentioned actions hurt each other | Reinforcing (A helps self, hurts B; B helps self, hurts A) | Align incentives or coordinate |
 | 7. Drifting Goals | Standards erode gradually from complacency | Balancing (gap → lower standard rather than improve) | Make gap visible, fix standards |
 | 8. Limits to Growth | Growth slows despite effort, hits ceiling | Balancing (growth → constraint → slow growth) | Remove constraint or shift focus |
-| 9. Growth and Underinvestment | Growth creates need for capacity, underfunded | Reinforcing (growth → insufficient capacity → quality drops → growth slows) | Invest ahead of demand |
+| 9. Growth and Underinvestment | Growth creates need for capacity, underfunded | Reinforcing (underinvest → quality drops → growth slows → "investment wasn't needed" → underinvest more), inside a balancing growth limit | Invest ahead of demand |
 | 10. Eroding Goals (Pessimistic) | Standards lower in response to performance pressure | Reinforcing (pressure → lower standards → worse performance → more pressure) | Break cycle, re-establish standards |
+
+> **Note on #7 and #10 (this pack's extension):** the systems-thinking literature (Senge, *The Fifth Discipline* App. 2; Kim; Braun) treats **Drifting Goals** and **Eroding Goals** as two NAMES for a SINGLE archetype - a balancing loop in which the goal, not the performance, absorbs the gap. This pack splits it into a complacency-driven form (#7) and a pressure-driven form (#10) because the two have different interventions in software teams; the split and the "2 more weeks?" diagnostic test are **this pack's extension, not canon**. The archetype most often listed as the tenth canonical pattern - **Balancing Process with Delay** (also catalogued as the Attractiveness Principle) - is not covered here; for delay-driven overshoot and oscillation see the D/R ratio analysis in [stocks-and-flows-modeling.md](stocks-and-flows-modeling.md).
 
 
 ## 1. Fixes that Fail
@@ -49,12 +51,11 @@ Apply More of Same Fix
 
 **Causal Loop Diagram:**
 ```
-Problem --+--> Quick Fix --+--> Symptom Relief
-   ^                             |
-   |                             ↓
-   +------o----- Unintended Side Effect (delay)
+B loop:  Problem --+--> Quick Fix --o--> Problem
+         (1 opposite link = balancing: the fix relieves the symptom)
 
-R: Fix amplifies problem via side effects
+R loop:  Quick Fix --+--> Unintended Side Effect --+(delay)--> Problem --+--> Quick Fix
+         (0 opposite links = reinforcing: the fix amplifies the problem via side effects)
 ```
 
 ### Software Engineering Examples
@@ -465,7 +466,8 @@ Actual Drops to 93%
       ↓
 Lower Target to 93% - "Be Realistic"
       ↓
-[REINFORCING LOOP - Standards Erode Gradually]
+[BALANCING LOOP - the gap is closed by lowering the GOAL, not by raising
+ performance; repeated cycles ratchet standards downward]
 ```
 
 **Key characteristic:** Driven by complacency, not necessity. Team CAN achieve target but chooses not to.
@@ -772,6 +774,8 @@ Lower Standards Again
 ## Distinguishing Similar Archetypes
 
 ### Drifting Goals (#7) vs. Eroding Goals (#10)
+
+**One canonical archetype, split here.** The literature uses "Drifting Goals" and "Eroding Goals" interchangeably for the same structure; the complacency/pressure split below is this pack's extension because the two call for different interventions. Say "Drifting/Eroding Goals" when talking to someone outside this pack.
 
 **Both:** Standards lower over time
 **Key difference:** WHY standards are lowered

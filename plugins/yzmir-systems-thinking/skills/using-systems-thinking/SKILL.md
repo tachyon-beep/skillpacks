@@ -231,14 +231,14 @@ START: What's your goal?
 1. **recognizing-system-patterns** → Identify delay, oscillation pattern
 2. **stocks-and-flows-modeling** → Calculate delay time constant, D/R ratio
 3. **causal-loop-diagramming** → Mark delays on causal links (||)
-4. **systems-archetypes-reference** → "Shifting the Burden to the Intervenor" (long-term fix delayed)
-5. **behavior-over-time-graphs** → Show overshoot/undershoot pattern
+4. **behavior-over-time-graphs** → Show overshoot/undershoot pattern
+
+**No archetype step here:** delay-driven oscillation is a *balancing loop with a delay*, not one of the archetypes in systems-archetypes-reference. Diagnose it with the D/R ratio in stocks-and-flows-modeling, not by archetype matching.
 
 **Why this sequence:**
 - Pattern recognition confirms delay issue
 - Stock-flow quantifies delay danger (D/R > 0.5 = crisis)
 - CLD visualizes where delays are
-- Archetype matches delay-based patterns
 - BOT graphs show oscillation
 
 ### Scenario 5: "Presenting to Executives"
@@ -376,7 +376,7 @@ START: What's your goal?
 | "Just add more resources" | Resource additions often activate balancing loops | "Route to leverage-points-mastery - this is lowest-leverage point (constants)" | Ignoring system structure |
 | "This isn't a system, it's a simple bug" | Bugs that persist are symptoms of system structure | "Route to systems-archetypes-reference - likely 'Fixes that Fail'" | Linear thinking on complex problems |
 | "We don't have time for analysis" | Crisis timing requires stock-flow calculation | "Route to stocks-and-flows-modeling - 15 min calculation vs wrong 6-month commitment" | Analysis paralysis fear |
-| "Our situation is unique" | 90% match archetypes | "Route to systems-archetypes-reference - most 'unique' problems aren't" | Not invented here syndrome |
+| "Our situation is unique" | Most recurring problems match a known archetype | "Route to systems-archetypes-reference - most 'unique' problems aren't" | Not invented here syndrome |
 | "Just draw a quick diagram" | Polarity errors change diagnosis (R vs B) | "Route to causal-loop-diagramming - use systematic 6-step process" | Skipping validation |
 | "Intuition says it will get worse" | Intuition fails on delays, non-linear dynamics | "Route to stocks-and-flows-modeling - calculate, don't guess" | Overconfidence in intuition |
 | "We need to act NOW" | Acting without understanding wastes resources | "Route to recognizing-system-patterns - 15 min pattern ID prevents months of wrong solution" | Action bias |

@@ -71,6 +71,8 @@ Systems are governed by archetypal structures. Recognize the pattern, apply the 
 
 **Diagnostic questions for each archetype** guide identification.
 
+**Note:** Drifting Goals and Eroding Goals are one canonical archetype (the literature uses the names interchangeably); this pack splits them by driver because the interventions differ. See systems-archetypes-reference for the caveat.
+
 ### Phase 3: Quantitative Analysis (45-60 min)
 
 **Goal:** Calculate concrete predictions
@@ -216,7 +218,7 @@ If the analysis needs to move beyond conceptual systems thinking, hand off to a 
 | "Just add more resources" | Resource additions are lowest leverage (Level 12) |
 | "This isn't a system, it's simple" | Persistent "simple" problems have hidden loops |
 | "We don't have time for analysis" | Wrong action makes crisis worse |
-| "Our situation is unique" | 90% match known archetypes |
+| "Our situation is unique" | Most recurring problems match a known archetype |
 
 ## Scope Boundaries
 
