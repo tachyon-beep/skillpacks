@@ -1148,9 +1148,13 @@ class MyModule(nn.Module):
 ## Complete Example: Well-Designed ResNet Block
 
 ```python
+import functools
+import math
+
 import torch
 import torch.nn as nn
-import math
+
+# LayerNorm2d is defined in Pattern 3 above; import or copy it alongside this.
 
 class ResNetBlock(nn.Module):
     """

@@ -113,11 +113,21 @@ Never suggest them to someone who is memory-constrained — see
 ```python
 from torch.amp import autocast, GradScaler
 
-scaler = GradScaler('cuda')          # torch.cuda.amp.GradScaler() is deprecated
+# BF16: no scaler at all.
 with autocast('cuda', dtype=torch.bfloat16):
-    output = compiled_model(input)
-# BF16 needs no GradScaler; FP16 does.
+    loss = criterion(compiled_model(input), target)
+loss.backward()
+
+# FP16: scaler required (FP16 gradients underflow; BF16's exponent range doesn't).
+scaler = GradScaler('cuda')          # torch.cuda.amp.GradScaler() is deprecated
+with autocast('cuda', dtype=torch.float16):
+    loss = criterion(compiled_model(input), target)
+scaler.scale(loss).backward()
+scaler.step(optimizer)
+scaler.update()
 ```
+Flag `GradScaler` paired with `bfloat16` as a review finding — it signals the
+author copied an FP16 recipe without understanding why the scaler is there.
 
 **`torch.load` defaults to `weights_only=True` (2.6+):**
 ```python
