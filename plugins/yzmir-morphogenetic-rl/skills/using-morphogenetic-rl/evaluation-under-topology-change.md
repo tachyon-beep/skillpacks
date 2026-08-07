@@ -127,7 +127,7 @@ You will be tempted by `loss / param_count` and `loss / total_train_flops`. Both
 
 Loss is better when it is *lower*. Dividing loss by the resource makes a run that spent **more** parameters or **more** compute score better at equal loss — the ratio rewards exactly the resource it claims to control for. A morphogenetic run that grows freely and lands at the same loss as the static baseline will "win" on loss-per-FLOP purely by burning more FLOPs. That is the opposite of the comparison you wanted.
 
-If you want the resource in the denominator, put a quantity that improves with magnitude there instead — e.g. `(loss_baseline − loss_M) / extra_flops` is a genuine marginal-return-on-compute measure, and it goes negative when growth hurt, which is the behaviour you want from a fairness statistic.
+If you want the resource in the denominator, put a quantity that *improves* with magnitude in the numerator instead. Using the M-vs-B notation above, `(loss_B − loss_M) / (flops_M − flops_B)` is a genuine marginal-return-on-compute measure: it rises when the extra compute bought real loss reduction and goes negative when growth hurt — which is the behaviour you want from a fairness statistic and exactly what the raw ratios cannot do.
 
 The raw ratios are usable as a one-directional smell test and nothing more: if `loss / param_count` collapses while loss itself is flat, the controller is buying parameters that do no work. Report that as a diagnostic observation, never as the headline comparison.
 

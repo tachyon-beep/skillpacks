@@ -292,8 +292,8 @@ When the test fails, the first divergence point is the bug. Walk back through th
 | Single shared RNG | Trainer trajectory diverges on first controller change | Separate streams per purpose |
 | `torch.manual_seed` only at start | Lazy CUDA init non-determinism | Use `torch.Generator` instances; pass them explicitly to every op that accepts `generator=`, and `torch.random.fork_rng` around those that do not (dropout) |
 | Logging decisions but not seeds | Replay produces different per-event randomness | Log `sampled_seed` per event |
-| Per-event seed = `master_seed + event_id` | Linear addition collides easily; predictable | Use a wide multiply or hash mix, **masked to 64 bits**: `(master_seed ^ event_id * 0x9E37_79B9_7F4A_7C15) & 0xFFFF_FFFF_FFFF_FFFF` |
-| Unmasked wide-multiply seed mix | `manual_seed` raises "Overflow when unpacking long long" at the second event | `& 0xFFFF_FFFF_FFFF_FFFF` before seeding |
+| Per-event seed = `master_seed + event_id` | Linear addition collides easily; predictable | Use a wide multiply or hash mix — masked, per the next row |
+| Wide-multiply seed mix left unmasked | `event_id * 0x9E37…` exceeds 2**64 at `event_id = 2`; `manual_seed` raises "Overflow when unpacking long long" and the run dies on its second growth event | `(master_seed ^ event_id * 0x9E37_79B9_7F4A_7C15) & 0xFFFF_FFFF_FFFF_FFFF` |
 | Draw from a device generator into a CPU tensor factory | `Expected a 'cpu' device type for generator but found 'cuda'` | Pass `device=rng.device` at the draw site |
 | Assigning the result of `all_reduce` / `broadcast_object_list` | Both are in-place and return `None`; the variable silently becomes `None` | Reduce/broadcast into a buffer, then read the buffer |
 | All-reduce after the controller decided | Rank 0 sampled on stale local state | All-reduce observations *before* feeding the controller |
