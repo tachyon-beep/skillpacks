@@ -116,40 +116,66 @@ from torch.utils.checkpoint import checkpoint
 x = checkpoint(self.expensive_layer, x, use_reentrant=False)
 ```
 
-**PyTorch 2.9 Memory Optimizations:**
+**torch.compile — default mode only when triaging memory:**
 ```python
-# torch.compile can reduce memory through kernel fusion
-model = torch.compile(model, mode="reduce-overhead")
-
-# For very large models, FSDP with torch.compile
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-model = FSDP(model)
+# Default mode can trim peak memory via fusion (fewer materialised
+# intermediates). A modest win, not an OOM cure.
 model = torch.compile(model)
 ```
 
-## PyTorch 2.9 Awareness
+> ⚠️ **Never recommend `mode="reduce-overhead"` (or `"max-autotune"`) as an OOM
+> fix.** Both capture CUDA graphs, which reserve a private memory pool plus
+> static input/output buffers — they **increase** peak memory. They are latency
+> optimisations for small batches. The pack's own compile-mode table in
+> `using-pytorch-engineering/mixed-precision-and-optimization.md` says "Higher
+> memory overhead" for exactly this reason. If a user is already OOMing and has
+> `reduce-overhead` set, removing it is a *fix*, not a regression.
 
-PyTorch 2.9 (released 2025) includes:
+**Sharding when the model genuinely does not fit — FSDP2:**
+```python
+# FSDP2 (fully_shard) is the supported sharding path. FSDP1
+# (FullyShardedDataParallel) is DEPRECATED as of PyTorch 2.11 - do not
+# recommend it for new code; only read it in existing code.
+from torch.distributed.fsdp import fully_shard
 
-1. **Improved torch.compile memory efficiency**: Better fusion reduces peak memory
-2. **Enhanced memory snapshot visualization**: Use `torch.cuda.memory._dump_snapshot()`
-3. **FSDP2 (experimental)**: Next-gen sharding for very large models
-4. **Better AMP integration**: Reduced memory overhead in mixed precision
+for block in model.layers:
+    fully_shard(block)
+fully_shard(model)
 
-When diagnosing, check the PyTorch version first:
+# FSDP2 was designed to compose with torch.compile; compile the blocks first.
+```
+
+## Version Awareness
+
+Check the installed version before recommending anything version-gated:
+
 ```python
 import torch
-print(torch.__version__)  # Should work with 2.0+ features, 2.9 has latest
+print(torch.__version__)
 ```
+
+Version facts this agent relies on (do not invent others — read the reference
+sheets or the release notes instead of guessing):
+
+1. **`torch.load` defaults to `weights_only=True` from 2.6** — relevant when a
+   memory fix involves re-saving or reloading checkpoints.
+2. **Memory snapshots**: `torch.cuda.memory._record_memory_history()` /
+   `torch.cuda.memory._dump_snapshot()`, viewed at <https://docs.pytorch.org/memory_viz>.
+   Private API — name-check it against the installed version.
+3. **FSDP2 (`fully_shard`) is the supported sharding path; FSDP1 is deprecated
+   as of 2.11.** FSDP2 is not experimental.
+4. **`torch.amp`** is the device-agnostic autocast/GradScaler path;
+   `torch.cuda.amp` is deprecated.
 
 ## Cross-Pack Discovery
 
-For performance issues that aren't memory-related, check for complementary skills:
+For performance issues that aren't memory-related, check for complementary skills.
+Plugin metadata lives at `plugins/<pack>/.claude-plugin/plugin.json`:
 
 ```python
 # Check if training optimization pack is available
 import glob
-training_opt = glob.glob("plugins/yzmir-training-optimization/plugin.json")
+training_opt = glob.glob("plugins/yzmir-training-optimization/.claude-plugin/plugin.json")
 if training_opt:
     print("Training optimization pack available for gradient/loss issues")
 else:

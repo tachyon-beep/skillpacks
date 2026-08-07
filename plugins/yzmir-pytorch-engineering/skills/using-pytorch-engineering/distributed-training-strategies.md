@@ -50,9 +50,15 @@ This sheet covers four PyTorch-native primitives. Pick the lowest one that satis
 | Primitive | When | Memory savings | Notes |
 |-----------|------|----------------|-------|
 | `DistributedDataParallel` (DDP) | Model + optimizer fits per GPU | None (replicated) | Fastest. Default choice. |
-| `FullyShardedDataParallel` (FSDP1) | Model+optimizer doesn't fit | ZeRO-1/2/3 equivalent via `ShardingStrategy` | Mature. Wraps the root module. |
-| `fully_shard` (FSDP2) | New code, want compose with `torch.compile` or TP | Same as FSDP1 (full shard) | Per-parameter sharding via DTensor. Composable. |
+| `fully_shard` (FSDP2) | **Any new sharded training** | ZeRO-3 equivalent (full shard) | Supported path. Per-parameter sharding via DTensor. Composes with `torch.compile` and TP. |
+| `FullyShardedDataParallel` (FSDP1) | Existing code only | ZeRO-1/2/3 equivalent via `ShardingStrategy` | **Deprecated as of PyTorch 2.11.** Mature and still runs; plan migration to FSDP2. |
 | DTensor + 2D mesh | Trillion-parameter / very long context | FSDP × tensor parallel | Foundation for FSDP2 + TP composition. |
+
+**FSDP1 vs FSDP2, stated once and used everywhere in this pack:** FSDP1
+(`FullyShardedDataParallel`) is **deprecated as of PyTorch 2.11**; FSDP2
+(`fully_shard`) is the supported path. New code: FSDP2. Existing FSDP1 code
+still runs and is not urgent to rip out, but it is now migration debt, not a
+neutral alternative. FSDP1 is documented below because you will inherit it.
 
 **Strategy choice (ZeRO-1 vs ZeRO-2 vs ZeRO-3) lives in `yzmir-training-optimization/optimization-algorithms.md`.** This sheet shows you the *PyTorch API* once you've picked the strategy.
 
@@ -739,8 +745,13 @@ export NCCL_SOCKET_IFNAME=eth0
 # Enable InfiniBand (if available)
 export NCCL_IB_DISABLE=0
 
-# Increase timeout for slow networks
-export NCCL_TIMEOUT=1800  # 30 minutes
+# Increase collective timeout for slow networks.
+# NOTE: NCCL_TIMEOUT is NOT a NCCL environment variable - setting it does
+# nothing. The collective watchdog timeout is a PyTorch-side setting:
+#     dist.init_process_group(backend="nccl", timeout=timedelta(minutes=30))
+# NCCL's own knobs here are the async-error/blocking-wait controls:
+export TORCH_NCCL_ASYNC_ERROR_HANDLING=1   # surface async NCCL errors
+# (Related NCCL-side tunables that DO exist: NCCL_IB_TIMEOUT, NCCL_SOCKET_NTHREADS.)
 
 # Debugging: Log NCCL activity
 export NCCL_DEBUG=INFO
@@ -764,7 +775,10 @@ export NCCL_IB_HCA=mlx5_0  # Specify IB adapter
 **Debugging communication issues:**
 ```bash
 export NCCL_DEBUG=INFO  # Verbose logging
-export NCCL_DEBUG_FILE=/tmp/nccl_rank_%r.log  # Per-rank logs
+# NCCL_DEBUG_FILE substitutions are %h (hostname) and %p (PID) - there is no
+# %r for rank. Use %h_%p and map back via the log contents, or set the file
+# name per-process from your launcher using $RANK.
+export NCCL_DEBUG_FILE=/tmp/nccl_%h_%p.log  # Per-process logs
 ```
 
 
@@ -926,11 +940,15 @@ dist.barrier()  # Synchronize all processes
 
 ```bash
 export NCCL_DEBUG=INFO
-export NCCL_DEBUG_FILE=/tmp/nccl_rank_%r.log
+
+# %h = hostname, %p = PID. There is NO %r (rank) substitution.
+# To get rank-named files, name them from the launcher instead:
+#   torchrun ... --no-python bash -c 'NCCL_DEBUG_FILE=/tmp/nccl_rank_$RANK.log python train.py'
+export NCCL_DEBUG_FILE=/tmp/nccl_%h_%p.log
 
 # Run training, then check logs:
-cat /tmp/nccl_rank_0.log  # Master
-cat /tmp/nccl_rank_4.log  # First process on node 1
+ls /tmp/nccl_*.log
+cat /tmp/nccl_rank_0.log  # if you named them by $RANK as above
 ```
 
 **Look for in logs:**
@@ -960,7 +978,11 @@ model = DDP(model, device_ids=[local_rank])
 - But necessary for correct training!
 
 
-## FullyShardedDataParallel (FSDP1)
+## FullyShardedDataParallel (FSDP1) — deprecated, documented because you will inherit it
+
+> **FSDP1 is deprecated as of PyTorch 2.11.** Write new sharded training with
+> FSDP2 (`fully_shard`, next section). This section exists so you can read,
+> maintain, and migrate the FSDP1 code already in your repo.
 
 **Context:** When the model + gradients + optimizer states do not fit on a single GPU, DDP (which replicates everything) is not enough. FSDP shards parameters, gradients, and optimizer states across the data-parallel ranks. The original sharded-DP experimental ground was Facebook's FairScale (`fairscale.optim.oss.OSS`, `fairscale.nn.data_parallel.ShardedDataParallel`); FairScale is effectively unmaintained, and FSDP is the production successor that you should use today.
 
@@ -1264,7 +1286,7 @@ Compiling the whole model and then sharding is generally not what you want; per-
 - FSDP1's monolithic `auto_wrap_policy`. In FSDP2 you do the wrapping yourself by iterating over the modules you actually want as FSDP units. This is more code but more explicit.
 - FSDP1's `BackwardPrefetch` flag. FSDP2 manages prefetch internally.
 
-**Rule of thumb:** New code → FSDP2. Existing FSDP1 code that works → leave it alone unless you need `torch.compile` composition or tensor parallel.
+**Rule of thumb:** New code → FSDP2, always. Existing FSDP1 code that works → not urgent, but it is now deprecated (2.11), so schedule the migration rather than treating FSDP1 as a permanent option. Migrate sooner if you need `torch.compile` composition or tensor parallel, since FSDP1 cannot give you those.
 
 
 ## DTensor and Device Mesh (Brief)
@@ -1341,7 +1363,7 @@ For ZeRO stage selection (1 vs 2 vs 3), memory math, and DeepSpeed-vs-FSDP trade
 | 11 | FSDP1 `use_orig_params=False` with param-group optimizer | Optimizer ignores param groups; `torch.compile` breaks | Flat-parameter view hides original params | Set `use_orig_params=True` |
 | 12 | Saving full state dict on every rank | OOM, race conditions | Forgot `rank0_only=True` / didn't gate save | Use `FullStateDictConfig(offload_to_cpu=True, rank0_only=True)` and save only on rank 0 |
 | 13 | Mixing `dist.new_group()` with `init_device_mesh` | Mysterious deadlocks in 2D parallelism | Two parallel topologies fighting | Pick one; for 2D+, use `init_device_mesh` exclusively |
-| 14 | Using FairScale `OSS` / `ShardedDataParallel` for new code | Stale dependency, missing fixes | FairScale unmaintained | Use FSDP1 (mature) or FSDP2 (new) |
+| 14 | Using FairScale `OSS` / `ShardedDataParallel` for new code | Stale dependency, missing fixes | FairScale unmaintained | Use FSDP2 (`fully_shard`) — FSDP1 is itself deprecated as of 2.11 |
 | 15 | Calling `.to(device)` after `FSDP(...)` | Crash or wrong sharding | FSDP places shards itself | Pass `device_id=torch.cuda.current_device()` to FSDP |
 
 
@@ -1581,7 +1603,7 @@ model = DDP(
 | "I'll wrap model then move to device" | Order matters critically (DDP). FSDP places shards itself. | DDP: `to(device)` BEFORE `DDP()`. FSDP: pass `device_id=...`, don't pre-place. |
 | "Communication is slow, must be network" | May be configuration (NCCL, bucketing, sharding) | Profile first, tune config second |
 | "I'll just use FairScale OSS" | FairScale is effectively unmaintained | Use FSDP1 (`FullyShardedDataParallel`) or FSDP2 (`fully_shard`) |
-| "FSDP2 is too new, stick with FSDP1" | FSDP2 is the supported path for `torch.compile` and TP composition | New code: FSDP2. Existing FSDP1: leave alone unless you need composition. |
+| "FSDP2 is too new, stick with FSDP1" | Backwards: FSDP1 is the deprecated one (2.11); FSDP2 is the supported path and the only one that composes with `torch.compile` and TP | New code: FSDP2. Existing FSDP1: schedule migration. |
 
 **Critical rule:** DDP and FSDP have specific setup requirements. Follow the checklist systematically; don't guess.
 
@@ -1821,42 +1843,64 @@ For FSDP, parameters become `DTensor` instances; check `param.device_mesh` and `
 
 **Step 5: Profile communication overhead**
 
+> **You cannot get this from wall-clock timers around the training step.** DDP's
+> allreduce is issued from backward hooks and overlaps with the rest of the
+> backward pass on the same stream/comm streams. Bracketing `forward + backward`
+> with `time.time()` measures *the same interval twice* — subtracting one from
+> the other yields ≈ 0 regardless of how bad the communication actually is.
+> Attribute the time per-kernel with the profiler instead.
+
 ```python
-def profile_communication_overhead(model, data_loader, device, num_steps=10):
-    import time
+from torch.profiler import profile, ProfilerActivity, schedule
+
+def profile_communication_overhead(model, data_loader, optimizer, criterion,
+                                   device, num_steps=5):
+    """Split measured GPU time into NCCL (communication) vs everything else."""
     model.train()
-    compute_times, total_times = [], []
+    prof_schedule = schedule(wait=1, warmup=1, active=num_steps, repeat=1)
 
-    for step, (data, target) in enumerate(data_loader):
-        if step >= num_steps:
-            break
-        data = data.to(device, non_blocking=True)
-        target = target.to(device, non_blocking=True)
+    with profile(
+        activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+        schedule=prof_schedule,
+    ) as prof:
+        for step, (data, target) in enumerate(data_loader):
+            if step >= num_steps + 2:
+                break
+            data = data.to(device, non_blocking=True)
+            target = target.to(device, non_blocking=True)
 
-        torch.cuda.synchronize()
-        step_start = time.time()
+            optimizer.zero_grad(set_to_none=True)
+            loss = criterion(model(data), target)
+            loss.backward()
+            optimizer.step()
+            prof.step()
 
-        compute_start = time.time()
-        output = model(data)
-        loss = criterion(output, target)
-        loss.backward()
-
-        torch.cuda.synchronize()
-        step_end = time.time()
-
-        compute_times.append(step_end - compute_start)
-        total_times.append(step_end - step_start)
-
-    avg_compute = sum(compute_times) / len(compute_times)
-    avg_total = sum(total_times) / len(total_times)
-    communication = avg_total - avg_compute
+    # self_device_time_total attributes GPU time to the kernel itself, so
+    # overlapped comm kernels are counted once and not double-counted with
+    # the compute they hide behind.
+    events = prof.key_averages()
+    comm_us = sum(e.self_device_time_total for e in events
+                  if "nccl" in e.key.lower())
+    total_us = sum(e.self_device_time_total for e in events)
 
     if dist.get_rank() == 0:
-        print(f"Compute: {avg_compute:.4f}s, Comm: {communication:.4f}s, "
-              f"overhead: {(communication/avg_total)*100:.1f}%")
-        if communication / avg_total > 0.3:
-            print("⚠️ High communication overhead (>30%)")
+        frac = comm_us / total_us if total_us else 0.0
+        print(f"GPU time: {total_us/1e3:.1f} ms, NCCL: {comm_us/1e3:.1f} ms "
+              f"({frac*100:.1f}%)")
+        if frac > 0.3:
+            print("⚠️ High communication share (>30% of GPU time)")
+        print(events.table(sort_by="self_device_time_total", row_limit=10))
 ```
+
+> Note on the attribute name: this field was `self_cuda_time_total` before it
+> was made device-agnostic. On 2.9 the attribute is `self_device_time_total`
+> and the old name is **gone** (`AttributeError`) — if you are porting an old
+> profiling script, that rename is the first thing to fix.
+> **Communication share is not the same as communication
+> *cost*** — well-overlapped allreduce can be 30% of GPU time and cost almost no
+> wall-clock. Confirm with the trace (`export_chrome_trace`) that the NCCL
+> kernels sit *alongside* compute rather than in gaps before you go tuning
+> bucket sizes.
 
 
 ## Common Rationalizations (Don't Do These)
@@ -1866,7 +1910,7 @@ def profile_communication_overhead(model, data_loader, device, num_steps=10):
 | "User is rushed" | Wrong fix wastes 30+ min | Follow systematic methodology |
 | "Senior engineer says use DataParallel" | DataParallel is objectively slower; docs say not-recommended | Recommend DDP with evidence |
 | "FairScale worked last year" | FairScale is unmaintained | Use FSDP1 / FSDP2 |
-| "FSDP2 is bleeding edge" | FSDP2 is the recommended path for new code in 2.9+ | Use FSDP2 unless you need a feature only FSDP1 has |
+| "FSDP2 is bleeding edge" | FSDP2 is the recommended path for new code in 2.9+, and FSDP1 is deprecated as of 2.11 | Use FSDP2; only stay on FSDP1 for existing code you have not migrated yet |
 | "Profiling takes time" | Profiling finds exact bottleneck in minutes | Always profile before optimizing |
 | "Network must be the issue" | Could be config, NCCL, or code | Check network AFTER code checks |
 | "Just use fewer GPUs" | Likely a configuration issue | Fix configuration |
@@ -1946,4 +1990,4 @@ def profile_communication_overhead(model, data_loader, device, num_steps=10):
 
 ---
 
-*PyTorch API surface current as of 2026-05 (PyTorch 2.9+); revisit quarterly.*
+*PyTorch API surface verified against PyTorch 2.9 (torch 2.9.1) as of 2026-08; revisit quarterly. Baseline is 2.9 — claims about later releases (e.g. FSDP1 deprecated in 2.11) are called out inline where they matter.*

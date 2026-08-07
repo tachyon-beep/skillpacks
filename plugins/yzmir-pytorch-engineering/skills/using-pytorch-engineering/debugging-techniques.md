@@ -370,7 +370,7 @@ with torch.autograd.set_detect_anomaly(True):
 - Need to find WHICH operation produces NaN
 - After identifying NaN, before fixing
 
-**Performance note:** detect_anomaly() is SLOW (~10x overhead). Only use during debugging, NEVER in production.
+**Performance note:** detect_anomaly() is SLOW. The cost scales with the number of autograd nodes, not with FLOPs, so it hurts most on graphs made of many small ops — measured **~3.5× on a 10-layer MLP step**, and it can be far worse on op-heavy models. Debug-only; never leave it on in production.
 
 
 **Tool 2: Forward Hooks for Intermediate Inspection**
@@ -1414,30 +1414,44 @@ if step % 100 == 0:
 **Pattern 13: DataLoader Multiprocessing Deadlock**
 
 ```python
-# Problem: Training hangs after first epoch, no error message
+# Problem: Training hangs or crashes once num_workers > 0
 
-# Cause: Unpicklable objects in Dataset
+# Cause: worker startup has to move the Dataset into a child process.
+# Under the default 'fork' start method the object is inherited, not pickled;
+# under 'spawn' (Windows/macOS default, and required by some libraries) it IS
+# pickled. The real hazards, in order of how often they bite:
 
 class BadDataset(Dataset):
-    def __init__(self):
+    def __init__(self, device):
         self.data = load_data()
-        self.transform_model = nn.Linear(10, 10)  # Can't pickle CUDA tensors in modules!
+        # ❌ CUDA state in a worker. Initializing CUDA in a forked child is
+        #    unsupported and hangs or aborts. This is the actual killer.
+        self.transform_model = nn.Linear(10, 10).to(device)
+        # ❌ Lambdas / local functions / open file & DB handles: unpicklable
+        #    under 'spawn', and handles shared across fork corrupt each other.
+        self.transform = lambda x: x * 2
+        self.conn = sqlite3.connect("features.db")
 
     def __getitem__(self, idx):
-        x = self.data[idx]
-        x = self.transform_model(torch.tensor(x))
-        return x.numpy()
+        return self.transform_model(torch.as_tensor(self.data[idx])).numpy()
 
-# Solution: Remove PyTorch modules from Dataset
+# NOTE: a plain CPU nn.Linear is perfectly picklable and works fine in a
+# worker. "PyTorch module in a Dataset" is not itself the bug - CUDA is.
+
+# Solution: keep workers CPU-only and picklable; open handles lazily per worker
 class GoodDataset(Dataset):
     def __init__(self):
         self.data = load_data()
-        # Do transforms with numpy/scipy, not PyTorch
+        self.transform_model = nn.Linear(10, 10)   # CPU module: fine
+        self.conn = None                           # opened per worker below
 
     def __getitem__(self, idx):
-        x = self.data[idx]
-        x = some_numpy_transform(x)
-        return x
+        if self.conn is None:                      # per-worker, post-fork
+            self.conn = sqlite3.connect("features.db")
+        with torch.no_grad():
+            return self.transform_model(torch.as_tensor(self.data[idx])).numpy()
+
+# Do the GPU work on the batch in the main process, not per-sample in workers.
 
 # Debugging: Test with num_workers=0
 train_loader = DataLoader(dataset, num_workers=0)  # No multiprocessing
@@ -1935,8 +1949,10 @@ hazard, not an exotic failure mode. When debugging NaN/Inf in an FP8 run:
 - **Master weights are FP32.** If master weights themselves are NaN, the bug
   is in the optimizer or LR schedule, not the FP8 quantization. Always check
   master weights first.
-- **Loss scaling is BF16's job, not FP8's.** Don't combine `GradScaler` with
-  FP8; the scaling lives inside the FP8 implementation.
+- **Loss scaling is FP16's mechanism, and neither BF16's nor FP8's.**
+  `GradScaler` exists because FP16 gradients underflow; BF16 has FP32's exponent
+  range and needs no scaler, and FP8 carries its own per-tensor scaling inside
+  the implementation. Don't bolt `GradScaler` onto either one.
 
 Apply the standard NaN-detection patterns in this sheet (anomaly detection,
 forward/backward hooks) but expect to find the root cause in the FP8 scale
@@ -1949,8 +1965,11 @@ covers the broader FP8 recipe; this sheet is the debugging entry point.
 ## Note on `torch.autograd.set_detect_anomaly(True)`
 
 This sheet uses `set_detect_anomaly(True)` extensively. **It is debug-only.**
-The instrumentation roughly doubles backward pass cost and serializes some
-operations to capture stack traces. Pattern:
+The instrumentation records a stack trace per autograd node and serializes some
+operations, so the cost tracks graph *size*, not FLOPs: a few times slower is
+typical (≈3.5× measured on a 10-layer MLP training step), and models built from
+many small ops can be much worse. Measure on your own model rather than
+budgeting from a fixed multiplier. Pattern:
 
 ```python
 # DEBUG: enable temporarily, capture the offending step, disable.
@@ -2020,4 +2039,4 @@ diagnosis. For NaN monitoring in production, use forward/backward hooks with
 
 ---
 
-PyTorch API surface current as of 2026-05 (PyTorch 2.9+); revisit quarterly.
+PyTorch API surface verified against PyTorch 2.9 (torch 2.9.1) as of 2026-08; revisit quarterly. Baseline is 2.9 — claims about later releases (e.g. FSDP1 deprecated in 2.11) are called out inline where they matter.

@@ -793,11 +793,15 @@ gradcheck(
     atol=1e-5,        # Absolute tolerance for comparison
     rtol=1e-3,        # Relative tolerance for comparison
     raise_exception=True,  # Raise on failure (recommended for testing)
-    check_sparse_nnz=False,  # Check sparse tensor non-zeros
     nondet_tol=0.0,   # Tolerance for non-deterministic operations
     check_undefined_grad=True,  # Check that undefined grads are None
     check_grad_dtypes=True,  # Check gradient dtypes match
+    check_batched_grad=False,  # Also check vmap-based batched grads
+    fast_mode=False,  # Randomized fast path; much quicker for big inputs
+    masked=None,      # Sparse inputs: compare only specified (non-zero) elems
 )
+# `check_sparse_nnz` was REMOVED in the 2.x series - passing it is a TypeError.
+# Its role is now filled by `masked=True` for sparse inputs.
 
 # Key insights:
 # - Use double precision (dtype=torch.double) for numerical stability
@@ -1506,16 +1510,16 @@ class UltraSelective(Function):
         # Instead of saving full 'output' tensor:
         # ctx.save_for_backward(input, weight, output)  # Large memory
 
-        # ✅ Save only boolean mask (1 bit per element vs 32 bits)
-        ctx.save_for_backward(input, weight)
-        ctx.relu_mask = (output > 0)  # Boolean tensor (much smaller)
+        # ✅ Save only a boolean mask (1 byte per element vs 4 for fp32)
+        #    The mask is a TENSOR, so it goes through save_for_backward too -
+        #    per Rule 1. `ctx.relu_mask = ...` would bypass version tracking.
+        ctx.save_for_backward(input, weight, output > 0)
 
         return output
 
     @staticmethod
     def backward(ctx, grad_output):
-        input, weight = ctx.saved_tensors
-        relu_mask = ctx.relu_mask
+        input, weight, relu_mask = ctx.saved_tensors
 
         # Use mask to apply ReLU gradient
         grad_weighted = grad_output * relu_mask.float()
@@ -1542,12 +1546,11 @@ class DetachPattern(Function):
         Compute loss between input and target.
         Target doesn't need gradients (it's labels).
         """
-        # Save input and weight (need gradients)
-        ctx.save_for_backward(input, weight)
-
-        # Detach target (doesn't need gradients)
-        # This breaks the autograd connection, saving memory
-        ctx.target = target.detach()
+        # Save every tensor the backward needs through save_for_backward -
+        # including target. It is still a tensor, so Rule 1 applies; no
+        # gradient flows to it because backward returns None in its slot.
+        # (No ctx.target attribute: that would bypass version tracking.)
+        ctx.save_for_backward(input, weight, target)
 
         # Compute weighted loss
         loss = ((input - target) ** 2 * weight).mean()
@@ -1555,8 +1558,7 @@ class DetachPattern(Function):
 
     @staticmethod
     def backward(ctx, grad_output):
-        input, weight = ctx.saved_tensors
-        target = ctx.target  # Already detached
+        input, weight, target = ctx.saved_tensors
 
         # Compute gradients
         diff = input - target
@@ -2150,8 +2152,8 @@ class FusedLinearReLU(Function):
 
         # Save only input, weight, bias, and mask
         # NOT saving linear_output (saves memory)
-        ctx.save_for_backward(input, weight, bias)
-        ctx.relu_mask = relu_mask
+        # The mask is a tensor -> save_for_backward, not a ctx attribute.
+        ctx.save_for_backward(input, weight, bias, relu_mask)
 
         return output
 
@@ -2160,8 +2162,7 @@ class FusedLinearReLU(Function):
         """
         Backward through ReLU and linear.
         """
-        input, weight, bias = ctx.saved_tensors
-        relu_mask = ctx.relu_mask
+        input, weight, bias, relu_mask = ctx.saved_tensors
 
         grad_input = grad_weight = grad_bias = None
 

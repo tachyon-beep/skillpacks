@@ -11,7 +11,7 @@ This meta-skill routes you to the right PyTorch specialist based on symptoms. Py
 
 **Core Principle**: Different PyTorch problems require different specialists. Match symptoms to the appropriate specialist skill. Don't guess at solutions—route to the expert.
 
-**API surface calibrated to PyTorch 2.9+ as of 2026-05.** Deprecated `torch.cuda.amp` aliases have been migrated to `torch.amp`; FairScale ZeRO references are replaced with native FSDP1/FSDP2. Modern features (`torch.compile`, FlexAttention, CUDA Graphs, NVTX/Nsight Systems, DTensor, `expandable_segments`, `channels_last`, FP8) are covered as first-class topics.
+**API surface calibrated to PyTorch 2.9+ (verified against torch 2.9.1), reviewed 2026-08.** Deprecated `torch.cuda.amp` aliases have been migrated to `torch.amp`; FairScale ZeRO references are replaced with native FSDP1/FSDP2. Modern features (`torch.compile`, FlexAttention, CUDA Graphs, NVTX/Nsight Systems, DTensor, `expandable_segments`, `channels_last`) are covered as first-class topics. FP8 appears only as a *debugging* topic (NaN/Inf triage) — `torch.amp` has no FP8 autocast path, so FP8 recipes and strategy live in `yzmir-training-optimization`.
 
 ---
 
@@ -20,10 +20,11 @@ This meta-skill routes you to the right PyTorch specialist based on symptoms. Py
 Reconciliation gate — what you can rely on inside this pack:
 
 - **PyTorch 2.9+ baseline.** Examples assume the modern API surface. `torch.cuda.amp.autocast` / `torch.cuda.amp.GradScaler` are deprecated aliases — sheets use `torch.amp.autocast(device_type=...)` and `torch.amp.GradScaler()` instead.
-- **Distributed = native FSDP.** FairScale ZeRO is unmaintained; coverage uses FSDP1 (`FullyShardedDataParallel`) and FSDP2 (`fully_shard`, `MixedPrecisionPolicy`, `OffloadPolicy`, sharded state dict, `init_device_mesh`/DTensor). DDP and pipeline parallelism are still covered where appropriate.
+- **Distributed = FSDP2.** FairScale ZeRO is unmaintained. FSDP2 (`fully_shard`, `MixedPrecisionPolicy`, `OffloadPolicy`, sharded state dict, `init_device_mesh`/DTensor) is the supported path; FSDP1 (`FullyShardedDataParallel`) is **deprecated as of PyTorch 2.11** and is documented only so you can read and migrate inherited code. DDP and pipeline parallelism are still covered where appropriate.
 - **Compile-first thinking.** `torch.compile` (modes, `dynamic=`, recompilation triage, graph-break debugging) and FlexAttention / `scaled_dot_product_attention` are first-class — not afterthoughts.
 - **GPU profiling = modern tooling.** PyTorch Profiler, NVTX ranges, Nsight Systems, CUDA Graphs (`torch.cuda.graph`, `make_graphed_callables`), and `expandable_segments:True` for fragmentation are the tools of choice.
 - **Capability-tiered, not model-pinned.** No hardcoded model IDs or vendor-specific assumptions; sheets describe capability tiers and let the caller bind concrete models.
+- **Checkpoints are `weights_only`-safe.** `torch.load` defaults to `weights_only=True` from PyTorch 2.6; the checkpointing sheet designs checkpoints to load cleanly under that default rather than teaching `weights_only=False` as an escape hatch.
 - **Entry points.** Agents (`pytorch-code-reviewer`, `memory-diagnostician`) and commands (`/yzmir-pytorch-engineering:debug-nan`, `:debug-oom`, `:profile`) are the canonical entry points and route into the sheets refreshed in this pass.
 
 ---
@@ -168,14 +169,14 @@ When you see a link like `[tensor-operations-and-memory.md](tensor-operations-an
 - `mode="reduce-overhead"` / `mode="max-autotune"` / `fullgraph=True`
 - "FlexAttention" / `scaled_dot_product_attention` / "SDPA" / "FlashAttention backend"
 
-**Route to**: See [mixed-precision-and-optimization.md](mixed-precision-and-optimization.md) for the modern `torch.amp` API, BF16/FP16/FP8 selection, gradient scaling, numerical stability, `torch.compile` modes/dynamic/recompilation triage, FlexAttention, and `scaled_dot_product_attention`.
+**Route to**: See [mixed-precision-and-optimization.md](mixed-precision-and-optimization.md) for the modern `torch.amp` API, BF16/FP16 selection (FP8 strategy → `yzmir-training-optimization`), gradient scaling, numerical stability, `torch.compile` modes/dynamic/recompilation triage, FlexAttention, and `scaled_dot_product_attention`.
 
 **Why**: Mixed precision requires careful handling of numerical stability, gradient scaling, and operation compatibility. `torch.compile` shifts where bugs surface (recompiles, graph breaks, guard failures), and attention now has a first-class fused path via SDPA / FlexAttention.
 
 **Example queries**:
 - "How to use mixed precision training?" (route into the `torch.amp` section)
 - "AMP causing NaN losses"
-- "FP16 vs BF16 vs FP8 for my model"
+- "FP16 vs BF16 for my model" (FP8: strategy in `yzmir-training-optimization`, NaN triage in `debugging-techniques.md`)
 - "torch.compile keeps recompiling on every batch"
 - "Graph break inside my forward — how do I find it?"
 - "Replace my hand-rolled attention with SDPA / FlexAttention"
@@ -417,11 +418,11 @@ After routing, load the appropriate specialist skill for detailed guidance. **Ei
 1. [tensor-operations-and-memory.md](tensor-operations-and-memory.md) — Tensor lifecycles, contiguity, `channels_last` memory format, `expandable_segments:True` and allocator tuning, gradient checkpointing, fragmentation, OOM mitigation.
 2. [module-design-patterns.md](module-design-patterns.md) — `nn.Module` structure, parameter/buffer registration, initialization, composability with checkpointing / FSDP / `torch.compile`.
 3. [distributed-training-strategies.md](distributed-training-strategies.md) — DDP, FSDP1 (`FullyShardedDataParallel`), FSDP2 (`fully_shard`, `MixedPrecisionPolicy`, `OffloadPolicy`), DTensor + `init_device_mesh`, sharded state dict, NCCL, multi-node launch. FairScale ZeRO is out — replaced by native FSDP.
-4. [mixed-precision-and-optimization.md](mixed-precision-and-optimization.md) — `torch.amp.autocast` / `torch.amp.GradScaler` (BF16/FP16/FP8 API and selection), TF32, `torch.compile` modes / `dynamic=` / recompilation triage / `fullgraph`, `scaled_dot_product_attention`, FlexAttention.
+4. [mixed-precision-and-optimization.md](mixed-precision-and-optimization.md) — `torch.amp.autocast` / `torch.amp.GradScaler` (BF16/FP16 selection; `torch.amp` has no FP8 autocast path, and FP8 strategy lives in `yzmir-training-optimization`), TF32, `torch.compile` modes / `dynamic=` / recompilation triage / `fullgraph`, `scaled_dot_product_attention`, FlexAttention.
 5. [performance-profiling.md](performance-profiling.md) — PyTorch Profiler (with stacks and memory), NVTX ranges, Nsight Systems / `nsys` workflows, CUDA Graphs (`torch.cuda.graph`, `make_graphed_callables`), allocator stats / `expandable_segments` for fragmentation, host-bound vs compute-bound vs comm-bound triage.
 6. [debugging-techniques.md](debugging-techniques.md) — Systematic NaN/Inf debugging, anomaly detection, gradient checking, `torch.compile` debugging (`TORCH_LOGS`, `TORCH_COMPILE_DEBUG`, graph-break and recompile triage), distributed deadlock isolation.
 7. [checkpointing-and-reproducibility.md](checkpointing-and-reproducibility.md) — Complete checkpointing (model + optimizer + scheduler + scaler + RNG), determinism, sharded / distributed checkpoint (FSDP, DCP).
-8. [custom-autograd-functions.md](custom-autograd-functions.md) — `torch.autograd.Function`, custom forward/backward, `setup_context` / `save_for_backward`, gradcheck, `torch.compile` interop.
+8. [custom-autograd-functions.md](custom-autograd-functions.md) — `torch.autograd.Function`, custom forward/backward with the combined `forward(ctx, ...)` form, `ctx.save_for_backward`, `gradcheck` / `gradgradcheck` numerical verification, double backward, common gradient-breaking pitfalls. **Not covered:** the split `forward()` + `setup_context()` form, and `torch.compile` interop for custom Functions — see the upstream [Extending PyTorch](https://docs.pytorch.org/docs/stable/notes/extending.html) note for those.
 
 ---
 
@@ -434,7 +435,7 @@ PyTorch engineering sits underneath several other Yzmir packs. Hand off explicit
   - In: when their diagnostics implicate a PyTorch-level cause (graph breaks under compile, FSDP comm overhead, AMP scaler misuse, allocator fragmentation), route back here.
 - **`yzmir-llm-specialist`** ↔ this pack
   - Out: prompt engineering, fine-tuning strategy, RAG design, eval/safety.
-  - In: LLM training and inference workloads frequently land in this pack for FSDP2 sharding, FlexAttention / SDPA, BF16/FP8 mixed precision, `torch.compile` for transformer blocks, KV-cache memory tuning.
+  - In: LLM training and inference workloads frequently land in this pack for FSDP2 sharding, FlexAttention / SDPA, BF16/FP16 mixed precision, `torch.compile` for transformer blocks, KV-cache memory tuning.
 - **`yzmir-ml-production`** ↔ this pack
   - Out: deployment topology, serving stack, rollout, monitoring, drift, system-level inference optimization.
   - In: when their inference profiling points at a PyTorch-level fix — `torch.compile` modes, CUDA Graphs, SDPA backend selection, `channels_last`, allocator config — route here.

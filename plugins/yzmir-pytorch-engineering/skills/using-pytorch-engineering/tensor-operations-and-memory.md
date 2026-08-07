@@ -273,19 +273,38 @@ for batch in dataloader:
 **4. Broadcasting Awareness**
 
 ```python
-# Broadcasting can create large intermediate tensors
+# Broadcasting does NOT materialise the broadcast operand - it uses a
+# zero-stride view. What costs memory is the RESULT tensor.
 x = torch.randn(1000, 1000, 100)  # 400 MB
-y = torch.randn(100)  # 400 bytes
+y = torch.randn(100)              # 400 bytes
 
-# ❌ MEMORY INEFFICIENT: Broadcasting creates full tensor
-result = x + y  # y broadcasts to (1000, 1000, 100) temporarily
+# Allocates a second 400 MB tensor for the result.
+result = x + y
 
-# ✅ MORE EFFICIENT: Explicit broadcasting with memory awareness
-result = x.add(y)  # Same operation, PyTorch optimizes
+# `x.add(y)` is exactly the same call - torch.Tensor.__add__ dispatches to it.
+# There is no efficiency difference; do not "optimise" x + y into x.add(y).
+result = x.add(y)
 
-# ✅ BEST: Fused operations when possible
-result = torch.addcmul(x, y, value=1.0)  # Fused multiply-add
+# ✅ The actual saving: write into existing storage instead of allocating.
+x.add_(y)                  # in-place; no new 400 MB allocation
+torch.add(x, y, out=buf)   # or reuse a preallocated buffer
 ```
+
+**Genuine fused ops** exist, but they need the operands the fusion is defined
+over. `addcmul` computes `input + value * tensor1 * tensor2` and takes **three**
+tensors — `torch.addcmul(x, y, value=1.0)` is a `TypeError`, and even spelled
+correctly it is not equivalent to `x + y`:
+
+```python
+# out = x + value * t1 * t2   (one kernel, one result allocation)
+out = torch.addcmul(x, t1, t2, value=2.0)
+torch.addcmul(x, t1, t2, value=2.0, out=x)   # or fully in-place: x.addcmul_(t1, t2, value=2.0)
+
+# Sibling: addcdiv -> x + value * (t1 / t2). Same three-tensor shape.
+```
+
+For everything else, the fusion tool is `torch.compile`, which fuses the
+elementwise chain you actually wrote instead of asking you to hand-pick kernels.
 
 **Profiling broadcasting:**
 ```python
@@ -358,24 +377,30 @@ check_device_consistency(model, batch['input'], batch['target'])
 ```python
 from torch.amp import autocast, GradScaler
 
-# ❌ WRONG: Inconsistent autocast usage
+# ✅ RECOMMENDED: forward + loss inside autocast, backward OUTSIDE it
 scaler = GradScaler("cuda")
 for batch in dataloader:
     with autocast("cuda"):
         output = model(batch)
-    loss = criterion(output, target)  # ❌ Loss computed outside autocast!
-    scaler.scale(loss).backward()
-
-# ✅ CORRECT: Consistent autocast context
-scaler = GradScaler("cuda")
-for batch in dataloader:
-    with autocast("cuda"):
-        output = model(batch)
-        loss = criterion(output, target)  # ✅ Loss inside autocast
-    scaler.scale(loss).backward()
+        loss = criterion(output, target)
+    scaler.scale(loss).backward()      # ✅ backward always outside autocast
     scaler.step(optimizer)
     scaler.update()
-    optimizer.zero_grad()
+    optimizer.zero_grad(set_to_none=True)
+
+# ⚠️ Loss outside autocast: usually FINE, not a crash. The output is FP16/BF16,
+#    the loss is then computed in FP32, and autograd still casts correctly on
+#    the way back. Some losses are safer this way - autocast's own op list
+#    already forces several reductions (cross_entropy, log_softmax, mse_loss) to
+#    FP32 for exactly this reason.
+with autocast("cuda"):
+    output = model(batch)
+loss = criterion(output, target)       # legal; FP32 loss
+
+# ❌ ACTUALLY WRONG: running backward inside the autocast context.
+with autocast("cuda"):
+    loss = criterion(model(batch), target)
+    scaler.scale(loss).backward()      # ❌ documented as unsupported
 ```
 
 **Critical rules:**
@@ -521,7 +546,7 @@ torch.cuda.memory._record_memory_history(enabled=None)
 | 5 | Non-contiguous tensor operations | Unexpectedly slow operations | Strided memory access inefficiency | Call `.contiguous()` before repeated ops |
 | 6 | Allocations in loops | Slow iterations, fragmentation | Memory allocation overhead | Pre-allocate and reuse buffers |
 | 7 | Gradient accumulation without clearing | OOM after few iterations | Gradients accumulate unbounded | `optimizer.zero_grad()` every iteration |
-| 8 | Mixed precision context boundaries | Intermittent crashes, NaN values | Loss computed outside autocast | Keep forward + loss inside `autocast()` |
+| 8 | Mixed precision context boundaries | Unsupported/undefined behaviour | `backward()` called *inside* the `autocast` region | Keep forward + loss inside `autocast()`; run backward outside it. (Loss outside autocast is legal — just an FP32 loss.) |
 | 9 | Device inconsistency | "device-side assert" errors | Tensors on different devices | Systematic device checking |
 | 10 | Logging with tensors instead of scalars | Memory growth during training | Retaining graphs for logging | Always use `.item()` for logging |
 
@@ -893,28 +918,49 @@ for batch in dataloader:  # Batch sizes: 32, 64, 32, 128, 32...
     # CUDA memory becomes fragmented
     # Reserved >> Allocated
 
-# ✅ BETTER: Use gradient accumulation with fixed effective batch size
-accumulation_steps = 4
-effective_batch_size = 32
+# ✅ BEST: let the allocator handle it - expandable_segments makes the pool
+#    grow/shrink instead of stranding fixed-size blocks. One env var, no
+#    change to your data pipeline, no data dropped.
+#      PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
-for i, batch in enumerate(dataloader):
-    # Always process fixed size mini-batches
-    mini_batch = batch[:effective_batch_size]  # Fixed size
-    output = model(mini_batch)
-    loss = criterion(output, target) / accumulation_steps
-    loss.backward()
+# ✅ ALSO GOOD: make the SHAPES uniform without dropping samples.
+#    Bucket by length and pad within a bucket, so the allocator sees a small
+#    set of repeated sizes rather than a continuum.
+from torch.nn.utils.rnn import pad_sequence
 
-    if (i + 1) % accumulation_steps == 0:
-        optimizer.step()
-        optimizer.zero_grad()
+BUCKETS = (64, 128, 256, 512)          # pad up to the next bucket boundary
 
-# ✅ OR: Periodically defragment
+def collate_bucketed(samples):
+    longest = max(s.size(0) for s in samples)
+    target_len = next((b for b in BUCKETS if b >= longest), longest)
+    padded = pad_sequence(samples, batch_first=True)          # (B, longest, ...)
+    if padded.size(1) < target_len:                           # pad up to bucket
+        pad = padded.new_zeros(padded.size(0),
+                               target_len - padded.size(1),
+                               *padded.shape[2:])
+        padded = torch.cat([padded, pad], dim=1)
+    return padded
+
+# ❌ WRONG: "fixing" it by truncating the batch
+# mini_batch = batch[:32]      # silently DISCARDS every sample past index 32.
+# Your epoch no longer covers the dataset and your metrics are on a subset.
+# Gradient accumulation splits a batch across steps - it does not make
+# variable-shaped batches uniform, and it is not a fix for fragmentation.
+# If you do want fixed micro-batches, iterate over ALL the chunks:
+#     for micro in batch.split(32):
+#         loss = criterion(model(micro), target) / n_micro
+#         loss.backward()
+
+# ⚠️ LAST RESORT: periodic defragmentation
 if epoch % 10 == 0:
-    torch.cuda.empty_cache()  # Release fragmented memory
+    torch.cuda.empty_cache()   # returns cached blocks to the driver
     gc.collect()
+# empty_cache() is not free: the next allocations go back through cudaMalloc,
+# and it does nothing for memory that is still live. Reach for it only after
+# expandable_segments and shape bucketing.
 ```
 
-**Key insight:** Variable batch sizes fragment CUDA memory pool. Use fixed sizes or periodic cleanup.
+**Key insight:** Variable *shapes* fragment the CUDA caching allocator. Fix the shape distribution (bucketing) or the allocator's behaviour (`expandable_segments:True`) — never fix it by throwing away data.
 
 
 ## Quick Reference: Memory & Performance Checklist
@@ -1107,4 +1153,4 @@ Cite: https://docs.pytorch.org/docs/stable/notes/cuda.html
 
 ---
 
-PyTorch API surface current as of 2026-05 (PyTorch 2.9+); revisit quarterly.
+PyTorch API surface verified against PyTorch 2.9 (torch 2.9.1) as of 2026-08; revisit quarterly. Baseline is 2.9 — claims about later releases (e.g. FSDP1 deprecated in 2.11) are called out inline where they matter.

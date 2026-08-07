@@ -116,11 +116,20 @@ scaler.step(optimizer)
 scaler.update()
 ```
 
-**PyTorch 2.9 Compile Memory Optimization:**
+**torch.compile (default mode only) — modest memory win:**
 ```python
-# torch.compile can reduce memory through fusion
-model = torch.compile(model, mode="reduce-overhead")
+# Default mode can reduce peak memory through fusion (fewer materialised
+# intermediates). Treat it as a small win, not an OOM cure.
+model = torch.compile(model)
 ```
+
+> **Do NOT reach for `mode="reduce-overhead"` during OOM triage.** That mode
+> captures CUDA graphs, which hold a private memory pool and static input/output
+> buffers — it **increases** peak memory. It is a latency optimisation for small
+> batches, not a memory optimisation. See
+> `using-pytorch-engineering/mixed-precision-and-optimization.md` (compile-mode
+> table: "Higher memory overhead"). `mode="max-autotune"` captures CUDA graphs
+> too and carries the same caveat.
 
 ### Step 6: Verify Fix
 
@@ -154,17 +163,48 @@ def check_memory_stable(model, dataloader, num_batches=10):
 
 ## Memory Budget Calculator
 
-For transformer models, estimate memory per batch:
+Estimate the two terms **separately** — they scale differently, and conflating
+them is how people conclude the wrong fix. Persistent state scales with
+*parameters* (batch size does nothing to it); activations scale with *batch ×
+sequence*.
+
+**1. Persistent state — ~16 bytes per parameter** for the standard BF16 + Adam
+mixed-precision recipe:
 
 ```
-Memory ≈ 4 * batch_size * seq_len * hidden_dim * num_layers * 3 bytes
-         (activations)                                        (fp16 + gradients + optimizer)
+BF16 weights          2P
+BF16 gradients        2P
+FP32 master weights   4P
+Adam m, v (FP32)      8P
+                    ----
+                     16P bytes     (FP32 + Adam is also 16P: 4+4+8)
 ```
 
-Example: batch=32, seq=512, hidden=768, layers=12
+**2. Activations — scale with batch and sequence**, and only exist during
+training (inference with `no_grad` keeps almost none):
+
 ```
-4 * 32 * 512 * 768 * 12 * 3 = 1.8 GB per forward pass
+activations ≈ num_layers * k * batch * seq_len * hidden * bytes_per_elem
 ```
+
+`k ≈ 12–16` saved tensors per transformer block for a standard implementation
+with no activation checkpointing. Add `batch * heads * seq_len² * bytes` **only
+if** attention scores are materialised — SDPA / FlashAttention / FlexAttention
+do not materialise them, which is why they matter so much at long sequence.
+
+Worked example — 110M params, batch=32, seq=512, hidden=768, layers=12, BF16:
+
+```
+state       = 110e6 * 16                       ≈ 1.8 GB   (batch-independent)
+activations = 12 * 16 * 32 * 512 * 768 * 2     ≈ 4.8 GB   (linear in batch)
+                                               --------
+                                               ≈ 6.6 GB   + allocator overhead
+```
+
+**Reading the split is the diagnosis.** Activation-dominated (as here) → smaller
+batch, gradient accumulation, activation checkpointing. State-dominated → shard
+it (FSDP2), offload the optimizer, or use a lighter optimizer. Cutting batch size
+when state dominates buys you almost nothing.
 
 ## When to Escalate
 

@@ -50,7 +50,7 @@ Action: Do NOT activate - use memory-diagnostician agent instead
 |---------|-------|-----|
 | `model(x)` in training | Missing `model.train()` | Add `model.train()` before training loop |
 | `model(x)` in eval | Missing `model.eval()` | Add `model.eval()` and `torch.no_grad()` |
-| `tensor.to(device)` | Device mismatch risk | Use `tensor.to(model.device)` or consistent device variable |
+| `tensor.to(device)` | Device mismatch risk | Thread one `device` variable through the script. Note `nn.Module` has **no** `.device` attribute — to read a model's device use `next(model.parameters()).device` (and guard for parameterless modules). |
 | `output = model(x); loss = criterion(output, y)` | Dimensions not checked | Add shape assertions or comments |
 | `.backward()` without `.zero_grad()` | Gradient accumulation | Add `optimizer.zero_grad()` before forward pass |
 | In-place operations on leaf tensors | Autograd error | Use out-of-place versions |
@@ -61,11 +61,17 @@ These don't raise errors but produce wrong results:
 
 | Pattern | Issue | How to Detect |
 |---------|-------|---------------|
-| `nn.Linear(in, out)` with wrong `in` | Broadcasts incorrectly | Check input shape matches |
 | `softmax(dim=0)` when should be `dim=-1` | Wrong probability axis | Verify probabilities sum to 1 on correct axis |
 | `torch.tensor(data)` vs `torch.as_tensor(data)` | Unexpected copy or dtype | Check if original data is modified |
-| Missing `contiguous()` before view | Incorrect view | Check stride requirements |
-| `model.load_state_dict(strict=False)` | Missing parameters | Log ignored/missing keys |
+| `reduction='mean'` loss + gradient accumulation without `/ accum_steps` | Effective loss scaled by `accum_steps` | Check the accumulation divisor |
+| Broadcasting where you meant elementwise (e.g. `(N,1)` target vs `(N,)` prediction) | Silently produces an `(N,N)` result | Assert shapes before the loss |
+| `model.load_state_dict(strict=False)` | Missing parameters silently left at init | Log returned `missing_keys` / `unexpected_keys` |
+
+**Not silent — these raise, so classify them as Category 1 correctness bugs, not
+insidious ones:** `nn.Linear` with the wrong `in_features` raises a `RuntimeError`
+(mat1/mat2 shape mismatch), and `.view()` on a non-contiguous tensor raises
+("view size is not compatible with input tensor's size and stride"). Reporting a
+crash as a silent-wrongness risk misleads the user about where to look.
 
 ### Category 3: Memory Issues (Performance-Critical)
 
@@ -87,41 +93,42 @@ These don't raise errors but produce wrong results:
 | `torch.cat` in loop | Quadratic time | Collect in list, single cat |
 | Not using `torch.compile` (2.0+) | Missing speedup | Consider `model = torch.compile(model)` |
 
-### Category 5: PyTorch 2.9 Considerations
+### Category 5: Modern-API Considerations (2.x)
 
-PyTorch 2.9 (2025 release) improvements to be aware of:
+Check these against the installed version — don't assert release-note claims you
+haven't verified.
 
-**torch.compile Maturity:**
+**torch.compile modes:**
 ```python
-# 2.9 has better compile stability
-model = torch.compile(model)  # Generally safe for most models now
+model = torch.compile(model)                          # default: start here
 
-# Mode selection
-model = torch.compile(model, mode="reduce-overhead")  # For small batches
-model = torch.compile(model, mode="max-autotune")    # For large batches
+model = torch.compile(model, mode="reduce-overhead")  # latency; CUDA graphs
+model = torch.compile(model, mode="max-autotune")     # throughput; CUDA graphs
 ```
+Both non-default modes capture CUDA graphs and therefore **raise** peak memory.
+Never suggest them to someone who is memory-constrained — see
+`using-pytorch-engineering/mixed-precision-and-optimization.md`.
 
-**Improved AMP:**
+**`torch.amp`, not `torch.cuda.amp`:**
 ```python
-# 2.9 has better automatic mixed precision
 from torch.amp import autocast, GradScaler
 
-# Now works better with compile
-with autocast('cuda'):
+scaler = GradScaler('cuda')          # torch.cuda.amp.GradScaler() is deprecated
+with autocast('cuda', dtype=torch.bfloat16):
     output = compiled_model(input)
+# BF16 needs no GradScaler; FP16 does.
 ```
 
-**Enhanced Tensor Subclassing:**
+**`torch.load` defaults to `weights_only=True` (2.6+):**
 ```python
-# 2.9 improves custom tensor support
-# Check for compatibility if using custom tensor types
+# Flag a review target that "fixes" an UnpicklingError like this:
+checkpoint = torch.load(path, weights_only=False)   # ⚠️ arbitrary code execution
+# Correct fix: make the checkpoint weights_only-safe, or allowlist the specific
+# global with torch.serialization.safe_globals([...]).
 ```
 
-**Better Error Messages:**
-```python
-# 2.9 provides clearer shape mismatch errors
-# Look for improved stack traces in user's errors
-```
+**FSDP2 over FSDP1:** `fully_shard` is the supported sharding path;
+`FullyShardedDataParallel` (FSDP1) is deprecated as of PyTorch 2.11.
 
 ## Review Process
 
@@ -170,25 +177,26 @@ For each layer:
 
 ## Cross-Pack Discovery
 
-Check for complementary packs for specialized reviews:
+Check for complementary packs for specialized reviews. Plugin metadata lives at
+`plugins/<pack>/.claude-plugin/plugin.json` — a glob on `plugins/<pack>/plugin.json`
+never matches and will make every pack look absent.
 
 ```python
 import glob
 
-# For Python-specific issues (typing, patterns)
-python_pack = glob.glob("plugins/axiom-python-engineering/plugin.json")
-if not python_pack:
-    print("Recommend: axiom-python-engineering for Python patterns")
+def pack_installed(name: str) -> bool:
+    return bool(glob.glob(f"plugins/{name}/.claude-plugin/plugin.json"))
 
-# For training dynamics issues
-training_pack = glob.glob("plugins/yzmir-training-optimization/plugin.json")
-if not training_pack:
-    print("Recommend: yzmir-training-optimization for convergence issues")
-
-# For architecture concerns
-arch_pack = glob.glob("plugins/yzmir-neural-architectures/plugin.json")
-if not arch_pack:
-    print("Recommend: yzmir-neural-architectures for design review")
+# Present -> route the relevant findings there. Absent -> recommend installing.
+for pack, why in [
+    ("axiom-python-engineering",     "Python patterns and typing"),
+    ("yzmir-training-optimization",  "convergence / hyperparameter issues"),
+    ("yzmir-neural-architectures",   "architecture design review"),
+]:
+    if pack_installed(pack):
+        print(f"Route {why} to {pack}")
+    else:
+        print(f"Consider installing {pack} for {why}")
 ```
 
 ## Scope Boundaries

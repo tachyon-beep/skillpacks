@@ -46,6 +46,28 @@ Checkpoint failures stem from: incomplete state (missing optimizer momentum, wro
 > the rename (existing checkpoints load), but new code should use the new path.
 > Cite: https://docs.pytorch.org/docs/stable/amp.html
 
+> **Serialization note (PyTorch 2.6+): `torch.load` defaults to `weights_only=True`.**
+> The flag was added in 1.13; **PyTorch 2.6 flipped its default from `False` to
+> `True`**. A bare `torch.load(path)` on 2.6+ therefore refuses to unpickle
+> arbitrary globals and raises `_pickle.UnpicklingError` — including for perfectly
+> ordinary training checkpoints that stash `np.random.get_state()` (it carries a
+> NumPy `ndarray`, whose reconstructor is not on the allowlist). This is the single
+> most common "my resume code broke on upgrade" failure. Three consequences, all
+> applied throughout this sheet:
+>
+> 1. **Design the checkpoint to be `weights_only`-safe.** Store RNG state as
+>    tensors and primitives (see `numpy_rng_state_safe` below). Then plain
+>    `torch.load(path)` works on every version ≥ 1.13 with no flag at all.
+> 2. **If you must load a legacy checkpoint containing non-allowlisted globals**,
+>    either allowlist them (`torch.serialization.add_safe_globals([...])`, or the
+>    `torch.serialization.safe_globals([...])` context manager) or pass
+>    `weights_only=False` — the latter **only** for a file you produced yourself
+>    and can vouch for. `weights_only=False` executes arbitrary code at load time.
+> 3. **Never pass `weights_only=False` to a checkpoint you downloaded.** That is
+>    the threat the 2.6 default change exists to close.
+>
+> Cite: https://docs.pytorch.org/docs/stable/generated/torch.load.html
+
 ### The Complete Checkpoint
 
 **Critical Rule:** A checkpoint is NOT just the model. It must contain ALL state needed to resume training exactly where it stopped.
@@ -56,6 +78,33 @@ Checkpoint failures stem from: incomplete state (missing optimizer momentum, wro
 import torch
 import numpy as np
 import random
+
+def numpy_rng_state_safe() -> dict:
+    """Capture NumPy's RNG state in a `weights_only=True`-loadable form.
+
+    `np.random.get_state()` returns a tuple containing a uint32 `ndarray`.
+    Pickling an ndarray requires NumPy's reconstructor global, which
+    `torch.load`'s 2.6+ default (`weights_only=True`) refuses to unpickle.
+    Tensors + primitives are always allowed, so store it as those.
+    """
+    bit_generator, keys, pos, has_gauss, cached_gaussian = np.random.get_state()
+    return {
+        'bit_generator': bit_generator,                       # str - OK
+        'keys': torch.from_numpy(keys.astype(np.int64)),      # tensor - OK
+        'pos': pos,                                           # int - OK
+        'has_gauss': has_gauss,                               # int - OK
+        'cached_gaussian': cached_gaussian,                   # float - OK
+    }
+
+def restore_numpy_rng_state(state: dict) -> None:
+    """Inverse of numpy_rng_state_safe(). Restores NumPy's RNG exactly."""
+    np.random.set_state((
+        state['bit_generator'],
+        state['keys'].numpy().astype(np.uint32),
+        state['pos'],
+        state['has_gauss'],
+        state['cached_gaussian'],
+    ))
 
 def save_checkpoint(
     epoch: int,
@@ -103,9 +152,12 @@ def save_checkpoint(
     # Additional recommended components
     checkpoint.update({
         # NumPy RNG state (for data augmentation)
-        'numpy_rng_state': np.random.get_state(),
+        # NOT np.random.get_state() directly - that ndarray breaks the
+        # weights_only=True default on torch.load (PyTorch 2.6+).
+        'numpy_rng_state': numpy_rng_state_safe(),
 
         # Python RNG state (for any Python random operations)
+        # Plain tuple of ints - weights_only-safe as-is.
         'python_rng_state': random.getstate(),
 
         # Add any kwargs passed in
@@ -126,7 +178,10 @@ def validate_checkpoint(checkpoint_path: str) -> bool:
         True if checkpoint is valid, False otherwise
     """
     try:
-        checkpoint = torch.load(checkpoint_path, map_location='cpu')
+        # weights_only=True is the default on 2.6+; stated explicitly here so the
+        # same code is correct (and safe) on 1.13-2.5 as well. It succeeds because
+        # save_checkpoint() kept every value a tensor, dict, or primitive.
+        checkpoint = torch.load(checkpoint_path, map_location='cpu', weights_only=True)
 
         # Check required keys
         required_keys = [
@@ -192,7 +247,9 @@ checkpoint['config'] = {
 }
 
 # Save PyTorch version for compatibility checking
-checkpoint['pytorch_version'] = torch.__version__
+# str() matters: torch.__version__ is a TorchVersion object, and pickling it
+# trips the weights_only=True default on load. A plain str is always allowed.
+checkpoint['pytorch_version'] = str(torch.__version__)
 
 # Save timestamp
 from datetime import datetime
@@ -228,7 +285,8 @@ def load_checkpoint(
     """
     # Load checkpoint
     # map_location ensures checkpoint loads regardless of save device
-    checkpoint = torch.load(checkpoint_path, map_location=device)
+    # weights_only=True is the 2.6+ default; explicit here for version-proofing.
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
 
     # Load model state
     model.load_state_dict(checkpoint['model_state_dict'])
@@ -246,7 +304,7 @@ def load_checkpoint(
         torch.cuda.set_rng_state_all(checkpoint['cuda_rng_state'])
 
     if 'numpy_rng_state' in checkpoint:
-        np.random.set_state(checkpoint['numpy_rng_state'])
+        restore_numpy_rng_state(checkpoint['numpy_rng_state'])
 
     if 'python_rng_state' in checkpoint:
         random.setstate(checkpoint['python_rng_state'])
@@ -340,7 +398,7 @@ model.load_state_dict(checkpoint['model_state_dict'])
 # ✅ CORRECT: Restore all RNG states
 torch.set_rng_state(checkpoint['rng_state'])
 torch.cuda.set_rng_state_all(checkpoint['cuda_rng_state'])
-np.random.set_state(checkpoint['numpy_rng_state'])
+restore_numpy_rng_state(checkpoint['numpy_rng_state'])  # see helper above
 random.setstate(checkpoint['python_rng_state'])
 
 # ❌ WRONG: Not using map_location (fails if checkpoint saved on different device)
@@ -529,9 +587,14 @@ sparse_tensor = torch.sparse_coo_tensor(indices, values, size)
 result = sparse_tensor @ dense_tensor  # May be non-deterministic
 
 # 5. torch.nn.DataParallel
-# DataParallel has non-deterministic gather operations
-model = torch.nn.DataParallel(model)  # Non-deterministic!
-# Use DistributedDataParallel (DDP) instead for determinism
+# Not a "non-deterministic gather" - the gather itself is a plain concat.
+# The problem is that DP replicates and re-scatters the module every forward,
+# splitting each batch across devices, so BatchNorm statistics and gradient
+# reduction order depend on device count and split boundaries. Combined with
+# its per-step replication it is hard to reason about and universally
+# not-recommended.
+model = torch.nn.DataParallel(model)  # ❌ Don't use it, determinism aside
+# Use DistributedDataParallel (DDP), one process per GPU
 ```
 
 **Checking for non-deterministic operations:**
@@ -539,10 +602,15 @@ model = torch.nn.DataParallel(model)  # Non-deterministic!
 ```python
 import os
 
-# PyTorch 1.11+ provides environment variable to detect non-deterministic ops
-os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'  # or ':16:8'
+# CUBLAS_WORKSPACE_CONFIG does NOT detect anything. It is a REQUIREMENT:
+# with CUDA >= 10.2, cuBLAS needs a fixed workspace to make GEMMs run-to-run
+# reproducible, and use_deterministic_algorithms(True) will RAISE at the first
+# cuBLAS call if this is unset. Must be set BEFORE CUDA is initialized -
+# setting it after the first CUDA call has no effect.
+os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'  # or ':16:8' (less memory)
 
-# Enable PyTorch deterministic mode (throws error on non-deterministic ops)
+# THIS is the detection mechanism: raises RuntimeError naming any op that has
+# no deterministic implementation.
 torch.use_deterministic_algorithms(True)
 
 # Now PyTorch will raise error if non-deterministic operation is used
@@ -1216,8 +1284,10 @@ def save_checkpoint_with_version(
     import sys
 
     # Add version metadata
+    # str() on torch.__version__: the raw TorchVersion object is not on
+    # torch.load's weights_only allowlist and would break loading on 2.6+.
     checkpoint['_metadata'] = {
-        'pytorch_version': torch.__version__,
+        'pytorch_version': str(torch.__version__),
         'python_version': sys.version,
         'cuda_version': torch.version.cuda if torch.cuda.is_available() else None,
         'cudnn_version': torch.backends.cudnn.version() if torch.cuda.is_available() else None,
@@ -1344,16 +1414,69 @@ migrate_checkpoint(
 ```
 
 
-### Using weights_only for Security
+### weights_only: The 2.6 Default Flip
 
-**Critical:** PyTorch 2.0+ introduces `weights_only=True` flag to prevent arbitrary code execution during checkpoint loading.
+**Critical, and frequently taught backwards:** `weights_only` is not a new opt-in
+safety flag. It landed in PyTorch **1.13** and became the **default in 2.6**
+(January 2025).
+
+| PyTorch | `torch.load(path)` behaviour |
+|---|---|
+| < 1.13 | Full unpickle. Arbitrary code execution. No flag available. |
+| 1.13 – 2.5 | Full unpickle **by default**; `weights_only=True` available as opt-in. |
+| **≥ 2.6** | **`weights_only=True` by default.** Non-allowlisted globals raise `_pickle.UnpicklingError`. |
+
+So on the 2.9 baseline this sheet targets, the failure mode has inverted. The
+danger is no longer "bare `torch.load` silently ran attacker code" — it is
+"my working resume script started raising `UnpicklingError` after the upgrade,
+so I pasted `weights_only=False` to make it go away." **That paste re-opens
+exactly the hole the default change closed.**
 
 ```python
-# Old way (PyTorch < 2.0) - potentially unsafe
-checkpoint = torch.load('checkpoint.pt')  # Can execute arbitrary code!
+# PyTorch >= 2.6: this is ALREADY the safe path. No flag needed.
+checkpoint = torch.load('checkpoint.pt', map_location='cpu')
 
-# New way (PyTorch 2.0+) - safe
-checkpoint = torch.load('checkpoint.pt', weights_only=True)  # Only loads tensors
+# Be explicit if you support 1.13-2.5 too - same behaviour on every version.
+checkpoint = torch.load('checkpoint.pt', map_location='cpu', weights_only=True)
+
+# ❌ The reflex fix after an upgrade breaks your loader. Do NOT do this
+#    to a checkpoint you did not produce yourself.
+checkpoint = torch.load('downloaded_from_the_internet.pt', weights_only=False)
+```
+
+**The real fix is at save time.** If a checkpoint contains only tensors, dicts,
+lists, and primitives, `weights_only=True` loads it with no ceremony. The usual
+offender in a *training* checkpoint is `np.random.get_state()` (it carries a
+uint32 `ndarray`) — see `numpy_rng_state_safe()` in the Complete Checkpoint
+section above for the tensorised form.
+
+**Loading a legacy checkpoint you cannot re-save**: allowlist the specific
+globals rather than disabling the check wholesale.
+
+```python
+import numpy as np
+import numpy.core.multiarray as ma
+
+# Scoped: allowlist applies only inside the block.
+with torch.serialization.safe_globals(
+    [ma._reconstruct, np.ndarray, np.dtype, np.dtypes.UInt32DType]
+):
+    checkpoint = torch.load('legacy_checkpoint.pt', map_location='cpu')
+
+# Process-wide equivalent: torch.serialization.add_safe_globals([...])
+
+# Then re-save it in weights_only-safe form so you never need this again.
+```
+
+> The exact allowlist depends on what the old file pickled and on the NumPy
+> version that wrote it; `UnpicklingError` names the offending global, so add
+> them one at a time and stop when it loads. Only do this for a file whose
+> provenance you trust — allowlisting is narrower than `weights_only=False`,
+> but it is still a decision to unpickle something.
+
+```python
+import pickle
+import warnings
 
 # Handling weights_only with full checkpoints
 def save_checkpoint_secure(checkpoint: dict, checkpoint_path: str) -> None:
@@ -1367,27 +1490,45 @@ def save_checkpoint_secure(checkpoint: dict, checkpoint_path: str) -> None:
         'loss': checkpoint['loss'],  # float - OK
         'rng_state': checkpoint['rng_state'],  # tensor - OK
         'cuda_rng_state': checkpoint['cuda_rng_state'],  # list of tensors - OK
+        # NumPy RNG state, tensorised (raw np.random.get_state() would NOT be OK)
+        'numpy_rng_state': numpy_rng_state_safe(),
+        'python_rng_state': random.getstate(),  # tuple of ints - OK
     }
 
     torch.save(safe_checkpoint, checkpoint_path)
 
-def load_checkpoint_secure(checkpoint_path: str) -> dict:
-    """Load checkpoint securely with weights_only=True."""
-    try:
-        # Try weights_only first (PyTorch 2.0+)
-        checkpoint = torch.load(checkpoint_path, weights_only=True)
-    except TypeError:
-        # Fall back for PyTorch < 2.0
-        print("weights_only not available, loading without (PyTorch < 2.0)")
-        checkpoint = torch.load(checkpoint_path)
-    except Exception as e:
-        # Checkpoint contains non-tensor objects
-        print(f"weights_only=True failed: {e}")
-        print("Loading with weights_only=False (CAUTION: potential security risk)")
-        checkpoint = torch.load(checkpoint_path, weights_only=False)
+def load_checkpoint_secure(checkpoint_path: str, trusted: bool = False) -> dict:
+    """Load a checkpoint under weights_only=True.
 
-    return checkpoint
+    Args:
+        checkpoint_path: File to load.
+        trusted: Set True ONLY for a file this process/team produced. Controls
+            whether an UnpicklingError is allowed to fall back to a full
+            unpickle. Defaults to False so untrusted files fail closed.
+    """
+    try:
+        # Explicit: identical behaviour on 1.13-2.5 and on the 2.6+ default.
+        return torch.load(checkpoint_path, map_location='cpu', weights_only=True)
+    except pickle.UnpicklingError as e:
+        # The checkpoint pickled a global that is not on the allowlist.
+        # Correct fix: re-save it via save_checkpoint_secure(). Interim fix:
+        # torch.serialization.safe_globals([...]) naming the global from `e`.
+        if not trusted:
+            raise RuntimeError(
+                f"{checkpoint_path} contains non-allowlisted globals and is not "
+                f"marked trusted; refusing to unpickle it. Original error: {e}"
+            ) from e
+        warnings.warn(
+            f"Falling back to weights_only=False for trusted checkpoint "
+            f"{checkpoint_path}. This executes arbitrary code at load time.",
+            RuntimeWarning,
+        )
+        return torch.load(checkpoint_path, map_location='cpu', weights_only=False)
 ```
+
+Note there is no `except TypeError` version-probe here: `weights_only` has
+existed since 1.13, well below this sheet's baseline. Probing for it is dead
+code that only hides real errors.
 
 
 ## Common Checkpointing Pitfalls
@@ -1708,7 +1849,8 @@ When reviewing checkpointing implementation or debugging checkpoint-related issu
 
 **Version Compatibility:**
 - [ ] No PyTorch version in checkpoint metadata
-- [ ] Using `weights_only=False` in PyTorch 2.0+ (security risk)
+- [ ] Passing `weights_only=False` to silence an `UnpicklingError` on 2.6+ (re-opens the arbitrary-code-execution hole the 2.6 default closed — fix the checkpoint format instead)
+- [ ] Saving raw `np.random.get_state()` (its ndarray breaks the `weights_only=True` default on load)
 - [ ] No migration strategy for old checkpoints
 - [ ] Assuming checkpoints work across PyTorch versions
 - [ ] No documentation of checkpoint format/contents
@@ -1831,7 +1973,7 @@ def load_checkpoint(
 ) -> int:
     """Load complete checkpoint and return start_epoch."""
 
-    checkpoint = torch.load(checkpoint_path, map_location=device)
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
 
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -1839,7 +1981,7 @@ def load_checkpoint(
 
     torch.set_rng_state(checkpoint['rng_state'].cpu())
     torch.cuda.set_rng_state_all(checkpoint['cuda_rng_state'])
-    np.random.set_state(checkpoint['numpy_rng_state'])
+    restore_numpy_rng_state(checkpoint['numpy_rng_state'])
     random.setstate(checkpoint['python_rng_state'])
 
     if scaler is not None and 'scaler_state_dict' in checkpoint:
@@ -2011,7 +2153,7 @@ mid-training resume, sharded is mandatory above ~10B parameters.
 
 **Resume logic is NOT "just load and continue".** Start at checkpoint['epoch'] + 1, not checkpoint['epoch'] (off-by-one causes re-running epochs). Restore all RNG states. Use map_location for device portability. Validate checkpoint makes sense (run validation, check loss matches).
 
-**Version compatibility is NOT automatic.** Save PyTorch version in metadata. Use weights_only=True in PyTorch 2.0+ for security. Log missing/unexpected keys when using strict=False. Have migration strategy for old checkpoints.
+**Version compatibility is NOT automatic.** Save PyTorch version in metadata. `torch.load` defaults to `weights_only=True` from 2.6 onward — design checkpoints to load cleanly under it (tensorise NumPy RNG state) rather than passing `weights_only=False` to make the error go away. Log missing/unexpected keys when using strict=False. Have migration strategy for old checkpoints.
 
 These practices ensure training continuity, reproducibility, and checkpoint integrity across crashes, version changes, and distributed training scenarios.
 
@@ -2036,4 +2178,4 @@ These practices ensure training continuity, reproducibility, and checkpoint inte
 
 ---
 
-PyTorch API surface current as of 2026-05 (PyTorch 2.9+); revisit quarterly.
+PyTorch API surface verified against PyTorch 2.9 (torch 2.9.1) as of 2026-08; revisit quarterly. Baseline is 2.9 — claims about later releases (e.g. FSDP1 deprecated in 2.11) are called out inline where they matter.

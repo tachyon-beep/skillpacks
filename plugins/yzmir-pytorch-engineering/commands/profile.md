@@ -204,9 +204,13 @@ def profile_with_stack_trace(model, sample_input, device):
     print("Open in chrome://tracing or https://ui.perfetto.dev/")
 
     # Print operations with source locations
+    # NOTE: the EventList attribute is `device_time_total` on current PyTorch -
+    # `cuda_time_total` was renamed when the profiler went device-agnostic and
+    # attribute access on the old name now raises AttributeError. (The
+    # sort_by="cuda_time_total" STRING is still accepted by .table().)
     for event in prof.key_averages():
-        if event.cuda_time_total > 1000:  # > 1ms
-            print(f"{event.key}: {event.cuda_time_total/1000:.2f}ms")
+        if event.device_time_total > 1000:  # microseconds -> > 1ms
+            print(f"{event.key}: {event.device_time_total/1000:.2f}ms")
             if event.stack:
                 print(f"  Stack: {event.stack[:3]}")
 ```
@@ -234,14 +238,35 @@ print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=5))
 ```
 
 **TorchInductor Analysis:**
+
+`torch._dynamo.config.log_level` and `torch._dynamo.config.output_code` were
+**removed** early in the 2.x series (`AttributeError` on current PyTorch).
+Logging is configured through `TORCH_LOGS` or `torch._logging.set_logs`:
+
+```bash
+# Generated Triton kernels
+TORCH_LOGS="output_code" python train.py
+
+# Why Dynamo bailed out / kept recompiling
+TORCH_LOGS="graph_breaks,recompiles" python train.py
+
+# Inductor's scheduling decisions
+TORCH_LOGS="inductor" python train.py
+
+# Everything Dynamo+Inductor emit (verbose)
+TORCH_LOGS="+dynamo,+inductor" python train.py
+```
+
 ```python
-# See what Inductor optimizes
-import torch._dynamo
-torch._dynamo.config.log_level = logging.DEBUG
-torch._dynamo.config.output_code = True
+# Programmatic equivalent - set BEFORE the first compiled call
+import logging
+import torch._logging
+
+torch._logging.set_logs(output_code=True, graph_breaks=True, recompiles=True)
+# or a level for a whole component: torch._logging.set_logs(dynamo=logging.DEBUG)
 
 model = torch.compile(model)
-_ = model(input)  # Check logs for generated Triton kernels
+_ = model(input)  # Triton kernel source now appears in the logs
 ```
 
 ## Common Optimization Patterns
@@ -254,7 +279,7 @@ After identifying bottlenecks, apply these fixes:
 | Small batch GPU underutil | Increase batch size or use `torch.compile` |
 | CPU-GPU transfers | Batch transfers, avoid `.item()` in loops |
 | Memory bandwidth | Use mixed precision (`torch.amp`) |
-| Kernel launch overhead | `torch.compile(mode="reduce-overhead")` |
+| Kernel launch overhead | `torch.compile(mode="reduce-overhead")` — CUDA graphs; **raises peak memory**, so not while OOM-constrained |
 
 ## Output Format
 

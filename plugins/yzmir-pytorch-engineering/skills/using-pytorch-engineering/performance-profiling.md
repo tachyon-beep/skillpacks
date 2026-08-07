@@ -304,7 +304,7 @@ def diagnose_bottleneck_type(model, dataloader):
     # Look for high memory-bound ops
     events = prof.key_averages()
     for evt in events:
-        if evt.cuda_time_total > 0:
+        if evt.device_time_total > 0:
             # If many large tensor ops with low FLOPS → memory-bound
             pass
 
@@ -1146,8 +1146,10 @@ def diagnose_gpu_bottleneck(model, sample_input):
 
     # Find top GPU operations
     events = prof.key_averages()
-    cuda_events = [(evt.key, evt.cuda_time_total) for evt in events
-                   if evt.cuda_time_total > 0]
+    # device_time_total, not cuda_time_total: renamed when the profiler became
+    # device-agnostic; the old attribute now raises AttributeError.
+    cuda_events = [(evt.key, evt.device_time_total) for evt in events
+                   if evt.device_time_total > 0]
     cuda_events.sort(key=lambda x: x[1], reverse=True)
 
     print("Top 10 GPU operations:")
@@ -1169,7 +1171,7 @@ def diagnose_gpu_bottleneck(model, sample_input):
     elif 'mm' in top_op.lower() or 'matmul' in top_op.lower():
         print("\n🎯 Bottleneck: Matrix multiplication")
         print("Solutions:")
-        print("  1. Ensure dimensions are multiples of 8 (FP16) or 16 (BF16)")
+        print("  1. Ensure dimensions are multiples of 8 (FP16/BF16 are both 2-byte)")
         print("  2. Use mixed precision")
         print("  3. Check for unnecessary transposes")
 
@@ -1195,7 +1197,8 @@ with autocast("cuda"):
 # 2-3x speedup for large models
 
 # Solution 2: Tensor Core alignment
-# Ensure dimensions are multiples of 8 (FP16) or 16 (BF16)
+# Multiple follows element size: 8 for 16-bit (FP16 AND BF16 - both 2 bytes),
+# 4 for TF32, 16 for INT8. Bigger multiples (64/128) also help tiling.
 # BAD:  (batch=31, seq_len=127, hidden=509)
 # GOOD: (batch=32, seq_len=128, hidden=512)
 
@@ -1212,40 +1215,74 @@ model = torch.compile(model)
 - Large tensor operations dominating time
 - Memory bandwidth saturated
 
+**Two things people get backwards here — read before using the code:**
+
+1. **The profiler cannot tell you bytes moved.** `self_device_memory_usage` is
+   the *net allocation delta* for that op (it is 0 for in-place ops and negative
+   for frees). Dividing it by time does not give DRAM bandwidth. You must compute
+   bytes read + written yourself from the op's input and output shapes.
+2. **The threshold direction is the opposite of the intuition.** Memory-bound
+   means the op is achieving a **high** fraction of peak bandwidth — it is
+   already saturating DRAM, so no amount of extra FLOPs is the problem. A *low*
+   achieved bandwidth means you are bound by something else (launch overhead,
+   occupancy, serialization, or genuinely compute-bound work). "Bandwidth <
+   500 GB/s ⇒ memory-bound" is exactly wrong.
+
 **Diagnostic code:**
 
 ```python
-def diagnose_memory_bottleneck(model, sample_input):
-    """Check if operations are memory-bandwidth limited"""
+import torch.utils.benchmark as benchmark
 
-    # Profile memory and compute
-    with profile(
-        activities=[ProfilerActivity.CUDA],
-        profile_memory=True
-    ) as prof:
-        output = model(sample_input)
+def achieved_bandwidth_gbps(fn, bytes_moved: int, iters: int = 50) -> float:
+    """Measured DRAM bandwidth for one op, in GB/s.
 
-    # Analyze operations
-    for evt in prof.key_averages():
-        if evt.cuda_time_total > 0 and evt.self_cuda_memory_usage > 0:
-            # Rough FLOP/s estimate
-            # Memory-bound: low FLOP/s despite high memory usage
-            # Compute-bound: high FLOP/s
+    `bytes_moved` is YOUR arithmetic, not the profiler's: sum the bytes the
+    kernel must read plus the bytes it must write.
+      elementwise z = x + y, fp16, N elems -> 3 * N * 2 bytes
+      in-place     x.add_(y),  fp16, N elems -> 3 * N * 2 bytes (still writes x)
+      reduction    x.sum(),    fp16, N elems -> N * 2 bytes (+ negligible out)
+    Timer.blocked_autorange handles CUDA synchronization internally.
+    """
+    t = benchmark.Timer(stmt="fn()", globals={"fn": fn})
+    seconds = t.blocked_autorange(min_run_time=1.0).median
+    return bytes_moved / seconds / 1e9
 
-            memory_gb = evt.self_cuda_memory_usage / 1e9
-            time_s = evt.cuda_time_total / 1e6  # µs to s
+def classify_op(fn, bytes_moved: int, peak_gbps: float) -> None:
+    """peak_gbps: your GPU's spec-sheet HBM/GDDR bandwidth.
 
-            if memory_gb > 1.0 and time_s > 0.01:
-                bandwidth = memory_gb / time_s  # GB/s
-                print(f"{evt.key:40s}: {bandwidth:.1f} GB/s")
+    Look it up rather than deriving it - torch.cuda.get_device_properties()
+    does not expose memory clock or bus width. Reference points:
+    A100 80GB ~2039, H100 SXM ~3350, H200 ~4800, RTX 4090 ~1008 GB/s.
+    """
+    achieved = achieved_bandwidth_gbps(fn, bytes_moved)
+    frac = achieved / peak_gbps
+    print(f"achieved {achieved:7.1f} GB/s = {frac*100:5.1f}% of peak")
 
-    print("\nIf bandwidth < 500 GB/s, likely memory-bound")
-    print("Solutions:")
-    print("  1. Reduce intermediate tensor sizes")
-    print("  2. Use in-place operations where safe")
-    print("  3. Tile large operations")
-    print("  4. Increase arithmetic intensity (more compute per byte)")
+    if frac > 0.6:
+        print("MEMORY-BOUND: saturating DRAM. The op is already near the roofline.")
+        print("  1. Fuse the surrounding elementwise chain (torch.compile)")
+        print("  2. Raise arithmetic intensity - more compute per byte loaded")
+        print("  3. Use a narrower dtype (BF16/FP16) - fewer bytes for the same math")
+        print("  4. Avoid needless materialisation of intermediates")
+    elif frac > 0.2:
+        print("MIXED: neither DRAM nor the SMs are saturated.")
+        print("  Check occupancy and whether the op is large enough to fill the GPU.")
+    else:
+        print("NOT memory-bound. Low bandwidth means the limiter is elsewhere:")
+        print("  1. Kernel-launch / Python overhead (tiny kernels) -> torch.compile,")
+        print("     CUDA graphs, or larger batches")
+        print("  2. Compute-bound (check Tensor Core utilisation with Nsight Compute)")
+        print("  3. Host-device syncs (.item(), .cpu()) serialising the stream")
+
+# Example: a fp16 elementwise add on 64M elements
+x = torch.randn(64 * 1024 * 1024, device="cuda", dtype=torch.float16)
+y = torch.randn_like(x)
+classify_op(lambda: x + y, bytes_moved=3 * x.numel() * x.element_size(),
+            peak_gbps=2039.0)  # <- your GPU's number
 ```
+
+To find *which* ops to run this on, sort the profiler table by device time and
+start at the top — but do the bandwidth arithmetic per-op by hand, as above.
 
 
 ### I/O-Bound Bottlenecks
@@ -2234,4 +2271,4 @@ SM occupancy alongside the timeline).
 
 ---
 
-PyTorch API surface current as of 2026-05 (PyTorch 2.9+); revisit quarterly.
+PyTorch API surface verified against PyTorch 2.9 (torch 2.9.1) as of 2026-08; revisit quarterly. Baseline is 2.9 — claims about later releases (e.g. FSDP1 deprecated in 2.11) are called out inline where they matter.

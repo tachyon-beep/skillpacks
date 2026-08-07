@@ -178,13 +178,22 @@ class FeatureExtractorBlock(nn.Module):
    # ❌ Can't modify F.relu() usage without code changes
    ```
 
-4. **Quantization**: Quantization tools trace module operations
+4. **Quantization**: eager-mode quantization rewrites *modules*, so functional
+   calls are invisible to it
    ```python
-   # ✅ Quantization sees nn.ReLU
-   quantized = torch.quantization.quantize_dynamic(model)
+   # torch.ao.quantization, NOT torch.quantization - the namespace moved in 1.10
+   # and the old path is a deprecated shim.
+   from torch.ao.quantization import quantize_dynamic
 
-   # ❌ F.relu() not traced by quantization
+   # ✅ Eager-mode quant swaps nn.ReLU / nn.Linear modules it can see
+   quantized = quantize_dynamic(model, {nn.Linear}, dtype=torch.qint8)
+
+   # ❌ F.relu() is not a module, so eager-mode quant cannot touch it
    ```
+   Scope this correctly: it is an **eager-mode** limitation. Graph-based paths
+   (`torch.export` + PT2E quantization, FX graph mode) capture functional calls
+   fine. Eager-mode quantization is itself on the way out — new work should use
+   the PT2E flow or `torchao`.
 
 **Pattern to follow:**
 - Simple internal blocks: Functional is fine
@@ -243,15 +252,43 @@ class EncoderBlock(nn.Module):
         x = self.act2(self.norm2(self.conv2(x)))
         return x
 
+# The contract this creates: norm_layer is called as norm_layer(num_channels).
+# Any substitute MUST be constructible from a single channel count. That is a
+# real constraint, and getting it wrong is the most common way this pattern
+# blows up at runtime - see below.
+
+import functools
+
+class LayerNorm2d(nn.LayerNorm):
+    """LayerNorm over the CHANNEL dim of an NCHW tensor.
+
+    Bare nn.LayerNorm(C) normalizes over the LAST dims of its input. On NCHW
+    conv output the last dim is W, so nn.LayerNorm(128) silently normalizes
+    width - and raises unless W == 128. Permute so channels are last.
+    """
+    def forward(self, x):                      # x: (N, C, H, W)
+        x = x.permute(0, 2, 3, 1)              # -> (N, H, W, C)
+        x = super().forward(x)
+        return x.permute(0, 3, 1, 2)           # -> (N, C, H, W)
+
 # Usage examples:
 # Standard: BatchNorm + ReLU
 block1 = EncoderBlock(64, 128)
 
-# LayerNorm + GELU (for vision transformers)
-block2 = EncoderBlock(64, 128, norm_layer=nn.LayerNorm, activation=nn.GELU)
+# LayerNorm + GELU (ConvNeXt style) - via the NCHW-aware wrapper
+block2 = EncoderBlock(64, 128, norm_layer=LayerNorm2d, activation=nn.GELU)
 
-# No normalization
-block3 = EncoderBlock(64, 128, norm_layer=nn.Identity, activation=nn.ReLU)
+# GroupNorm + SiLU - partial() supplies num_groups, leaving num_channels
+block3 = EncoderBlock(64, 128,
+                      norm_layer=functools.partial(nn.GroupNorm, 32),
+                      activation=nn.SiLU)
+
+# No normalization - nn.Identity ignores the channel arg, which is fine
+block4 = EncoderBlock(64, 128, norm_layer=nn.Identity, activation=nn.ReLU)
+
+# ❌ Two ways this breaks, both silent-looking until you run a tensor through:
+# EncoderBlock(64, 128, norm_layer=nn.LayerNorm)  # normalizes W, not C
+# EncoderBlock(64, 128, norm_layer=nn.GroupNorm)  # TypeError: missing num_channels
 ```
 
 **Advanced: Flexible normalization for different dimensions**
@@ -1212,8 +1249,17 @@ class ResNetBlock(nn.Module):
 # Standard ResNet block
 block1 = ResNetBlock(64, 128, stride=2)
 
-# With LayerNorm and GELU (Vision Transformer style)
-block2 = ResNetBlock(64, 128, norm_layer=nn.GroupNorm, activation=nn.GELU)
+# With GroupNorm and GELU (ConvNeXt style).
+# norm_layer is called as norm_layer(num_channels), so nn.GroupNorm must be
+# partial'd with num_groups first - passing the bare class is a TypeError
+# (missing num_channels). Same trap as Pattern 3; same fix.
+block2 = ResNetBlock(64, 128,
+                     norm_layer=functools.partial(nn.GroupNorm, 32),
+                     activation=nn.GELU)
+
+# With channel-wise LayerNorm: use the LayerNorm2d wrapper from Pattern 3,
+# not bare nn.LayerNorm (which would normalize the width dim).
+block3 = ResNetBlock(64, 128, norm_layer=LayerNorm2d, activation=nn.GELU)
 
 # Can hook any operation:
 handle = block1.act1.register_forward_hook(lambda m, i, o: print(f"ReLU output shape: {o.shape}"))
@@ -1842,8 +1888,9 @@ Both force graph breaks. Move logging to outside the compiled region or use
 [ ] No `if`/`while` on tensor values (use `torch.where` / masking)
 [ ] No `print` / Python logging in forward
 [ ] No data-dependent shape resizing (dynamic shapes opt-in only)
-[ ] Custom autograd Functions use supported pattern
-    (see custom-autograd-functions.md)
+[ ] Custom autograd Functions correct in eager first
+    (see custom-autograd-functions.md; note it does NOT cover compile
+     interop — check upstream "Extending PyTorch" for that)
 [ ] Verified with `torch._dynamo.explain(module)(sample_input)` — zero breaks
 ```
 
@@ -1970,17 +2017,31 @@ apply_activation_checkpointing(
 `CheckpointImpl.NO_REENTRANT` matches `use_reentrant=False` semantics and
 composes with FSDP and `torch.compile`.
 
-### Anti-pattern: checkpointing a non-pure function
+### Randomness inside a checkpointed region (handled, but know why)
+
+Checkpointing recomputes the forward during backward. If that region contains
+dropout, the recompute must draw the **same** mask as the original forward — or
+the gradients belong to a different network than the one that produced the loss.
 
 ```python
-# ANTI-PATTERN: dropout inside the checkpointed region randomizes per-pass
+# ✅ FINE as written: preserve_rng_state defaults to True, so the RNG state is
+#    stashed at checkpoint time and restored before the recompute. The dropout
+#    mask is identical in both passes.
 def forward(self, x):
     return checkpoint(lambda y: F.dropout(self.lin(y), p=0.1), x,
-                      use_reentrant=False)   # forward != recomputed forward
+                      use_reentrant=False)
+
+# ❌ ACTUAL anti-pattern: disabling the guard.
+#    Now the recompute draws a fresh mask -> silently wrong gradients.
+return checkpoint(fn, x, use_reentrant=False, preserve_rng_state=False)
 ```
 
-`preserve_rng_state=True` (default) keeps the recompute deterministic with the
-original forward; do not turn it off unless you understand the consequences.
+`preserve_rng_state=False` is a performance micro-optimisation (it skips
+saving/restoring RNG state) that is only safe when the checkpointed region is
+genuinely deterministic. **Real** non-purity that `preserve_rng_state` does
+*not* fix: reading or mutating external state inside the region (updating a
+counter, appending to a list, BatchNorm running stats being updated twice).
+Keep checkpointed regions side-effect free.
 
 
 ## References
@@ -2009,4 +2070,4 @@ original forward; do not turn it off unless you understand the consequences.
 
 ---
 
-PyTorch API surface current as of 2026-05 (PyTorch 2.9+); revisit quarterly.
+PyTorch API surface verified against PyTorch 2.9 (torch 2.9.1) as of 2026-08; revisit quarterly. Baseline is 2.9 — claims about later releases (e.g. FSDP1 deprecated in 2.11) are called out inline where they matter.

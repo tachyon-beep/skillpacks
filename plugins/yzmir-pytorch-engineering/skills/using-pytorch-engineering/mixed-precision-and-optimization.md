@@ -514,15 +514,19 @@ def contrastive_loss_fp32(embeddings, temperature=0.07):
 **Tensor Cores have dimension requirements:**
 
 ```python
-# POOR: Dimensions not multiples of 8 (FP16) or 16 (BF16)
-model = nn.Linear(127, 253)  # Odd dimensions - Tensor Cores can't be used efficiently
+# POOR: Dimensions not multiples of 8 (16-bit) - Tensor Cores underused
+model = nn.Linear(127, 253)  # Odd dimensions
 
-# OPTIMAL: Dimensions are multiples of 8/16
+# OPTIMAL: Dimensions are multiples of 8 (better: 64/128)
 model = nn.Linear(128, 256)  # Tensor Cores fully utilized
 
-# Rule of thumb:
-# FP16: multiple of 8 (best: 16, 32, 64, 128, ...)
-# BF16: multiple of 16 (best: 16, 32, 64, 128, ...)
+# Rule of thumb - the multiple follows the ELEMENT SIZE, not the "modernness"
+# of the dtype. FP16 and BF16 are both 2-byte, so they share a rule:
+#   FP16: multiple of 8
+#   BF16: multiple of 8   (same as FP16 - NOT 16; both are 2 bytes wide)
+#   TF32: multiple of 4   (4-byte storage)
+#   INT8: multiple of 16  (1-byte - this is where the "16" belongs)
+# Larger multiples (64, 128) additionally help tiling/L2 reuse for big GEMMs.
 ```
 
 **Check your model architecture:**
@@ -877,7 +881,19 @@ attn = F.scaled_dot_product_attention(
 )
 ```
 
-Internally dispatches to one of: FlashAttention, memory-efficient attention, cuDNN attention, or the math fallback. The dispatcher picks based on dtype, shapes, mask type, and hardware. FlashAttention-3 (Shah et al., [arXiv:2407.08608](https://arxiv.org/abs/2407.08608)) ships with PyTorch on Hopper (H100/H200) and is selected automatically when applicable.
+Internally dispatches to one of: FlashAttention, memory-efficient attention, cuDNN attention, or the math fallback. The dispatcher picks based on dtype, shapes, mask type, and hardware.
+
+> **What `SDPBackend.FLASH_ATTENTION` actually is.** It is core PyTorch's
+> **FlashAttention-2**-derived kernel, not FlashAttention-3. FlashAttention-3
+> (Shah et al., [arXiv:2407.08608](https://arxiv.org/abs/2407.08608)) is *not*
+> integrated into core PyTorch's SDPA dispatcher — upstreaming it is still an
+> open issue ([pytorch#137901](https://github.com/pytorch/pytorch/issues/137901)).
+> On Hopper (H100/H200), the Hopper-specialised path you actually get from SDPA
+> is **`SDPBackend.CUDNN_ATTENTION`**, and the dispatcher may select it over
+> `FLASH_ATTENTION` for eligible shapes/dtypes. If you specifically want FA-3
+> kernels you must install them yourself (the `flash-attn` project's Hopper
+> build) and call them directly — SDPA will not route to them. Do not assume
+> "I'm on H100, so I'm getting FA-3."
 
 **Forcing a backend** with `sdpa_kernel`:
 
@@ -1116,7 +1132,7 @@ Look for: ops in FP32 that should be FP16, excessive dtype conversions (casts be
 | 3 | Using BF16 on pre-Ampere GPUs | Slow or no speedup | BF16 needs Ampere+ for hardware acceleration | Check GPU; use FP16 on Volta/Turing |
 | 4 | Manual loss scaling | Overflow or underflow | Fixed scale factor doesn't adapt | Use `GradScaler` (dynamic scaling) |
 | 5 | Custom loss with exp/log in FP16 | NaN losses, overflow | exp() overflows, log() underflows in FP16 | Disable autocast or use log-sum-exp |
-| 6 | Misaligned tensor dimensions | Poor speedup | Tensor Cores need dims % 8 / % 16 | Pad dimensions to multiples of 8/16 |
+| 6 | Misaligned tensor dimensions | Poor speedup | Tensor Cores want dims % 8 for 16-bit (FP16 *and* BF16); % 4 for TF32; % 16 for INT8 | Pad dimensions to a multiple of 8 (64/128 is better still) |
 | 7 | Checking gradients before unscale | Wrong gradient norms | Inspecting scaled gradients | Unscale before inspecting |
 | 8 | Stepping scheduler when step skipped | LR/params desync | Scheduler steps even when inf/nan | Only step scheduler if optimizer stepped |
 | 9 | Mixed precision on tiny models | No speedup, complexity | Memory-bound, not compute-bound | Skip mixed precision for small models |
@@ -1277,14 +1293,17 @@ dist.init_process_group(backend="nccl")
 model = MyModel().to(device)
 model = DDP(model, device_ids=[local_rank])
 
-# Each rank has its own GradScaler
-scaler = torch.amp.GradScaler("cuda")
+# FP16 here, because the point of this example is the scaler. With BF16 you
+# would use NO scaler at all (see below) - pairing GradScaler with bfloat16
+# contradicts this sheet's own rule.
+AMP_DTYPE = torch.float16
+scaler = torch.amp.GradScaler("cuda")   # one per rank, never shared
 
 for data, target in dataloader:
     data, target = data.to(device), target.to(device)
-    optimizer.zero_grad()
+    optimizer.zero_grad(set_to_none=True)
 
-    with torch.amp.autocast("cuda", dtype=torch.bfloat16):
+    with torch.amp.autocast("cuda", dtype=AMP_DTYPE):
         output = model(data)
         loss = criterion(output, target)
 
@@ -1297,6 +1316,13 @@ for data, target in dataloader:
 
     scaler.step(optimizer)
     scaler.update()
+
+# BF16 equivalent - no scaler anywhere:
+#     with torch.amp.autocast("cuda", dtype=torch.bfloat16):
+#         loss = criterion(model(data), target)
+#     loss.backward()
+#     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+#     optimizer.step()
 ```
 
 **Key points:**
@@ -1305,6 +1331,9 @@ for data, target in dataloader:
 - DDP synchronizes the scaled gradients correctly
 - Unscale after backward (so you operate on synced grads)
 - No special DDP configuration needed
+- **A scaler is FP16 machinery.** BF16 has FP32's exponent range and does not
+  underflow, so BF16 + `GradScaler` is at best a no-op-shaped complication.
+  `GradScaler(enabled=False)` is the right way to keep one code path for both
 
 ### Edge Case 2: Mixed Precision with Gradient Checkpointing
 
@@ -1324,18 +1353,18 @@ class CheckpointedModel(nn.Module):
         return self.layer3(x)
 
 model = CheckpointedModel().cuda()
-scaler = torch.amp.GradScaler("cuda")
 
+# BF16 -> no GradScaler. (Swap dtype to torch.float16 and this needs the
+# scaler dance from Edge Case 1; the checkpointing story is identical either way.)
 for data, target in dataloader:
-    optimizer.zero_grad()
+    optimizer.zero_grad(set_to_none=True)
 
     with torch.amp.autocast("cuda", dtype=torch.bfloat16):
         output = model(data)
         loss = criterion(output, target)
 
-    scaler.scale(loss).backward()
-    scaler.step(optimizer)
-    scaler.update()
+    loss.backward()
+    optimizer.step()
 ```
 
 **Key insight:** Gradient checkpointing and autocast compose. The recomputed forward inherits the autocast context. Use `use_reentrant=False` (the modern default) to avoid the legacy checkpointing semantics.
@@ -1550,4 +1579,4 @@ def validate_mixed_precision(model, dataloader, criterion, device):
 
 ---
 
-*PyTorch API surface current as of 2026-05 (PyTorch 2.9+); revisit quarterly.*
+*PyTorch API surface verified against PyTorch 2.9 (torch 2.9.1) as of 2026-08; revisit quarterly. Baseline is 2.9 — claims about later releases (e.g. FSDP1 deprecated in 2.11) are called out inline where they matter.*
