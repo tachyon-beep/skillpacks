@@ -134,7 +134,12 @@ def structured_channel_pruning_cnn(model, pruning_ratio=0.5, example_input=None)
     )
 
     # Execute pruning (removes channels, creates smaller model)
-    # WHY remove channels: Conv2d(64, 128) → Conv2d(32, 64) after 50% pruning
+    # WHY remove channels: Conv2d(64, 128) → Conv2d(32, 64) after 50% pruning.
+    # NOTE the compounding: an interior conv loses HALF its output channels and
+    # (via the dependency graph) half its input channels, so its parameter count
+    # drops ~4×, not 2×. Boundary layers don't compound — the stem's 3 input
+    # channels and the classifier's 1000 outputs are fixed — so whole-model
+    # reduction lands between 2× and 4×, never exactly at the pruning_ratio.
     pruner.step()
 
     return model
@@ -153,8 +158,10 @@ model_pruned = structured_channel_pruning_cnn(
     example_input=torch.randn(1, 3, 224, 224)
 )
 
-print(f"Pruned model size: {get_model_size(model_pruned):.1f}MB")  # 22.4MB (50% reduction)
-print(f"Pruned params: {count_parameters(model_pruned):,}")  # 5,844,756 (50% reduction)
+# Expect somewhere between 2× and 4× on params (see note above) — measure it,
+# don't assume it equals the pruning_ratio.
+print(f"Pruned model size: {get_model_size(model_pruned):.1f}MB")
+print(f"Pruned params: {count_parameters(model_pruned):,}")
 
 # Benchmark inference speed
 # WHY faster: Smaller dense matrices (fewer FLOPs, less memory bandwidth)
@@ -700,20 +707,32 @@ For LLMs, distillation usually means **supervised fine-tuning of a smaller base 
 import torch
 import torch.nn as nn
 
-def decompose_linear_layer_svd(layer, rank_ratio=0.5):
+def decompose_linear_layer_svd(layer, rank_ratio=0.125):
     """
     Decompose linear layer using SVD (low-rank approximation).
 
     WHY: Large matrix W (m×n) → two smaller matrices U (m×r) and V (r×n)
     WHY works: Weight matrices often have low effective rank (redundancy)
 
-    Example: Linear(4096, 4096) with 50% rank
-    - Original: 16.8M parameters (4096×4096)
-    - Decomposed: 4.1M parameters (4096×2048 + 2048×4096) - 4× reduction!
+    CRITICAL — know the break-even rank before you pick rank_ratio:
+    Decomposition costs r×(m+n) parameters vs m×n originally, so it only
+    compresses when r < m·n/(m+n). For a SQUARE m×m layer that break-even
+    rank is m/2 — i.e. rank_ratio=0.5 on a square layer buys you EXACTLY
+    ZERO compression while still paying the approximation error. You must
+    go well below break-even for this to be worth doing.
+
+    Example: Linear(4096, 4096), break-even rank = 2048 (rank_ratio 0.5)
+    - Original:              16,781,312 params (4096×4096 + bias)
+    - rank_ratio=0.5  (r=2048): 16,781,312 params - 1.0× (no saving at all)
+    - rank_ratio=0.25 (r=1024):  8,392,704 params - 2× reduction
+    - rank_ratio=0.125 (r=512):  4,198,400 params - 4× reduction
+
+    Rule of thumb: for a square layer, compression factor ≈ 1/(2·rank_ratio).
 
     Args:
         layer: nn.Linear layer to decompose
-        rank_ratio: Fraction of original rank to keep (0.5 = keep 50%)
+        rank_ratio: Fraction of original rank to keep. Must be < 0.5 for a
+            square layer to compress at all; 0.125 gives ~4×.
 
     Returns:
         Sequential module with two linear layers (equivalent to original)
@@ -757,9 +776,10 @@ def decompose_linear_layer_svd(layer, rank_ratio=0.5):
 original_layer = nn.Linear(4096, 4096)
 print(f"Original params: {count_parameters(original_layer):,}")  # 16,781,312
 
-# Decompose with 50% rank retention
-decomposed_layer = decompose_linear_layer_svd(original_layer, rank_ratio=0.5)
-print(f"Decomposed params: {count_parameters(decomposed_layer):,}")  # 4,194,304 (4× reduction!)
+# Break-even for a square layer is rank_ratio=0.5 — that would save NOTHING.
+# Keep 12.5% of the rank (r=512) for a genuine 4× reduction.
+decomposed_layer = decompose_linear_layer_svd(original_layer, rank_ratio=0.125)
+print(f"Decomposed params: {count_parameters(decomposed_layer):,}")  # 4,198,400 (4.0× reduction)
 
 # Verify reconstruction quality
 x = torch.randn(1, 128, 4096)  # Example input
@@ -773,16 +793,22 @@ print(f"Reconstruction error: {reconstruction_error.item():.4f}")  # Small error
 ### Apply SVD to Entire Model
 
 ```python
-def decompose_model_svd(model, rank_ratio=0.5, layer_threshold=1024):
+def decompose_model_svd(model, rank_ratio=0.25, layer_threshold=1024):
     """
     Apply SVD decomposition to all large linear layers in model.
 
     WHY selective: Only decompose large layers (small layers don't benefit)
     WHY threshold: Layers with <1024 input/output features too small to benefit
 
+    WARNING: rank_ratio is applied to min(in, out). For a SQUARE layer,
+    rank_ratio=0.5 is exactly break-even (no saving, pure accuracy loss) —
+    see decompose_linear_layer_svd. Square attention projections therefore
+    need rank_ratio well under 0.5 before they contribute anything.
+
     Args:
         model: Model to compress
-        rank_ratio: Fraction of rank to keep (0.5 = 2× reduction per layer)
+        rank_ratio: Fraction of rank to keep (square layer: ~1/(2·rank_ratio)×
+            reduction, so 0.25 = 2×, 0.125 = 4×)
         layer_threshold: Minimum layer size to decompose (skip small layers)
 
     Returns:
@@ -812,10 +838,19 @@ model = BertModel.from_pretrained('bert-base-uncased')
 original_params = count_parameters(model)
 print(f"Original params: {original_params:,}")  # 109M
 
-# Apply SVD (50% rank) to feedforward layers
+# Apply SVD to the large linear layers.
+# NOTE what rank_ratio=0.5 actually does to BERT-base:
+#   - 768×3072 FFN layers: break-even rank is 768·3072/3840 = 614, so r=384
+#     genuinely compresses (2.36M → 1.47M params each)
+#   - 768×768 attention projections: break-even rank is exactly 384, so r=384
+#     saves NOTHING and only adds approximation error
+# Net: 109M → 88M (1.24×), all of it from the FFN layers.
 model_compressed = decompose_model_svd(model, rank_ratio=0.5, layer_threshold=512)
 compressed_params = count_parameters(model_compressed)
-print(f"Compressed params: {compressed_params:,}")  # 82M (1.3× reduction)
+print(f"Compressed params: {compressed_params:,}")  # ~88M (1.24× reduction)
+
+# For real compression, drop below break-even (and expect to fine-tune harder):
+# decompose_model_svd(model, rank_ratio=0.25, layer_threshold=512)  # ~2× on FFN
 
 # Fine-tune to recover accuracy
 # WHY: Low-rank approximation introduces small errors, fine-tuning compensates

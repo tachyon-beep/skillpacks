@@ -564,7 +564,12 @@ receivers:
         channel: '#ml-alerts-warnings'
 ```
 
-Alertmanager docs: <https://prometheus.io/docs/alerting/latest/alertmanager/>. For incident response and on-call rotations: PagerDuty (<https://www.pagerduty.com>), Opsgenie (<https://www.atlassian.com/software/opsgenie>), or open-source **Grafana OnCall** (<https://grafana.com/products/oncall/>).
+Alertmanager docs: <https://prometheus.io/docs/alerting/latest/alertmanager/>. For incident response and on-call rotations: **PagerDuty** (<https://www.pagerduty.com>), **Jira Service Management** (<https://www.atlassian.com/software/jira/service-management>), or **incident.io** / **Rootly**.
+
+Two currency notes before you pick:
+
+- **Opsgenie is end-of-life.** Atlassian ended new sales on 2025-06-04, with full end-of-life on 2027-04-05; on-call capability is folding into Jira Service Management. Do not start new work on Opsgenie; existing users should plan the JSM migration.
+- **Grafana OnCall OSS entered maintenance mode in 2025** and is not accepting new feature work — viable if you already run it, a poor greenfield bet.
 
 
 ## Section 6: SLAs and SLOs for ML Systems
@@ -737,7 +742,7 @@ Cross-references: see `yzmir-llm-specialist/llm-evaluation-metrics.md` for the o
 - **Arize AI** — enterprise platform combining traditional ML monitoring with LLM observability; ships Phoenix as the OSS path. <https://arize.com>.
 - **WhyLabs** — drift, data-quality, and LLM observability built on the open-source `whylogs` profiler. <https://whylabs.ai> and <https://whylogs.readthedocs.io>.
 - **Fiddler AI** — model monitoring, explainability, and LLM observability with built-in safety/hallucination metrics. <https://www.fiddler.ai>.
-- **Aporia** — ML and LLM observability with guardrails (PII, prompt-injection, hallucination detection inline). <https://www.aporia.com>.
+- **Aporia** — ML and LLM observability with guardrails (PII, prompt-injection, hallucination detection inline). **Acquired by Coralogix in December 2024**; the technology now ships as part of Coralogix AI observability rather than as a standalone product, so evaluate it as a Coralogix component. <https://coralogix.com>.
 - **Datadog LLM Observability** — LLM tracing and evaluation as a module within Datadog APM. <https://docs.datadoghq.com/llm_observability/>.
 - **New Relic AI Monitoring** — APM-integrated LLM observability. <https://newrelic.com/platform/ai-monitoring>.
 - **Comet MPM (Model Production Monitoring)** — drift, quality, and integrity for ML and LLM models, integrates with Comet Experiments. <https://www.comet.com/site/products/model-production-monitoring/>.
@@ -752,7 +757,7 @@ OpenTelemetry has emerging — and still evolving — semantic conventions for G
 
 Stable-ish span attributes (still subject to change — pin OTel SDK versions and re-check quarterly):
 
-- `gen_ai.system` (e.g. `"openai"`, `"anthropic"`, `"vertex_ai"`)
+- `gen_ai.system` (e.g. `"openai"`, `"anthropic"`, `"vertex_ai"`) — **being renamed to `gen_ai.provider.name`** in the evolving spec; check which your instrumentation library emits and which your back-end indexes, since a mismatch silently drops the attribute
 - `gen_ai.request.model`, `gen_ai.response.model`
 - `gen_ai.request.temperature`, `gen_ai.request.top_p`, `gen_ai.request.max_tokens`
 - `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`
@@ -872,7 +877,9 @@ LATENCY       = Histogram('ml_latency_seconds', 'Latency', ['endpoint'],
                           buckets=[0.01, 0.05, 0.1, 0.5, 1.0, 2.0])
 
 # Model quality
-PRED_BY_CLASS = Counter('ml_predictions_by_class', 'Predictions', ['class'])
+# NOTE: label name is 'predicted_class', not 'class' — `class` is a Python
+# keyword, so `.labels(class=...)` below would be a SyntaxError.
+PRED_BY_CLASS = Counter('ml_predictions_by_class', 'Predictions', ['predicted_class'])
 CONFIDENCE    = Histogram('ml_prediction_confidence', 'Confidence',
                           buckets=[i/10 for i in range(11)])
 ACCURACY      = Gauge('ml_accuracy_ground_truth', 'Sampled accuracy')
@@ -893,7 +900,7 @@ def predict(text: str):
         result = {"label": "positive", "confidence": 0.92}
         LATENCY.labels(endpoint="/predict").observe(time.time() - start)
         REQUEST_COUNT.labels(endpoint="/predict", model_version="v1.0").inc()
-        PRED_BY_CLASS.labels(class=result["label"]).inc()
+        PRED_BY_CLASS.labels(predicted_class=result["label"]).inc()
         CONFIDENCE.observe(result["confidence"])
         return result
     except Exception as e:

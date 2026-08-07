@@ -95,9 +95,13 @@ async def generate(request: GenerateRequest):
     - Resource limits: Single GPU/CPU bottleneck
     """
     try:
-        # This will queue up during high traffic
-        response = await openai.ChatCompletion.acreate(
-            model="gpt-3.5-turbo",
+        # This will queue up during high traffic.
+        # (Note the API shape: openai.ChatCompletion.acreate was removed in the
+        # openai-python 1.0 rewrite, Nov 2023. Current form is an AsyncOpenAI
+        # client — used here so the anti-pattern being illustrated is the
+        # ARCHITECTURE, not an obsolete SDK call.)
+        response = await client.chat.completions.create(
+            model="gpt-4o-mini",
             messages=[{"role": "user", "content": request.prompt}],
             max_tokens=request.max_tokens
         )
@@ -573,7 +577,16 @@ class CostIgnorantDeployment:
     - Ignore cost budgets: Surprise bills
     """
 
-    # Instance types (AWS p3 instances)
+    # Instance types (AWS p3 instances).
+    #
+    # CURRENCY NOTE: p3 = V100, a 2017 generation. It is kept here only because
+    # the round numbers make the cost arithmetic easy to follow — do NOT use it
+    # to size real LLM serving. Current-generation equivalents:
+    #   - small models / high concurrency  → g5 (A10G), g6/g6e (L4, L40S)
+    #   - large models / long context      → p4d (A100), p5 / p5e (H100/H200)
+    # Hourly costs below are ILLUSTRATIVE. Always price against the current AWS
+    # rate card for your region; the *ratios* (spot ≈ 60-90% off on-demand) are
+    # the durable lesson, not the absolute dollars.
     INSTANCE_TYPES = {
         "p3.2xlarge": InstanceConfig("p3.2xlarge", 8, 61, 1, 3.06, False),   # On-demand
         "p3.8xlarge": InstanceConfig("p3.8xlarge", 32, 244, 4, 12.24, False), # On-demand
@@ -802,8 +815,26 @@ class LoadBalancer:
         self.hash_ring: Dict[int, Instance] = {}
         self._build_hash_ring()
 
-        # Start health checking
-        asyncio.create_task(self._health_check_loop())
+        # Health checking is NOT started here. asyncio.create_task() requires a
+        # running event loop; calling it from __init__ at module scope raises
+        # RuntimeError('no running event loop'). Start it from async context
+        # instead — see start() below and the FastAPI lifespan hook.
+        self._health_check_task: Optional[asyncio.Task] = None
+
+    async def start(self):
+        """Start background health checking. Call from async context."""
+        if self._health_check_task is None:
+            self._health_check_task = asyncio.create_task(self._health_check_loop())
+
+    async def stop(self):
+        """Cancel background health checking on shutdown."""
+        if self._health_check_task is not None:
+            self._health_check_task.cancel()
+            try:
+                await self._health_check_task
+            except asyncio.CancelledError:
+                pass
+            self._health_check_task = None
 
     def _build_hash_ring(self, virtual_nodes: int = 150):
         """Build consistent hash ring for session affinity."""
@@ -1027,11 +1058,21 @@ instances = [
     Instance(id="instance-3", host="10.0.1.12", port=8000, weight=0.5),  # Older GPU
 ]
 
-# Create load balancer with least-connections strategy
+# Create load balancer with least-connections strategy.
+# Construction is sync and safe at module scope; the background health-check
+# loop must be started from async context (see lifespan below).
 load_balancer = LoadBalancer(
     instances=instances,
     strategy=LoadBalancingStrategy.LEAST_CONNECTIONS
 )
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await load_balancer.start()   # event loop exists here
+    yield
+    await load_balancer.stop()
+
+app = FastAPI(lifespan=lifespan)
 
 @app.post("/generate")
 async def generate(request: GenerateRequest):

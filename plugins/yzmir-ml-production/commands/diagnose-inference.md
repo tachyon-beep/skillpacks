@@ -262,12 +262,12 @@ def compare_predictions(current, historical):
 import glob
 
 # For PyTorch profiling
-pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/plugin.json")
+pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/.claude-plugin/plugin.json")
 if pytorch_pack:
     print("For PyTorch profiling: use yzmir-pytorch-engineering")
 
 # For monitoring setup
-quality_pack = glob.glob("plugins/ordis-quality-engineering/plugin.json")
+quality_pack = glob.glob("plugins/ordis-quality-engineering/.claude-plugin/plugin.json")
 if quality_pack:
     print("For observability patterns: use ordis-quality-engineering")
 ```

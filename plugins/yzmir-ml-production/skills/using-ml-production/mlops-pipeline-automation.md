@@ -284,30 +284,40 @@ class MLFeatureStore:
 - **Soda Core** / **Soda Cloud** — SQL-native checks for warehouse data quality. <https://docs.soda.io>
 - **dbt tests** — for dbt-managed warehouse pipelines. <https://docs.getdbt.com/docs/build/data-tests>
 
+**API currency warning:** Great Expectations' `ge.from_pandas(df, expectation_suite_name=...)` convenience API — which most pre-2024 tutorials use — was **removed in GX 1.0** (mid-2024). GX 1.x requires the context flow: `gx.get_context()` → data source → batch definition → expectation suite → validation definition. Do not port a pre-1.0 snippet; check the GX docs for your pinned version. The example below uses **Pandera**, whose API has been stable across this period.
+
 ```python
-import great_expectations as ge
+import pandera as pa
 import pandas as pd
 
-class DataValidator:
-    def create_expectations(self, df: pd.DataFrame):
-        ge_df = ge.from_pandas(df, expectation_suite_name="data_validation")
-        ge_df.expect_table_columns_to_match_ordered_list(
-            ['user_id','age','income','purchase_history','target'])
-        ge_df.expect_column_values_to_be_of_type('user_id','int')
-        ge_df.expect_column_values_to_be_between('age', 18, 100)
-        ge_df.expect_column_values_to_be_between('income', 0, 500_000)
-        ge_df.expect_column_values_to_not_be_null('user_id')
-        ge_df.expect_column_values_to_be_unique('user_id')
-        ge_df.expect_column_mean_to_be_between('age', 25, 65)
-        return ge_df
+# Declarative schema — column types, ranges, nullability, uniqueness
+schema = pa.DataFrameSchema(
+    {
+        "user_id": pa.Column(int, nullable=False, unique=True),
+        "age": pa.Column(int, checks=[
+            pa.Check.in_range(18, 100),
+            pa.Check(lambda s: 25 <= s.mean() <= 65, name="mean_age_in_range"),
+        ]),
+        "income": pa.Column(float, checks=pa.Check.in_range(0, 500_000)),
+        "purchase_history": pa.Column(object, nullable=True),
+        "target": pa.Column(int),
+    },
+    strict=True,   # reject unexpected columns
+    ordered=True,  # enforce column order
+)
 
-    def validate(self, df):
-        results = self.create_expectations(df).validate()
-        if not results['success']:
-            for failed in [e for e in results['results'] if not e['success']]:
-                print("FAIL:", failed['expectation_config']['expectation_type'])
-        return results
+class DataValidator:
+    def validate(self, df: pd.DataFrame):
+        try:
+            # lazy=True collects ALL failures rather than raising on the first
+            return schema.validate(df, lazy=True)
+        except pa.errors.SchemaErrors as exc:
+            # exc.failure_cases is a DataFrame: check, column, failure_case, index
+            print(exc.failure_cases)
+            raise
 ```
+
+(Recent Pandera versions also expose the pandas backend as `import pandera.pandas as pa`; the top-level `import pandera as pa` shown here continues to work. Confirm against your pinned version.)
 
 **Drift libraries:** `Evidently`, `NannyML`, `Alibi Detect`, `Deepchecks`, `TorchDrift` — see the production-monitoring sheet's drift section for citations and trade-offs.
 
@@ -379,7 +389,9 @@ The orchestrator landscape has matured significantly — **Airflow** is no longe
 
 #### Orchestrator Survey
 
-**Apache Airflow** — incumbent, widely deployed, batch-oriented. Strong scheduler, mature operator ecosystem, large community. Weaker fit for ML-specific concerns: DAG definitions are static (less Pythonic), passing data between tasks goes through XComs (small payloads only) or external storage, dynamic task generation is awkward. Best for batch data-engineering DAGs. Reposition as the "good for batch ETL, OK for ML" choice. Docs: <https://airflow.apache.org/docs/>. Apache project page: <https://airflow.apache.org>. Astronomer (managed Airflow): <https://www.astronomer.io>.
+**Apache Airflow** — incumbent, widely deployed, batch-oriented. Strong scheduler, mature operator ecosystem, large community. Weaker fit for ML-specific concerns: DAG definitions are static (less Pythonic), passing data between tasks goes through XComs (small payloads only) or external storage, dynamic task generation is awkward. Best for batch data-engineering DAGs. Reposition as the "good for batch ETL, OK for ML" choice.
+
+**Airflow 3.0 (released 2025-04-22)** is the first major release since 2.0 in 2020 and materially narrows some of the gaps above — a new task-execution API enabling remote/multi-language execution, DAG versioning, a rewritten UI, and event-driven scheduling. If you last evaluated Airflow on 2.x, the ML-fit critique above deserves a re-test against 3.x before you rule it out. Docs: <https://airflow.apache.org/docs/>. Apache project page: <https://airflow.apache.org>. Astronomer (managed Airflow): <https://www.astronomer.io>.
 
 **Prefect** (Prefect 2 / Prefect 3) — Pythonic flows decorated with `@flow` / `@task`, native async, dynamic DAGs ("subflows" and runtime-generated tasks), hybrid execution model (orchestration server + agent/worker pools you run anywhere). Prefect Cloud is the managed control plane; Prefect Server is the OSS self-hostable equivalent. Strong choice for teams that want Airflow-style orchestration with a much friendlier Python DX. Docs: <https://docs.prefect.io>. Site: <https://www.prefect.io>.
 

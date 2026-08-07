@@ -114,7 +114,15 @@ import torch.ao.quantization as tq
 
 # WHY: Dynamic quantization is simplest - just one function call
 # No calibration data needed because activations stay FP32
-model = torch.load('model.pth')
+#
+# NOTE on loading: PyTorch 2.6 changed torch.load's default to
+# weights_only=True. `torch.load('model.pth')` on a full pickled nn.Module now
+# raises UnpicklingError. Save/load state_dicts (below) — that is the supported
+# pattern anyway. For a trusted legacy full-module checkpoint you can pass
+# weights_only=False, but never do that with a file you did not produce:
+# weights_only=False executes arbitrary pickle payloads.
+model = ModelClass()
+model.load_state_dict(torch.load('model.pth', weights_only=True))
 model.eval()  # WHY: Must be in eval mode (no batchnorm updates)
 
 # WHY: Specify which layers to quantize (Linear, LSTM, etc.)
@@ -181,11 +189,37 @@ def calibrate_model(model, calibration_loader):
     return model
 
 # Step 1: Prepare model for quantization
-model = torch.load('model.pth')
+# NOTE: PyTorch 2.6 flipped torch.load's default to weights_only=True, so
+# loading a full pickled module now raises UnpicklingError. Prefer saving and
+# loading a state_dict; pass weights_only=False only for files you trust.
+model = ModelClass()
+model.load_state_dict(torch.load('model.pth', weights_only=True))
 model.eval()
 
-# WHY: Insert quantization/dequantization stubs at boundaries
-# This tells PyTorch where to convert between FP32 and INT8
+# WHY: Eager-mode static quantization requires you to mark the FP32↔INT8
+# boundary YOURSELF with QuantStub/DeQuantStub. Without them, tq.convert()
+# produces a model whose first quantized op receives an unquantized FP32
+# tensor and raises at runtime. tq.prepare() does NOT insert them for you.
+class QuantizedWrapper(torch.nn.Module):
+    def __init__(self, model):
+        super().__init__()
+        self.quant = tq.QuantStub()      # FP32 → INT8 on the way in
+        self.model = model
+        self.dequant = tq.DeQuantStub()  # INT8 → FP32 on the way out
+
+    def forward(self, x):
+        x = self.quant(x)
+        x = self.model(x)
+        return self.dequant(x)
+
+model = QuantizedWrapper(model).eval()
+
+# WHY fuse first: Conv+BN+ReLU must be folded into a single op before
+# quantization, both for accuracy (one quantization point, not three) and
+# because some fused INT8 kernels only exist for the fused pattern.
+# Names are module paths within the wrapped model.
+model = tq.fuse_modules(model, [['model.conv1', 'model.bn1', 'model.relu']])
+
 model.qconfig = tq.get_default_qconfig('x86')  # WHY: 'x86' is the modern
                                                # backend alias (replaces
                                                # 'fbgemm' from PyTorch 2.x)
@@ -282,7 +316,8 @@ def train_one_epoch_qat(model, train_loader, optimizer, criterion):
     return model
 
 # Step 1: Prepare model for QAT
-model = torch.load('model.pth')
+model = ModelClass()
+model.load_state_dict(torch.load('model.pth', weights_only=True))
 model.train()
 
 # WHY: QAT config includes fake quantization ops
@@ -483,7 +518,8 @@ class CalibrationDataReaderWrapper(CalibrationDataReader):
             return None
 
 # Step 1: Export PyTorch model to ONNX
-model = torch.load('model.pth')
+model = ModelClass()
+model.load_state_dict(torch.load('model.pth', weights_only=True))
 model.eval()
 dummy_input = torch.randn(1, 3, 224, 224)
 
@@ -539,7 +575,8 @@ from torch.ao.quantization.quantizer.x86_inductor_quantizer import (
 # WHY: torch.export traces the model into an ExportedProgram - a stable
 # graph IR that downstream backends consume. This replaces the older
 # FX symbolic_trace path.
-model = torch.load('model.pth')
+model = ModelClass()
+model.load_state_dict(torch.load('model.pth', weights_only=True))
 model.eval()
 example_inputs = (torch.randn(1, 3, 224, 224),)
 
@@ -662,7 +699,7 @@ This part documents the named techniques. **For "should I use AWQ or GPTQ for *t
 ### 7.1 Named techniques
 
 **AWQ — Activation-aware Weight Quantization**
-Lin et al., MIT Han Lab, 2023; MLSys 2024 best paper. [arXiv:2306.00978](https://arxiv.org/abs/2306.00978). Observes that ~1% of "salient" weights dominate quality; uses activation magnitudes to find a per-channel scale that protects them, then does weight-only INT4 quantization without backprop. Tool: [AutoAWQ](https://github.com/casper-hansen/AutoAWQ) (community) or [llm-awq](https://github.com/mit-han-lab/llm-awq) (official). Hardware: Ampere+ (uses INT4 packed kernels).
+Lin et al., MIT Han Lab, 2023; MLSys 2024 best paper. [arXiv:2306.00978](https://arxiv.org/abs/2306.00978). Observes that ~1% of "salient" weights dominate quality; uses activation magnitudes to find a per-channel scale that protects them, then does weight-only INT4 quantization without backprop. Tooling: **AutoAWQ was archived on 2025-05-11 and is no longer maintained** — do not start new work on it. Use [llm-compressor](https://github.com/vllm-project/llm-compressor) (the vLLM project's successor, which produces AWQ-format checkpoints), or [llm-awq](https://github.com/mit-han-lab/llm-awq) (the authors' reference implementation). Existing AWQ *checkpoints* remain loadable by vLLM/TensorRT-LLM — it is the quantization tool that is dead, not the format. Hardware: Ampere+ (uses INT4 packed kernels).
 
 **GPTQ — Generative Pretrained Transformer Quantization**
 Frantar et al., 2022. [arXiv:2210.17323](https://arxiv.org/abs/2210.17323). Layer-wise Hessian-based weight quantization at 3-4 bits using approximate second-order information from a small calibration set. Tool: [AutoGPTQ](https://github.com/AutoGPTQ/AutoGPTQ) (legacy) and [GPTQModel](https://github.com/ModelCloud/GPTQModel) (active fork). Hardware: any (CUDA, ROCm, CPU kernels exist).
@@ -705,7 +742,8 @@ Native Tensor Core support starting on NVIDIA Hopper (H100/H200), Ada (RTX 40-se
 
 | Engine | AWQ | GPTQ | AQLM | HQQ | NF4/FP4 | SmoothQuant W8A8 | GGUF | FP8 | MXFP4/6 |
 |--------|-----|------|------|-----|---------|------------------|------|-----|---------|
-| **AutoAWQ** | yes (native) | no | no | no | no | no | no | no | no |
+| **llm-compressor** (AutoAWQ successor) | yes (native) | yes | no | no | no | yes | no | yes | no |
+| **AutoAWQ** *(archived 2025-05; legacy only)* | yes (native) | no | no | no | no | no | no | no | no |
 | **AutoGPTQ / GPTQModel** | no | yes (native) | no | no | no | no | no | no | no |
 | **llama.cpp / ExLlamaV2** | partial (via convert) | yes (ExLlamaV2) | no | no | no | no | yes (llama.cpp primary) | no | no |
 | **vLLM** | yes | yes | yes | partial | yes (via bnb) | yes | partial (limited) | yes (Hopper+) | emerging (Blackwell) |
@@ -718,7 +756,7 @@ Native Tensor Core support starting on NVIDIA Hopper (H100/H200), Ada (RTX 40-se
 
 ### 7.4 Quick-pick guidance
 
-- **Self-hosted LLM serving on NVIDIA, want the easy path:** vLLM + AWQ INT4 (or GPTQ INT4 if no AWQ checkpoint exists).
+- **Self-hosted LLM serving on NVIDIA, want the easy path:** vLLM + AWQ INT4 (or GPTQ INT4 if no AWQ checkpoint exists). To *produce* the checkpoint, use `llm-compressor` — AutoAWQ is archived.
 - **Need to fit a 70B+ model on a single 80 GB GPU or 13B on 8 GB:** AQLM 2-bit, or AWQ INT3 if available.
 - **CPU / laptop / Apple Silicon:** llama.cpp + GGUF (`Q4_K_M` or `Q5_K_M`).
 - **Hopper / Blackwell, want maximum throughput on long-context serving:** TensorRT-LLM + FP8 (E4M3 weights + E4M3 activations) or MXFP4 on Blackwell.
@@ -781,7 +819,7 @@ These are illustrative ranges from published benchmarks; verify on your hardware
 |--------|---------------|-------------|----------|
 | Size | ~14MB | ~4MB (3.5×) | ~4MB (3.5×) |
 | CPU Latency | ~45ms | ~15ms (3×) | ~15ms (3×) |
-| mAP@0.5 | ~37.4% | ~36.8% (-0.6pp) | ~37.2% (-0.2pp) |
+| mAP@0.5:0.95 | ~37.4% | ~36.8% (-0.6pp) | ~37.2% (-0.2pp) |
 
 ### NLP Classification (BERT-base, GLUE)
 
@@ -846,6 +884,12 @@ Larger accuracy loss than necessary. Start with INT8, only go to 4-bit if memory
 ```
 
 The old namespace forwards but is not the documented path. Use `torch.ao.quantization` for eager mode and `torch.ao.quantization.quantize_pt2e` for the export path.
+
+**Heads-up — `torch.ao.quantization` is itself now on the clock.** PyTorch 2.9 emits, at import:
+
+> `torch.ao.quantization is deprecated and will be removed in 2.10.` Eager mode (`quantize`, `quantize_dynamic`) → migrate to the torchao eager `quantize_` API; FX graph mode (`prepare_fx`/`convert_fx`) → migrate to the torchao pt2e API; pt2e quantization has been migrated to [torchao](https://github.com/pytorch/ao/tree/main/torchao/quantization/pt2e). Tracking issue: [pytorch/ao#2259](https://github.com/pytorch/ao/issues/2259).
+
+The `torch.ao.quantization.*` imports throughout this sheet still work on PyTorch 2.9 and are correct for it. If you are writing code that must survive a PyTorch 2.10 upgrade, take the `torchao` paths instead and verify the exact import against the torchao docs for your pinned version.
 
 ### Pitfall 7: Assuming All Layers Quantize Equally
 

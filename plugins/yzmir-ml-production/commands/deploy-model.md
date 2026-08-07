@@ -58,9 +58,14 @@ async def health():
     return {"status": "healthy", "model_version": MODEL_VERSION}
 ```
 
-### Pattern 2: gRPC (TorchServe)
+### Pattern 2: Dedicated inference server
+
+> **TorchServe was archived in August 2025 and is no longer maintained.** Do not choose it for new deployments. Use **NVIDIA Triton Inference Server** (multi-framework, dynamic batching, GPU-dense), **Ray Serve** (Python-native composition and autoscaling), or **BentoML** (packaging-first). For LLMs specifically, go straight to **vLLM** or **SGLang** — see `model-serving-patterns.md`.
+
+The TorchServe commands below are retained only for maintaining existing deployments:
 
 ```bash
+# LEGACY — archived project, existing deployments only
 # Package model
 torch-model-archiver --model-name mymodel \
   --version 1.0 \
@@ -115,9 +120,10 @@ COPY serve.py /app/
 
 WORKDIR /app
 
-# Health check
+# Health check — python:3.11-slim has NO curl, so a curl-based probe would
+# fail every time and mark the container permanently unhealthy. Use stdlib.
 HEALTHCHECK --interval=30s --timeout=10s \
-  CMD curl -f http://localhost:8000/health || exit 1
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()" || exit 1
 
 EXPOSE 8000
 CMD ["uvicorn", "serve:app", "--host", "0.0.0.0", "--port", "8000"]
@@ -126,7 +132,7 @@ CMD ["uvicorn", "serve:app", "--host", "0.0.0.0", "--port", "8000"]
 ### docker-compose for local testing
 
 ```yaml
-version: '3.8'
+# `version:` is obsolete in Compose V2 — omit it
 services:
   model-server:
     build: .
@@ -285,12 +291,12 @@ async def health_check():
 import glob
 
 # For deployment strategies
-devops_pack = glob.glob("plugins/axiom-devops-engineering/plugin.json")
+devops_pack = glob.glob("plugins/axiom-devops-engineering/.claude-plugin/plugin.json")
 if devops_pack:
     print("Available: axiom-devops-engineering for deployment strategies")
 
 # For monitoring
-quality_pack = glob.glob("plugins/ordis-quality-engineering/plugin.json")
+quality_pack = glob.glob("plugins/ordis-quality-engineering/.claude-plugin/plugin.json")
 if quality_pack:
     print("Available: ordis-quality-engineering for observability patterns")
 ```

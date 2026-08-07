@@ -223,18 +223,30 @@ print(f"p-value: {p_value:.3f}")  # p=0.72 (NOT significant!)
 
 **Problem 1: No sample size calculation**
 ```python
-# Required sample size for 80% power, 5% significance, 2% effect size
+# Required sample size for 80% power, 5% significance,
+# to detect 86% → 88% accuracy (a 2pp improvement).
+#
+# WHY Cohen's h and not (delta / std): accuracy is a PROPORTION. The
+# standardised effect size for comparing two proportions is Cohen's h, which
+# arcsine-transforms them. Dividing a percentage-point delta by a guessed
+# "baseline std" is not a defined effect size and will understate n badly.
 from statsmodels.stats.power import zt_ind_solve_power
+from statsmodels.stats.proportion import proportion_effectsize
+
+effect_size = proportion_effectsize(0.88, 0.86)  # Cohen's h ≈ 0.0595
 
 required_n = zt_ind_solve_power(
-    effect_size=0.02 / 0.1,  # 2% improvement, 10% baseline std
-    alpha=0.05,  # 5% significance level
-    power=0.8,  # 80% power
+    effect_size=effect_size,
+    alpha=0.05,      # 5% significance level
+    power=0.8,       # 80% power
+    alternative='two-sided',
 )
-print(f"Need {required_n:.0f} samples per model")  # ~3,100 samples!
+print(f"Need {required_n:.0f} samples per model")  # ~4,433 samples!
 
-# You only have 50 samples per model - need 62× more data
+# You only have 50 samples per model - need ~89× more data
 ```
+
+**Small effects on high baselines are expensive.** Moving 86% → 88% needs ~4,400 per arm; if you only care about a 5pp jump on a lower baseline the cost drops by ~6×. Decide the minimum effect worth detecting *before* you size the test.
 
 **Problem 2: No significance testing**
 ```python
@@ -1663,6 +1675,12 @@ class CanaryDeployment:
     def rollback(self, reason: str):
         """Rollback to old model."""
         logger.error(f"ROLLBACK TRIGGERED: {reason}")
+
+        # Capture WHICH stage failed BEFORE clearing it — otherwise every
+        # rollback alert reports 'unknown' and you lose the single most
+        # useful field for diagnosing the failure.
+        failed_stage = self.current_stage.value if self.current_stage else 'unknown'
+
         self.status = CanaryStatus.ROLLED_BACK
         self.current_stage = None
 
@@ -1670,7 +1688,7 @@ class CanaryDeployment:
         alert_team({
             'event': 'CANARY_ROLLBACK',
             'reason': reason,
-            'stage': self.current_stage.value if self.current_stage else 'unknown',
+            'stage': failed_stage,
             'baseline': self.baseline,
             'current_metrics': self.new_metrics.get_metrics()
         })
@@ -2595,18 +2613,22 @@ Deploying Model B!"
 
 **Problem: Insufficient statistical power**
 ```python
-# Calculate required sample size
+# Calculate required sample size to detect 85% → 90% accuracy.
+# Accuracy is a proportion, so the effect size is Cohen's h (see the
+# sample-size discussion earlier in this sheet) - not delta/std.
 from statsmodels.stats.power import zt_ind_solve_power
+from statsmodels.stats.proportion import proportion_effectsize
 
 required_n = zt_ind_solve_power(
-    effect_size=0.05 / 0.15,  # 5% effect, 15% std
+    effect_size=proportion_effectsize(0.90, 0.85),  # Cohen's h ≈ 0.152
     alpha=0.05,  # 5% significance
-    power=0.8    # 80% power
+    power=0.8,   # 80% power
+    alternative='two-sided',
 )
-print(f"Required: {required_n:.0f} samples per model")  # ~708 samples
+print(f"Required: {required_n:.0f} samples per model")  # ~681 samples
 
 # You have: 20 samples per model
-print(f"You need {required_n / 20:.0f}× more data!")  # 35× more data!
+print(f"You need {required_n / 20:.0f}× more data!")  # 34× more data!
 ```
 
 **Statistical test shows no significance:**
@@ -3149,14 +3171,9 @@ Deployed Model A!"
 
 "STOP! Analyze by user segment before deciding.
 
-**Problem: Simpson's Paradox (aggregate hides segments)**
+**Problem: the aggregate hides opposing segments (heterogeneity)**
 ```
-Aggregate:
-- Model A: 80% accuracy
-- Model B: 78% accuracy
-→ Model A wins overall
-
-But by segment:
+By segment:
 Premium users (20% of traffic):
 - Model A: 70% accuracy
 - Model B: 90% accuracy (Model B wins!)
@@ -3165,12 +3182,16 @@ Free users (80% of traffic):
 - Model A: 85% accuracy
 - Model B: 75% accuracy (Model A wins)
 
-Overall average:
-- Model A: 0.20 * 70% + 0.80 * 85% = 82% (NOT 80%!)
-- Model B: 0.20 * 90% + 0.80 * 75% = 78%
+Aggregate (traffic-weighted):
+- Model A: 0.20 × 70% + 0.80 × 85% = 82%
+- Model B: 0.20 × 90% + 0.80 × 75% = 78%
+→ Model A wins overall
 
-Model A wins overall, BUT premium users prefer Model B!
+Model A wins overall, BUT premium users are strictly better served by Model B.
+Ship A globally and you knowingly degrade your highest-value segment.
 ```
+
+**This is heterogeneity (effect modification), not Simpson's Paradox** — the two get conflated constantly. Here the segments disagree *with each other*, and the aggregate simply follows the bigger segment. **Simpson's Paradox is stricter**: every segment points the *same* way and the aggregate *reverses* it (see the detector in `production-debugging-techniques.md`). Both demand segment-level reporting; only the paradox means the aggregate is actively lying to you.
 
 **Segment analysis:**
 ```python
@@ -3256,21 +3277,28 @@ Why:
 ```
 
 **Drift detection:**
+
+> **API currency:** Evidently was restructured in **0.7 (2025)**. `evidently.report`, `evidently.metric_preset` and `ColumnMapping` — the imports in every pre-2025 tutorial — no longer exist. Presets now live under `evidently.presets`, `Report` is constructed positionally, and column semantics are declared with `DataDefinition` on a `Dataset` instead of `ColumnMapping`. The snippet below targets 0.7+; confirm exact names against the docs for your pinned version.
+
 ```python
-from evidently import ColumnMapping
-from evidently.report import Report
-from evidently.metric_preset import DataDriftPreset, DataQualityPreset
+from evidently import Dataset, DataDefinition, Report
+from evidently.presets import DataDriftPreset, DataSummaryPreset
+
+# Declare column semantics once (replaces ColumnMapping)
+definition = DataDefinition(
+    numerical_columns=["user_age", "drift_score"],
+    categorical_columns=["product_category", "season"],
+)
+
+reference = Dataset.from_pandas(training_data, data_definition=definition)
+current = Dataset.from_pandas(production_data, data_definition=definition)
 
 # Compare training data vs production data
-data_drift_report = Report(metrics=[
-    DataDriftPreset(),
-    DataQualityPreset()
-])
+report = Report([DataDriftPreset(), DataSummaryPreset()])
+snapshot = report.run(current_data=current, reference_data=reference)
 
-data_drift_report.run(
-    reference_data=training_data,  # Jan-Mar 2024
-    current_data=production_data,   # Jul 2024
-)
+# snapshot.dict() / snapshot.json() for programmatic access,
+# snapshot.save_html("drift.html") for the report
 
 # Results:
 {

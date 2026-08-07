@@ -114,7 +114,15 @@ class ModelServer:
     def load_model(self):
         if self.model is None:
             logger.info(f"Loading model from {self.model_path}...")
-            self.model = torch.load(self.model_path, map_location=self.device)
+            # PyTorch 2.6 made weights_only=True the default, so loading a full
+            # pickled nn.Module now raises UnpicklingError. Load a state_dict
+            # into a constructed model — also the safer pattern, since
+            # weights_only=False executes arbitrary pickle payloads.
+            self.model = ModelClass()
+            self.model.load_state_dict(
+                torch.load(self.model_path, map_location=self.device, weights_only=True)
+            )
+            self.model.to(self.device)
             self.model.eval()
             logger.info("Model loaded successfully")
 
@@ -325,7 +333,7 @@ async def predict_async(request: PredictionRequest):
 
 ## Part 2: TorchServe (Legacy / Maintenance Mode)
 
-**Status:** TorchServe entered limited maintenance in 2024 and the upstream `pytorch/serve` repository was archived in August 2025; there are no planned new features, bug fixes, or security patches ([upstream issue #3396](https://github.com/pytorch/serve/issues/3396)). For new work, prefer Ray Serve, BentoML, NVIDIA Triton Inference Server, or — for LLMs specifically — vLLM / SGLang / TensorRT-LLM (Part 8).
+**Status:** TorchServe entered limited maintenance in 2024 and the upstream `pytorch/serve` repository was archived in August 2025; there are no planned new features, bug fixes, or security patches (see the archive notice on [pytorch/serve](https://github.com/pytorch/serve)). For new work, prefer Ray Serve, BentoML, NVIDIA Triton Inference Server, or — for LLMs specifically — vLLM / SGLang / TensorRT-LLM (Part 8).
 
 **Migration urgency:** If you have an existing TorchServe deployment that works, you do not need to migrate immediately. Plan migration on your normal lifecycle cadence, prioritizing it ahead of any change that would require a CVE patch from upstream (which won't come).
 
@@ -532,7 +540,12 @@ class ModelServicer(model_service_pb2_grpc.ModelServiceServicer):
 
     def __init__(self, model_path: str):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = torch.load(model_path, map_location=self.device)
+        # state_dict load — see note above re: PyTorch 2.6 weights_only default
+        self.model = ModelClass()
+        self.model.load_state_dict(
+            torch.load(model_path, map_location=self.device, weights_only=True)
+        )
+        self.model.to(self.device)
         self.model.eval()
         logger.info(f"Model loaded on {self.device}")
 
@@ -631,7 +644,9 @@ import torch.onnx
 
 
 def convert_pytorch_to_onnx(model_path: str, output_path: str):
-    model = torch.load(model_path)
+    # state_dict load — PyTorch 2.6+ defaults to weights_only=True
+    model = ModelClass()
+    model.load_state_dict(torch.load(model_path, weights_only=True))
     model.eval()
     dummy_input = torch.randn(1, 3, 224, 224)
 
@@ -923,8 +938,12 @@ RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000
+# NOTE: python:3.11-slim does NOT ship curl. A `CMD curl -f ...` healthcheck
+# here fails on every probe and the container is permanently "unhealthy" —
+# which orchestrators read as a crash-looping service. Either apt-get install
+# curl in the runtime stage, or (better, no extra layer) probe with stdlib:
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8000/health || exit 1
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()" || exit 1
 
 CMD ["uvicorn", "serve_fastapi:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
 ```
@@ -933,7 +952,8 @@ CMD ["uvicorn", "serve_fastapi:app", "--host", "0.0.0.0", "--port", "8000", "--w
 
 ```yaml
 # docker-compose.yml
-version: '3.8'
+# NOTE: the top-level `version:` key is obsolete in Compose V2 and emits a
+# warning. Omit it.
 
 services:
   model-api:
@@ -958,7 +978,8 @@ services:
               count: 1
               capabilities: [gpu]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      # stdlib probe — the slim image has no curl (see Dockerfile note above)
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -1078,7 +1099,7 @@ Not LLM-specialized; use it as a multi-model orchestration layer over vLLM or ot
 Ergonomic packaging and deployment of services that wrap a serving engine. Best when you want a single artifact ("Bento") that pins a vLLM/TGI/TensorRT-LLM engine plus pre/post-processing and ships through your deploy pipeline. ([Project](https://github.com/bentoml/BentoML))
 
 **llama.cpp + ExLlamaV2**
-The CPU / laptop / Apple Silicon path. llama.cpp is the canonical engine for GGUF k-quants; ExLlamaV2 targets NVIDIA GPUs with very efficient INT4 (EXL2) kernels, popular on consumer hardware. Use these for local development, on-device, or when you don't have a server-class GPU. ([llama.cpp](https://github.com/ggml-org/llama.cpp), [ExLlamaV2](https://github.com/turboderp/exllamav2))
+The CPU / laptop / Apple Silicon path. llama.cpp is the canonical engine for GGUF k-quants; ExLlamaV2 targets NVIDIA GPUs with very efficient INT4 (EXL2) kernels, popular on consumer hardware — note the author's active line has moved on to **ExLlamaV3 / EXL3**, so check which the model quant you want is published for. Use these for local development, on-device, or when you don't have a server-class GPU. ([llama.cpp](https://github.com/ggml-org/llama.cpp), [ExLlamaV2](https://github.com/turboderp/exllamav2))
 
 **MLC-LLM**
 Universal deployment via TVM compilation: targets browsers (WebGPU), iOS, Android, Mac/Linux/Windows desktop, NVIDIA, AMD, Apple, Qualcomm. Use when you need a single model artifact that runs across mobile/web/desktop. ([Project](https://github.com/mlc-ai/mlc-llm))

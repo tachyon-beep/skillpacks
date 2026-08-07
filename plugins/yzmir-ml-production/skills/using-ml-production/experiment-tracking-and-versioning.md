@@ -135,7 +135,7 @@ This section surveys the experiment-tracking and model-registry tools you should
 
 ### Tool Roster
 
-**MLflow** (open-source) — Tracking + Model Registry + Projects + Models + Serving + Evaluation. Self-hostable; broad framework integrations; in MLflow 2.x the registry uses model **aliases** (e.g. `@champion`, `@challenger`) rather than the deprecated stage labels (`Staging`, `Production`). MLflow 2.x also added an LLM-evaluation API (`mlflow.evaluate(model_type="question-answering"|"text-summarization"|...)`) and prompt-engineering tracking. Docs: <https://mlflow.org/docs/latest/index.html>. Site: <https://mlflow.org>. Managed: Databricks, plus the OSS server runs anywhere.
+**MLflow** (open-source) — Tracking + Model Registry + Projects + Models + Serving + Evaluation. Self-hostable; broad framework integrations. **MLflow 3 has been the current major since June 2025**; the examples in this sheet are written against 2.x APIs that remain valid in 3.x unless noted, but check the [MLflow 3 migration guide](https://mlflow.org/docs/latest/) before pinning. From 2.x onward the registry uses model **aliases** (e.g. `@champion`, `@challenger`) rather than stage labels (`Staging`, `Production`) — and in MLflow 3 the stage API is gone entirely, not merely deprecated. MLflow 2.x also added an LLM-evaluation API (`mlflow.evaluate(model_type="question-answering"|"text-summarization"|...)`) and prompt-engineering tracking. Docs: <https://mlflow.org/docs/latest/index.html>. Site: <https://mlflow.org>. Managed: Databricks, plus the OSS server runs anywhere.
 
 **Weights & Biases** (W&B) — Cloud-hosted (also self-hostable) experiment tracking with Models (registry), Sweeps (hyperparameter search), Reports (publishable analyses), Artifacts (versioned data/model assets), and **Weave** (W&B's LLM-app tracing and evaluation product). Strong UI, real-time visualization, advanced sweep algorithms. Docs: <https://docs.wandb.ai>. Weave docs: <https://weave-docs.wandb.ai>. Site: <https://wandb.ai>.
 
@@ -310,7 +310,7 @@ if __name__ == "__main__":
     train()
 ```
 
-**MLflow Registry: aliases vs stages.** Stage labels (`Staging`, `Production`, `Archived`) and `transition_model_version_stage()` are deprecated as of MLflow 2.9 and slated for removal. Use **aliases** (`set_registered_model_alias`, `delete_registered_model_alias`, and load via `models:/<name>@<alias>`) and **tags** for metadata. Migration guide: <https://mlflow.org/docs/latest/model-registry.html#deprecated-using-model-stages>.
+**MLflow Registry: aliases vs stages.** Stage labels (`Staging`, `Production`, `Archived`) and `transition_model_version_stage()` were deprecated in MLflow 2.9 and **removed in MLflow 3** (GA June 2025) — on MLflow 3 that call raises, it does not warn. Use **aliases** (`set_registered_model_alias`, `delete_registered_model_alias`, and load via `models:/<name>@<alias>`) and **tags** for metadata. Migration guide: <https://mlflow.org/docs/latest/model-registry.html#deprecated-using-model-stages>.
 
 ```python
 # Promotion using aliases (the modern pattern)

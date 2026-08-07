@@ -87,22 +87,45 @@ class DynamicBatcher:
 
 ```python
 # Post-Training Quantization (PTQ) - fastest to implement
-import torch.quantization
+# NOTE: torch.quantization is a deprecated alias — use torch.ao.quantization.
+import torch
+import torch.ao.quantization as tq
 
-# Dynamic quantization (weights only)
-quantized_model = torch.quantization.quantize_dynamic(
+# --- Dynamic quantization (weights only) -----------------------------------
+# Supports Linear / LSTM / GRU / RNN / Embedding only. Passing Conv2d here is a
+# SILENT NO-OP — for CNNs you must use the static path below.
+quantized_model = tq.quantize_dynamic(
     model,
     {torch.nn.Linear, torch.nn.LSTM},
     dtype=torch.qint8
 )
 
-# Static quantization (weights + activations) - better speedup
-model.qconfig = torch.quantization.get_default_qconfig('fbgemm')
-torch.quantization.prepare(model, inplace=True)
+# --- Static quantization (weights + activations) - better speedup ----------
+# Eager-mode static PTQ requires YOU to mark the FP32<->INT8 boundary with
+# QuantStub/DeQuantStub. Without them, convert() yields a model that raises at
+# runtime when it receives an FP32 tensor. prepare() does not add them for you.
+class QuantizedWrapper(torch.nn.Module):
+    def __init__(self, model):
+        super().__init__()
+        self.quant = tq.QuantStub()
+        self.model = model
+        self.dequant = tq.DeQuantStub()
+
+    def forward(self, x):
+        return self.dequant(self.model(self.quant(x)))
+
+model = QuantizedWrapper(model).eval()
+
+# Fuse Conv+BN+ReLU before quantizing (accuracy + fused INT8 kernels)
+model = tq.fuse_modules(model, [['model.conv1', 'model.bn1', 'model.relu']])
+
+model.qconfig = tq.get_default_qconfig('x86')  # 'x86' supersedes 'fbgemm'
+tq.prepare(model, inplace=True)
 # Run calibration data through model
-for data in calibration_loader:
-    model(data)
-torch.quantization.convert(model, inplace=True)
+with torch.no_grad():
+    for data in calibration_loader:
+        model(data)
+tq.convert(model, inplace=True)
 ```
 
 **ONNX Runtime Quantization:**
@@ -248,12 +271,12 @@ def benchmark_model(model, input_shape, num_iterations=100, warmup=10):
 import glob
 
 # For PyTorch optimization
-pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/plugin.json")
+pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/.claude-plugin/plugin.json")
 if pytorch_pack:
     print("For PyTorch profiling: use yzmir-pytorch-engineering")
 
 # For neural architectures
-arch_pack = glob.glob("plugins/yzmir-neural-architectures/plugin.json")
+arch_pack = glob.glob("plugins/yzmir-neural-architectures/.claude-plugin/plugin.json")
 if arch_pack:
     print("For architecture optimization: use yzmir-neural-architectures")
 ```

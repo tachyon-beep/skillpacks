@@ -216,12 +216,15 @@ with torch.no_grad():
 import logging
 logging.getLogger("torch_tensorrt").setLevel(logging.DEBUG)
 
-# 2. Disable unsupported layers (fallback to PyTorch)
+# 2. Allow graph breaks so unsupported ops fall back to PyTorch.
+#    (There is no `TorchFallback()` object — fallback is controlled by these
+#     two arguments.)
 trt_model = torch_tensorrt.compile(
     model,
     inputs=[...],
     enabled_precisions={torch.float16},
-    torch_fallback=torch_tensorrt.TorchFallback()  # Fallback for unsupported ops
+    require_full_compilation=False,   # permit partitioning; default is already False
+    torch_executed_ops={"torch.ops.aten.some_unsupported_op.default"},  # force specific ops to PyTorch
 )
 
 # 3. Check for unsupported ops
@@ -293,15 +296,26 @@ with torch.no_grad():
 
 ```python
 import torch
-from torch.cuda.amp import autocast
 
-model = load_model().eval().cuda().half()  # Convert model to FP16
+# Pick ONE of these two approaches — they are alternatives, not a combination.
 
-# Inference with autocast
+# (a) Autocast (recommended): weights stay FP32, PyTorch picks per-op precision.
+#     Safer numerically; no manual .half() anywhere.
+model = load_model().eval().cuda()
 with torch.no_grad():
-    with autocast():
-        output = model(input_tensor.cuda().half())
+    with torch.amp.autocast('cuda', dtype=torch.float16):
+        output = model(input_tensor.cuda())
+
+# (b) Hard cast: model and inputs are FP16 throughout. Lower memory, but every
+#     op runs in FP16 including ones that need FP32 range (softmax, norms).
+model_fp16 = load_model().eval().cuda().half()
+with torch.no_grad():
+    output = model_fp16(input_tensor.cuda().half())
 ```
+
+**Note on the import**: `torch.cuda.amp.autocast` has been deprecated since PyTorch 2.4 in favour of the device-generic `torch.amp.autocast('cuda', ...)`. Use the latter.
+
+**Do not do both.** Calling `.half()` on the model *and* wrapping in `autocast()` is a common copy-paste error: autocast's FP32 fallbacks for numerically sensitive ops can no longer take effect because the weights are already FP16, so you get approach (b)'s accuracy risk while believing you have (a)'s safety.
 
 **Caution**: Some models lose accuracy with FP16. Test accuracy before deploying.
 
@@ -389,19 +403,25 @@ def find_optimal_batch_size(model, input_shape, device='cuda', max_memory_pct=0.
     while batch_size < max_batch:
         try:
             torch.cuda.empty_cache()
+            torch.cuda.reset_peak_memory_stats(device)  # peak must be per-iteration
             test_batch = torch.randn(batch_size, *input_shape).to(device)
 
             with torch.no_grad():
                 _ = model(test_batch)
 
-            # Check memory usage
-            mem_allocated = torch.cuda.memory_allocated() / torch.cuda.max_memory_allocated()
+            # Check memory usage as a fraction of TOTAL DEVICE CAPACITY.
+            # WHY not max_memory_allocated(): memory_allocated()/max_memory_allocated()
+            # is ~1.0 immediately after any forward pass, so the threshold below
+            # would fire on the first iteration and the search would always
+            # "converge" on batch size 1-2. Peak-vs-capacity is the real question.
+            total_memory = torch.cuda.get_device_properties(device).total_memory
+            mem_frac = torch.cuda.max_memory_allocated() / total_memory
 
-            if mem_allocated > max_memory_pct:
-                print(f"Batch size {batch_size}: {mem_allocated*100:.1f}% memory (near limit)")
+            if mem_frac > max_memory_pct:
+                print(f"Batch size {batch_size}: {mem_frac*100:.1f}% of device memory (near limit)")
                 break
 
-            print(f"Batch size {batch_size}: OK ({mem_allocated*100:.1f}% memory)")
+            print(f"Batch size {batch_size}: OK ({mem_frac*100:.1f}% of device memory)")
             batch_size *= 2
 
         except RuntimeError as e:
@@ -672,16 +692,22 @@ output = session.run(None, {'input': input_data})[0]
 
 ```python
 # Convert PyTorch to OpenVINO IR
-# First: Export to ONNX (as above)
-# Then: Use Model Optimizer
+# NOTE: the legacy `mo` Model Optimizer CLI was REMOVED in OpenVINO 2025.0.
+# Use `ovc` (CLI) or openvino.convert_model (Python) instead.
 
 # Command-line conversion
-!mo --input_model model.onnx --output_dir openvino_model --data_type FP16
+!ovc model.onnx --output_model openvino_model/model.xml --compress_to_fp16 True
 
-# Python API
-from openvino.runtime import Core
+# Python API — convert PyTorch directly, no ONNX hop required
+import openvino as ov
 
-# Load model
+ov_model = ov.convert_model(model, example_input=torch.randn(1, 3, 224, 224))
+ov.save_model(ov_model, "openvino_model/model.xml", compress_to_fp16=True)
+
+# Load and compile
+# NOTE: the `openvino.runtime` namespace is deprecated — import from `openvino`.
+from openvino import Core
+
 ie = Core()
 model = ie.read_model(model="openvino_model/model.xml")
 compiled_model = ie.compile_model(model=model, device_name="CPU")
@@ -764,13 +790,16 @@ import torch
 # (Per https://docs.pytorch.org/docs/stable/quantization.html, eager-mode APIs
 # live under torch.ao.quantization, and are being further migrated to the
 # pytorch/ao project — track https://github.com/pytorch/ao if pinning future-proof code.)
-from torch.ao.quantization import quantize_dynamic, get_default_qconfig
+from torch.ao.quantization import quantize_dynamic
 
 # Dynamic quantization (easiest, no calibration)
+# CRITICAL: dynamic quantization supports ONLY Linear, LSTM/GRU/RNN (and cells),
+# Embedding and EmbeddingBag. Passing nn.Conv2d in this set is a SILENT NO-OP —
+# convs are returned untouched in FP32 and you get none of the promised speedup.
 model = load_model().eval()
 quantized_model = quantize_dynamic(
     model,
-    {torch.nn.Linear, torch.nn.Conv2d},  # Quantize these layers
+    {torch.nn.Linear},  # Conv2d is NOT supported here — see note below
     dtype=torch.qint8
 )
 
@@ -782,7 +811,14 @@ with torch.no_grad():
     output = quantized_model(input_tensor)
 ```
 
-**For better accuracy**: Use static quantization with calibration (see `quantization-for-inference` skill)
+**For convolutional networks (MobileNet, ResNet, EfficientNet), dynamic quantization does nothing.** The 2-4× ARM speedup on a CNN comes from **static PTQ** (calibration with representative data, activations quantized ahead of time) or **QAT**. Convs must go through the static path — see the `quantization-for-inference` skill. A quick sanity check that quantization actually happened:
+
+```python
+# Convs should print as QuantizedConv2d, not Conv2d
+print(quantized_model)
+```
+
+**For better accuracy on Linear-heavy models**: Use static quantization with calibration (see `quantization-for-inference` skill)
 
 
 ### Strategy 2: TensorFlow Lite (Best for ARM/Mobile)
@@ -806,6 +842,13 @@ import tensorflow as tf
 torch.onnx.export(model, dummy_input, "model.onnx")
 
 # Step 2: ONNX → TensorFlow (use onnx-tf)
+#
+# CURRENCY WARNING: this PyTorch → ONNX → TF → TFLite chain is the legacy route
+# and `onnx-tf` is effectively abandoned; it breaks on modern opsets. Prefer:
+#   - ai-edge-torch  — Google's supported PyTorch → LiteRT (.tflite) converter,
+#                      no ONNX hop:  ai_edge_torch.convert(model, sample_args)
+#   - onnx2tf        — actively maintained if you must start from ONNX
+# Note TFLite was rebranded **LiteRT** in 2024; the .tflite format is unchanged.
 from onnx_tf.backend import prepare
 import onnx
 
@@ -920,8 +963,11 @@ architectures = [
 for name, model in architectures:
     model = model.eval()
 
-    # Quantize
-    quantized_model = quantize_dynamic(model, {torch.nn.Linear, torch.nn.Conv2d}, dtype=torch.qint8)
+    # Quantize. NOTE: these are all CONV nets — dynamic quantization would be a
+    # no-op on them (Linear-only), so use the static PTQ path for a real
+    # comparison. Benchmarking the dynamic-quantized version here would just be
+    # benchmarking the FP32 model under another name.
+    quantized_model = static_ptq_quantize(model, calibration_loader)  # see quantization-for-inference
 
     # Benchmark
     input_tensor = torch.randn(1, 3, 224, 224)
@@ -1099,8 +1145,11 @@ trt_model = torch_tensorrt.compile(model, inputs=[...], enabled_precisions={torc
 
 **Strategy**:
 ```python
-# 1. Quantize to INT8 (critical for ARM)
-quantized_model = quantize_dynamic(model, {torch.nn.Linear, torch.nn.Conv2d}, dtype=torch.qint8)
+# 1. Quantize to INT8 (critical for ARM).
+#    For a CNN this MUST be static PTQ — quantize_dynamic does not support
+#    Conv2d and would leave the whole backbone in FP32.
+quantized_model = static_ptq_quantize(model, calibration_loader)  # see quantization-for-inference
+#    (Linear/RNN-only models can use quantize_dynamic(model, {torch.nn.Linear}).)
 
 # 2. Convert to TensorFlow Lite with XNNPACK
 # (see TFLite section above)

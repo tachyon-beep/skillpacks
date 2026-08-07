@@ -695,19 +695,28 @@ class ProductionProfiler:
         duration: int = 60
     ) -> str:
         """
-        Profile memory usage with memory_profiler.
+        Profile memory usage of an ALREADY-RUNNING process.
+
+        WHY not memory_profiler: it is a line-profiler driven by @profile
+        decorators on code you launch under it — it cannot attach to an
+        arbitrary PID, and the project has been unmaintained since 2022.
+        Use py-spy (sampling, no target cooperation needed) for a live
+        snapshot, or memray for full allocation tracking.
 
         Returns:
             Path to memory profile
         """
         output_file = self.output_dir / f"memory_profile_{pid}_{int(time.time())}.txt"
 
-        # Use memory_profiler for line-by-line analysis
-        cmd = [
-            "python", "-m", "memory_profiler",
-            "--backend", "psutil",
-            str(pid)
-        ]
+        # py-spy attaches to a live PID and dumps per-thread stacks.
+        # Requires ptrace permission (root, or --cap-add SYS_PTRACE in Docker).
+        cmd = ["py-spy", "dump", "--pid", str(pid)]
+
+        # For allocation-level detail you must start the process under memray:
+        #   memray run -o out.bin your_server.py
+        #   memray flamegraph out.bin
+        # memray can also attach to a running process:
+        #   memray attach <pid>
 
         result = subprocess.run(
             cmd,
@@ -974,7 +983,7 @@ for query, metrics in stats.items():
 | Profile Type | Tool | What to Look For |
 |--------------|------|------------------|
 | CPU | py-spy | Wide bars in flamegraph (bottlenecks) |
-| Memory | memory_profiler | Memory leaks, large allocations |
+| Memory | memray (py-spy dump for a live PID) | Memory leaks, large allocations |
 | Model | torch.profiler | Slow operations, CPU-GPU transfer |
 | Database | Query profiler | Slow queries, N+1 queries |
 | Network | distributed tracing | High latency services, cascading failures |
@@ -1505,13 +1514,29 @@ class ABTestDebugger:
 
             segment_directions[segment] = "treatment_better" if treat.success_rate > ctrl.success_rate else "control_better"
 
-        # Detect paradox: overall direction differs from all segments
-        all_segments_agree = all(d == overall_direction for d in segment_directions.values())
+        # Detect paradox: EVERY segment agrees with the others, AND the
+        # aggregate points the OTHER way. That reversal is what makes it
+        # Simpson's Paradox.
+        #
+        # WHY not `not all(d == overall_direction)`: that fires whenever
+        # segments merely DISAGREE WITH EACH OTHER (segment A favours
+        # treatment, segment B favours control). That is ordinary
+        # heterogeneity / effect modification — common, and not a paradox.
+        # Flagging it as one trains you to ignore the detector.
+        directions = set(segment_directions.values())
+        segments_unanimous = len(directions) == 1
 
-        paradox_detected = not all_segments_agree
+        paradox_detected = (
+            segments_unanimous
+            and directions.pop() != overall_direction
+        )
+
+        # Worth surfacing separately — not a paradox, but still worth a look
+        heterogeneous = not segments_unanimous
 
         return {
             "paradox_detected": paradox_detected,
+            "heterogeneous": heterogeneous,
             "overall_direction": overall_direction,
             "segment_directions": segment_directions,
             "explanation": self._explain_simpsons_paradox(
@@ -1531,9 +1556,20 @@ class ABTestDebugger:
         Explain Simpson's Paradox if detected.
         """
         if not detected:
+            if len(set(segments.values())) > 1:
+                return (
+                    f"No Simpson's Paradox, but segments disagree with each other: {segments}. "
+                    "This is heterogeneity (the effect genuinely differs by segment), not a "
+                    "reversal. Report per-segment effects rather than a single average."
+                )
             return "No Simpson's Paradox detected. Segment and overall results agree."
 
-        return f"Simpson's Paradox detected! Overall: {overall}, but segments show: {segments}. This indicates a confounding variable. Review segment sizes and assignment."
+        return (
+            f"Simpson's Paradox detected! EVERY segment says {set(segments.values()).pop()}, "
+            f"but the aggregate says {overall}. This reversal means segment sizes are confounded "
+            "with assignment — trust the segment-level result, not the aggregate, and check why "
+            "allocation was unbalanced across segments."
+        )
 
     def calculate_required_sample_size(
         self,
@@ -1601,20 +1637,29 @@ print(f"P-value: {results['p_value']:.4f}")
 print(f"Relative lift: {results['relative_lift_percent']:.2f}%")
 print(f"Interpretation: {results['interpretation']}")
 
-# Check for Simpson's Paradox
+# Check for Simpson's Paradox.
+# A REAL reversal: control wins in BOTH segments, treatment wins overall.
+# The confound is allocation — treatment got 270 of its 350 users in the
+# high-converting US segment, control got only 87 there.
 control_segments = {
-    "US": ABTestResult("control_US", 300, 40, []),
-    "UK": ABTestResult("control_UK", 200, 10, [])
+    "US": ABTestResult("control_US", 87, 81, []),    # 93.1%
+    "UK": ABTestResult("control_UK", 263, 192, [])   # 73.0%
 }
 
 treatment_segments = {
-    "US": ABTestResult("treatment_US", 400, 48, []),  # Better
-    "UK": ABTestResult("treatment_UK", 120, 14, [])   # Better
+    "US": ABTestResult("treatment_US", 270, 234, []),  # 86.7% — WORSE than control's 93.1%
+    "UK": ABTestResult("treatment_UK", 80, 55, [])     # 68.8% — WORSE than control's 73.0%
 }
+# Aggregate: control 273/350 = 78.0%, treatment 289/350 = 82.6%
+# → treatment "wins" overall despite losing every segment. That is the paradox.
 
 paradox = debugger.detect_simpsons_paradox(control_segments, treatment_segments)
-print(f"\nSimpson's Paradox: {paradox['paradox_detected']}")
+print(f"\nSimpson's Paradox: {paradox['paradox_detected']}")  # True
 print(f"Explanation: {paradox['explanation']}")
+
+# Contrast — segments that merely DISAGREE are heterogeneity, not a paradox:
+#   US: treatment worse, UK: treatment better, overall treatment better
+#   → paradox_detected=False, heterogeneous=True. Report per-segment effects.
 
 # Calculate required sample size
 required_n = debugger.calculate_required_sample_size(

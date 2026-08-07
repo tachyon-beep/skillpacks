@@ -288,34 +288,42 @@ with mlflow.start_run():
         input_example=input_example
     )
 
-# Promote to production
+# Promote to production using ALIASES.
+# NOTE: transition_model_version_stage() and the Staging/Production/Archived
+# stage labels were deprecated in MLflow 2.9 and REMOVED in MLflow 3 (GA June
+# 2025). Aliases are the supported mechanism.
 client = mlflow.tracking.MlflowClient()
-client.transition_model_version_stage(
-    name="fraud-detector",
-    version=5,
-    stage="Production"
-)
+client.set_registered_model_alias("fraud-detector", "champion", version=5)
+
+# Load by alias rather than by stage:
+#   model = mlflow.pyfunc.load_model("models:/fraud-detector@champion")
 ```
 
 ### Data Validation Pattern
 
 ```python
-# Validate data before training
-import great_expectations as ge
+# Validate data before training (Pandera — stable, Pythonic schema validation)
+import pandera as pa
+
+schema = pa.DataFrameSchema({
+    # Schema validation
+    "user_id": pa.Column(int, nullable=False, unique=True),
+    "amount": pa.Column(
+        float,
+        # Distribution validation
+        checks=[
+            pa.Check.in_range(0, 10_000),
+            pa.Check(lambda s: 50 <= s.mean() <= 150, name="mean_amount_in_range"),
+        ],
+    ),
+})
 
 def validate_training_data(df):
-    ge_df = ge.from_pandas(df)
-
-    # Schema validation
-    ge_df.expect_column_to_exist("user_id")
-    ge_df.expect_column_values_to_be_of_type("amount", "float64")
-
-    # Distribution validation
-    ge_df.expect_column_mean_to_be_between("amount", 50, 150)
-    ge_df.expect_column_values_to_be_between("amount", 0, 10000)
-
-    return ge_df.validate()
+    # raises SchemaError on failure; lazy=True collects all failures at once
+    return schema.validate(df, lazy=True)
 ```
+
+**If you use Great Expectations instead:** the batteries-included `ge.from_pandas(df)` API shown in older material was **removed in GX 1.0** (mid-2024). GX 1.x requires the context/data-source/batch-definition flow (`gx.get_context()` → data source → batch definition → expectation suite). Check the current GX docs for the exact calls against your pinned version rather than porting a pre-1.0 snippet.
 
 ## Scope Boundaries
 
