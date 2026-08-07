@@ -107,6 +107,14 @@ Three terminating conditions:
 For each compare-point:
 
 ```python
+from enum import Enum
+
+class CompareResult(Enum):
+    PASS = "pass"
+    FAIL = "fail"
+    NOT_IN_SCOPE = "not_in_scope"   # this class is not verifiable per-compare-point
+
+
 def compare_at(t: int, recorded: RunRecord, replay: RunRecord, class_: ClassSpec) -> CompareResult:
     a, b = recorded.state_hash[t], replay.state_hash[t]
     if class_.is_bit_exact:
@@ -120,15 +128,21 @@ def compare_at(t: int, recorded: RunRecord, replay: RunRecord, class_: ClassSpec
         s_b = replay.snapshot[t]
         return compare_with_tolerance(s_a, s_b, eps=class_.eps)
     elif class_.is_statistical:
-        # Per-tick comparison is too tight; fall through to summary stats
-        return CompareResult.PASS  # individual ticks not in-scope
+        # Class 3's per-run hash is meaningless (see `05-`): cross-run agreement
+        # is distributional, not per-tick. Return NOT_IN_SCOPE, never PASS —
+        # a per-tick PASS here would aggregate into a clean verification result
+        # for a run that was never actually compared.
+        return CompareResult.NOT_IN_SCOPE
 ```
+
+**Never return PASS for a check you did not perform.** The distinction between "compared and agreed" and "not comparable at this granularity" is the whole verification claim: collapse them and a Class 3 system verifies green against a replay that diverged completely on the first tick.
 
 Aggregate per-compare-point results into a verification result:
 
-- **PASS**: every compare-point in scope satisfies the class.
-- **PARTIAL**: most compare-points pass; some are within-class but flagged for review.
+- **PASS**: at least one compare-point was in scope, and every in-scope compare-point satisfies the class.
+- **PARTIAL**: most in-scope compare-points pass; some are within-class but flagged for review.
 - **FAIL**: at least one compare-point violates the class.
+- **NOT VERIFIED**: every compare-point returned `NOT_IN_SCOPE`. This is the mandatory result for a Class 3 system under per-tick comparison alone — it is not a pass, and it must not be reported as one. Class 3 is verified by the distributional summary test declared in the determinism spec (`epsilon`, `N`, and the named statistical test, per `01-`), run across N seeded runs — not by this loop.
 
 ### Step 5 — On FAIL, optionally dispatch replay-debugger
 

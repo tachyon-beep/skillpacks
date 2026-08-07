@@ -40,10 +40,13 @@ def audit_idempotence(canonicalise_fn, sample_graphs):
     return failures
 
 def audit_order_independence(canonicalise_fn, sample_graph_pairs):
-    """sample_graph_pairs: (g1, g2) where g2 is g1 with nodes/edges added in
-    different order or relabeled -- same semantics, different raw form."""
+    """sample_graph_pairs: (g1, out1, g2, out2) where g2 is g1 with nodes/edges
+    added in a different order or relabeled -- same semantics, different raw
+    form. The output sets travel with their graphs: canonicalisation is defined
+    relative to the declared outputs, so a pair compared against the wrong
+    outputs is not a test of order-independence at all."""
     failures = []
-    for g1, g2 in sample_graph_pairs:
+    for g1, out1, g2, out2 in sample_graph_pairs:
         if canonical_bytes(canonicalise_fn(g1, out1)) != canonical_bytes(canonicalise_fn(g2, out2)):
             failures.append((g1, g2))
     return failures
