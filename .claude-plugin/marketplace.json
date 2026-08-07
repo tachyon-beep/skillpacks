@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, product management, solution architecture, distributed systems, tensor compilers, game development, security, documentation, site design, and UX skills for Claude Code - 50 complete skillpacks with 400+ TDD-validated skills and reference sheets",
-    "version": "3.28.0",
+    "version": "3.28.1",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -715,10 +715,11 @@
     {
       "name": "yzmir-ml-production",
       "source": "./plugins/yzmir-ml-production",
-      "description": "Production ML - quantization, serving, MLOps, monitoring, debugging - 10 reference sheets, 3 commands, 2 agents",
+      "description": "Production ML - quantization, serving, MLOps, dataset curation, monitoring, debugging - 11 reference sheets, 3 commands, 2 agents",
       "keywords": [
         "yzmir",
-        "production"
+        "production",
+        "dataset-curation"
       ],
       "category": "ai-ml"
     },
