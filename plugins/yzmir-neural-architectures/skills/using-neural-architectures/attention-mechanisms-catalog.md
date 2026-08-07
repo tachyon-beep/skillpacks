@@ -41,13 +41,16 @@ Attention(Q, K, V) = softmax(Q K^T / √d_k) V
 - Memory: O(n²) for attention matrix
 - Exact: Yes (no approximation)
 
-**Memory breakdown (4k tokens, d=768):**
+**Memory breakdown (4k tokens, d=768), materializing the score matrix:**
 ```
-Attention scores: 4096² × 4 bytes = 64MB per layer
+Attention scores: 4096² × 4 bytes = 64MB per HEAD
 Multi-head (12 heads): 64MB × 12 = 768MB per layer
 16 layers: 768MB × 16 = 12GB just for attention!
 Batch size 8: 12GB × 8 = 96GB (impossible on single GPU)
 ```
+This is exactly the cost FlashAttention eliminates — it never materializes
+the n² matrix, so in practice you do not pay this. The table above is the
+*reason* Flash exists, not the memory profile of a modern model.
 
 **When to use:**
 - Sequence length < 2k tokens
@@ -117,7 +120,7 @@ Flash Attention:
 ### When to Use
 
 ✅ **ALWAYS use Flash Attention when:**
-- Sequence length < 16k tokens
+- You are running attention on a CUDA GPU — at **any** sequence length
 - Need exact attention (no approximation)
 - Available in your framework
 
@@ -166,14 +169,41 @@ pip install flash-attn --no-build-isolation
 ### Limitations
 
 ❌ **Flash Attention NOT suitable when:**
-- Sequence length > 16k (memory still grows quadratically)
-- Custom attention masks (complex patterns not supported)
-- Inference on CPU (CUDA-only)
+- Inference on CPU (CUDA-only; PyTorch falls back to a math kernel)
+- Very exotic attention patterns that no kernel implements (rare — see
+  FlexAttention below)
 
-**For > 16k tokens:** Use sparse or linear attention
+**What is NOT a limitation:** long sequences. FlashAttention memory is
+**O(n), not O(n²)** — it never materializes the score matrix (see the O(n)
+memory claim in the algorithm section above). *Compute* remains O(n²), so
+long sequences get slower, but they do not blow up memory. Production models
+run **exact** FlashAttention at 128k+ context. Do not switch to sparse or
+linear attention merely because the sequence exceeds some length.
+
+**Newer variants worth knowing:**
+- **FlashAttention-3 (2024):** rewritten for Hopper (H100) — asynchrony,
+  warp specialization, FP8 support. Large speedup over FA-2 on H100-class
+  hardware.
+- **FlexAttention (PyTorch 2.5+, 2024):** compiles an arbitrary
+  `score_mod` / `mask_mod` function into a fused Flash-style kernel. This
+  **removes the "custom masks unsupported" limitation** — sliding window,
+  ALiBi, document masking, prefix-LM and causal variants all get
+  Flash-quality kernels without hand-writing CUDA. Reach for this before
+  reaching for an approximate attention mechanism.
 
 
-## Part 3: Sparse Attention (Exact for Long Sequences)
+## Part 3: Sparse Attention (Exact for Long Sequences) — *largely legacy*
+
+> **Status note (2026):** Longformer and BigBird were designed for a world in
+> which 4k tokens of exact attention did not fit in memory. FlashAttention
+> removed that constraint. Today they are **legacy** for new builds: exact
+> Flash + RoPE context scaling serves 128k+ context, and where you genuinely
+> want a sparse *pattern* (sliding window, document masking), FlexAttention
+> compiles it into a fused exact kernel without switching model families.
+>
+> Read this section to understand deployed models and the sliding-window idea
+> (still live in Mistral-class models and in FlexAttention `mask_mod`s), not
+> as a default recommendation.
 
 ### Concept
 
@@ -271,31 +301,43 @@ model = BigBirdModel.from_pretrained(
 ### Sparse Attention Decision
 
 ```
-Sequence length < 4k:
-→ Flash Attention (exact, no pattern needed)
+Any sequence length, new build:
+→ Exact FlashAttention first. It is O(n) memory; length alone is not a
+  reason to leave it.
 
-Sequence length 4k-16k:
-→ Longformer (sliding window + global)
-→ Best for: Documents, long-form text
+You want a specific sparsity PATTERN (sliding window, doc masking, prefix-LM):
+→ FlexAttention `mask_mod` — keeps exactness AND the fused kernel.
+→ Or a model natively trained with sliding-window attention (Mistral-class).
 
-Sequence length > 16k:
-→ Longformer if possible
-→ Linear attention if Longformer too slow
+You are maintaining a deployed Longformer / BigBird checkpoint:
+→ This section explains it. Don't port the pattern to a new model.
 ```
 
 
-## Part 4: Linear Attention (Approximate for Very Long)
+## Part 4: Linear Attention (Approximate for Very Long) — *largely legacy*
+
+> **Status note (2026):** Performer, Linformer and the linear-attention family
+> lost. They trade exactness for an asymptotic win that FlashAttention made
+> unnecessary at the lengths people actually run, and they consistently
+> underperformed on retrieval-style long-context tasks. Where sub-quadratic
+> sequence modeling did succeed, it was **state-space / hybrid** models
+> (Mamba-2, Jamba), not softmax approximation — see
+> [sequence-models-comparison.md](sequence-models-comparison.md).
+>
+> Know these as background and for reading older papers. Do not pick one for
+> a new build without a measured reason.
 
 ### Concept
 
 **Idea:** Approximate softmax attention with linear operations
 - Complexity: O(n × k) where k << n
-- Trade-off: 1-3% accuracy loss
-- Benefit: Can handle very long sequences (> 16k)
+- Trade-off: real accuracy loss, worst on long-range retrieval
+- Benefit: sub-quadratic *compute* at extreme lengths
 
 **Key property:** APPROXIMATE (not exact)
 - Do NOT use if accuracy critical
-- Good for extremely long sequences where exact is impossible
+- Only consider when exact Flash is genuinely compute-bound at your length
+  and you have measured the quality cost
 
 ### Variant 1: Performer
 
@@ -306,8 +348,9 @@ Sequence length > 16k:
 # Standard attention
 Attention(Q, K, V) = softmax(Q K^T) V
 
-# Performer approximation
-φ(Q) ≈ φ(K)^T ≈ softmax(Q K^T)
+# Performer approximation: a random feature map φ(·) such that
+φ(Q) φ(K)^T ≈ softmax(Q K^T)
+# Associativity then lets you avoid the n² product entirely:
 Attention(Q, K, V) ≈ φ(Q) (φ(K)^T V)
 
 # Complexity: O(n × k) where k = feature dimension
@@ -391,17 +434,19 @@ model = Linformer(
 ### Linear Attention Decision
 
 ```
-Need exact attention:
-→ Flash Attention or Sparse Attention (NOT linear)
+Need exact attention (almost always):
+→ FlashAttention at any length; FlexAttention if you need a custom pattern
 
-Sequence > 16k, accuracy critical:
-→ Sparse Attention (Longformer)
+Long context (16k-128k+), accuracy critical:
+→ Still exact FlashAttention + RoPE scaling. This is what production
+  long-context models do. Linear attention is NOT the answer here.
 
-Sequence > 16k, accuracy loss OK:
-→ Performer (better) or Linformer
+Streaming / constant-memory decoding, or genuinely compute-bound at extreme
+length:
+→ SSM or hybrid (Mamba-2, Jamba) — see sequence-models-comparison.md
 
-Sequence > 100k:
-→ State space models (S4, Mamba, not attention)
+Performer / Linformer:
+→ Legacy. Only with a measured accuracy budget and a measured speedup.
 ```
 
 
@@ -544,7 +589,7 @@ Block size = 64 tokens
 - Vertical stripe: Attend to corresponding position in other blocks
 ```
 
-**Used in:** Sparse Transformer (OpenAI), GPT-3
+**Used in:** Sparse Transformer (Child et al., OpenAI, **2019**), GPT-3
 
 ### Multi-Query Attention (MQA)
 
@@ -574,57 +619,59 @@ Block size = 64 tokens
 
 ### By Sequence Length
 
+**The headline: exact attention scales further than most people think.**
+Sequence length is not by itself a reason to leave exact FlashAttention.
+
 ```
-< 2k tokens:
-→ Flash Attention
-   Exact, fast, standard
+Any length, up to 128k+:
+→ Exact FlashAttention (FA-2, or FA-3 on H100-class hardware)
+   + RoPE context scaling (YaRN / NTK-aware) if extending a pretrained model
+   This is what production long-context models actually do.
+   Memory is O(n); only COMPUTE is quadratic.
 
-2k-4k tokens:
-→ Flash Attention
-   Still manageable with modern GPUs
+Need a specific attention PATTERN (sliding window, doc masking, prefix-LM):
+→ FlexAttention `mask_mod` / `score_mod`
+   Still exact, still a fused kernel, no model-family change.
 
-4k-16k tokens:
-→ Sparse Attention (Longformer, BigBird)
-   Exact, designed for documents
-→ OR Flash Attention if batch size = 1
+Compute (not memory) is the measured bottleneck at extreme length:
+→ Sliding-window attention (Mistral-class), or
+→ State-space / hybrid models (Mamba-2, Jamba) for streaming and
+   constant-memory decoding — see sequence-models-comparison.md
+→ Linear attention (Performer/Linformer) only with a measured quality budget
 
-> 16k tokens:
-→ Sparse Attention
-   If task has local structure
-→ Linear Attention (Performer)
-   If accuracy loss OK (1-2%)
-→ State Space Models (S4, Mamba)
-   If sequence > 100k
+Maintaining a deployed Longformer / BigBird:
+→ Parts 3-4 explain them. Legacy for new builds.
 ```
 
 ### By Memory Constraints
 
 ```
 GPU OOM with standard attention:
-1. Try Flash Attention (4x less memory, free lunch)
-2. If still OOM, reduce batch size
-3. If batch size = 1 and still OOM, use sparse attention
-4. Last resort: Linear attention (if accuracy loss OK)
+1. Use Flash Attention (removes the n² score matrix entirely — free lunch)
+2. Reduce batch size / use gradient accumulation
+3. Use AMP (bf16) — roughly halves activation memory
+4. Gradient checkpointing — genuinely useful; it trades compute for
+   activation memory and composes WITH Flash Attention
+5. Shard the model (FSDP / ZeRO) if the weights, not the activations, dominate
 
-DON'T:
-- Gradient checkpointing (slower, use Flash Attention instead)
-- Throwing more GPUs (algorithmic problem, not hardware)
+NOTE: at long context, decode-time memory is usually the KV CACHE, not the
+attention computation. Fix that with GQA/MQA, MLA, or KV-cache quantization —
+not by swapping in an approximate attention.
 ```
 
 ### By Accuracy Requirements
 
 ```
 Must be exact (no approximation):
-→ Flash Attention or Sparse Attention
+→ FlashAttention (any length), or FlexAttention if you need a custom pattern
    Never use linear attention!
 
-Accuracy loss acceptable (1-3%):
-→ Linear Attention (Performer, Linformer)
-   Only for very long sequences (> 16k)
+Accuracy loss acceptable:
+→ Linear Attention (Performer, Linformer) — legacy; measure before adopting
+   The modern sub-quadratic answer is an SSM/hybrid, not softmax approximation
 
 Critical task (medical, legal):
-→ Exact attention only
-   Flash Attention or Sparse Attention
+→ Exact attention only — FlashAttention / FlexAttention
 ```
 
 ### By Task Type
@@ -635,8 +682,8 @@ Classification / Understanding:
    Sequence usually < 2k
 
 Document processing:
-→ Longformer (4096 tokens)
-   Designed for documents
+→ A long-context Transformer with exact FlashAttention (32k-128k+)
+   Longformer/BigBird only if you already run one
 
 Generation (LLM):
 → Flash Attention for training
@@ -746,17 +793,22 @@ class DecoderWithCrossAttention(nn.Module):
 ### Mistake 1: Ignoring Flash Attention
 
 **Symptom:** Training slow, high memory usage
-**Fix:** Always use Flash Attention for < 16k tokens
+**Fix:** Use Flash Attention at every sequence length, not just short ones
 
-### Mistake 2: Using Linear Attention Unnecessarily
+### Mistake 2: Abandoning Exact Attention Because the Sequence Is Long
 
-**Symptom:** 1-3% accuracy loss for no reason
-**Fix:** Use Flash Attention (exact) unless sequence > 16k
+**Symptom:** Reaching for Longformer/Performer at 16k-128k and eating an
+accuracy loss for nothing
+**Fix:** FlashAttention memory is O(n). Exact attention serves 128k+ in
+production. Use FlexAttention if you need a custom mask; only consider
+approximation with a measured quality budget.
 
-### Mistake 3: Gradient Checkpointing Instead of Flash Attention
+### Mistake 3: Assuming Custom Masks Rule Out Flash
 
-**Symptom:** Training 20% slower
-**Fix:** Flash Attention gives memory savings AND speed
+**Symptom:** Falling back to a naive O(n²) implementation for a sliding
+window, document mask, or prefix-LM mask
+**Fix:** FlexAttention (PyTorch 2.5+) compiles arbitrary `mask_mod` /
+`score_mod` into a fused Flash-style kernel
 
 ### Mistake 4: Cross-Attention with Causal Mask
 
@@ -766,7 +818,14 @@ class DecoderWithCrossAttention(nn.Module):
 ### Mistake 5: Accepting O(n²) Memory
 
 **Symptom:** GPU OOM for > 4k tokens
-**Fix:** Use sparse or Flash Attention, don't just add GPUs
+**Fix:** Use Flash Attention, don't just add GPUs
+
+### Mistake 6: Blaming Attention for a KV-Cache Problem
+
+**Symptom:** Long-context *inference* OOMs even with Flash Attention
+**Fix:** At decode time the KV cache dominates, not the attention kernel.
+Use GQA/MQA, MLA, or KV-cache quantization — swapping attention mechanisms
+will not help
 
 
 ## Summary: Quick Reference
@@ -775,15 +834,16 @@ class DecoderWithCrossAttention(nn.Module):
 
 ```
 Sequence length:
-  < 2k → Flash Attention (default)
-  2-4k → Flash Attention
-  4-16k → Longformer (documents) or Flash Attention (batch=1)
-  > 16k → Sparse or Linear Attention
+  Any length → exact FlashAttention (FA-2; FA-3 on H100-class)
+  Extending a pretrained model → + RoPE scaling (YaRN / NTK-aware)
+  Custom mask/bias needed → FlexAttention (still exact, still fused)
+  Legacy only → Longformer / BigBird / Performer / Linformer
 
 Memory constrained:
-  First: Try Flash Attention (4x less memory)
-  Still OOM: Use sparse attention (Longformer)
-  Last resort: Linear attention (accuracy loss)
+  First: Flash Attention (removes the n² score matrix)
+  Then: bf16/AMP, smaller batch + grad accumulation, gradient checkpointing
+  Long-context inference: fix the KV cache (GQA/MQA/MLA, cache quantization)
+  Weights dominate: FSDP / ZeRO sharding
 
 Speed critical:
   Training: Flash Attention (2x faster)
@@ -821,4 +881,7 @@ After mastering this skill:
 - `llm-specialist/context-window-management`: Manage long contexts in LLMs
 - `architecture-design-principles`: Understand broader design trade-offs
 
-**Remember:** Flash Attention is the modern default. Use it unless you have a specific reason not to (> 16k tokens, custom patterns).
+**Remember:** Exact FlashAttention is the modern default at *every* sequence
+length — its memory is O(n), so length alone is never the reason to leave it.
+If you need a custom mask or bias, use FlexAttention rather than an
+approximate mechanism. Sparse and linear attention are legacy for new builds.

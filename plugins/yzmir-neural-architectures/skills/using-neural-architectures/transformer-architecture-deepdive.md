@@ -80,13 +80,13 @@ scores = scores / math.sqrt(d_k)
 ```
 
 **WHY scaling?**
-- Dot products grow with dimension: Var(q · k) = d_k
-- Example: d_k=64 → Random dot products ~ ±64
+- Dot products grow with dimension: Var(q · k) = d_k for unit-variance q, k
+- Example: d_k=64 → std = √64 = **8**, so scores land around ±8 (±16 at 2σ)
 - Large scores → Softmax saturates → Gradients vanish
-- Scaling: Keep scores ~ O(1) regardless of dimension
+- Scaling by 1/√d_k divides by that same 8 → scores back to ~O(1)
 
-**Without scaling:** Softmax([30, 25, 20]) ≈ [0.99, 0.01, 0.00] (saturated!)
-**With scaling:** Softmax([3, 2.5, 2]) ≈ [0.50, 0.30, 0.20] (healthy gradients)
+**Without scaling:** Softmax([8, 4, 0]) ≈ [0.98, 0.02, 0.00] (saturated!)
+**With scaling** (÷ √64 = 8): Softmax([1, 0.5, 0]) ≈ [0.51, 0.31, 0.19] (healthy gradients)
 
 **Step 4: Softmax to get attention weights**
 ```python
@@ -263,8 +263,18 @@ class MultiHeadAttention(nn.Module):
 
 ### Modern Variants: GQA and MQA
 
-**Problem:** K/V caching during inference is memory-intensive
-- LLaMA-2 70B: 8192 × 64 heads × 2 (K + V) = 1M parameters per token cached!
+**Problem:** K/V caching during inference is memory-intensive. The cache holds
+**activations**, not parameters, and its size is:
+
+```
+bytes/token = 2 (K and V) × n_layers × n_kv_heads × head_dim × bytes_per_element
+```
+
+- Hypothetical LLaMA-2 70B *without* GQA (80 layers, 64 KV heads, head_dim 128):
+  2 × 80 × 64 × 128 = 1.31M values/token = **2.5 MB/token** at FP16
+- Actual LLaMA-2 70B *with* GQA (8 KV heads): 2 × 80 × 8 × 128 = 164k
+  values/token = **320 KB/token** at FP16 — an 8× reduction.
+  A single 4k-token sequence still costs ~1.3 GB of KV cache.
 
 **Solution 1: Multi-Query Attention (MQA)**
 - **One** K/V head shared across **all** Q heads
@@ -391,10 +401,16 @@ DeepEP).
 | Training data << model size | ❌ Sparsity hurts when data is the bottleneck |
 | Long-tail / multi-domain data | ✅ Experts can specialize |
 
-**Rule of thumb (2026):** Frontier models are MoE (Mixtral, DeepSeek-V3,
-Qwen2-MoE, GPT-4-class internal models). Most production fine-tunes and
-on-device models are still dense — MoE adds VRAM cost, deployment complexity,
-and serving constraints that aren't worth it below the very-large scale.
+**Rule of thumb (2026):** Frontier models — open and closed — are MoE. The
+open-weights frontier is now the DeepSeek V-series, Zhipu's GLM-5 line,
+Alibaba's Qwen3.x, Moonshot's Kimi K2.x and MiniMax's M-series, all
+large-total/small-active MoE. Most production fine-tunes and on-device models
+are still dense — MoE adds VRAM cost, deployment complexity, and serving
+constraints that aren't worth it below the very-large scale.
+
+**Currency caveat:** the open-MoE leaderboard changes every few weeks and
+different leaderboards disagree. Treat any named "strongest" model here as a
+snapshot; check a current leaderboard before committing to one.
 
 ### Mixtral, DeepSeek-MoE, OLMoE — what's different
 
@@ -402,7 +418,10 @@ and serving constraints that aren't worth it below the very-large scale.
   Standard reference design. Open weights.
 - **DeepSeek-MoE / V2 / V3.** Fine-grained experts (V3: 256 routed + 1 shared
   per layer, 8 active), MLA attention, auxiliary-loss-free load balancing.
-  V3 is 671B total / 37B active. Currently the strongest open-weights MoE.
+  V3 is 671B total / 37B active. The design that set the template the current
+  open-MoE frontier (DeepSeek V4, GLM-5.x, Qwen3.x, Kimi K2.x) still follows:
+  many fine-grained experts, a shared always-on expert, low-rank attention
+  KV compression, and load balancing without an auxiliary loss.
 - **OLMoE 7B (2024).** 64 experts, top-8 routing. Fully open including data
   and training code; the cleanest reference for studying MoE recipes.
 
@@ -415,6 +434,9 @@ and serving constraints that aren't worth it below the very-large scale.
   produces dead experts and broken capacity utilization.
 - **Don't assume MoE is "just a faster Transformer at inference."** Active
   FLOPs are lower; total VRAM is higher. Plan around the cache.
+
+
+## Part 3: Position Encoding
 
 ### Why Position Encoding?
 
@@ -499,21 +521,31 @@ def apply_rotary_pos_emb(x, cos, sin):
 **Simplest modern approach:** Add bias to attention scores (no embeddings!)
 
 ```python
-# Bias matrix: -1 * distance
-# [[0, -1, -2, -3],
-#  [0,  0, -1, -2],
-#  [0,  0,  0, -1],
-#  [0,  0,  0,  0]]
+# Causal ALiBi bias: bias[i][j] = -m * (i - j) for j <= i, -inf for j > i.
+# Query i is penalized by its distance BACK to key j. Lower-triangular:
+# [[  0, -inf, -inf, -inf],
+#  [ -1,    0, -inf, -inf],
+#  [ -2,   -1,    0, -inf],
+#  [ -3,   -2,   -1,    0]]     (shown for slope m = 1)
 
 scores = Q @ K^T / √d_k + alibi_bias
 ```
 
+Each head gets its own slope `m` (a geometric sequence, e.g. 1/2, 1/4, 1/8,
+…), so different heads decay over different ranges.
+
 **Key advantages:**
-- **Best extrapolation** to longer sequences
+- Extrapolates beyond the training length far better than sinusoidal or
+  learned absolute embeddings
 - No positional embeddings (simpler)
 - Per-head slopes (different decay rates)
 
-**Used in:** BLOOM
+**Trade-off:** the linear penalty is a hard recency prior — it actively
+suppresses distant tokens rather than merely encoding their position, which
+hurts tasks that need genuine long-range retrieval.
+
+**Used in:** BLOOM, MPT. **Not the modern default** — see the trend note
+below: RoPE with context scaling won.
 
 ### Position Encoding Selection Guide
 
@@ -521,7 +553,7 @@ scores = Q @ K^T / √d_k + alibi_bias
 |----------|-------------|-----|
 | NLP (variable length) | RoPE (with extension if needed) | Production standard since LLaMA |
 | NLP (fixed length) | Learned embeddings | Adapts to data |
-| Vision (ViT) | 2D learned embeddings or RoPE-2D | Spatial structure |
+| Vision (ViT) | Learned 1D embeddings (original ViT) or RoPE-2D (newer models) | The ViT paper found 2D-aware embeddings gave no gain over plain 1D learned ones |
 | Long sequences (>2k) | RoPE + YaRN / NTK-aware scaling | Extends pretrained context |
 | Legacy/compatibility | Sinusoidal | Original Transformer |
 
@@ -1094,10 +1126,12 @@ Seq2Seq (input ≠ output) → Encoder-decoder (T5-style) or Decoder-only with p
 ### Position Encoding Selection
 
 ```
-NLP (variable length) → RoPE or ALiBi
-NLP (fixed length) → Learned embeddings
-Vision (ViT) → 2D learned embeddings
-Long sequences (> 2k) → ALiBi (best extrapolation)
+NLP (variable length) → RoPE            (production standard since LLaMA)
+NLP (fixed length)    → Learned embeddings
+Vision (ViT)          → Learned embeddings (1D, as in the original ViT)
+                        or RoPE-2D in newer models
+Long sequences (>2k)  → RoPE + YaRN / NTK-aware scaling
+                        (RoPE has won; ALiBi is now a minority choice)
 ```
 
 ### Multi-Head Configuration

@@ -2648,7 +2648,7 @@ print(f"p-value: {p_value:.3f}")  # p ≈ 0.64 (NOT significant!)
 Can't conclude Model B is better from 40 total samples.
 
 Options:
-1. Continue A/B test until 708+ samples per model
+1. Continue A/B test until 681+ samples per model
 2. Accept current model (Model A) if time-constrained
 3. Run longer test (1-2 weeks) for sufficient data
 ```
@@ -3282,11 +3282,11 @@ Why:
 
 ```python
 from evidently import Dataset, DataDefinition, Report
-from evidently.presets import DataDriftPreset, DataSummaryPreset
+from evidently.presets import DataDriftPreset
 
 # Declare column semantics once (replaces ColumnMapping)
 definition = DataDefinition(
-    numerical_columns=["user_age", "drift_score"],
+    numerical_columns=["user_age"],
     categorical_columns=["product_category", "season"],
 )
 
@@ -3294,11 +3294,11 @@ reference = Dataset.from_pandas(training_data, data_definition=definition)
 current = Dataset.from_pandas(production_data, data_definition=definition)
 
 # Compare training data vs production data
-report = Report([DataDriftPreset(), DataSummaryPreset()])
-snapshot = report.run(current_data=current, reference_data=reference)
+report = Report([DataDriftPreset()])
+result = report.run(current_data=current, reference_data=reference)
 
-# snapshot.dict() / snapshot.json() for programmatic access,
-# snapshot.save_html("drift.html") for the report
+# `result` exposes the run's findings for programmatic access and HTML export;
+# check the method names for your pinned version.
 
 # Results:
 {

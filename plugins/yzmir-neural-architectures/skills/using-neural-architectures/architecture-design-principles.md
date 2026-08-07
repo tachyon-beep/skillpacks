@@ -212,7 +212,9 @@ class SimpleTransformer(nn.Module):
 **When NOT to use:**
 - ❌ Small datasets (< 10k samples, use RNN or MLP)
 - ❌ Strong structural priors available (images → CNN)
-- ❌ Very long sequences (> 16k tokens, use sparse attention)
+- ⚠️ Very long sequences — still fine with exact FlashAttention (O(n) memory)
+  up to 128k+; only the *compute* is quadratic. See
+  [attention-mechanisms-catalog.md](attention-mechanisms-catalog.md)
 - ❌ Low-latency requirements (RNN faster)
 
 **Strengths:**
@@ -283,7 +285,9 @@ START
 │  ├─ YES → Check sequence length
 │  │   ├─ < 100 timesteps → LSTM/GRU
 │  │   ├─ 100-4000 tokens → Transformer
-│  │   └─ > 4000 tokens → Sparse Transformer (Longformer)
+│  │   └─ > 4000 tokens → Transformer + FlashAttention + RoPE scaling
+│  │                       (exact attention serves 128k+; SSM/hybrid only
+│  │                        for streaming / constant-memory decode)
 │  └─ NO → Continue
 │
 ├─ Is data graph-structured (molecules, social networks)?
@@ -428,17 +432,24 @@ class ResidualBlock(nn.Module):
 # Even if ∂F/∂x ≈ 0, gradient flows through identity path
 ```
 
-**Results:**
+**Results** (He et al. 2016, CIFAR-10 test error — the degradation
+experiment; lower is better):
 ```python
-# Without skip connections:
-20-layer plain: 85% accuracy
-50-layer plain: 78% accuracy (worse!)
+# Without skip connections (plain nets):
+20-layer plain: ≈ 9.0% error
+56-layer plain: ≈ 12.5% error   # DEEPER IS WORSE — the degradation problem
 
 # With skip connections (ResNet):
-20-layer ResNet: 87% accuracy
-50-layer ResNet: 92% accuracy (better!)
-152-layer ResNet: 95% accuracy (even better!)
+20-layer ResNet:  8.75% error
+56-layer ResNet:  6.97% error   # deeper now helps
+110-layer ResNet: 6.43% error
 ```
+
+The point is not the absolute numbers but the *sign flip*: without residual
+connections, adding depth made the network worse even on training loss — an
+optimization failure, not overfitting. (On ImageNet the same pack reports
+ResNet-152 at 78.3% top-1; see
+[cnn-families-and-selection.md](cnn-families-and-selection.md).)
 
 **Rule**: For networks > 10 layers, ALWAYS use skip connections.
 
@@ -536,29 +547,68 @@ model = ResNet18()
 **Rule**: Balance depth and width. Standard pattern: 12-50 layers, 64-512 channels.
 
 
-## Principle: Match Capacity to Data Size
+## Principle: Match Capacity to Data — and to How You Initialize
 
 **Capacity = # of learnable parameters**
 
-### Parameter Budget:
+### There is no valid parameters-to-samples ratio
+
+A persistent myth says parameters must stay below some fraction of the
+dataset size (e.g. "0.01–0.1× samples"). **Do not use a ratio rule.** It is
+contradicted by essentially every model in production:
 
 ```python
-# Rule of thumb: parameters should be 0.01-0.1× dataset size
-
-# Example 1: MNIST (60,000 images)
-# Budget: 600 - 6,000 parameters
-# Simple CNN: 60,000 parameters (10×) → Works, but might overfit
-# LeNet: 60,000 parameters → Classic, works well
-
-# Example 2: ImageNet (1.2M images)
-# Budget: 12,000 - 120,000 parameters
-# ResNet-50: 25M parameters (200×) → Works (aggressive augmentation helps)
-
-# Example 3: Tabular (100 samples, 20 features)
-# Budget: 1 - 10 parameters
-# Linear: 21 parameters → Perfect fit!
-# MLP: 1,000 parameters → Overfits horribly
+# LeNet-5:    ~60k params / 60k MNIST images        = 1×      → works well
+# ResNet-50:  25M params / 1.2M ImageNet images     = 21×     → works well
+# ViT-L/16:   304M params / 1.28M ImageNet images   = 237×    → SOTA when pretrained
+# LLaMA fine-tune: 7B params / 5k instructions      = 1.4M×   → routine, works
 ```
+
+Classical capacity counting does not predict deep-network generalization.
+Overparameterized networks are the norm, and the *double descent* /
+"benign overfitting" literature shows test error can keep improving past the
+interpolation threshold. A ratio-based validator would flag nearly every
+model above as CRITICAL, which tells you the rule is wrong, not the models.
+
+**What actually governs generalization**, in rough order of strength:
+
+| Factor | Effect |
+|--------|--------|
+| **Pretrained vs random init** | Dominant. A pretrained backbone fine-tuned on 2k images behaves like a far smaller hypothesis class; the same architecture from scratch on 2k images overfits hard. |
+| **Regularization + augmentation** | Weight decay, dropout/stochastic depth, mixup/RandAugment, early stopping. This — not parameter count — is how large models are fit to small data. |
+| **Label noise & task difficulty** | Noisy labels let a big model memorize; clean labels are far more forgiving. |
+| **Parameter count** | Weakest of the four, and only bites when training from scratch with little data and little regularization. |
+
+### The two regimes that actually matter
+
+**Fine-tuning a pretrained model (the 2026 default).** Parameter count is
+essentially unconstrained by dataset size. Choose the backbone by
+compute/latency budget, not by a ratio.
+
+- < 1k labels → linear probe / frozen-feature head, or LoRA-style PEFT
+- 1k–10k labels → fine-tune a small-to-medium backbone, freeze early layers
+- > 10k labels → full fine-tune of whatever backbone fits your budget
+
+**Training from scratch.** This is where data scarcity genuinely bites, and
+the honest threshold is an **absolute sample count**, not a ratio:
+
+- < 1k samples → don't train a deep net from scratch. Use classical ML
+  (linear / gradient boosting) or a pretrained backbone.
+- 1k–50k samples → possible for small CNNs with heavy augmentation, but a
+  pretrained backbone will almost always beat it. Prefer pretraining.
+- 50k–1M samples → from-scratch training of standard architectures is
+  reasonable (this is the CIFAR / ImageNet-subset regime).
+- \> 1M samples → from-scratch training of large models is reasonable; this
+  is where ViT-class models stop needing external pretraining.
+
+**Data-scarcity warning still applies** — it just isn't a ratio. Small
+*absolute* sample counts with a randomly-initialized deep model is the real
+failure mode, and pretraining, not shrinking, is the first fix.
+
+### Diagnose empirically, don't predict from a ratio
+
+The train/val gap is ground truth. Measure it; don't forecast it from a
+parameter count.
 
 ### Overfitting Detection:
 
@@ -589,7 +639,9 @@ train_acc = 60%, val_acc = 58%  # Both low → UNDERFITTING!
 # Order: Try (2) first (cheapest), then (1), then (3)
 ```
 
-**Rule**: Match parameters to data size. Start small, increase capacity only if underfitting.
+**Rule**: There is no parameters-to-samples ratio to satisfy. Prefer a
+pretrained backbone, regularize, then let the measured train/val gap — not a
+parameter count — tell you whether to add or remove capacity.
 
 
 ## Principle: Design for Compute Constraints
@@ -606,25 +658,57 @@ train_acc = 60%, val_acc = 58%  # Both low → UNDERFITTING!
 # 1. Model parameters (FP32): params × 4 bytes
 # 2. Gradients: params × 4 bytes
 # 3. Optimizer states (Adam): params × 8 bytes (2× weights)
-# 4. Activations: batch_size × feature_maps × spatial_size × 4 bytes
-
-# Example: ResNet-50
-params = 25M
-memory_params = 25M × 4 = 100 MB
-memory_gradients = 100 MB
-memory_optimizer = 200 MB
-memory_activations = batch_size × 64 × 7×7 × 4 ≈ batch_size × 12 KB
-
-# Total (batch=32): 100 + 100 + 200 + 0.4 = 400 MB
-# Fits easily on 4GB GPU!
-
-# Example: GPT-3 (175B parameters)
-memory_params = 175B × 4 = 700 GB
-memory_total = 700 + 700 + 1400 = 2800 GB = 2.8 TB!
-# Requires 35×A100 (80GB each)
+# 4. Activations: SUM over EVERY layer of its saved output tensor,
+#    × batch_size × 4 bytes  ← this is the part people get wrong
 ```
 
-**Rule**: Calculate memory before training. Don't design models that don't fit.
+**The activation term dominates, and it is a sum over layers.** Autograd
+retains a tensor for essentially every op it must backprop through — each
+conv output, each BatchNorm output, each non-inplace ReLU — not just the
+final feature map. Estimating from the last layer alone understates training
+memory by two to three orders of magnitude.
+
+```python
+# Correct method: hook every leaf module and sum its output elements.
+import torch, torchvision
+
+model = torchvision.models.resnet50()
+total = 0
+def hook(mod, inp, out):
+    global total
+    if torch.is_tensor(out):
+        total += out.numel()
+for mod in model.modules():
+    if not list(mod.children()):
+        mod.register_forward_hook(hook)
+model(torch.randn(1, 3, 224, 224))
+# total ≈ 32.0M elements per image
+```
+
+```python
+# Example: ResNet-50, batch 32, 224×224, FP32, Adam
+params            = 25.6M
+memory_params     = 25.6M × 4  = 102 MB
+memory_gradients  = 102 MB
+memory_optimizer  = 205 MB
+# Activations, measured per image (conv 11.1M + BN 11.1M + ReLU 9.6M + pool):
+memory_activations = 32.0M elements × 4 bytes × 32 = 4.10 GB
+#   (final feature map alone is 7×7×2048 = 100k elements = 0.4 MB — 0.01%
+#    of the real total. That is why the last-layer estimate is useless.)
+
+# Total (batch=32): 0.10 + 0.10 + 0.20 + 4.10 ≈ 4.5 GB
+# Does NOT fit a 4GB GPU. Options: batch 16 (≈2.5 GB), AMP/bf16 (~halves
+# activations), gradient checkpointing (trades compute for ~√n activations).
+
+# Example: GPT-3 (175B parameters) — here the WEIGHT terms dominate instead
+memory_params = 175B × 4 = 700 GB
+memory_total  = 700 + 700 + 1400 = 2800 GB = 2.8 TB (before activations)
+# Requires 35×A100 (80GB each) just for optimizer state — hence ZeRO/FSDP.
+```
+
+**Rule**: Calculate memory before training, and count activations per layer.
+For CNNs at normal batch sizes, activations — not weights — set the budget;
+for very large models the weight/optimizer terms take over.
 
 ### Latency Budget:
 
@@ -745,19 +829,21 @@ for name, param in model.named_parameters():
 ```python
 train_acc = 99%, val_acc = 70%  # 29% gap → Overfitting
 
-# Check parameter/data ratio:
-num_params = sum(p.numel() for p in model.parameters())
-data_size = len(train_dataset)
-ratio = num_params / data_size
-
-# If ratio > 1: Model has more parameters than data points!
+# The GAP is the diagnosis. Do NOT compute a parameter/data ratio and treat
+# it as evidence — overparameterization is normal and does not by itself
+# predict this gap. Check instead:
+#   - Is the backbone pretrained, or randomly initialized?
+#   - Is there augmentation, weight decay, dropout at all?
+#   - How many ABSOLUTE training samples are there?
+#   - Are train and val drawn from the same distribution (leakage/split bug)?
 ```
 
 **Solutions (in order):**
-1. Reduce capacity (fewer layers/channels)
-2. Add dropout / weight decay
-3. Data augmentation
+1. Use / switch to a pretrained backbone (biggest single lever)
+2. Data augmentation
+3. Add dropout / weight decay, early stopping
 4. Collect more data
+5. Reduce capacity — last, not first
 
 ### Problem 3: Underfitting (train and val both low)
 
@@ -824,9 +910,11 @@ Before finalizing an architecture:
 - Not too shallow and wide (under-utilizes depth)
 - Standard: 12-50 layers, 64-512 channels
 
-### ☐ Match capacity to data size
-- Parameters ≈ 0.01-0.1× dataset size
-- Monitor train/val gap (overfitting indicator)
+### ☐ Match capacity to data — via init and regularization, not a ratio
+- No parameters-to-samples ratio to satisfy; overparameterization is normal
+- Pretrained backbone first; regularize + augment second; shrink last
+- From scratch, the risk is a small ABSOLUTE sample count (<10k), not a ratio
+- Monitor train/val gap (the actual overfitting indicator)
 
 ### ☐ Respect compute constraints
 - Memory: Model + gradients + optimizer + activations < VRAM
@@ -944,7 +1032,7 @@ model = ResNet18()  # Correct inductive bias
 
 4. **Depth-width balance**: Not too deep+narrow (bottleneck) or too shallow+wide (under-utilizes depth)
 
-5. **Capacity**: Match parameters to data size (0.01-0.1× dataset size)
+5. **Capacity**: No parameters-to-samples ratio — pretrained init and regularization govern generalization; judge by the measured train/val gap
 
 6. **Constraints**: Design for available memory, latency, throughput
 

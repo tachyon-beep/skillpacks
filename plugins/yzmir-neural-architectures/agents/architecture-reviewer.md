@@ -146,20 +146,36 @@ grep -rn "ReLU\|GELU\|LeakyReLU\|Tanh\|Sigmoid" --include="*.py"
 
 ### 6. Capacity vs Data Check
 
-If dataset size is known:
+**Never flag on a parameters-to-samples ratio.** Overparameterization is
+normal and works — ResNet-50 is 21× ImageNet's sample count, a fine-tuned 7B
+LLM is ~10⁶× its instruction set. A ratio threshold would mark nearly every
+correct model CRITICAL, so it is not a finding.
+
+What to actually check, if dataset size is known:
 
 ```python
-# Calculate parameter-data ratio
 num_params = sum(p.numel() for p in model.parameters())
 dataset_size = len(train_dataset)
-ratio = num_params / dataset_size
 
-# Thresholds
-# > 1.0: CRITICAL - certain overfitting
-# > 0.1: WARNING - likely overfitting
-# 0.01-0.1: GOOD
-# < 0.01: May underfit
+# Report the ratio as CONTEXT only, never as a verdict:
+#   f"{num_params:,} params / {dataset_size:,} samples"
+
+# The one genuine red flag — all three must hold:
+#   1. randomly initialized (no pretrained=True / no loaded checkpoint), AND
+#   2. dataset_size < 10_000 (ABSOLUTE count, not a ratio), AND
+#   3. no augmentation / weight decay / dropout in the pipeline
+# → WARNING: "from scratch on a small dataset with no regularization"
+#   Fix order: pretrained backbone → augmentation + weight decay →
+#              only then reduce capacity.
+
+# dataset_size < 1_000 and randomly initialized
+# → CRITICAL: prefer classical ML or a frozen-feature linear probe.
 ```
+
+**Ground truth is the measured train/val gap**, not any static count. If
+training logs exist, read them: a large gap means regularize/augment/pretrain;
+both metrics low means underfitting. Ask for the gap before asserting
+overfitting.
 
 ## Common Anti-Patterns
 
@@ -170,8 +186,9 @@ ratio = num_params / dataset_size
 | 8-channel bottleneck | Min channels < 16 | High | Increase width |
 | No normalization | No BatchNorm/LayerNorm | Medium | Add after layers |
 | No activation | Missing ReLU/GELU | Critical | Add nonlinearities |
-| 100M params, 1k samples | ratio > 100 | Critical | Smaller model |
-| VGG in 2025 | Using VGG architecture | Medium | Use EfficientNet |
+| Deep net from scratch on <1k samples | No pretrained weights + tiny dataset | Critical | Pretrained backbone, linear probe, or classical ML |
+| From scratch on <10k samples, no augmentation | No transforms / weight decay | Medium | Pretrain, then augment; shrink last |
+| VGG as a new-build backbone | Using VGG architecture | Medium | Use ConvNeXt v2 / EfficientNetV2 |
 
 ## Review Process
 
@@ -242,9 +259,11 @@ Apply each check from the checklist:
 
 ### Capacity Analysis
 - Parameters: [count]
-- Dataset: [size if known]
-- Ratio: [params/data]
-- Assessment: [OK/Warning/Critical]
+- Dataset: [absolute size if known]
+- Initialization: [pretrained checkpoint / random]
+- Regularization present: [augmentation, weight decay, dropout — yes/no]
+- Measured train/val gap: [from logs, or "not available — cannot assert overfitting"]
+- Assessment: [OK / Warning / Critical — never based on a params:samples ratio]
 ```
 
 ## Cross-Pack Discovery
@@ -255,12 +274,12 @@ For issues beyond architecture:
 import glob
 
 # Training issues
-training_pack = glob.glob("plugins/yzmir-training-optimization/plugin.json")
+training_pack = glob.glob("plugins/yzmir-training-optimization/.claude-plugin/plugin.json")
 if not training_pack:
     print("Recommend: yzmir-training-optimization for training configuration")
 
 # Implementation issues
-pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/plugin.json")
+pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/.claude-plugin/plugin.json")
 if not pytorch_pack:
     print("Recommend: yzmir-pytorch-engineering for PyTorch patterns")
 ```

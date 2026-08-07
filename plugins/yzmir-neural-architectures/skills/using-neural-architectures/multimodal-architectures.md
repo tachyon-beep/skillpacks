@@ -35,7 +35,7 @@ they answer different questions:
    image, write text about it." → take a frozen pretrained LLM and a frozen
    pretrained vision encoder, train only a small bridge between them. The
    dominant production recipe for vision-language assistants.
-3. **Native multimodal (Gemini-style, Chameleon, NaVL family).** Train one
+3. **Native multimodal (Gemini-style, Chameleon, NVLM-class).** Train one
    Transformer end-to-end on interleaved tokens from multiple modalities.
    More expensive, often higher ceiling.
 
@@ -140,9 +140,17 @@ to language semantics. A trivial 2-layer MLP is enough to map it into the
 LLM's input embedding space. You get a competitive vision-language model for
 ~$1k of fine-tuning compute.
 
-**This is the modern default recipe.** Idefics3, Qwen-VL (early variants),
-InternVL, the Llama 3.2-V family, and many domain VLMs are all variations on
-the LLaVA template.
+**This is the modern default recipe.** Idefics2/Idefics3 (SigLIP-SO400M +
+a pixel-shuffle/perceiver connector, visual tokens concatenated into the
+input sequence — **fully autoregressive, not cross-attention**), Qwen-VL
+(early variants), InternVL, PaliGemma, and many domain VLMs are all
+variations on the LLaVA template.
+
+**Counter-example worth knowing:** **Llama 3.2-Vision** is *not* a LLaVA-style
+MLP projector. It bolts vision on via **cross-attention adapter layers**
+inserted into the frozen text model (Flamingo-lineage), which is why its
+text-only behaviour is preserved exactly and why its vision weights are a
+separate adapter stack. Don't assume "open VLM ⇒ MLP projector."
 
 ### 2.2 Q-Former — BLIP-2
 
@@ -163,18 +171,25 @@ in practice by:
 - Plain MLP projectors (LLaVA family — simpler, often matches Q-Former when
   data is sufficient)
 - Resampling schemes / Perceiver-style fixed-token outputs (used in
-  Flamingo, Idefics, Mini-CPM-V) when token-budget pressure remains.
+  Flamingo, Idefics1, MiniCPM-V) when token-budget pressure remains.
 
 Worth knowing as a reference design and for low-token-budget settings.
 
-### 2.3 Cross-attention / Perceiver-Resampler — Flamingo / Idefics
+### 2.3 Cross-attention / Perceiver-Resampler — Flamingo lineage
 
 **Papers:**
 - Alayrac et al. — *Flamingo: a Visual Language Model for Few-Shot Learning*
   (NeurIPS 2022)
-- Laurençon et al. — *OBELICS: An Open Web-Scale Filtered Dataset of
-  Interleaved Image-Text Documents* and the Idefics 1/2/3 model family
-  (2023-2024)
+- Laurençon et al. — *OBELICS* (2023) and **Idefics1**, the open Flamingo
+  reproduction
+- Llama 3.2-Vision (Meta, 2024) — the most widely deployed current example
+
+**Careful with the Idefics naming.** Only **Idefics1** is Flamingo-style
+cross-attention. **Idefics2 and Idefics3 switched to a fully autoregressive
+design** — SigLIP-SO400M encoder, a pixel-shuffle connector, visual tokens
+concatenated into the LLM's input sequence (§2.1 above). Treating Idefics3 as
+a cross-attention model is a common and consequential mistake: it changes
+which connector you train and how you serve it.
 
 **Architecture:**
 
@@ -204,7 +219,7 @@ self-attention layers.
 |------|--------|
 | Best general single-image VL assistant, smallest budget | LLaVA-NeXT / LLaVA-OneVision style: SigLIP + MLP + open LLM |
 | High-res images / OCR-heavy tasks | LLaVA-NeXT or InternVL with patch-tiling |
-| Multi-image / interleaved docs | Idefics3-style cross-attention (Flamingo lineage) |
+| Multi-image / interleaved docs | Idefics3-style autoregressive (SigLIP + pixel-shuffle connector, interleaved image/text tokens); or a cross-attention adapter (Flamingo / Llama 3.2-V lineage) if you must leave the text model's weights untouched |
 | Token-budget-constrained edge | Q-Former or Perceiver-Resampler to fixed token count |
 | You already have great in-domain text data and a frozen open LLM | LLaVA-style MLP projector, fine-tune end-to-end on instruction data |
 
@@ -309,7 +324,8 @@ You need a multimodal system. What's the primary task?
 ├─ Visual question answering / image-grounded chat
 │  └─ Use bolt-on VL recipe (LLaVA family)
 │     ├─ Single image, general → LLaVA-NeXT / LLaVA-OneVision
-│     ├─ Multi-image / interleaved docs → Idefics3 (Flamingo lineage)
+│     ├─ Multi-image / interleaved docs → Idefics3 (autoregressive, SigLIP
+│     │                                    + pixel-shuffle connector)
 │     ├─ OCR / chart / document-heavy → patch-tiling LLaVA-NeXT or InternVL
 │     └─ Token-budget constrained → BLIP-2 / Q-Former or Perceiver-Resampler
 │

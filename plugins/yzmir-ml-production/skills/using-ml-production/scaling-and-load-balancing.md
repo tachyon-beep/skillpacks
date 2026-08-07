@@ -1040,11 +1040,13 @@ class LoadBalancer:
         }
 
 # Example usage: FastAPI with load balancing
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import httpx
 
-app = FastAPI()
+# NOTE: `app` is created further down, after `lifespan` is defined, so the
+# health-check loop starts inside the event loop rather than at import time.
 
 class GenerateRequest(BaseModel):
     prompt: str

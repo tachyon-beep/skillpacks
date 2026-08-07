@@ -6,7 +6,8 @@ Sequence modeling has evolved rapidly:
 - 2014-2017: LSTM/GRU dominated
 - 2017+: Transformers revolutionized the field
 - 2018+: TCN emerged as efficient alternative
-- 2021-2022: Sparse Transformers, S4 for very long sequences
+- 2021-2022: Sparse Transformers, S4 for very long sequences (since largely
+  superseded by exact FlashAttention + RoPE context scaling)
 - 2023-2024: Linear-time sequence models — Mamba / Mamba-2, RWKV-5/6,
   RetNet, Hyena, Jamba (Transformer + Mamba hybrid)
 
@@ -40,7 +41,7 @@ DO NOT use for:
 
 | Characteristic | Question | Impact |
 |----------------|----------|--------|
-| **Sequence Length** | Typical length? | Short (< 100) → LSTM/CNN, Medium (100-1k) → Transformer, Long (> 1k) → Sparse Transformer/S4 |
+| **Sequence Length** | Typical length? | Short (< 100) → LSTM/CNN, Medium (100-1k) → Transformer, Long (> 1k) → Transformer + FlashAttention (exact scales far); SSM/hybrid for streaming |
 | **Data Type** | Language, time series, audio? | Language → Transformer, Time series → TCN/Transformer, Audio → Specialized |
 | **Data Volume** | Training examples? | Small (< 10k) → LSTM/TCN, Large (> 100k) → Transformer |
 | **Latency** | Real-time needed? | Yes → TCN/LSTM, No → Transformer |
@@ -61,8 +62,8 @@ START: What's your primary constraint?
 │  │  └─ Time series → Transformer or TCN
 │  │
 │  ├─ Long (1000-10000 steps)
-│  │  ├─ Sparse Transformer (Longformer, BigBird)
-│  │  └─ Hierarchical models
+│  │  ├─ Transformer + exact FlashAttention (still the default here)
+│  │  └─ Hierarchical models if the task is genuinely chunkable
 │  │
 │  └─ Very Long (> 10000 steps)
 │     ├─ Modern: Mamba-2 or Jamba-style hybrid (constant-memory inference)
@@ -498,7 +499,7 @@ Small dataset (< 10k):
 → BiLSTM or 1D CNN (simple, effective)
 
 Large dataset (> 10k):
-→ DistilBERT (smaller Transformer, 40M params)
+→ DistilBERT (smaller Transformer, 66M params)
 → Or BiLSTM if latency critical
 ```
 
@@ -548,9 +549,10 @@ Multivariate:
 
 **Long sequences (> 1000 steps):**
 ```
-→ Sparse Transformer (Informer for time series)
+→ Transformer + FlashAttention (exact; the default)
+→ Time-series-specific: Informer / PatchTST
 → Hierarchical models (chunk + aggregate)
-→ State Space Models (S4)
+→ State Space Models (S4/Mamba-2) for very long horizons or streaming
 ```
 
 
@@ -640,7 +642,7 @@ Winner: Transformer
 
 ## Common Pitfalls
 
-### Pitfall 1: Using LSTM in 2025 Without Considering Modern Alternatives
+### Pitfall 1: Defaulting to LSTM Without Considering Modern Alternatives
 **Symptom:** Defaulting to LSTM for all sequence tasks
 
 **Why it's wrong:** Transformers (language) and TCN (time series) often better
@@ -653,7 +655,9 @@ Winner: Transformer
 
 **Why it's wrong:** O(n²) memory explodes
 
-**Fix:** Use Sparse Transformer (Longformer, BigBird) or hierarchical approach
+**Fix:** Use FlashAttention — its memory is O(n), so long sequences do not
+explode. Add gradient checkpointing / bf16 if still tight; hierarchical
+chunking only if the task is genuinely chunkable.
 
 
 ### Pitfall 3: Not Trying TCN for Time Series
@@ -677,7 +681,7 @@ Winner: Transformer
 
 **Why it's wrong:** Architecture effectiveness varies dramatically with length
 
-**Fix:** Match architecture to sequence length (short → LSTM/CNN, long → Sparse Transformer)
+**Fix:** Match architecture to sequence length (short → LSTM/CNN, long → Transformer with exact FlashAttention)
 
 
 ## Evolution Timeline
@@ -689,13 +693,16 @@ Winner: Transformer
 → Vanishing gradient problem
 → Can't learn long dependencies
 
-2014: LSTM (Hochreiter & Schmidhuber)
+1997: LSTM (Hochreiter & Schmidhuber)
 → Gates solve vanishing gradient
-→ Became standard for sequences
+→ Sat largely unused until GPUs + data made deep RNNs trainable;
+  became the standard for sequences through ~2014-2017
 
-2014: GRU
+2014: GRU (Cho et al.)
 → Simplified LSTM
 → Similar performance, fewer parameters
+→ Same year seq2seq + attention (Sutskever et al.; Bahdanau et al.) put
+  RNNs at the center of NLP
 
 2017: Transformer (Attention Is All You Need)
 → Self-attention replaces recurrence
@@ -707,7 +714,7 @@ Winner: Transformer
 → Often better than LSTM for time series
 → Underrated alternative
 
-2020: Sparse Transformers
+2019-2020: Sparse Transformers (Child et al. 2019; Longformer/BigBird 2020)
 → Reduce quadratic complexity
 → Enable longer sequences
 
@@ -725,7 +732,10 @@ Winner: Transformer
 
 Current (2026):
 - NLP: Transformer dominant (BERT, GPT, LLaMA, Mistral, Gemma)
-- Long context (>100k tokens): Mamba-2 or Mamba/Transformer hybrid
+- Long context (>100k tokens): still **Transformers** — exact FlashAttention
+  + RoPE scaling is what every frontier long-context model runs. SSMs and
+  SSM/Transformer hybrids (Mamba-2, Jamba) are credible and shipping, but
+  they are the minority, not the default.
 - Time Series: Transformer or TCN; Mamba for very long horizons
 - Audio: Conformer (speech), SSMs for raw waveform
 - Edge / streaming: Mamba (constant memory) or quantized small Transformer
@@ -750,7 +760,8 @@ Based on answers:
 → Language + small data → BiLSTM or DistilBERT
 → Time series + speed → TCN
 → Time series + accuracy + large data → Transformer
-→ Very long sequences → Sparse Transformer or S4
+→ Very long sequences → Transformer + FlashAttention + RoPE scaling
+                        (Mamba-2 / hybrid for streaming or constant memory)
 → Edge deployment → TCN or LSTM
 → Real-time latency → TCN
 ```
@@ -786,8 +797,8 @@ Based on answers:
 | Short text (< 50 tokens) | BiLSTM, DistilBERT | 1D CNN | Full BERT (overkill) |
 | Long text (> 512 tokens) | Longformer, BigBird | Hierarchical | Standard BERT (memory) |
 | Time series (< 1k steps) | TCN, Transformer | LSTM | Basic RNN |
-| Time series (> 1k steps) | Sparse Transformer, Mamba-2 | Hierarchical, S4 | Standard Transformer |
-| Very long context LLM (>100k tok) | Mamba-2 or Jamba hybrid | Sparse / sliding-window Transformer | Vanilla Transformer (KV cache) |
+| Time series (> 1k steps) | Transformer + FlashAttention, PatchTST/Informer | Mamba-2, hierarchical | Naive O(n²) attention implementations |
+| Very long context LLM (>100k tok) | Transformer + FlashAttention + RoPE scaling (what production does) | Mamba-2 / Jamba hybrid if you need constant-memory streaming decode | Approximate (linear) attention |
 | Small dataset (< 10k) | LSTM, TCN | Simple models | Transformer (overfits) |
 | Large dataset (> 100k) | Transformer | TCN | LSTM (plateaus) |
 | Edge deployment | TCN, LSTM | Quantized Transformer | Large Transformer |
@@ -797,7 +808,7 @@ Based on answers:
 1. **Don't default to LSTM** (outdated for most tasks)
 2. **Transformer for language** (current standard, if data sufficient)
 3. **TCN for time series** (fast, effective, underrated)
-4. **Match to sequence length** (short → LSTM/CNN, long → Sparse Transformer)
+4. **Match to sequence length** (short → LSTM/CNN, long → Transformer with exact FlashAttention)
 5. **Consider modern alternatives** (don't stop at LSTM vs Transformer)
 
 

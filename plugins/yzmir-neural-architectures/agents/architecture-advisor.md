@@ -88,8 +88,10 @@ Questions:
 
 ### Phase 3: Apply Constraints
 
-**Dataset size constraints:**
-- <1,000 samples: Linear/simple MLP
+**Dataset size constraints** (assuming a **pretrained** backbone — the 2026
+default; shift one size down and add heavy augmentation if training from
+scratch):
+- <1,000 samples: frozen features + linear probe, or classical ML
 - 1,000-10,000: Small models (ResNet-18, EfficientNet-B0)
 - 10,000-100,000: Medium models (ResNet-50, EfficientNet-B2)
 - >100,000: Large models OK (EfficientNet-B4, ViT)
@@ -110,23 +112,31 @@ Questions:
 
 | Trendy Choice | Challenge With |
 |---------------|---------------|
-| "Use ViT" | "Dataset size? ViT needs >100k images. CNN better for smaller." |
+| "Use ViT" | "Training from scratch or fine-tuning? From scratch a ViT wants >1M images; a *pretrained* ViT (DINOv2/SigLIP) fine-tunes well below 100k and often beats a CNN there." |
 | "Use Transformer" | "Sequence length? LSTM better for <100 tokens, faster training." |
-| "Use Diffusion" | "Real-time needed? GAN is 100× faster (1 pass vs 50-1000)." |
+| "Use Diffusion" | "Real-time needed? Reach for a *distilled* diffusion model first (LCM / SDXL-Turbo / consistency models: 1-4 steps, real-time on one consumer GPU). A GAN is a 1-step alternative, not a 100× win over modern distilled diffusion." |
 | "Use latest model" | "Proven architecture often better. Match to YOUR constraints." |
 
 **Counter-narrative**: "New ≠ better. Match architecture to YOUR specific constraints."
 
 ## Capacity Matching
 
-**Prevent overfitting by matching capacity:**
+**Do NOT use a parameters-to-samples ratio.** Overparameterization is the
+norm and works: ResNet-50 is 21× ImageNet's sample count, a fine-tuned 7B
+LLM is ~10⁶× its instruction set. A ratio gate would flag nearly every
+production model as critical.
+
+What to reason about instead:
 
 ```
-Parameters / Samples ratio:
-- > 1.0: CRITICAL - more params than data points
-- > 0.1: WARNING - likely overfitting
-- 0.01-0.1: GOOD - balanced
-- < 0.01: Consider larger model if underfitting
+1. Pretrained or from scratch?   ← dominant factor
+2. Regularization + augmentation present?
+3. ABSOLUTE sample count (only bites when training from scratch):
+   - <1k from scratch    → don't; use classical ML or a frozen-feature probe
+   - 1k-50k from scratch → possible with heavy augmentation, but a pretrained
+                           backbone will almost always beat it
+   - >100k from scratch  → reasonable
+4. Measured train/val gap ← ground truth; ask for it before advising
 ```
 
 When dataset is small:
@@ -182,17 +192,17 @@ After architecture selection, guide to complementary packs:
 import glob
 
 # For training the chosen architecture
-training_pack = glob.glob("plugins/yzmir-training-optimization/plugin.json")
+training_pack = glob.glob("plugins/yzmir-training-optimization/.claude-plugin/plugin.json")
 if not training_pack:
     print("Recommend: yzmir-training-optimization for training configuration")
 
 # For PyTorch implementation
-pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/plugin.json")
+pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/.claude-plugin/plugin.json")
 if not pytorch_pack:
     print("Recommend: yzmir-pytorch-engineering for implementation details")
 
 # For production deployment
-ml_prod = glob.glob("plugins/yzmir-ml-production/plugin.json")
+ml_prod = glob.glob("plugins/yzmir-ml-production/.claude-plugin/plugin.json")
 if not ml_prod:
     print("Recommend: yzmir-ml-production for quantization/serving")
 ```

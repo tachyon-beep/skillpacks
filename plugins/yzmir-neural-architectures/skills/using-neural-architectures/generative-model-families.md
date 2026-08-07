@@ -216,9 +216,14 @@ min_G max_D V(D, G) = E[log D(x)] + E[log(1 - D(G(z)))]
 4. **Hyperparameter sensitivity**: Learning rates critical
 
 **Solutions:**
-- Spectral normalization (StyleGAN2)
-- Progressive growing (start low-res, increase)
-- Minibatch discrimination (penalize lack of diversity)
+- Spectral normalization on the discriminator (SN-GAN, Miyato et al. 2018;
+  also used in BigGAN)
+- R1 gradient penalty on the discriminator (StyleGAN / StyleGAN2 use this,
+  *not* spectral norm) or WGAN-GP's gradient penalty
+- Weight demodulation + path-length regularization (StyleGAN2's actual
+  stabilizers)
+- Progressive growing (start low-res, increase — ProGAN / StyleGAN)
+- Minibatch discrimination / minibatch stddev (penalize lack of diversity)
 - Wasserstein loss (WGAN, more stable)
 
 ### Mode Collapse
@@ -248,10 +253,12 @@ if diversity < threshold:
 
 ### Modern GANs
 
-**StyleGAN2 (2020):**
-- State-of-the-art for faces
-- Style-based generator
-- Spectral normalization for stability
+**StyleGAN2 (Karras et al., 2020):**
+- State-of-the-art for faces in its era
+- Style-based generator with **weight demodulation** (replaced StyleGAN's
+  AdaIN, removing the droplet artifacts)
+- **Path-length regularization** + **R1 gradient penalty** for stability —
+  note: *not* spectral normalization, which belongs to SN-GAN / BigGAN
 - Resolution: 1024×1024
 
 **StyleGAN3 (2021):**
@@ -346,8 +353,16 @@ where ε ~ N(0, I), β_t = noise schedule
 # Model learns to denoise
 x_T (noise) → x_{T-1} → ... → x_1 → x_0 (image)
 
+# Notation: α_t = 1 - β_t,  ᾱ_t = Π_{s<=t} α_s  (cumulative product)
+
 # Model predicts: ε_θ(x_t, t)
-# Then: x_{t-1} = (x_t - √β_t * ε_θ(x_t, t)) / √(1 - β_t)
+# DDPM reverse step (Ho et al. 2020, eq. 11):
+#   μ_θ(x_t, t) = (1/√α_t) · ( x_t - (β_t / √(1 - ᾱ_t)) · ε_θ(x_t, t) )
+#   x_{t-1}     = μ_θ(x_t, t) + σ_t · z,   z ~ N(0, I)   (z = 0 at t = 0)
+# with σ_t² = β_t (or the β̃_t variant).
+#
+# Note the ᾱ_t (cumulative) inside the noise term — using β_t/√(1-β_t) or
+# a single-step α_t there is the most common transcription error.
 ```
 
 **Training:**
@@ -422,7 +437,9 @@ Two big changes from SDXL:
 Released by Black Forest Labs (2024); the team came out of the original
 Stable Diffusion / SDXL work. Open-weights `dev` and `schnell` variants. Uses
 a flow-matching objective with a hybrid MMDiT + parallel-DiT block design;
-generally considered the strongest open-weights image model as of 2024-2025.
+was widely considered the strongest open-weights image model as of 2024-2025.
+Since superseded — the open image-generation frontier moves fast, so check a
+current leaderboard rather than trusting any name pinned here.
 
 #### DiT — Diffusion Transformers
 
@@ -480,9 +497,12 @@ is now real-time on a single consumer GPU.
 **Papers:** Austin et al. — *D3PM* (NeurIPS 2021); Lou, Meng, Ermon — *SEDD:
 Score Entropy Discrete Diffusion* (ICML 2024).
 
-Diffusion-style training over discrete tokens. Currently mostly research, but
-SEDD-class models are starting to compete with autoregressive language models
-on small-scale benchmarks. Worth knowing about; not yet production.
+Diffusion-style training over discrete tokens. Once purely research; by 2026
+commercial diffusion language models exist (Google's Gemini Diffusion,
+Inception's Mercury family), pitched on very high token throughput from
+parallel token decoding rather than on peak quality. Still a small minority
+of deployed LLMs — autoregressive decoding remains the default — but no
+longer "research only". Verify the current state before betting on one.
 
 #### Historical / deprecated as primary references
 
@@ -547,14 +567,17 @@ def sample(model, shape):
     # Start from pure noise
     x_t = torch.randn(shape)
 
-    # Iteratively denoise
+    # Schedules: betas[t] is the noise schedule; alphas = 1 - betas;
+    # alpha_bars = torch.cumprod(alphas, dim=0)  <-- ᾱ_t, the CUMULATIVE one
     for t in reversed(range(T)):
         # Predict noise
         ε_pred = model(x_t, t)
 
-        # Denoise one step
-        α_t = alpha_schedule[t]
-        x_t = (x_t - (1 - α_t) / torch.sqrt(1 - ᾱ_t) * ε_pred) / torch.sqrt(α_t)
+        # Denoise one step (DDPM eq. 11)
+        α_t     = alphas[t]
+        ᾱ_t     = alpha_bars[t]
+        β_t     = betas[t]
+        x_t = (x_t - (β_t / torch.sqrt(1 - ᾱ_t)) * ε_pred) / torch.sqrt(α_t)
 
         # Add noise (except last step)
         if t > 0:

@@ -639,7 +639,9 @@ edge_index = torch.tensor([
 
 **Solution:** Batch graphs as one large disconnected graph
 ```python
-from torch_geometric.data import DataLoader
+from torch_geometric.loader import DataLoader  # NOT torch_geometric.data
+                                               # (that path was deprecated
+                                               #  in PyG 2.0 and removed)
 
 # Create dataset
 dataset = [Data(...), Data(...), ...]

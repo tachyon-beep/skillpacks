@@ -118,6 +118,8 @@ class ModelServer:
             # pickled nn.Module now raises UnpicklingError. Load a state_dict
             # into a constructed model — also the safer pattern, since
             # weights_only=False executes arbitrary pickle payloads.
+            # `ModelClass` throughout this sheet = your model's constructor
+            # (e.g. ResNet18(num_classes=10)); import it alongside the weights.
             self.model = ModelClass()
             self.model.load_state_dict(
                 torch.load(self.model_path, map_location=self.device, weights_only=True)

@@ -57,7 +57,9 @@ Data Modality?
 │  ├─ Sequence length?
 │  │  ├─ Short (<100) → LSTM/GRU
 │  │  ├─ Medium (100-1000) → Transformer
-│  │  └─ Long (>1000) → Sparse Transformer (Longformer)
+│  │  └─ Long (>1000) → Transformer + FlashAttention + RoPE scaling
+│  │                     (exact attention is fine to 128k+; SSM/hybrid
+│  │                      only for streaming or constant-memory needs)
 │  └─ Latency?
 │     ├─ Real-time → LSTM or TCN
 │     └─ Batch → Transformer
@@ -89,7 +91,7 @@ Data Modality?
 | Vision Transformer (ViT) | Small dataset (<10k) | CNN (ResNet, EfficientNet) |
 | Vision Transformer (ViT) | Edge/mobile deployment | MobileNet, EfficientNet-Lite |
 | Transformers (general) | Very small datasets | LSTM, CNN (less capacity) |
-| Diffusion Models | Real-time generation | GAN (1 forward pass) |
+| Diffusion Models (undistilled, 50-1000 steps) | Real-time generation | Distilled diffusion (LCM / Turbo / consistency, 1-4 steps) first; GAN only if 1-step and no distilled checkpoint exists |
 | Diffusion Models | Limited training compute | VAE (faster training) |
 | Graph Transformers | Small graphs (<100 nodes) | Standard GNN (simpler) |
 
@@ -97,15 +99,30 @@ Data Modality?
 
 ## Capacity Matching
 
-**Rule of thumb**: Parameters ≈ 0.01-0.1× dataset size
+**There is no parameters-to-samples ratio to satisfy.** Overparameterization
+is normal and works (ResNet-50 = 21× ImageNet's sample count; a fine-tuned
+7B LLM ≈ 10⁶× its instruction set). What decides the outcome is whether the
+backbone is **pretrained**, whether you **regularize and augment**, and the
+**absolute** sample count if training from scratch.
 
-| Dataset Size | Max Model Params | Example |
+Typical backbone sizes by dataset size, **assuming a pretrained
+initialization** (the 2026 default):
+
+| Dataset Size | Typical Backbone | Example |
 |--------------|------------------|---------|
-| 1,000 | 10-100 params | Linear regression |
-| 10,000 | 100K-1M params | Small MLP or ResNet-18 |
-| 100,000 | 1M-10M params | ResNet-50, EfficientNet-B2 |
-| 1,000,000 | 10M-100M params | ResNet-101, EfficientNet-B4 |
-| 10,000,000+ | 100M+ params | Large Transformers, ViT |
+| < 1,000 | Frozen features + linear probe, or classical ML | Linear/gradient boosting on DINOv2 features |
+| 1,000-10,000 | Small pretrained backbone, freeze early layers | ResNet-18, EfficientNet-B0, ViT-S |
+| 10,000-100,000 | Medium pretrained backbone, full fine-tune | ResNet-50, EfficientNet-B2, ViT-B |
+| 100,000-1,000,000 | Large pretrained backbone | ConvNeXt-B, EfficientNetV2-M, ViT-L |
+| > 1,000,000 | Any; from-scratch training becomes viable | ConvNeXt-L, ViT-L/H |
+
+**If training from scratch**, shift one row *down* and add heavy
+augmentation — and below ~50k samples, seriously reconsider: a pretrained
+backbone will almost always win.
+
+**Diagnose empirically.** A large train/val gap means regularize, augment,
+or pretrain (in that order) before shrinking the model. Both metrics low
+means the model is too small or undertrained — add capacity or train longer.
 
 ## Output Format
 
@@ -144,17 +161,17 @@ After architecture selection:
 import glob
 
 # For training the architecture
-training_pack = glob.glob("plugins/yzmir-training-optimization/plugin.json")
+training_pack = glob.glob("plugins/yzmir-training-optimization/.claude-plugin/plugin.json")
 if not training_pack:
     print("Recommend: yzmir-training-optimization for optimizer/LR selection")
 
 # For PyTorch implementation
-pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/plugin.json")
+pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/.claude-plugin/plugin.json")
 if not pytorch_pack:
     print("Recommend: yzmir-pytorch-engineering for implementation")
 
 # For deployment
-ml_prod = glob.glob("plugins/yzmir-ml-production/plugin.json")
+ml_prod = glob.glob("plugins/yzmir-ml-production/.claude-plugin/plugin.json")
 if not ml_prod:
     print("Recommend: yzmir-ml-production for quantization/serving")
 ```

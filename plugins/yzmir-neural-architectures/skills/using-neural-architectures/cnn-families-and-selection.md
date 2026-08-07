@@ -325,7 +325,7 @@ Resolution* (CVPR 2022).
 
 Hierarchical ViT with shifted local windows; v2 adds residual-post-norm,
 scaled cosine attention, and a log-spaced continuous position bias to scale
-past 3B params and 1500² input resolution without divergence.
+past 3B params and 1536² input resolution without divergence.
 
 - Strong for dense prediction (segmentation, detection); the canonical
   "ViT that behaves like a CNN backbone" choice
@@ -379,8 +379,8 @@ current best variant on `timm` or the official repo.)
 **Architecture:** Very deep (16-19 layers), small 3×3 convolutions, many parameters
 
 **Variants:**
-- VGG-16: 138M params, 15.5 GFLOPs, 71.5% ImageNet
-- VGG-19: 144M params, 19.6 GFLOPs, 71.1% ImageNet
+- VGG-16: 138M params, 15.5 GFLOPs, 71.6% ImageNet (torchvision top-1)
+- VGG-19: 144M params, 19.6 GFLOPs, 72.4% ImageNet (torchvision top-1)
 
 **When to Use:**
 - ❌ **DON'T use VGG for new projects**
@@ -482,11 +482,25 @@ variants) while staying CNN-fast.
 | YOLOv8 (Ultralytics) | 2023 | Anchor-free, decoupled head, simpler training |
 | YOLOv9 (Wang et al. 2024) | 2024 | PGI + GELAN; better accuracy/FLOP |
 | YOLOv10 (Wang et al. 2024) | 2024 | NMS-free dual-label assignment; lower latency |
-| YOLOv11 (Ultralytics) | 2024 | Iterative refinement on YOLOv8 codebase |
+| YOLO11 (Ultralytics) | 2024 | Iterative refinement on YOLOv8 codebase; long-lived stable production choice |
+| YOLOv12 (2025) | 2025 | Attention-centric design; strong benchmarks but still NMS + DFL |
+| YOLOv13 (2025) | 2025 | Further attention-centric components; also still NMS + DFL |
+| **YOLO26** (Ultralytics) | **Jan 2026** | Current SOTA release: **DFL removed**, **native NMS-free end-to-end inference**, Progressive Loss Balancing, Small-Target-Aware Label assignment, MuSGD optimizer. Covers all seven Ultralytics tasks |
 
-Pick whichever has the best maintained checkpoints for your deployment
-target. Differences between v8/v9/v10/v11 are modest; ecosystem stability
-matters more than the latest paper.
+**Current guidance (2026):** start a new project on **YOLO26** — it is the
+latest release, the only one covering all seven tasks, and its NMS-free /
+DFL-free head removes the export and latency friction that v12/v13 kept. For
+already-stable production workloads, **YOLO11** remains a fully supported
+choice, and the two are the pair Ultralytics recommends.
+
+YOLOv12/v13 posted strong benchmarks but retained NMS and Distribution Focal
+Loss, which adds latency overhead and export difficulty on low-power targets
+— so they are rarely the right pick over YOLO26 for a new build.
+
+Beyond that, pick whichever has the best maintained checkpoints for your
+deployment target: ecosystem stability matters more than the latest paper.
+Note the licensing split — Ultralytics releases are AGPL-3.0 or commercial,
+which for some products matters more than a point of mAP.
 
 #### B. Transformer-based detectors (DETR family)
 
@@ -525,7 +539,7 @@ detection driven by natural-language queries.
 #### Detection backbone summary
 
 ```
-Real-time CNN, fixed classes      → YOLOv8/v9/v10/v11
+Real-time CNN, fixed classes      → YOLO26 (new builds) or YOLO11 (stable)
 End-to-end Transformer detector   → DINO or RT-DETR
 Best COCO accuracy, no realtime   → Co-DETR or DINO
 Open-vocabulary / text-prompt     → Grounding DINO, OWL-v2, YOLO-World
@@ -560,7 +574,11 @@ Mask2Former (Cheng et al. CVPR 2022):
 - Ravi et al. — *SAM 2: Segment Anything in Images and Videos* (Meta, 2024)
 
 SAM is a **promptable** segmentation foundation model: you give it a point,
-box, mask, or text prompt and it produces a segmentation mask, in zero-shot.
+box, or coarse mask and it produces a segmentation mask, in zero-shot. (The
+paper discusses a text-prompt capability as a proof of concept, but it was
+**not included in the released model** — for text-driven segmentation, pair
+SAM with an open-vocabulary detector such as Grounding DINO and feed its
+boxes to SAM.)
 Architecture: ViT image encoder + prompt encoder + lightweight mask decoder.
 Trained on the SA-1B dataset (1.1B masks).
 
@@ -721,7 +739,8 @@ MobileNetV3-Large:  5M params (fast inference)
 - Edge: **EfficientNetV2-S/M** or **FastViT**
 - Mobile: **MobileNetV3** + quantization (still the practical default for the
   smallest budgets)
-- Detection (real-time): **YOLOv8/v9/v10/v11** or **RT-DETR**
+- Detection (real-time): **YOLO26** (new builds; NMS-free, end-to-end) or
+  **YOLO11** (established production) or **RT-DETR**
 - Detection (best accuracy): **DINO**, **Co-DETR**
 - Detection (open vocabulary): **Grounding DINO**, **YOLO-World**
 - Segmentation (general): **Mask2Former** + ConvNeXt v2 / Swin v2

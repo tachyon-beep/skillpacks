@@ -7,7 +7,7 @@ You're designing a neural network or debugging training instability. Someone sug
 - **Batch size dependency**: BatchNorm fails with small batches (< 8)
 - **Architecture mismatch**: BatchNorm breaks RNNs/Transformers (use LayerNorm)
 - **Task-specific needs**: Style transfer needs InstanceNorm, not BatchNorm
-- **Modern alternatives**: RMSNorm simpler and faster than LayerNorm for LLMs
+- **Modern alternatives**: RMSNorm is simpler than LayerNorm and the default for LLMs
 
 **This skill prevents normalization cargo-culting and provides architecture-specific selection.**
 
@@ -215,13 +215,19 @@ for bs in batch_sizes:
     # GroupNorm consistent across all batch sizes
 ```
 
-**Empirical results (He et al. 2018):**
+**Empirical results** (Wu & He, *Group Normalization*, ECCV 2018 — figures
+read off Fig. 1, so treat as approximate):
 ```
-ImageNet classification with ResNet-50:
-batch_size = 32:  BatchNorm = 76.5%, GroupNorm = 76.3%  (tie)
-batch_size = 8:   BatchNorm = 75.8%, GroupNorm = 76.1%  (GroupNorm wins!)
-batch_size = 2:   BatchNorm = 72.1%, GroupNorm = 75.3%  (GroupNorm wins!)
+ImageNet top-1 accuracy, ResNet-50, batch size per GPU:
+batch_size = 32:  BatchNorm ≈ 76.4%, GroupNorm ≈ 75.9%  (BN slightly ahead)
+batch_size = 8:   BatchNorm ≈ 75.2%, GroupNorm ≈ 76.0%  (GroupNorm wins)
+batch_size = 2:   BatchNorm ≈ 65.3%, GroupNorm ≈ 75.9%  (BatchNorm collapses)
 ```
+
+The shape of the result is what matters: **GroupNorm is flat across batch
+size; BatchNorm degrades sharply below ~8 and collapses at 2.** BatchNorm is
+still marginally better at large batch — pick GroupNorm because your batch is
+small, not because it is uniformly superior.
 
 
 ### 4. Instance Normalization (InstanceNorm)
@@ -309,15 +315,21 @@ x_norm = x / rms  # Only scale, no centering
 ```
 
 **When to use:**
-- ✅ Modern LLMs (LLaMA, Mistral, Gemma)
-- ✅ When speed matters (15-20% faster than LayerNorm)
+- ✅ Modern LLMs (LLaMA, Mistral, Gemma, Qwen) — it is the de facto default
 - ✅ Large Transformer models (billions of parameters)
 
 **Advantages:**
-- ✅ **Simpler**: One operation instead of two
-- ✅ **Faster**: ~15-20% speedup over LayerNorm
+- ✅ **Simpler**: One reduction instead of two (no mean subtraction)
+- ✅ **Cheaper per op**: fewer memory passes in the norm kernel itself
 - ✅ **Numerically stable**: No subtraction (avoids catastrophic cancellation)
-- ✅ **Same performance**: Empirically matches LayerNorm quality
+- ✅ **Same quality**: Empirically matches LayerNorm
+
+**Do not expect a large end-to-end speedup.** Normalization is a small
+fraction of a Transformer's runtime — attention and the MLP dominate — so
+replacing LayerNorm with RMSNorm typically moves end-to-end throughput by low
+single-digit percent at most, and can be within noise once both are fused.
+Adopt RMSNorm because it is the modern default and one less thing to tune,
+not for a throughput win. If throughput is your goal, measure your own stack.
 
 **PyTorch implementation:**
 ```python
@@ -346,21 +358,20 @@ x = torch.randn(32, 128, 512)  # Batch, SeqLen, d_model
 y = rms(x)
 ```
 
-**Speed comparison (LLaMA-7B, A100 GPU):**
-```
-LayerNorm:  1000 tokens/sec
-RMSNorm:    1180 tokens/sec  # 18% faster!
-
-# For large models, this adds up:
-# 1 million tokens: 180 seconds saved
-```
+**On benchmarking this:** if you want a number, measure the norm layers in
+isolation on your hardware (`torch.utils.benchmark`) and then measure
+end-to-end. The isolated kernel gap is real; the end-to-end gap usually is
+not material. Beware quoted "N% faster LLM" figures that do not say whether
+they measured the kernel or the whole model.
 
 **Modern LLM adoption:**
 ```python
-# LLaMA (Meta, 2023): RMSNorm
+# T5 (Google, 2019): RMSNorm (the first widely-used adopter — T5's
+#                    "simplified layer norm" is RMSNorm)
+# LLaMA / LLaMA-2 / LLaMA-3 (Meta, 2023-2024): RMSNorm
 # Mistral (Mistral AI, 2023): RMSNorm
 # Gemma (Google, 2024): RMSNorm
-# PaLM (Google, 2022): RMSNorm
+# Qwen2/3 (Alibaba): RMSNorm
 
 # Older models:
 # GPT-2/3 (OpenAI): LayerNorm
@@ -522,15 +533,24 @@ class TransformerLayerPreNorm(nn.Module):
 # Post-norm (original):
 # - Less stable (requires careful initialization + warmup)
 # - Slightly better performance IF training succeeds
-# - Hard to train deep models (> 12 layers)
+# - Gets progressively harder to train as depth grows (BERT-LARGE
+#   managed 24 layers; beyond that warmup/init tuning dominates)
 
 # Pre-norm (modern):
 # - More stable (easier to train deep models)
 # - Standard for large models (GPT-3: 96 layers!)
 # - Recommended default
 
-# Empirical: GPT-2, BERT (post-norm, ≤12 layers)
-#            GPT-3, T5, LLaMA (pre-norm, ≥24 layers)
+# Empirical:
+#   Post-norm: original Transformer (2017), BERT (base 12 / LARGE 24 layers).
+#              Trainable, but needs warmup and careful init.
+#   Pre-norm:  GPT-2 (2019) — yes, GPT-2 is PRE-norm, including the 48-layer
+#              XL — plus GPT-3, T5, LLaMA, Mistral, Gemma, Qwen.
+#
+# So the split is chronological, not depth-based: the field moved to pre-norm
+# once models got deep enough that post-norm warmup became fragile. BERT-LARGE
+# shows post-norm can reach 24 layers; GPT-2 shows pre-norm was adopted well
+# before 24. Don't infer placement from layer count.
 ```
 
 **Using RMSNorm instead:**
@@ -544,7 +564,7 @@ class TransformerLayerRMSNorm(nn.Module):
             nn.ReLU(),
             nn.Linear(4 * d_model, d_model)
         )
-        self.rms1 = RMSNorm(d_model)  # 15-20% faster than LayerNorm
+        self.rms1 = RMSNorm(d_model)  # modern LLM default (LLaMA-style)
         self.rms2 = RMSNorm(d_model)
 
     def forward(self, x):
@@ -629,7 +649,7 @@ elif architecture in ["RNN", "LSTM", "GRU"]:
 
 elif architecture == "Transformer":
     if model_size == "large":  # > 1B parameters
-        use_rmsnorm()  # 15-20% faster
+        use_rmsnorm()  # modern default; simpler, not a big end-to-end win
     else:
         use_layernorm()
 
@@ -880,8 +900,9 @@ class TinyNet(nn.Module):
 
 ### Transformers:
 - **Small models** (< 1B): LayerNorm + pre-norm
-- **Large models** (≥ 1B): RMSNorm + pre-norm (15-20% faster)
-- **Avoid**: Post-norm for deep models (> 12 layers)
+- **Large models** (≥ 1B): RMSNorm + pre-norm (the modern default; simpler, not a material throughput win)
+- **Avoid**: Post-norm for new deep models — it is trainable (BERT-LARGE is
+  24-layer post-norm) but needs warmup and init care that pre-norm removes
 
 ### GANs:
 - **Generator**: InstanceNorm (image translation) or no norm

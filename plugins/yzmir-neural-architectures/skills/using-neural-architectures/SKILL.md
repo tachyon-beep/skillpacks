@@ -143,7 +143,7 @@ These answers determine architecture appropriateness.
 
 **Clarifying questions:**
 
-- "Sequence length?" (< 100 → RNN/LSTM/TCN, 100-1000 → Transformer, > 1000 → Sparse Transformers)
+- "Sequence length?" (< 100 → RNN/LSTM/TCN, 100+ → Transformer with exact FlashAttention; long context → + RoPE scaling, not sparse/linear attention)
 - "Latency requirements?" (Real-time → TCN/LSTM, Offline → Transformer)
 - "Data volume?" (Small → Simpler models, Large → Transformers)
 
@@ -257,7 +257,7 @@ modern fast option. Don't recommend training Stable Diffusion from scratch.
 **Cross-reference:**
 
 - For sequence models generally → [sequence-models-comparison.md](sequence-models-comparison.md) (includes transformers in context)
-- For LLMs specifically → `yzmir/llm-specialist/transformer-for-llms` (LLM-specific transformers)
+- For LLMs specifically → `yzmir-llm-specialist` (`/llm-specialist` router: LLM-specific architecture, fine-tuning, inference optimization, context management)
 
 ---
 

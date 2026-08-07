@@ -121,6 +121,9 @@ import torch.ao.quantization as tq
 # pattern anyway. For a trusted legacy full-module checkpoint you can pass
 # weights_only=False, but never do that with a file you did not produce:
 # weights_only=False executes arbitrary pickle payloads.
+#
+# `ModelClass` throughout this sheet = your model's constructor
+# (e.g. BertForSequenceClassification(config)); import it alongside the weights.
 model = ModelClass()
 model.load_state_dict(torch.load('model.pth', weights_only=True))
 model.eval()  # WHY: Must be in eval mode (no batchnorm updates)

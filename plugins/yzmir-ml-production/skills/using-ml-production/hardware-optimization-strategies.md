@@ -967,7 +967,26 @@ for name, model in architectures:
     # no-op on them (Linear-only), so use the static PTQ path for a real
     # comparison. Benchmarking the dynamic-quantized version here would just be
     # benchmarking the FP32 model under another name.
-    quantized_model = static_ptq_quantize(model, calibration_loader)  # see quantization-for-inference
+    #
+    # Static eager PTQ, inline (see quantization-for-inference.md for the
+    # full treatment incl. fuse_modules for Conv+BN+ReLU):
+    import torch.ao.quantization as tq
+
+    class _Wrapped(torch.nn.Module):
+        def __init__(self, m):
+            super().__init__()
+            self.quant, self.model, self.dequant = tq.QuantStub(), m, tq.DeQuantStub()
+
+        def forward(self, x):
+            return self.dequant(self.model(self.quant(x)))
+
+    quantized_model = _Wrapped(model).eval()
+    quantized_model.qconfig = tq.get_default_qconfig('x86')
+    tq.prepare(quantized_model, inplace=True)
+    with torch.no_grad():
+        for data, _ in calibration_loader:  # representative data, not random
+            quantized_model(data)
+    tq.convert(quantized_model, inplace=True)
 
     # Benchmark
     input_tensor = torch.randn(1, 3, 224, 224)
@@ -1148,7 +1167,10 @@ trt_model = torch_tensorrt.compile(model, inputs=[...], enabled_precisions={torc
 # 1. Quantize to INT8 (critical for ARM).
 #    For a CNN this MUST be static PTQ — quantize_dynamic does not support
 #    Conv2d and would leave the whole backbone in FP32.
-quantized_model = static_ptq_quantize(model, calibration_loader)  # see quantization-for-inference
+#    PSEUDOCODE: the real sequence is QuantStub/DeQuantStub wrapper →
+#    fuse_modules → qconfig('x86') → prepare → calibrate → convert.
+#    See quantization-for-inference.md "Static Quantization" for the full code.
+quantized_model = <static PTQ of model, calibrated on representative data>
 #    (Linear/RNN-only models can use quantize_dynamic(model, {torch.nn.Linear}).)
 
 # 2. Convert to TensorFlow Lite with XNNPACK
