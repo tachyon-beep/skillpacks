@@ -875,8 +875,8 @@ class Unit:
         damage = self.base_damage
 
         # Counter relationships
-        if (self.type == UnitType.WARRIOR and target.type == UnitType.ARCHER) or \\
-           (self.type == UnitType.ARCHER and target.type == UnitType.MAGE) or \\
+        if (self.type == UnitType.WARRIOR and target.type == UnitType.ARCHER) or \
+           (self.type == UnitType.ARCHER and target.type == UnitType.MAGE) or \
            (self.type == UnitType.MAGE and target.type == UnitType.WARRIOR):
             damage *= 1.5  # 50% bonus vs counter
 

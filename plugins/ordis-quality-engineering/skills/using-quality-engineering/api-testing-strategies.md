@@ -117,7 +117,7 @@ def test_user_query():
 ```python
 def test_get_user_success():
     response = api.get("/users/123")
-   assert response.status_code == 200
+    assert response.status_code == 200
     assert response.json()["name"] == "Alice"
 ```
 

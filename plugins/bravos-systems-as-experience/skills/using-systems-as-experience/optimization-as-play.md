@@ -1405,10 +1405,11 @@ class TutorialProgression:
             'goal': 'Produce 60 circuits/min (requires iron plates + copper wire)',
             'complexity': 'HIGH',
             'lesson': 'Complex products require managing multiple input chains',
-            'example_chain': lambda: {
-                'iron_ore': ['mine'] → ['smelt'] → ['iron_plates'],
-                'copper_ore': ['mine'] → ['smelt'] → ['copper_plates'] → ['wire_machine'] → ['copper_wire'],
-                'circuit': ['iron_plates' + 'copper_wire'] → ['assemble'] → ['circuit']
+            # Each chain is an ordered list of stages: output of stage N feeds stage N+1.
+            'example_chain': {
+                'iron_plates': ['iron_ore', 'mine', 'smelt'],
+                'copper_wire': ['copper_ore', 'mine', 'smelt', 'wire_machine'],
+                'circuit': ['iron_plates + copper_wire', 'assemble'],
             }
         }
 

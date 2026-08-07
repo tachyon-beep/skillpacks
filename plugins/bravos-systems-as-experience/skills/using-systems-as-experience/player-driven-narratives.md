@@ -1913,7 +1913,7 @@ of his cruelty. His redemption arc progresses: 40%
 **Fix**: Implement magnitude system and peak detection.
 
 ```python
-class MemorabilitySy stem:
+class MemorabilitySystem:
     """Ensure memorable moments stand out"""
 
     def __init__(self):

@@ -200,7 +200,7 @@ echo "user@@example.com" > crash.txt
 
 **Find smallest input that triggers crash:**
 
-```python
+```bash
 # Original: "user@@example.com" (19 bytes)
 # Minimized: "@@" (2 bytes)
 

@@ -111,7 +111,7 @@ env | grep -E "(DB_|API_|TEST_)"
 ### Step 2D: Time Dependency
 
 **Diagnostic:**
-```python
+```bash
 # Search for time-dependent code
 grep -r "datetime.now\|time.time\|Date.now" tests/
 grep -r "timezone\|UTC\|localtime" tests/
@@ -164,7 +164,7 @@ server = start_server(port=0)  # OS assigns free port
 ### Step 2F: Non-Deterministic Code
 
 **Diagnostic:**
-```python
+```bash
 # Search for randomness
 grep -r "random\|shuffle\|sample\|uuid" tests/
 grep -r "random\|shuffle\|sample" src/  # In application code too

@@ -2040,7 +2040,8 @@ if frame % agent.update_frequency == 0:
         agent.update_minimal()  # Follow flow field only
     # LOD 3: No update
 
-# Result: 8ms per frame (60 FPS) with 1000 agents!
+# Result: 8ms per frame with 1000 agents — half the 16.7ms budget for 60 FPS,
+# leaving the rest of the frame for rendering and everything else.
 ```
 
 **LOD Performance Impact**:

@@ -1241,7 +1241,7 @@ for particle in all_particles:
         particle.update()
     else:
         # Cull distant particles
-        particle_pool.return(particle)
+        particle_pool.release(particle)  # `return` is a keyword — don't name a method that
 ```
 
 **Savings**: 50-70% of particle update cost.

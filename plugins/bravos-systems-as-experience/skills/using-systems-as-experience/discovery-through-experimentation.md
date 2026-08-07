@@ -142,6 +142,7 @@ To solve the electricity puzzle:
 2. Place between electric source and target
 3. Metal conducts electricity
 4. Door opens
+"""
 
 # Nothing left to discover, game told you the answer
 ```

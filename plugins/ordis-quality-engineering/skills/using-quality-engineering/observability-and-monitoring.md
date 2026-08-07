@@ -266,7 +266,7 @@ annotations:
 
 ### Symptom-Based Alerting
 
-```python
+```yaml
 # ❌ Bad - alert on cause
 alert: HighCPU
 expr: cpu_usage > 80%
