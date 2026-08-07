@@ -193,6 +193,7 @@ def stream_response(prompt: str, model: str):
 ```python
 # For non-real-time workloads (bulk processing, offline analysis).
 # OpenAI Batch API: ~50% discount vs synchronous, 24h completion window.
+# `client` is the OpenAI() instance constructed in Optimization 4 above.
 
 batch_input = client.files.create(file=open("requests.jsonl", "rb"), purpose="batch")
 

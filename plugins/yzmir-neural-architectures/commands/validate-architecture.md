@@ -157,6 +157,8 @@ metrics low means underfitting. Neither is predictable from a parameter count.
 **Rule**: Model + gradients + optimizer + activations < VRAM
 
 ```python
+import torch
+
 def estimate_memory(model, batch_size, input_shape, optimizer='adam'):
     """Estimate training memory requirements."""
     num_params = sum(p.numel() for p in model.parameters())
@@ -183,8 +185,11 @@ def estimate_memory(model, batch_size, input_shape, optimizer='adam'):
     for mod in model.modules():
         if not list(mod.children()):
             handles.append(mod.register_forward_hook(hook))
+    was_training = model.training
+    model.eval()  # so the probe pass does not update BatchNorm running stats
     with torch.no_grad():
         model(torch.zeros(1, *input_shape))
+    model.train(was_training)
     for h in handles:
         h.remove()
     # elements-per-image × batch × 4 bytes (FP32); halve for AMP/bf16

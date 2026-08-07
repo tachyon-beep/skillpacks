@@ -54,20 +54,23 @@ alongside the practitioner vote, which reshuffled everything below the top two. 
 
 Confirmed across multiple independent reports:
 
-- **LLM01 Prompt Injection** and **LLM02 Sensitive Information Disclosure** — unchanged.
-- **Excessive Agency** rose from LLM06 to **LLM03** — production incidents cluster on
-  agentic systems whose output autonomously runs commands, calls APIs, or writes to stores.
-- **Unbounded Consumption** rose four places to **LLM06**, now explicitly covering
-  extended-thinking and multimodal inference as denial-of-wallet surfaces.
-- **Misinformation** rose to **LLM07**.
-- **System Prompt Leakage** was renamed and broadened to **Hidden Context Exposure**
-  (**LLM08**) — covering *all* non-user-visible context: system instructions, RAG schemas,
-  hidden policy logic.
-- **Improper Output Handling** fell from LLM05 to **LLM10**.
+- **Prompt Injection** (`LLM01`) and **Sensitive Information Disclosure** (`LLM02`) — held
+  their positions; these two IDs mean the same thing in both editions.
+- **Excessive Agency** rose from `LLM06:2025` to **`LLM03:2026`** — production incidents
+  cluster on agentic systems whose output autonomously runs commands, calls APIs, or
+  writes to stores.
+- **Unbounded Consumption** rose four places, `LLM10:2025` → **`LLM06:2026`**, now
+  explicitly covering extended-thinking and multimodal inference as denial-of-wallet
+  surfaces.
+- **Misinformation** rose `LLM09:2025` → **`LLM07:2026`**.
+- **System Prompt Leakage** (`LLM07:2025`) was renamed and broadened to **Hidden Context
+  Exposure** (**`LLM08:2026`**) — covering *all* non-user-visible context: system
+  instructions, RAG schemas, hidden policy logic.
+- **Improper Output Handling** fell `LLM05:2025` → **`LLM10:2026`**.
 
 Reported but single-sourced at time of writing — **verify against the OWASP publication
-before citing these three IDs**: LLM04 Supply Chain, LLM05 Data and Model Poisoning,
-LLM09 Vector and Embedding Weaknesses.
+before citing these three IDs**: `LLM04:2026` Supply Chain, `LLM05:2026` Data and Model
+Poisoning, `LLM09:2026` Vector and Embedding Weaknesses.
 
 Source: [OWASP GenAI LLM Top 10 2026](https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/).
 

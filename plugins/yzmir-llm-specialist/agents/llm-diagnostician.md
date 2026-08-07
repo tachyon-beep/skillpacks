@@ -103,6 +103,19 @@ grep -rn "don't know\|not sure\|cannot answer" --include="*.py"
 
 **Fixes:**
 ```python
+import os
+from openai import OpenAI
+
+client = OpenAI()
+
+# Model IDs resolve from config by capability tier — see llm-inference-optimization.md
+# Part 3 for the full router. Snippets below reuse this mapping.
+MODEL_FOR_TIER = {
+    "frontier-reasoning": os.getenv("MODEL_FRONTIER_REASONING"),
+    "frontier-general":   os.getenv("MODEL_FRONTIER_GENERAL"),
+    "fast-cheap":         os.getenv("MODEL_FAST_CHEAP"),
+}
+
 # Add grounding
 prompt = f"""Answer based ONLY on the context below.
 If the answer is not in the context, say "I don't have that information."

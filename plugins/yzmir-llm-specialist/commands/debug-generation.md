@@ -165,6 +165,18 @@ JSON output:"""
 ### Fix 4: Adjust Temperature
 
 ```python
+import os
+from openai import OpenAI
+
+client = OpenAI()
+
+# Model IDs resolve from config by capability tier — never inline them.
+# See llm-inference-optimization.md Part 3 for the full router.
+MODEL_FOR_TIER = {
+    "frontier-general": os.getenv("MODEL_FRONTIER_GENERAL"),
+    "fast-cheap":       os.getenv("MODEL_FAST_CHEAP"),
+}
+
 # For factual/consistent outputs
 response = client.chat.completions.create(
     model=MODEL_FOR_TIER["frontier-general"],  # resolve IDs from config, never inline

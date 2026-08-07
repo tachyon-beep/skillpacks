@@ -194,8 +194,10 @@ class SeqLSTM(nn.Module):
 **Architecture:** Self-attention mechanism, parallel processing
 
 **Complexity:**
-- Memory: O(n²) for sequence length n
-- Compute: O(n²d) where d is embedding dimension
+- Compute: O(n²d) where d is embedding dimension — genuinely quadratic
+- Memory: O(n²) **only if you materialize the attention matrix**. With
+  FlashAttention (the default since 2022) attention memory is **O(n)**;
+  see [attention-mechanisms-catalog.md](attention-mechanisms-catalog.md)
 
 **Strengths:**
 - ✅ Parallel processing (fast training)
@@ -205,7 +207,8 @@ class SeqLSTM(nn.Module):
 - ✅ Scales with data (more data = better performance)
 
 **Weaknesses:**
-- ❌ Quadratic memory (struggles with sequences > 1000)
+- ❌ Quadratic *compute* — long sequences get slower (memory is fine with
+  FlashAttention; at inference the KV cache, not attention, is the limit)
 - ❌ Needs more data than LSTM (> 10k examples)
 - ❌ Slower inference than TCN
 - ❌ Harder to interpret than RNN
@@ -219,7 +222,8 @@ class SeqLSTM(nn.Module):
 
 **When NOT to Use:**
 - ❌ Short sequences (< 50 tokens) - LSTM/CNN competitive, simpler
-- ❌ Very long sequences (> 2000) - quadratic memory explodes
+- ⚠️ Very long sequences - quadratic compute makes them slow, but exact
+  FlashAttention handles 128k+ without a memory blow-up
 - ❌ Small datasets (< 10k) - will overfit
 - ❌ Edge deployment - large model size
 
@@ -234,6 +238,10 @@ attention_weights = softmax(Q @ K^T / sqrt(d))  # Shape: (32, 1000, 1000)
 # For n=5000:
 # Memory: 32 * 5000 * 5000 * 4 bytes = 3.2 GB per batch!
 # → Impossible on most GPUs
+
+# ...which is exactly why nobody does this any more. FlashAttention never
+# materializes that matrix: same exact result, O(n) memory. The figures above
+# are the motivation for Flash, NOT the memory profile of a modern model.
 ```
 
 **Code Example:**
