@@ -1,7 +1,7 @@
 {
   "name": "yzmir-ai-engineering-expert",
-  "version": "1.2.1",
-  "description": "Primary router for all 10 Yzmir AI/ML engineering skillpacks - covers framework, training, RL, LLM applications (incl. reasoning, agentic/MCP, multimodal, RAG), neural architectures, ML production, dynamic architectures, morphogenetic RL (RL-controlled topology growth), simulation foundations, and systems thinking",
+  "version": "1.2.2",
+  "description": "Primary router for all 12 Yzmir AI/ML engineering skillpacks - covers framework, training, RL, LLM applications (incl. reasoning, agentic/MCP, multimodal, RAG), neural architectures, ML production, dynamic architectures, morphogenetic RL (RL-controlled topology growth), simulation foundations, systems thinking, counterfactual statistics (paired-branch experiment inference), and structure synthesis (generators whose output is a typed graph)",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

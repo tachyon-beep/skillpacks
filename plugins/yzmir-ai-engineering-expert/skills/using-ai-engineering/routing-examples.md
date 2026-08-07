@@ -84,7 +84,7 @@ This will be faster and more reliable than trial-and-error."
 
 **Route to**: pytorch-engineering FIRST (memory debugging), then llm-specialist (if LLM-specific optimization needed)
 
-**Explain**: "Memory issues are foundation-level. Routing to pytorch-engineering for memory diagnostics, then llm-specialist if we need LLM-specific optimizations like gradient checkpointing."
+**Explain**: "Memory issues are foundation-level. Routing to pytorch-engineering for memory diagnostics (activation memory, gradient checkpointing, optimizer-state offload), then llm-specialist if we need genuinely LLM-specific levers like sequence packing, sequence-length / KV-cache budget, or LoRA-vs-full-fine-tune."
 
 ---
 
@@ -106,7 +106,8 @@ This will be faster and more reliable than trial-and-error."
 Fast clarification to ensure fastest resolution (30 seconds):
 CUDA OOM can be either:
 A) Memory management issue (how PyTorch allocates) → pytorch-engineering (2-min diagnostic)
-B) LLM-specific optimization issue (gradient checkpointing, etc.) → llm-specialist
+B) LLM-specific optimization issue (sequence packing, KV-cache / context budget,
+   LoRA vs full fine-tune) → llm-specialist
 
 Which area: PyTorch memory errors or LLM optimization settings?
 
@@ -296,7 +297,7 @@ Once you've picked a strategy there, training-optimization helps you tune it."
 
 **User**: "I'm using a reasoning model with extended thinking and the answers are worse than the regular model. Same prompt. Why?"
 
-**Recognize**: Reasoning models (o-series, Claude extended thinking, R1, Gemini thinking) prompt and evaluate **differently** than chat models — over-prompting hurts them, "show your work" instructions are redundant or harmful, and eval needs to account for thinking-token cost. This is an LLM-application concern, not training, not architecture, not deployment.
+**Recognize**: Reasoning models (GPT-5 thinking, o-series, Claude extended thinking, R1, Gemini thinking) prompt and evaluate **differently** than chat models — over-prompting hurts them, "show your work" instructions are redundant or harmful, and eval needs to account for thinking-token cost. This is an LLM-application concern, not training, not architecture, not deployment.
 
 **DO**: Route to `llm-specialist` reasoning-models sheet.
 
@@ -318,7 +319,7 @@ and the 'when not to use a reasoning model' decision matrix."
 
 **DON'T**: Route to `training-optimization` ("extended thinking failure" sounds like a training symptom but it isn't), and don't route to `neural-architectures` ("reasoning model architecture" is the provider's, not yours).
 
-**Rationale**: Reasoning models are a 2025+ paradigm; older prompt-engineering intuition often makes them worse, not better. Naming this trap explicitly prevents the misroute.
+**Rationale**: Reasoning models are a late-2024+ paradigm; older prompt-engineering intuition often makes them worse, not better. Naming this trap explicitly prevents the misroute.
 
 ---
 

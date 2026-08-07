@@ -57,8 +57,8 @@ Before routing, if query contains ANY of these ambiguous patterns, ASK ONE clari
 | PyTorch, CUDA, memory, distributed, tensor, `torch.compile`, FSDP, GPU | **pytorch-engineering** | Foundation issues |
 | NaN loss, converge, unstable, hyperparameters, gradients, LR, FP8, mixed precision | **training-optimization** | Training problems |
 | Agent, policy, reward, environment, MDP, game, exploration, MARL | **deep-rl** | RL domain |
-| LLM, fine-tune, RLHF, LoRA, prompt, instruction tuning, Claude / o-series / Llama / Mistral / Gemini, RAG, retrieval, embedding, reranker, prompt caching | **llm-specialist** | Language model applications |
-| Reasoning models, "thinking tokens", extended thinking, o-series, R1, test-time compute, reasoning eval | **llm-specialist** | Inference-time reasoning is an LLM-application concern |
+| LLM, fine-tune, RLHF, LoRA, prompt, instruction tuning, Claude / GPT-5 / o-series / Llama / Mistral / Gemini, RAG, retrieval, embedding, reranker, prompt caching | **llm-specialist** | Language model applications |
+| Reasoning models, "thinking tokens", extended thinking, GPT-5 thinking, o-series (o1 / o3), R1, test-time compute, reasoning eval | **llm-specialist** | Inference-time reasoning is an LLM-application concern |
 | Agent loop, tool use, MCP server/client, multi-agent orchestration, autonomous agent | **llm-specialist** | Agentic patterns are LLM-application concerns |
 | Multimodal, VLM, vision-language, image+text, audio understanding | **llm-specialist** (application) and/or **neural-architectures** (modality fusion) | Routing depends on whether the question is "use a VLM" vs "design a fusion architecture" |
 | Diffusion, flow matching, DiT, Stable Diffusion, image / video / audio generation | **neural-architectures** | Generative-media architecture |
@@ -67,6 +67,8 @@ Before routing, if query contains ANY of these ambiguous patterns, ASK ONE clari
 | Network grows / prunes during training, continual learning, catastrophic forgetting, modular composition, MoE routing, adapter merging, PEFT (LoRA / QLoRA / DoRA / VeRA / PiSSA / LoftQ / LoRA+ / rsLoRA / LongLoRA) | **dynamic-architectures** | Networks that change topology / adapter composition over time |
 | RL controller that decides WHEN / HOW to mutate a network's topology during training, growth actions, governor / safety gates, rollback-as-RL-signal, deterministic morphogenesis, ablation under topology change | **morphogenetic-rl** | The *controller* designing growth actions, not the network being grown (companion to dynamic-architectures) |
 | ODE, integrator, physics sim, determinism, stability, replay, time-step, numerical methods | **simulation-foundations** | Simulation mathematics (often underpins RL environments) |
+| "Is this difference real / significant", paired comparison, matched seeds, no-op anchor / control, how many runs or seeds, grouped splits, data leakage between splits, winner's curse, best-of-K selection bias, abstention calibration, pre-registration, Pareto / frontier reporting | **counterfactual-statistics** | Statistics **for** ML experiments — owns the independent unit and the paired test, not the model |
+| Generator whose OUTPUT is a graph, typed DAG grammar, graph generation, NAS **search space** design, canonicalisation / normal form, graph isomorphism, semantic hashing, best-of-K structure pool, mode collapse in candidates, generator/judge separation | **structure-synthesis** | Generating *novel* topology from a grammar (choosing among existing architecture families is neural-architectures) |
 | Causal loop, feedback dynamics, leverage points, system archetypes, stock-flow, behavior-over-time | **systems-thinking** | Whole-system reasoning |
 
 ---
@@ -88,6 +90,10 @@ When task spans domains, route to ALL relevant packs in execution order:
 | "Build an agent that uses tools and a vector store" | llm-specialist (agentic + RAG) | Often single-pack; bring in `axiom-engineering-foundations` for system design if scope grows |
 | "Diffusion model training diverges" | training-optimization + neural-architectures | General training first, architecture second |
 | "Production LLM hallucinations / drift" | ml-production (observability) + llm-specialist (eval, RAG, prompting) | Detect before redesign |
+| "Is my growth controller's improvement real?" | morphogenetic-rl + counterfactual-statistics | Design the controller first; prove the effect against a no-op anchor second |
+| "I generated architecture candidates — which one is actually better?" | structure-synthesis + counterfactual-statistics | Generate and canonicalise the pool first, then judge it with a paired design |
+| "Best-of-K picked a winner but it doesn't reproduce" | counterfactual-statistics (selection bias / winner's curse) + structure-synthesis (pool diversity after canonicalisation) | Correct the selection bias before regenerating |
+| "How many seeds do I need for this ablation?" | counterfactual-statistics (+ the pack owning the thing ablated) | Power analysis before burning compute |
 
 **Principle**: Load in order of dependency. Fix foundation before domain. Complete training before deployment.
 
@@ -104,10 +110,13 @@ When task spans domains, route to ALL relevant packs in execution order:
 | "Chatbot learning" | llm-specialist | ASK FIRST | Could be LLM OR RL |
 | "My model forgets old data" | training-optimization | dynamic-architectures FIRST | Continual-learning lifecycle problem |
 | "Replay diverges between machines" | deep-rl | simulation-foundations FIRST | Determinism / numerics problem |
-| "o3 / extended thinking gives bad answers" | (guess) | llm-specialist (reasoning models sheet) | Reasoning-model prompting and eval differs from chat |
+| "o3 / GPT-5 thinking / extended thinking gives bad answers" | (guess) | llm-specialist (reasoning models sheet) | Reasoning-model prompting and eval differs from chat |
 | "Build an MCP server / tool-using agent" | (none) | llm-specialist (agentic patterns) | Agent design lives with LLM applications |
 | "RL agent that decides when to grow a network" | deep-rl | morphogenetic-rl FIRST | This is the controller-design pack; deep-rl alone misses governor/safety-gate/rollback patterns |
 | "DoRA vs QLoRA for my 70B fine-tune" | llm-specialist | dynamic-architectures (PEFT comparison) + llm-specialist (fine-tune workflow) | Adapter method choice is the lifecycle pack's domain |
+| "Design the search space my generator emits architectures from" | neural-architectures | structure-synthesis | Choosing among human-authored families (ResNet vs Mamba) is neural-architectures; *generating* novel typed graphs from a grammar is structure-synthesis |
+| "My two forked branches differ by 3% — is that significant?" | (generic stats / guess) | counterfactual-statistics | Branches forked from one run are repeated measures of that run, not independent samples — paired test, clustered unit |
+| "Statistics question, so not a Yzmir problem" | (route out of Yzmir) | counterfactual-statistics | Statistics *for* ML experiments is owned inside the faction |
 
 ---
 
@@ -215,7 +224,7 @@ When task spans domains, route to ALL relevant packs in execution order:
 
 **Skip AI/ML skills when:**
 - Simple data processing without ML.
-- Statistical analysis without neural networks.
+- Statistical analysis *unconnected to an ML experiment* (business reporting, survey analysis, classical inference on non-model data).
 - Data cleaning / ETL without model training.
 - The task is pure system architecture (route to `axiom-solution-architect`), pure DevOps (route to `axiom-devops-engineering`), or pure security threat modeling for the surrounding system (route to `ordis-security-architect`).
 
@@ -223,8 +232,9 @@ When task spans domains, route to ALL relevant packs in execution order:
 - *"Build a chatbot"* with no ML training and no fine-tuning — usually a Yzmir question (`llm-specialist`: prompting, RAG, agent loop) but bring in `axiom-solution-architect` if the request is really about system design.
 - *"Why does my agent's tool call fail?"* — usually `llm-specialist` (agentic patterns), but if it's a tool-runtime / sandbox / IPC issue it's `axiom-engineering-foundations`.
 - *"Make my LLM responses cheaper"* — `llm-specialist` (prompt caching, model routing, smaller models) and/or `ml-production` (serving stack). Both are valid.
+- *"Is this result statistically significant?"* — **stays inside Yzmir** whenever the thing measured is an ML experiment: paired branch comparisons, seed counts and power, grouped splits and leakage, best-of-K selection bias, abstention calibration → `counterfactual-statistics`. Only leave Yzmir if the data has nothing to do with a model.
 
-**Red flag**: If you're not training, deploying, prompting, retrieving for, or evaluating a model, you probably don't need Yzmir.
+**Red flag**: If you're not training, deploying, prompting, retrieving for, evaluating, generating structures for, or designing/analysing an experiment on a model, you probably don't need Yzmir.
 
 ---
 
@@ -245,6 +255,8 @@ Identify problem type:
     - Network grows/prunes / continual learning / PEFT (LoRA/QLoRA/DoRA/...) / MoE composition? → dynamic-architectures
     - RL controller deciding WHEN/HOW to grow a network (governor, safety gates, rollback)? → morphogenetic-rl
     - Simulation math / determinism / ODEs? → simulation-foundations
+    - Is the measured difference real? paired branches / seed count / leakage / best-of-K / calibration? → counterfactual-statistics
+    - Generator emits graphs? typed DAG grammar / NAS search space / canonicalisation / semantic hashing? → structure-synthesis
     - Whole-system feedback / causal loops / leverage? → systems-thinking
     ↓
 Cross-cutting? → YES → Route to MULTIPLE packs (order by dependency)
@@ -270,23 +282,26 @@ See [routing-examples.md](routing-examples.md) for detailed worked examples:
 
 ## AI Engineering Plugin Router Catalog
 
-This meta-router directs you to the appropriate Yzmir AI/ML plugin. The Yzmir faction ships **10 specialist packs** plus this router:
+This meta-router directs you to the appropriate Yzmir AI/ML plugin. The Yzmir faction ships **12 specialist packs** plus this router:
 
 1. **yzmir-pytorch-engineering** — PyTorch framework: CUDA, memory, FSDP/`torch.compile`, distributed, tensor operations.
 2. **yzmir-training-optimization** — Training problems: optimizers, schedules, precision (BF16/FP8), gradients, convergence, hyperparameters.
 3. **yzmir-deep-rl** — Reinforcement learning: agents, policies, rewards, environments, MDP, offline RL, MARL.
 4. **yzmir-llm-specialist** — LLM applications: prompting, RAG, fine-tuning (SFT/DPO/GRPO), reasoning models, agentic patterns / MCP, multimodal use, prompt caching, evaluation, safety.
 5. **yzmir-neural-architectures** — Architecture selection: CNN / transformer / Mamba / GNN / diffusion / DiT / multimodal fusion, capacity and depth-width tradeoffs.
-6. **yzmir-ml-production** — Production: vLLM / SGLang / TensorRT-LLM serving, quantization (`torch.ao.quantization`, AWQ, GPTQ, FP8), MLOps, observability (Phoenix / Langfuse / OTel GenAI), drift, scaling.
+6. **yzmir-ml-production** — Production: vLLM / SGLang / TensorRT-LLM serving, quantization (`torchao` — the successor to the deprecated `torch.ao.quantization` — AWQ, GPTQ, FP8), MLOps, observability (Phoenix / Langfuse / OTel GenAI), drift, scaling.
 7. **yzmir-dynamic-architectures** — Networks that grow / prune / adapt: continual learning, gradient isolation, modular composition, MoE routing, adapter merging, PEFT (LoRA / QLoRA / DoRA / VeRA / PiSSA / LoftQ / LoRA+ / rsLoRA / LongLoRA), lifecycle. *Owns the HOW: how the growable / adaptable network trains.*
 8. **yzmir-morphogenetic-rl** — RL controllers that decide WHEN and HOW to mutate a network's topology during training: action/observation/reward design for the controller, governor and safety gates, rollback-as-RL-signal, deterministic morphogenesis, growth-aware ablation. *Companion to dynamic-architectures: owns the CONTROLLER that drives growth, not the network being grown.*
 9. **yzmir-simulation-foundations** — Simulation mathematics: ODEs, integrators, stability, control theory, determinism — often the foundation under RL environments and physics-based systems.
 10. **yzmir-systems-thinking** — Systems thinking methodology: causal loops, leverage points, archetypes, stocks-flows, behavior-over-time graphs.
+11. **yzmir-counterfactual-statistics** — Statistics for counterfactual / paired-branch ML experiments: the independent statistical unit (the trajectory, not the branch), cluster-robust inference, paired tests against a zero-anchored no-op control, common random numbers, grouped splits and the leakage taxonomy, best-of-K selection bias / winner's curse, abstention calibration, paired power analysis, pre-registration, and quality-cost-stability frontier reporting. *Owns whether a measured difference is real — the pack every other Yzmir pack's "did it help?" question ends up in.*
+12. **yzmir-structure-synthesis** — Generative models whose output is a **graph**: typed DAG grammars with node/edge/cost ceilings, deterministic and latent-conditioned generation, best-of-K pools, mutation and recombination over lineages, canonicalisation to normal forms, equivalence detection and semantic hashing, mode-collapse diagnosis, and generator / structural-verifier / utility-judge separation. Applies to neural architecture search, program synthesis over typed IRs, and molecule / circuit generation. *Owns producing a novel candidate structure; `neural-architectures` owns choosing among human-authored families, `dynamic-architectures` owns embodying the chosen structure, and `counterfactual-statistics` owns judging whether it helped.*
 
 **Adjacent (non-Yzmir) routers worth knowing about:**
 - `axiom-engineering-foundations` — general software-engineering rigor for AI systems (debugging, refactoring, code review).
 - `axiom-solution-architect` — when AI is one component of a larger system that needs an architecture document.
 - `ordis-security-architect` — LLM threat modeling, prompt injection, exfil, AI supply chain.
 - `axiom-python-engineering` — Python tooling foundations underneath PyTorch / Transformers code.
+- `axiom-determinism-and-replay` — when the determinism/replay question is about the *system* (seeds, snapshots, divergence localisation, replay harnesses) rather than the simulation mathematics that `simulation-foundations` covers.
 
 **Remember**: When in doubt, ASK. Clarification takes seconds, wrong routing takes minutes. **Knowledge cutoff awareness**: model IDs and provider features evolve quickly — capability-tier framing in downstream packs (frontier reasoning / frontier general / fast-cheap / on-device) is intentional. Check provider docs for current model IDs before quoting them in user-facing answers.
