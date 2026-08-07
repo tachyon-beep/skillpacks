@@ -170,7 +170,7 @@ The backward graph has 18 nodes to the forward's 7 — verified on torch 2.9 for
 What AOTAutograd does for you that is hard to do yourself:
 
 - **Functionalisation** — in-place ops become out-of-place, so memory dependencies become graph edges (the hazard in `torch-fx-capture-and-transformation.md`).
-- **Decomposition** — composite ops lower to a smaller ATen core set. `torch._decomp.core_aten_decompositions()` is 1014 entries on torch 2.9.1; consuming that table is far cheaper than writing your own, and it means your backward is derived by the same rules PyTorch uses. See `operator-lowering-and-kernel-selection.md`.
+- **Decomposition** — composite ops lower to a smaller ATen core set. `torch._decomp.core_aten_decompositions()` is ~1000 entries on torch 2.9.1 — the exact count is registration-state-dependent, so do not assert on it (see `operator-lowering-and-kernel-selection.md`). Consuming that table is far cheaper than writing your own, and it means your backward is derived by the same rules PyTorch uses. See `operator-lowering-and-kernel-selection.md`.
 - **Partitioning** — decides what the forward saves versus what the backward recomputes (the activation-checkpointing tradeoff).
 
 Note the API surface: `aot_module_simplified`, `aot_module`, and `aot_function` all live under `torch._functorch.aot_autograd` — a **private** module. It is what `torch.compile` itself uses and it is stable in practice, but it is not covered by API-stability guarantees. Pin your torch version and record it in the manifest (`compilation-manifests-and-reproducibility.md`); a minor-version bump can change the joint graph you capture, which changes your artifact.

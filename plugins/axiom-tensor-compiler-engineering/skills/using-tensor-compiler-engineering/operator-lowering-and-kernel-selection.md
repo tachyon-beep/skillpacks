@@ -95,12 +95,14 @@ DECOMPOSITIONS = {
 
 ### Prefer the library's table
 
-`torch._decomp.core_aten_decompositions()` is 1014 entries on torch 2.9.1. Consuming it is nearly always better than authoring your own:
+`torch._decomp.core_aten_decompositions()` is ~1000 entries on torch 2.9.1. Consuming it is nearly always better than authoring your own:
 
 ```python
 from torch._decomp import core_aten_decompositions
 decomps = core_aten_decompositions()
 ```
+
+**Do not pin the count in a test or a manifest.** It is registration-state-dependent: on torch 2.9.1 a fresh process reports 1004 entries and the same process reports 1013–1014 once `torch.compile`/AOTAutograd have imported and registered their decompositions. Assert on the presence of the ops you actually lower, never on `len(...)`.
 
 These have been differentiated, tested across dtypes and devices, and fixed over years of bug reports. Your own decomposition of `layer_norm` will be correct for a year and then wrong for `eps` inside versus outside the `sqrt`. Write your own only for ops the table does not cover, and hold those to the four conditions above.
 
@@ -259,9 +261,22 @@ Conformance passes: `randn` inputs, forward and even gradient agreement to 1e-7.
 
 - `domain_restrictions` — the author is forced to answer "where does this not hold?" and finds the answer is `|x| > ~88 in float32`.
 - Domain-extremes testing — conformance inputs include large magnitude (`numerical-contracts-and-tolerances.md`), and the failure appears immediately rather than in month three.
-- `in_library_table` — `core_aten_decompositions()` has `softmax`, with the max-subtraction, differentiated and tested.
+- `in_library_table` — the library already covers this, and the max-subtraction is PyTorch's, differentiated and tested. Where it lives is worth knowing precisely, because it decides what you get:
 
-The fix is `PREFER-LIBRARY`: use the table's entry, which is stable *and* fusible.
+```python
+from torch._decomp import core_aten_decompositions, get_decompositions
+aten = torch.ops.aten
+
+core_aten_decompositions()[aten.softmax.int]   # present: redispatches to aten._softmax
+aten._softmax.default in core_aten_decompositions()   # False — left as a Core ATen op
+
+# The max-subtracting primitive form lives in the broader torch._decomp registry:
+table = {**core_aten_decompositions(), **get_decompositions([aten._softmax])}
+```
+
+Traced through `make_fx` on torch 2.9.1, the core table alone yields a single `aten._softmax` node; adding `get_decompositions([aten._softmax])` yields `amax → sub → exp → sum → div` — the stabilised form, spelled out.
+
+The fix is `PREFER-LIBRARY`: take the library's decomposition rather than writing your own. Note the two levels, because "stable" and "fusible" are not the same purchase. The core table alone is **stable** but leaves `aten._softmax` as one opaque node a fusion pass cannot open. If you need the primitives to fuse, ask for them with `get_decompositions([aten._softmax])` — and you still get the max-subtraction, which is the whole point. What you must not do is hand-write the fusible form and lose the stabilisation on the way.
 
 The general lesson: **a decomposition that drops a numerical stabilisation looks like a pure algebraic simplification, because that is exactly what it is.** The stabilisation is not in the maths; it is in the kernel. Only the domain question surfaces it.
 

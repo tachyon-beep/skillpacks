@@ -206,7 +206,12 @@ def cross_layout_conformance(module, x, rtol, atol, report):
             "non_contiguous": torch.zeros(*x.shape[:-1], x.shape[-1] * 2,
                                           dtype=x.dtype, device=x.device
                                           )[..., :x.shape[-1]].copy_(x),
-            "transposed_roundtrip": x.transpose(-1, -2).transpose(-1, -2),
+            # `.contiguous()` between the transposes is load-bearing. Without it,
+            # x.transpose(-1,-2).transpose(-1,-2) returns the same storage, the
+            # same strides and is_contiguous()==True — it IS x, and the check is
+            # vacuous. Materialising in transposed order gives a genuinely
+            # stride-permuted view (inner-dim stride != 1) of the same values.
+            "transposed_strided": x.transpose(-1, -2).contiguous().transpose(-1, -2),
         }
         for name, xv in variants.items():
             out = module(xv)
@@ -218,7 +223,7 @@ def cross_layout_conformance(module, x, rtol, atol, report):
 
 The layouts split into two classes, and knowing which is which is what makes the check usable (all figures measured on torch 2.9.1):
 
-- **Same-kernel layouts** — non-contiguous/strided views and transposed round-trips, where the memory format is unchanged — must agree **bit-exactly**. Measured: `0.000e+00` against the contiguous baseline in every configuration tried (CPU and CUDA, narrow and wide convs). Any nonzero difference here is a real finding with no noise floor to hide in.
+- **Same-kernel layouts** — strided views of an unchanged memory format: row-padded slices, and transposed-then-materialised views whose inner-dimension stride is not 1 — must agree **bit-exactly**. Measured: `0.000e+00` against the contiguous baseline in every configuration tried (CPU and CUDA, narrow and wide convs). Any nonzero difference here is a real finding with no noise floor to hide in. Check that each variant you list is actually a distinct layout: a bare transpose round-trip (`x.transpose(-1,-2).transpose(-1,-2)`) is not — it returns `x`'s own storage, strides and contiguity, so it reports `0.000e+00` no matter how broken the compiler is.
 - **Kernel-changing layouts** — `channels_last`, which legitimately dispatches different convolution algorithms — are exact only when the backend happens to pick the same kernels. Measured on the same conv stack: `0.000e+00` on CPU at 8 channels, but `9.5e-07` on CPU at 64 channels (different oneDNN path), `4.1e-05` on CUDA with the default `cudnn.allow_tf32=True`, and `0.000e+00` on CUDA with it off. A channels-last difference inside the reassociation budget is a kernel-selection fact — record which kernel ran in the manifest and hold the diff to the budget; anything beyond budget, or any nonzero *same-kernel* difference, is a bug. If your pipeline pins kernel choice per layout, demand exactness everywhere and say so in the contract.
 
 Cross-device agreement is never exact — different devices run different kernels by construction. Expect order `1e-07` for a small float32 conv stack CPU-versus-CUDA (measured `3.6e-07`), and orders more when TF32 flags differ (`4.5e-04` at 64 channels with `cudnn.allow_tf32=True` against `4.8e-07` with it off) — which is why the flags are asserted before any of this runs.
@@ -382,7 +387,7 @@ The generalisable lesson: **the bug was never hard to find. Every hole in that f
 - [ ] `gradcheck` runs on a float64 copy
 - [ ] Zero-influence subgraphs checked for *existence*, not just behaviour
 - [ ] Every claimed device exercised
-- [ ] Contiguous, channels-last, non-contiguous, transposed-roundtrip all exercised
+- [ ] Contiguous, channels-last, non-contiguous, transposed-strided all exercised — and each verified to be a genuinely distinct layout, not a view that is secretly the baseline
 - [ ] Inputs include cancellation, large magnitude, zeros, batch=1, batch=max
 - [ ] Both train and eval mode
 - [ ] Post-training parameter state, not only initialisation

@@ -71,7 +71,9 @@ DECOMPOSITIONS = {
 
 ## Computing a Semantic Hash
 
-A semantic hash must be invariant to things that are not semantics (node names, whitespace, the order the producer happened to emit independent nodes) and sensitive to everything that is (op, target, dataflow edges, literal arguments).
+A semantic hash must be invariant to things that are not semantics (node names, whitespace) and sensitive to everything that is (op, target, dataflow edges, literal arguments).
+
+Emission order of *independent* nodes is the case to be honest about. The implementation below identifies nodes positionally, which buys rename-invariance and costs order-invariance: two graphs that compute the same thing but emit independent nodes in different orders hash differently (verified on torch 2.9.1). **Order-invariance is bought upstream, not here** — canonicalise emission order in the producer (a deterministic topological sort with a stable tiebreak) before the hash runs. If you instead canonicalise inside the hash, every stored hash you already have is invalidated, so make that choice once, at the start.
 
 This is verified against `torch.fx`, and generalises to any graph IR with the same three concepts (op kind, target, positional/keyword arguments):
 
@@ -88,6 +90,16 @@ def semantic_skeleton(gm: fx.GraphModule) -> list[dict]:
     Node identity is positional (index in topological order), so renaming a node
     cannot change the hash. `get_attr` is excluded: parameter *values* are not
     semantics, they are state — hash them separately if your contract needs it.
+
+    Two limits of positional identity, both measured on torch 2.9.1 — know them
+    before you rely on this hash as a cache key:
+
+    1. Emission order IS significant. Independent nodes emitted in a different
+       order produce a different hash. Canonicalise order in the producer.
+    2. Indices are assigned over ALL nodes, including the excluded `get_attr`s,
+       so moving a state node shifts every semantic index after it. Enumerate
+       only over SEMANTIC_OPS if you want indices insensitive to state
+       placement — and re-baseline every stored hash if you make that change.
     """
     order = {n: i for i, n in enumerate(gm.graph.nodes)}
     skeleton = []

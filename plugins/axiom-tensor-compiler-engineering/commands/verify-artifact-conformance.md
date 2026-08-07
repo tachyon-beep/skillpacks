@@ -67,9 +67,11 @@ If gradcheck runs in float32: **HIGH**, and note that the team has almost certai
 
 ### 4. Cross-device and cross-layout
 
-Every device the artifact *claims* to support, and four layouts: contiguous, channels-last, non-contiguous, transposed round-trip.
+Every device the artifact *claims* to support, and four layouts: contiguous, channels-last, non-contiguous, transposed-strided (`x.transpose(-1,-2).contiguous().transpose(-1,-2)`).
 
-Layout agreement is two checks, not one. Same-kernel layouts (non-contiguous views, transposed round-trips — memory format unchanged) must be **exact**: any nonzero difference is a finding with no noise floor, the highest-signal check in the suite. Memory-format changes (`channels_last`) legally re-select kernels; hold them to the reassociation budget and require the kernel choice to appear in the manifest. On torch 2.9.1, channels-last conv differs from contiguous by up to `4.1e-05` with the default `cudnn.allow_tf32=True` — a kernel/config fact, not a miscompile.
+First check each layout variant is really a variant. A bare transpose round-trip (`x.transpose(-1,-2).transpose(-1,-2)`) is a common entry in these suites and is worthless: it returns the same storage pointer, the same strides and `is_contiguous()==True`, so it cannot fail. Assert `stride()` or `is_contiguous()` differs from the baseline for every variant; a check that always reports `0.000e+00` is a **MEDIUM** finding in its own right, because the suite is being credited for coverage it does not have.
+
+Layout agreement is then two checks, not one. Same-kernel layouts (strided views with the memory format unchanged) must be **exact**: any nonzero difference is a finding with no noise floor, the highest-signal check in the suite. Memory-format changes (`channels_last`) legally re-select kernels; hold them to the reassociation budget and require the kernel choice to appear in the manifest. On torch 2.9.1, channels-last conv differs from contiguous by up to `4.1e-05` with the default `cudnn.allow_tf32=True` — a kernel/config fact, not a miscompile.
 
 ### 5. Manifest completeness
 
