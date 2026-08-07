@@ -251,9 +251,9 @@ reward = optimal_action == action  # Agent can't see this normally
 
 ### Defer to Other Skills
 
-**Full training debugging**: Route to `rl-training-diagnostician` agent or `/deep-rl:diagnose`
+**Full training debugging**: Route to `rl-training-diagnostician` agent or `/yzmir-deep-rl:diagnose`
 
-**Algorithm selection**: Route to `/deep-rl:select-algorithm` command
+**Algorithm selection**: Route to `/yzmir-deep-rl:select-algorithm` command
 
 **Exploration for sparse rewards**: Recommend `exploration-strategies.md` reference sheet
 

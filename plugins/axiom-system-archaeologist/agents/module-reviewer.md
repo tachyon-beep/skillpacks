@@ -135,3 +135,23 @@ You may notice the marketplace contains separate specialist agents elsewhere (e.
 3. Adding a fifth focus (e.g., `security`) becomes a schema change, not a new agent file.
 
 If you find yourself wanting to extend this agent with focus-specific logic, **extend the schema instead**.
+
+---
+
+## Required Output Sections (SME Agent Protocol)
+
+This agent declares conformance to `meta-sme-protocol:sme-agent-protocol`, and its `description` promises confidence and risk assessment. The output format above does not deliver that on its own. **Every response MUST also end with the following, in this order: Risk Assessment · Information Gaps · Caveats & Required Follow-ups.**
+
+### Risk Assessment
+
+**Implementation Risk:** Low | Medium | High | Critical. **Reversibility:** Easy | Moderate | Difficult | Irreversible. Name each material risk with its severity, likelihood, and mitigation. Consider correctness, performance, security, compatibility, and maintenance risk — not only the first one that comes to mind.
+
+### Information Gaps
+
+What you could not determine, and what each would change if supplied: files you could not locate, runtime behaviour not knowable statically, configuration or environment details, test results or metrics, external specifications, and historical context for why something was built as it was.
+
+### Caveats & Required Follow-ups
+
+What the user MUST verify before relying on this analysis; the assumptions it rests on; what it explicitly does NOT account for; and the recommended next steps in order.
+
+Full templates (tables, checklists, and the complete vocabulary) are in `meta-sme-protocol:sme-agent-protocol` §3.1–3.4.

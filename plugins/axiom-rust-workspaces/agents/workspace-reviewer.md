@@ -285,3 +285,19 @@ Status: <CLEAN | WARN | FAIL>
 ## The Bottom Line
 
 **Read the workspace's config and design specs. Sweep against the 6 spine sheets and the 10 anti-patterns. For tier M+, also sweep the 7 operational sheets. Produce findings prioritised by cost-of-postponing, with cross-sheet rationale and concrete remediation. Confidence and risk assessment per the SME protocol. The agent reviews shape and hygiene; behaviour, performance, and security are other packs' jobs.**
+
+---
+
+## Required Output Sections (SME Agent Protocol)
+
+This agent declares conformance to `meta-sme-protocol:sme-agent-protocol`, and its `description` promises confidence and risk assessment. The output format above does not deliver that on its own. **Every response MUST also end with the following, in this order: Information Gaps · Caveats & Required Follow-ups.**
+
+### Information Gaps
+
+What you could not determine, and what each would change if supplied: files you could not locate, runtime behaviour not knowable statically, configuration or environment details, test results or metrics, external specifications, and historical context for why something was built as it was.
+
+### Caveats & Required Follow-ups
+
+What the user MUST verify before relying on this analysis; the assumptions it rests on; what it explicitly does NOT account for; and the recommended next steps in order.
+
+Full templates (tables, checklists, and the complete vocabulary) are in `meta-sme-protocol:sme-agent-protocol` §3.1–3.4.

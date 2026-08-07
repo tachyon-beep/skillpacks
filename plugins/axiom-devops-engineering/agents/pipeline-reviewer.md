@@ -221,5 +221,5 @@ Optionally append the machine-readable summary block from the SME protocol (§3.
 
 - `deployment-strategist` (this pack) — the forward-design counterpart; route design work there.
 - `using-devops-engineering` sheets — the 13-dimension rubric; cite the relevant sheet in each finding so the producer can go deep.
-- `/ordis-security-architect` — when supply-chain or secret findings warrant a full threat model.
-- `/ordis-quality-engineering` — for the test-pyramid and flaky-gate dimensions behind the CI test stage.
+- `/security-architect` — when supply-chain or secret findings warrant a full threat model.
+- `/quality-engineering` — for the test-pyramid and flaky-gate dimensions behind the CI test stage.
