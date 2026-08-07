@@ -280,5 +280,5 @@ The image is the artifact, and an artifact you cannot reason about is a liabilit
 - `ci-cd-pipeline-architecture` (this pack) — where the build/scan/sign/verify gates live in the pipeline.
 - `deployment-strategies` (this pack) — deploying signed digests via progressive delivery.
 - `infrastructure-as-code` (this pack) — registry, admission policy, and OIDC roles as code.
-- `/ordis-security-architect` — supply-chain threat modeling, admission control, secret management posture.
-- `/axiom-solution-architect` — recording the base-image and signing-stack decisions as ADRs.
+- `/security-architect` — supply-chain threat modeling, admission control, secret management posture.
+- `/solution-architect` — recording the base-image and signing-stack decisions as ADRs.

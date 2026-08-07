@@ -65,6 +65,9 @@ All router skills from the 18 plugins are now available as slash commands:
 ### Compilers & IR (Axiom)
 - **`/tensor-compiler-engineering`** - Routes to tensor-compiler engineering (graph IR, lowering, kernel selection, conformance testing)
 
+### Marketplace Maintenance (Meta)
+- **`/skillpack-maintenance`** - Routes to skillpack maintenance methodology (domain analysis, structure review with fitness scorecard, RED-GREEN-REFACTOR behavioral testing, scoped quality improvements)
+
 ## Usage
 
 Simply type the slash command in Claude Code to load the router skill:
@@ -108,6 +111,7 @@ The router will then guide you to the appropriate specialized skill for your tas
 | yzmir-structure-synthesis | using-structure-synthesis | /structure-synthesis |
 | yzmir-systems-thinking | using-systems-thinking | /systems-thinking |
 | yzmir-training-optimization | using-training-optimization | /training-optimization |
+| meta-skillpack-maintenance | using-skillpack-maintenance | /skillpack-maintenance |
 
 ## Implementation Details
 

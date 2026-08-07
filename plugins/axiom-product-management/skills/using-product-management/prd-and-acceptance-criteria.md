@@ -6,14 +6,14 @@ The PRD is not a sixth workspace artifact. The five standing artifacts are defin
 
 ## Problem first, solution never (here)
 
-Lead with the problem, the user, and the desired outcome — in that order — and stop before the solution. The discipline is not stylistic; it is what keeps the PRD upstream of `/axiom-solution-architect`. The moment the spec says "build a caching layer," it has chosen a *how* product does not own, foreclosed alternatives the architect should weigh, and coupled the bet's success to one implementation. State the problem so well that several solutions are visibly possible, then hand the choice down.
+Lead with the problem, the user, and the desired outcome — in that order — and stop before the solution. The discipline is not stylistic; it is what keeps the PRD upstream of `/solution-architect`. The moment the spec says "build a caching layer," it has chosen a *how* product does not own, foreclosed alternatives the architect should weigh, and coupled the bet's success to one implementation. State the problem so well that several solutions are visibly possible, then hand the choice down.
 
 A problem statement carries four parts, and a missing part is a hole a solution-first spec will fill with an assumption:
 
 - **Who** — the specific user or segment whose problem this is. Not "users"; the segment whose job is blocked. (Whether this is the *right* problem for the right who is the discovery decision — `product-discovery-and-opportunity.md`; the PRD assumes that call was made and a PDR recorded it.)
 - **The problem** — the job they are trying to do and where it currently breaks, stated as their pain, not as the absence of your feature. "Users can't export reports" is the absence of a feature; "analysts rebuild the same report by hand every Monday because last week's export is stale" is a problem.
 - **The desired outcome** — the changed behavior or state that means the problem is solved, in the user's terms. This is what the success metric will measure; if you cannot name the outcome, you cannot write a falsifiable criterion for it.
-- **Why now** — what makes this worth a slot. (Cost-of-delay *arithmetic* and sequencing belong to `/axiom-program-management`'s `roadmapping-and-prioritization.md`; the PRD states the *why-now story* the bet rests on, not the WSJF score.)
+- **Why now** — what makes this worth a slot. (Cost-of-delay *arithmetic* and sequencing belong to `/program-management`'s `roadmapping-and-prioritization.md`; the PRD states the *why-now story* the bet rests on, not the WSJF score.)
 
 The tell for a solution-first spec: delete the proposed solution and see whether the problem still reads as a problem. If it collapses into "we haven't built X yet," there was no problem — there was a solution looking for one, and the is-this-worth-solving decision was skipped (`product-anti-patterns.md`).
 
@@ -55,7 +55,7 @@ What goes to /axiom-planning (the top item), what goes to /axiom-solution-archit
 (solution shape), tracker IDs.
 ```
 
-What is conspicuously absent is as important as what is present: **no implementation steps, no file list, no architecture, no task breakdown.** Those are the plan (`/axiom-planning`) and the design (`/axiom-solution-architect`). A PRD that contains them has done two siblings' jobs badly and blurred the seam that makes ownership coherent.
+What is conspicuously absent is as important as what is present: **no implementation steps, no file list, no architecture, no task breakdown.** Those are the plan (`/axiom-planning`) and the design (`/solution-architect`). A PRD that contains them has done two siblings' jobs badly and blurred the seam that makes ownership coherent.
 
 ## Falsifiable acceptance criteria — the load-bearing idea
 
@@ -103,7 +103,7 @@ Each PRD carries exactly one headline **success metric** — the signal that the
 
 This is the differentiation, and the boundary table *is* the seam-enforcement — it draws the stop line where product's spec ends and engineering's how begins:
 
-| Belongs in the **PRD** (this sheet) | Belongs in the **plan** (`/axiom-planning`) | Belongs in the **architecture** (`/axiom-solution-architect`) |
+| Belongs in the **PRD** (this sheet) | Belongs in the **plan** (`/axiom-planning`) | Belongs in the **architecture** (`/solution-architect`) |
 |---|---|---|
 | Who, the problem, desired outcome, why now | Ordered tasks with exact files and code | Solution shape and component design |
 | The success metric + TARGET + date | Codebase-validated sequencing of the work | Technology and pattern choices, trade-offs |
@@ -111,7 +111,7 @@ This is the differentiation, and the boundary table *is* the seam-enforcement �
 | Non-goals and guardrail constraints | Effort/risk against codebase reality | How constraints are met technically |
 | Open questions and assumptions | Concrete steps that resolve them | Architectural answers to the open questions |
 
-The flow: product writes the PRD → hands the **top item** to `/axiom-planning`, which turns it into an executable, codebase-validated implementation plan → routes any solution/architecture shaping to `/axiom-solution-architect`. The committed bet is *also* handed to `/axiom-program-management` for sequencing and forecast (the dated commitment never comes from the PRD). **Do not write the implementation plan here, and do not choose the architecture here** — restating either is the same defect as restating WSJF: it duplicates a sibling, drifts out of sync with the real plan, and dissolves the seam. The PRD's `Handoff` section records the linkage (which item, which tracker ID, which sibling owns what) — never a copy of the plan.
+The flow: product writes the PRD → hands the **top item** to `/axiom-planning`, which turns it into an executable, codebase-validated implementation plan → routes any solution/architecture shaping to `/solution-architect`. The committed bet is *also* handed to `/program-management` for sequencing and forecast (the dated commitment never comes from the PRD). **Do not write the implementation plan here, and do not choose the architecture here** — restating either is the same defect as restating WSJF: it duplicates a sibling, drifts out of sync with the real plan, and dissolves the seam. The PRD's `Handoff` section records the linkage (which item, which tracker ID, which sibling owns what) — never a copy of the plan.
 
 This is the `DISPATCH` step of the operating loop made concrete (`product-ownership-operating-model.md`): a PRD reaches `Status: ready-for-planning` only when its problem is stated, its one success metric is named, and its acceptance criteria are falsifiable — those are the gates that make it safe to hand outward. A PRD with a directional criterion is *not* ready, no matter how complete it looks, because the thing it hands to planning cannot later be accepted. The status is a claim about falsifiability, not about word count.
 
@@ -123,15 +123,15 @@ Distinguish two refusals that are easy to blur. **`vision.md` anti-goals** are *
 
 ## Anti-Patterns
 
-1. **Solution-first specification.** The PRD opens with the feature ("add a caching layer," "build a dashboard") and the problem is reverse-engineered to justify it. Seductive because the solution is the exciting part and writing it feels like progress, while problem-framing feels like throat-clearing. But it forecloses the architect's alternatives, couples success to one implementation, and skips whether the problem was worth solving at all. *Fix: lead with who → problem → desired outcome → why now, and confirm the problem still reads as a problem with the solution deleted; route the how to `/axiom-solution-architect` — see the problem-first section above, and `product-discovery-and-opportunity.md` for the is-this-worth-solving call.*
+1. **Solution-first specification.** The PRD opens with the feature ("add a caching layer," "build a dashboard") and the problem is reverse-engineered to justify it. Seductive because the solution is the exciting part and writing it feels like progress, while problem-framing feels like throat-clearing. But it forecloses the architect's alternatives, couples success to one implementation, and skips whether the problem was worth solving at all. *Fix: lead with who → problem → desired outcome → why now, and confirm the problem still reads as a problem with the solution deleted; route the how to `/solution-architect` — see the problem-first section above, and `product-discovery-and-opportunity.md` for the is-this-worth-solving call.*
 
 2. **Unfalsifiable acceptance.** Criteria read "intuitive," "improved," "users are happier" — directional words no observation can disprove. Seductive because a criterion that cannot fail can never embarrass you at acceptance. But it builds an acceptance gap into the spec before any code exists: `ACCEPT` has nothing to defend a rejection on, so it banks "it shipped" as success. This is the *spec-level twin* of the `metrics.md` unfalsifiable-target trap. *Fix: every criterion binary, against a pre-committed threshold, bounded by a date, with an explicit reject branch; the acceptance criterion is the falsification condition at the spec level, mirroring the PDR reversal-trigger (product-state-and-continuity.md).*
 
-3. **Gold-plating — the spec elaborates the solution.** The PRD keeps adding capability "while we're in there" — extra states, edge cases, configuration nobody asked for — because more feels more complete and saying "not this bet" feels like under-delivering. But it inflates scope past the problem, and the inflation is *how-elaboration* the product does not own. *Fix: name the non-goals explicitly to fence the bet's scope (bounds the WHAT), and route solution-elaboration to `/axiom-solution-architect` (owns the HOW); the PRD states the problem and the bar, not the trimmings.*
+3. **Gold-plating — the spec elaborates the solution.** The PRD keeps adding capability "while we're in there" — extra states, edge cases, configuration nobody asked for — because more feels more complete and saying "not this bet" feels like under-delivering. But it inflates scope past the problem, and the inflation is *how-elaboration* the product does not own. *Fix: name the non-goals explicitly to fence the bet's scope (bounds the WHAT), and route solution-elaboration to `/solution-architect` (owns the HOW); the PRD states the problem and the bar, not the trimmings.*
 
 4. **One metric short, or six metrics long.** The PRD names no success metric (so nothing decides the bet) or lists many (so nothing single decides it). Seductive because more metrics feel more rigorous and no metric avoids committing. Either way there is no single observation that pays off or kills the bet. *Fix: name exactly one headline success metric with BASELINE → TARGET and a date, drawn from the metrics.md scoreboard; route metric design and kill-logic to product-metrics-and-experimentation.md.*
 
-5. **PRD as plan.** The spec lists files to touch, steps to take, an architecture to adopt. Seductive because it feels thorough and like a head start for engineering. But it does `/axiom-planning`'s and `/axiom-solution-architect`'s jobs badly, drifts out of sync with the real plan the moment the codebase pushes back, and erases the seam. *Fix: keep the PRD to problem → criteria → non-goals → handoff; hand the top item to `/axiom-planning` and the solution shape to `/axiom-solution-architect`, recording only the linkage.*
+5. **PRD as plan.** The spec lists files to touch, steps to take, an architecture to adopt. Seductive because it feels thorough and like a head start for engineering. But it does `/axiom-planning`'s and `/solution-architect`'s jobs badly, drifts out of sync with the real plan the moment the codebase pushes back, and erases the seam. *Fix: keep the PRD to problem → criteria → non-goals → handoff; hand the top item to `/axiom-planning` and the solution shape to `/solution-architect`, recording only the linkage.*
 
 ## Cross-References
 
@@ -141,5 +141,5 @@ Distinguish two refusals that are easy to blur. **`vision.md` anti-goals** are *
 - `vision-strategy-and-roadmap.md` — owns product-level anti-goals (what the product refuses to become), distinct from this sheet's bet-level non-goals (the scope fence on one PRD).
 - `product-metrics-and-experimentation.md` — owns metric design, instrumentation, A/B/hypothesis mechanics, and kill-the-bet logic; the PRD names which metric moves and by how much, it does not design the discipline.
 - `/axiom-planning` — turns the PRD's top item into an executable, codebase-validated implementation plan. The PRD owns what/why and the bar; planning owns the plan. Do not write the plan here.
-- `/axiom-solution-architect` — owns the solution shape, architecture, and ADRs (the *how*). Route solution-elaboration there; the PRD names constraints the design lives inside, not the design.
-- `/axiom-program-management` — sequences and delivers the committed bet: WSJF/cost-of-delay (`roadmapping-and-prioritization.md`), forecast (`estimation-and-forecasting.md`), flow. The dated commitment comes from its forecast, never from the PRD. The PRD's why-now is a story, not a WSJF score.
+- `/solution-architect` — owns the solution shape, architecture, and ADRs (the *how*). Route solution-elaboration there; the PRD names constraints the design lives inside, not the design.
+- `/program-management` — sequences and delivers the committed bet: WSJF/cost-of-delay (`roadmapping-and-prioritization.md`), forecast (`estimation-and-forecasting.md`), flow. The dated commitment comes from its forecast, never from the PRD. The PRD's why-now is a story, not a WSJF score.

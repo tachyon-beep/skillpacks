@@ -46,7 +46,7 @@ git log --oneline -30 2>/dev/null
 From that evidence, draft the five artifacts to the **exact schemas in `product-state-and-continuity.md`** — do not invent shapes:
 
 1. **`vision.md`** — purpose, who-it-serves, anti-goals, and the authority-grant slot. Draft purpose and audience from README/docs; mark anything you inferred rather than found as an assumption to confirm.
-2. **`roadmap.md`** — seed Now/Next/Later as **intent only**, from observed direction (recent commits and open tracker themes suggest the Now bet). Include the routing banner: sequencing, WSJF, and dated forecasts are produced by `/axiom-program-management`, never here. No dates, no WSJF scores.
+2. **`roadmap.md`** — seed Now/Next/Later as **intent only**, from observed direction (recent commits and open tracker themes suggest the Now bet). Include the routing banner: sequencing, WSJF, and dated forecasts are produced by `/program-management`, never here. No dates, no WSJF scores.
 3. **`metrics.md`** — seed a north-star and at least one guardrail, each with a **falsifiable** target as a `BASELINE → TARGET by <date>` placeholder for the human to set real numbers against. A directional word is not a metric; reject "improve engagement."
 4. **`current-state.md`** — the resume brief: the inferred current bet, what the tracker shows in flight (by ID), the open questions bootstrap could not resolve, and where the next session starts.
 5. **`decisions/`** — create the directory. Optionally seed `0001-bootstrap-from-observed-state.md` recording that the initial workspace was inferred (context → what was observed → the call → reversal trigger: "revisit once the human confirms vision and grant").
@@ -74,7 +74,7 @@ Whether bootstrapping or resuming, **end by surfacing the current authority gran
 ## Constraints on what this command produces
 
 - **Writes files, never a copy-paste block.** The workspace is the deliverable; on bootstrap, the five artifacts and `decisions/` land on disk via `Write`. Emitting a block instead loses the continuity property the pack exists for.
-- **Roadmap is intent only.** No dates, no WSJF, no sequencing — those are `/axiom-program-management`. Keep the routing banner in `roadmap.md`.
+- **Roadmap is intent only.** No dates, no WSJF, no sequencing — those are `/program-management`. Keep the routing banner in `roadmap.md`.
 - **Metrics are falsifiable.** Every seeded target carries a number and a date against a BASELINE/TARGET placeholder; reject directional words.
 - **The grant is confirmed before it is authoritative.** Use the fixed taxonomy; confirm via AskUserQuestion, or write `DRAFT — unconfirmed` and flag it.
 - **Generic illustrations only.** Any example metric, bet, or anti-goal is an obvious placeholder (e.g. "reduce activation time from BASELINE to TARGET") — never a real client, organization, or domain.
@@ -95,6 +95,6 @@ Whether bootstrapping or resuming, **end by surfacing the current authority gran
 - `product-state-and-continuity.md` — the exact schemas for `vision.md`, `roadmap.md`, `metrics.md`, `current-state.md`, the PDR template, the RESUME protocol, and the tracker-adapter contract this command builds and loads.
 - `vision-strategy-and-roadmap.md` — shapes the vision and the Now/Next/Later bets seeded into the workspace as intent.
 - `product-metrics-and-experimentation.md` — the kill/keep logic and target design behind the falsifiable metrics this command seeds.
-- `/axiom-program-management` — owns sequencing, WSJF, and the dated forecast; the seeded roadmap is intent only and hands the committed bet there.
+- `/program-management` — owns sequencing, WSJF, and the dated forecast; the seeded roadmap is intent only and hands the committed bet there.
 - `/product-checkpoint` — the write-back command that closes the loop, refreshes the workspace, and commits; this command never commits.
 - `/write-prd` — turns the chosen top bet into a PRD with falsifiable acceptance criteria during `DISPATCH`.

@@ -253,4 +253,4 @@ Git holds the desired state; an in-cluster controller pulls it and reconciles co
 - `ci-cd-pipeline-architecture` (this pack) — the build/test/scan/sign stages that produce the artifact CI commits to the config repo; where the CI/CD split is enforced.
 - `infrastructure-as-code` (this pack) — the same desired-state-in-git discipline for cloud infrastructure; drift detection and plan/apply gates are the IaC analog of reconciliation.
 - `ordis-security-architect` — supply-chain attestation (SLSA, cosign keyless via Fulcio/Rekor), admission-time signature verification, and OIDC federation for credential-free CI.
-- `/axiom-solution-architect` — recording the Argo CD vs Flux choice and the one-repo-vs-two decision as ADRs.
+- `/solution-architect` — recording the Argo CD vs Flux choice and the one-repo-vs-two decision as ADRs.

@@ -212,7 +212,7 @@ Write to `<input dir or working dir>/failure-mode-analysis-YYYY-MM-DD.md`:
 
 Covered: forward fault enumeration with defense/gap assessment (DESIGN), backward attribution of an observed anomaly to the first broken guarantee (ANOMALY), and a dated report naming the next sheet/artifact/test.
 
-Not covered: implementing fixes (downstream — the report names the artifact); a full design critique against all failure modes (use `/review-distributed-design`); broker/event-sourcing mechanics (`axiom-event-driven-architecture`); deployment/rollback of a fix (`axiom-devops-engineering`).
+Not covered: implementing fixes (downstream — the report names the artifact); a full design critique against all failure modes (use `/review-distributed-design`); broker/event-sourcing mechanics (`axiom-event-driven-architecture` — proposed, not yet in the marketplace); deployment/rollback of a fix (`axiom-devops-engineering`).
 
 ## Downstream Handoffs
 

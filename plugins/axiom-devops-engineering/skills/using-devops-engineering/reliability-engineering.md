@@ -329,5 +329,5 @@ Assume everything fails. Put a number on "reliable" (SLO) and spend it deliberat
 - `ci-cd-pipeline-architecture` (this pack) — where restore-test and chaos jobs run as pipeline/scheduled gates.
 - `infrastructure-as-code` (this pack) — codified, reproducible infra is the prerequisite for a rehearsable regional failover.
 - Instrument vendor-neutrally with OpenTelemetry (OTLP) — the four golden signals and SLI queries feed both the burn-rate alerts and the chaos hypotheses.
-- `/ordis-quality-engineering` — chaos engineering and resilience/load testing methodology in depth.
-- `/axiom-solution-architect` — recording RTO/RPO targets and the DR architecture decision as an ADR.
+- `/quality-engineering` — chaos engineering and resilience/load testing methodology in depth.
+- `/solution-architect` — recording RTO/RPO targets and the DR architecture decision as an ADR.

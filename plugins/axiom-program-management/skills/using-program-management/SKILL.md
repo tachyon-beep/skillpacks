@@ -1,6 +1,6 @@
 ---
 name: using-program-management
-description: Use when **managing the delivery of work** rather than building it — running a project or a program, not writing its code. Use when a team is busy but outcomes are not landing, when "when will it be done" has no defensible answer, when status is green every week until it is suddenly red, when dependencies surprise you, when a RAID log is a graveyard, or when several projects must be coordinated toward one outcome (a program). Lean/agile-leaning, honest about where program scale needs predictive structure. Pairs with `/axiom-planning` (turning one workstream into an implementation plan) and `/axiom-sdlc-engineering` (process maturity, requirements traceability, formal governance). Do not load for writing code, picking an architecture, or designing a single feature.
+description: Use when **managing the delivery of work** rather than building it — running a project or a program, not writing its code. Use when a team is busy but outcomes are not landing, when "when will it be done" has no defensible answer, when status is green every week until it is suddenly red, when dependencies surprise you, when a RAID log is a graveyard, or when several projects must be coordinated toward one outcome (a program). Lean/agile-leaning, honest about where program scale needs predictive structure. Pairs with `/axiom-planning` (turning one workstream into an implementation plan) and `/sdlc-engineering` (process maturity, requirements traceability, formal governance). Do not load for writing code, picking an architecture, or designing a single feature.
 ---
 
 # Using Program Management
@@ -11,7 +11,7 @@ description: Use when **managing the delivery of work** rather than building it 
 
 There are three distinct jobs that get conflated, and this pack draws the line between them sharply because the failure modes differ:
 
-- **Building the thing** is engineering. How to structure the code, which architecture, how to test — that is the language-engineering packs, `/axiom-system-architect`, and `/axiom-sdlc-engineering`'s `design-and-build`.
+- **Building the thing** is engineering. How to structure the code, which architecture, how to test — that is the language-engineering packs, `/system-architect`, and `/sdlc-engineering`'s `design-and-build`.
 - **Planning one workstream** — turning a spec into an ordered set of executable tasks with exact files and acceptance criteria — is `/axiom-planning`. A plan is an artifact you execute once.
 - **Managing delivery** is this pack. It is the *standing* discipline that runs across many plans and many sprints: keeping work flowing, keeping scope honest, keeping stakeholders aligned, keeping risks visible before they become issues, keeping the forecast defensible, and — at program scale — keeping multiple projects pointed at a single outcome that someone is accountable for realizing.
 
@@ -44,10 +44,10 @@ Use this pack when:
 
 Do **not** use this pack when:
 
-- You are **writing code, choosing an architecture, or designing a single feature** — load the relevant engineering pack or `/axiom-system-architect`.
+- You are **writing code, choosing an architecture, or designing a single feature** — load the relevant engineering pack or `/system-architect`.
 - You need to **turn one spec into an executable implementation plan** — load `/axiom-planning`. (This pack manages the delivery that plan sits inside; it does not write the plan.)
-- Your question is about **CMMI maturity levels, requirements traceability matrices, formal DAR/RSKM governance, or statistical process control** — load `/axiom-sdlc-engineering`. (This pack runs operational delivery; that pack defines the formal process discipline underneath it. See **Boundary**.)
-- You need to **decompose a workflow into stages** (a wizard, an approval pipeline, a troubleshooting tree) — load `/axiom-procedural-architecture`.
+- Your question is about **CMMI maturity levels, requirements traceability matrices, formal DAR/RSKM governance, or statistical process control** — load `/sdlc-engineering`. (This pack runs operational delivery; that pack defines the formal process discipline underneath it. See **Boundary**.)
+- You need to **decompose a workflow into stages** (a wizard, an approval pipeline, a troubleshooting tree) — load `/procedural-architecture`.
 - Your question is **organizational design or people management** (hiring, performance, org charts) in isolation — out of scope; this pack manages *delivery*, not *the organization*.
 
 ## Start Here
@@ -125,15 +125,15 @@ This pack manages **delivery**. It deliberately hands off three adjacent discipl
 
 - **Turning a workstream into an executable implementation plan → `/axiom-planning`.** This pack decides *what* to deliver next and *how confident* the date is; `/axiom-planning` turns the chosen workstream into an ordered set of tasks with exact files, code, and acceptance criteria, validated against the codebase before execution. The relationship is: this pack owns the backlog and the forecast; planning owns the plan for the item at the top of it. When a sheet says "hand the top backlog item to `/axiom-planning`," that is the seam.
 
-- **Process maturity, requirements traceability, and formal governance → `/axiom-sdlc-engineering`.** That pack owns CMMI levels, the requirements lifecycle and traceability matrix, formal Decision Analysis (DAR) and Risk Management (RSKM) process areas, and statistical process control for metrics. This pack owns the *operational* expression of those disciplines: a working RAID log (not the RSKM process definition), an honest status report (not the SPC control chart), a governance cadence that meets and decides (not the DAR procedure). When a regulated context demands formal traceability or quantitative process management, this pack routes there. Rule of thumb: **`/axiom-sdlc-engineering` defines the process; this pack runs the delivery inside it.**
+- **Process maturity, requirements traceability, and formal governance → `/sdlc-engineering`.** That pack owns CMMI levels, the requirements lifecycle and traceability matrix, formal Decision Analysis (DAR) and Risk Management (RSKM) process areas, and statistical process control for metrics. This pack owns the *operational* expression of those disciplines: a working RAID log (not the RSKM process definition), an honest status report (not the SPC control chart), a governance cadence that meets and decides (not the DAR procedure). When a regulated context demands formal traceability or quantitative process management, this pack routes there. Rule of thumb: **`/sdlc-engineering` defines the process; this pack runs the delivery inside it.**
 
-- **Architecture and engineering decisions → `/axiom-system-architect` and the language-engineering packs.** How to build it, structured, is not a management question.
+- **Architecture and engineering decisions → `/system-architect` and the language-engineering packs.** How to build it, structured, is not a management question.
 
 This pack also does **not** cover:
 
 - **People management** — hiring, performance reviews, org design, career development — out of scope; this pack manages work, not people's employment.
 - **Financial management beyond delivery** — corporate budgeting, procurement contracts, vendor SOWs as legal instruments — touched only where funding flow affects delivery (`capacity-and-resource-flow.md`); the legal and accounting layers are out of scope.
-- **Product discovery and UX research** — what to build and why users want it — load `/lyra-ux-designer` for the research discipline; this pack manages delivering what discovery decided.
+- **Product discovery and UX research** — what to build and why users want it — load `/ux-designer` for the research discipline; this pack manages delivering what discovery decided.
 
 ## Routing by Symptom
 
@@ -175,7 +175,7 @@ This pack also does **not** cover:
 
 **Route to**: [`risk-issues-and-raid.md`](risk-issues-and-raid.md).
 
-**Why**: A RAID log is a management tool only if it is reviewed on cadence, risks are re-scored as conditions change, and there is an escalation path that moves a risk up before it becomes an issue. The sheet covers exposure scoring, review cadence, and the escalation discipline. For the *formal* RSKM process area in a regulated context, it routes you to `/axiom-sdlc-engineering`.
+**Why**: A RAID log is a management tool only if it is reviewed on cadence, risks are re-scored as conditions change, and there is an escalation path that moves a risk up before it becomes an issue. The sheet covers exposure scoring, review cadence, and the escalation discipline. For the *formal* RSKM process area in a regulated context, it routes you to `/sdlc-engineering`.
 
 ### Scope keeps growing and I can't say no cleanly
 

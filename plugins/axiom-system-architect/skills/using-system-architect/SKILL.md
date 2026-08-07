@@ -59,11 +59,16 @@ Archaeologist → Architect → (Future: Project Manager)
 - Priority-based roadmaps
 - "Here's what's wrong and how to fix it"
 
-**Project Manager** (future: axiom-project-manager):
-- Execution tracking
-- Sprint planning
-- Risk management
+**Delivery Manager** (`axiom-program-management`, `/program-management`):
+- Execution tracking, flow metrics, and forecasting
+- Dependency, risk and RAID management
+- Governance cadence and benefits realization
 - "Here's how we'll track the fixes"
+
+**Product Owner** (`axiom-product-management`, `/product-management`):
+- Whether the fix is worth making, and for whom
+- Bets, PRDs, and falsifiable acceptance criteria
+- "Here's why this one and not that one"
 
 ## Available Architect Skills
 
@@ -260,11 +265,13 @@ Architect identifies Python-specific issues
    Documentation → /technical-writer
    ```
 
-4. **Project Management** (future)
+4. **Delivery Management**
    ```
-   /project-manager
-   → Creates tracked project from roadmap
-   → Sprint planning, progress tracking
+   /program-management
+   → Turns the roadmap into sequenced, tracked delivery
+   → Flow metrics, dependencies, RAID, forecasting
+   /product-management
+   → Decides which fixes are worth making, and for whom
    ```
 
 ## Decision Tree
@@ -352,8 +359,10 @@ Comprehensive baseline testing showed agents naturally:
 
 ## Related Documentation
 
-- **Archaeologist plugin:** `axiom-system-archaeologist`
-- **Future PM plugin:** `axiom-project-manager` (not yet implemented)
+- **Archaeologist plugin:** `axiom-system-archaeologist` (`/system-archaeologist`)
+- **Delivery plugin:** `axiom-program-management` (`/program-management`)
+- **Product plugin:** `axiom-product-management` (`/product-management`)
+- **Distributed-systems architecture:** `axiom-distributed-systems` (`/distributed-systems`)
 
 ## The Bottom Line
 

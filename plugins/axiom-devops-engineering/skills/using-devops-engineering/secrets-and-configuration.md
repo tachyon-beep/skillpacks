@@ -260,4 +260,4 @@ A secret lives in one authoritative store, is delivered to workloads at runtime 
 - `infrastructure-as-code` (this pack) — state encryption and OIDC federation for CI; never store cloud keys in CI.
 - `ci-cd-pipeline-architecture` (this pack) — where OIDC/workload-identity and masked secret injection live in the pipeline.
 - `deployment-strategies` (this pack) — promoting one immutable artifact across environments with only config/secrets differing.
-- `/ordis-security-architect` — threat-modeling the secret blast radius, IAM least-privilege design, and KMS/envelope-encryption posture.
+- `/security-architect` — threat-modeling the secret blast radius, IAM least-privilege design, and KMS/envelope-encryption posture.

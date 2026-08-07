@@ -72,7 +72,7 @@ The discipline is the project-scale principle — integrate early and continuous
 
 The aim is to make the program's final integration a *non-event* — because the pieces have been meeting continuously, the big convergence has nothing new to discover. A program whose integration risk is concentrated in one terminal big-bang event has chosen the riskiest possible structure; one that integrates a thin slice across all teams every increment has amortized that risk down to nothing.
 
-This is also where lean stops being dogma. A large or regulated program — one shipping a safety-critical system, or coordinating a hard external deadline across nine teams — legitimately needs *more* predictive structure here: a planned integration-and-test phase with formal entry/exit criteria, a hardening increment, traceability from requirement to integration test (which routes to `/axiom-sdlc-engineering`). Continuous integration across the program reduces the size of that phase; it does not always eliminate the need for a planned convergence with formal gates. Match the rigor to the stakes.
+This is also where lean stops being dogma. A large or regulated program — one shipping a safety-critical system, or coordinating a hard external deadline across nine teams — legitimately needs *more* predictive structure here: a planned integration-and-test phase with formal entry/exit criteria, a hardening increment, traceability from requirement to integration test (which routes to `/sdlc-engineering`). Continuous integration across the program reduces the size of that phase; it does not always eliminate the need for a planned convergence with formal gates. Match the rigor to the stakes.
 
 ## The coordination role and forums
 

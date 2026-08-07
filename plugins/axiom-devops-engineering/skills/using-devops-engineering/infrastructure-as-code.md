@@ -216,5 +216,5 @@ The infrastructure is the code, the code is in `main`, and `main` applied *is* p
 ## Cross-references
 
 - `ci-cd-pipeline-architecture` (this pack) — where the `plan`/`apply` gates live in the deployment pipeline.
-- `/axiom-solution-architect` — recording the OpenTofu-vs-Terraform license decision as an ADR.
+- `/solution-architect` — recording the OpenTofu-vs-Terraform license decision as an ADR.
 - `ordis-security-architect` — OIDC federation, secret management, state encryption posture.

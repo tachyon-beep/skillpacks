@@ -84,7 +84,7 @@ What goes to /axiom-planning (the top item), what goes to /axiom-solution-archit
 (solution shape), tracker IDs.
 ```
 
-**Problem first, solution never.** Lead with who → the problem → desired outcome → why now, and stop before the solution. The tell for a solution-first spec: delete the proposed solution and see whether the problem still reads as a problem. If it collapses into "we haven't built X yet," there was no problem. State the problem so well that several solutions are visibly possible, then hand the choice down to `/axiom-solution-architect`.
+**Problem first, solution never.** Lead with who → the problem → desired outcome → why now, and stop before the solution. The tell for a solution-first spec: delete the proposed solution and see whether the problem still reads as a problem. If it collapses into "we haven't built X yet," there was no problem. State the problem so well that several solutions are visibly possible, then hand the choice down to `/solution-architect`.
 
 ## The falsifiability gate — enforce it, do not narrate it
 
@@ -115,8 +115,8 @@ At least one criterion must be a **guardrail pulled from `metrics.md`** that mus
 
 - **Problem-first, not template-first.** Generate real, tailored content from the gathered inputs; flag genuine unknowns as stated assumptions rather than inventing facts. Do not emit a blank form.
 - **One metric, not a dashboard.** Exactly one headline success metric, drawn from the `metrics.md` scoreboard. A PRD that lists six "success metrics" has chosen none.
-- **No how.** Conspicuously absent — and kept absent — are implementation steps, file lists, architecture, and task breakdowns. Those are the plan (`/axiom-planning`) and the design (`/axiom-solution-architect`). A PRD that contains them is a PRD-as-plan: it does two siblings' jobs badly and dissolves the seam.
-- **No dated commitment.** The PRD's why-now is a story, not a WSJF score; the dated delivery commitment comes from `/axiom-program-management`'s forecast, never from this spec.
+- **No how.** Conspicuously absent — and kept absent — are implementation steps, file lists, architecture, and task breakdowns. Those are the plan (`/axiom-planning`) and the design (`/solution-architect`). A PRD that contains them is a PRD-as-plan: it does two siblings' jobs badly and dissolves the seam.
+- **No dated commitment.** The PRD's why-now is a story, not a WSJF score; the dated delivery commitment comes from `/program-management`'s forecast, never from this spec.
 - **Generic illustrations only.** Any example metric, criterion, or non-goal is an obvious placeholder (BASELINE / TARGET / `<bet name>`) — never a real client, organization, or domain.
 - **Non-goals are bet-level.** They fence *this* spec's scope (a later bet may cross them) — not the product-level anti-goals in `vision.md` (what the product refuses to *become*).
 
@@ -125,8 +125,8 @@ At least one criterion must be a **guardrail pulled from `metrics.md`** that mus
 After the PRD, make the three edges of the seam explicit so the user knows where the build comes from and where it does not:
 
 1. **Name the top item** — the single highest-value workstream in this PRD — and state that it is handed to **`/axiom-planning`** to become an executable, codebase-validated implementation plan. The PRD owns *what / why* and the bar; planning owns the plan for the item at the top.
-2. **Route solution / architecture shaping to `/axiom-solution-architect`** — the solution shape, the component design, the ADR. The PRD names the constraints the design lives inside, never the design.
-3. **State the forecast does not come from here** — the committed bet also goes to `/axiom-program-management` for sequencing and the dated forecast. The PRD emits no date.
+2. **Route solution / architecture shaping to `/solution-architect`** — the solution shape, the component design, the ADR. The PRD names the constraints the design lives inside, never the design.
+3. **State the forecast does not come from here** — the committed bet also goes to `/program-management` for sequencing and the dated forecast. The PRD emits no date.
 
 The PRD's `Handoff` section records only the linkage (which item, which tracker ID, which sibling owns what) — never a copy of the plan.
 
@@ -135,7 +135,7 @@ The PRD's `Handoff` section records only the linkage (which item, which tracker 
 1. State whether a workspace was found and what was pulled from it (the metric + guardrail from `metrics.md`, the `PDR-NNNN` from `decisions/`, the bet tier from `roadmap.md`) versus asked for.
 2. Present the PRD as a fenced markdown block the user can save (offer to `Write` it to `docs/product/` or alongside the tracker item if the user wants the file on disk).
 3. Declare the **falsifiability status**: `ready-for-planning` only if every criterion is binary + dated + has a reject branch and the success metric is anchored to `metrics.md`; otherwise `draft`, naming exactly what blocks it (an unanchored metric, a directional criterion, a missing PDR).
-4. State the named top item and the `/axiom-planning` hand-off, plus the `/axiom-solution-architect` route for solution shape.
+4. State the named top item and the `/axiom-planning` hand-off, plus the `/solution-architect` route for solution shape.
 5. Note any assumption that, if wrong, changes the bet — especially in the success metric and its TARGET.
 
 ## Cross-references
@@ -147,5 +147,5 @@ The PRD's `Handoff` section records only the linkage (which item, which tracker 
 - `product-discovery-and-opportunity.md` — owns the is-this-worth-solving / for-whom call the PRD assumes was made and recorded as a PDR.
 - `vision-strategy-and-roadmap.md` — owns product-level anti-goals (what the product refuses to become), distinct from this PRD's bet-level non-goals.
 - `/axiom-planning` — turns the PRD's top item into an executable, codebase-validated implementation plan (closing seam).
-- `/axiom-solution-architect` — owns the solution shape, architecture, and ADRs (the *how*); the PRD routes solution-elaboration there.
-- `/axiom-program-management` — sequences and delivers the committed bet; the dated commitment comes from its forecast, never from this PRD.
+- `/solution-architect` — owns the solution shape, architecture, and ADRs (the *how*); the PRD routes solution-elaboration there.
+- `/program-management` — sequences and delivers the committed bet; the dated commitment comes from its forecast, never from this PRD.

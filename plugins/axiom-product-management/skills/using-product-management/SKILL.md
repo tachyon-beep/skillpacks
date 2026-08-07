@@ -1,6 +1,6 @@
 ---
 name: using-product-management
-description: 'Use when a Claude is taking **standing ownership** of a software product across many sessions — discovery, strategy, specs, and value validation — deciding *what to build, why, for whom,* and *whether it worked*, with continuity, decision provenance, and an authority boundary that escalates irreversible or outward-facing actions to the human owner. Owns the product disciplines: opportunity assessment (JTBD, problem validation, business case), vision/strategy/positioning and intent-roadmapping, PRDs with falsifiable acceptance criteria, delivery orchestration and acceptance, product-value metrics and experimentation, and the product anti-pattern catalog. Orchestrates rather than reimplements: routes sequencing/flow/WSJF to `/axiom-program-management`, plans to `/axiom-planning`, solution/architecture to `/axiom-solution-architect`, research method to `/lyra-ux-designer`. Do **not** load to build one feature, choose an architecture, or manage delivery flow for already-decided work.'
+description: 'Use when a Claude is taking **standing ownership** of a software product across many sessions — discovery, strategy, specs, and value validation — deciding *what to build, why, for whom,* and *whether it worked*, with continuity, decision provenance, and an authority boundary that escalates irreversible or outward-facing actions to the human owner. Owns the product disciplines: opportunity assessment (JTBD, problem validation, business case), vision/strategy/positioning and intent-roadmapping, PRDs with falsifiable acceptance criteria, delivery orchestration and acceptance, product-value metrics and experimentation, and the product anti-pattern catalog. Orchestrates rather than reimplements: routes sequencing/flow/WSJF to `/program-management`, plans to `/axiom-planning`, solution/architecture to `/solution-architect`, research method to `/ux-designer`. Do **not** load to build one feature, choose an architecture, or manage delivery flow for already-decided work.'
 ---
 
 # Using Product Management
@@ -12,8 +12,8 @@ description: 'Use when a Claude is taking **standing ownership** of a software p
 Three distinct jobs get conflated, and this pack draws the line hard because the failure modes differ:
 
 - **Product** — *what / why / for-whom / did-it-work.* Decide the bet and its falsifiable success criteria; specify it; verify value actually landed. This pack.
-- **Program** — *delivered-predictably.* Sequence and deliver the committed bet: flow, forecast, WSJF, scope control, coordination, RAID, benefits tracking. `/axiom-program-management`.
-- **Engineering** — *build-it.* Architecture, implementation planning, code. `/axiom-solution-architect`, `/axiom-planning`, and the language-engineering packs.
+- **Program** — *delivered-predictably.* Sequence and deliver the committed bet: flow, forecast, WSJF, scope control, coordination, RAID, benefits tracking. `/program-management`.
+- **Engineering** — *build-it.* Architecture, implementation planning, code. `/solution-architect`, `/axiom-planning`, and the language-engineering packs.
 
 The seam that defines this pack, stated once and load-bearing everywhere:
 
@@ -37,10 +37,10 @@ Use this pack when:
 
 Do **not** use this pack when:
 
-- You are **building one feature, choosing an architecture, or writing code** — load the relevant engineering pack, `/axiom-solution-architect`, or `/axiom-planning`. (This pack decides *what* feature and *why*; it does not build it.)
-- You are **managing the delivery flow of already-decided work** — when, in what order, how predictably — load `/axiom-program-management`. (This pack decides the bet; that pack delivers it. See **Boundary**.)
+- You are **building one feature, choosing an architecture, or writing code** — load the relevant engineering pack, `/solution-architect`, or `/axiom-planning`. (This pack decides *what* feature and *why*; it does not build it.)
+- You are **managing the delivery flow of already-decided work** — when, in what order, how predictably — load `/program-management`. (This pack decides the bet; that pack delivers it. See **Boundary**.)
 - You need to **turn one chosen workstream into an executable implementation plan** — load `/axiom-planning`.
-- Your question is **user-research method** (interview technique, usability-test design) or UX/IA/visual design — load `/lyra-ux-designer`. (This pack owns the *product/opportunity lens*; that pack owns the research craft.)
+- Your question is **user-research method** (interview technique, usability-test design) or UX/IA/visual design — load `/ux-designer`. (This pack owns the *product/opportunity lens*; that pack owns the research craft.)
 - Your question is **organizational design, people management, or financials/procurement** — out of scope.
 
 ## Start Here
@@ -59,7 +59,7 @@ If your input is "a Claude is taking ownership of a product and needs to drive i
 
 **Specifying — make the bet falsifiable:**
 
-5. [`prd-and-acceptance-criteria.md`](prd-and-acceptance-criteria.md) — problem statements, PRDs, and **falsifiable** acceptance criteria; the seam to `/axiom-planning` and `/axiom-solution-architect`.
+5. [`prd-and-acceptance-criteria.md`](prd-and-acceptance-criteria.md) — problem statements, PRDs, and **falsifiable** acceptance criteria; the seam to `/axiom-planning` and `/solution-architect`.
 
 **Delivery ownership — get it built without building it:**
 
@@ -104,10 +104,10 @@ Each is catalogued, with its fix, in `product-anti-patterns.md`; the spine and d
 
 This pack owns **what/why/for-whom/did-it-work**. It deliberately hands off four adjacent disciplines, and the handoffs are load-bearing — they appear inside the sheets, not just here. The cardinal rule of this pack is **route the mechanics, do not restate them**.
 
-- **Sequencing and delivering the committed bet → `/axiom-program-management`.** Once product has decided *the bet and its falsifiable success criteria*, program-management owns getting it delivered predictably: Now/Next/Later *sequencing mechanics*, WSJF (Weighted Shortest Job First) / cost-of-delay / RICE / Kano / MoSCoW arithmetic, flow metrics (cycle time, throughput, WIP), forecasting, scope and backlog control, RAID, RAG status, OKRs / benefits realization, and dependency coordination. This pack **never** restates that arithmetic or those metric definitions — when a sheet needs them, it routes. Rule of thumb: **product decides the bet and validates value; program-management delivers it predictably.**
+- **Sequencing and delivering the committed bet → `/program-management`.** Once product has decided *the bet and its falsifiable success criteria*, program-management owns getting it delivered predictably: Now/Next/Later *sequencing mechanics*, WSJF (Weighted Shortest Job First) / cost-of-delay / RICE / Kano / MoSCoW arithmetic, flow metrics (cycle time, throughput, WIP), forecasting, scope and backlog control, RAID, RAG status, OKRs / benefits realization, and dependency coordination. This pack **never** restates that arithmetic or those metric definitions — when a sheet needs them, it routes. Rule of thumb: **product decides the bet and validates value; program-management delivers it predictably.**
 - **Turning the chosen workstream into an executable plan → `/axiom-planning`.** This pack produces the PRD with falsifiable acceptance criteria for the top item; `/axiom-planning` turns it into an ordered set of tasks with exact files and code, validated against the codebase. Product owns the *what/why*; planning owns the *plan*.
-- **Solution and architecture design → `/axiom-solution-architect`.** *How* to build a chosen thing — the solution shape, the architecture, the ADRs — is routed there. Product owns *what/why*, not *how*.
-- **User-research method and UX/IA/visual design → `/lyra-ux-designer`.** Interview technique, usability-test design, and the design craft live there. This pack owns the *product/opportunity lens* — is the problem worth solving, for whom, what is the business case — and routes the research *mechanics* across.
+- **Solution and architecture design → `/solution-architect`.** *How* to build a chosen thing — the solution shape, the architecture, the ADRs — is routed there. Product owns *what/why*, not *how*.
+- **User-research method and UX/IA/visual design → `/ux-designer`.** Interview technique, usability-test design, and the design craft live there. This pack owns the *product/opportunity lens* — is the problem worth solving, for whom, what is the business case — and routes the research *mechanics* across.
 
 ## Routing by Symptom
 
@@ -122,10 +122,10 @@ Routes go both inward (to a sheet) and outward (to a sibling pack). The route-ou
 | "It shipped — did it actually deliver value?" | `product-metrics-and-experimentation.md`, then `delivery-orchestration-and-acceptance.md` |
 | "Should we kill this bet or double down?" | `product-metrics-and-experimentation.md` |
 | "Write decisions and state back durably" | `product-state-and-continuity.md` (and `/product-checkpoint`) |
-| "Sequence / forecast / WSJF / when-will-it-be-done" | **`/axiom-program-management`** — delivery mechanics, not product |
+| "Sequence / forecast / WSJF / when-will-it-be-done" | **`/program-management`** — delivery mechanics, not product |
 | "Turn the top item into an implementation plan" | **`/axiom-planning`** |
-| "How do we *build* this; what architecture?" | **`/axiom-solution-architect`** + the language-engineering packs |
-| "How do I run the user interview / usability test?" | **`/lyra-ux-designer`** — research method |
+| "How do we *build* this; what architecture?" | **`/solution-architect`** + the language-engineering packs |
+| "How do I run the user interview / usability test?" | **`/ux-designer`** — research method |
 
 ## Pressure Resistance — A Gate, Not a Suggestion
 
@@ -190,8 +190,8 @@ The pack ships three slash commands and two agents.
 
 ## Cross-References
 
-- `/axiom-program-management` — sequences and delivers the committed bet (flow, forecast, WSJF, scope, RAID, benefits). The single most-routed sibling; this pack decides the bet and validates value, that pack delivers it predictably. Never restate its mechanics.
+- `/program-management` — sequences and delivers the committed bet (flow, forecast, WSJF, scope, RAID, benefits). The single most-routed sibling; this pack decides the bet and validates value, that pack delivers it predictably. Never restate its mechanics.
 - `/axiom-planning` — turns the PRD's top item into an executable, codebase-validated implementation plan. Product owns the what/why; planning owns the plan.
-- `/axiom-solution-architect` — solution and architecture design and ADRs for *how* to build a chosen thing. Product owns what/why; route the how there.
-- `/lyra-ux-designer` — user-research method (interview, usability testing) and UX/IA/visual design. This pack owns the product/opportunity lens; route the research craft there.
-- `/axiom-sdlc-engineering` — process maturity, requirements traceability, and formal governance, when a regulated context demands them underneath the operating loop.
+- `/solution-architect` — solution and architecture design and ADRs for *how* to build a chosen thing. Product owns what/why; route the how there.
+- `/ux-designer` — user-research method (interview, usability testing) and UX/IA/visual design. This pack owns the product/opportunity lens; route the research craft there.
+- `/sdlc-engineering` — process maturity, requirements traceability, and formal governance, when a regulated context demands them underneath the operating loop.

@@ -59,7 +59,7 @@ The grant is product-specific and inspectable by design — not hardcoded in the
 
 ## `roadmap.md` — Now/Next/Later as intent (sequencing routed out)
 
-This is the *file schema*, not the roadmapping discipline. The Now/Next/Later bands, the confidence-decreases-with-horizon honesty, theme-based bets, and the cost-of-delay/WSJF arithmetic are owned by `/axiom-program-management` (`roadmapping-and-prioritization.md`) and shaped in the sibling `vision-strategy-and-roadmap.md`. The workspace file records *intent and sequence as the owner currently believes it*; the dated commitment and the WSJF computation are produced downstream.
+This is the *file schema*, not the roadmapping discipline. The Now/Next/Later bands, the confidence-decreases-with-horizon honesty, theme-based bets, and the cost-of-delay/WSJF arithmetic are owned by `/program-management` (`roadmapping-and-prioritization.md`) and shaped in the sibling `vision-strategy-and-roadmap.md`. The workspace file records *intent and sequence as the owner currently believes it*; the dated commitment and the WSJF computation are produced downstream.
 
 ```markdown
 # Roadmap — <product name>            Updated: <YYYY-MM-DD> (PDR-0007)
@@ -79,7 +79,7 @@ This is the *file schema*, not the roadmapping discipline. The Now/Next/Later ba
 - **<theme>** — on the map; not shaped or sized
 ```
 
-Each Now/Next item points at its tracker reference, not at a copied task list. When a Now bet is committed for delivery, the seam fires: hand it to `/axiom-program-management` for sequencing and forecast — the roadmap cell never becomes a date.
+Each Now/Next item points at its tracker reference, not at a copied task list. When a Now bet is committed for delivery, the seam fires: hand it to `/program-management` for sequencing and forecast — the roadmap cell never becomes a date.
 
 ## `decisions/` — the Product Decision Record (PDR)
 
@@ -231,7 +231,7 @@ Checkpoint at the end of every session and before any escalation, so the owner r
 
 5. **Unfalsifiable targets in `metrics.md`.** Metrics read "improve engagement," "better performance" — directional words with no number and no date. Seductive because vague targets are never wrong. They make acceptance and PDR reversal triggers impossible to fire, so bets never get killed. *Fix: every target gets a number and a date against a BASELINE; reject anything you cannot falsify — kill/keep logic in product-metrics-and-experimentation.md.*
 
-6. **A roadmap that drifts into a delivery schedule.** Dates and WSJF scores creep into `roadmap.md` because a stakeholder wanted precision. Seductive because it looks like control. It duplicates `/axiom-program-management`'s job, decays the moment reality moves, and turns honest intent into a broken promise. *Fix: keep `roadmap.md` as intent-only with the routing banner; hand the committed bet to `/axiom-program-management` for sequencing and the forecast.*
+6. **A roadmap that drifts into a delivery schedule.** Dates and WSJF scores creep into `roadmap.md` because a stakeholder wanted precision. Seductive because it looks like control. It duplicates `/program-management`'s job, decays the moment reality moves, and turns honest intent into a broken promise. *Fix: keep `roadmap.md` as intent-only with the routing banner; hand the committed bet to `/program-management` for sequencing and the forecast.*
 
 ## Cross-References
 
@@ -239,5 +239,5 @@ Checkpoint at the end of every session and before any escalation, so the owner r
 - `product-metrics-and-experimentation.md` — the kill/keep logic and experiment design behind a PDR's reversal trigger and `metrics.md`'s targets; this sheet stores the durable scoreboard, that sheet decides what it means.
 - `vision-strategy-and-roadmap.md` — shapes the strategy and the Now/Next/Later bets this sheet records as a file; the workspace is where that thinking is persisted.
 - `prd-and-acceptance-criteria.md` — PRDs are the spec a Now bet hands to delivery; `current-state.md` references them by ID and acceptance is judged against their criteria.
-- `/axiom-program-management` — owns Now/Next/Later mechanics, WSJF / cost-of-delay arithmetic, flow metrics, and the dated forecast. The committed bet is handed over for sequencing; the roadmap file never computes it. See its `roadmapping-and-prioritization.md`.
+- `/program-management` — owns Now/Next/Later mechanics, WSJF / cost-of-delay arithmetic, flow metrics, and the dated forecast. The committed bet is handed over for sequencing; the roadmap file never computes it. See its `roadmapping-and-prioritization.md`.
 - `/axiom-planning` — turns the top bet's PRD into an executable, codebase-validated plan; `current-state.md` records what was dispatched to it.

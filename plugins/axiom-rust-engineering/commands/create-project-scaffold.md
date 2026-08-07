@@ -129,7 +129,7 @@ allow-registry = ["https://github.com/rust-lang/crates.io-index"]
 allow-git = []
 ```
 
-After writing `deny.toml`, run `/rust-engineering:audit` (or `/audit` if scoped) to verify supply-chain posture against advisories, licenses, bans, and sources.
+After writing `deny.toml`, run `/axiom-rust-engineering:audit` (or `/audit` if scoped) to verify supply-chain posture against advisories, licenses, bans, and sources.
 
 8. **Write `.github/workflows/ci.yml`**
 

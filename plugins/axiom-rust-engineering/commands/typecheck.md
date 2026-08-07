@@ -129,7 +129,7 @@ Next step: Fix clippy warnings, then run full test suite.
 ## Iteration Loop
 
 1. Make code changes
-2. Run `/rust-engineering:typecheck`
+2. Run `/axiom-rust-engineering:typecheck`
 3. Fix any type errors (fail fast)
 4. Fix clippy warnings
 5. Commit

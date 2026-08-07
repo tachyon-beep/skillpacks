@@ -290,5 +290,5 @@ You control the part of MTTR between failure and understanding, and observabilit
 - `deployment-strategies` (this pack) — the canary `AnalysisTemplate` queries the RED/SLO metrics defined here; SLI-gated rollout with automated revert is the payoff of this instrumentation.
 - `ci-cd-pipeline-architecture` (this pack) — where deploy annotations and SLO gates plug into the pipeline.
 - `infrastructure-as-code` (this pack) — provision the Collector, backends, and alerting rules as code, not by hand.
-- `/ordis-quality-engineering` — chaos engineering and performance testing exercise the observability you build here; verify the alerts actually fire.
-- `/axiom-solution-architect` — record the OTel-vs-vendor and SLO-target decisions as ADRs.
+- `/quality-engineering` — chaos engineering and performance testing exercise the observability you build here; verify the alerts actually fire.
+- `/solution-architect` — record the OTel-vs-vendor and SLO-target decisions as ADRs.

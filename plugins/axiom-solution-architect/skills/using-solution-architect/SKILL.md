@@ -50,7 +50,7 @@ All reference sheets are in the same directory as this `SKILL.md`. When you see 
 ## The Pipeline
 
 ```
-archaeologist (docs) → architect (assesses) → (future) project-manager
+archaeologist (docs) → architect (assesses) → program-management (delivers)
                                  ↑
 solution-architect (designs) ────┘  (solution-architect output can later
                                     be critiqued by system-architect)

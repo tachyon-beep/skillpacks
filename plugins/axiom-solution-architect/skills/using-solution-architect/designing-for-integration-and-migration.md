@@ -274,4 +274,5 @@ This section is operational guidance and must be applied before `16-` is drafted
 
 - Operational runbooks (separate artifact, owned by the operating team)
 - Infrastructure-as-code (`13-deployment-view.md` covers the topology; IaC is implementation)
-- Execution scheduling (that's project-manager territory — not in v1.0.0)
+- Execution scheduling and delivery sequencing → `axiom-program-management` (`/program-management`)
+- The *mechanics* of the patterns named above — outbox delivery semantics, idempotency keys, CDC ordering guarantees, saga compensation, consensus → `axiom-distributed-systems` (`/distributed-systems`). This sheet chooses the migration pattern and its abort criterion; that pack makes the chosen pattern correct under partition.

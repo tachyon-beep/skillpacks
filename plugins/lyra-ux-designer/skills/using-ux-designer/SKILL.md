@@ -289,7 +289,16 @@ When you see a link like `[ux-fundamentals.md](ux-fundamentals.md)`, read the fi
 **When the surface is a static documentation site or marketing page** (not an interactive application):
 - Hand off to `lyra-site-designer` — owns information architecture, HTML/CSS, design tokens, and developer-UX patterns for docs-first frameworks (Starlight / VitePress / Docusaurus).
 
-**This pack stays in scope** for: SaaS dashboards, web applications, mobile apps, desktop tools, game UI, AI / chat / agent surfaces.
+**This pack stays in scope** for: SaaS dashboards, web applications, mobile apps, GUI desktop tools, game UI, AI / chat / agent surfaces.
+
+---
+
+### Lyra UX + Lyra TUI (sibling pack)
+
+**When the surface is a terminal user interface** (a CLI-adjacent full-screen app, not a GUI desktop tool):
+- Hand off to `lyra-tui-designer` (`/tui-designer`) — owns framework-agnostic TUI design: cell-grid layout, keyboard-first interaction, colour under 16/256/truecolour degradation, and terminal accessibility constraints that WCAG's pixel-based criteria do not translate to directly.
+
+**This pack stays in scope** for the design *reasoning* — audience needs, IA, interaction model — which transfers across surfaces. Take the reasoning from here, the terminal-specific execution from there.
 
 ---
 

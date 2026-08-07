@@ -31,7 +31,7 @@ Use this pack when:
 Do **not** use this pack when:
 
 - You only need to scan an existing Python simulation for known violation patterns → `/check-determinism` (yzmir-simulation-foundations).
-- You are designing the audit trail of *decisions* (rule firings, governor verdicts) for compliance review → `/using-audit-pipelines` (axiom-audit-pipelines). That pack handles canonical encoding, fingerprint chains, and signed exports for evidence; this pack handles re-runnable execution for debugging.
+- You are designing the audit trail of *decisions* (rule firings, governor verdicts) for compliance review → `/audit-pipelines` (axiom-audit-pipelines). That pack handles canonical encoding, fingerprint chains, and signed exports for evidence; this pack handles re-runnable execution for debugging.
 - You want bit-exact numerical methods for a particular ODE/PDE solver → `yzmir-simulation-foundations` covers integrator selection and stability.
 - The system makes no sequential decisions and has no internal state worth re-running (a stateless transform pipeline, a pure function batch job).
 

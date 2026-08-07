@@ -22,7 +22,7 @@ recording pass/fail/waiver per check.
 
 For a focused single-channel design pass without the full workflow, invoke the relevant sheet from the
 `using-distributed-systems` skill directly (e.g. `replication-and-quorums.md`). Architecture risk
-consolidation across the whole solution belongs to `/axiom-solution-architect`, which consumes the
+consolidation across the whole solution belongs to `/solution-architect`, which consumes the
 `99-` spec produced here.
 
 ## Preconditions
@@ -174,7 +174,7 @@ Router-owned consolidation. Assemble the `99-` spec from the numbered artifacts:
   and the test/invariant that proves it.
 - The declared tier and any promotions recorded in Step 1.
 - The list of cross-referenced packs and what each owns.
-- Open risks handed to `/axiom-solution-architect` for whole-solution risk consolidation.
+- Open risks handed to `/solution-architect` for whole-solution risk consolidation.
 
 If `99-` does not exist yet, generate a draft from the artifacts; the user reviews and signs off before
 the gate is declared final.
@@ -208,7 +208,7 @@ sheets. No code is emitted by this command.
 
 ## Downstream Handoffs (suggest after completion)
 
-- Whole-solution risk consolidation — `/axiom-solution-architect` consumes the `99-` spec and folds these
+- Whole-solution risk consolidation — `/solution-architect` consumes the `99-` spec and folds these
   channels into the architecture risk register and ADRs.
 - Deterministic cluster testing — `/scaffold-replay-system` (axiom-determinism-and-replay) if `12-`
   calls for deterministic-simulation testing of the cluster.

@@ -99,7 +99,7 @@ Three model-specific provenance traps:
 2. **Pre/post-processing.** Tokenisation, normalisation, calibration tables, output decoding — are they part of the model (`ruleset_version`) or part of the code (`code_version`)? Pick once and document. Half-and-half is unreproducible.
 3. **Stochastic models.** Models that sample (LLMs at temperature > 0, generative models with randomness) cannot satisfy "same causes → same effect" without capturing the seed. Capture the seed in `inputs_commitment`. Without it, the entry records a sample, not a decision; raise this in `00-` if the decision-shape is in fact non-determined.
 
-For LLM-driven decisions: the prompt, the model identity, the inference parameters (temperature, top-p, max tokens, seed if supported, system prompt) all belong in `inputs_commitment` and the parts that change with deployment belong in `ruleset_version`. See also `axiom-ai-engineering` if this is a primary design concern.
+For LLM-driven decisions: the prompt, the model identity, the inference parameters (temperature, top-p, max tokens, seed if supported, system prompt) all belong in `inputs_commitment` and the parts that change with deployment belong in `ruleset_version`. See also `yzmir-ai-engineering-expert` (`/ai-engineering`) if this is a primary design concern.
 
 ## Bindings Beyond the Entry
 

@@ -579,10 +579,14 @@ Priority order:
 **Related skills**:
 - **Message queues** → `message-queues` (RabbitMQ, Kafka patterns)
 - **REST APIs** → `rest-api-design` (service interface design)
-- **gRPC** → Check if gRPC skill exists
+- **gRPC** → not covered by this pack as of v1.x; use the gRPC project's own guidance for IDL and codegen, and take the service-boundary reasoning from this sheet
 - **Security** → `ordis-security-architect` (service-to-service auth, zero trust)
 - **Database** → `database-integration` (per-service databases, migrations)
 - **Testing** → `api-testing` (contract testing, integration testing)
+
+**Related packs**:
+- **Correctness under partition** → `axiom-distributed-systems` (`/distributed-systems`) — this sheet names sagas, eventual consistency and distributed-system maturity as *costs* of the microservices decision; that pack owns the mechanics: delivery-and-ordering semantics, the outbox pattern, idempotency and deduplication, saga compensation, and consensus. Route there once the decision to decompose is made.
+- **Deployment and operational readiness** → `axiom-devops-engineering` (`/devops-engineering`)
 
 ## Further Reading
 

@@ -317,9 +317,9 @@ When you see a link like `[systematic-delinting.md](systematic-delinting.md)`, r
 **Example queries**:
 - "Build a PyO3 extension that processes NumPy arrays" → start here; redirect to `/pyo3-interop` for production hardening.
 - "Integrate candle model into a Python service" → start here for the candle side, `/pyo3-interop` for the binding.
-- "Zero-copy tensor sharing between Rust and Python" → `/pyo3-interop:numpy-buffer-protocol`.
-- "GIL deadlock in our PyO3 module" → `/pyo3-interop:gil-release-patterns` and `/pyo3-interop:debugging-pyo3`.
-- "Wheel matrix for PyO3 module across CPython 3.9–3.13" → `/pyo3-interop:abi3-vs-native-extensions` and `/pyo3-interop:packaging-and-wheels`.
+- "Zero-copy tensor sharing between Rust and Python" → `/pyo3-interop` (`numpy-buffer-protocol.md`).
+- "GIL deadlock in our PyO3 module" → `/pyo3-interop` (`gil-release-patterns.md`) and `debugging-pyo3.md`.
+- "Wheel matrix for PyO3 module across CPython 3.9–3.13" → `/pyo3-interop` (`abi3-vs-native-extensions.md`) and `packaging-and-wheels.md`.
 
 ---
 

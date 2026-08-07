@@ -49,7 +49,7 @@ Read the catalog as a diagnostic. Each pattern attacks one of the four ownership
 
 **Why it is seductive:** Precision is comforting and a dated roadmap looks authoritative; it is easier to nod at an implied date than to insist on the distinction between intent and forecast. The dishonesty is structural, not malicious — intent and commitment got fused into one artifact.
 
-*Fix: keep the roadmap as intent and confidence-banded horizons (Now/Next/Later, certainty decreasing outward), and source every dated commitment from a forecast with a confidence interval — never from a roadmap cell. The intent-roadmap discipline is in* `vision-strategy-and-roadmap.md`*; the forecast and the Now/Next/Later mechanics are owned by* `/axiom-program-management` *(`roadmapping-and-prioritization.md`) — hand the committed bet over for sequencing rather than drawing dates here.*
+*Fix: keep the roadmap as intent and confidence-banded horizons (Now/Next/Later, certainty decreasing outward), and source every dated commitment from a forecast with a confidence interval — never from a roadmap cell. The intent-roadmap discipline is in* `vision-strategy-and-roadmap.md`*; the forecast and the Now/Next/Later mechanics are owned by* `/program-management` *(`roadmapping-and-prioritization.md`) — hand the committed bet over for sequencing rather than drawing dates here.*
 
 ## Solution-in-Search-of-a-Problem
 
@@ -65,7 +65,7 @@ Read the catalog as a diagnostic. Each pattern attacks one of the four ownership
 
 **Why it is seductive:** Deferring to authority feels safe and responsive, and the loudest voice is often genuinely senior and genuinely well-intentioned; pushing back feels like obstruction. But responsiveness to volume is not prioritization.
 
-*Fix: the load-bearing rule — **authority sets context for the inputs, it does not override the ordering.** "The CEO wants it" is a fact about a stakeholder, not a prioritization input; it earns its place by being scored on the same scale as everything else (its real value, its real cost of delay), never by jumping the queue. The product-side discipline — positioning, strategy, the owned "no" to in-strategy requests — is in* `vision-strategy-and-roadmap.md`*; the scoring arithmetic (WSJF, cost of delay) is owned by* `/axiom-program-management` *(`roadmapping-and-prioritization.md`), where this same anti-pattern is closed from the delivery side.*
+*Fix: the load-bearing rule — **authority sets context for the inputs, it does not override the ordering.** "The CEO wants it" is a fact about a stakeholder, not a prioritization input; it earns its place by being scored on the same scale as everything else (its real value, its real cost of delay), never by jumping the queue. The product-side discipline — positioning, strategy, the owned "no" to in-strategy requests — is in* `vision-strategy-and-roadmap.md`*; the scoring arithmetic (WSJF, cost of delay) is owned by* `/program-management` *(`roadmapping-and-prioritization.md`), where this same anti-pattern is closed from the delivery side.*
 
 ## Autonomy Overreach
 
@@ -104,4 +104,4 @@ Read the catalog as a diagnostic. Each pattern attacks one of the four ownership
 - `prd-and-acceptance-criteria.md` — closes the Acceptance Gap at its source: the falsifiable acceptance criteria that `ACCEPT` later tests; weak criteria here are where the build trap and the feature factory get in.
 - `delivery-orchestration-and-acceptance.md` — closes the Feature Factory and the Acceptance Gap on the delivery side: dispatch → verify-it-shipped → accept against criteria.
 - `product-metrics-and-experimentation.md` — closes the Build Trap and Vanity Metrics: decision-useful north-star/input/guardrail metrics, and the when-to-kill-a-bet logic that makes a falsified hypothesis a cheap win.
-- `/axiom-program-management` — closes HiPPO from the delivery side and owns the WSJF / cost-of-delay / forecast arithmetic behind both HiPPO and Roadmap-as-Promise (`roadmapping-and-prioritization.md`). Route the mechanics there; this sheet states only the product discipline.
+- `/program-management` — closes HiPPO from the delivery side and owns the WSJF / cost-of-delay / forecast arithmetic behind both HiPPO and Roadmap-as-Promise (`roadmapping-and-prioritization.md`). Route the mechanics there; this sheet states only the product discipline.

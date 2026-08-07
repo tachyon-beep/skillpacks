@@ -8,7 +8,7 @@ argument-hint: "[project_path]"
 
 You are constructing or refreshing a **RAID log** — Risks, Assumptions, Issues, Dependencies — from the current state of a project or program. The output is a *living management artifact*: clean markdown tables the user can save and review on cadence, not a kickoff relic that gets written once and forgotten. This command is **outcome-first, not template-first**: you populate the tables from gathered state (or from what you ask for), you do not emit a blank skeleton for the user to fill in.
 
-This command produces an artifact. It does not edit code, design a schedule, or run a delivery audit. For a deeper delivery-health audit against all 13 pack sheets, dispatch the `delivery-health-reviewer` agent (see *Optional* below). For the formal RSKM (Risk Management) and DAR (Decision Analysis) process areas required in regulated contexts, route to `/axiom-sdlc-engineering` — this command runs the *operational* RAID log, not the formal process definition.
+This command produces an artifact. It does not edit code, design a schedule, or run a delivery audit. For a deeper delivery-health audit against all 13 pack sheets, dispatch the `delivery-health-reviewer` agent (see *Optional* below). For the formal RSKM (Risk Management) and DAR (Decision Analysis) process areas required in regulated contexts, route to `/sdlc-engineering` — this command runs the *operational* RAID log, not the formal process definition.
 
 ## Invocation Path
 
@@ -145,4 +145,4 @@ The agent supplements the RAID log; it does not replace it. Present the RAID log
 - `risk-issues-and-raid.md` — the authoritative sheet: operational RAID log, exposure scoring (probability × impact), the risk→issue conversion, review cadence, and the escalation path. Load this for the scoring and escalation discipline behind this command.
 - `dependencies-and-coordination.md` — dated, owned dependency commitments with named provider and consumer, blocked-work management, and integration-point discipline. Load this for the dependency contract model (and `cross-project-dependencies-and-integration.md` when the dependency graph spans multiple projects in a program).
 - `status-reporting-and-metrics.md` — how RAID feeds an honest status report without the watermelon effect.
-- `/axiom-sdlc-engineering` — the **formal** RSKM (Risk Management) and DAR (Decision Analysis) process areas for regulated contexts. That pack defines the process; this command runs the operational RAID log inside it.
+- `/sdlc-engineering` — the **formal** RSKM (Risk Management) and DAR (Decision Analysis) process areas for regulated contexts. That pack defines the process; this command runs the operational RAID log inside it.
