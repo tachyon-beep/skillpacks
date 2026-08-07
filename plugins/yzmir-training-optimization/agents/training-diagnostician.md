@@ -180,6 +180,7 @@ Investigation commands:
 ```python
 # Profile data loading vs compute
 import time
+import torch
 
 data_time = 0
 compute_time = 0
