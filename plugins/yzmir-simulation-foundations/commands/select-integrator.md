@@ -263,16 +263,8 @@ def physics_update_substepped(bodies, dt, substeps=4):
 - [ ] Performance meets requirements
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
+For game physics implementation patterns, route to `bravos-simulation-tactics` (`/simulation-tactics`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
-# For stability analysis of your system
-# Use /analyze-stability command in this pack
-
-# For game implementation patterns
-tactics_pack = glob.glob("plugins/bravos-simulation-tactics/.claude-plugin/plugin.json")
-if not tactics_pack:
-    print("Recommend: bravos-simulation-tactics for game physics patterns")
-```
+**In this pack:** `/analyze-stability` covers stability analysis of your system.

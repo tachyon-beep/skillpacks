@@ -184,28 +184,9 @@ Provide recommendations in this structure:
 2. [Training recommendation]
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-After architecture selection, guide to complementary packs:
-
-```python
-import glob
-
-# For training the chosen architecture
-training_pack = glob.glob("plugins/yzmir-training-optimization/.claude-plugin/plugin.json")
-if not training_pack:
-    print("Recommend: yzmir-training-optimization for training configuration")
-
-# For PyTorch implementation
-pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/.claude-plugin/plugin.json")
-if not pytorch_pack:
-    print("Recommend: yzmir-pytorch-engineering for implementation details")
-
-# For production deployment
-ml_prod = glob.glob("plugins/yzmir-ml-production/.claude-plugin/plugin.json")
-if not ml_prod:
-    print("Recommend: yzmir-ml-production for quantization/serving")
-```
+After architecture selection, the complementary work routes out: training configuration to `yzmir-training-optimization` (`/training-optimization`), implementation details to `yzmir-pytorch-engineering` (`/pytorch-engineering`), and quantization/serving to `yzmir-ml-production` (`/ml-production`). If any of these is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Scope Boundaries
 

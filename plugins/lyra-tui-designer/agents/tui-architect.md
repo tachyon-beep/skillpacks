@@ -182,25 +182,11 @@ Suggested order to implement (usually: lifecycle guard → event loop/state → 
 - Require a mouse.
 - Hand back implementation code — you deliver the *architecture*; engineering packs build it.
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
+For broader, non-terminal UX critique of the resulting design, route to `lyra-ux-designer` (`/ux-designer`). To hand off ratatui implementation, `axiom-rust-engineering` (`/rust-engineering`). If either is not in your available skills, recommend installing it from the skillpacks marketplace.
 
-# For deep mechanics on any single part of the package
-if glob.glob("plugins/lyra-tui-designer/skills/using-tui-designer/*.md"):
-    print("Reference sheets available: rendering-and-redraw-discipline, event-loop-and-state-architecture,")
-    print("layout-and-responsive-composition, lifecycle-signals-and-terminal-restoration,")
-    print("input-keyboard-mouse-and-focus, accessibility-in-the-terminal, degradation/distribution, testing-tuis")
-
-# For broader (non-terminal) UX competency review of the resulting design
-if glob.glob("plugins/lyra-ux-designer/.claude-plugin/plugin.json"):
-    print("Available: lyra-ux-designer for general interaction/accessibility critique")
-
-# To hand off implementation
-if glob.glob("plugins/axiom-rust-engineering/.claude-plugin/plugin.json"):
-    print("Available: axiom-rust-engineering for ratatui implementation")
-```
+**In this pack:** the `using-tui-designer` reference sheets go deeper on any single part of the package — rendering and redraw discipline, event loop and state architecture, layout and responsive composition, lifecycle/signals and terminal restoration, input/keyboard/mouse and focus, accessibility in the terminal, distribution and cross-environment, and testing TUIs.
 
 ## Scope Boundaries
 

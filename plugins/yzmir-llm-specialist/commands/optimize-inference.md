@@ -263,13 +263,6 @@ After analysis, provide:
 4. **Expected Impact**: Projected latency/cost/quality changes
 5. **Monitoring Setup**: How to track improvements
 
-## Cross-Pack Discovery
+## Related Packs
 
-For PyTorch/model-level optimization:
-
-```python
-import glob
-pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/.claude-plugin/plugin.json")
-if not pytorch_pack:
-    print("Recommend: yzmir-pytorch-engineering for model-level profiling")
-```
+For PyTorch/model-level profiling and optimization, route to `yzmir-pytorch-engineering` (`/pytorch-engineering`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.

@@ -285,21 +285,9 @@ async def health_check():
 - [ ] Add A/B testing capability
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
-
-# For deployment strategies
-devops_pack = glob.glob("plugins/axiom-devops-engineering/.claude-plugin/plugin.json")
-if devops_pack:
-    print("Available: axiom-devops-engineering for deployment strategies")
-
-# For monitoring
-quality_pack = glob.glob("plugins/ordis-quality-engineering/.claude-plugin/plugin.json")
-if quality_pack:
-    print("Available: ordis-quality-engineering for observability patterns")
-```
+For deployment strategy — rollout mechanism, verification gates, rollback — route to `axiom-devops-engineering` (`/devops-engineering`). For observability patterns, `ordis-quality-engineering` (`/quality-engineering`). If either is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Load Detailed Guidance
 

@@ -345,19 +345,11 @@ After fix, verify:
 2. [Monitoring to add]
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
+For game-side implementation — replay and debug visualization — route to `bravos-simulation-tactics` (`/simulation-tactics`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
-# For stability analysis of equilibria
-# Route to stability-analyst agent in this pack
-
-# For game implementation patterns
-tactics_pack = glob.glob("plugins/bravos-simulation-tactics/.claude-plugin/plugin.json")
-if not tactics_pack:
-    print("Recommend: bravos-simulation-tactics for replay/debug visualization")
-```
+**In this pack:** equilibrium and stability analysis goes to the `stability-analyst` agent.
 
 ## Scope Boundaries
 

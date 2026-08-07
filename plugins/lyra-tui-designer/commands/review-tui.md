@@ -154,17 +154,9 @@ If a review for today already exists, append `-v2`, `-v3` rather than overwritin
 - [Scope of this review]
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
-if glob.glob("plugins/lyra-ux-designer/.claude-plugin/plugin.json"):
-    print("Available: lyra-ux-designer for general UX/IA/interaction critique beyond the terminal")
-if glob.glob("plugins/muna-technical-writer/.claude-plugin/plugin.json"):
-    print("Available: muna-technical-writer for status-bar / help-overlay microcopy review")
-if glob.glob("plugins/ordis-quality-engineering/.claude-plugin/plugin.json"):
-    print("Available: ordis-quality-engineering for building out the snapshot/CI test suite (#13)")
-```
+For general UX/IA/interaction critique beyond the terminal, route to `lyra-ux-designer` (`/ux-designer`). For status-bar and help-overlay microcopy review, `muna-technical-writer` (`/technical-writer`). For building out the snapshot/CI test suite that failure mode #13 demands, `ordis-quality-engineering` (`/quality-engineering`). If any of these is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Scope Boundaries
 

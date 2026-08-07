@@ -167,20 +167,9 @@ sheets or the release notes instead of guessing):
 4. **`torch.amp`** is the device-agnostic autocast/GradScaler path;
    `torch.cuda.amp` is deprecated.
 
-## Cross-Pack Discovery
+## Related Packs
 
-For performance issues that aren't memory-related, check for complementary skills.
-Plugin metadata lives at `plugins/<pack>/.claude-plugin/plugin.json`:
-
-```python
-# Check if training optimization pack is available
-import glob
-training_opt = glob.glob("plugins/yzmir-training-optimization/.claude-plugin/plugin.json")
-if training_opt:
-    print("Training optimization pack available for gradient/loss issues")
-else:
-    print("Consider: yzmir-training-optimization for gradient analysis")
-```
+For performance issues that aren't memory-related — gradient and loss behavior, optimizer and LR configuration — route to `yzmir-training-optimization` (`/training-optimization`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Scope Boundaries
 

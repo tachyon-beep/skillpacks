@@ -207,11 +207,10 @@ Look for:
 **Test Architecture Questions:**
 → Use `/ordis-quality-engineering:analyze-pyramid` command or test-suite-reviewer agent
 
-**Python-Specific Testing:**
-Check: `Glob` for `plugins/axiom-python-engineering/.claude-plugin/plugin.json`
+**Python-Specific Testing:** → `axiom-python-engineering` (`/python-engineering`)
 
-If found → "For pytest-specific patterns, load `axiom-python-engineering`."
-If NOT found → Recommend installation
+If it is in your available skills → "For pytest-specific patterns, load `axiom-python-engineering`."
+Otherwise → recommend installing it from the skillpacks marketplace.
 
 **Performance Issues (not flakiness):**
 → Route to performance-testing-fundamentals.md reference sheet

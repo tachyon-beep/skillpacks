@@ -360,16 +360,9 @@ class Simulation:
 2. [Monitoring to add]
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
-
-# For mathematical stability analysis
-foundations_pack = glob.glob("plugins/yzmir-simulation-foundations/.claude-plugin/plugin.json")
-if not foundations_pack:
-    print("Recommend: yzmir-simulation-foundations for stability analysis")
-```
+When the bug is in the maths rather than the code — energy drift, integrator blow-up, chaotic sensitivity — stability analysis belongs to `yzmir-simulation-foundations` (`/simulation-foundations`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Scope Boundaries
 

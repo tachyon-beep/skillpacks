@@ -238,18 +238,6 @@ After Priority 2: +Y% → Z%
 - Measure existing coverage metrics (use /audit)
 - Analyze test pyramid distribution (use /analyze-pyramid)
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
-
-# For Python testing patterns
-python_pack = glob.glob("plugins/axiom-python-engineering/.claude-plugin/plugin.json")
-if python_pack:
-    print("For pytest patterns: load axiom-python-engineering")
-
-# For security testing
-security_pack = glob.glob("plugins/ordis-security-architect/.claude-plugin/plugin.json")
-if security_pack:
-    print("For security test patterns: load ordis-security-architect")
-```
+For pytest patterns and Python testing idioms, route to `axiom-python-engineering` (`/python-engineering`). For security test patterns, `ordis-security-architect` (`/security-architect`). If either is not in your available skills, recommend installing it from the skillpacks marketplace.

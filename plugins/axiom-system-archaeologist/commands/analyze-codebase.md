@@ -193,21 +193,9 @@ docs/arch-analysis-YYYY-MM-DD-HHMM/
     └── validation-*.md      # Validation reports
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
-
-# For architecture assessment after documentation
-architect_pack = glob.glob("plugins/axiom-system-architect/.claude-plugin/plugin.json")
-if not architect_pack:
-    print("Recommend: axiom-system-architect for quality assessment")
-
-# For security analysis
-security_pack = glob.glob("plugins/ordis-security-architect/.claude-plugin/plugin.json")
-if not security_pack:
-    print("Recommend: ordis-security-architect for threat modeling")
-```
+Once the documentation exists, route architecture and quality assessment to `axiom-system-architect` (`/system-architect`), and threat modeling to `ordis-security-architect` (`/security-architect`). If either is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Anti-Patterns
 

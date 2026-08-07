@@ -224,21 +224,9 @@ Categorize by severity, provide recommendations.
 | No audit logging | Undetected attacks | Log security events |
 | Missing rate limits | DoS/brute force | Per-user/endpoint limits |
 
-## Cross-Pack Discovery
+## Related Guidance
 
-```python
-import glob
-
-# For threat modeling (do before review if not done)
-threat_ref = glob.glob("plugins/ordis-security-architect/skills/using-security-architect/threat-modeling.md")
-if threat_ref:
-    print("Available: threat-modeling.md for systematic threat identification")
-
-# For controls design after review
-controls_ref = glob.glob("plugins/ordis-security-architect/skills/using-security-architect/security-controls-design.md")
-if controls_ref:
-    print("Available: security-controls-design.md for implementing fixes")
-```
+**In this pack:** `threat-modeling.md` for systematic threat identification — do it before the review if it has not been done — and `security-controls-design.md` for implementing the fixes the review surfaces.
 
 ## Scope Boundaries
 

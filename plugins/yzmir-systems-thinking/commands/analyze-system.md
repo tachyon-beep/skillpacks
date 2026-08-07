@@ -207,7 +207,7 @@ For each proposed intervention:
 **Output:** Pattern + archetype + recommended intervention
 **Trade-off:** No quantitative modeling
 
-## Cross-Pack Discovery
+## Related Packs
 
 If the analysis needs to move beyond conceptual systems thinking, hand off to a sibling pack: `/simulation-foundations` (yzmir-simulation-foundations) for numerically implementing stock/flow models, and `/system-architect` (axiom-system-architect) for code-level architecture assessment.
 

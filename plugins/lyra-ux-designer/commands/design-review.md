@@ -245,21 +245,9 @@ If the surface is **not** an AI artefact, skip this section.
 - Inconsistent styling
 - Polish improvements
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
-
-# For documentation UX
-writer_pack = glob.glob("plugins/muna-technical-writer/.claude-plugin/plugin.json")
-if writer_pack:
-    print("Available: muna-technical-writer for microcopy review")
-
-# For security concerns
-security_pack = glob.glob("plugins/ordis-security-architect/.claude-plugin/plugin.json")
-if security_pack:
-    print("Available: ordis-security-architect for auth flow review")
-```
+For microcopy review, route to `muna-technical-writer` (`/technical-writer`). For auth flows and other security-sensitive surfaces, `ordis-security-architect` (`/security-architect`). If either is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Scope Boundaries
 

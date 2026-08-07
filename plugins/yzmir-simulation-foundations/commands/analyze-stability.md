@@ -189,21 +189,11 @@ def verify_lyapunov(V, f, g, x, y):
 3. [Bifurcation warnings if applicable]
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-For implementation guidance after stability analysis:
+For implementation guidance after the stability analysis — game simulation patterns — route to `bravos-simulation-tactics` (`/simulation-tactics`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
-```python
-import glob
-
-# For game simulation implementation
-tactics_pack = glob.glob("plugins/bravos-simulation-tactics/.claude-plugin/plugin.json")
-if not tactics_pack:
-    print("Recommend: bravos-simulation-tactics for game implementation patterns")
-
-# For numerical integration selection
-# (use /select-integrator command in this pack)
-```
+**In this pack:** `/select-integrator` covers numerical integration selection.
 
 ## Scope Boundaries
 

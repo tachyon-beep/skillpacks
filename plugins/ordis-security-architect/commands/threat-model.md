@@ -248,21 +248,11 @@ ROOT: [Attacker Goal]
 
 **Check**: Do trusted components have monitoring? What if compromised?
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
+For writing the threat model up for its audience, route to `muna-technical-writer` (`/technical-writer`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
-# For documenting threats
-doc_pack = glob.glob("plugins/muna-technical-writer/.claude-plugin/plugin.json")
-if doc_pack:
-    print("Available: muna-technical-writer for threat documentation")
-
-# For controls design
-controls_ref = glob.glob("plugins/ordis-security-architect/skills/using-security-architect/security-controls-design.md")
-if controls_ref:
-    print("Available: security-controls-design.md for mitigation design")
-```
+**In this pack:** `security-controls-design.md` covers mitigation design for the threats you identify.
 
 ## Scope Boundaries
 

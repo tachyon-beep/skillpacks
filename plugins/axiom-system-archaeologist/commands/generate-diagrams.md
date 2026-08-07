@@ -237,16 +237,9 @@ Confidence: [High/Medium/Low based on catalog confidence]
 - [Unverified dependencies]
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
-
-# For documentation formatting
-writer_pack = glob.glob("plugins/muna-technical-writer/.claude-plugin/plugin.json")
-if not writer_pack:
-    print("Recommend: muna-technical-writer for professional formatting")
-```
+For professional formatting and publication of the generated diagrams, route to `muna-technical-writer` (`/technical-writer`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Scope Boundaries
 

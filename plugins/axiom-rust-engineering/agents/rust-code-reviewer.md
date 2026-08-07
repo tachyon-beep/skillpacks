@@ -158,10 +158,7 @@ If you encounter complex `unsafe` blocks, raw pointer arithmetic, or transmute c
 
 If you notice potential vulnerabilities, input validation issues, or trust boundary problems:
 
-**Check**: `Glob` for `**/ordis-security-architect/.claude-plugin/plugin.json`
-
-**If found**: Recommend loading the security skill for threat modeling
-**If NOT found**: Recommend installing `ordis-security-architect` from the skillpacks marketplace
+Route them to `ordis-security-architect` (`/security-architect`) for threat modeling if that pack is in your available skills; otherwise recommend installing `ordis-security-architect` from the skillpacks marketplace.
 
 ## Anti-Patterns to Always Flag
 

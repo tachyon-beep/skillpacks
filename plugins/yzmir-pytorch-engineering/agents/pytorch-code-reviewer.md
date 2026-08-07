@@ -185,29 +185,9 @@ For each layer:
 2. What is the actual output shape?
 3. Are batch dimensions consistent?
 
-## Cross-Pack Discovery
+## Related Packs
 
-Check for complementary packs for specialized reviews. Plugin metadata lives at
-`plugins/<pack>/.claude-plugin/plugin.json` — a glob on `plugins/<pack>/plugin.json`
-never matches and will make every pack look absent.
-
-```python
-import glob
-
-def pack_installed(name: str) -> bool:
-    return bool(glob.glob(f"plugins/{name}/.claude-plugin/plugin.json"))
-
-# Present -> route the relevant findings there. Absent -> recommend installing.
-for pack, why in [
-    ("axiom-python-engineering",     "Python patterns and typing"),
-    ("yzmir-training-optimization",  "convergence / hyperparameter issues"),
-    ("yzmir-neural-architectures",   "architecture design review"),
-]:
-    if pack_installed(pack):
-        print(f"Route {why} to {pack}")
-    else:
-        print(f"Consider installing {pack} for {why}")
-```
+Route findings that fall outside PyTorch itself to the pack that owns them: Python patterns and typing to `axiom-python-engineering` (`/python-engineering`), convergence and hyperparameter issues to `yzmir-training-optimization` (`/training-optimization`), and architecture design review to `yzmir-neural-architectures` (`/neural-architectures`). If a pack is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Scope Boundaries
 

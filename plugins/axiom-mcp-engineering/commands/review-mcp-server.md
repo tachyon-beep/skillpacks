@@ -177,7 +177,7 @@ REVIEW_FILE="${SERVER%/}/mcp-review-$(date +%Y-%m-%d).md"
 
 If a review for today already exists, append a disambiguating suffix (`-v2`, `-v3`) rather than overwriting — prior reviews are the change history.
 
-## Cross-Pack Discovery
+## Related Packs
 
 After the review, suggest downstream handoffs based on the findings:
 

@@ -202,17 +202,14 @@ X critical, Y warnings, Z suggestions
 
 ### Defer to Other Packs
 
-**Python/pytest Syntax:**
-Check: `Glob` for `plugins/axiom-python-engineering/.claude-plugin/plugin.json`
+**Python/pytest Syntax:** → `axiom-python-engineering` (`/python-engineering`)
 
-If found → "For pytest fixture syntax and Python testing patterns, load `axiom-python-engineering:using-python-engineering` and read testing-and-quality.md."
-If NOT found → "For Python-specific testing syntax, consider installing `axiom-python-engineering`."
+If it is in your available skills → "For pytest fixture syntax and Python testing patterns, load `axiom-python-engineering:using-python-engineering`."
+Otherwise → "For Python-specific testing syntax, consider installing `axiom-python-engineering`."
 
-**Security Testing:**
-Check: `Glob` for `plugins/ordis-security-architect/.claude-plugin/plugin.json`
+**Security Testing:** → `ordis-security-architect` (`/security-architect`)
 
-If found → Recommend for security testing architecture
-If NOT found → Recommend installation
+Recommend it for security testing architecture; if it is not in your available skills, recommend installing it.
 
 ## Reference
 

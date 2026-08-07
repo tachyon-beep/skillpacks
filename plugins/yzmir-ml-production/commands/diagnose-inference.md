@@ -256,21 +256,9 @@ def compare_predictions(current, historical):
 - [ ] Add test case for [scenario]
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
-
-# For PyTorch profiling
-pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/.claude-plugin/plugin.json")
-if pytorch_pack:
-    print("For PyTorch profiling: use yzmir-pytorch-engineering")
-
-# For monitoring setup
-quality_pack = glob.glob("plugins/ordis-quality-engineering/.claude-plugin/plugin.json")
-if quality_pack:
-    print("For observability patterns: use ordis-quality-engineering")
-```
+For PyTorch-level profiling, route to `yzmir-pytorch-engineering` (`/pytorch-engineering`). For observability patterns, `ordis-quality-engineering` (`/quality-engineering`). If either is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Load Detailed Guidance
 

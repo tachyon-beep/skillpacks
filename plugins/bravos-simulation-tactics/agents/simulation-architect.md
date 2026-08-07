@@ -318,19 +318,11 @@ class AggregateSimulation:
 3. [Risk to watch]
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
+For the mathematical foundations under the design — stability, integration, numerical error — route to `yzmir-simulation-foundations` (`/simulation-foundations`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
-# For mathematical foundations (stability, integration)
-foundations_pack = glob.glob("plugins/yzmir-simulation-foundations/.claude-plugin/plugin.json")
-if not foundations_pack:
-    print("Recommend: yzmir-simulation-foundations for mathematical foundations")
-
-# For debugging issues that arise
-# Use desync-detective agent or /debug-simulation command in this pack
-```
+**In this pack:** when the built simulation misbehaves, hand off to the `desync-detective` agent or the `/debug-simulation` command.
 
 ## Scope Boundaries
 

@@ -302,16 +302,8 @@ def design_lod_for_budget(total_entities, frame_budget_ms, per_entity_costs):
 3. [Optimization opportunities]
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
+For integrator selection and the numerical cost of each LOD tier, route to `yzmir-simulation-foundations` (`/simulation-foundations`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
-# For performance profiling and optimization
-# Use performance-optimization-for-sims skill in this pack
-
-# For mathematical foundations
-foundations_pack = glob.glob("plugins/yzmir-simulation-foundations/.claude-plugin/plugin.json")
-if not foundations_pack:
-    print("Recommend: yzmir-simulation-foundations for integrator selection")
-```
+**In this pack:** `performance-optimization-for-sims.md` covers profiling and optimization once the tiers are set.

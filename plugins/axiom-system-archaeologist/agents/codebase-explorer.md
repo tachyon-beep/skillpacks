@@ -215,16 +215,9 @@ After writing, re-read to verify:
 3. All sections present
 4. Evidence cited
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
-
-# After documentation, for quality assessment
-architect_pack = glob.glob("plugins/axiom-system-architect/.claude-plugin/plugin.json")
-if not architect_pack:
-    print("Recommend: axiom-system-architect for quality assessment")
-```
+Once the documentation exists, quality and architecture assessment belongs to `axiom-system-architect` (`/system-architect`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Scope Boundaries
 

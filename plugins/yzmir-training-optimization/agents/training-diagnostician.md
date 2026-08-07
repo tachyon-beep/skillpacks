@@ -282,23 +282,19 @@ Load: [appropriate reference sheet]
 
 ### Defer to Other Packs
 
-**PyTorch Errors (CUDA OOM, DataLoader issues):**
-Check: `Glob` for `plugins/yzmir-pytorch-engineering/.claude-plugin/plugin.json`
+**PyTorch Errors (CUDA OOM, DataLoader issues):** → `yzmir-pytorch-engineering` (`/pytorch-engineering`)
 
-If found → "This is a PyTorch infrastructure issue. Load `yzmir-pytorch-engineering` for memory/DataLoader debugging."
-If NOT found → "For PyTorch-specific issues, consider installing `yzmir-pytorch-engineering`."
+If it is in your available skills → "This is a PyTorch infrastructure issue. Load `yzmir-pytorch-engineering` for memory/DataLoader debugging."
+Otherwise → "For PyTorch-specific issues, consider installing `yzmir-pytorch-engineering`."
 
-**RL Training Issues:**
-Check: `Glob` for `plugins/yzmir-deep-rl/.claude-plugin/plugin.json`
+**RL Training Issues:** → `yzmir-deep-rl` (`/deep-rl`)
 
-If found → "For RL-specific training (reward, exploration), load `yzmir-deep-rl`. The 80/20 rule: check environment/reward first."
-If NOT found → "For RL training, consider installing `yzmir-deep-rl`."
+If it is in your available skills → "For RL-specific training (reward, exploration), load `yzmir-deep-rl`. The 80/20 rule: check environment/reward first."
+Otherwise → "For RL training, consider installing `yzmir-deep-rl`."
 
-**Architecture Selection:**
-Check: `Glob` for `plugins/yzmir-neural-architectures/.claude-plugin/plugin.json`
+**Architecture Selection:** → `yzmir-neural-architectures` (`/neural-architectures`)
 
-If found → Recommend for architecture questions
-If NOT found → Recommend installation
+Recommend it for architecture questions; if it is not in your available skills, recommend installing it.
 
 ## Pressure Resistance
 

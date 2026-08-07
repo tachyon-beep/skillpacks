@@ -147,17 +147,9 @@ phase_3_contract:
 
 If you dispatched the `deployment-strategist` agent, append its Confidence / Risk / Information-Gaps / Caveats sections verbatim.
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
-# Observability / SLOs for canary analysis and monitoring
-if glob.glob("plugins/ordis-quality-engineering/.claude-plugin/plugin.json"):
-    print("Available: ordis-quality-engineering for test gates and observability patterns")
-# API deployment specifics
-if glob.glob("plugins/axiom-web-backend/.claude-plugin/plugin.json"):
-    print("Available: axiom-web-backend for API deployment patterns")
-```
+For the test gates and observability that canary analysis depends on, route to `ordis-quality-engineering` (`/quality-engineering`). For API-specific deployment concerns, `axiom-web-backend` (`/web-backend`). If either is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Scope Boundaries
 

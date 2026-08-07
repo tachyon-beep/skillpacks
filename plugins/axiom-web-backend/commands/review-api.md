@@ -183,21 +183,9 @@ grep -r "raise HTTPException" "$API_DIR" --include="*.py" | grep -v "detail="
 | CORS wildcard | `Access-Control-Allow-Origin: *` | Specific origins |
 | Sensitive in logs | Log full request body | Redact sensitive fields |
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
-
-# For security review
-security_pack = glob.glob("plugins/ordis-security-architect/.claude-plugin/plugin.json")
-if security_pack:
-    print("For deeper security review: use ordis-security-architect")
-
-# For API testing
-quality_pack = glob.glob("plugins/ordis-quality-engineering/.claude-plugin/plugin.json")
-if quality_pack:
-    print("For API testing patterns: use ordis-quality-engineering")
-```
+For deeper security review, route to `ordis-security-architect` (`/security-architect`). For API testing patterns, `ordis-quality-engineering` (`/quality-engineering`). If either is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Load Detailed Guidance
 

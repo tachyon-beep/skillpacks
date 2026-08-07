@@ -271,21 +271,11 @@ For each control, verify:
 3. **What's the next layer of defense?**
 4. **Is failure logged/detected?**
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
+For documenting the controls once designed, route to `muna-technical-writer` (`/technical-writer`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
-# For threat modeling (should be done first)
-threat_ref = glob.glob("plugins/ordis-security-architect/skills/using-security-architect/threat-modeling.md")
-if threat_ref:
-    print("Available: threat-modeling.md for identifying threats to control")
-
-# For documentation
-doc_pack = glob.glob("plugins/muna-technical-writer/.claude-plugin/plugin.json")
-if doc_pack:
-    print("Available: muna-technical-writer for documenting controls")
-```
+**In this pack:** `threat-modeling.md` identifies the threats these controls answer — run it first if it has not been done.
 
 ## Scope Boundaries
 

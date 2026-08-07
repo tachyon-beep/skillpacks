@@ -239,26 +239,23 @@ for epoch in range(100):
 
 ### Defer to Other Packs
 
-**Architecture Questions (layer choices, model size):**
-Check: `Glob` for `plugins/yzmir-neural-architectures/.claude-plugin/plugin.json`
+**Architecture Questions (layer choices, model size):** → `yzmir-neural-architectures` (`/neural-architectures`)
 
-If found → "Architecture selection is separate from training config. Load `yzmir-neural-architectures` for model design."
-If NOT found → "For architecture design, consider installing `yzmir-neural-architectures` from the skillpacks marketplace."
+If it is in your available skills → "Architecture selection is separate from training config. Load `yzmir-neural-architectures` for model design."
+Otherwise → "For architecture design, consider installing `yzmir-neural-architectures` from the skillpacks marketplace."
 
-**Data Loading Issues (num_workers, prefetch, transforms):**
-Check: `Glob` for `plugins/yzmir-pytorch-engineering/.claude-plugin/plugin.json`
+**Data Loading Issues (num_workers, prefetch, transforms):** → `yzmir-pytorch-engineering` (`/pytorch-engineering`)
 
-If found → "Data loading is PyTorch infrastructure. Load `yzmir-pytorch-engineering` for DataLoader optimization."
-If NOT found → "For DataLoader issues, consider installing `yzmir-pytorch-engineering`."
+If it is in your available skills → "Data loading is PyTorch infrastructure. Load `yzmir-pytorch-engineering` for DataLoader optimization."
+Otherwise → "For DataLoader issues, consider installing `yzmir-pytorch-engineering`."
 
 **Runtime Debugging (loss NaN mid-training, performance issues):**
 → Defer to training-diagnostician agent (same plugin)
 
-**RL-Specific Training (policy gradients, replay buffers):**
-Check: `Glob` for `plugins/yzmir-deep-rl/.claude-plugin/plugin.json`
+**RL-Specific Training (policy gradients, replay buffers):** → `yzmir-deep-rl` (`/deep-rl`)
 
-If found → "RL training has different defaults. Load `yzmir-deep-rl` for RL-specific configuration."
-If NOT found → "For RL training configuration, consider installing `yzmir-deep-rl`."
+If it is in your available skills → "RL training has different defaults. Load `yzmir-deep-rl` for RL-specific configuration."
+Otherwise → "For RL training configuration, consider installing `yzmir-deep-rl`."
 
 ### Handoff Between Agents
 

@@ -179,6 +179,13 @@ After component changes, ensure coherence:
 - Commands reference related guidance
 - Agents reference handoff targets
 
+**Cross-pack referrals (house rule):**
+- Write them as **static prose** — a short "Related Packs" paragraph naming the target pack and its slash command. Never a runtime filesystem probe (`glob.glob("plugins/...")`, `Glob` for a sibling's `plugin.json`): the cwd is the user's project, not the marketplace, so the check never fires, and Claude already sees installed skills and slash commands in context.
+- Reference the sibling's **router only** (`ordis-security-architect` / `/security-architect`) — never a deep sheet path inside another pack, and never promise specific content you cannot verify ships there.
+- Verify the target pack exists in `plugins/` and that its slash command exists in `.claude/commands/` before naming either.
+- Carry the fallback inline: "…if it's in your available skills; otherwise recommend installing it from the skillpacks marketplace."
+- Same-pack pointers are not referrals — state them flatly ("**In this pack:** `/catalog-debt` produces the formal debt catalog"), with no conditional hedge, since same-pack content always ships together.
+
 **Terminology:**
 - Consistent terms across all components
 - Canonical names for concepts

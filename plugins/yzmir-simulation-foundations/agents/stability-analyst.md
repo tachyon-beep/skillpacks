@@ -256,19 +256,11 @@ Behavior: [Description of trajectories near this point]
 - [Bifurcation proximity]
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
+For game physics implementation patterns, route to `bravos-simulation-tactics` (`/simulation-tactics`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
-# For numerical integration selection
-# Use /select-integrator command in this pack
-
-# For game implementation patterns
-tactics_pack = glob.glob("plugins/bravos-simulation-tactics/.claude-plugin/plugin.json")
-if not tactics_pack:
-    print("Recommend: bravos-simulation-tactics for game physics patterns")
-```
+**In this pack:** `/select-integrator` covers numerical integration selection.
 
 ## Scope Boundaries
 

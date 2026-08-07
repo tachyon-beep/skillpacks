@@ -222,23 +222,9 @@ Provide review in this structure:
 - [ ] Safety monitoring
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-For code quality issues beyond LLM safety:
-
-```python
-import glob
-
-# Python code quality
-python_pack = glob.glob("plugins/axiom-python-engineering/.claude-plugin/plugin.json")
-if not python_pack:
-    print("Recommend: axiom-python-engineering for general Python review")
-
-# Security architecture
-security_pack = glob.glob("plugins/ordis-security-architect/.claude-plugin/plugin.json")
-if not security_pack:
-    print("Recommend: ordis-security-architect for broader security review")
-```
+For code quality issues beyond LLM safety, general Python review belongs to `axiom-python-engineering` (`/python-engineering`), and broader security architecture to `ordis-security-architect` (`/security-architect`). If either is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Scope Boundaries
 

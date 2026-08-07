@@ -292,25 +292,13 @@ If you find yourself writing "the catalog is fine" or "the sidebar works" withou
 - Conduct user research - I work from stated purpose and available evidence and flag the gap
 - Make implementation decisions
 
-## Cross-Pack Discovery
+## Related Packs
 
-After theory, the design and audit work follows:
+After theory, the design and audit work follows.
 
-```python
-import glob
+**In this pack:** once a candidate design exists, `ux-critic` reviews it, then `accessibility-auditor` verifies WCAG conformance.
 
-# For design review of a specific proposed design
-if glob.glob("plugins/lyra-ux-designer/agents/ux-critic.md"):
-    print("Next: ux-critic for design review once a candidate design exists")
-
-# For accessibility verification of the resulting design
-if glob.glob("plugins/lyra-ux-designer/agents/accessibility-auditor.md"):
-    print("Then: accessibility-auditor for WCAG verification")
-
-# For solution architecture if the UX rethink implies structural product change
-if glob.glob("plugins/axiom-solution-architect/.claude-plugin/plugin.json"):
-    print("Adjacent: axiom-solution-architect if UX changes imply architectural changes")
-```
+If the UX rethink implies structural product change, route to `axiom-solution-architect` (`/solution-architect`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Reference Your Knowledge Base
 

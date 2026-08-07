@@ -207,21 +207,11 @@ Create documentation in the appropriate pattern, then provide:
 - [Any follow-up needed]
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
+For threat-model and other security documentation, route to `ordis-security-architect` (`/security-architect`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
-# For security documentation
-security_pack = glob.glob("plugins/ordis-security-architect/.claude-plugin/plugin.json")
-if security_pack:
-    print("Available: ordis-security-architect for threat model documentation")
-
-# For diagram conventions
-diagram_ref = glob.glob("plugins/muna-technical-writer/skills/using-technical-writer/diagram-conventions.md")
-if diagram_ref:
-    print("Available: diagram-conventions.md for architecture diagrams")
-```
+**In this pack:** `diagram-conventions.md` covers architecture diagram conventions.
 
 ## Scope Boundaries
 

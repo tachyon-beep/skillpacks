@@ -184,21 +184,11 @@ Read and verify:
 
 **Response:** "Effort doesn't equal quality. The issues exist regardless of effort invested."
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
+**Next in this pack:** `/catalog-debt` turns the assessment into a formal debt catalog; `identifying-technical-debt.md` is the reference sheet behind it.
 
-# For technical debt cataloging after assessment
-debt_pack = glob.glob("plugins/axiom-system-architect/skills/*/identifying-technical-debt.md")
-if debt_pack:
-    print("Next step: /catalog-debt to create formal debt catalog")
-
-# For security deep-dive
-security_pack = glob.glob("plugins/ordis-security-architect/.claude-plugin/plugin.json")
-if not security_pack:
-    print("Recommend: ordis-security-architect for security threat modeling")
-```
+For a security deep-dive — threat modeling, controls design — route to `ordis-security-architect` (`/security-architect`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Output Location
 

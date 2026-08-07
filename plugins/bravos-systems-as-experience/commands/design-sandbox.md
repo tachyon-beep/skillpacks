@@ -275,21 +275,11 @@ discovery: [What player learns by doing]
 | Hidden mechanics | Feels arbitrary | Clear feedback loops |
 | Single solution | Not a sandbox | Multiple valid approaches |
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
+For onboarding and first-session flow design, route to `lyra-ux-designer` (`/ux-designer`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
-# For UX onboarding patterns
-ux_pack = glob.glob("plugins/lyra-ux-designer/.claude-plugin/plugin.json")
-if ux_pack:
-    print("Available: lyra-ux-designer for onboarding flow design")
-
-# For emergent gameplay
-emergence_pack = glob.glob("plugins/bravos-systems-as-experience/.claude-plugin/plugin.json")
-if emergence_pack:
-    print("Available: /design-emergence for mechanic interaction design")
-```
+**In this pack:** `/design-emergence` covers mechanic interaction design for the sandbox's systems.
 
 ## Scope Boundaries
 

@@ -344,27 +344,11 @@ Provide diagnosis in this structure:
 [How to avoid this issue in future]
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-For related issues:
+For model-level debugging — tensors, autograd, memory — route to `yzmir-pytorch-engineering` (`/pytorch-engineering`). For fine-tuning and general training issues, `yzmir-training-optimization` (`/training-optimization`). If either is not in your available skills, recommend installing it from the skillpacks marketplace.
 
-```python
-import glob
-
-# For RAG quality issues
-llm_pack = glob.glob("plugins/yzmir-llm-specialist/.claude-plugin/plugin.json")
-# Already in this pack - use /rag-audit command
-
-# For PyTorch/model issues
-pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/.claude-plugin/plugin.json")
-if not pytorch_pack:
-    print("Recommend: yzmir-pytorch-engineering for model-level debugging")
-
-# For training issues
-training_pack = glob.glob("plugins/yzmir-training-optimization/.claude-plugin/plugin.json")
-if not training_pack:
-    print("Recommend: yzmir-training-optimization for fine-tuning issues")
-```
+**In this pack:** RAG quality issues go to the `/rag-audit` command.
 
 ## Scope Boundaries
 

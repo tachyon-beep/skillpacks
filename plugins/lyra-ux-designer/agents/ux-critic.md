@@ -188,19 +188,11 @@ Rank all issues by severity:
 - Criticize without solutions
 - Manufacture praise
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
+For microcopy review, route to `muna-technical-writer` (`/technical-writer`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
-# For accessibility deep-dive
-if glob.glob("plugins/lyra-ux-designer/agents/accessibility-auditor.md"):
-    print("Recommend: accessibility-auditor for full WCAG audit")
-
-# For documentation UX
-if glob.glob("plugins/muna-technical-writer/.claude-plugin/plugin.json"):
-    print("Available: muna-technical-writer for microcopy review")
-```
+**In this pack:** for a full WCAG audit, hand off to the `accessibility-auditor` agent.
 
 ## Scope Boundaries
 

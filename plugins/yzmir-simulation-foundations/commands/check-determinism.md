@@ -315,19 +315,11 @@ def replay_and_compare(sim_factory, inputs_file, expected_checksum):
 3. [Validation strategy]
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
+For replay and debug patterns in a game context, route to `bravos-simulation-tactics` (`/simulation-tactics`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
-# For debugging simulation chaos
-tactics_pack = glob.glob("plugins/bravos-simulation-tactics/.claude-plugin/plugin.json")
-if not tactics_pack:
-    print("Recommend: bravos-simulation-tactics for replay/debug patterns")
-
-# For multiplayer architecture
-# Network determinism requires lockstep or rollback patterns
-```
+For multiplayer, network determinism requires lockstep or rollback — decide which before hardening the simulation.
 
 ## Scope Boundaries
 

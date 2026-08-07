@@ -212,21 +212,9 @@ Estimated coverage improvement: X% → Y%
 | Full user flow | E2E test | Critical paths only |
 | Auth/security | Unit + Integration | Both isolation and integration |
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
-
-# For Python-specific testing patterns
-python_pack = glob.glob("plugins/axiom-python-engineering/.claude-plugin/plugin.json")
-if python_pack:
-    print("Available: axiom-python-engineering for pytest patterns")
-
-# For security testing
-security_pack = glob.glob("plugins/ordis-security-architect/.claude-plugin/plugin.json")
-if security_pack:
-    print("Available: ordis-security-architect for security test design")
-```
+For pytest patterns, route to `axiom-python-engineering` (`/python-engineering`). For security test design, `ordis-security-architect` (`/security-architect`). If either is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Load Detailed Guidance
 

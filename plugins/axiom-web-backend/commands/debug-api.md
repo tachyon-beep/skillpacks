@@ -234,21 +234,9 @@ seq 1 100 | xargs -P 10 -I {} curl -s -o /dev/null -w "%{http_code}\n" http://lo
 ps aux | grep uvicorn | awk '{print $4}'
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
-
-# For database debugging
-python_pack = glob.glob("plugins/axiom-python-engineering/.claude-plugin/plugin.json")
-if python_pack:
-    print("For Python debugging patterns: use axiom-python-engineering")
-
-# For performance testing
-quality_pack = glob.glob("plugins/ordis-quality-engineering/.claude-plugin/plugin.json")
-if quality_pack:
-    print("For load testing: use ordis-quality-engineering")
-```
+For Python-side debugging patterns, route to `axiom-python-engineering` (`/python-engineering`). For load testing, `ordis-quality-engineering` (`/quality-engineering`). If either is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Load Detailed Guidance
 

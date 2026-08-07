@@ -87,28 +87,23 @@ X critical, Y warnings, Z suggestions
 
 ## Scope Boundaries - What You DON'T Review
 
-You focus on **Python code quality**. When you notice issues outside your scope, check if complementary skills are available and recommend appropriately.
+You focus on **Python code quality**. When you notice issues outside your scope, hand them to the pack that owns them.
 
 ### Testing Methodology Issues
 
 If you notice: flaky tests, test strategy questions, coverage methodology, test architecture
 
-**Check**: `Glob` for `plugins/ordis-quality-engineering/.claude-plugin/plugin.json`
+**If `ordis-quality-engineering` (`/quality-engineering`) is in your available skills:**
+> "This is a testing methodology question. For comprehensive guidance, load `ordis-quality-engineering:using-quality-engineering` and route to the relevant reference sheet."
 
-**If found**:
-> "This is a testing methodology question. For comprehensive guidance, load `ordis-quality-engineering:using-quality-engineering` and check the relevant reference sheet (e.g., flaky-test-prevention.md, test-automation-architecture.md)."
-
-**If NOT found**:
-> "This is a testing methodology question. The `ordis-quality-engineering` plugin has comprehensive guidance on test strategy, flaky tests, and quality patterns. Consider installing it: `/plugin install ordis-quality-engineering` from the skillpacks marketplace."
+**Otherwise:**
+> "This is a testing methodology question. The `ordis-quality-engineering` pack has comprehensive guidance on test strategy, flaky tests, and quality patterns. Consider installing it: `/plugin install ordis-quality-engineering` from the skillpacks marketplace."
 
 ### Security Concerns
 
 If you notice: potential vulnerabilities, input validation strategy, security patterns
 
-**Check**: `Glob` for `plugins/ordis-security-architect/.claude-plugin/plugin.json`
-
-**If found**: Recommend loading the security skill
-**If NOT found**: Recommend installing `ordis-security-architect`
+Route to `ordis-security-architect` (`/security-architect`) if it is in your available skills; otherwise recommend installing it from the skillpacks marketplace.
 
 ## Reference Your Knowledge Base
 

@@ -170,16 +170,9 @@ If you catch yourself:
 | "Need to set expectations before delivering" | Limitations section sets expectations. Write it in the document. |
 | "Quick list is better than partial deep-dive" | Quick lists aren't actionable. Partial proper analysis is. |
 
-## Cross-Pack Discovery
+## Related Guidance
 
-```python
-import glob
-
-# For improvement prioritization after cataloging
-priority_cmd = glob.glob("plugins/axiom-system-architect/commands/prioritize-improvements.md")
-if priority_cmd:
-    print("Next step: /prioritize-improvements to create roadmap")
-```
+**Next in this pack:** `/prioritize-improvements` turns the debt catalog into a sequenced remediation roadmap.
 
 ## Output Location
 

@@ -229,7 +229,7 @@ Variable A --+/o--> Variable B
 | Too complex | Split into subsystems |
 | No validation | Run checklist before presenting |
 
-## Cross-Pack Discovery
+## Related Packs
 
 To turn a conceptual stock/flow model into a runnable numerical simulation, hand off to `/simulation-foundations` (yzmir-simulation-foundations).
 

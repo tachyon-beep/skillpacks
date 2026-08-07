@@ -265,19 +265,11 @@ Design around the budget, not the other way around.
 - [Where to NOT add simulation]
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
+For the mathematical foundations behind the assessment, route to `yzmir-simulation-foundations` (`/simulation-foundations`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
-# For mathematical foundations
-foundations_pack = glob.glob("plugins/yzmir-simulation-foundations/.claude-plugin/plugin.json")
-if not foundations_pack:
-    print("Recommend: yzmir-simulation-foundations for mathematical foundations")
-
-# For performance after assessment
-# Use /performance-optimization skill in this pack
-```
+**In this pack:** `performance-optimization-for-sims.md` covers the performance work that usually follows an assessment.
 
 ## Scope Boundaries
 

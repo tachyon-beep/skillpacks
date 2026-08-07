@@ -275,14 +275,10 @@ When justifying moves, cite relevant skills:
 
 All in: `axiom-python-engineering:using-python-engineering`
 
-## Cross-Pack Discovery
+## Related Packs
 
-If the refactor reveals deeper architectural issues:
+If the refactor reveals deeper architectural issues, say so plainly: "The scope here is larger than a refactor" — and route to `axiom-system-architect` (`/system-architect`), whose `assess-architecture` command runs the proper architectural review.
 
-**Check**: `Glob` for `plugins/axiom-system-architect/.claude-plugin/plugin.json`
-**If found**: "The scope here is larger than a refactor - consider `axiom-system-architect:assess-architecture` for a proper architectural review."
+If extraction reveals untested critical paths, route the coverage gaps to `ordis-quality-engineering` (`/quality-engineering`) and its `analyze-test-gaps` command.
 
-If extraction reveals untested critical paths:
-
-**Check**: `Glob` for `plugins/ordis-quality-engineering/.claude-plugin/plugin.json`
-**If found**: "Coverage gaps surfaced during refactoring - consider `ordis-quality-engineering:analyze-test-gaps`."
+If either pack is not in your available skills, recommend installing it from the skillpacks marketplace.

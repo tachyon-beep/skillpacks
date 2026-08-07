@@ -202,23 +202,19 @@ The following would improve this diagnosis:
 
 ### Defer to Other Packs
 
-**PyTorch/Tensor Issues:**
-Check: `Glob` for `plugins/yzmir-pytorch-engineering/.claude-plugin/plugin.json`
+**PyTorch/Tensor Issues:** → `yzmir-pytorch-engineering` (`/pytorch-engineering`)
 
-If found → "This is a PyTorch tensor/autograd issue. Load `yzmir-pytorch-engineering` for debugging."
-If NOT found → "This appears to be a PyTorch issue. Consider installing `yzmir-pytorch-engineering` from the skillpacks marketplace."
+If it is in your available skills → "This is a PyTorch tensor/autograd issue. Load `yzmir-pytorch-engineering` for debugging."
+Otherwise → "This appears to be a PyTorch issue. Consider installing `yzmir-pytorch-engineering` from the skillpacks marketplace."
 
-**General Training Issues (not RL-specific):**
-Check: `Glob` for `plugins/yzmir-training-optimization/.claude-plugin/plugin.json`
+**General Training Issues (not RL-specific):** → `yzmir-training-optimization` (`/training-optimization`)
 
-If found → "This is a general training optimization issue. Load `yzmir-training-optimization` for learning rate/optimizer debugging."
-If NOT found → "For general training optimization, consider installing `yzmir-training-optimization`."
+If it is in your available skills → "This is a general training optimization issue. Load `yzmir-training-optimization` for learning rate/optimizer debugging."
+Otherwise → "For general training optimization, consider installing `yzmir-training-optimization`."
 
-**Python Code Quality:**
-Check: `Glob` for `plugins/axiom-python-engineering/.claude-plugin/plugin.json`
+**Python Code Quality:** → `axiom-python-engineering` (`/python-engineering`)
 
-If found → Recommend for code quality issues
-If NOT found → Recommend installation
+Recommend it for code quality issues; if it is not in your available skills, recommend installing it.
 
 ## Anti-Patterns to Catch
 

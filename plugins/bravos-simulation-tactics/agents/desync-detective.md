@@ -404,16 +404,9 @@ class ReplaySystem:
 2. [Regression testing approach]
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
-
-# For mathematical stability (if physics is desyncing)
-foundations_pack = glob.glob("plugins/yzmir-simulation-foundations/.claude-plugin/plugin.json")
-if not foundations_pack:
-    print("Recommend: yzmir-simulation-foundations for integrator analysis")
-```
+When the desync traces back to the physics maths rather than the netcode, integrator and stability analysis belongs to `yzmir-simulation-foundations` (`/simulation-foundations`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Scope Boundaries
 

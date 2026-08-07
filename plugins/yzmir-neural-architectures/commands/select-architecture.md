@@ -153,25 +153,6 @@ After gathering requirements, provide:
 - [Potential issue based on constraints]
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-After architecture selection:
-
-```python
-import glob
-
-# For training the architecture
-training_pack = glob.glob("plugins/yzmir-training-optimization/.claude-plugin/plugin.json")
-if not training_pack:
-    print("Recommend: yzmir-training-optimization for optimizer/LR selection")
-
-# For PyTorch implementation
-pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/.claude-plugin/plugin.json")
-if not pytorch_pack:
-    print("Recommend: yzmir-pytorch-engineering for implementation")
-
-# For deployment
-ml_prod = glob.glob("plugins/yzmir-ml-production/.claude-plugin/plugin.json")
-if not ml_prod:
-    print("Recommend: yzmir-ml-production for quantization/serving")
-```
+After architecture selection, optimizer and LR selection go to `yzmir-training-optimization` (`/training-optimization`), implementation to `yzmir-pytorch-engineering` (`/pytorch-engineering`), and quantization/serving to `yzmir-ml-production` (`/ml-production`). If any of these is not in your available skills, recommend installing it from the skillpacks marketplace.

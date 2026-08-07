@@ -241,16 +241,9 @@ We will use PostgreSQL 15+ as our primary database.
 - Aurora pricing analysis: [internal doc]
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
-
-# For security-related ADRs
-security_pack = glob.glob("plugins/ordis-security-architect/.claude-plugin/plugin.json")
-if security_pack:
-    print("Available: ordis-security-architect for security ADRs")
-```
+For security-related ADRs — threat models, control decisions, authorization boundaries — route to `ordis-security-architect` (`/security-architect`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Scope Boundaries
 

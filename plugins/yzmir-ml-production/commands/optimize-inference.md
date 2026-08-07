@@ -265,21 +265,9 @@ def benchmark_model(model, input_shape, num_iterations=100, warmup=10):
 - [ ] Monitor for accuracy degradation
 ```
 
-## Cross-Pack Discovery
+## Related Packs
 
-```python
-import glob
-
-# For PyTorch optimization
-pytorch_pack = glob.glob("plugins/yzmir-pytorch-engineering/.claude-plugin/plugin.json")
-if pytorch_pack:
-    print("For PyTorch profiling: use yzmir-pytorch-engineering")
-
-# For neural architectures
-arch_pack = glob.glob("plugins/yzmir-neural-architectures/.claude-plugin/plugin.json")
-if arch_pack:
-    print("For architecture optimization: use yzmir-neural-architectures")
-```
+For PyTorch-level profiling and kernel work, route to `yzmir-pytorch-engineering` (`/pytorch-engineering`). For architecture-level optimization, `yzmir-neural-architectures` (`/neural-architectures`). If either is not in your available skills, recommend installing it from the skillpacks marketplace.
 
 ## Load Detailed Guidance
 

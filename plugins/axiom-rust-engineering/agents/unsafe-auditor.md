@@ -209,10 +209,7 @@ Then, for each `unsafe` block, produce one finding entry in this format:
 
 If an `unsafe` block handles untrusted input — parsing bytes from a network socket, deserializing from a file, processing user-controlled offsets — the soundness finding has a security dimension.
 
-**Check**: `Glob` for `**/ordis-security-architect/.claude-plugin/plugin.json`
-
-**If found**: Note that the finding should be reviewed by the `ordis-security-architect` for threat modeling beyond pure soundness.
-**If NOT found**: Recommend installing `ordis-security-architect` from the skillpacks marketplace to add security context to the audit.
+Route it to `ordis-security-architect` (`/security-architect`) if that pack is in your available skills — note that the finding warrants threat modeling beyond pure soundness. Otherwise, recommend installing `ordis-security-architect` from the skillpacks marketplace to add security context to the audit.
 
 ### When to Stop and Ask
 
