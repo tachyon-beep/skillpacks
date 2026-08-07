@@ -22,7 +22,8 @@ Load this skill when:
 - Optimizing model inference (speed, size, cost)
 - Setting up MLOps workflows (tracking, automation, CI/CD)
 - Monitoring or debugging production models, including LLM-specific signals (hallucination rate, tool-call success, prompt-injection attempts)
-- User mentions: "production", "deploy", "serve model", "MLOps", "monitoring", "optimize inference", "vLLM", "SGLang", "TensorRT-LLM", "Phoenix", "Langfuse"
+- Curating, documenting, releasing, or handing over a **dataset** — including label quality, deduplication, synthetic-data provenance, and eval-set construction
+- User mentions: "production", "deploy", "serve model", "MLOps", "monitoring", "optimize inference", "vLLM", "SGLang", "TensorRT-LLM", "Phoenix", "Langfuse", "dataset", "data card", "Croissant", "labelling", "annotation", "synthetic data", "eval set"
 
 **Don't use for**: Training optimization (use `training-optimization`), model architecture selection (use `neural-architectures`), PyTorch infrastructure (use `pytorch-engineering`), prompt/RAG/agent design quality (use `llm-specialist`).
 
@@ -92,23 +93,34 @@ When you see a link like `[quantization-for-inference.md](quantization-for-infer
 
 ---
 
-### Category 3: MLOps Tooling
+### Category 3: MLOps & Data
 
-**Symptoms**: "Track experiments", "version models", "automate deployment", "reproducibility", "CI/CD for ML", "feature store", "model registry", "experiment management", "version prompts", "version RAG eval set"
+**Symptoms**: "Track experiments", "version models", "automate deployment", "reproducibility", "CI/CD for ML", "feature store", "model registry", "experiment management", "version prompts", "version RAG eval set", "dataset release", "data card", "datasheet", "Croissant", "label quality", "inter-annotator agreement", "annotation", "deduplicate training data", "synthetic data", "eval-set contamination", "curate dataset", "dataset handover"
 
 **When to route here**:
 - Need workflow/process improvements
 - Want to track experiments, version models, version prompts, or version RAG eval sets
 - Need to automate training-to-deployment pipeline
 - Team collaboration and reproducibility concerns
+- Need to release, document, hand over, or share a **dataset** as a production artifact
+- Label quality, deduplication, synthetic-data provenance, or eval-set construction is the concern
 
 **Routes to**:
 - [experiment-tracking-and-versioning.md](experiment-tracking-and-versioning.md) - MLflow, Weights & Biases, Comet, Hugging Face Hub, model registries, prompt versioning, RAG/eval-set versioning, lineage
 - [mlops-pipeline-automation.md](mlops-pipeline-automation.md) - CI/CD for ML, feature stores, data validation, automated retraining, orchestration
+- [dataset-curation-and-quality.md](dataset-curation-and-quality.md) - Dataset release contract, Croissant / Datasheets / Data Cards, coverage and slices, dedup (MinHash/LSH, SemDeDup), label quality (Krippendorff's α, confident learning, annotation platforms), synthetic-data provenance and ratio discipline, eval-set construction and freeze/rotate policy
 
 **Key distinction**:
 - Experiment tracking = Research/development phase (track runs, version models, version prompts/eval sets)
 - Pipeline automation = Production phase (automate workflows, CI/CD)
+- Dataset curation = The **data artifact itself** (what's in it, is it right, can you defend and hand it over)
+
+**Data sheet split — three-way, and it matters**:
+- **What to version and why it's a release** → `dataset-curation-and-quality.md`
+- **How to version it** (DVC, lakeFS, hashing, registries, lineage) → `experiment-tracking-and-versioning.md`
+- **How to enforce it in CI** (Great Expectations, Pandera, eval gates) → `mlops-pipeline-automation.md`
+
+Schema validation proves the data is *well-formed*; the curation sheet covers whether it is *right* — duplication, label error, missing slices, contamination. Route to both when the query is "our data quality is bad" without further detail.
 
 **Multi-concern**: Queries like "track experiments AND automate deployment" → route to BOTH skills
 
@@ -157,7 +169,12 @@ Is it about HOW to expose/deploy model (incl. LLM-serving stack)?
   NO → Continue
 
 Is it about workflow/process/automation?
-  YES → Category 3: MLOps Tooling
+  YES → Category 3: MLOps & Data
+  NO → Continue
+
+Is it about the DATASET itself (what's in it, label quality, dedup, synthetic data,
+eval-set construction, releasing or handing it over)?
+  YES → Category 3: dataset-curation-and-quality.md
   NO → Continue
 
 Is it about monitoring/debugging in production (incl. LLM telemetry)?
@@ -203,6 +220,7 @@ Ambiguous? → Ask ONE question to clarify concern category
 **Ask**: "What's the current pain point — experiment tracking, automated deployment, prompt/eval-set versioning, or some combination?"
 - Tracking/versioning (incl. prompt/eval-set) → Category 3 (experiment-tracking-and-versioning)
 - Automation/CI/CD → Category 3 (mlops-pipeline-automation)
+- Dataset quality/curation/release → Category 3 (dataset-curation-and-quality)
 - Multiple → Route to multiple skills
 
 ---
@@ -266,13 +284,19 @@ The two packs split along the **ops vs. generation-quality boundary**.
 
 **Clear boundary**:
 - training-optimization = Training phase (convergence, hyperparameters, training speed)
-- ml-production = Inference phase (deployment, serving, monitoring)
+- ml-production = Inference phase (deployment, serving, monitoring) **plus the dataset as a production artifact**
+
+**The dataset is not an exception to the inference-phase framing.** `dataset-curation-and-quality.md` treats the dataset as a *versioned production artifact with a release contract and quality gates* — composition, provenance, documentation, handover, and the drift→re-collection loop. That is operational discipline, and it belongs here. What belongs to training-optimization is what you do with data *during* a training run (curriculum, sampling schedules, augmentation for convergence), not what the dataset **is**.
 
 **"Too slow" disambiguation**:
 - Training slow → training-optimization
 - Inference slow → ml-production
 
 **Bidirectional**: training-optimization should send users here when they're done training; ml-production should send users back when they need to retrain (drift response, dataset updates).
+
+### With data-engineering concerns
+
+Pipeline and warehouse mechanics — batch/streaming pipelines, ELT/ETL, dbt, dimensional and lakehouse modelling, orchestration as a data-platform concern, CDC — are **not** in this pack. `dataset-curation-and-quality.md` is deliberately scoped to the ML training/eval corpus as a *model-facing* artifact: what is in it, whether it is right, and how it is released. If the question is "how do we build and model the warehouse this data comes from," that is a data-engineering question, not an ml-production one.
 
 ### With pytorch-engineering
 
@@ -305,6 +329,10 @@ For AI/LLM threat modeling — prompt injection, data exfiltration via tool-call
 | "We use TorchServe" (existing system) | Skip routing | Route to serving-patterns, note migration path | Existing systems still need ops guidance, but flag the deprecation |
 | "Hallucinations in production" | Route only to llm-specialist | Route both: ml-production (Phoenix/Langfuse to detect+alert) + llm-specialist (eval methodology + fix via prompt/RAG/fine-tune) | Detection is ops; remediation is generation quality |
 | "Quantize an LLM" | Route only to quantization-for-inference | Route both: llm-specialist (which format suits the task) + ml-production (AWQ/GPTQ ops, hardware fit) | Format choice and ops are different concerns |
+| "Our data quality is bad" | Route to mlops-pipeline-automation (data validation) | Route both: `dataset-curation-and-quality.md` (is the data *right* — dedup, label error, coverage, contamination) + mlops-pipeline-automation (how to *enforce* it in CI) | Schema validation proves well-formedness, not correctness |
+| "Version our dataset" | Route only to experiment-tracking-and-versioning | Ask: mechanics or release contract? DVC/hashing → experiment-tracking; what a release *contains* and how it's documented/handed over → dataset-curation-and-quality | Versioning tooling ≠ knowing what to version |
+| "Our eval set is contaminated" | Route to dataset-curation only | Route by model type: general construction/hygiene → dataset-curation-and-quality; LLM n-gram/pretraining contamination → llm-specialist `llm-evaluation-metrics.md` Part 10; the *statistics* of leakage → `yzmir-counterfactual-statistics` | Three packs own three different layers |
+| "Model isn't trained yet, so skip this pack" | Defer entirely to training packs | Dataset curation, labelling, and eval-set construction happen pre-training and live here | The "finish training first" red flag applies to serving, not data |
 
 ---
 
@@ -320,6 +348,9 @@ For AI/LLM threat modeling — prompt injection, data exfiltration via tool-call
 | "They're technical, skip clarification" | Technical users still benefit from clarifying questions. |
 | "LLM question, route only to llm-specialist" | Most LLM production questions need both packs. Default to dual-route. |
 | "TorchServe still works, just route there" | TorchServe is in maintenance mode. Flag and offer alternatives. |
+| "Data quality = schema validation, route to mlops" | Schema checks can't see duplication, label error, missing slices, or contamination. Route to dataset-curation too. |
+| "The dataset is an input, not our concern" | The dataset is a versioned production artifact with a release contract. It is squarely this pack's concern. |
+| "They're pre-training, wrong pack" | Dataset curation and eval-set construction precede training and belong here. Only serving/scaling/observability require a trained model. |
 
 ---
 
@@ -331,9 +362,11 @@ If you catch yourself thinking ANY of these, STOP and clarify:
 - "Performance probably means speed" → ASK speed, accuracy, or LLM output quality
 - "Deploy = serving-patterns only" → Consider deployment-strategies and monitoring too
 - "They mentioned [tool], route based on tool" → Route by CONCERN, not tool
-- "MLOps = one skill" → Could span experiment tracking, automation, and prompt/eval-set versioning
+- "MLOps = one skill" → Could span experiment tracking, automation, dataset curation, and prompt/eval-set versioning
 - "Skip question to save time" → Clarifying prevents wrong routing
 - "LLM in production = llm-specialist alone" → Default to dual-routing
+- "Data quality means schema validation" → ASK whether the concern is well-formedness (mlops) or correctness (dataset-curation)
+- "The dataset is given" → It is an artifact with a release contract; route to dataset-curation-and-quality
 
 **When in doubt**: Ask ONE clarifying question. 10 seconds of clarification prevents minutes of wrong-skill loading.
 
@@ -348,7 +381,11 @@ If you catch yourself thinking ANY of these, STOP and clarify:
 | Deploy LLM | Capability tier and target? | LLM-serving Part of serving-patterns + llm-specialist | Observability + cost monitoring |
 | Production monitoring | Proactive or reactive? | Monitoring OR debugging | Both if setting up + fixing issues |
 | LLM observability | Plumbing or methodology? | Monitoring (plumbing) + llm-specialist (methodology) | Cost + drift alerts |
-| MLOps setup | Tracking, automation, or prompt/eval versioning? | Experiment tracking AND/OR automation | Often multiple needed |
+| MLOps setup | Tracking, automation, dataset curation, or prompt/eval versioning? | Experiment tracking AND/OR automation AND/OR dataset-curation | Often multiple needed |
+| Dataset quality/curation | Well-formed (schema) or right (content)? | Dataset-curation-and-quality | mlops-pipeline-automation to enforce in CI |
+| Dataset release/handover | Internal handover or external share? | Dataset-curation-and-quality (release contract, Croissant) | security-architect for PII/sharing threat model |
+| Label quality / annotation | Measured or assumed? | Dataset-curation-and-quality (κ/α, confident learning) | Taxonomy problems are not model problems |
+| Synthetic data expansion | Contamination checked? | Dataset-curation-and-quality (provenance, ablation ladder) | counterfactual-statistics for the comparison stats |
 | Performance issues | Speed, accuracy, or LLM quality? | Optimization OR observability OR llm-specialist | Depends on clarification |
 | Scale serving | Traffic pattern? | Scaling-and-load-balancing | Serving patterns if not set up yet |
 
@@ -429,8 +466,10 @@ If you catch yourself thinking ANY of these, STOP and clarify:
 - LLM generation quality only (prompts, RAG retrieval design, fine-tuning strategy choice, agent design, eval methodology, safety/alignment) → Use llm-specialist
 - Classical ML deployment → ml-production still applies; consider gradient boosting / sklearn serving paths inside serving-patterns
 - AI/LLM threat modeling → Use ordis-security-architect
+- Data pipelines, warehouses, ELT/dbt, dimensional modelling → data-engineering territory, not this pack
+- The *statistics* of splits, leakage, and paired comparison → Use `yzmir-counterfactual-statistics`
 
-**Red flag**: If model isn't trained yet, probably don't need ml-production. Finish training first.
+**Red flag**: If model isn't trained yet, probably don't need ml-production — **except for the dataset**. Dataset curation, labelling, release, and eval-set construction happen *before* training and belong here ([dataset-curation-and-quality.md](dataset-curation-and-quality.md)). "Finish training first" applies to serving, scaling, and observability, not to the data the training consumes.
 
 ---
 
@@ -450,7 +489,7 @@ You've routed correctly when:
 
 ## ML Production Specialist Skills Catalog
 
-After routing, load the appropriate specialist skill for detailed guidance. **This pack contains exactly 10 reference sheets** (no new sheets added in this refresh):
+After routing, load the appropriate specialist skill for detailed guidance. **This pack contains exactly 11 reference sheets**:
 
 1. [quantization-for-inference.md](quantization-for-inference.md) - `torch.ao.quantization`, AWQ, GPTQ, INT8/INT4 ops, post-training quantization, QAT, calibration, kernel/hardware fit (LLM format *choice* lives in llm-specialist)
 2. [model-compression-techniques.md](model-compression-techniques.md) - Pruning (structured/unstructured), knowledge distillation, architecture optimization, model size reduction
@@ -462,6 +501,7 @@ After routing, load the appropriate specialist skill for detailed guidance. **Th
 8. [mlops-pipeline-automation.md](mlops-pipeline-automation.md) - CI/CD for ML, feature stores, data validation, automated retraining, orchestration (Airflow, Kubeflow, Prefect, Dagster)
 9. [production-monitoring-and-alerting.md](production-monitoring-and-alerting.md) - Metrics tracking, drift detection, dashboards, alerting, SLAs; **LLM observability: Phoenix, Langfuse, OpenTelemetry GenAI semantic conventions**; tool-call telemetry, prompt-injection signal, RAG-retrieval-quality drift, cost/token monitoring
 10. [production-debugging-techniques.md](production-debugging-techniques.md) - Error analysis, production profiling, rollback procedures, post-mortems, root cause analysis, tool-call failure forensics
+11. [dataset-curation-and-quality.md](dataset-curation-and-quality.md) - The dataset as a versioned production artifact: release contract and composition manifest, documentation standards (**Croissant 1.1**, Datasheets for Datasets, Data Cards, HF dataset cards), coverage and slice design, deduplication (MinHash/LSH, SemDeDup, `datatrove`), label quality (Cohen's κ / Fleiss' κ / Krippendorff's α selection, confident learning via `cleanlab`, annotation platforms — Argilla, Label Studio, doccano, Prodigy; Snorkel OSS flagged low-maintenance), synthetic-data provenance tagging and ratio discipline (model collapse, ablation ladders), eval-set construction and freeze/rotate policy, drift→targeted re-collection
 
 ---
 
@@ -472,4 +512,5 @@ After routing, load the appropriate specialist skill for detailed guidance. **Th
   - `yzmir-llm-specialist/using-llm-specialist` — generation quality, prompt/RAG/agent/eval/safety design (10 sheets including `reasoning-models.md`, `agentic-patterns-and-mcp.md`, `context-engineering-and-prompt-caching.md`)
   - `yzmir-training-optimization/using-training-optimization` — training-phase convergence and speed
   - `yzmir-pytorch-engineering/using-pytorch-engineering` — distributed training, low-level profiling, CUDA/memory
-  - `ordis-security-architect/using-security-architect` — AI/LLM threat modeling, controls, security review
+  - `ordis-security-architect/using-security-architect` — AI/LLM threat modeling, controls, security review, PII handling in shared datasets
+  - `yzmir-counterfactual-statistics/using-counterfactual-statistics` — the statistics beneath dataset work: independent units, grouped splits and the leakage taxonomy, paired comparison, winner's curse

@@ -32,6 +32,7 @@ Do **not** use this pack when:
 - You need bit-exact reproducibility, cross-machine determinism, floating-point or GPU nondeterminism, or replay divergence localisation → `axiom-determinism-and-replay`. **This pack presupposes that contract**: common random numbers is not achievable in a system that cannot replay.
 - You are debugging an RL reward function or algorithm choice → `yzmir-deep-rl`.
 - You need production monitoring, drift detection, or online evaluation → `yzmir-ml-production`.
+- You need to *construct* the dataset or eval set rather than reason about it — curation, coverage/slice design, deduplication tooling, label quality and annotator agreement, synthetic-data provenance, the dataset release contract and its documentation standards → `yzmir-ml-production/dataset-curation-and-quality`. **This pack owns the inference drawn from a split; that sheet owns how the data was built.** [grouped-splits-and-leakage.md](grouped-splits-and-leakage.md) remains authoritative for the leakage taxonomy itself.
 - You need general test strategy or flaky-test triage → `ordis-quality-engineering`.
 
 ## The Running Example
@@ -258,6 +259,7 @@ Any one of these means stop and route before believing the number:
 | Telemetry schemas that survive shape change; ablation logging | `yzmir-morphogenetic-rl/growth-telemetry-and-ablation` |
 | RL algorithm choice, reward design, exploration | `yzmir-deep-rl` |
 | Production monitoring, drift detection, online eval | `yzmir-ml-production` |
+| Dataset/eval-set **construction** — curation, dedup tooling, label quality, synthetic-data provenance, release contract | `yzmir-ml-production/dataset-curation-and-quality` |
 | Test strategy, flaky tests, coverage | `ordis-quality-engineering` |
 | Writing the result up for a specific audience | `muna-technical-writer` |
 
