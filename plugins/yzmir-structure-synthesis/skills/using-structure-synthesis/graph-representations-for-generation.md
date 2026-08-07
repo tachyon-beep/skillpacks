@@ -59,9 +59,9 @@ Encode a genuine residual block — an input that feeds *both* a transform and t
 g = nx.DiGraph()
 for n, op in [("in", "identity"), ("lin", "linear"), ("add", "residual_add")]:
     g.add_node(n, op=op)
-g.add_edge("in", "lin")
-g.add_edge("lin", "add")
-g.add_edge("in", "add")   # 'add' has TWO parents: 'lin' and 'in' — this is the branch
+g.add_edge("in", "lin", in_port=0)
+g.add_edge("lin", "add", in_port=0)
+g.add_edge("in", "add", in_port=1)   # 'add' has TWO parents: 'lin' and 'in' — this is the branch
 
 order = ["in", "lin", "add"]
 decoded = decode_SEQUENCE_ONLY(encode_SEQUENCE_ONLY(g, order))
@@ -74,24 +74,35 @@ The original graph has 3 edges. The round-tripped graph has 2. **The skip connec
 
 ```python
 def encode_POINTER_BASED(g, order):
+    """Each parent reference is an (index, in_port) PAIR, not a bare index.
+    Dropping the port is the same class of bug one level down: the edge
+    survives the round trip, the wiring does not."""
     index_of = {n: i for i, n in enumerate(order)}
-    return [(g.nodes[n]["op"], tuple(sorted(index_of[p] for p in g.predecessors(n)))) for n in order]
+    return [
+        (g.nodes[n]["op"],
+         tuple(sorted((index_of[p], g.edges[p, n]["in_port"]) for p in g.predecessors(n))))
+        for n in order
+    ]
 
 def decode_POINTER_BASED(tokens):
     g = nx.DiGraph()
     for i, (op, _) in enumerate(tokens):
         g.add_node(i, op=op)
     for i, (op, parents) in enumerate(tokens):
-        for p in parents:
-            g.add_edge(p, i, in_port=0)
+        for parent_index, in_port in parents:
+            g.add_edge(parent_index, i, in_port=in_port)
     return g
 
 decoded2 = decode_POINTER_BASED(encode_POINTER_BASED(g, order))
 assert decoded2.number_of_edges() == g.number_of_edges() == 3
-print("pointer-based round trip preserves all 3 edges, including the branch")
+assert (sorted((u, v, d["in_port"]) for u, v, d in decoded2.edges(data=True))
+        == [(0, 1, 0), (0, 2, 1), (1, 2, 0)])   # ports survive, not just edges
+print("pointer-based round trip preserves all 3 edges AND their port assignments")
 ```
 
-The fix costs something: the generator must now predict valid parent indices (which the implicit scheme never had to do), and invalid or forward-referencing pointers become a new failure mode `structural-verification.md`'s reachability and cycle checks need to catch. That's a real cost — and it's the cost of being able to express the structures the grammar actually allows, rather than a silent subset of them.
+**Carry the port, not just the parent index.** An encoding that stores `tuple(sorted(index_of[p] for p in g.predecessors(n)))` and decodes with `in_port=0` on every edge round-trips *edge count* faithfully and *wiring* incorrectly — for a portless grammar nothing is lost, but the moment the grammar contains a port-sensitive operator (`concat`, a weighted merge, an attention block with distinct query/key inputs) the decoder silently rewires every candidate onto port 0. Because the edge count still matches, the obvious round-trip assertion passes. If the grammar is genuinely portless, dropping the port is a legitimate simplification — but write that assumption down as a stated limitation next to the encoder, because it is exactly the kind of assumption a later grammar extension invalidates without touching this file. (A grammar that can feed the *same* producer into two ports of one operator needs `MultiDiGraph` on top of this; see the representation caveat in `canonicalisation-and-normal-forms.md`.)
+
+The fix costs something: the generator must now predict valid parent indices *and* valid ports (which the implicit scheme never had to do), and invalid or forward-referencing pointers become a new failure mode `structural-verification.md`'s reachability and cycle checks need to catch. That's a real cost — and it's the cost of being able to express the structures the grammar actually allows, rather than a silent subset of them.
 
 ## Choosing a Representation: Ask What the Grammar Needs First
 

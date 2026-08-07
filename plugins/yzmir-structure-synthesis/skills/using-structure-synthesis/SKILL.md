@@ -261,6 +261,7 @@ Embodying an accepted candidate in a live network? → yzmir-dynamic-architectur
 | "`nx.is_isomorphic()` is good enough to check if two candidates match" | Bare topology-only isomorphism ignores operator labels; two structurally-identical graphs with completely different operators compare as isomorphic | See `equivalence-detection-and-semantic-hashing` |
 | "A canonicaliser that removes any degree-(1,1) node is just cleaning up pass-throughs" | Not every single-in/single-out node is an identity function; deleting a real nonlinearity changes semantics | See `canonicalisation-and-normal-forms` |
 | "Refining node signatures from their inputs is enough to canonicalise" | Nodes distinguished only by their *downstream* role stay tied forever, and raw labels then leak into the canonical form — one structure, several identities | See `canonicalisation-and-normal-forms` RED Scenario 2 |
+| "Refinement is bidirectional now, so breaking the remaining ties by node ID is fine" | Necessary, not sufficient: two tied orbits resolved independently pick a combination that is not an automorphism, and repeated multi-node branches on a commutative merge false-split | See `canonicalisation-and-normal-forms`, "What the Tie-Break May Decide" |
 | "The hash library's default is fine, we don't need our own serialization" | Hash libraries change their output across versions and are frequently attribute-blind by default; an unpinned hash is not a stable identity | See `equivalence-detection-and-semantic-hashing` |
 | "We'll just let the grammar cover a few more operators, it's a small change" | Grammar growth is combinatorial in verification cost; "small" additions have caused search and verification to become intractable in this exact failure mode before | See `search-space-evolution-and-explosion-control` |
 | "Constrained decoding means we don't need a separate verifier" | Constrained decoding narrows the search but rarely proves every legality property (cross-node contracts, global budgets); the verifier is still required | See `validity-by-construction-vs-post-hoc` |
@@ -272,7 +273,7 @@ Embodying an accepted candidate in a live network? → yzmir-dynamic-architectur
 - [ ] **Generator filters its own pool**: any code path where the generator drops or re-ranks candidates using a predicted-utility signal
 - [ ] **Verifier reads reward, future utility, or candidate provenance** in its accept/reject decision
 - [ ] **Canonicaliser changes non-equivalent semantics**: a "simplification" that isn't provably identity-preserving
-- [ ] **Canonicaliser splits one structure into several identities**: signature refinement that reads predecessors only, letting raw node IDs leak into the "canonical" form for branch-and-merge graphs
+- [ ] **Canonicaliser splits one structure into several identities**: signature refinement that reads predecessors only, or a raw node ID breaking the ties that bidirectional refinement leaves — either way raw labels leak into the "canonical" form for branch-and-merge graphs
 - [ ] **Diversity measured on raw syntax**: duplicate rate reported before canonicalisation
 - [ ] **Hash has no version field**: no way to detect that a library upgrade silently changed hash values
 - [ ] **Equivalence check is bare, unlabeled isomorphism**: `nx.is_isomorphic()` (or equivalent) with no node/edge attribute matching

@@ -80,7 +80,14 @@ for n in order:
     new_sig[n] = (sig[n], tuple(incoming))   # no successors() fold anywhere
 ```
 
-Construct counterexamples for both: a non-identity operator (e.g., `relu`) at a degree-(1,1) position — if the canonicaliser removes it, confirmed Critical (semantic change). And a port-asymmetric pair — two identical branches feeding different ports of a merge, with the port assignment swapped between two otherwise-identical graphs — if the canonical forms differ, confirmed Critical (false split; this direction is *never* caught downstream, because the exact-check fallback only fires on hash agreement).
+Construct counterexamples. Semantic-change side: a non-identity operator (e.g., `relu`) at a degree-(1,1) position — if the canonicaliser removes it, confirmed Critical. And `out = residual_add(a·port1, identity(a)·port0)`, which computes `2a` — if the identity splice fires without a `has_edge(pred, succ)` guard, the `add_edge` overwrites the existing edge on a `DiGraph`, the merge drops to one input, and the result both changes semantics and false-merges with a genuinely single-input `residual_add(a)`: confirmed Critical.
+
+False-split side, in escalating order — **do not stop after the first one passes**:
+
+1. A **port-asymmetric pair** — two identical single-node branches feeding *different* ports of a merge, with the assignment swapped between two otherwise-identical graphs. Catches predecessor-only refinement.
+2. A **deep same-port pair** — two `in → relu → sigmoid → merge` chains, both feeding the *same* port of a commutative merge, with the mid-chain wiring swapped between copies. Catches a correct bidirectional refinement whose leftover ties are broken by raw node ID: the relus form one tied orbit and the sigmoids another, and resolving them independently picks a pairing that is not an automorphism. Confirm the pair really is isomorphic with `DiGraphMatcher(node_match=..., edge_match=...)` first, then compare canonical bytes.
+
+Differing canonical forms on either pair is confirmed Critical — false splits are *never* caught downstream, because the exact-check fallback only fires on hash agreement. Read the tie-break as well as the refinement direction: bidirectional refinement is necessary, orbit-aware individualization-refinement is what makes it sufficient.
 
 ### Pattern 4: Diversity Claimed in Raw-Syntax Space
 

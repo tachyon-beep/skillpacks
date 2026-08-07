@@ -60,14 +60,39 @@ def test_order_independence():
     assert canonical_bytes(canonicalise(g1, {"out"})) == canonical_bytes(canonicalise(g2, {"out"}))
 
 def test_no_false_split_on_symmetric_structures():
-    # Port-asymmetric pair: identical branches feeding a merge, port assignment
-    # swapped between the two copies. Isomorphic graphs MUST canonicalise
+    # Class 1 -- port-asymmetric pair: identical SINGLE-node branches feeding a
+    # merge, port assignment swapped between the two copies. Catches
+    # predecessor-only refinement. Isomorphic graphs MUST canonicalise
     # identically -- a split here is invisible to every downstream check.
     g1, g2 = make_port_swapped_symmetric_pair()
     assert canonical_bytes(canonicalise(g1, {"out"})) == canonical_bytes(canonicalise(g2, {"out"}))
+
+def test_no_false_split_on_deep_same_port_branches():
+    # Class 2 -- repeated MULTI-node branches feeding the SAME port of a
+    # commutative merge (in -> relu -> sigmoid -> merge, twice), with the
+    # mid-chain wiring swapped between copies. Class 1 passes on any
+    # bidirectional refinement; THIS is the pair that fails when the leftover
+    # ties are broken by raw node ID, because the relus are one tied orbit and
+    # the sigmoids another and resolving them independently is not an
+    # automorphism. Parameterise over every branch depth and multiplicity the
+    # grammar can express.
+    g1, g2 = make_same_port_deep_branch_pair()
+    assert labeled_isomorphic(g1, g2)   # the fixture's own precondition
+    assert canonical_bytes(canonicalise(g1, {"out"})) == canonical_bytes(canonicalise(g2, {"out"}))
+
+def test_identity_splice_does_not_collapse_a_parallel_edge():
+    # out = residual_add(a via port 1, identity(a) via port 0) -- computes 2a.
+    # On a DiGraph the splice's add_edge would OVERWRITE the existing (a, out)
+    # edge, dropping the merge to one input. Semantics-changing rewrite AND a
+    # false merge with a genuinely single-input residual_add(a).
+    g = make_residual_passthrough_graph()
+    canon = canonicalise(g, {"out"})
+    merge = next(n for n in canon.nodes if canon.nodes[n]["op"] == "residual_add")
+    assert canon.in_degree(merge) == 2, "splice collapsed 2a into a"
+    assert semantic_hash(g, {"out"}) != semantic_hash(make_single_input_add(), {"out"})
 ```
 
-Reference implementation for these functions, including why the refinement must fold in both in-edges and out-edges: `canonicalisation-and-normal-forms.md`'s executable decision procedure.
+Reference implementation for these functions — why the refinement must fold in both in-edges and out-edges, why bidirectional refinement is necessary but **not sufficient** without an orbit-aware individualization tie-break, and why the identity splice needs a `has_edge` guard: `canonicalisation-and-normal-forms.md`'s executable decision procedure.
 
 ### 2. Hash Equivalence Tested in BOTH Directions
 
@@ -86,12 +111,19 @@ def test_bare_isomorphism_is_not_used_anywhere():
     # appear anywhere near candidate-equivalence code. Note: this is a plain
     # substring grep followed by a Python-side filter, not a single regex with
     # negative lookahead -- `(?!...)` is a PCRE feature that POSIX `grep -E`
-    # does not support (it fails silently on most greps rather than erroring,
-    # which would make this guard always report zero findings).
+    # rejects with an error (exit status 2, message on stderr). The danger is
+    # not that the grep is quiet; it is that a harness reading only stdout sees
+    # the rejection as an empty result and reports zero findings forever. Hence
+    # the explicit returncode check below: grep exits 0 on match, 1 on no match,
+    # >=2 on error, and only the first two are answers.
     import subprocess
     result = subprocess.run(
         ["grep", "-rn", "is_isomorphic(", "."],
         capture_output=True, text=True,
+    )
+    assert result.returncode in (0, 1), (
+        f"grep failed (exit {result.returncode}): {result.stderr.strip()} "
+        "-- a guard that cannot run is not a passing guard"
     )
     suspicious = [l for l in result.stdout.splitlines() if "node_match" not in l]
     assert not suspicious, f"bare isomorphism check found: {suspicious}"

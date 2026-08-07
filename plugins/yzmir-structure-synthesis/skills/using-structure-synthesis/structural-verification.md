@@ -12,7 +12,9 @@ description: Use when building or reviewing the legality gate a generated candid
 - Debugging "the verifier passed this candidate but it broke downstream" (usually a missing check, not a broken one)
 - Auditing whether a verifier has started consuming reward, predicted utility, or generator identity in its accept/reject decision
 
-For the canonical form and hash the verifier's checks often run alongside, see `canonicalisation-and-normal-forms.md` and `equivalence-detection-and-semantic-hashing.md`. For what happens before verification (constrained decoding narrowing the space), see `validity-by-construction-vs-post-hoc.md`.
+**Pipeline order is fixed across this pack, and it is load-bearing**: cheap legality checks (shape/type inference, acyclicity, interface-contract arity) → **canonicalisation** (`canonicalisation-and-normal-forms.md`) → **the full gate described in this sheet, including reachability and dead-node detection, run on the canonical form**. The cheap checks come first because canonicalising a shape-broken or cyclic candidate is wasted work — and, for acyclicity specifically, because **the canonicaliser does not check it**: `nx.ancestors` and signature refinement both run happily on a cyclic graph, so a cyclic candidate that reaches canonicalisation gets a plausible-looking canonical form and a hash instead of a rejection. Acyclicity is this gate's obligation, discharged before canonicalisation, not something the canonicaliser will catch on your behalf. Reachability comes *after*, because eliminating unreachable nodes is canonicalisation's job, not the verifier's: run it too early and a legitimately-generated dangling node fails a check that canonicalisation was about to make moot. The identity a cleared candidate carries (`equivalence-detection-and-semantic-hashing.md`) is computed once, on that same canonical form, so "this candidate already passed the gate" means the same thing everywhere.
+
+For what happens before any of this (constrained decoding narrowing the space), see `validity-by-construction-vs-post-hoc.md`.
 
 ## Core Principle
 
@@ -28,7 +30,7 @@ A structural verifier that only checks one or two of these is a partial gate, no
 |---|---|
 | **Forbidden-operation detection** | An operator outside the grammar's whitelist (see `typed-graph-grammars.md`) |
 | **Shape inference and alignment** | Tensor shape mismatches across an edge; a candidate that would crash at first forward pass |
-| **Cycle and reachability checks** | Cycles in what must be a DAG; dead code that survived canonicalisation |
+| **Cycle and reachability checks** | Cycles in what must be a DAG (checked cheaply *before* canonicalisation, which needs one); dead code that survived canonicalisation (checked *after*, on the canonical form — before it, a dangling node is canonicalisation's problem, not a rejection) |
 | **Interface-contract checks** | Input/output arity and shape that doesn't match the declared insertion contract (see `conditioning-on-context-and-contracts.md`) |
 | **Gradient-flow / trainability-mask validation** | A declared-trainable parameter with no path to the loss, or a frozen parameter accidentally left trainable |
 | **Identity-at-birth / zero-influence proof** | A residual or insertion structure that does not actually compute the identity function at its declared birth parameters, whatever its structure suggests |
@@ -289,7 +291,8 @@ If a verifier's function signature grows a parameter that isn't on that list, th
 - [ ] **Zero-influence "verified" by structural pattern match** with no numeric forward-pass check
 - [ ] **Verifier function signature includes reward, utility, or provenance** as a live input to the decision
 - [ ] **Shape inference stops at the first mismatch it happens to hit** rather than propagating through the whole graph
-- [ ] **No reachability check** — dead nodes from an imperfect canonicaliser reach the verifier undetected
+- [ ] **No reachability check on the canonical form** — dead nodes from an imperfect canonicaliser reach the verifier undetected
+- [ ] **Gate and canonicaliser disagree about which runs first** — if each stage's docs assume it goes second, one of them is being fed a form it was not written for; write the order down once (cheap checks → canonicalise → full gate) and cite it from both
 - [ ] **Trainability mask never checked against actual gradient reachability** — declared-trainable parameters with no path to the loss
 - [ ] **Gradient check asserts magnitude instead of connectivity** — rejects legitimate zero-influence births whose upstream grads are zero-valued by design
 - [ ] **Static budget accounting happens after compilation**, not before — by then the compute to build the illegal candidate is already spent
@@ -305,7 +308,7 @@ If a verifier's function signature grows a parameter that isn't on that list, th
 
 ## Cross-References
 
-- **The canonical form checked for dead nodes before this gate runs**: `canonicalisation-and-normal-forms.md`
+- **The canonicalisation pass that runs between the cheap legality checks and this gate, and eliminates the dead nodes this gate's reachability check then confirms are gone**: `canonicalisation-and-normal-forms.md`
 - **The hash used to identify which candidates this verifier has already cleared**: `equivalence-detection-and-semantic-hashing.md`
 - **The grammar this gate enforces membership in**: `typed-graph-grammars.md`
 - **The interface contract checked here**: `conditioning-on-context-and-contracts.md`

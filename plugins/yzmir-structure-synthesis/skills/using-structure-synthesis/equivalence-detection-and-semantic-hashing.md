@@ -91,7 +91,13 @@ That is a library vendor telling you, in the vendor's own words, that upgrading 
 
 Read that v3.5 warning again: the bugfix was to *track in and out edges separately*. A hand-rolled canonicaliser whose signature refinement reads predecessors only has precisely the blindness networkx patched — two nodes distinguished solely by their downstream role (which port of a merge they feed) never get separated, and isomorphic graphs canonicalise to different forms. That is a **false split**, the direction no downstream check can catch. The full failing example, runnable, is RED Scenario 2 in `canonicalisation-and-normal-forms.md`.
 
-This pack's own reference implementation is a worked example of the consequence: its hash version is `structhash-v2` because `structhash-v1` was the predecessor-only design. The refinement change alters canonical bytes for branch-and-merge graphs, so every v1 hash is incomparable with every v2 hash — and the version field is what makes that incomparability *visible* instead of silent. A version bump on canonicaliser change is not bureaucracy; it is the only thing standing between "we fixed the canonicaliser" and "we corrupted the archive and called it a fix."
+This pack's own reference implementation is a worked example of the consequence, and it has now paid the price **twice**:
+
+- **`structhash-v1`** — predecessor-only refinement. False-split on port-asymmetric branch-and-merge graphs.
+- **`structhash-v2`** — bidirectional refinement, raw node ID breaking whatever ties were left. Fixed v1's failure and shipped a subtler one: refinement is necessary but not sufficient, and a raw-ID tie-break resolves two tied orbits independently, which false-splits parallel **multi-node** branches feeding the same port of a commutative merge (Inception-style cells). See RED Scenario 2's "What the Tie-Break May Decide" in `canonicalisation-and-normal-forms.md`.
+- **`structhash-v3`** — bidirectional refinement plus orbit-aware individualization-refinement, lexicographic-minimum over branches. No raw label reaches the canonical form at any point.
+
+Each change altered canonical bytes for structures the previous version got wrong, so v1, v2 and v3 hashes are mutually incomparable — and the version field is what makes that incomparability *visible* instead of silent. Note the shape of the v2 lesson specifically: a fix that closes the counterexample you have is not the same as a fix that closes the *class*. A version bump on canonicaliser change is not bureaucracy; it is the only thing standing between "we fixed the canonicaliser" and "we corrupted the archive and called it a fix."
 
 ## The GREEN Fix: Own the Serialization, Version the Hash, Never Trust Equality Alone
 
@@ -105,14 +111,18 @@ An external graph hash function (Weisfeiler-Leman or otherwise) is legitimate as
 
 ## Executable Decision Procedure
 
-The same `canonicalise` / `canonical_bytes` implementation from `canonicalisation-and-normal-forms.md` — bidirectional refinement, sha256 signature compression — extended with the versioned hash and an equivalence check that tests both directions:
+The same `canonicalise` / `canonical_bytes` implementation from `canonicalisation-and-normal-forms.md` — bidirectional refinement, orbit-aware individualization, guarded identity splice, sha256 signature compression — extended with the versioned hash and an equivalence check that tests both directions. **The two sheets must stay byte-for-byte in lock-step**; a drift between them is a hash-version incident:
 
 ```python
 import hashlib
 import networkx as nx
 
-HASH_VERSION = "structhash-v2"  # v1 = predecessor-only refinement (Trap 3); bump on ANY
-                                # canonicalisation or serialization change
+HASH_VERSION = "structhash-v3"  # v1 = predecessor-only refinement (Trap 3);
+                                # v2 = bidirectional refinement + raw-ID tie-break
+                                #      (still false-split on deep same-port branches);
+                                # v3 = orbit-aware individualization, no raw label
+                                #      anywhere. Bump on ANY canonicalisation or
+                                #      serialization change.
 IDENTITY_OPS = {"identity", "residual_passthrough"}
 
 def make_graph(ops, edges):
@@ -131,7 +141,59 @@ def _digest(*parts) -> str:
         h.update(b"\x00")
     return h.hexdigest()
 
-def canonicalise(g, outputs):
+class CanonicalisationBudgetExceeded(RuntimeError):
+    """Raised, never swallowed — a silent fallback to a raw-ID tie-break would
+    restore exactly the v2 false split."""
+
+def _refine(g, signature):
+    """Bidirectional WL refinement to its fixed point (Trap 3's fix)."""
+    for _ in range(len(signature)):
+        new_sig = {}
+        for n in g.nodes:
+            incoming = sorted((signature[p], g.edges[p, n]["in_port"])
+                              for p in g.predecessors(n))
+            outgoing = sorted((signature[s], g.edges[n, s]["in_port"])
+                              for s in g.successors(n))
+            new_sig[n] = _digest(signature[n], incoming, outgoing)
+        if len(set(new_sig.values())) == len(set(signature.values())):
+            return new_sig
+        signature = new_sig
+    return signature
+
+def _labeling_key(g, ranked):
+    index = {n: i for i, n in enumerate(ranked)}
+    return (tuple(g.nodes[n]["op"] for n in ranked),
+            tuple(sorted((index[u], index[v], g.edges[u, v]["in_port"]) for u, v in g.edges)))
+
+def _canonical_order(g, signature, budget):
+    """Refine; while ties remain, individualize each member of the smallest
+    tied cell, re-refine, and keep the lexicographically smallest labeling.
+    Cell choice and individualization are both signature-driven, never
+    node-ID-driven — that is what makes the result isomorphism-invariant."""
+    signature = _refine(g, signature)
+    cells = {}
+    for n in g.nodes:
+        cells.setdefault(signature[n], []).append(n)
+    tied = [c for c in cells.values() if len(c) > 1]
+    if not tied:
+        return sorted(g.nodes, key=lambda n: signature[n])
+    target = min(tied, key=lambda c: (len(c), signature[c[0]]))
+    best_order = best_key = None
+    for v in sorted(target):
+        budget[0] -= 1
+        if budget[0] < 0:
+            raise CanonicalisationBudgetExceeded(
+                f"individualization search exhausted its budget; largest tied "
+                f"cell has {len(target)} members")
+        branch = dict(signature)
+        branch[v] = _digest("individualized", signature[v])   # NOT _digest(v)
+        ranked = _canonical_order(g, branch, budget)
+        key = _labeling_key(g, ranked)
+        if best_key is None or key < best_key:
+            best_order, best_key = ranked, key
+    return best_order
+
+def canonicalise(g, outputs, leaf_budget=10_000):
     outputs = set(outputs)
     live = set(outputs)
     for o in outputs:
@@ -144,21 +206,14 @@ def canonicalise(g, outputs):
             if (n not in outputs and pruned.in_degree(n) == 1 and pruned.out_degree(n) == 1
                     and pruned.nodes[n]["op"] in IDENTITY_OPS):
                 pred, succ = next(pruned.predecessors(n)), next(pruned.successors(n))
+                if pruned.has_edge(pred, succ):
+                    continue   # DiGraph cannot hold the parallel edge: splicing
+                               # would OVERWRITE a real one and change semantics
                 pruned.add_edge(pred, succ, in_port=pruned.edges[n, succ]["in_port"])
                 pruned.remove_node(n)
                 changed = True
-    order = list(nx.topological_sort(pruned))
-    signature = {n: _digest("op", pruned.nodes[n]["op"]) for n in order}
-    for _ in range(len(order) + 1):
-        new_sig = {}
-        for n in order:
-            incoming = sorted((signature[p], pruned.edges[p, n]["in_port"])
-                              for p in pruned.predecessors(n))
-            outgoing = sorted((signature[s], pruned.edges[n, s]["in_port"])
-                              for s in pruned.successors(n))
-            new_sig[n] = _digest(signature[n], incoming, outgoing)
-        signature = new_sig
-    ranked = sorted(order, key=lambda n: (signature[n], n))
+    base = {n: _digest("op", pruned.nodes[n]["op"]) for n in pruned.nodes}
+    ranked = _canonical_order(pruned, base, [leaf_budget])
     relabel = {old: f"n{i}" for i, old in enumerate(ranked)}
     return nx.relabel_nodes(pruned, relabel, copy=True)
 
@@ -200,7 +255,7 @@ def test_equivalent_graphs_hash_equal():
     assert semantic_hash(g1, {"x3"}) == semantic_hash(g2, {"baz"})
     assert graphs_equivalent(g1, {"x3"}, g2, {"baz"})
 
-# --- Direction 1, adversarial: port-asymmetric branches (Trap 3 regression) ---
+# --- Direction 1, adversarial: port-asymmetric branches (v1 regression) ---
 def test_branch_and_merge_does_not_falsely_split():
     g1 = make_graph({"in": "linear", "a": "relu", "b": "relu", "out": "residual_add"},
                     [("in", "a", 0), ("in", "b", 0), ("a", "out", 0), ("b", "out", 1)])
@@ -208,6 +263,40 @@ def test_branch_and_merge_does_not_falsely_split():
                     [("in", "a", 0), ("in", "b", 0), ("a", "out", 1), ("b", "out", 0)])
     assert semantic_hash(g1, {"out"}) == semantic_hash(g2, {"out"})
     assert graphs_equivalent(g1, {"out"}, g2, {"out"})
+
+# --- Direction 1, adversarial: DEEP same-port branches (v2 regression).
+#     v1's fixture above passes under v2; this one does not. Depth is the
+#     discriminating variable, not port asymmetry. ---
+def make_same_port_deep_branch_pair(merge_op="add"):
+    """Two parallel TWO-node chains into the SAME port of a commutative merge,
+    with the mid-chain wiring swapped between the copies. The relus are one
+    tied orbit and the sigmoids another; resolving the two orbits independently
+    (what a raw-ID tie-break does) picks a pairing that is not an automorphism."""
+    nodes = {"in": "linear", "p1": "relu", "p2": "relu",
+             "q1": "sigmoid", "q2": "sigmoid", "out": merge_op}
+    common = [("in", "p1", 0), ("in", "p2", 0), ("q1", "out", 0), ("q2", "out", 0)]
+    d1 = make_graph(nodes, common + [("p1", "q1", 0), ("p2", "q2", 0)])
+    d2 = make_graph(nodes, common + [("p1", "q2", 0), ("p2", "q1", 0)])
+    return d1, d2
+
+def test_deep_same_port_branches_do_not_falsely_split():
+    for merge_op in ("add", "residual_add", "concat"):
+        d1, d2 = make_same_port_deep_branch_pair(merge_op)
+        assert _labeled_isomorphic(d1, d2), "fixture must be isomorphic to be a fixture"
+        assert semantic_hash(d1, {"out"}) == semantic_hash(d2, {"out"})
+        assert graphs_equivalent(d1, {"out"}, d2, {"out"})
+
+# --- Direction 1, adversarial: the identity splice must not corrupt semantics ---
+def test_residual_passthrough_survives_canonicalisation():
+    # out = residual_add(a via port 1, identity(a) via port 0) -- computes 2a
+    two_a = make_graph({"a": "linear", "id": "identity", "out": "residual_add"},
+                       [("a", "out", 1), ("a", "id", 0), ("id", "out", 0)])
+    one_a = make_graph({"a": "linear", "out": "residual_add"}, [("a", "out", 0)])
+    canon = canonicalise(two_a, {"out"})
+    merge = next(n for n in canon.nodes if canon.nodes[n]["op"] == "residual_add")
+    assert canon.in_degree(merge) == 2, "splice collapsed 2a into a"
+    assert semantic_hash(two_a, {"out"}) != semantic_hash(one_a, {"out"})   # no false merge
+    assert not graphs_equivalent(two_a, {"out"}, one_a, {"out"})
 
 # --- Direction 2: distinct semantics -> distinct hash ---
 def test_nonequivalent_graphs_hash_differ():
@@ -223,10 +312,28 @@ def test_bare_isomorphism_trap_regression():
     assert nx.is_isomorphic(g1, g2) is True          # the trap fires on the bare call
     assert graphs_equivalent(g1, {"x3"}, g2, {"x3"}) is False  # the labeled pipeline correctly rejects
 
+# --- Direction 2, adversarial: a canonicaliser that unifies MORE must not
+#     unify too much. Same op multiset, same degree sequence, NOT isomorphic. ---
+def test_near_miss_pair_still_separates():
+    a = make_graph({"in": "linear", "p1": "relu", "p2": "relu",
+                    "q1": "sigmoid", "q2": "sigmoid", "out": "add"},
+                   [("in", "p1", 0), ("in", "p2", 0), ("p1", "q1", 0),
+                    ("p2", "q2", 0), ("q1", "out", 0), ("q2", "out", 0)])
+    b = make_graph({"in": "linear", "p1": "relu", "p2": "relu",
+                    "q1": "sigmoid", "q2": "sigmoid", "out": "add"},
+                   [("in", "p1", 0), ("in", "p2", 0), ("p1", "q1", 0),
+                    ("q1", "q2", 0), ("p2", "out", 0), ("q2", "out", 0)])
+    assert not _labeled_isomorphic(a, b)             # genuinely different structures
+    assert semantic_hash(a, {"out"}) != semantic_hash(b, {"out"})
+    assert not graphs_equivalent(a, {"out"}, b, {"out"})
+
 test_equivalent_graphs_hash_equal()
 test_branch_and_merge_does_not_falsely_split()
+test_deep_same_port_branches_do_not_falsely_split()
+test_residual_passthrough_survives_canonicalisation()
 test_nonequivalent_graphs_hash_differ()
 test_bare_isomorphism_trap_regression()
+test_near_miss_pair_still_separates()
 print("equivalence + hash properties verified (both directions)")
 ```
 
@@ -238,6 +345,11 @@ print("equivalence + hash properties verified (both directions)")
 - Treat it as a **halting defect in the canonicaliser or serializer**, with the disagreeing pair preserved as a regression fixture. This state is one of the few places the pipeline can catch its own identity layer being wrong — wasting it on a warning log discards the highest-value bug report the system will ever generate.
 
 The reverse disagreement — hashes differ but someone proves the graphs equivalent by hand — is the false-split case: same severity, same response, but *nothing will detect it automatically*. That is why the adversarial Direction-1 tests above (relabelings, port permutations, symmetric structures drawn from your own grammar) exist: they are the only detector.
+
+Two things about that detector, learned the hard way by this pack's own reference implementation:
+
+- **The fixture class has to be deeper than depth 1.** Port-swapped *single-node* branches — the v1 regression fixture — are passed by any canonicaliser with bidirectional refinement, so a suite built only from them issues a clean bill to a v2-class implementation that still false-splits. The discriminating fixture is repeated **multi-node** branches feeding the same port of a commutative merge, with the internal wiring permuted (`make_same_port_deep_branch_pair` above). Generate that pair at every branch depth your grammar can express, not just the depth someone happened to draw first.
+- **Bidirectional refinement is necessary but not sufficient.** Reading the refinement loop and confirming it folds in both `predecessors()` and `successors()` establishes only that v1's bug is gone. The sufficient construction is orbit-aware individualization-refinement resolving the tie residue; a raw-ID tie-break after a correct bidirectional refinement is still a false-split generator. Audit the tie-break, not just the loop.
 
 ## Hash-Version Migration
 
@@ -276,6 +388,8 @@ An equivalence-class ID is the semantic hash, reused: every candidate that canon
 - [ ] **A library hash function used directly as the persisted identity**, with no owned serialization layer on top
 - [ ] **No `hash_version` field**, or a version bump that isn't enforced by a golden-hash fixture test
 - [ ] **Only one direction of the equivalence property tested** — or Direction 1 tested only on renamed chains, never on port permutations or symmetric structures
+- [ ] **Direction-1 adversarial fixtures stop at depth-1 branches** — single-node parallel branches pass under a raw-ID tie-break; repeated multi-node branches on the same port are the pair that discriminates
+- [ ] **The canonicaliser's tie-break was never audited**, only its refinement direction — bidirectional refinement is necessary, orbit-aware individualization is what makes it sufficient
 - [ ] **Hash/exact-check disagreement handled as a log line** instead of a halting defect with the pair preserved
 - [ ] **Archive mixes hash versions without version-checked comparisons**
 - [ ] **Equivalence-class IDs computed from raw graphs**, not from the canonical form
@@ -285,14 +399,14 @@ An equivalence-class ID is the semantic hash, reused: every candidate that canon
 
 1. **What are the inputs to your hash, byte for byte?** If you cannot write down the exact serialization format, a library is deciding it for you, and the library's next version will decide differently.
 2. **What is your hash version, and what test fails when someone forgets to bump it?** If the answers are "we don't have one" and "none," every future canonicaliser fix is a silent archive invalidation.
-3. **Which adversarial pairs are in your Direction-1 test set?** Renamed chains catch nothing interesting; port permutations, symmetric branches, and interleaved emission orders catch real refinement bugs.
+3. **Which adversarial pairs are in your Direction-1 test set, and how deep do they go?** Renamed chains catch nothing interesting; port permutations of single-node branches catch a v1-class bug and nothing more. Repeated multi-node branches on the same port of a commutative merge are the pair that separates a sufficient canonicaliser from a plausible one.
 4. **What does your code do when the hash and the exact check disagree?** If nobody knows, the answer is "logs and continues," which discards the best bug report the identity layer will ever produce.
 5. **Can you compare two archive entries from six months apart and know the comparison is valid?** If hash versions aren't stored and checked, you cannot.
 
 ## Cross-References
 
-- **The canonical form this hash is built on, the bidirectional-refinement requirement, and the tie-break safety argument**: `canonicalisation-and-normal-forms.md`
-- **Where this equivalence check plugs into the full legality gate**: `structural-verification.md`
+- **The canonical form this hash is built on, the bidirectional-refinement requirement, and the orbit-aware individualization that resolves the tie residue**: `canonicalisation-and-normal-forms.md`
+- **Where this equivalence check plugs into the full legality gate.** Pipeline order across this pack is fixed: cheap legality checks (shape, type, acyclicity, contract arity) → canonicalisation → the full structural-verification gate, including reachability and dead-node detection, run on the canonical form. This hash identifies a candidate the gate has cleared, so it is computed once, on that canonical form: `structural-verification.md`
 - **Why diversity must be measured in canonical/functional space using this hash**: `diversity-and-mode-collapse.md`
 - **How the archive keys retrieval and dedup on equivalence-class ID**: `lineage-mutation-and-recombination.md`
 - **The full anti-pattern catalogue**: `synthesis-anti-patterns.md`
