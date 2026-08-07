@@ -146,8 +146,11 @@ class TrainingLoop:
         start_epoch = 0
         checkpoint_path = f'{checkpoint_dir}/checkpoint_latest.pt'
         if Path(checkpoint_path).exists():
-            start_epoch = self.load_checkpoint(checkpoint_path)
+            # load_checkpoint returns the epoch that COMPLETED; resume at the next one
+            start_epoch = self.load_checkpoint(checkpoint_path) + 1
             logger.info(f"Resuming training from epoch {start_epoch}")
+
+        val_loss = None  # so the KeyboardInterrupt handler can't hit an unbound name
 
         for epoch in range(start_epoch, num_epochs):
             try:
@@ -165,9 +168,16 @@ class TrainingLoop:
                     f"val_loss={val_loss:.4f}, lr={self.optimizer.param_groups[0]['lr']:.2e}"
                 )
 
+                # CRITICAL: decide "did we improve?" BEFORE save_checkpoint runs,
+                # because save_checkpoint updates self.best_val_loss as a side effect.
+                # Reading self.best_val_loss after the save compares val_loss to
+                # itself, is never True, and early-stops after exactly `patience`
+                # epochs no matter how well training is going.
+                improved = val_loss < self.best_val_loss
+
                 self.save_checkpoint(epoch, val_loss, checkpoint_dir)
 
-                if val_loss < self.best_val_loss:
+                if improved:
                     self.epochs_without_improvement = 0
                 else:
                     self.epochs_without_improvement += 1
@@ -177,7 +187,8 @@ class TrainingLoop:
 
             except KeyboardInterrupt:
                 logger.info("Training interrupted by user")
-                self.save_checkpoint(epoch, val_loss, checkpoint_dir)
+                if val_loss is not None:
+                    self.save_checkpoint(epoch, val_loss, checkpoint_dir)
                 break
             except RuntimeError as e:
                 logger.error(f"Error in epoch {epoch}: {e}")
@@ -190,6 +201,7 @@ class TrainingLoop:
 ### 2. Data Split: Train/Val/Test Separation (CRITICAL)
 
 ```python
+import torch
 from torch.utils.data import Subset
 
 class DataSplitter:
@@ -200,7 +212,14 @@ class DataSplitter:
         assert abs(train_ratio + val_ratio + test_ratio - 1.0) < 1e-9
 
         n = len(dataset)
-        indices = list(range(n))
+
+        # CRITICAL: actually shuffle, and actually use random_state.
+        # Sequential slices of an ordered dataset (sorted by class, by patient,
+        # by timestamp) hand you splits with disjoint label distributions —
+        # val/test accuracy is then meaningless. Seeding the generator is what
+        # makes the split reproducible across runs.
+        generator = torch.Generator().manual_seed(random_state)
+        indices = torch.randperm(n, generator=generator).tolist()
 
         train_size = int(train_ratio * n)
         train_indices = indices[:train_size]

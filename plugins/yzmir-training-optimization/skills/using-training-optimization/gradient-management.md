@@ -1333,7 +1333,7 @@ class StableModel(nn.Module):
 # AVOID: Operations that can cause numerical instability
 
 # ❌ Division by small numbers
-loss = 1.0 / (predictions + eps)  # If predictions ≈ 0, loss explodes
+loss = 1.0 / predictions  # If predictions ≈ 0, loss explodes
 
 # ✅ Add epsilon for stability
 eps = 1e-8
@@ -1540,9 +1540,11 @@ Loss becomes NaN
 **The critical interaction:**
 
 ```python
-from torch.cuda.amp import autocast, GradScaler
+import torch
 
-scaler = GradScaler()
+# Modern namespace (PyTorch 2.4+). torch.cuda.amp.* are deprecated aliases.
+# A GradScaler is required for FP16; BF16 does not need one.
+scaler = torch.amp.GradScaler('cuda')
 model = TransformerModel().cuda()
 optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
 
@@ -1550,7 +1552,7 @@ for batch in train_loader:
     optimizer.zero_grad()
 
     # Forward pass with autocast (mixed precision)
-    with autocast():
+    with torch.amp.autocast(device_type='cuda', dtype=torch.float16):
         output = model(batch['input'])
         loss = criterion(output, batch['target'])
 
@@ -1605,16 +1607,16 @@ clip_grad_norm_(model.parameters(), max_norm=1.0)  # ✅ Clips at true 1.0
 **Complete AMP + Clipping + Accumulation:**
 
 ```python
-from torch.cuda.amp import autocast, GradScaler
+import torch
 
-scaler = GradScaler()
+scaler = torch.amp.GradScaler('cuda')   # FP16 only; omit for BF16
 accumulation_steps = 4
 
 optimizer.zero_grad()
 
 for i, batch in enumerate(train_loader):
     # Forward pass with autocast
-    with autocast():
+    with torch.amp.autocast(device_type='cuda', dtype=torch.float16):
         output = model(batch['input'])
         loss = criterion(output, batch['target'])
 
@@ -1710,13 +1712,49 @@ For FP8 recipe details, dtype routing, and the amax/scaling mechanism, cross-ref
 
 Distributed data parallel (DDP) is straightforward: each rank holds full gradients, and `torch.nn.utils.clip_grad_norm_` works as-is (DDP all-reduces gradients during backward, so each rank already sees the global gradient before the clip).
 
-Fully Sharded Data Parallel (FSDP) is **not** the same. Each rank only holds a shard of each parameter's gradient, so a naive `torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)` would compute the norm over only the local shard and clip incorrectly.
+Fully Sharded Data Parallel (FSDP) is **not** automatically the same — but the correct call differs between FSDP1 and FSDP2, and getting this backwards is a common and silent error. Check which one you are on before copying a clipping recipe.
 
-**The correct pattern** (PyTorch FSDP, both legacy `FullyShardedDataParallel` and FSDP2 / `fully_shard`):
+**FSDP2 (`torch.distributed.fsdp.fully_shard`) — use the standard clip:**
 
-- Use the FSDP-specific clip method that knows how to compute the global norm across shards: `model.clip_grad_norm_(max_norm)` on the FSDP-wrapped root module. This performs the cross-rank all-reduce on the squared-norm before applying the clip ratio to local shards.
-- Equivalently, gather gradients first via `summon_full_params` / `unshard()` and then call the standard `torch.nn.utils.clip_grad_norm_` — but this is wasteful and only used when you need the full gradients for some other reason.
-- Do **not** call the global `torch.nn.utils.clip_grad_norm_` on FSDP-wrapped parameters directly without one of the above; the resulting clip will be silently per-shard and your effective `max_norm` will be wrong by roughly a factor of `sqrt(world_size)`.
+```python
+# FSDP2: parameters and gradients are DTensors
+from torch.distributed.fsdp import fully_shard
+fully_shard(model)          # shards in place; model stays an nn.Module
+...
+loss.backward()
+total_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+```
+
+`torch.nn.utils.clip_grad_norm_` is **correct** here. Under FSDP2 each `param.grad` is a `DTensor`, so the norm reduction is a DTensor op that all-reduces across the device mesh — the total norm is the true *global* norm and the clip coefficient applied to each local shard is the right one. This is what torchtitan does.
+
+Two details worth knowing:
+
+- The returned `total_norm` is itself a `DTensor`. Call `.full_tensor()` on it before logging or comparing it against a scalar threshold, or you will log a sharded object.
+- `fully_shard` modules do **not** have a `.clip_grad_norm_()` method (that is an FSDP1 class method). Calling `model.clip_grad_norm_(1.0)` on an FSDP2 model raises `AttributeError`. If you also use pipeline parallelism, the DTensor reduction covers only the FSDP mesh — you must reduce the norm across the pipeline mesh yourself (torchtitan's `clip_grad_norm_` helper shows this pattern using `torch.nn.utils.get_total_norm` plus `torch.nn.utils.clip_grads_with_norm_`).
+
+**FSDP1 (legacy `FullyShardedDataParallel` wrapper) — use the FSDP method:**
+
+```python
+# FSDP1: plain sharded tensors, no cross-rank norm knowledge
+from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+model = FSDP(model)
+...
+loss.backward()
+total_norm = model.clip_grad_norm_(max_norm=1.0)   # method on the FSDP root module
+```
+
+Here each rank holds a plain (non-DTensor) shard of each gradient, so `torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)` would compute the norm over only the local shard and clip incorrectly — the effective `max_norm` ends up wrong by roughly a factor of `sqrt(world_size)`. `FSDP.clip_grad_norm_` performs the cross-rank all-reduce on the squared norm before applying the clip ratio. It must be called on the **root** FSDP module.
+
+The gather-first alternative (`FSDP.summon_full_params` on FSDP1, `unshard()` on an FSDP2 module) also works but is wasteful — only do it when you need the full gradients for some other reason anyway.
+
+| | FSDP1 (`FullyShardedDataParallel`) | FSDP2 (`fully_shard`) |
+|---|---|---|
+| Gradient type | plain sharded tensor | `DTensor` |
+| Correct clip | `model.clip_grad_norm_(max_norm)` | `torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)` |
+| The wrong call | `torch.nn.utils.clip_grad_norm_` → silent per-shard clip | `model.clip_grad_norm_` → `AttributeError` |
+| Gather-first escape hatch | `summon_full_params` | `unshard()` |
+
+The FSDP1 failure mode is the dangerous one: it is silent. The FSDP2 failure mode raises immediately.
 
 Reference: PyTorch FSDP docs (https://pytorch.org/docs/stable/fsdp.html) and the FSDP2 design notes. For broader distributed-training plumbing (sharding strategies, mixed precision config, activation checkpointing interactions), cross-ref `yzmir-pytorch-engineering/skills/using-pytorch-engineering/distributed-training-strategies.md`.
 
@@ -1955,11 +1993,11 @@ Performance improvement: 3x less communication overhead
 **Complete DDP + Accumulation + Clipping + AMP:**
 
 ```python
-from torch.cuda.amp import autocast, GradScaler
+import torch
 from contextlib import nullcontext
 
 model = DDP(model, device_ids=[local_rank])
-scaler = GradScaler()
+scaler = torch.amp.GradScaler('cuda')   # FP16 only; omit for BF16
 accumulation_steps = 4
 
 optimizer.zero_grad()
@@ -1970,7 +2008,7 @@ for i, batch in enumerate(train_loader):
     # Disable sync on accumulation steps
     with model.no_sync() if is_accumulation_step else nullcontext():
         # Mixed precision forward
-        with autocast():
+        with torch.amp.autocast(device_type='cuda', dtype=torch.float16):
             output = model(batch)
             loss = criterion(output, target)
 

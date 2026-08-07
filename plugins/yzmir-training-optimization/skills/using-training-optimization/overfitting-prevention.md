@@ -13,7 +13,7 @@ Overfitting is the most common training failure: your model memorizes training d
 
 Load this skill when:
 - Training loss decreasing but validation loss increasing (classic overfitting)
-- Train accuracy 95% but validation accuracy 75% (26% gap = serious overfitting)
+- Train accuracy 95% but validation accuracy 75% (20-point gap = serious overfitting)
 - Model performs well on training data but fails on unseen data
 - You want to prevent overfitting before it happens (architecture selection)
 - Selecting regularization technique (dropout vs L2 vs early stopping)
@@ -135,28 +135,44 @@ Watch for these signs:
 **Implementation (PyTorch)**:
 ```python
 class EarlyStoppingCallback:
-    def __init__(self, patience=10, min_delta=0):
+    def __init__(self, patience=10, min_delta=0, mode='max'):
         """
-        patience: Stop if validation accuracy doesn't improve for N epochs
+        patience:  Stop if the monitored metric doesn't improve for N epochs
         min_delta: Minimum change to count as improvement
+        mode:      'max' when higher is better (accuracy, F1, AUC)
+                   'min' when lower is better (loss, error rate)
         """
+        assert mode in ('max', 'min'), "mode must be 'max' or 'min'"
         self.patience = patience
         self.min_delta = min_delta
-        self.best_val_acc = -float('inf')
+        self.mode = mode
+        self.best_score = -float('inf') if mode == 'max' else float('inf')
         self.patience_counter = 0
         self.should_stop = False
 
-    def __call__(self, val_acc):
-        if val_acc - self.best_val_acc > self.min_delta:
-            self.best_val_acc = val_acc
+    def __call__(self, score):
+        """Returns True if this score was an improvement."""
+        if self.mode == 'max':
+            improved = score - self.best_score > self.min_delta
+        else:
+            improved = self.best_score - score > self.min_delta
+
+        if improved:
+            self.best_score = score
             self.patience_counter = 0
         else:
             self.patience_counter += 1
             if self.patience_counter >= self.patience:
                 self.should_stop = True
 
+        # Returning the verdict lets callers snapshot the best model WITHOUT
+        # re-comparing against self.best_score — which has already been updated
+        # by this call, so `score < cb.best_score` would compare a value to
+        # itself and never be True.
+        return improved
+
 # Usage:
-early_stop = EarlyStoppingCallback(patience=10)
+early_stop = EarlyStoppingCallback(patience=10, mode='max')  # monitoring accuracy
 
 for epoch in range(500):
     train_acc = train_one_epoch()
@@ -164,7 +180,7 @@ for epoch in range(500):
     early_stop(val_acc)
 
     if early_stop.should_stop:
-        print(f"Early stopping at epoch {epoch}, best val_acc {early_stop.best_val_acc}")
+        print(f"Early stopping at epoch {epoch}, best val_acc {early_stop.best_score}")
         break
 ```
 
@@ -204,7 +220,7 @@ for epoch in range(500):
 optimizer = torch.optim.AdamW(
     model.parameters(),
     lr=1e-4,
-    weight_decay=0.01  # L2 regularization strength
+    weight_decay=0.01  # DECOUPLED weight decay (AdamW), not classic L2
 )
 
 # Typical training loop (weight decay applied automatically)
@@ -711,7 +727,7 @@ optimizer = AdamW(weight_decay=0.001)
 4. **Data augmentation** (back-translation for NLP, mixup for vision)
 5. **Reduce model capacity** (use smaller transformer)
 
-**Anti-pattern for Transformers**: Dropout (modern transformers don't use it much). Use batch norm + layer norm already included.
+**Anti-pattern for Transformers**: Heavy dropout (modern transformers use little or none). They rely on the **LayerNorm** already built into each block — transformers use LayerNorm, not BatchNorm.
 
 ### RNNs/LSTMs (Sequences)
 
@@ -1032,7 +1048,7 @@ early_stop = EarlyStoppingCallback(patience=15)
 **Fix 2: Reduce Model Capacity** (Cost: lower max capacity, but necessary)
 ```python
 # Use ResNet18 instead of ResNet50
-# 11M → 11M parameters (already smaller than ResNet50)
+# 23M → 11M parameters (ResNet18 is roughly half of ResNet50)
 # Actually, use even smaller: ResNet10-like
 # 2M parameters for 5K examples = 400x ratio (better but still high)
 # Retrain with ResNet18 + early stopping
@@ -1353,7 +1369,9 @@ If you've checked all these and still overfitting, the issue is likely:
 
 **Pattern 1: Proper Training Loop with Early Stopping**
 ```python
-early_stop = EarlyStoppingCallback(patience=15)
+# mode='min' — this loop monitors val LOSS, where lower is better.
+# The default mode='max' would treat a RISING loss as improvement.
+early_stop = EarlyStoppingCallback(patience=15, mode='min')
 best_model = None
 
 for epoch in range(500):
@@ -1379,9 +1397,10 @@ for epoch in range(500):
 
     val_loss /= len(val_loader)
 
-    # Check early stopping
-    early_stop(val_loss)
-    if val_loss < early_stop.best_val_loss:
+    # Check early stopping. Use the RETURNED verdict — re-reading
+    # early_stop.best_score here would compare val_loss against itself
+    # (the call already updated it) and never snapshot a best model.
+    if early_stop(val_loss):
         best_model = copy.deepcopy(model)
 
     if early_stop.should_stop:

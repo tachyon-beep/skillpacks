@@ -248,7 +248,9 @@ transform = transforms.GaussianBlur(kernel_size=(3, 7), sigma=(0.1, 2.0))
 
 **Grayscale**:
 ```python
-transform = transforms.Grayscale(p=0.2)  # 20% probability
+transform = transforms.RandomGrayscale(p=0.2)  # 20% probability
+# NOTE: transforms.Grayscale is the *unconditional* converter and takes
+# num_output_channels, not p — Grayscale(p=0.2) raises TypeError.
 ```
 
 **When to use**: When color information is redundant or unreliable.
@@ -281,10 +283,12 @@ def mixup(x, y, alpha=1.0):
 
 **When to use**: All image classification tasks.
 
-**Strength tuning**:
-- Light: alpha=2.0 (blends close to original)
-- Medium: alpha=1.0 (uniform blending)
-- Strong: alpha=0.2 (extreme blends)
+**Strength tuning** (λ ~ Beta(α, α) — note the direction, it is counter-intuitive):
+- Light: alpha=0.2 (Beta is U-shaped: λ lands near 0 or 1, so most images are barely mixed — this is the standard ImageNet setting)
+- Medium: alpha=1.0 (Beta(1,1) is uniform: λ equally likely anywhere in [0, 1])
+- Strong: alpha=2.0+ (λ concentrates near 0.5, so nearly every image is a half-and-half blend)
+
+**Why small alpha is the weak setting**: α < 1 pushes Beta's mass to the *endpoints*, α > 1 pulls it to the *centre*. Larger α therefore means more mixing, not less. Reaching for α=0.2 to get "extreme blends" gets you the opposite of what you wanted.
 
 **Effectiveness**: One of the best modern augmentations, ~1-2% accuracy improvement typical.
 
@@ -313,11 +317,18 @@ def cutmix(x, y, alpha=1.0):
     bbx2 = np.clip(cx + cut_w // 2, 0, width)
     bby2 = np.clip(cy + cut_h // 2, 0, height)
 
-    x[index, :, bby1:bby2, bbx1:bbx2] = x[index, :, bby1:bby2, bbx1:bbx2]
+    # Paste the patch FROM the shuffled batch INTO a copy of the original.
+    # Note the asymmetry: LHS is the full batch, RHS is indexed by `index`.
+    # Writing x[index, ...] = x[index, ...] assigns the region to itself — a
+    # silent no-op that leaves images untouched while still returning mixed
+    # labels, which trains the model against targets it cannot possibly match.
+    mixed_x = x.clone()
+    mixed_x[:, :, bby1:bby2, bbx1:bbx2] = x[index, :, bby1:bby2, bbx1:bbx2]
 
+    # Recompute lam from the ACTUAL box area (clipping may have shrunk it)
     lam = 1 - ((bbx2 - bbx1) * (bby2 - bby1)) / (height * width)
 
-    return x, y, y[index], lam
+    return mixed_x, y, y[index], lam
 ```
 
 **When to use**: Image classification (especially effective).
@@ -714,8 +725,11 @@ X_resampled, y_resampled = smote.fit_resample(X_train, y_train)
 ```python
 def add_noise_to_features(X: np.ndarray, noise_std: float):
     """Add Gaussian noise to features (percentage of feature std)."""
-    noise = np.random.normal(0, noise_std, X.shape)
-    # Scale noise to percentage of feature std
+    # Draw unit-variance noise, THEN scale it once by noise_std * feature_std.
+    # Applying noise_std twice (sampling at scale noise_std and then multiplying
+    # by feature_stds * noise_std) gives an effective std of noise_std**2 —
+    # a requested "5%" would actually inject 0.25%.
+    noise = np.random.normal(0, 1.0, X.shape)
     feature_stds = np.std(X, axis=0)
     scaled_noise = noise * (feature_stds * noise_std)
     return X + scaled_noise
@@ -1242,7 +1256,8 @@ probabilistic = ProbabilisticAugmentation(strong, p=0.3)
 
 ```python
 from albumentations import (
-    HorizontalFlip, VerticalFlip, Rotate, ColorJitter, Resize, Compose
+    HorizontalFlip, VerticalFlip, Rotate, ColorJitter, Resize, Compose,
+    BboxParams,
 )
 
 # Albumentations handles box remapping automatically
@@ -1284,12 +1299,15 @@ from albumentations import (
     HorizontalFlip, RandomCrop, Rotate, ColorJitter, Compose
 )
 
+# Masks need NO extra params — albumentations applies the same geometric
+# transform to anything passed as mask=. (keypoint_params/bbox_params are for
+# keypoint and bounding-box targets respectively, not for masks.)
 segmentation_augmentation = Compose([
     HorizontalFlip(p=0.5),
     Rotate(limit=15, p=0.5),
     RandomCrop(height=256, width=256),
     ColorJitter(brightness=0.2, contrast=0.2, p=0.5),
-], keypoint_params=KeypointParams(format='xy'))
+])
 
 # Usage:
 image, mask = segmentation_sample

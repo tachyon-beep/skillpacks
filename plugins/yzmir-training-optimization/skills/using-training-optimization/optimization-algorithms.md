@@ -413,7 +413,8 @@ This section adds the major post-AdamW optimizers that have meaningfully shipped
 - **Core idea**: applies Newton–Schulz orthogonalization to the momentum buffer of 2D hidden-layer weight matrices, optimizing the *direction* of the update. Used **alongside** AdamW (Muon for matrix-shaped hidden weights, AdamW for embeddings, output head, biases, norms).
 - **Memory profile**: similar to SGD-with-momentum for the Muon-managed parameters (one buffer); AdamW handles the rest.
 - **When it beats AdamW**: NanoGPT speedrun records — Muon set the record on 2024-10-15 with ~35% training-speed improvement over AdamW, and has held it through 12+ subsequent records by multiple researchers. FLOP overhead is reportedly <1% at typical LM scales.
-- **When it doesn't**: Models without significant 2D hidden weights; very small models where AdamW's two buffers aren't a bottleneck. Production-frontier-scale results outside the speedrun community are still maturing.
+- **Production-frontier validation**: no longer speedrun-only. Moonshot AI's **Moonlight** (16B-parameter MoE, February 2025) trained with a scaled-up Muon and reported roughly 2× the compute efficiency of an AdamW baseline, contributing the distributed/ZeRO-style Muon implementation and the weight-decay + per-parameter update-scale adjustments needed to make Muon work at scale. Moonshot then trained **Kimi K2** — a 1T-parameter MoE on 15.5T tokens — using **MuonClip**, Muon plus a QK-clipping mechanism added to suppress attention-logit explosions, reporting a stable loss curve across the full run ([arXiv:2507.20534](https://arxiv.org/abs/2507.20534), July 2025). Treat Muon as validated at frontier scale, with the caveat that the scaling fixes (weight decay, update-scale matching, and QK-clip for very large runs) are part of the recipe rather than optional extras.
+- **When it doesn't**: Models without significant 2D hidden weights; very small models where AdamW's two buffers aren't a bottleneck.
 - **Hyperparameter sensitivity**: medium; tune Muon's LR independently from the AdamW partition's LR.
 
 ### Schedule-Free — "The Road Less Scheduled"
@@ -690,7 +691,7 @@ scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
 # Batch 256–512, scale LR linearly with batch
 ```
 
-Alternative when memory or LR sensitivity matters: **Lion** at LR ~10× smaller than the AdamW you'd otherwise use.
+Alternative when optimizer-state **memory** is the constraint: **Lion** (one buffer instead of AdamW's two), at LR ~10× smaller than the AdamW you'd otherwise use. Note this buys memory, not LR robustness — Lion is *more* LR-sensitive than AdamW, so budget for a fresh LR sweep.
 
 
 ### Vision Transformers (ViT, Swin, DeiT)

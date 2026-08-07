@@ -1417,7 +1417,8 @@ import mlflow
 
 def objective(trial):
     with mlflow.start_run(nested=True):
-        lr = trial.suggest_loguniform("learning_rate", 1e-5, 1e-1)
+        # suggest_loguniform is deprecated since Optuna 3.0 — use suggest_float(log=True)
+        lr = trial.suggest_float("learning_rate", 1e-5, 1e-1, log=True)
         batch_size = trial.suggest_categorical("batch_size", [32, 64, 128])
 
         mlflow.log_params({"learning_rate": lr, "batch_size": batch_size})

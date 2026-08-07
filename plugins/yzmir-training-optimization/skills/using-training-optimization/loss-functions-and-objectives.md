@@ -346,14 +346,25 @@ logits = torch.randn(32, 10)  # (batch=32, num_classes=10)
 target = torch.randint(0, 10, (32,))  # (batch=32,) with values in [0, 9]
 loss = F.cross_entropy(logits, target)  # ✅ Works!
 
-# ❌ WRONG: One-hot encoded target
-target_onehot = F.one_hot(target, num_classes=10)  # (batch=32, num_classes=10)
-loss = F.cross_entropy(logits, target_onehot)  # ❌ Type error!
+# ❌ WRONG: LONG one-hot target
+target_onehot = F.one_hot(target, num_classes=10)  # (batch=32, 10), dtype=int64
+loss = F.cross_entropy(logits, target_onehot)
+# ❌ RuntimeError: Expected floating point type for target with class
+#    probabilities, got Long
 
-# If you have one-hot, convert back to indices:
+# ✅ Fix A: convert back to indices
 target_indices = target_onehot.argmax(dim=1)  # (batch,)
 loss = F.cross_entropy(logits, target_indices)  # ✅ Works!
+
+# ✅ Fix B: cast to float — since PyTorch 1.10, cross_entropy accepts
+# CLASS-PROBABILITY targets of the same shape as logits
+loss = F.cross_entropy(logits, target_onehot.float())  # ✅ identical value
 ```
+
+**Note**: the class-probability form is not just a workaround — it is how you
+pass genuinely soft targets (label smoothing done manually, mixup/cutmix
+blends, distillation from a teacher's soft outputs). Only a *long* one-hot
+tensor is an error; a float one is a supported input.
 
 ### Handling Class Imbalance with Weights
 
@@ -946,32 +957,51 @@ def grad_norm_step(model, losses, alpha=1.5):
 # Normalize each loss to [0, 1] range before combining
 
 class NormalizedMultiTaskLoss(nn.Module):
-    def __init__(self, num_tasks):
+    """Scale-normalize each task's loss by ITS OWN running statistics."""
+
+    def __init__(self, num_tasks, momentum=0.9, eps=1e-8):
         super().__init__()
-        # Track running mean/std per task
+        # Per-task statistics, accumulated ACROSS STEPS
         self.register_buffer('running_mean', torch.zeros(num_tasks))
-        self.register_buffer('running_std', torch.ones(num_tasks))
-        self.momentum = 0.9
+        self.register_buffer('running_sq', torch.ones(num_tasks))
+        self.momentum = momentum
+        self.eps = eps
 
     def forward(self, losses):
         """Normalize each loss before combining"""
-        losses_tensor = torch.stack(losses)
+        losses_tensor = torch.stack(losses)   # shape (num_tasks,)
 
         if self.training:
-            # Update running statistics
-            mean = losses_tensor.mean()
-            std = losses_tensor.std() + 1e-8
+            with torch.no_grad():
+                # CRITICAL: detach. Storing graph-attached tensors in the
+                # running stats keeps every previous step's autograd graph
+                # alive — a steadily growing memory leak that eventually
+                # fails with "backward through the graph a second time".
+                d = losses_tensor.detach()
+                self.running_mean.mul_(self.momentum).add_(d, alpha=1 - self.momentum)
+                self.running_sq.mul_(self.momentum).add_(d * d, alpha=1 - self.momentum)
 
-            self.running_mean = (self.momentum * self.running_mean +
-                                (1 - self.momentum) * mean)
-            self.running_std = (self.momentum * self.running_std +
-                               (1 - self.momentum) * std)
+        # Per-task std from the per-task second moment
+        std = (self.running_sq - self.running_mean ** 2).clamp_min(0).sqrt() + self.eps
 
-        # Normalize losses
-        normalized = (losses_tensor - self.running_mean) / self.running_std
-
+        normalized = (losses_tensor - self.running_mean) / std
         return normalized.sum()
 ```
+
+**Two traps this implementation avoids:**
+
+1. **Reducing across tasks instead of across steps.** Writing
+   `mean = losses_tensor.mean()` collapses the task dimension to a *scalar*,
+   which then broadcasts identically into every slot of the per-task buffer.
+   Every task ends up divided by the same number, so the code balances
+   nothing while looking like it does. Each task needs its own statistic,
+   tracked over time.
+2. **Forgetting `.detach()`** on the running statistics (see above).
+
+**What actually does the balancing:** since `running_mean` and `std` are
+detached constants, subtracting the mean has *no* effect on gradients
+(`d(L−c)/dθ = dL/dθ`). The `1/std` factor is the entire mechanism — it
+rescales each task's gradient contribution to comparable magnitude.
 
 ### Best Practices for Multi-Task Loss
 
@@ -1241,20 +1271,24 @@ class PerceptualLoss(nn.Module):
     """
     def __init__(self, layer='relu3_3'):
         super().__init__()
-        # Load pre-trained VGG
-        vgg = torchvision.models.vgg16(pretrained=True).features
+        # Load pre-trained VGG (pretrained=True is deprecated; use weights=)
+        weights = torchvision.models.VGG16_Weights.IMAGENET1K_V1
+        vgg = torchvision.models.vgg16(weights=weights).features
         self.vgg = vgg.eval()
 
         # Freeze VGG
         for param in self.vgg.parameters():
             param.requires_grad = False
 
-        # Select layer
+        # Select layer. These are the indices of the ReLU outputs — slicing
+        # features[:idx+1] ends ON the ReLU. Indices {4, 9, 16, 23} are the
+        # MaxPool layers that FOLLOW them; using those silently gives you
+        # pooled features, not the relu*_* features the loss is named for.
         self.layer_map = {
-            'relu1_2': 4,
-            'relu2_2': 9,
-            'relu3_3': 16,
-            'relu4_3': 23,
+            'relu1_2': 3,
+            'relu2_2': 8,
+            'relu3_3': 15,
+            'relu4_3': 22,
         }
         self.layer_idx = self.layer_map[layer]
 
@@ -1503,15 +1537,15 @@ for x, y in train_loader:
 # Problem: Mixed precision (FP16) can cause gradients to underflow
 # Solution: Scale loss up, then scale gradients down
 
-from torch.cuda.amp import autocast, GradScaler
+import torch
 
-scaler = GradScaler()
+scaler = torch.amp.GradScaler('cuda')   # FP16 needs this; BF16 does not
 
 for x, y in train_loader:
     optimizer.zero_grad()
 
     # Forward in FP16
-    with autocast():
+    with torch.amp.autocast('cuda', dtype=torch.float16):
         pred = model(x)
         loss = criterion(pred, y)
 
@@ -1589,15 +1623,18 @@ loss = F.cross_entropy(logits, target)  # Expects logits!
 ### Pitfall 3: Wrong Target Shape for CrossEntropyLoss
 
 ```python
-# ❌ WRONG: One-hot encoded targets
-target = F.one_hot(labels, num_classes=10)  # (batch, 10)
-loss = F.cross_entropy(logits, target)  # Type error!
+# ❌ WRONG: LONG one-hot targets
+target = F.one_hot(labels, num_classes=10)  # (batch, 10), dtype=int64
+loss = F.cross_entropy(logits, target)  # RuntimeError: expected floating point
 
 # ✅ RIGHT: Class indices
 target = labels  # (batch,) with values in [0, 9]
 loss = F.cross_entropy(logits, target)
 
-# Impact: Runtime error or wrong loss computation
+# ✅ ALSO RIGHT: float class probabilities (PyTorch >= 1.10), same shape as logits
+loss = F.cross_entropy(logits, target_probs)  # for soft/mixup/distillation targets
+
+# Impact: Runtime error
 # Fix time: 2 minutes
 ```
 

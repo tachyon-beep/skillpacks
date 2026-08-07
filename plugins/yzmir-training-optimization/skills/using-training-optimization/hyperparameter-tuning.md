@@ -331,7 +331,10 @@ from scipy.stats import loguniform, uniform
 # Define search space with proper scales
 learning_rate_dist = loguniform(a=0.00001, b=0.1)  # Log scale!
 batch_size_dist = [16, 32, 64, 128, 256]
-weight_decay_dist = loguniform(a=0.0, b=0.1)  # Log scale!
+# NOTE: a must be > 0 — loguniform(a=0.0, ...) raises ValueError (log(0)).
+# To include "no weight decay", sample from a small positive floor and treat
+# values below it as zero, or search 0.0 as a separate discrete option.
+weight_decay_dist = loguniform(a=1e-6, b=0.1)  # Log scale!
 dropout_dist = uniform(loc=0.0, scale=0.8)
 
 best_acc = 0
@@ -477,7 +480,7 @@ learning_rates_linear = [0.0001, 0.002, 0.004, 0.006, 0.008, 0.01]
 
 # CORRECT: Log scale for learning rate
 import numpy as np
-learning_rates_log = np.logspace(-4, -2, 6)  # 10^-4 to 10^-2
+learning_rates_log = np.logspace(-4, -2, 7)  # 10^-4 to 10^-2, 7 points
 # [0.0001, 0.000215, 0.000464, 0.001, 0.00215, 0.00464, 0.01]
 # Each step is ~2.15x (equal importance)
 # GOOD: Even coverage across exponential range
@@ -720,30 +723,39 @@ study.optimize(objective, n_trials=200)
 # Cons: More setup needed
 
 from ray import tune
+from ray.tune.schedulers import ASHAScheduler
 
 def train_model(config):
     model = create_model()
     for epoch in range(100):
         train(model, lr=config['lr'], batch_size=config['batch_size'])
         val_acc = validate(model)
-        tune.report(accuracy=val_acc)
+        tune.report({"accuracy": val_acc})   # dict positional, NOT kwargs
 
-analysis = tune.run(
+tuner = tune.Tuner(
     train_model,
-    config={
+    param_space={
         "lr": tune.loguniform(1e-5, 1e-1),
         "batch_size": tune.choice([16, 32, 64, 128]),
     },
-    num_samples=200,
-    scheduler=tune.ASHAScheduler(
-        time_attr="training_iteration",
+    tune_config=tune.TuneConfig(
+        num_samples=200,
         metric="accuracy",
         mode="max",
-        max_t=100,
+        scheduler=ASHAScheduler(time_attr="training_iteration", max_t=100),
     ),
-    verbose=1,
 )
+results = tuner.fit()
+best_result = results.get_best_result()
 ```
+
+**API note (Ray 2.x):** three things changed from the Ray 1.x recipes still
+circulating. `tune.run(...)` is superseded by `tune.Tuner(...).fit()`, with
+`config=` renamed to `param_space=` and search settings moved into
+`tune.TuneConfig`. `tune.report()` takes a **dict** — the `tune.report(acc=x)`
+kwargs form is gone. And `ASHAScheduler` is imported from
+`ray.tune.schedulers`, not accessed as `tune.ASHAScheduler`. Note also that
+`metric`/`mode` now live on `TuneConfig` rather than on the scheduler.
 
 **When to Use**: Distributed setup (multiple GPUs/machines), 500+ trials
 
@@ -764,14 +776,21 @@ parameters:
   learning_rate:
     min: 0.00001
     max: 0.1
-    distribution: log_uniform
+    distribution: log_uniform_values   # NOT log_uniform - see note
   weight_decay:
     min: 0.00001
     max: 0.1
-    distribution: log_uniform
+    distribution: log_uniform_values
 
 # Then run: wandb sweep sweep_config.yaml
 ```
+
+**Trap: `log_uniform` vs `log_uniform_values`.** In W&B sweeps, `log_uniform`
+interprets `min`/`max` as **exponents** — it samples `x` uniformly in
+`[min, max]` and returns `exp(x)`. Feeding it raw learning rates gives
+`exp(0.00001) … exp(0.1)` ≈ `1.00001 … 1.105`, so every trial trains at an LR
+above 1.0 and the sweep silently searches nonsense. Use
+`log_uniform_values`, which takes the actual min/max values you want.
 
 **When to Use**: Team settings, want visual results, corporate environment
 
@@ -846,7 +865,7 @@ for lr in learning_rates:
 
 ### Pitfall 1: Not Using Log Scale for Learning Rate
 **Problem**: Linear scale [0.0001, 0.002, 0.004, 0.006, 0.008, 0.01] misses optimal
-**Fix**: Use logarithmic scale np.logspace(-4, -2, 6)
+**Fix**: Use logarithmic scale np.logspace(-4, -2, 7)
 **Impact**: Can miss 3-5% accuracy improvement
 
 ### Pitfall 2: Tuning Too Many Hyperparameters at Once
@@ -1088,9 +1107,20 @@ for step in range(total_steps):
 Large batch size → Less gradient noise → Can use larger LR
 Small batch size → More gradient noise → Need smaller LR
 
-Rule of thumb: LR ∝ sqrt(batch_size)
-Doubling batch size → can increase LR by ~1.4x
+Default rule of thumb (SGD/momentum): LR ∝ batch_size  (LINEAR scaling)
+Doubling batch size → double the LR, with warmup for large jumps
+  — Goyal et al. (2017), "Accurate, Large Minibatch SGD"
+
+Sometimes used for Adam-family optimizers: LR ∝ sqrt(batch_size)
+Doubling batch size → increase LR by ~1.4x
 ```
+
+**Use linear scaling as the default and validate it.** The sqrt rule is a
+weaker, Adam-family-specific heuristic, not the general rule — reach for it
+only if linear scaling proves unstable for your optimizer. Both rules break
+down beyond the problem's *critical batch size*. See
+`batch-size-and-memory-tradeoffs.md` in this pack for the scaling helper,
+the warmup requirement, and the critical-batch-size limit.
 
 **Example: CIFAR-10 ResNet18**:
 ```
@@ -1246,8 +1276,10 @@ def cosine_annealing(epoch, total_epochs, min_lr, max_lr):
 **OneCycleLR** (up then down):
 ```python
 # Used in FastAI, very effective
-# Goes: max_lr → min_lr → max_lr/25
-# Over entire training
+# Goes: max_lr/div_factor → max_lr → max_lr/final_div_factor
+# i.e. warm up to the peak over the first pct_start (default 30%) of
+# training, then anneal well below the starting LR over the remaining 70%.
+# Steps EVERY BATCH, not every epoch.
 ```
 
 **Which to Choose**:
@@ -1575,7 +1607,7 @@ Random search: 200 configs = 6,400 minutes = 4.4 days
 lr_values = [0.008, 0.009, 0.01, 0.011, 0.012]
 
 # CORRECT: Covers multiple orders of magnitude
-lr_values = np.logspace(-4, -1, 6)  # [1e-4, 1e-3, 1e-2, 1e-1]
+lr_values = np.logspace(-4, -1, 4)  # [1e-4, 1e-3, 1e-2, 1e-1]
 ```
 
 **Mistake 2: Batch size without corresponding LR adjustment**
@@ -1596,7 +1628,7 @@ learning_rates = [0.001, 0.002, 0.003, 0.005, 0.01]
 wd_values = [0.0, 0.025, 0.05, 0.075, 0.1]
 
 # CORRECT: Log spacing for weight decay
-wd_values = np.logspace(-5, -1, 6)  # [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
+wd_values = np.logspace(-5, -1, 5)  # [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
 ```
 
 **Mistake 4: Dropout range that's too wide**

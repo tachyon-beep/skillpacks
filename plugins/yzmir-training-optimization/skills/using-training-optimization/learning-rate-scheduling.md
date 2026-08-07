@@ -161,12 +161,16 @@ for epoch in range(100):
     scheduler.step()  # Call AFTER each epoch
 ```
 
-**Example Schedule (initial_lr=0.1, eta_min=1e-5):**
+**Example Schedule (initial_lr=0.1, eta_min=1e-5, T_max=100):**
 - Epoch 0: LR = 0.1
-- Epoch 25: LR ≈ 0.075
+- Epoch 25: LR ≈ 0.0854
 - Epoch 50: LR ≈ 0.05
-- Epoch 75: LR ≈ 0.025
+- Epoch 75: LR ≈ 0.0147
 - Epoch 100: LR = 0.00001
+
+Note the shape: cosine decays *slowly* at first, fastest in the middle, then
+slowly again. It is not linear — at the quarter mark you have only shed ~15%
+of the LR, not 25%.
 
 **Pros:**
 - No milestone tuning required
@@ -607,6 +611,7 @@ Method from Leslie Smith (2015), *Cyclical Learning Rates*:
 ## LR Finder Implementation
 
 ```python
+import copy
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
@@ -615,7 +620,14 @@ def find_lr(model, train_loader, optimizer, loss_fn, device,
             start_lr=1e-8, end_lr=10, num_iter=100, smooth_f=0.05):
     """LR Finder: Sweep learning rates and plot loss curve."""
     model.train()
-    initial_state = model.state_dict()
+
+    # CRITICAL: deepcopy. state_dict() returns references to the LIVE tensors,
+    # so optimizer.step() mutates them in place and "restoring" afterwards is
+    # a no-op — you silently keep the damaged weights from the sweep, including
+    # whatever the diverged high-LR iterations did to them.
+    # Save the optimizer too: its momentum/Adam moments are polluted as well.
+    initial_state = copy.deepcopy(model.state_dict())
+    initial_optim_state = copy.deepcopy(optimizer.state_dict())
 
     lr_mult = (end_lr / start_lr) ** (1 / num_iter)
 
@@ -662,7 +674,9 @@ def find_lr(model, train_loader, optimizer, loss_fn, device,
         if lr > end_lr:
             break
 
+    # Restore BOTH — the sweep is a probe, it must leave no trace
     model.load_state_dict(initial_state)
+    optimizer.load_state_dict(initial_optim_state)
 
     plt.figure(figsize=(10, 6))
     plt.plot(lrs, losses)

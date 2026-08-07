@@ -88,9 +88,14 @@ optimizer = torch.optim.SGD(
 
 | Training Length | Schedule | Why |
 |-----------------|----------|-----|
-| < 30 epochs | Constant or simple decay | Not enough time for complex schedules |
-| 30-100 epochs | Cosine annealing | Smooth decay, good results |
-| > 100 epochs | Step decay or OneCycleLR | Standard for long training |
+| < 10 epochs | Constant LR or simple linear decay | Not enough steps for a schedule to pay off |
+| 10-30 epochs | OneCycleLR (fast) or CosineAnnealingLR | OneCycle's aggressive up-then-down profile suits short runs |
+| > 30 epochs, fixed budget | CosineAnnealingLR or MultiStepLR | Smooth decay over a known horizon |
+| Long-horizon LLM pretraining, or budget may extend | WSD | Stable phase can be extended without restarting the schedule |
+
+Transformers additionally need **warmup** (mandatory) — cosine + warmup, or WSD for pretraining.
+
+> Do **not** reach for OneCycleLR on long (50+ epoch) runs; it is a short-budget schedule. See `learning-rate-scheduling.md` for the full flowchart.
 
 ```python
 # Cosine annealing (recommended)

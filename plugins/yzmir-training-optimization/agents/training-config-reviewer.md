@@ -136,22 +136,36 @@ optimizer.step()
 
 ### 6. Mixed Precision (AMP) Configuration
 
-**Red Flag:** AMP without GradScaler
+**Red Flag:** FP16 AMP without GradScaler — *and* use of the deprecated `torch.cuda.amp.*` namespace.
 
 ```python
-# RED FLAG: AMP without scaler
-with torch.cuda.amp.autocast():
+# RED FLAG 1: FP16 autocast with no scaler
+with torch.amp.autocast('cuda', dtype=torch.float16):
     loss = model(x)
-loss.backward()  # Gradients may underflow!
+loss.backward()  # FP16 gradients may underflow to zero!
 
-# CORRECT: With GradScaler
-scaler = torch.cuda.amp.GradScaler()
-with torch.cuda.amp.autocast():
+# RED FLAG 2: deprecated namespace (PyTorch 2.4+ emits DeprecationWarning)
+scaler = torch.cuda.amp.GradScaler()      # → torch.amp.GradScaler('cuda')
+with torch.cuda.amp.autocast():           # → torch.amp.autocast('cuda', dtype=...)
+    ...
+
+# CORRECT (FP16): modern namespace + GradScaler
+scaler = torch.amp.GradScaler('cuda')
+with torch.amp.autocast('cuda', dtype=torch.float16):
     loss = model(x)
 scaler.scale(loss).backward()
 scaler.step(optimizer)
 scaler.update()
+
+# CORRECT (BF16): no GradScaler needed — BF16 has FP32-equivalent exponent range.
+# This is the recommended default on Ampere/Hopper/Blackwell and AMD CDNA.
+with torch.amp.autocast('cuda', dtype=torch.bfloat16):
+    loss = model(x)
+loss.backward()
+optimizer.step()
 ```
+
+**Do not flag** a BF16 autocast run for "missing GradScaler" — that is correct, not a defect. The scaler is an FP16 requirement only.
 
 ### 7. Learning Rate Schedule
 
@@ -208,7 +222,8 @@ for epoch in range(100):
 | Small batch, no accumulation | batch < 16, no accumulation | Add accumulation |
 | Accumulation, no scaling | accumulation > 1, loss not divided | Divide loss by steps |
 | No gradient clipping | Transformer/RNN without clip | Add clip_grad_norm |
-| AMP no scaler | autocast without GradScaler | Add GradScaler |
+| AMP no scaler | **FP16** autocast without GradScaler (BF16 needs none) | Add GradScaler, or switch to BF16 |
+| Deprecated AMP namespace | `torch.cuda.amp.autocast` / `.GradScaler` | Use `torch.amp.autocast('cuda', ...)` / `torch.amp.GradScaler('cuda')` |
 | Long train, no schedule | epochs > 30, constant LR | Add CosineAnnealingLR |
 
 ## Scope Boundaries

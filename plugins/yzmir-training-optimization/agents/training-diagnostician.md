@@ -184,17 +184,26 @@ import time
 data_time = 0
 compute_time = 0
 
-for i, (x, y) in enumerate(dataloader):
-    t0 = time.time()
-    # Data loading happened before this point
-    data_time += time.time() - t0
+# CRITICAL: the data-loading cost is the wait BETWEEN iterations, so the clock
+# must start at the END of the previous iteration — before the for-loop asks
+# for the next batch. Starting it inside the body (after the batch has already
+# arrived) measures nothing and reports data_time ~= 0 every time, so the
+# bottleneck branch can never fire.
+end_of_last_iter = time.perf_counter()
 
-    t1 = time.time()
+for i, (x, y) in enumerate(dataloader):
+    # Time spent waiting for this batch to be produced
+    data_time += time.perf_counter() - end_of_last_iter
+
+    t1 = time.perf_counter()
     loss = model(x, y)
     loss.backward()
     optimizer.step()
-    compute_time += time.time() - t1
+    optimizer.zero_grad()
+    torch.cuda.synchronize()   # CUDA is async; without this you time the launch, not the work
+    compute_time += time.perf_counter() - t1
 
+    end_of_last_iter = time.perf_counter()
     if i > 20: break
 
 print(f"Data loading: {data_time:.2f}s")
