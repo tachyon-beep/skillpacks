@@ -372,192 +372,195 @@ Mixing: Q_team = mixing_network(Q_1, Q_2, Q_3, state)
 **QMIX Training**:
 
 ```python
+import copy
+
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.optim import Adam
 
 class QMIXAgent:
-    def __init__(self, n_agents, state_dim, obs_dim, action_dim, hidden_dim=64):
+    def __init__(self, n_agents, state_dim, obs_dim, n_actions,
+                 hidden_dim=64, mix_dim=32):
         self.n_agents = n_agents
+        self.n_actions = n_actions
+        self.mix_dim = mix_dim
 
-        # Individual Q-networks (one per agent)
+        # Individual Q-networks: one Q-value PER ACTION, so we can argmax.
+        # (A network taking [obs, action] and returning a scalar cannot be
+        #  argmaxed without enumerating actions — and QMIX needs that argmax.)
         self.q_networks = nn.ModuleList([
             nn.Sequential(
-                nn.Linear(obs_dim + action_dim, hidden_dim),
-                nn.ReLU(),
-                nn.Linear(hidden_dim, hidden_dim),
-                nn.ReLU(),
-                nn.Linear(hidden_dim, 1)  # Q-value for this action
+                nn.Linear(obs_dim, hidden_dim), nn.ReLU(),
+                nn.Linear(hidden_dim, hidden_dim), nn.ReLU(),
+                nn.Linear(hidden_dim, n_actions),
             )
             for _ in range(n_agents)
         ])
 
-        # Mixing network: takes individual Q-values and produces joint Q
-        self.mixing_network = nn.Sequential(
-            nn.Linear(n_agents + state_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, 1)
+        # HYPERNETWORKS. The mixing network has no weights of its own — its
+        # weights are GENERATED from the global state, then passed through
+        # abs() so they are NON-NEGATIVE.
+        #
+        # That non-negativity IS QMIX. It gives dQ_tot/dQ_i >= 0, which makes
+        # argmax_a Q_tot decompose into per-agent argmaxes (the IGM property)
+        # — the entire reason decentralised execution is sound. A plain MLP
+        # over [Q_1..Q_n, state] is NOT QMIX; it is an unconstrained joint
+        # critic whose greedy joint action cannot be recovered per-agent.
+        self.hyper_w1 = nn.Linear(state_dim, n_agents * mix_dim)
+        self.hyper_w2 = nn.Linear(state_dim, mix_dim)
+        # Biases are unconstrained — they shift Q_tot without breaking monotonicity
+        self.hyper_b1 = nn.Linear(state_dim, mix_dim)
+        self.hyper_b2 = nn.Sequential(
+            nn.Linear(state_dim, mix_dim), nn.ReLU(), nn.Linear(mix_dim, 1)
         )
 
-        # Hypernet: generates mixing network weights (ensuring monotonicity)
-        self.hypernet = nn.Sequential(
-            nn.Linear(state_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim * (n_agents + state_dim))
-        )
-
+        self.online_modules = [self.q_networks, self.hyper_w1, self.hyper_w2,
+                               self.hyper_b1, self.hyper_b2]
         self.optimizer = Adam(
-            list(self.q_networks.parameters()) +
-            list(self.mixing_network.parameters()) +
-            list(self.hypernet.parameters()),
-            lr=5e-4
+            [p for m in self.online_modules for p in m.parameters()], lr=5e-4
         )
 
         self.discount = 0.99
-        self.target_update_rate = 0.001
+        self.target_update_rate = 0.005
         self.epsilon = 0.05
 
-        # Target networks (soft update)
         self._init_target_networks()
 
     def _init_target_networks(self):
-        """Create target networks for stable learning."""
-        self.target_q_networks = nn.ModuleList([
-            nn.Sequential(*[nn.Linear(*p.shape[::-1]) for p in q.parameters()])
-            for q in self.q_networks
-        ])
-        self.target_mixing_network = nn.Sequential(
-            *[nn.Linear(*p.shape[::-1]) for p in self.mixing_network.parameters()]
+        """
+        Target nets are DEEP COPIES: same architecture, same initial weights.
+        (Rebuilding layers from `p.shape` is a classic bug — parameters()
+         yields biases as well as weight matrices, so the reconstruction is
+         both the wrong shape and randomly initialised.)
+        """
+        self.target_modules = [copy.deepcopy(m) for m in self.online_modules]
+        (self.target_q_networks, self.target_hyper_w1, self.target_hyper_w2,
+         self.target_hyper_b1, self.target_hyper_b2) = self.target_modules
+        for m in self.target_modules:
+            for p in m.parameters():
+                p.requires_grad_(False)
+
+    def agent_q_values(self, observations, networks):
+        """Q_i(o_i, ·) for every agent. Returns [batch, n_agents, n_actions]."""
+        return torch.stack(
+            [net(obs) for net, obs in zip(networks, observations)], dim=1
         )
 
-    def compute_individual_q_values(self, observations, actions):
+    def mix(self, agent_qs, state, target=False):
         """
-        Compute Q-values for each agent given their observation and action.
+        Monotonic mixing:  Q_tot = w2 . ELU(W1 . q + b1) + b2,  with W1, w2 >= 0.
 
         Args:
-            observations: list of n_agents observations (each [batch_size, obs_dim])
-            actions: list of n_agents actions (each [batch_size, action_dim])
-
+            agent_qs: [batch, n_agents] — the CHOSEN action's Q per agent
+            state:    [batch, state_dim] — global state (centralised training only)
         Returns:
-            q_values: tensor [batch_size, n_agents]
+            q_tot: [batch, 1]
         """
-        q_values = []
-        for i, (obs, act) in enumerate(zip(observations, actions)):
-            # Concatenate observation and action
-            q_input = torch.cat([obs, act], dim=-1)
-            q_i = self.q_networks[i](q_input)
-            q_values.append(q_i)
+        hw1, hw2, hb1, hb2 = (
+            (self.target_hyper_w1, self.target_hyper_w2,
+             self.target_hyper_b1, self.target_hyper_b2) if target else
+            (self.hyper_w1, self.hyper_w2, self.hyper_b1, self.hyper_b2)
+        )
 
-        return torch.cat(q_values, dim=-1)  # [batch_size, n_agents]
+        b = agent_qs.shape[0]
+        w1 = torch.abs(hw1(state)).view(b, self.n_agents, self.mix_dim)  # >= 0
+        b1 = hb1(state).view(b, 1, self.mix_dim)
+        hidden = F.elu(torch.bmm(agent_qs.view(b, 1, self.n_agents), w1) + b1)
 
-    def compute_joint_q_value(self, q_values, state):
-        """
-        Mix individual Q-values into joint Q-value using monotonic mixing network.
+        w2 = torch.abs(hw2(state)).view(b, self.mix_dim, 1)              # >= 0
+        b2 = hb2(state).view(b, 1, 1)
+        return (torch.bmm(hidden, w2) + b2).view(b, 1)
 
-        Args:
-            q_values: individual Q-values [batch_size, n_agents]
-            state: global state [batch_size, state_dim]
-
-        Returns:
-            q_joint: joint Q-value [batch_size, 1]
-        """
-        # Ensure monotonicity by using weight constraints
-        # Mixing network learns to combine Q-values
-        q_joint = self.mixing_network(torch.cat([q_values, state], dim=-1))
-        return q_joint
-
-    def train_step(self, batch, state_batch):
+    def train_step(self, batch):
         """
         One QMIX training step.
 
-        Batch contains:
-          observations: list[n_agents] of [batch_size, obs_dim]
-          actions: list[n_agents] of [batch_size, action_dim]
-          rewards: [batch_size] (shared team reward)
-          next_observations: list[n_agents] of [batch_size, obs_dim]
-          dones: [batch_size]
+        batch:
+          observations:      list[n_agents] of [batch, obs_dim]
+          actions:           [batch, n_agents]  LongTensor of action INDICES
+          rewards:           [batch]            shared team reward
+          next_observations: list[n_agents] of [batch, obs_dim]
+          state:             [batch, state_dim] global state at s
+          next_state:        [batch, state_dim] global state at s'   (NOT s)
+          dones:             [batch]
         """
-        observations, actions, rewards, next_observations, dones = batch
-        batch_size = observations[0].shape[0]
+        (observations, actions, rewards, next_observations,
+         state, next_state, dones) = batch
 
-        # Compute current Q-values
-        q_values = self.compute_individual_q_values(observations, actions)
-        q_joint = self.compute_joint_q_value(q_values, state_batch)
+        # Q for the actions actually taken
+        all_q = self.agent_q_values(observations, self.q_networks)      # [b, n, A]
+        chosen_q = all_q.gather(2, actions.unsqueeze(-1)).squeeze(-1)   # [b, n]
+        q_tot = self.mix(chosen_q, state)
 
-        # Compute target Q-values
         with torch.no_grad():
-            # Get next Q-values for all possible joint actions (in practice, greedy)
-            next_q_values = self.compute_individual_q_values(
-                next_observations,
-                [torch.zeros_like(a) for a in actions]  # Best actions (simplified)
-            )
+            # Double-Q: argmax from the ONLINE nets, value from the TARGET nets.
+            # Monotonicity is what makes this per-agent argmax equal the joint one.
+            next_online = self.agent_q_values(next_observations, self.q_networks)
+            greedy = next_online.argmax(dim=2, keepdim=True)             # [b, n, 1]
+            next_target = self.agent_q_values(next_observations,
+                                              self.target_q_networks)
+            next_chosen = next_target.gather(2, greedy).squeeze(-1)      # [b, n]
 
-            # Mix next Q-values
-            next_q_joint = self.compute_joint_q_value(next_q_values, state_batch)
+            # Mix with the TARGET mixer at the NEXT state
+            next_q_tot = self.mix(next_chosen, next_state, target=True)
 
-            # TD target: team gets shared reward
             td_target = rewards.unsqueeze(-1) + (
                 1 - dones.unsqueeze(-1)
-            ) * self.discount * next_q_joint
+            ) * self.discount * next_q_tot
 
-        # QMIX loss
-        qmix_loss = ((q_joint - td_target) ** 2).mean()
+        qmix_loss = ((q_tot - td_target) ** 2).mean()
 
         self.optimizer.zero_grad()
         qmix_loss.backward()
+        nn.utils.clip_grad_norm_(
+            [p for m in self.online_modules for p in m.parameters()], 10.0
+        )
         self.optimizer.step()
 
-        # Soft update target networks
         self._soft_update_targets()
 
         return {'qmix_loss': qmix_loss.item()}
 
     def _soft_update_targets(self):
-        """Soft update target networks."""
-        for target, main in zip(self.target_q_networks, self.q_networks):
-            for target_param, main_param in zip(target.parameters(), main.parameters()):
-                target_param.data.copy_(
-                    self.target_update_rate * main_param.data +
-                    (1 - self.target_update_rate) * target_param.data
-                )
+        """Polyak-average every online module into its target twin."""
+        tau = self.target_update_rate
+        for online, target in zip(self.online_modules, self.target_modules):
+            for p_online, p_target in zip(online.parameters(), target.parameters()):
+                p_target.data.copy_(tau * p_online.data + (1 - tau) * p_target.data)
 
     def select_actions(self, observations):
         """
-        Greedy action selection (decentralized execution).
-        Each agent selects action independently.
+        Decentralised execution: each agent argmaxes its OWN Q_i.
+        No mixing network, no global state — that is the point of monotonicity.
         """
         actions = []
-        for i, obs in enumerate(observations):
-            with torch.no_grad():
-                # Agent i evaluates all possible actions
-                best_action = None
-                best_q = -float('inf')
-
-                for action in range(self.action_dim):
-                    q_input = torch.cat([obs, one_hot(action, self.action_dim)])
-                    q_val = self.q_networks[i](q_input).item()
-
-                    if q_val > best_q:
-                        best_q = q_val
-                        best_action = action
-
-                # Epsilon-greedy
+        with torch.no_grad():
+            for i, obs in enumerate(observations):
                 if torch.rand(1).item() < self.epsilon:
-                    best_action = torch.randint(0, self.action_dim, (1,)).item()
-
-                actions.append(best_action)
-
+                    actions.append(torch.randint(0, self.n_actions, (1,)).item())
+                else:
+                    actions.append(int(self.q_networks[i](obs).argmax()))
         return actions
 ```
 
 **QMIX Key Concepts**:
 
-1. **Monotonicity**: If agent improves action, team value improves
-2. **Value Factorization**: Q_team = f(Q_1, Q_2, ..., Q_n)
-3. **Decentralized Execution**: Each agent uses only own observation
-4. **Centralized Training**: Trainer sees all Q-values and state
+1. **Monotonicity**: ∂Q_team/∂Q_i ≥ 0 — enforced by `abs()` on the hypernet-generated mixing
+   weights. If you drop that constraint you have not built QMIX; you have built VDN's
+   unconstrained cousin with no decentralisation guarantee.
+2. **Value Factorization**: Q_team = f(Q_1, ..., Q_n; s), with f monotone in each Q_i
+3. **Decentralized Execution**: monotonicity ⇒ argmax_a Q_team = (argmax Q_1, ..., argmax Q_n),
+   so each agent acts on its own observation alone at execution time (the IGM property)
+4. **Centralized Training**: only the mixer sees the global state, and only during training
+
+**Checklist for "is this actually QMIX?"** — three things go wrong most often:
+
+- Are the mixing weights passed through `abs()` (or squared/softplus)? If not: not QMIX.
+- Is the hypernetwork's output actually *used* in the forward pass, or is it defined and
+  then ignored while a plain `nn.Sequential` does the mixing?
+- Does the TD target use the **target** networks at the **next** state — both the target Q_i's
+  and the target mixer, with `next_state` not `state`?
 
 **When QMIX Works Well**:
 

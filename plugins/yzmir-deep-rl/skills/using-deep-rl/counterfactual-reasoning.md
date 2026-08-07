@@ -918,6 +918,7 @@ Where:
 
 ```python
 import itertools
+import math
 from typing import List, Callable, Set
 
 def shapley_values(
@@ -952,7 +953,7 @@ def shapley_values(
             shapley[component] += marginal
 
     # Average over all permutations
-    n_factorial = np.math.factorial(n)
+    n_factorial = math.factorial(n)  # np.math was removed in NumPy 2.0
     for c in components:
         shapley[c] /= n_factorial
 
@@ -1048,7 +1049,7 @@ class ShapleyModuleEvaluator:
 
 Shapley values ARE averaged counterfactuals. Each marginal contribution `v(S ∪ {i}) - v(S)` asks: "What if component i were added/removed?" The averaging over orderings gives a fair attribution that respects the interactions between components.
 
-For Esper morphogenetic systems, Shapley provides principled answers to:
+For morphogenetic RL systems, Shapley provides principled answers to:
 - "Which module should I prune?" → Lowest Shapley value
 - "Which modules are load-bearing?" → Highest Shapley values
 - "Is this new module helping?" → Positive Shapley contribution
@@ -1270,7 +1271,7 @@ When implementing counterfactual reasoning:
 ## See Also
 
 **Within this pack:**
-- **reward-shaping.md**: Counterfactual credit can inform reward design
+- **reward-shaping-engineering.md**: Counterfactual credit can inform reward design
 - **exploration-strategies.md**: Safe exploration via counterfactual simulation
 - **model-based-rl.md**: World models enable counterfactual reasoning
 

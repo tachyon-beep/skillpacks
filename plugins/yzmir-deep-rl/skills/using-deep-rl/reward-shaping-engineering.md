@@ -23,9 +23,9 @@ Invoke this skill when you encounter:
 Do NOT use for:
 
 - Algorithm selection (route to rl-foundations or specific algorithm skill)
-- General RL debugging (route to rl-debugging-methodology)
+- General RL debugging (route to rl-debugging)
 - Exploration strategies (route to exploration-strategies)
-- Environment design (route to environment-design-patterns)
+- Environment design (route to rl-environments)
 
 
 ## Core Principle
@@ -179,33 +179,41 @@ The theorem states: If you add shaping reward of form
 F(s, a, s') = γ * Φ(s') - Φ(s)
 ```
 
-where Φ(s) is ANY function of state, then:
+where Φ(s) is ANY function of state (Ng, Harada & Russell, ICML 1999), then:
 
 1. Optimal policy remains unchanged
-2. Optimal value function shifts by Φ
-3. Learning accelerates due to better signal
+2. Optimal value functions shift by exactly −Φ:  **Q'\*(s,a) = Q\*(s,a) − Φ(s)** and **V'\*(s) = V\*(s) − Φ(s)**
+3. Learning often accelerates, because the signal is denser
 
 **Why This Matters**: You can safely add rewards like distance-to-goal without worrying you're changing what the agent should do.
 
 ### Mathematical Foundation
 
-Original MDP has Q-function: `Q^π(s,a) = E[R(s,a,s') + γV^π(s')]`
+Original MDP has Q-function: `Q*(s,a) = E[R(s,a,s') + γ max_{a'} Q*(s',a')]`
 
-With potential-based shaping:
+Claim: `Q'*(s,a) = Q*(s,a) − Φ(s)` satisfies the Bellman optimality equation of the shaped MDP.
+Substitute it in and watch Φ telescope:
 
 ```
-Q'^π(s,a) = Q^π(s,a) + [γΦ(s') - Φ(s)]
-          = E[R(s,a,s') + γΦ(s') - Φ(s) + γV^π(s')]
-          = E[R(s,a,s') + γ(Φ(s') + V^π(s')) - Φ(s)]
+Q'*(s,a) = E[ R(s,a,s') + F(s,a,s') + γ max_{a'} Q'*(s',a') ]
+         = E[ R(s,a,s') + γΦ(s') - Φ(s) + γ max_{a'} (Q*(s',a') - Φ(s')) ]
+         = E[ R(s,a,s') + γΦ(s') - Φ(s) + γ max_{a'} Q*(s',a') - γΦ(s') ]
+                          └──────────────────────────────────────┘
+                          the +γΦ(s') and -γΦ(s') cancel exactly
+         = E[ R(s,a,s') + γ max_{a'} Q*(s',a') ] - Φ(s)
+         = Q*(s,a) - Φ(s)     ✓
 ```
 
-The key insight: When computing optimal policy, Φ(s) acts like state-value function offset. Different actions get different Φ values, but relative ordering (which action is best) unchanged.
+**Why the optimal policy is unchanged**: at any fixed state s, every action's Q-value is shifted
+by the **same** constant −Φ(s). Φ(s) does not depend on a, so
+`argmax_a Q'*(s,a) = argmax_a Q*(s,a)`.
 
-**Proof Sketch**:
-
-- Policy compares Q(s,a₁) vs Q(s,a₂) to pick action
-- Both differ by same [γΦ(s') - Φ(s)] at state s
-- Relative ordering preserved → same optimal action
+**A proof sketch you will see and should reject**: *"both actions differ by the same
+[γΦ(s') − Φ(s)], so the ordering is preserved."* That is invalid — **s' depends on a**, so
+γΦ(s') is NOT the same across actions. The invariance comes from the telescoping above, where
+the action-dependent γΦ(s') term cancels against the next state's shift and only the
+action-independent −Φ(s) survives. Get this wrong and you will "generalize" the theorem to
+shaping terms that are not potential-based and quietly change the optimal policy.
 
 ### Practical Implementation
 
@@ -256,12 +264,21 @@ def compute_potential(s):
 # WRONG: This changes the optimal policy!
 shaping_reward = -0.1 * distance_to_goal
 
-# WHY WRONG: This isn't potential-based. Moving from d=1 to d=0.5 gives:
-#   Reward = -0.1 * 0.5 - (-0.1 * 1.0) = +0.05
-# But moving from d=3 to d=2.5 gives:
-#   Reward = -0.1 * 2.5 - (-0.1 * 3.0) = +0.05
-# Same reward for same distance change regardless of state!
-# This distorts value function and can change which action is optimal.
+# WHY WRONG: it is a function of the state you LAND IN, not a difference of
+# potentials, so nothing telescopes. Every step spent near the goal collects
+# a small penalty; every step spent far away collects a bigger one — and the
+# totals do NOT cancel over a trajectory.
+#
+# Concretely, with gamma=1: an agent that reaches the goal in 10 steps while
+# hugging the goal region pays  10 * -0.1 * 0.5 = -0.5.
+# An agent that takes the true shortest path but swings wide (d≈3 for 4 of
+# 6 steps) pays  4*(-0.3) + 2*(-0.05) = -1.3.
+# The shaping has made the SLOWER path look better by 0.8. The optimal
+# policy under the shaped reward is now "loiter near the goal", not "reach it".
+#
+# The potential-based version, gamma*Phi(s') - Phi(s) with Phi = -distance,
+# sums to  gamma^T * Phi(s_T) - Phi(s_0)  over a trajectory — it depends only
+# on the endpoints, so no path can farm it. That is the whole trick.
 ```
 
 **Right Way**:
@@ -1002,11 +1019,12 @@ def multi_objective_reward(s, a, s_next):
 Potential-Based Shaping:
 F(s,a,s') = γΦ(s') - Φ(s)
 
-Value Function Shift (with shaping):
-V'(s) = V(s) + Φ(s)
+Value Function Shift (with shaping) — note the MINUS sign:
+V'*(s)   = V*(s)   - Φ(s)
+Q'*(s,a) = Q*(s,a) - Φ(s)
 
 Optimal Policy Preservation:
-argmax_a Q'(s,a) = argmax_a Q(s,a)  (same action, different Q-values)
+argmax_a Q'*(s,a) = argmax_a Q*(s,a)   (the shift -Φ(s) does not depend on a)
 
 Reward Normalization:
 r_norm = (r - μ) / (σ + ε)

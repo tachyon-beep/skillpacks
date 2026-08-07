@@ -8,7 +8,7 @@ Invoke this skill when you need to:
 - **Create Custom Environments**: Build a new environment from scratch using Gym/gymnasium
 - **Define Observation/Action Spaces**: Design Box, Discrete, Dict, Tuple spaces correctly
 - **Use Environment Wrappers**: Add preprocessing, modify rewards, implement time limits
-- **Parallelize Environments**: Choose between DummyVectorEnv, SyncVectorEnv, AsyncVectorEnv
+- **Parallelize Environments**: Choose between SyncVectorEnv and AsyncVectorEnv (gymnasium has no DummyVectorEnv)
 - **Debug Environment Bugs**: Diagnose reset/step issues, reward scaling, space mismatches
 - **Test Environments**: Validate environments before training agents
 - **Handle API Differences**: Migrate between Gym versions or Gym vs gymnasium
@@ -528,10 +528,10 @@ Wrappers add functionality without modifying the original environment:
 # Without wrappers: modify environment directly (WRONG - mixes concerns)
 class CartPoleNormalized(CartPole):
     def step(self, action):
-        obs, reward, done, info = super().step(action)
+        obs, reward, terminated, truncated, info = super().step(action)
         obs = obs / 2.4  # Normalize observation
         reward = reward / 100  # Normalize reward
-        return obs, reward, done, info
+        return obs, reward, terminated, truncated, info
 
 # With wrappers: compose functionality (RIGHT - clean separation)
 env = CartPole()
@@ -664,12 +664,18 @@ import gymnasium as gym
 
 env = gym.make("ALE/Pong-v5")
 env = gym.wrappers.TimeLimit(env, max_episode_steps=4500)
-env = gym.wrappers.ClipAction(env)
 env = FrameStackWrapper(env, num_frames=4)
 env = gym.wrappers.NormalizeObservation(env)
 
 # Order matters: think about data flow
-# raw env -> ClipAction -> FrameStack -> NormalizeObservation
+# raw env -> TimeLimit -> FrameStack -> NormalizeObservation
+
+# NOTE: no ClipAction here. ClipAction requires a Box action space —
+# applying it to Atari (Discrete(6)) raises at construction. Action clipping
+# belongs on continuous-control envs:
+cc_env = gym.make("HalfCheetah-v5")
+cc_env = gym.wrappers.ClipAction(cc_env)      # Box action space: valid
+cc_env = gym.wrappers.NormalizeObservation(cc_env)
 ```
 
 
@@ -677,85 +683,90 @@ env = gym.wrappers.NormalizeObservation(env)
 
 ### Types of Vectorized Environments
 
-**DummyVectorEnv: Serial execution (simple, slowest)**
+Gymnasium ships exactly **two** vector implementations: `SyncVectorEnv` and `AsyncVectorEnv`.
+There is no `DummyVectorEnv` in `gymnasium.vector` — that name comes from Tianshou and (as
+`DummyVecEnv`) from Stable-Baselines3, where it means the same thing gymnasium calls **Sync**.
+Importing it from gymnasium is an `ImportError`.
+
+**SyncVectorEnv: serial execution in one process (simple, easiest to debug)**
 
 ```python
-from gymnasium.vector import DummyVectorEnv
-
-# Create 4 independent environments (serial)
-envs = DummyVectorEnv([
-    lambda: gym.make("CartPole-v1")
-    for i in range(4)
-])
-
-obs, info = envs.reset()  # obs shape: (4, 4)
-actions = np.array([0, 1, 1, 0])  # 4 actions
-obs, rewards, terminateds, truncateds, info = envs.step(actions)
-# rewards shape: (4,)
-```
-
-**SyncVectorEnv: Synchronized parallel (fast, moderate complexity)**
-
-```python
+import gymnasium as gym
 from gymnasium.vector import SyncVectorEnv
 
-# Create 8 parallel environments (all step together)
+# Create 8 environments stepped one after another in this process
 envs = SyncVectorEnv([
     lambda: gym.make("CartPole-v1")
-    for i in range(8)
+    for _ in range(8)
 ])
 
-obs, info = envs.reset()
-# All 8 envs step synchronously
+obs, info = envs.reset(seed=42)  # obs shape: (8, 4)
+actions = envs.action_space.sample()
 obs, rewards, terminateds, truncateds, info = envs.step(actions)
+# rewards shape: (8,)
 ```
 
-**AsyncVectorEnv: Asynchronous parallel (fastest, most complex)**
+`SyncVectorEnv` is **not** parallel. It gives you the batched observation/action API — which is
+what your training loop actually wants — with none of the multiprocessing cost. The win over a
+single env is batched inference on the GPU, not concurrent env stepping.
+
+**AsyncVectorEnv: true parallelism across processes (fastest, most complex)**
 
 ```python
 from gymnasium.vector import AsyncVectorEnv
 
-# Create 16 parallel environments (independent processes)
+# Create 16 environments, each in its own subprocess
 envs = AsyncVectorEnv([
     lambda: gym.make("CartPole-v1")
-    for i in range(16)
+    for _ in range(16)
 ])
 
-# Same API as SyncVectorEnv but faster
-obs, info = envs.reset()
+# Same API as SyncVectorEnv, but env stepping overlaps across cores
+obs, info = envs.reset(seed=42)
 obs, rewards, terminateds, truncateds, info = envs.step(actions)
 envs.close()  # IMPORTANT: Close async envs to cleanup processes
 ```
 
+Or let `gym.make_vec` pick the implementation:
+
+```python
+envs = gym.make_vec("CartPole-v1", num_envs=16, vectorization_mode="async")
+```
+
 ### Comparison and Decision Tree
 
-| Feature | Dummy | Sync | Async |
-|---------|-------|------|-------|
-| Speed | Slow | Fast | Fastest |
-| CPU cores | 1 | 1 (+ GIL) | N |
-| Memory | Low | Moderate | High |
-| Complexity | Simple | Medium | Complex |
-| Debugging | Easy | Medium | Hard |
-| Best for | Testing | Training | Large-scale training |
+| Feature | Sync | Async |
+|---------|------|-------|
+| Execution | Serial, one process | Parallel, one subprocess per env |
+| CPU cores used | 1 | up to N |
+| Memory | Low | High (N copies of the env) |
+| Startup cost | Negligible | Process spawn + pickling |
+| Debugging | Easy (real tracebacks) | Hard (errors cross process boundary) |
+| Best for | Cheap envs, testing, small N | Expensive envs (physics, rendering), large N |
 
 **When to use each:**
 
 ```python
 num_envs = 32
 
-if num_envs <= 1:
+if num_envs == 1:
     # Single environment
     env = gym.make("CartPole-v1")
-elif num_envs <= 4:
-    # Few environments: use Dummy for simplicity
-    env = DummyVectorEnv([gym.make("CartPole-v1") for _ in range(num_envs)])
-elif num_envs <= 8:
-    # Medium: use Sync for speed without complexity
-    env = SyncVectorEnv([gym.make("CartPole-v1") for _ in range(num_envs)])
+elif env_step_is_cheap:  # e.g. CartPole: the Python/IPC overhead exceeds the env step
+    # Serial batching — usually faster than Async for trivial envs
+    envs = SyncVectorEnv([lambda: gym.make("CartPole-v1") for _ in range(num_envs)])
 else:
-    # Many: use Async for maximum speed
-    env = AsyncVectorEnv([gym.make("CartPole-v1") for _ in range(num_envs)])
+    # Expensive envs (MuJoCo, rendering, simulators): parallelism pays for the IPC
+    envs = AsyncVectorEnv([lambda: gym.make("HalfCheetah-v5") for _ in range(num_envs)])
 ```
+
+**The real decision is env step cost, not env count.** For CartPole, `Async` with 8 workers is
+often *slower* than `Sync` — you pay process IPC per step to parallelize a microsecond of work.
+Measure steps/second both ways before committing.
+
+**Note the `lambda:` in every example.** `SyncVectorEnv([gym.make(...) for _ in range(n)])`
+passes already-constructed envs where callables are expected, and fails. Each entry must be a
+zero-argument factory.
 
 ### Common Vectorized Environment Bugs
 
@@ -809,19 +820,43 @@ class ParallelSafeEnv(gym.Env):
 
 **Bug 3: Handling auto-reset in vectorized envs**
 
+Gymnasium **v1.0 (Oct 2024) changed this, and removed `info['final_observation']` /
+`info['final_info']` entirely.** The default is now `AutoresetMode.NEXT_STEP`:
+
 ```python
-# When an episode terminates in vectorized env, it auto-resets
-obs, rewards, terminateds, truncateds, info = envs.step(actions)
+# Gymnasium >= 1.0 — NEXT_STEP autoreset (the default)
+obs, rewards, terminateds, truncateds, infos = envs.step(actions)
 
-# If terminateds[i] is True, envs[i] has been auto-reset
-# The obs[i] is the NEW initial observation from the reset
-# NOT the final observation of the episode
-
-# To get final observation before reset:
-obs, rewards, terminateds, truncateds, info = envs.step(actions)
-final_obs = info['final_observation']  # Original terminal obs
-reset_obs = obs  # New obs from auto-reset
+# When terminateds[i] or truncateds[i] is True:
+#   obs[i] IS the true terminal observation. Nothing is hidden. Use it directly.
+# The reset happens on the NEXT call to step(), and on THAT step:
+#   obs[i]        = new initial observation
+#   rewards[i]    = 0
+#   terminated[i] = truncated[i] = False
+#   the action you passed for env i is IGNORED
+#
+# So the transition to SKIP is the one AFTER a done, not the one that was done:
+for i in range(num_envs):
+    if just_autoreset[i]:
+        continue  # do not store this transition — the action had no effect
+    buffer.add(prev_obs[i], actions[i], rewards[i], obs[i], terminateds[i])
+just_autoreset = np.logical_or(terminateds, truncateds)
 ```
+
+**Do not write `info['final_observation']`** — on gymnasium ≥ 1.0 that key does not exist and
+`info.get('final_observation', obs)` silently returns the wrong thing on <1.0-style code paths.
+
+If you genuinely want the old same-step behavior, ask for it explicitly:
+
+```python
+envs = gym.make_vec("CartPole-v1", num_envs=8,
+                    vectorization_mode="sync",
+                    vector_kwargs={"autoreset_mode": gym.vector.AutoresetMode.SAME_STEP})
+```
+
+`AutoresetMode.DISABLED` is the third option: sub-envs never auto-reset and you call
+`envs.reset(options={"reset_mask": mask})` yourself. Cleanest for evaluation loops where you
+want exactly N episodes per env.
 
 
 ## Part 6: Common Environment Bugs and Fixes
@@ -1239,12 +1274,18 @@ action = np.clip(action,
 ### Red Flag 5: Vectorized Environment Auto-Reset Confusion
 
 ```python
-# RED FLAG: Treating auto-reset obs as terminal obs
-obs, rewards, terminateds, truncateds, info = envs.step(actions)
-# obs contains NEW reset observations, not final observations!
+# RED FLAG (gymnasium >= 1.0): storing the post-autoreset transition
+obs, rewards, terminateds, truncateds, infos = envs.step(actions)
+# The step AFTER a done returns the reset obs, reward 0, and IGNORES your action.
+# Storing it teaches the agent that its action did nothing.
 
-# Solution: Use info['final_observation']
-final_obs = info['final_observation']
+# Solution: skip the step following a done. The done step's obs IS terminal.
+for i in range(num_envs):
+    if not just_autoreset[i]:
+        buffer.add(prev_obs[i], actions[i], rewards[i], obs[i], terminateds[i])
+just_autoreset = np.logical_or(terminateds, truncateds)
+
+# RED FLAG: reaching for info['final_observation'] — removed in gymnasium v1.0
 ```
 
 ### Red Flag 6: Non-Parallel-Safe Shared State
@@ -1312,7 +1353,7 @@ envs.close()  # or use try/finally
 **Claim 4**: "Vectorized environments are always faster"
 
 - **Reality**: Parallelization overhead for small envs can make them slower.
-- **Evidence**: For < 4 envs, DummyVectorEnv is faster than AsyncVectorEnv
+- **Evidence**: For cheap envs (CartPole), SyncVectorEnv beats AsyncVectorEnv — IPC per step costs more than the env step itself
 
 **Claim 5**: "My environment is correct if the agent learns something"
 
@@ -1505,12 +1546,15 @@ class TrainingLoop:
 
     def _setup_environment(self, env, num_parallel):
         """Proper environment setup"""
+        env_id = env
         if num_parallel == 1:
-            env = gym.make(env)
-        elif num_parallel <= 4:
-            env = DummyVectorEnv([lambda: gym.make(env) for _ in range(num_parallel)])
+            env = gym.make(env_id)
+        elif cheap_env_step:
+            # Serial batching — no IPC cost, real tracebacks
+            env = SyncVectorEnv([lambda: gym.make(env_id) for _ in range(num_parallel)])
         else:
-            env = SyncVectorEnv([lambda: gym.make(env) for _ in range(num_parallel)])
+            # Expensive env step: parallelism pays for the process overhead
+            env = AsyncVectorEnv([lambda: gym.make(env_id) for _ in range(num_parallel)])
 
         # Add standard wrappers
         env = gym.wrappers.TimeLimit(env, max_episode_steps=1000)
@@ -1520,10 +1564,11 @@ class TrainingLoop:
 
     def train_one_episode(self):
         """Correct training loop"""
-        obs, info = self.env.reset()
+        obs, info = self.env.reset(seed=self.seed)
 
         total_reward = 0
         steps = 0
+        just_autoreset = np.zeros(self.num_parallel, dtype=bool)
 
         while True:
             # Get action from policy
@@ -1535,12 +1580,13 @@ class TrainingLoop:
             # Step environment
             obs, reward, terminated, truncated, info = self.env.step(action)
 
-            # CRITICAL: Handle auto-reset in vectorized case
-            if 'final_observation' in info:
-                final_obs = info['final_observation']
-                # Store final obs in replay buffer, not reset obs
-            else:
-                final_obs = obs
+            # CRITICAL: gymnasium >= 1.0 NEXT_STEP autoreset.
+            # obs on a done step IS the terminal obs — store it.
+            # The step AFTER a done is the autoreset step: its action was
+            # ignored and its reward is 0, so it must NOT be stored.
+            if just_autoreset.any():
+                pass  # skip storing those envs' transitions this iteration
+            just_autoreset = np.logical_or(terminated, truncated)
 
             # Store experience
             self.store_experience(obs, reward, terminated, truncated, info)
@@ -1590,20 +1636,23 @@ finally:
     envs.close()
 ```
 
-**Mistake 2: Using wrong observation after auto-reset**
+**Mistake 2: Storing the autoreset step (gymnasium ≥ 1.0)**
 
 ```python
-# WRONG: Mixing terminal and reset observations
+# WRONG: storing every step unconditionally
 obs, reward, terminated, truncated, info = envs.step(actions)
-# obs is reset observation, but we treat it as terminal!
-store_in_replay_buffer(obs, reward, terminated)
+store_in_replay_buffer(prev_obs, actions, reward, obs, terminated)
+# On the step AFTER a done, the sub-env was reset: your action was ignored,
+# reward is 0, and obs is a fresh initial state. Storing that teaches the
+# agent a false transition.
 
-# CORRECT: Use final_observation for training
-final_obs = info.get('final_observation', obs)
-if np.any(terminated):
-    store_in_replay_buffer(final_obs, reward, terminated)
-else:
-    next_obs = obs
+# CORRECT: the done step's obs IS terminal — store it. Skip the NEXT step.
+obs, reward, terminated, truncated, info = envs.step(actions)
+for i in range(num_envs):
+    if not just_autoreset[i]:
+        store_in_replay_buffer(prev_obs[i], actions[i], reward[i], obs[i], terminated[i])
+just_autoreset = np.logical_or(terminated, truncated)
+prev_obs = obs
 ```
 
 **Mistake 3: Not validating agent actions**

@@ -458,12 +458,13 @@ class DynaQ:
         return max(self.Q[s].items(), key=lambda x: x[1])[0]
 
     def train_episode(self, env):
-        s = env.reset()
+        s, _ = env.reset()
         done = False
 
         while not done:
             a = self.choose_action(s)
-            s_next, r, done, _ = env.step(a)
+            s_next, r, terminated, truncated, _ = env.step(a)
+            done = terminated or truncated
 
             # Learn from real transition
             self.learn_real_transition(s, a, r, s_next)
@@ -988,7 +989,7 @@ The Dreamer description in Part 5 covers the original architecture (Hafner et al
 **What's new vs TD-MPC1**:
 
 - **Single hyperparameter set across 104 continuous-control tasks** (DMC, MetaWorld, ManiSkill, MyoSuite).
-- **Multi-task pretraining**: A 317M-param model trained on a mixture of tasks transfers zero-shot.
+- **Multi-task pretraining**: a single 317M-param model was trained on an 80-task (DMC + MetaWorld) mixture and evaluated across all of them, plus few-shot fine-tuning on held-out tasks. Treat "zero-shot to a genuinely new task" as unproven — the paper's transfer results are within the pretraining task families.
 - Replaces ensembles with **distributional Q-functions** for uncertainty.
 
 **When to choose TD-MPC2**:

@@ -241,13 +241,13 @@ A2C = on-policy advantage actor-critic. Actor and critic train simultaneously wi
 for episode in range(num_episodes):
     states, actions, rewards, values = [], [], [], []
 
-    state = env.reset()
+    state, _ = env.reset()
     for t in range(horizon):
         # Actor samples action from policy
         action = actor(state)
 
         # Step environment
-        next_state, reward = env.step(action)
+        next_state, reward, terminated, truncated, _ = env.step(action)
 
         # Get value estimate (baseline)
         value = critic(state)
@@ -268,7 +268,10 @@ for episode in range(num_episodes):
     actor.update(actor_loss)
 
     # Critic loss (value function learning)
-    critic_targets = rewards + gamma * values[1:] + gamma * critic(next_state)
+    # Target = advantage + baseline, i.e. the same returns GAE was built from.
+    # Do NOT add gamma*V(s') a second time — the bootstrap is already inside
+    # advantages via compute_gae's final next_value term.
+    critic_targets = advantages + values
     critic_loss = (critic(states) - critic_targets)^2
     critic.update(critic_loss)
 ```
@@ -294,7 +297,11 @@ Worker 3  ──────────► Update (3) ──────► Con
 No synchronization barrier (race conditions possible)
 ```
 
-**In practice**: A2C is preferred. A3C was important historically (enables multi-GPU training without synchronization) but A2C is cleaner.
+**In practice**: A2C is preferred. A3C (Mnih et al., 2016) mattered historically because it let a
+**single multi-core CPU machine** train without a GPU — asynchronous workers on separate cores
+decorrelated the data, which is what experience replay does for DQN. Once GPUs made batched
+synchronous updates cheap, A2C's synchronous version proved just as good and far simpler to reason
+about (no stale gradients, no race conditions, reproducible).
 
 
 ## Part 3: SAC - Soft Actor-Critic
@@ -483,33 +490,48 @@ Tanh squashed: a = tanh(raw_action)  → bounded in [-1,1]
 But policy probability must account for this transformation:
 
 ```
-π(a|s) ≠ N(μ(s), σ²(s))  [Wrong! Ignores tanh]
-π(a|s) = |det(∂a/∂raw_action)|^(-1) * N(μ(s), σ²(s))
-       = (1 - a²)^2 * N(μ(s), σ²(s))  [Right! Jacobian correction]
+Let u = raw action (pre-squash), a = tanh(u), per dimension.
+da/du = 1 - tanh²(u) = 1 - a²
 
-log π(a|s) = log N(μ(s), σ²(s)) - 2*log(1 - a²)
+Change of variables:
+  π(a|s) ≠ N(u; μ, σ²)                       [Wrong! Ignores tanh]
+  π(a|s) = N(u; μ, σ²) · |det(∂a/∂u)|^(-1)
+         = N(u; μ, σ²) · Π_i (1 - a_i²)^(-1)  [Right — SAC appendix C]
+
+  log π(a|s) = log N(u; μ, σ²) - Σ_i log(1 - a_i²)
 ```
 
-**The bug**: Computing log_prob without Jacobian correction:
+Two things people get wrong here: the exponent is **−1, not −2**, and the log-correction is a
+**sum over action dimensions** — one term per dimension, not a single scalar.
+
+**The bug**: Computing log_prob without the Jacobian correction:
 
 ```python
-# WRONG
-log_prob = normal.log_prob(raw_action) - log(1 + exp(-2*x))
-# (standard normal log prob, ignores squashing)
+# WRONG — no correction at all: log_prob is for u, not for a
+log_prob = normal.log_prob(raw_action).sum(-1)
 
-# RIGHT
-log_prob = normal.log_prob(raw_action) - log(1 + exp(-2*x))
-log_prob = log_prob - 2 * (log(2) - x - softplus(-2*x))  # Add Jacobian term
+# ALSO WRONG — correction applied twice.
+# log(1 - tanh²(u)) and 2*(log 2 - u - softplus(-2u)) are the SAME quantity
+# (verify: they agree to machine precision for every u). Subtracting both
+# double-counts and inflates the entropy bonus.
+log_prob = normal.log_prob(u).sum(-1) - torch.log(1 - action.pow(2)).sum(-1) \
+                                      - 2 * (LOG2 - u - F.softplus(-2 * u)).sum(-1)
 ```
 
-Or simpler:
+**RIGHT** — pick exactly one form:
 
 ```python
-# PyTorch way
+# PyTorch way (readable)
 dist = Normal(mu, sigma)
 raw_action = dist.rsample()  # Reparameterized sample
 action = torch.tanh(raw_action)
-log_prob = dist.log_prob(raw_action) - torch.log(1 - action.pow(2) + 1e-6).sum(-1)
+log_prob = dist.log_prob(raw_action).sum(-1) \
+           - torch.log(1 - action.pow(2) + 1e-6).sum(-1)
+
+# Numerically-stable equivalent (what SpinningUp/CleanRL use).
+# Avoids the 1e-6 fudge, which matters when |a| → 1 and 1 - a² underflows.
+log_prob = dist.log_prob(raw_action).sum(-1) \
+           - (2 * (math.log(2) - raw_action - F.softplus(-2 * raw_action))).sum(-1)
 ```
 
 **Red Flag**: If SAC policy doesn't learn despite updates, check:
@@ -571,9 +593,13 @@ actor_loss = -(Q_current - alpha * log_prob)
 
 ### Why TD3 Exists
 
-TD3 = Twin Delayed DDPG. It addresses SAC's cost (two networks, more computation) with deterministic policy gradient (simpler).
+TD3 = Twin Delayed DDPG (Fujimoto et al., ICML 2018). It fixes **DDPG's** overestimation bias —
+not SAC's cost. TD3 and SAC are concurrent (both ICML 2018), and TD3 also uses two critics, so it
+is not the cheaper option; the difference is a deterministic policy with additive exploration noise
+versus SAC's stochastic maximum-entropy policy.
 
-**DDPG** (older): Deterministic policy, single Q-network, no entropy. Fast but unstable.
+**DDPG** (older): Deterministic policy, single Q-network, no entropy. Fast but unstable — the
+single critic's `max`-like bootstrap accumulates overestimation with nothing to check it.
 
 **TD3** (newer): Three tricks to stabilize DDPG:
 
@@ -1330,10 +1356,13 @@ alpha = 1.0
 ```python
 for step in range(1000000):
     # Collect experience
-    state = env.reset() if done else next_state
+    state, _ = env.reset() if done else (next_state, None)
     action = actor.sample(state)
-    next_state, reward, done = env.step(action)
-    replay_buffer.add(state, action, reward, next_state, done)
+    next_state, reward, terminated, truncated, _ = env.step(action)
+    done = terminated or truncated
+    # NOTE: bootstrap on `terminated` only — a time-limit `truncated` is not a
+    # real terminal state, and storing it as one truncates the value function.
+    replay_buffer.add(state, action, reward, next_state, terminated)
 
     if len(replay_buffer) < min_buffer_size:
         continue
@@ -1398,8 +1427,9 @@ for step in range(1000000):
     # Collect with exploration noise
     action = actor(state) + exploration_noise
     action = torch.clamp(action, *action_range)
-    next_state, reward, done = env.step(action)
-    replay_buffer.add(state, action, reward, next_state, done)
+    next_state, reward, terminated, truncated, _ = env.step(action)
+    done = terminated or truncated
+    replay_buffer.add(state, action, reward, next_state, terminated)
 
     batch = replay_buffer.sample(256)
 

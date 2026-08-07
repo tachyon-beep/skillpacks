@@ -23,7 +23,7 @@ Do NOT use this skill for:
 - Online RL with environment interaction (use policy-gradient-methods, actor-critic-methods)
 - Pure supervised learning on (s,a) pairs (that's behavior cloning, use supervised learning)
 - Online model-free learning (use value-based-methods)
-- Algorithm-agnostic debugging (use rl-debugging-methodology)
+- Algorithm-agnostic debugging (use rl-debugging)
 
 ## Core Principle
 
@@ -214,31 +214,46 @@ Offline RL:
 
 ### CQL: The Idea
 
-**Conservative Q-Learning** directly addresses value overestimation by adding a **pessimistic lower bound**:
+**Conservative Q-Learning** (Kumar et al. 2020) addresses value overestimation by adding a
+**regularizer to the critic loss**. It does *not* modify the Bellman target.
 
 ```
-Standard Bellman (optimistic):
-  Q(s,a) ← r + γ max_{a'} Q(s',a')
+Standard critic loss (optimistic):
+  L_TD(θ) = E_{(s,a,r,s')~D} [ (Q_θ(s,a) - (r + γ Q_target(s', a')))² ]
 
-CQL (conservative):
-  Q(s,a) ← r + γ max_{a'} (Q(s',a') - α * C(a'))
-
-Where C(a') is a penalty for actions outside data distribution.
+CQL adds a conservative regularizer evaluated at the SAME states s:
+  L_CQL(θ) = α · E_{s~D} [ log Σ_a exp Q_θ(s,a)  -  E_{a~β(·|s)} Q_θ(s,a) ]  +  L_TD(θ)
+             ─────────────────────────────────  ───────────────────────────
+             push DOWN the soft-max over all     push BACK UP the actions
+             actions (whatever Q currently       that actually appear in
+             likes best, in-data or not)         the dataset
 ```
 
-**Key Idea**: Penalize high Q-values for actions not well-represented in data.
+**Key Idea**: at every dataset state, subtract value from whatever action the critic currently
+rates highest and add it back to the actions the data actually took. Anything the critic likes
+*because it was never contradicted by data* gets pushed down; anything the data supports survives.
+The resulting Q is a provable lower bound on the value of the learned policy (paper Thm 3.2) —
+which is what makes `argmax_a Q(s,a)` safe to deploy without online correction.
+
+**The single most common mis-implementation**: applying the penalty inside the TD target instead
+of adding it to the critic loss. That changes what the Bellman backup converges to, gives up the
+lower-bound guarantee, and is not CQL.
 
 ### CQL in Practice: The Implementation
 
 **Full CQL Update**:
 
 ```python
+import math
+
 import torch
 import torch.nn as nn
 from torch.optim import Adam
 
 class CQLAgent:
     def __init__(self, state_dim, action_dim, hidden_dim=256):
+        self.action_dim = action_dim
+
         # Q-network (standard DQN-style)
         self.Q = nn.Sequential(
             nn.Linear(state_dim + action_dim, hidden_dim),
@@ -248,18 +263,11 @@ class CQLAgent:
             nn.Linear(hidden_dim, 1)  # Q-value output
         )
 
-        # Behavior cloning network (estimate β(a|s))
-        self.pi_b = nn.Sequential(
-            nn.Linear(state_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, action_dim)
-        )
-
         self.Q_optimizer = Adam(self.Q.parameters(), lr=3e-4)
-        self.pi_b_optimizer = Adam(self.pi_b.parameters(), lr=3e-4)
 
         # CQL hyperparameters
-        self.cql_weight = 1.0  # How much to penalize OOD actions
+        self.cql_alpha = 5.0   # Regularizer weight (D4RL MuJoCo default range: 5-10)
+        self.num_random = 10   # Actions sampled to estimate logsumexp_a Q(s,a)
         self.discount = 0.99
         self.target_update_rate = 0.005
 
@@ -276,68 +284,54 @@ class CQLAgent:
     def train_step(self, batch):
         """
         One CQL training update on batch D.
-        Batch contains: states, actions, rewards, next_states, dones
+        Batch contains: states, actions, rewards, next_states, next_actions, dones
+        (next_actions come from the dataset or from the learned policy at s' —
+         NEVER from the current transition's `actions`.)
         """
-        states, actions, rewards, next_states, dones = batch
+        states, actions, rewards, next_states, next_actions, dones = batch
         batch_size = states.shape[0]
 
-        # 1. Compute TD target with CQL penalty
+        # 1. Standard TD target — UNMODIFIED by CQL
         with torch.no_grad():
-            # Next action values
-            q_next = self.Q_target(torch.cat([next_states, actions], dim=1))
+            q_next = self.Q_target(torch.cat([next_states, next_actions], dim=1))
+            td_target = rewards + (1 - dones) * self.discount * q_next
 
-            # CQL: penalize high Q-values for OOD actions
-            # Sample random actions and batch actions
-            random_actions = torch.rand((batch_size, 10, self.action_dim))
-            batch_actions = actions.unsqueeze(1).expand(-1, 10, -1)
+        q_pred = self.Q(torch.cat([states, actions], dim=1))          # [batch, 1]
+        td_loss = ((q_pred - td_target) ** 2).mean()
 
-            # Q-values for random and batch actions
-            q_random = self.Q_target(torch.cat([
-                next_states.unsqueeze(1).expand(-1, 10, -1),
-                random_actions
-            ], dim=2))  # [batch, 10]
+        # 2. CQL regularizer — at the CURRENT states s, WITH gradients
+        #    (no torch.no_grad() here: this term must shape the critic)
+        #    Estimate log Σ_a exp Q(s,a) by importance-weighted sampling.
+        #    Actions assumed in [-1, 1]^action_dim, so the uniform proposal has
+        #    density 1/2^action_dim → log μ(a) = -action_dim * log 2.
+        random_actions = torch.rand(batch_size, self.num_random, self.action_dim) * 2 - 1
+        states_rep = states.unsqueeze(1).expand(-1, self.num_random, -1)
+        q_random = self.Q(
+            torch.cat([states_rep, random_actions], dim=2)
+        ).squeeze(-1)                                                 # [batch, num_random]
 
-            q_batch = self.Q_target(torch.cat([
-                next_states.unsqueeze(1).expand(-1, 10, -1),
-                batch_actions
-            ], dim=2))  # [batch, 10]
+        log_mu = -self.action_dim * math.log(2.0)
+        logsumexp_q = (
+            torch.logsumexp(q_random - log_mu, dim=1) - math.log(self.num_random)
+        )                                                             # [batch]
 
-            # CQL penalty: log(sum exp(Q_random) + sum exp(Q_batch))
-            # This penalizes taking OOD actions
-            cql_penalty = (
-                torch.logsumexp(q_random, dim=1) +
-                torch.logsumexp(q_batch, dim=1)
-            )
+        # Push DOWN the soft-max over all actions, push UP the dataset actions
+        cql_reg = (logsumexp_q - q_pred.squeeze(-1)).mean()
 
-            # TD target: conservative value estimate
-            td_target = rewards + (1 - dones) * self.discount * (
-                q_next - self.cql_weight * cql_penalty / 2
-            )
-
-        # 2. Update Q-network
-        q_pred = self.Q(torch.cat([states, actions], dim=1))
-        q_loss = ((q_pred - td_target) ** 2).mean()
+        # 3. Single critic loss: TD error + conservative regularizer
+        q_loss = td_loss + self.cql_alpha * cql_reg
 
         self.Q_optimizer.zero_grad()
         q_loss.backward()
         self.Q_optimizer.step()
-
-        # 3. Update behavior cloning network (optional)
-        # Helps estimate which actions are in-distribution
-        log_probs = torch.log_softmax(self.pi_b(states), dim=1)
-        bc_loss = -log_probs.gather(1, actions.long()).mean()
-
-        self.pi_b_optimizer.zero_grad()
-        bc_loss.backward()
-        self.pi_b_optimizer.step()
 
         # 4. Soft update target network
         self._soft_update_target()
 
         return {
             'q_loss': q_loss.item(),
-            'bc_loss': bc_loss.item(),
-            'cql_penalty': cql_penalty.mean().item()
+            'td_loss': td_loss.item(),
+            'cql_reg': cql_reg.item()
         }
 
     def _soft_update_target(self):
@@ -351,46 +345,41 @@ class CQLAgent:
                 (1 - self.target_update_rate) * target_param.data
             )
 
-    def select_action(self, state, temperature=0.1):
+    def select_action(self, state):
         """
-        Select action using CQL-trained Q-values.
-        Temperature controls exploration.
+        Act greedily w.r.t. the conservative Q. Discrete actions, one-hot encoded.
+        No exploration temperature — offline RL deploys the greedy policy; the
+        pessimism is already baked into Q.
         """
         with torch.no_grad():
-            # Evaluate all actions (in discrete case)
-            q_values = []
-            for a in range(self.action_dim):
-                action_tensor = torch.tensor([a], dtype=torch.float32)
-                q_val = self.Q(torch.cat([state, action_tensor]))
-                q_values.append(q_val.item())
-
-            q_values = torch.tensor(q_values)
-
-            # Softmax policy (temperature for uncertainty)
-            logits = q_values / temperature
-            action_probs = torch.softmax(logits, dim=0)
-
-            # Sample or take greedy
-            action = torch.multinomial(action_probs, 1).item()
-            return action
+            candidates = torch.eye(self.action_dim)                    # [A, action_dim]
+            states_rep = state.unsqueeze(0).expand(self.action_dim, -1)
+            q_values = self.Q(
+                torch.cat([states_rep, candidates], dim=1)
+            ).squeeze(-1)                                              # [A]
+            return int(q_values.argmax())
 ```
 
 **Key CQL Components**:
 
-1. **CQL Penalty**: `logsumexp(Q_random) + logsumexp(Q_batch)`
-   - Penalizes high Q-values for both random and batch actions
-   - Forces Q-network to be pessimistic
-   - Prevents extrapolation to unseen actions
+1. **CQL Regularizer**: `α · (logsumexp_a Q(s,a) − Q(s, a_dataset))`
+   - Added to the critic LOSS, at dataset states s — the TD target is untouched
+   - The logsumexp is a soft-max over actions: it pushes down whatever the critic
+     currently rates highest, in-data or not
+   - The subtracted dataset term pushes the supported actions back up, so the
+     penalty nets out to zero exactly where the data speaks
 
-2. **Conservative Target**: `r + γ(Q(s',a') - α*penalty)`
-   - Lowers TD target by CQL penalty amount
-   - Makes Q-estimates more conservative
-   - Safer for policy improvement
+2. **Sampling the logsumexp**: continuous action spaces cannot enumerate actions
+   - The importance-weighted estimator above uses uniform proposals only
+   - CQL(H) as published also mixes in samples from the current policy at `s` and `s'`,
+     each divided by its own proposal density — worth adding if the uniform-only
+     estimate is too loose on high-dimensional action spaces
 
-3. **Behavior Cloning Network**: Estimates β(a|s)
-   - Helps identify in-distribution actions
-   - Can weight CQL penalty by action probability
-   - Tighter constraint on constrained actions
+3. **Tuning α**: the one hyperparameter that decides conservatism
+   - Too low → OOD overestimation survives, policy exploits hallucinated values
+   - Too high → Q collapses toward the behavior policy, no improvement over BC
+   - CQL-Lagrange auto-tunes α against a target regularizer value (τ) instead of
+     fixing it, which is the more robust option when dataset quality is unknown
 
 ### CQL Intuition
 
@@ -398,18 +387,19 @@ class CQLAgent:
 
 ```
 Without CQL:
-Q(s1, wait) = 100  (hallucinated, no data)
+Q(s1, wait) = 100  (hallucinated, no data supports "wait" at s1)
 π picks wait → disaster
 
-With CQL:
-Q_target for s1, wait includes penalty
-Q_target = r + γ(Q(s',a') - α * log(sum exp(Q)))
-         = r + γ(50 - 100)
-         = r - 50 * γ
-CQL pessimism forces Q(s1, wait) low
-π picks safer action
+With CQL, at state s1 the regularizer contributes:
+  α * ( logsumexp_a Q(s1, a)  -  Q(s1, a_dataset) )
+  ≈ α * ( 100                 -  50               )   = 50α
 
-Result: Policy stays in data distribution, avoids hallucinated values
+Gradient descent on that term drives Q(s1, wait) DOWN (it dominates the
+logsumexp) and Q(s1, a_dataset) UP. Once Q(s1, wait) < Q(s1, a_dataset),
+the term stops shrinking the gap — the pessimism is self-limiting.
+
+Result: values stay a lower bound on the learned policy's true value,
+so argmax over Q cannot select an action justified only by hallucination.
 ```
 
 ### When CQL Works Well
@@ -430,40 +420,52 @@ Result: Policy stays in data distribution, avoids hallucinated values
 
 ### IQL: A Different Approach to Pessimism
 
-While CQL explicitly penalizes OOD actions, **IQL** achieves pessimism through a different mechanism: **expectile regression**.
+While CQL explicitly penalizes OOD actions, **IQL** (Kostrikov et al. 2021) sidesteps them entirely: it never evaluates Q at an action outside the dataset. The mechanism is **expectile regression** on a separate value function.
 
 ```
 Standard L2 Regression (mean):
-  Expected value minimizes E[(y - ŷ)²]
+  ŷ minimizes E[(y - ŷ)²]           → ŷ = E[y]
 
-Expectile Regression (quantile-like):
-  Expects value minimizes E[|2τ - 1| * |y - ŷ|] for τ in (0,1)
-  - τ < 0.5: underestimates (pessimistic)
-  - τ = 0.5: median (neutral)
-  - τ > 0.5: overestimates (optimistic)
+Expectile Regression (asymmetric L2):
+  ŷ minimizes E[ L_τ(y - ŷ) ]  where  L_τ(u) = |τ - 1{u < 0}| · u²
+  - τ = 0.5: recovers the mean (symmetric — weights 0.5 / 0.5)
+  - τ > 0.5: residuals where y > ŷ are weighted MORE, so ŷ is pulled UP
+             toward the upper tail; τ → 1 approaches max(y)
+  - τ < 0.5: ŷ is pulled DOWN toward the lower tail; τ → 0 approaches min(y)
 ```
+
+**Read that direction carefully — it is the whole of IQL.** IQL uses τ = 0.7–0.9, i.e. an
+**upper** expectile. It is *not* trying to make V pessimistic relative to Q.
 
 ### IQL Implementation
 
-**Key Insight**: Use expectile loss to make Q-estimates naturally pessimistic without explicit penalties.
+**Key Insight**: an upper expectile of Q over the *dataset's* actions approximates
+`max_a Q(s,a)` **restricted to the data support** — so the Bellman backup never has to
+evaluate Q at an action the dataset never took. The pessimism comes from that restriction,
+not from V sitting below Q.
 
 ```python
 class IQLAgent:
     def __init__(self, state_dim, action_dim, hidden_dim=256, expectile=0.7):
         self.Q = self._build_q_network(state_dim, action_dim, hidden_dim)
+        self.Q_target = self._build_q_network(state_dim, action_dim, hidden_dim)
+        self.Q_target.load_state_dict(self.Q.state_dict())
         self.V = self._build_v_network(state_dim, hidden_dim)  # Value function
+        self.policy = self._build_policy_network(state_dim, action_dim, hidden_dim)
 
         self.Q_optimizer = Adam(self.Q.parameters(), lr=3e-4)
         self.V_optimizer = Adam(self.V.parameters(), lr=3e-4)
+        self.policy_optimizer = Adam(self.policy.parameters(), lr=3e-4)
 
-        self.expectile = expectile  # τ = 0.7 for slight pessimism
+        self.expectile = expectile  # τ = 0.7 (MuJoCo) / 0.9 (AntMaze) — UPPER expectile
         self.discount = 0.99
-        self.temperature = 1.0  # For policy softness
+        self.beta = 3.0  # AWR inverse temperature for policy extraction
 
     def expectile_loss(self, diff, expectile):
         """
-        Asymmetric expectile loss.
-        Penalizes overestimation more than underestimation (pessimism).
+        Asymmetric expectile loss L_τ(u) = |τ - 1{u < 0}| · u².
+        With τ > 0.5, residuals where Q > V are weighted MORE, so V is
+        pulled up toward the best in-dataset actions.
         """
         weight = torch.where(
             diff > 0,
@@ -475,18 +477,19 @@ class IQLAgent:
     def train_v_function(self, batch):
         """
         Step 1: Train value function V(s)
-        V(s) estimates expected Q-value under behavior policy
+        V(s) approximates max over IN-DATASET actions — a soft max, controlled by τ.
         """
         states, actions, rewards, next_states, dones = batch
 
-        # Q-values from current policy
-        q_values = self.Q(states, actions)
+        # Q-values from the TARGET critic (frozen) on the dataset's own actions
+        with torch.no_grad():
+            q_values = self.Q_target(states, actions)
 
-        # V-network predicts these Q-values
+        # V-network regresses on these Q-values with the asymmetric loss
         v_pred = self.V(states)
 
-        # Expectile loss: V should underestimate Q slightly
-        # (stay pessimistic)
+        # Expectile loss with τ > 0.5: V is pulled UP toward the best
+        # action the dataset actually took at this state
         q_diff = q_values - v_pred
         v_loss = self.expectile_loss(q_diff, self.expectile).mean()
 
@@ -498,8 +501,8 @@ class IQLAgent:
 
     def train_q_function(self, batch):
         """
-        Step 2: Train Q-function using pessimistic V-target
-        Q(s,a) ← r + γ V(s')  (instead of γ max_a' Q(s',a'))
+        Step 2: Train Q-function against the V-target
+        Q(s,a) ← r + γ V(s')  (instead of γ max_{a'} Q(s',a') over ALL actions)
         """
         states, actions, rewards, next_states, dones = batch
 
@@ -517,73 +520,101 @@ class IQLAgent:
 
         return {'q_loss': q_loss.item()}
 
+    def extract_policy(self, batch):
+        """
+        Step 3: Advantage-weighted regression (AWR).
+        Behavior-clone the dataset, but weight each transition by
+        exp(β·(Q(s,a) - V(s))) — imitate the dataset's better-than-average actions.
+        The policy is NEVER used inside the Bellman backup, which is why IQL
+        never queries Q at an out-of-distribution action.
+        """
+        states, actions, rewards, next_states, dones = batch
+
+        with torch.no_grad():
+            advantage = self.Q_target(states, actions) - self.V(states)
+            weights = torch.exp(self.beta * advantage).clamp(max=100.0)
+
+        log_probs = self.policy.log_prob(states, actions)
+        policy_loss = -(weights * log_probs).mean()
+
+        self.policy_optimizer.zero_grad()
+        policy_loss.backward()
+        self.policy_optimizer.step()
+
+        return {'policy_loss': policy_loss.item()}
+
     def train_step(self, batch):
-        """IQL training: V-function first, then Q-function."""
+        """IQL training: V-function, then Q-function, then AWR policy extraction."""
         v_info = self.train_v_function(batch)
         q_info = self.train_q_function(batch)
-        return {**v_info, **q_info}
+        pi_info = self.extract_policy(batch)
+        self._soft_update_target()
+        return {**v_info, **q_info, **pi_info}
 
     def select_action(self, state):
-        """
-        Policy improvement: use exponential weighted Q-values.
-        Only improve actions with high estimated value.
-        """
+        """Act with the extracted AWR policy (deterministic mean at eval time)."""
         with torch.no_grad():
-            # Evaluate actions
-            q_values = self.Q(state, actions=None)  # All actions
+            return self.policy.mean(state)
 
-            # Exponential weighting: exp(Q/τ)
-            # Concentrates on high-Q actions
-            weights = torch.exp(q_values / self.temperature)
-            weights = weights / weights.sum()
-
-            action = torch.multinomial(weights, 1).item()
-            return action
+    def _soft_update_target(self, tau=0.005):
+        for target_param, main_param in zip(
+            self.Q_target.parameters(), self.Q.parameters()
+        ):
+            target_param.data.copy_(
+                tau * main_param.data + (1 - tau) * target_param.data
+            )
 ```
 
 ### IQL Key Insight
 
-**Why V-function Makes Q Pessimistic**:
+**Why This Avoids Overestimation**:
 
 ```
 Standard Q-Learning:
-  Q(s,a) = r + γ max_a' Q(s',a')  ← Optimistic!
+  Q(s,a) = r + γ max_{a'} Q(s',a')
+  The max ranges over ALL actions, including ones the dataset never took.
+  Offline, those Q-values are unconstrained extrapolation → they win the max
+  → the error propagates through every backup. This is THE offline failure.
 
 IQL:
-  1. Train V(s) to estimate Q under behavior policy
-     V(s) ≈ E_a~β[Q(s,a)]
-  2. Use V as target: Q(s,a) = r + γ V(s')
-     Why pessimistic?
+  1. Train V(s) as an UPPER expectile (τ=0.7-0.9) of Q(s,a) over the
+     dataset's own actions at s:
+       V(s) ≈ soft-max_{a ∈ support(β(·|s))} Q(s,a)
+     (τ=0.5 would give E_{a~β}[Q(s,a)] — the behavior value. IQL is NOT that.)
+  2. Use V as the target: Q(s,a) = r + γ V(s')
 
-     If policy is suboptimal:
-       - Good actions: Q > V(s) (above average)
-       - Bad actions: Q < V(s) (below average)
-       - max_a Q(s',a') picks good action (might extrapolate)
-       - V(s') is average (conservative)
-
-    Result: Using V instead of max prevents picking overestimated actions!
+  The max is still there — it is just RESTRICTED TO THE DATA SUPPORT, and it
+  is computed by regression instead of by querying the critic at new actions.
+  No OOD action is ever evaluated, so there is nothing to extrapolate.
 ```
 
 ### Expectile Loss Intuition
 
 ```
 Standard MSE: E[(Q - V)²]
-  - Symmetric penalty: overestimation = underestimation
+  - Symmetric penalty: overestimation = underestimation → V = E[Q] (behavior value)
 
-Expectile Loss (τ=0.7): E[|2*0.7 - 1| * |Q - V|²]
-  - When Q > V: weight = 0.7 (moderate penalty)
-  - When Q < V: weight = 0.3 (light penalty)
-  - Result: V underestimates Q slightly
+Expectile Loss L_τ(u) = |τ - 1{u < 0}| · u², with u = Q - V and τ = 0.7:
+  - When Q > V (V is too LOW):  weight = 0.7  (heavy penalty → push V up)
+  - When Q < V (V is too HIGH): weight = 0.3  (light penalty → weak pull down)
+  - Result: V settles ABOVE the mean, near the best in-dataset actions
 
-Effect: Q values are naturally pessimistic without explicit penalties!
+τ is the conservatism knob, and it runs the other way from "pessimism":
+  τ → 0.5  : V = behavior value. Safe, but no policy improvement (≈ BC).
+  τ = 0.7  : D4RL MuJoCo default. Clear improvement over the behavior policy.
+  τ = 0.9  : AntMaze default. Needed for trajectory stitching; more aggressive.
+  τ → 1.0  : hard max over dataset actions. One lucky high-return transition
+             now dominates V — the estimate becomes noise-sensitive and can
+             reintroduce overestimation from sampling error alone.
 ```
 
 ### When IQL Excels
 
-- **High-dimensional observations**: V-function is simpler than Q
-- **Continuous actions**: No need to discretize
-- **Mixed quality data**: Expectile naturally handles varying data quality
-- **Implicit distribution shift handling**: V-function implicitly constrains to data distribution
+- **Continuous actions**: no discretization, and no need to sample actions to build a penalty
+- **Mixed quality data**: τ tunes how far above the behavior policy you reach — one dial, not a schedule
+- **Trajectory stitching**: the in-support max still propagates value across episode boundaries, so IQL composes good sub-trajectories (τ=0.9 on AntMaze) where BC-style methods cannot
+- **Offline → online fine-tuning**: no term that must be annealed away when interaction resumes
+- **No OOD queries at all**: distribution shift is handled structurally, not by a penalty you have to tune
 
 
 ## Part 4: Batch-Constrained Q-Learning (BCQ)
@@ -876,7 +907,7 @@ Inference:
 
 ### Ensembles for Robustness: EDAC
 
-**EDAC** (Ensemble-Diversified Actor-Critic; An et al., 2021) takes IQL/SAC and trains an **ensemble of Q-networks** with explicit diversity penalty. The ensemble's variance acts as a free pessimism signal: high-variance state-action pairs get implicitly penalized. This often beats CQL on D4RL without an explicit conservative penalty.
+**EDAC** (Ensemble-Diversified Actor-Critic; An et al., 2021) builds on **SAC-N** — plain SAC with N critics and a min over the ensemble — and adds an explicit **diversity penalty** so the same robustness is reached with far fewer critics (N≈10 instead of N≈100). The ensemble's variance acts as a free pessimism signal: high-variance state-action pairs get implicitly penalized. This often beats CQL on D4RL without an explicit conservative penalty.
 
 **Use when**: You're already running an ensemble for uncertainty estimation; the marginal cost of EDAC is small.
 
@@ -1320,8 +1351,10 @@ Performance: no improvement over random
 
 Correct approach:
 - Tune conservatism to data quality
-- Diverse data: less pessimism (CQL weight = 0.1)
-- Limited data: more pessimism (CQL weight = 1.0)
+- Diverse / near-expert data: less pessimism (CQL α ≈ 5)
+- Narrow or random data:      more pessimism (CQL α ≈ 10)
+- Unknown data quality: use CQL-Lagrange, which auto-tunes α against a
+  target regularizer value instead of fixing it
 - Validate offline evaluation metrics
 ```
 
@@ -1533,17 +1566,22 @@ Results:
 
 ### Topic 1: Conservative Q-Learning Variants
 
-**CQL with Importance Weighting**:
+**CQL(H) vs CQL(ρ)** — which distribution the soft-max is taken over:
 
 ```
-Instead of treating all actions equally in CQL penalty,
-weight by behavioral policy probability:
+The regularizer is  α * ( E_{a~μ}[Q(s,a)] - E_{a~β}[Q(s,a)] ), and μ is your choice:
 
-CQL loss = -α * E[(1-β(a|s))/(1+β(a|s)) * Q(s,a)]
-           + E[Q(s,a) - target]
+CQL(H): μ = the maximum-entropy choice, which makes the first term
+        exactly log Σ_a exp Q(s,a). This is the default and what the
+        implementation above computes.
 
-Intuition: Heavy penalty on unlikely actions, light penalty on likely ones
-Result: More efficient use of data, can improve more than standard CQL
+CQL(ρ): μ = the previous iterate of the learned policy. Penalizes
+        specifically the actions your policy is drifting toward,
+        rather than everything the critic happens to rate highly.
+
+Intuition: CQL(H) is uniform pessimism, CQL(ρ) is targeted pessimism.
+Result: CQL(ρ) is less conservative on wide-support datasets; CQL(H) is
+        the safer default when the behavior policy is unknown.
 ```
 
 **Weighted CQL for Reward Maximization**:
@@ -1701,7 +1739,7 @@ gap = online_return_actual - offline_return_estimate
 
 - **Minari** (Farama Foundation): The official D4RL successor — actively maintained, standardized dataset format, integrated with `gymnasium`. Use Minari for new work.
 - D4RL: Original offline RL benchmark suite (frozen; superseded by Minari but still cited).
-- Atari 5M / Atari 10M: Limited-sample offline Atari (CQL paper uses these).
+- DQN Replay Dataset (Agarwal et al., 2020): offline Atari, 50M transitions per game. The standard limited-data variants are the **1% and 10% subsets**, which the CQL paper evaluates on.
 - RL Unplugged (DeepMind): Large-scale offline RL benchmark with diverse domains.
 
 **Related Skills**:
@@ -1709,4 +1747,4 @@ gap = online_return_actual - offline_return_estimate
 - rl-foundations: TD learning, Bellman equations
 - value-based-methods: Q-learning fundamentals
 - policy-gradient-methods: Policy improvement
-- rl-evaluation-benchmarking: How to measure RL progress
+- rl-evaluation: How to measure RL progress

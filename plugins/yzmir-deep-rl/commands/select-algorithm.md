@@ -74,7 +74,7 @@ START
 │  └─ Large action space → PPO
 │
 ├─ Multi-agent?
-│  ├─ Cooperative → QMIX, COMA
+│  ├─ Cooperative → MAPPO or IPPO (default), QMIX (value factorization)
 │  └─ Competitive/Mixed → MADDPG
 │
 └─ Extreme sample efficiency needed?

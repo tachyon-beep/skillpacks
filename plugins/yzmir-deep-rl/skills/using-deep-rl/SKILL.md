@@ -57,7 +57,7 @@ The correct approach depends on:
 6. **offline-rl** - CQL, IQL, BCQ, TD3+BC, AWAC, Decision Transformer; D4RL → Minari
 7. **multi-agent-rl** - QMIX, MADDPG, MAPPO/IPPO, PettingZoo, SMACv2
 8. **exploration-strategies** - ε-greedy, UCB, ICM, RND, Go-Explore, NGU/Agent57, BYOL-Explore
-9. **reward-shaping** - Reward design, potential-based shaping, inverse RL
+9. **reward-shaping-engineering** - Reward design, potential-based shaping, inverse RL
 10. **counterfactual-reasoning** - Causal inference, HER, off-policy evaluation, twin networks
 11. **rl-debugging** - Common RL bugs, why not learning, systematic debugging
 12. **rl-environments** - Gymnasium, MuJoCo, PettingZoo, Brax, Isaac Lab, EnvPool, Minari
@@ -121,7 +121,7 @@ The correct approach depends on:
 |---------|----------|-----|
 | "Not learning" / reward flat | **rl-debugging** FIRST | 80% of issues are bugs, not algorithms |
 | Exploration problems | **exploration-strategies** | Curiosity, RND, intrinsic motivation |
-| Reward design issues | **reward-shaping** | Potential-based shaping, inverse RL |
+| Reward design issues | **reward-shaping-engineering** | Potential-based shaping, inverse RL |
 | Environment setup | **rl-environments** | Gym API, wrappers, vectorization |
 | Evaluation questions | **rl-evaluation** | Deterministic vs stochastic, multiple seeds |
 
@@ -190,7 +190,7 @@ START: RL problem
 └─ DEBUGGING?
    ├─ Not learning → rl-debugging
    ├─ Exploration → exploration-strategies
-   ├─ Reward design → reward-shaping
+   ├─ Reward design → reward-shaping-engineering
    ├─ Environment → rl-environments
    └─ Evaluation → rl-evaluation
 ```

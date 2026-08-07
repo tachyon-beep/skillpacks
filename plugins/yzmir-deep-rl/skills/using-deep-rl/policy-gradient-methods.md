@@ -25,7 +25,7 @@ Do NOT use this skill for:
 - Model-based RL (route to model-based-rl)
 - Offline RL (route to offline-rl)
 - Theory foundations (route to rl-foundations)
-- Advanced variants (route to advanced-rl-topics)
+- Advanced variants (route to the algorithm-family sheet that owns the variant: value-based-methods, actor-critic-methods, or model-based-rl)
 
 
 ## Core Principle
@@ -733,7 +733,7 @@ DPO and its descendants drop policy gradients entirely — they reformulate RLHF
 ```
 Problem: Robot arm control (continuous 7D joint angles)
 - Continuous action space → Use policy gradients
-- Can't discretize (7^10 combinations way too many)
+- Can't discretize (7 joints × 10 bins each = 10^7 = 10 million joint actions)
 - PPO or TRPO appropriate
 
 Problem: Video game (discrete button presses)
@@ -804,7 +804,10 @@ Gradient vanishes, learning stops
 
 ```python
 # Option 1: Entropy bonus (favors exploration)
-entropy = 0.5 * torch.sum(torch.log(2 * torch.pi * torch.e * std))
+# H = 0.5 * log(2πe σ²) per dim — note σ SQUARED, or equivalently
+#   0.5*log(2πe) + log(σ). Dropping the square understates entropy.
+entropy = torch.sum(0.5 * torch.log(2 * torch.pi * torch.e * std**2))
+# Simpler and stabler: dist.entropy().sum(-1) on a torch.distributions.Normal
 loss = policy_loss - 0.01 * entropy  # Encourage exploration
 
 # Option 2: Minimum std (hard constraint)
@@ -1494,7 +1497,7 @@ value_loss = (returns - values).pow(2).mean()  # separate value update
 
 ```python
 # WRONG: using formula for continuous
-entropy = 0.5 * log(2 * pi * e * std)  # Only for Gaussian!
+entropy = 0.5 * log(2 * pi * e * std**2)  # Only for Gaussian! (and note σ²)
 
 # CORRECT: for categorical
 entropy = -(probs * log(probs + 1e-8)).sum()

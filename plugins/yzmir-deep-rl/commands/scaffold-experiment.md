@@ -83,13 +83,14 @@ seed: 42
 def evaluate(policy, env, n_episodes=10):
     rewards = []
     for _ in range(n_episodes):
-        obs = env.reset()
+        obs, info = env.reset()
         done = False
         episode_reward = 0
         while not done:
             # Deterministic action (no exploration)
             action = policy.predict(obs, deterministic=True)
-            obs, reward, done, info = env.step(action)
+            obs, reward, terminated, truncated, info = env.step(action)
+            done = terminated or truncated
             episode_reward += reward
         rewards.append(episode_reward)
     return np.mean(rewards), np.std(rewards)

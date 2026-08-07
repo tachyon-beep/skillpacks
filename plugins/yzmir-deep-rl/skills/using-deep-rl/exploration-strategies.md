@@ -215,8 +215,9 @@ def epsilon_exponential(step, decay_rate=0.9995):
 **Guidance:**
 
 - Use if task rewards are found quickly
-- `decay_rate = 0.9995` is gentle (1% per 100 steps)
-- `decay_rate = 0.999` is aggressive (1% per step)
+- `decay_rate = 0.9995` is gentle (0.05% per step → ε retains 95% after 100 steps, 61% after 1k)
+- `decay_rate = 0.999` is aggressive (0.1% per step → 90% after 100 steps, 37% after 1k)
+- Rule of thumb: ε halves every `ln(2)/(1-decay_rate)` steps — ~1,386 steps at 0.9995, ~693 at 0.999
 - Watch for premature convergence to local optimum
 
 #### Polynomial Decay
@@ -364,16 +365,29 @@ def boltzmann_exploration(q_values, temperature=1.0):
 Example: Three actions with Q=[10, 0, -10]
 
 ε-Greedy (ε=0.2):
-- Action 0: P=0.8 (exploit best)
-- Action 1: P=0.1 (random)
-- Action 2: P=0.1 (random)
-- Problem: Good actions (Q=0, -10) barely sampled
+- Action 0: P=0.80 (exploit best)
+- Action 1: P=0.10 (uniform random)
+- Action 2: P=0.10 (uniform random)
+- Problem: exploration is BLIND — the clearly-bad Q=-10 action is
+  sampled exactly as often as the plausible Q=0 action
 
-Boltzmann (T=2):
-- Action 0: P=0.88 (exp(10/2)=e^5 ≈ 148)
-- Action 1: P=0.11 (exp(0/2)=1)
-- Action 2: P=0.01 (exp(-10/2)≈0.007)
-- Better: Action 1 still gets 11% (not negligible)
+Boltzmann (T=5):
+- Action 0: P=0.867 (exp(10/5)=e^2 ≈ 7.39)
+- Action 1: P=0.117 (exp(0/5)=1)
+- Action 2: P=0.016 (exp(-10/5)=e^-2 ≈ 0.135)
+- Better: the runner-up still gets ~12%, the known-bad action ~1.6%
+  — exploration budget spent where it might pay off
+```
+
+**T must be scaled to the spread of your Q-values.** The same Q=[10, 0, -10] at T=2 gives
+P=[0.993, 0.007, 0.00003] — effectively greedy, no exploration at all. The knob that matters is
+`T` relative to the Q-gaps, so re-tune T whenever reward scale changes:
+
+```
+T=1  : P = [1.000, 0.000, 0.000]   pure exploitation
+T=2  : P = [0.993, 0.007, 0.000]   near-greedy
+T=5  : P = [0.867, 0.117, 0.016]   useful exploration
+T=10 : P = [0.665, 0.245, 0.090]   near-uniform, samples the bad action 9% of the time
 ```
 
 ### Temperature Decay Schedule
@@ -454,14 +468,24 @@ UCB balances exploitation and exploration via **optimism under uncertainty**:
 - If Q(a) is uncertain (rarely visited) → exploration bonus makes UCB high
 
 ```
-Example: Bandit with 2 arms
+Example: Bandit with 2 arms, N = 110 total pulls, ln(110) = 4.700
 - Arm A: Visited 100 times, estimated Q=2.0
-- Arm B: Visited 10 times, estimated Q=1.5
+- Arm B: Visited  10 times, estimated Q=1.5
 
-UCB(A) = 2.0 + 1.0 * sqrt(ln(110) / 100) ≈ 2.0 + 0.26 = 2.26
-UCB(B) = 1.5 + 1.0 * sqrt(ln(110) / 10) ≈ 1.5 + 0.82 = 2.32
+With c = sqrt(2) (the standard UCB1 constant):
+  UCB(A) = 2.0 + 1.414 * sqrt(4.700/100) = 2.0 + 0.307 = 2.307
+  UCB(B) = 1.5 + 1.414 * sqrt(4.700/10)  = 1.5 + 0.970 = 2.470
+  → Try Arm B despite the lower Q estimate: 0.5 of Q-gap is outweighed
+    by the uncertainty of having pulled it only 10 times.
 
-Result: Try Arm B despite lower Q estimate (less certain)
+c IS THE WHOLE DECISION. Same numbers, c = 1.0:
+  UCB(A) = 2.0 + 0.217 = 2.217
+  UCB(B) = 1.5 + 0.686 = 2.186
+  → Now Arm A wins. The bonus no longer covers a 0.5 Q-gap at N(B)=10.
+
+Read that as: c sets how many pulls of evidence it takes to stop exploring an
+arm. It is not a "small tuning knob" — it flips the action. Tune c against your
+REWARD SCALE: the bonus must be comparable to the Q-gaps you care about.
 ```
 
 ### Critical Limitation: Doesn't Scale to Deep RL
@@ -648,10 +672,21 @@ Together: Forward + Inverse
 # RND uses FROZEN random network, doesn't get reward for actual noise
 ```
 
-**Key Distinction:**
+**Key Distinction — and be precise about what "noise" means:**
 
-- ICM: Learns to predict environment (breaks if environment has noise/randomness)
-- RND: Uses frozen random network (robust to environment randomness)
+- ICM: predicts the *next state* given (state, action). Breaks on **stochastic transitions** —
+  the same (s,a) leads somewhere different each time, so prediction error never decays and the
+  agent farms it forever. This is the noisy-TV problem.
+- RND: predicts a frozen random function **of the current observation only**. Transition
+  stochasticity cannot fool it: the target for observation o is always the same number, so error
+  decays once o has been visited enough.
+
+**But RND is not immune to noise in general.** If the *observation itself* contains high-entropy
+content — a genuine noisy TV, a randomized skybox, a scrolling noise texture — every frame is a
+new observation, RND has never seen it, and the intrinsic reward stays high. RND solves
+**stochastic dynamics**, not **stochastic observations**. If your observations carry irrelevant
+randomness, fix it at the observation level (crop the noisy region, downsample, learn a
+representation that discards it) — no intrinsic-reward tweak will.
 
 ### Computational Cost
 
@@ -765,7 +800,7 @@ class RandomNetworkDistillation(nn.Module):
 ### Why RND is Elegant
 
 1. **No Environment Model**: Doesn't need to model dynamics (unlike ICM)
-2. **Robust to Randomness**: Random network isn't trying to predict anything real, so environment noise doesn't fool it
+2. **Robust to Stochastic DYNAMICS**: the target depends only on the observation, not on a transition, so randomness in *where you land* doesn't fool it. (Randomness *inside the observation* still does — see the ICM/RND distinction above.)
 3. **Simple**: Just predict random features
 4. **Fast**: Train only predictor (target frozen)
 
@@ -775,10 +810,11 @@ class RandomNetworkDistillation(nn.Module):
 |--------|-----|-----|
 | Networks | Forward + Inverse | Target (frozen) + Predictor |
 | Learns | Environment dynamics | Random feature prediction |
-| Robust to noise | No (breaks with stochastic envs) | Yes (random target immune) |
+| Stochastic transitions | No (noisy-TV: farms unpredictability) | Yes (target is observation-only) |
+| Stochastic observations | No | No (a truly novel pixel pattern is novel to RND too) |
 | Complexity | High (3+ networks, 2 losses) | Medium (2 networks, 1 loss) |
 | Computation | 2-3× base agent | 1.5-2× base agent |
-| When to use | Dense features, clean env | Sparse rewards, noisy env |
+| When to use | Dense features, deterministic env | Sparse rewards, stochastic dynamics |
 
 ### RND Pitfall: Training Instability
 
@@ -854,7 +890,7 @@ class CountBasedExploration:
 
 # Pseudocode:
 for episode in range(episodes):
-    state = env.reset()
+    state, _ = env.reset()
     for step in range(max_steps):
         # Compute exploration bonus
         intrinsic_reward = count_explorer.compute_intrinsic_reward(state)
@@ -1075,8 +1111,9 @@ def combine_rewards(extrinsic_reward, intrinsic_reward,
 # Even if novel thing is useless for task
 
 # Example: Atari with RND
-# If game has pixel randomness, RND rewards exploring random pixels
-# Instead of exploring to find coins/power-ups
+# If the OBSERVATION contains randomness (noise texture, random background),
+# every frame is novel to RND and it rewards staring at the noise
+# instead of exploring to find coins/power-ups
 
 # SOLUTION: Scale intrinsic reward carefully
 # Make it significant but not dominant
@@ -1310,7 +1347,7 @@ rnd = RandomNetworkDistillation(state_dim)
 - [ ] **ε-greedy on continuous actions**: Exploration unguided, learning slow
 - [ ] **Intrinsic reward >> task reward**: Agent ignores task
 - [ ] **No exploration specified**: Might be using default (often insufficient)
-- [ ] **Using RND in random/stochastic environment**: Breaks because predicting noise
+- [ ] **Using RND where the OBSERVATION contains irrelevant randomness** (noisy TV, random skybox): every frame reads as novel and the bonus never decays. RND handles stochastic *transitions* fine — it is stochastic *observations* that defeat it. Fix the observation, not the bonus.
 - [ ] **Count-based on images**: Can't count unique images, worthless
 - [ ] **Exploration at test time**: Test performance degrades from exploration noise
 - [ ] **ICM on pixel-randomness environment**: Forward model tries to predict noise

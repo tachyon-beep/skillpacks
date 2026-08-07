@@ -71,15 +71,24 @@ Q-learning learns the **optimal policy π*(a|s) = argmax_a Q(s,a)** regardless o
 
 ```
 Agent follows epsilon-greedy (explores 10% random)
-But Q-learning learns: "Take safe path away from cliff" (optimal)
-NOT: "Walk along cliff edge" (what exploring policy does sometimes)
+Q-learning learns: "Walk along the cliff edge" (the OPTIMAL path)
+NOT: "Take the safe path away from the cliff" (what SARSA learns)
 
 Q-learning separates:
 - Behavior policy: ε-greedy (for exploration)
 - Target policy: greedy (what we're learning toward)
 ```
 
-**Why This Matters**: Off-policy learning is sample-efficient (can learn from any exploration strategy). On-policy methods like SARSA would learn the exploration noise into policy.
+Because the max in the target ignores the ε-random actions the agent will actually take,
+Q-learning converges to the shortest optimal route — which runs along the cliff edge.
+SARSA bootstraps from the action actually taken, so it prices in the chance of an
+exploratory step into the cliff and learns the longer, safer detour (Sutton & Barto §6.5).
+
+**Why This Matters**: Off-policy learning recovers Q* from any exploration strategy. That is
+what you want when exploration is a training-time artifact you will turn off at deployment.
+It is NOT what you want when exploration noise is present at deployment and falling off the
+cliff is expensive — in cliff walking, Q-learning's *online* return during ε-greedy training
+is worse than SARSA's, even though its learned greedy policy is optimal.
 
 ### Convergence Guarantee
 
@@ -129,10 +138,10 @@ DQN = Q-learning + neural network + **two critical stability mechanisms**:
 
 ```python
 # Naive approach (WRONG)
-state = env.reset()
+state, _ = env.reset()
 for t in range(1000):
     action = epsilon_greedy(state)
-    next_state, reward = env.step(action)
+    next_state, reward, terminated, truncated, _ = env.step(action)
 
     # Update Q from this single transition
     Q(state, action) += α(reward + γ max Q(next_state) - Q(state, action))
@@ -152,10 +161,11 @@ for t in range(1000):
 replay_buffer = []
 
 for episode in range(num_episodes):
-    state = env.reset()
+    state, _ = env.reset()
     for t in range(max_steps):
         action = epsilon_greedy(state)
-        next_state, reward = env.step(action)
+        next_state, reward, terminated, truncated, _ = env.step(action)
+        done = terminated or truncated
 
         # Store experience (not learn yet)
         replay_buffer.append((state, action, reward, next_state, done))
@@ -608,6 +618,7 @@ class PrioritizedReplayBuffer:
         self.buffer = []
         self.priorities = []
         self.size = size
+        self.pos = 0  # Ring-buffer write cursor (NOT len(buffer) % size — that is always 0 when full)
         self.alpha = alpha  # How much to prioritize (0=uniform, 1=full priority)
         self.epsilon = 1e-6  # Small value to avoid zero priority
 
@@ -620,10 +631,11 @@ class PrioritizedReplayBuffer:
             self.priorities.append(max_priority)
         else:
             # Replace oldest if full
-            self.buffer[len(self.buffer) % self.size] = experience
-            self.priorities[len(self.priorities) % self.size] = max_priority
+            self.buffer[self.pos] = experience
+            self.priorities[self.pos] = max_priority
+        self.pos = (self.pos + 1) % self.size
 
-    def sample(self, batch_size):
+    def sample(self, batch_size, beta=0.4):
         # Compute sampling probabilities
         priorities = np.array(self.priorities) ** self.alpha
         priorities = priorities / np.sum(priorities)
@@ -633,7 +645,9 @@ class PrioritizedReplayBuffer:
         batch = [self.buffer[i] for i in indices]
 
         # Importance sampling weights (correct for bias from prioritized sampling)
-        weights = (1 / (len(self.buffer) * priorities[indices])) ** (1/3)  # β=1/3
+        # β is ANNEALED 0.4 → 1.0 over training (Schaul et al. 2016), not held fixed:
+        # early training tolerates bias for speed, late training must be unbiased.
+        weights = (1 / (len(self.buffer) * priorities[indices])) ** beta
         weights = weights / np.max(weights)  # Normalize
 
         return batch, indices, weights
@@ -746,7 +760,7 @@ Rainbow was the 2017 SOTA. The post-Rainbow line of work focuses on **scale**, *
 
 **BBF — Bigger, Better, Faster** (Schwarzer et al., ICML 2023)
 
-- A *practical* sample-efficient discrete-RL recipe: Atari 100k regime (only 100K frames = 2 hours of gameplay).
+- A *practical* sample-efficient discrete-RL recipe: Atari 100k regime (100K **agent steps** = 400K emulator frames at frameskip 4 ≈ 2 hours of gameplay).
 - Key tricks: **harder weight decay**, **higher replay ratio**, **periodic network resets** ("primacy bias" mitigation), **larger network with proper normalization**, **n-step Q-learning**.
 - Achieves super-human median Atari 100k with a single GPU — practical for lab work.
 
@@ -1192,8 +1206,9 @@ if state.shape != (4, 84, 84):
     print("Single frame (1, 84, 84) violates Markov property")
     print("Add frame stacking: stack last 4 frames")
 
-# Frame count
-4 frames: Standard (shows ~80ms at 50fps = ~4 frames)
+# Frame count (ALE runs at 60 Hz; the standard wrapper uses frameskip=4,
+# so one stacked "frame" is already 4 emulator frames ≈ 67 ms)
+4 frames: Standard (spans 16 emulator frames ≈ 267 ms of gameplay)
 3 frames: OK, slightly less velocity info
 2 frames: Minimum, just barely Markovian
 1 frame: WRONG, not Markovian
@@ -1258,7 +1273,7 @@ Start with Priority 1, only adjust Priority 2-3 if unstable.
 - Need systematic debugging methodology
 - Credit assignment problems
 
-### Route to reward-shaping if
+### Route to reward-shaping-engineering if
 
 - Sparse rewards
 - Reward design affecting learning

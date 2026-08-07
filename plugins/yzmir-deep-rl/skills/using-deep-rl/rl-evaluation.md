@@ -124,7 +124,9 @@ def evaluate_multi_seed(algorithm, env_name, seeds, total_steps):
 
     for seed in seeds:
         # Train agent
-        env = gym.make(env_name, seed=seed)
+        env = gym.make(env_name)
+        env.reset(seed=seed)
+        env.action_space.seed(seed)
         agent = algorithm(env, seed=seed)
 
         # Track performance during training
@@ -162,7 +164,7 @@ def evaluate_multi_seed(algorithm, env_name, seeds, total_steps):
 # Usage
 results = evaluate_multi_seed(
     algorithm=PPO,
-    env_name="HalfCheetah-v3",
+    env_name="HalfCheetah-v5",
     seeds=range(10),  # 10 seeds
     total_steps=1_000_000
 )
@@ -178,7 +180,7 @@ print(f"Range: [{results['min']:.1f}, {results['max']:.1f}]")
 
 ```
 Algorithm: PPO
-Environment: HalfCheetah-v3
+Environment: HalfCheetah-v5
 Seeds: 10
 Total Steps: 1M
 
@@ -262,6 +264,36 @@ print(f"95% CI for difference: [{comparison['ci_difference'][0]:.1f}, "
 - d ≥ 0.8: Large effect
 
 **Red Flag:** If p-value < 0.05 but Cohen's d < 0.2, the difference is statistically significant but practically negligible. Don't claim "better" without practical significance.
+
+### Prefer IQM + Stratified Bootstrap CIs Over Mean ± Std
+
+The mean±std and t-test machinery above is the *floor*, and it assumes more than RL runs deliver:
+approximate normality and enough seeds for the CLT to bite. Since **Agarwal et al. 2021, "Deep RL
+at the Edge of the Statistical Precipice"** (NeurIPS outstanding paper), the field standard for
+few-seed regimes is different, and reviewers will ask for it:
+
+- **IQM (interquartile mean)** — mean of the middle 50% of runs. Unlike the mean it is not moved
+  by one lucky seed; unlike the median it uses most of the data. This is the headline number.
+- **Stratified bootstrap CIs** — resample runs *within each task*, then aggregate. Reports
+  uncertainty honestly with 3–10 seeds, where a t-interval is over-confident.
+- **Performance profiles** — plot the fraction of runs above each score threshold. One picture
+  showing the whole distribution, not a point estimate; strictly more informative than a bar chart
+  with error bars, and it makes score-distribution overlap visible.
+- **Probability of improvement** — P(algorithm A run > algorithm B run), which answers the
+  question people actually mean when they say "is A better".
+
+```python
+# pip install rliable
+from rliable import library as rly, metrics
+
+# scores: dict of {algorithm: array of shape (num_runs, num_tasks)}
+iqm = lambda scores: np.array([metrics.aggregate_iqm(scores[..., i])
+                               for i in range(scores.shape[-1])])
+iqm_scores, iqm_cis = rly.get_interval_estimates(scores, iqm, reps=50_000)
+```
+
+**Report mean±std only alongside these, never instead of them.** If you have fewer than ~10 seeds,
+a bare mean±std comparison is not evidence — it is the exact failure mode that paper documents.
 
 ### Power Analysis: How Many Seeds Needed?
 
@@ -408,13 +440,15 @@ class EvaluationProtocol:
         self.eval_seed = eval_seed
 
         # Separate environments
+        # gymnasium removed env.seed(); seed via reset(seed=...) once,
+        # then the env's RNG advances on its own from there.
         self.train_env = gym.make(env_name)
-        self.train_env.seed(train_seed)
+        self.train_env.reset(seed=train_seed)
         self.train_env.action_space.seed(train_seed)
         self.train_env.observation_space.seed(train_seed)
 
         self.eval_env = gym.make(env_name)
-        self.eval_env.seed(eval_seed)
+        self.eval_env.reset(seed=eval_seed)
         self.eval_env.action_space.seed(eval_seed)
         self.eval_env.observation_space.seed(eval_seed)
 
@@ -426,13 +460,14 @@ class EvaluationProtocol:
         """Evaluation on SEPARATE evaluation environment."""
         rewards = []
         for _ in range(episodes):
-            state = self.eval_env.reset()
+            state, _ = self.eval_env.reset()
             episode_reward = 0
             done = False
 
             while not done:
                 action = agent.act_deterministic(state)
-                state, reward, done, _ = self.eval_env.step(action)
+                state, reward, terminated, truncated, _ = self.eval_env.step(action)
+                done = terminated or truncated
                 episode_reward += reward
 
             rewards.append(episode_reward)
@@ -440,7 +475,7 @@ class EvaluationProtocol:
         return np.mean(rewards), np.std(rewards)
 
 # Usage
-protocol = EvaluationProtocol("HalfCheetah-v3", train_seed=42, eval_seed=999)
+protocol = EvaluationProtocol("HalfCheetah-v5", train_seed=42, eval_seed=999)
 
 # Training
 agent = SAC()
@@ -498,7 +533,7 @@ def compute_sample_efficiency_curve(agent_class, env_name, seed,
 
 # Compare sample efficiency of multiple algorithms
 algorithms = [PPO, SAC, TD3]
-env_name = "HalfCheetah-v3"
+env_name = "HalfCheetah-v5"
 max_steps = 1_000_000
 
 for algo in algorithms:
@@ -522,28 +557,35 @@ for algo in algorithms:
               f"{mean_rewards[idx]:.1f} ± {std_rewards[idx]:.1f}")
 ```
 
-**Sample Output:**
+**Sample Output** (illustrative magnitudes for HalfCheetah — the *ordering* is the established
+result from Haarnoja et al. 2018; run your own numbers before citing any of them):
 
 ```
-PPO at 100k steps: 1,234 ± 156
-PPO at 500k steps: 3,456 ± 289
-PPO at 1M steps: 4,523 ± 387
+PPO at 100k steps:   -150 ± 190
+PPO at 500k steps:  1,150 ± 340
+PPO at 1M steps:    2,100 ± 420
 
-SAC at 100k steps: 891 ± 178
-SAC at 500k steps: 3,789 ± 245
-SAC at 1M steps: 4,912 ± 312
+SAC at 100k steps:  4,300 ± 610
+SAC at 500k steps:  9,100 ± 540
+SAC at 1M steps:   10,700 ± 480
 
-TD3 at 100k steps: 756 ± 134
-TD3 at 500k steps: 3,234 ± 298
-TD3 at 1M steps: 4,678 ± 276
+TD3 at 100k steps:  3,100 ± 720
+TD3 at 500k steps:  8,400 ± 690
+TD3 at 1M steps:   10,100 ± 550
 ```
 
 **Analysis:**
 
-- PPO is most sample-efficient early (1,234 at 100k)
-- SAC has best final performance (4,912 at 1M)
-- If sample budget is 100k → PPO is best choice
-- If sample budget is 1M → SAC is best choice
+- Off-policy SAC/TD3 dominate on-policy PPO at **every** sample budget here, and the gap is
+  widest early. A replay buffer reuses each transition dozens of times; PPO discards its batch
+  after a few epochs. That is the whole story of sample efficiency on MuJoCo.
+- If sample budget is 100k → SAC (PPO has barely left the starting line)
+- If sample budget is 1M → still SAC
+- **When PPO is nonetheless right**: when samples are cheap and *wall-clock* is the constraint —
+  thousands of parallel envs on GPU (Isaac Lab, Brax), or LLM post-training where the "env" is
+  a batched forward pass. Measure the budget you actually have: samples or seconds.
+- **The trap this table exists to prevent**: reading "PPO is the default on-policy algorithm" as
+  "PPO is efficient". Always compare at the same sample budget with the same seeds.
 
 ### Area Under Curve (AUC) Metric
 
@@ -677,16 +719,16 @@ def zero_shot_transfer(agent, train_env_name, test_env_names):
     return results
 
 # Example: Locomotion transfer
-agent_trained_on_cheetah = train(PPO, "HalfCheetah-v3")
+agent_trained_on_cheetah = train(PPO, "HalfCheetah-v5")
 
 transfer_results = zero_shot_transfer(
     agent_trained_on_cheetah,
-    train_env_name="HalfCheetah-v3",
-    test_env_names=["Hopper-v3", "Walker2d-v3", "Ant-v3"]
+    train_env_name="HalfCheetah-v5",
+    test_env_names=["Hopper-v5", "Walker2d-v5", "Ant-v5"]
 )
 
 print(f"Source (HalfCheetah): {transfer_results['source']:.1f}")
-for env in ["Hopper-v3", "Walker2d-v3", "Ant-v3"]:
+for env in ["Hopper-v5", "Walker2d-v5", "Ant-v5"]:
     perf = transfer_results[env]
     ratio = transfer_results[f'{env}_transfer_ratio']
     print(f"{env}: {perf:.1f} ({ratio:.1%} of source)")
@@ -772,7 +814,7 @@ class EvaluationMode:
         """
         rewards = []
         for _ in range(episodes):
-            state = env.reset()
+            state, _ = env.reset()
             episode_reward = 0
             done = False
 
@@ -783,7 +825,8 @@ class EvaluationMode:
                 else:
                     action = agent.policy.mean(state)  # Or argmax for discrete
 
-                state, reward, done, _ = env.step(action)
+                state, reward, terminated, truncated, _ = env.step(action)
+                done = terminated or truncated
                 episode_reward += reward
 
             rewards.append(episode_reward)
@@ -797,7 +840,7 @@ class EvaluationMode:
         """
         rewards = []
         for _ in range(episodes):
-            state = env.reset()
+            state, _ = env.reset()
             episode_reward = 0
             done = False
 
@@ -805,7 +848,8 @@ class EvaluationMode:
                 # Sample from policy distribution
                 action = agent.policy.sample(state)
 
-                state, reward, done, _ = env.step(action)
+                state, reward, terminated, truncated, _ = env.step(action)
+                done = terminated or truncated
                 episode_reward += reward
 
             rewards.append(episode_reward)
@@ -869,13 +913,14 @@ def required_eval_episodes(env, agent, desired_sem, max_episodes=1000):
     rewards = []
 
     for _ in range(initial_episodes):
-        state = env.reset()
+        state, _ = env.reset()
         episode_reward = 0
         done = False
 
         while not done:
             action = agent.act_deterministic(state)
-            state, reward, done, _ = env.step(action)
+            state, reward, terminated, truncated, _ = env.step(action)
+            done = terminated or truncated
             episode_reward += reward
 
         rewards.append(episode_reward)
@@ -1020,7 +1065,7 @@ class OfflineRLEvaluation:
                     break
 
             if policy_match:
-                returns.append(trajectory.return)
+                returns.append(trajectory.total_return)
 
         if len(returns) == 0:
             return None  # Policy doesn't match any dataset trajectory

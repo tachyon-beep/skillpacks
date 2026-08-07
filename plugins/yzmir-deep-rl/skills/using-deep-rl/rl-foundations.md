@@ -207,7 +207,7 @@ reward = (distance_prev - distance_curr) + large_bonus_at_goal
 
 **Why**: Encourages progress + explicit goal reward.
 
-**Takeaway**: Reward function engineering is CRITICAL. Route to reward-shaping skill for details.
+**Takeaway**: Reward function engineering is CRITICAL. Route to reward-shaping-engineering for details.
 
 
 ### MDP Formulation Checklist
@@ -1723,28 +1723,38 @@ for x in range(grid_size):
     print(' '.join(row))
 ```
 
-**Output**:
+**Output** (actual output of the code above):
 
 ```
-Converged in 23 iterations
+Converged in 6 iterations
 Value Function:
-[[ 2.39  3.65  5.05  6.17]
- [ 3.65  0.    6.17  7.59]
- [ 5.05  0.    7.59  8.77]
- [ 6.17  7.59  8.77  0.  ]]
+[[ 1.8098  3.122   4.58    6.2   ]
+ [ 3.122   4.58    6.2     8.    ]
+ [ 4.58    6.2     8.     10.    ]
+ [ 6.2     8.     10.      0.    ]]
 
 Optimal Policy:
-→ → → ↓
-↓ G → ↓
-→ G → ↓
+↓ → ↓ ↓
+↓ ↓ → ↓
+↓ ↓ ↓ ↓
 → → → G
 ```
 
 **Key Observations**:
 
-- Values increase as you get closer to goal
-- Policy points toward goal (shortest path)
-- Walls (value=0) are avoided
+- Values increase monotonically as you get closer to the goal
+- Goal-adjacent states are worth exactly 10 (one step, reward 10, no discounting of a
+  terminal transition); each extra step multiplies by γ=0.9 and subtracts the −1 step cost
+- Policy points toward the goal along a shortest path (ties broken by action order,
+  which is why the first row prefers ↓ over →)
+- The goal itself has V=0 — it is terminal, not valuable to be in
+
+**Note on the walls**: this implementation treats `walls` only inside `next_state` (moving into
+a wall bounces you back) — it never skips wall cells in the sweep, so (1,1) and (2,2) get ordinary
+values and ordinary arrows, exactly as printed. That is why there is no `G`-like marker for walls
+in the policy grid. If you want walls to be genuinely impassable *states*, you must also skip them
+in the value-iteration loop and in the policy extraction; a common exercise bug is to assume the
+bounce-back rule alone is enough.
 
 
 ### Example 2: Q-Learning on GridWorld
@@ -1848,9 +1858,11 @@ import numpy as np
 from collections import defaultdict
 import random
 
-# Simple chain MDP: s0 → s1 → s2 → goal
+# Simple chain MDP: s0 → s1 → s2 → goal(s3)
 # Deterministic policy: always go right
-# Reward: -1 per step, +10 at goal
+# Rewards are on TRANSITIONS (the standard convention, matching r + γV(s')):
+#   s0→s1: -1     s1→s2: -1     s2→s3: +10
+# s3 is terminal, V(s3) = 0
 # gamma = 0.9
 
 gamma = 0.9
@@ -1861,12 +1873,11 @@ def mc_policy_evaluation(num_episodes=1000):
     counts = defaultdict(int)
     
     for _ in range(num_episodes):
-        # Generate episode
+        # Generate episode: (state departed, reward for leaving it)
         trajectory = [
-            (0, -1),  # (state, reward)
+            (0, -1),
             (1, -1),
-            (2, -1),
-            (3, 10),  # goal
+            (2, 10),  # transition into the goal
         ]
         
         # Compute returns
@@ -1915,32 +1926,36 @@ print({s: round(V_td[s], 2) for s in [0, 1, 2]})
 
 # True values (analytical)
 V_true = {
-    0: -1 + gamma * (-1 + gamma * (-1 + gamma * 10)),
-    1: -1 + gamma * (-1 + gamma * 10),
-    2: -1 + gamma * 10,
+    0: -1 + gamma * (-1 + gamma * 10),
+    1: -1 + gamma * 10,
+    2: 10,
 }
 print("\nTrue V:")
 print({s: round(V_true[s], 2) for s in [0, 1, 2]})
 ```
 
-**Output**:
+**Output** (actual output of the code above):
 
 ```
 Monte Carlo V:
-{0: 4.39, 1: 6.1, 2: 8.0}
+{0: 6.2, 1: 8.0, 2: 10.0}
 
 TD(0) V:
-{0: 4.41, 1: 6.12, 2: 8.01}
+{0: 6.2, 1: 8.0, 2: 10.0}
 
 True V:
-{0: 4.39, 1: 6.1, 2: 8.0}
+{0: 6.2, 1: 8.0, 2: 10}
 ```
 
 **Observations**:
 
-- Both MC and TD converge to true values
+- Both MC and TD converge to the same true values
 - TD uses bootstrapping (updates before episode ends)
 - MC waits for complete episode
+- **They agree only because both use the same reward convention.** If MC scores the reward on
+  *arriving* at a state while TD scores it on the *transition*, the two will converge to values
+  offset by one step and you will spend an afternoon blaming the learning rate. Pin down where
+  the reward lands before comparing any two value estimators.
 
 
 ### Example 4: Discount Factor Impact
@@ -2150,7 +2165,7 @@ This skill covers **theory and foundations**. Route to other skills for:
 **Special Topics**:
 
 - **exploration-strategies**: Curiosity, RND, intrinsic motivation
-- **reward-shaping**: Potential-based shaping, inverse RL
+- **reward-shaping-engineering**: Potential-based shaping, inverse RL
 - **multi-agent-rl**: QMIX, MADDPG, cooperative/competitive
 - **offline-rl**: CQL, IQL, learning from fixed datasets
 - **model-based-rl**: MBPO, Dreamer, world models

@@ -450,10 +450,11 @@ import numpy as np
 # Collect rewards from random policy
 rewards = []
 for episode in range(100):
-    state = env.reset()
+    state, info = env.reset()
     for step in range(1000):
         action = env.action_space.sample()  # Random action
-        state, reward, done, _ = env.step(action)
+        state, reward, terminated, truncated, _ = env.step(action)
+        done = terminated or truncated
         rewards.append(reward)
         if done:
             break
@@ -477,8 +478,8 @@ if rewards.std() > 10:
 if rewards.mean() == rewards.max():
     print("⚠️ RED FLAG: Constant rewards, no signal to learn from!")
 
-if (rewards > 1).any() and (rewards < -1).any():
-    print("✓ Reward scale looks reasonable ([-1, 1] range)")
+if np.all(np.abs(rewards) <= 1):
+    print("✓ Reward scale looks reasonable (all rewards within [-1, 1])")
 ```
 
 **Action if scale is wrong:**
@@ -504,14 +505,15 @@ def sanity_check_env(env, num_episodes=5):
     """Quick check if environment is sane."""
 
     for episode in range(num_episodes):
-        state = env.reset()
+        state, info = env.reset()
         print(f"\nEpisode {episode}:")
         print(f"  Initial state shape: {state.shape}, dtype: {state.dtype}")
         print(f"  Initial state range: [{state.min()}, {state.max()}]")
 
         for step in range(10):
             action = env.action_space.sample()
-            next_state, reward, done, info = env.step(action)
+            next_state, reward, terminated, truncated, info = env.step(action)
+            done = terminated or truncated
 
             print(f"  Step {step}: action={action}, reward={reward}, done={done}")
             print(f"    State shape: {next_state.shape}, range: [{next_state.min()}, {next_state.max()}]")
@@ -556,10 +558,11 @@ def manual_policy(state):
 # Test manual policy
 total_reward = 0
 for episode in range(10):
-    state = env.reset()
+    state, info = env.reset()
     for step in range(500):
         action = manual_policy(state)
-        state, reward, done, _ = env.step(action)
+        state, reward, terminated, truncated, _ = env.step(action)
+        done = terminated or truncated
         total_reward += reward
         if done:
             break
@@ -578,7 +581,7 @@ print(f"Manual policy average reward: {avg_reward}")
 ```python
 # Check if observations are normalized
 for episode in range(10):
-    state = env.reset()
+    state, info = env.reset()
     print(f"Episode {episode}: state range [{state.min()}, {state.max()}]")
 
     # For images: should be [0, 1] or [-1, 1]
@@ -646,7 +649,7 @@ def reset(self):
 **Detection**:
 
 ```python
-states = [env.reset() for _ in range(10)]
+states = [env.reset(seed=None)[0] for _ in range(10)]
 if len(set(map(tuple, states))) == 1:
     print("⚠️ Reset broken, always same state")
 ```
@@ -1208,11 +1211,12 @@ elif reward_curve peaks then drops:
 # Compute random baseline
 random_rewards = []
 for _ in range(100):
-    state = env.reset()
+    state, info = env.reset()
     episode_reward = 0
     for step in range(1000):
         action = env.action_space.sample()
-        state, reward, done, _ = env.step(action)
+        state, reward, terminated, truncated, _ = env.step(action)
+        done = terminated or truncated
         episode_reward += reward
         if done:
             break
@@ -1269,11 +1273,12 @@ def debug_batch_size():
 def evaluate(agent, num_episodes=10):
     episode_rewards = []
     for _ in range(num_episodes):
-        state = env.reset()
+        state, info = env.reset()
         episode_reward = 0
         for step in range(1000):
             action = agent.act(state, explore=False)  # Greedy
-            state, reward, done, _ = env.step(action)
+            state, reward, terminated, truncated, _ = env.step(action)
+            done = terminated or truncated
             episode_reward += reward
             if done:
                 break
