@@ -146,7 +146,7 @@ Plus: pull the historical audit rejection rate. Zero over many trials is itself 
 
 **Symptom** — paired analysis on branches that do not actually share their future inputs, RNG streams, or resource budgets. Symptom in the numbers: `sd_d` much larger than the design predicted, explained away as "the task is noisy".
 
-**Mechanism** — CRN was never in effect or silently decayed. Unshared randomness adds variance twice. In the running example this takes `sd_d` from 0.030 to 0.075, dropping a fleet planned for 80% power to **11%**.
+**Mechanism** — CRN was never in effect or silently decayed. Unshared randomness adds variance twice. In the running example this takes `sd_d` from 0.030 to 0.075, dropping a fleet planned for 80% power (52 runs) to about **20%**.
 
 **Detector** — require a per-branch digest of each shared random stream and assert equality within a unit. Also look for additive seeding (`base_seed + branch_id`), which collides across units.
 

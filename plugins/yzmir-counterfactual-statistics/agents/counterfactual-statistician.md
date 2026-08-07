@@ -40,7 +40,7 @@ Route to: experiment-statistics-reviewer agent, or /audit-experiment-statistics.
 <example>
 User asks about a difference-in-differences design on observational logs.
 DO NOT trigger. That is not a paired counterfactual design.
-Route to: yzmir-experimentation (general A/B and causal inference).
+Route to: `yzmir-experimentation` *(planned — not yet in the marketplace; fall back to general statistical guidance)* — general A/B and causal inference.
 </example>
 
 ## Phase 1: Fact-Finding (before any design)

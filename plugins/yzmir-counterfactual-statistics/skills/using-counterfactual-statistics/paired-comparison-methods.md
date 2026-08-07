@@ -128,7 +128,14 @@ def assert_one_row_per_unit(unit_ids):
         )
 
 # Cost of dropping the pairing, on the running example's own data.
-# per_unit = the 24 per-run differences from statistical-units-and-clustering.md
+# per_unit = the 24 per-run differences from statistical-units-and-clustering.md,
+# regenerated here from that sheet's seeded DGP so this block runs standalone.
+_rng = np.random.default_rng(6)
+_G, _D, _K = 24, 3, 8                                  # runs, decision points, candidates
+_traj = _rng.normal(0.0, 0.026, _G)                    # per-run heterogeneity
+per_unit = _rng.normal(0.005 + _traj[:, None, None], 0.055,
+                       size=(_G, _D, _K)).reshape(_G, -1).mean(axis=1)
+
 rng = np.random.default_rng(42)
 G = 24
 noop = rng.normal(2.40, 0.11, G)          # per-run control loss

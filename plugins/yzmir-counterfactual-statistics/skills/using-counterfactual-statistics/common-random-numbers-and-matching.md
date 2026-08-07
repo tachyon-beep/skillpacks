@@ -139,7 +139,7 @@ Wire this into CI on a two-branch smoke trial. CRN that is not asserted decays: 
 
 ## The Failure It Prevents
 
-**Believing you have a matched comparison when you have an unmatched one.** The symptom is a paired analysis whose intervals are much wider than the design predicted, usually explained away as "the task is just noisy". Concretely, in the running example, unnoticed stream divergence takes `sd_d` from 0.030 to 0.075, which turns a fleet planned for 80% power into one with **11%** power. The experiment then produces a null, the intervention is abandoned, and nothing in the results table indicates that the fleet measured the dataloader rather than the method.
+**Believing you have a matched comparison when you have an unmatched one.** The symptom is a paired analysis whose intervals are much wider than the design predicted, usually explained away as "the task is just noisy". Concretely, in the running example, unnoticed stream divergence takes `sd_d` from 0.030 to 0.075, which turns a fleet planned for 80% power (52 runs) into one with about **20%** power. The experiment then produces a null, the intervention is abandoned, and nothing in the results table indicates that the fleet measured the dataloader rather than the method.
 
 This failure is worse than most because it is *conservative-looking*: wide intervals feel like caution. They are not — they are a measurement instrument that was quietly unplugged.
 

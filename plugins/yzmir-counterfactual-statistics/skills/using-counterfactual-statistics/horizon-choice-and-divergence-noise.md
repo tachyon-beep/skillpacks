@@ -59,7 +59,7 @@ An illustrative model (signal `a(1 − e^{−H/τ})` with `a = 0.016, τ = 2500`
 Three things to take from this table:
 
 1. **The optimum is interior and the penalty is asymmetric-looking but real on both sides.** At `H = 250` you need 222 runs because there is nothing to see yet; at `H = 40000` you need 145 because the branches have wandered. The middle costs 26.
-2. **The optimum is broad.** Anywhere from 2000 to 5000 costs within 10% of the best. Do not over-tune — pick a round number in the plateau, which also makes the choice easier to defend as non-data-driven.
+2. **The optimum is broad.** Anywhere from 2000 to 5000 costs within ~12% of the best in fleet size (and within ~6% in `d_z`). Do not over-tune — pick a round number in the plateau, which also makes the choice easier to defend as non-data-driven.
 3. **The largest effect is not at the best horizon.** The raw effect at `H = 40000` (0.0160) is 32% larger than at the optimum (0.0121), and needs 5.6× the fleet to establish. **"The effect is biggest at the long horizon" is compatible with the long horizon being the worst place to measure it.**
 
 That last point is the one that produces bad decisions, because the intuition ("bigger effect = easier to detect") is wrong whenever noise grows faster than signal.
