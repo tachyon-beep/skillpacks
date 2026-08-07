@@ -21,7 +21,7 @@ Each has a different first move.
 
 ## 1. Import-Time Crash
 
-```python
+```pycon
 >>> import mymod
 Segmentation fault (core dumped)
 ```
@@ -64,7 +64,7 @@ import mymod  # if it segfaults, you get a Python-style traceback
 
 ## 2. Runtime Panic
 
-```python
+```pycon
 >>> mymod.process(bad_input)
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
@@ -105,7 +105,7 @@ For library code, catch panics inside the binding and convert to PyErr (see [`er
 
 ## 3. Segfault
 
-```python
+```pycon
 >>> mymod.process(data)
 Segmentation fault (core dumped)
 $ echo $?

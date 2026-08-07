@@ -86,7 +86,7 @@ The output tells you which functions dominate. If a single Python function is 50
 
 For per-line detail:
 
-```python
+```text
 %load_ext line_profiler
 %lprun -f my_func workload()
 ```

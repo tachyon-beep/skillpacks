@@ -200,4 +200,3 @@ For broader, non-terminal UX critique of the resulting design, route to `lyra-ux
 - Write the implementation code (hand to an engineering pack)
 - Run a full WCAG/screen-reader audit (covered by accessibility specialists)
 - Design the underlying domain/data model beyond what the UI projects
-```

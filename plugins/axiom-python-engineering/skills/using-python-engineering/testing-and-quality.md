@@ -152,8 +152,11 @@ class TestUserUpdate:
         user = create_user("alice", "old@example.com")
         user.update_email("new@example.com")
         assert user.email == "new@example.com"
+```
 
-# ✅ Directory structure
+✅ Directory structure:
+
+```text
 tests/
 ├── __init__.py
 ├── conftest.py          # Shared fixtures

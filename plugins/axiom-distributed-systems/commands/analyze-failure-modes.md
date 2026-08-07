@@ -234,4 +234,3 @@ Not covered: implementing fixes (downstream — the report names the artifact); 
 | Writing the fix into the artifact | This command localises and routes; it does not patch |
 | Spec-inferred run reported at full confidence | No named spec = lower confidence; flag every inferred guarantee |
 | Report not dated/signed | Provenance matters; date-stamp the filename and sign the report |
-```

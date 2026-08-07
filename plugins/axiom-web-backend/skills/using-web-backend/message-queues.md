@@ -790,7 +790,7 @@ kafka-acls --add \
 
 **LocalStack for SQS/SNS**:
 
-```python
+```yaml
 # docker-compose.yml
 services:
   localstack:

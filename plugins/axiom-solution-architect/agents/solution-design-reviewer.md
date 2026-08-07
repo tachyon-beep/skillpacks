@@ -133,6 +133,7 @@ Walk through each of the eleven failure modes, with file-level evidence:
 …
 
 ## What the design does well
+```
 
 ---
 

@@ -118,13 +118,17 @@ async def create_order(order: Order):
 
 **gRPC**:
 
-```python
-# Proto definition
+Proto definition:
+
+```protobuf
 service OrderService {
     rpc CreateOrder (OrderRequest) returns (OrderResponse);
 }
+```
 
-# Implementation
+Implementation:
+
+```python
 class OrderServicer(order_pb2_grpc.OrderServiceServicer):
     async def CreateOrder(self, request, context):
         # Type-safe, efficient binary protocol
