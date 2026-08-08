@@ -65,6 +65,10 @@ All router skills from the 18 plugins are now available as slash commands:
 ### Compilers & IR (Axiom)
 - **`/tensor-compiler-engineering`** - Routes to tensor-compiler engineering (graph IR, lowering, kernel selection, conformance testing)
 
+### Contracts & Formalisation (Axiom)
+- **`/contract-engineering`** - Routes to typed cross-boundary contract discipline (schema design, fail-closed versioning, deterministic resolution, blinding, canonical identity, contract testing)
+- **`/experiment-formalisation`** - Routes to experiment formalisation with EXPO/SUMO/PROV-O (verified vocabulary only, projection law, competency questions, validation and conformance)
+
 ### Marketplace Maintenance (Meta)
 - **`/skillpack-maintenance`** - Routes to skillpack maintenance methodology (domain analysis, structure review with fitness scorecard, RED-GREEN-REFACTOR behavioral testing, scoped quality improvements)
 
@@ -100,6 +104,8 @@ The router will then guide you to the appropriate specialized skill for your tas
 | muna-wiki-management | using-wiki-manager | /wiki-manager |
 | ordis-security-architect | using-security-architect | /security-architect |
 | axiom-tensor-compiler-engineering | using-tensor-compiler-engineering | /tensor-compiler-engineering |
+| axiom-contract-engineering | using-contract-engineering | /contract-engineering |
+| axiom-experiment-formalisation | using-experiment-formalisation | /experiment-formalisation |
 | yzmir-ai-engineering-expert | using-ai-engineering | /ai-engineering |
 | yzmir-counterfactual-statistics | using-counterfactual-statistics | /counterfactual-statistics |
 | yzmir-deep-rl | using-deep-rl | /deep-rl |

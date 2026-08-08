@@ -60,7 +60,14 @@ falsified the pack's original "unobtainable → re-express from the paper" premi
 
 ```bash
 python3 score_green.py <deliverable.md>
+
+# Scorer self-test — the six-planted-defect fixture ships with the pack:
+python3 score_green.py .test-fixtures/planted-defects.md
+# Must flag Control/ResultSet/Lineage as fabricated, Factor/ParedComparison/
+# QualityControlStrategy as paper-only, and credit ExperimentalFactor/
+# TargetVariable/Treated_Untreated as verified.
 ```
 
-Loads `expo-owl-inventory.json` and `verified-terms.json` from the skill directory, so it
-stays correct as the inventory grows. Read every flag in context before scoring.
+Loads `expo-owl-inventory.json` and `verified-terms.json` relative to its own location,
+so it stays correct as the inventory grows and runs from any checkout. Read every flag
+in context before scoring.

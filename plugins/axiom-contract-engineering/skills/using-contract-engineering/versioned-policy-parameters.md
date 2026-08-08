@@ -74,6 +74,14 @@ class ParamKind(str, Enum):
     WEIGHT = "weight"    # participates in the tradable comparison
     BAND = "band"        # hysteresis / separation between two operating points
 
+class Bound(str, Enum):
+    """Which direction a VETO binds. Without this, the adjudicator hardcodes
+    one comparison and a floor veto (minimum safety coverage, minimum eval
+    score) can only be expressed by branching on the parameter's *name* —
+    the exact defect §5 forbids."""
+    CEILING = "ceiling"  # trips when the metric exceeds the value
+    FLOOR = "floor"      # trips when the metric falls below the value
+
 class Authority(str, Enum):
     """Closed set — who may retune this parameter. Free text here would be a
     covert channel into anything that reads it (blinding-by-construction.md)."""
@@ -87,6 +95,13 @@ class Param:
     kind: ParamKind
     authority: Authority  # who owns this operating point
     basis: str            # what the number was derived from (e.g. "p99 noise, 30d")
+    bound: Bound | None = None  # direction, for VETO params only
+
+    def __post_init__(self) -> None:
+        # Illegal states unrepresentable: a veto without a direction cannot be
+        # adjudicated; a direction on a non-veto is meaningless.
+        if (self.kind is ParamKind.VETO) != (self.bound is not None):
+            raise ValueError(f"bound is mandatory for VETO and forbidden otherwise")
 
 @dataclass(frozen=True)
 class PolicyRecord:
@@ -223,12 +238,17 @@ def adjudicate(candidate: Candidate, policy: PolicyRecord) -> Verdict:
     for name, p in sorted(policy.params.items()):
         if p.kind is not ParamKind.VETO:
             continue
-        if candidate.metrics[name] > p.value:
+        measured = candidate.metrics[name]
+        tripped = measured > p.value if p.bound is Bound.CEILING else measured < p.value
+        if tripped:                       # direction comes from the record, not the code
             return Verdict(admitted=False, vetoed_by=name,
                            veto_authority=p.authority,
                            policy_version=policy.policy_version)
 
-    # Stage 2 — only survivors are scored. Weights may trade freely against each other.
+    # Stage 2 — only survivors are scored. Weights may trade freely against each
+    # other. "retain_at" is the §4 operating point, kind=BAND-derived — it is a
+    # threshold the score is compared against, so it is excluded from the WEIGHT
+    # sum by its kind, not by its name.
     score = sum(candidate.metrics[n] * p.value
                 for n, p in policy.params.items() if p.kind is ParamKind.WEIGHT)
     return Verdict(admitted=score >= policy.params["retain_at"].value,

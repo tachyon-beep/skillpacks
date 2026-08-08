@@ -25,9 +25,11 @@ For each: pattern, heuristic, severity, closing sheet.
 2. **Bare `.get()` absence acceptance with no version gate**
 
    ```bash
-   grep -rn -B5 "\.get(" --include="*.py" "${P}" | grep -v "version"
+   # Candidate leads: bare .get() on a wire-shaped receiver. Scope to payload-like
+   # names — a tree-wide ".get(" sweep drowns the signal in config/argparse hits.
+   grep -rn -E "\b[a-z_]*(payload|raw|msg|wire|record)[a-z_]*\.get\(" --include="*.py" "${P}"
    ```
-   Heuristic: parser functions using bare `.get(key)` where no `schema_version`/`wire_version` check appears in the enclosing function. Severity: **med**. Sheet: `silent-default-elimination.md` §4.
+   Heuristic: parser functions using bare `.get(key)` where no `schema_version`/`wire_version` check appears in the **enclosing function** — so confirm each lead by reading the whole function, never by line-filtering. (Do not pipe through `grep -v version`: that filters *lines*, not functions — it deletes the gated parser's version-check context lines while keeping its `.get(` hit, reporting the compliant parser with the exculpatory evidence removed.) Severity: **med**. Sheet: `silent-default-elimination.md` §4.
 
 3. **Dual-key fallbacks (compat shims)**
 

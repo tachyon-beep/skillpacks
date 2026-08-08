@@ -141,7 +141,10 @@ Comparison
 │                              SplitSamples pairs by inheritance
 ├── arms[]
 │   ├── arm_role             ← intervention | none | reference      (mint)
-│   ├── realised_by          ← SUMO: realization → the Process that ran
+│   ├── realised_by          ← inverse reading of SUMO realization — the axiom
+│   │                          is (realization ?PROCESS ?PROP), process FIRST,
+│   │                          and its semantics are representational, not
+│   │                          causal (sumo-upper-binding.md quotes it exactly)
 │   └── results              ← EXPO: ExperimentalResults
 └── result_errors[]          ← EXPO: ResultError / FaultyComparison / IncompleteDataError
 ```

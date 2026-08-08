@@ -8,10 +8,11 @@ because a term appearing inside a "this is refuted" sentence is a PASS, not a fa
 Usage: python3 score_green.py <file>
 """
 import json, re, sys
+from pathlib import Path
 
-D = '/home/john/skillpacks/plugins/axiom-experiment-formalisation/skills/using-experiment-formalisation/'
-inv = json.load(open(D + 'expo-owl-inventory.json'))
-vt = json.load(open(D + 'verified-terms.json'))
+D = Path(__file__).resolve().parent / 'skills' / 'using-experiment-formalisation'
+inv = json.load(open(D / 'expo-owl-inventory.json'))
+vt = json.load(open(D / 'verified-terms.json'))
 
 REAL = set(inv['classes']) | set(inv['object_properties'])
 CORRECTIONS = {k: v for k, v in vt['expo_corrections'].items() if not k.startswith('$')}

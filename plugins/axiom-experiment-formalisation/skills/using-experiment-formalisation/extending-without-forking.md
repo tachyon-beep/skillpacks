@@ -92,13 +92,13 @@ Version the **module**, not the terms. Use `owl:versionIRI` (or your equivalent)
 
 ## The gap register
 
-The artifact that makes extension reviewable. One row per gap, maintained alongside the mapping:
+The artifact that makes extension reviewable. One row per gap, maintained alongside the mapping. **The CQ-x labels below continue the local numbering of the worked example in [`mapping-a-system.md`](mapping-a-system.md) (CQ-1…CQ-6), plus one question this register adds: CQ-7, "which inputs influenced decision D, and with what weight?"** — number yours once, in one place, and make every sheet cite that set:
 
 | Gap | Why nothing existing fits | Competency question | Resolution | Module | Status |
 |---|---|---|---|---|---|
 | Replication kinds | EXPO has no replication term; PROV-O models derivation, not experimental repetition | CQ-2 | mint 3 terms | comparison | minted |
 | Control over a process | MILO `experimentalControl` domain 2 = `Object` | CQ-1 | mint sibling predicate | comparison | minted |
-| Delegated authorisation | Absent from EXPO and SUMO | CQ-3 | mint | governance | minted |
+| Delegated authorisation | Absent from EXPO and SUMO | CQ-5 | mint | governance | minted |
 | Influence coefficient | Absent; no prior art found | CQ-7 | mint | lifecycle | minted |
 
 **Read the register as a diagnostic.** A short register against a large extension means terms were minted without checking for prior art. A register where every row says "nothing existing fits" and none cites a specific constraint means the checking was nominal. And a register that grows every sprint is telling you the grammar was not stable enough to formalise — which is the premature-generalisation failure, and the honest response is to stop and revisit [`formalisation-triage.md`](formalisation-triage.md).

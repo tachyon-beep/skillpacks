@@ -118,7 +118,10 @@ ABSENT_ABLE = ["cpu_util", "gpu_util", "queue_depth"]
 @pytest.mark.parametrize("form", ["tagged", "omitted"])
 def test_absence_parses_to_typed_absence(field, form):
     payload = json.loads((FIXTURES / "v3/new_producer.json").read_text())
-    payload[field] = {"absent": "not_sampled"} if form == "tagged" else payload.pop(field)
+    if form == "tagged":
+        payload[field] = {"absent": "not_sampled"}
+    else:
+        del payload[field]   # actually omit — `payload[field] = payload.pop(field)` would re-insert it
     value = getattr(parse(payload), field)
     assert isinstance(value, Absent) and value.reason is AbsenceReason.NOT_SAMPLED
 
@@ -224,12 +227,18 @@ def test_blinded_view_excludes_sensitive_field():
 
 Without the first assertion the test is a tautology that survives every refactor that quietly renames the field.
 
-**The closure walk.** Per-field tests miss the field added next quarter. Walk the record's declared fields and assert each one carries an explicit policy decision (`blinding-by-construction.md`):
+**The closure walk.** Per-field tests miss the field added next quarter. Re-assert in CI the walk that `blinding-by-construction.md` defines: `FIELD_POLICY` is keyed by `(qualified class name, field name)`, and `assert_field_policy_closure` recurses through every record *reachable from the source root* — a top-level check on the view's own fields would miss the fingerprint added three levels down:
 
 ```python
-def test_every_field_has_a_declared_policy():
-    undeclared = set(fields_of(ReviewerView)) - set(FIELD_POLICY[ReviewerView])
-    assert not undeclared, f"fields with no blinding decision: {sorted(undeclared)}"
+def test_every_reachable_field_has_a_declared_policy():
+    assert_field_policy_closure(CandidateRecord)   # raises UndeclaredFieldPolicy on any gap
+
+def test_closure_walk_actually_fails_on_undeclared_fields():
+    @dataclass(frozen=True)
+    class Unregistered:                            # positive control for the control
+        surprise: str
+    with pytest.raises(UndeclaredFieldPolicy, match="Unregistered.surprise"):
+        assert_field_policy_closure(Unregistered)
 ```
 
 ### 8. Resolver replay tests

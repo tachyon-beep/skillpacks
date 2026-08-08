@@ -1,6 +1,6 @@
 {
   "name": "axiom-contract-engineering",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The engineering discipline of typed cross-boundary contracts — contract-first boundaries with one authority per record class, silent-default elimination (absent ≠ zero, validity masks, fail-loud readers), schema versioning where any change in meaning is a new version and compatibility fails closed, deterministic resolution with no covert channels, blinding by construction (excluded fields absent from the schema, not ignored), canonical content-addressed identity, contract-layer dependency direction with import-lint gates, versioned policy parameters, definition lifecycle (draft → approved → locked via recorded events), and contract testing (golden fixtures, round-trips, canonicalisation properties, schema-invalid rejection, authority tests). Router + 10 sheets, 3 commands, 2 agents.",
   "author": {
     "name": "tachyon-beep",

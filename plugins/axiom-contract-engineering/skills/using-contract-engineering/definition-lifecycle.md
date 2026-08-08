@@ -123,6 +123,12 @@ class DefinitionRegistry:
         if self.state(old) is State.DRAFT:
             raise LifecycleViolation("a draft is edited, not superseded")
         new = DefinitionRef(old.name, old.version + 1)
+        if new in self._defs:
+            # Without this guard, superseding v2 a second time would overwrite
+            # v3's Definition and append a fresh None -> DRAFT event that becomes
+            # v3's latest — silently un-locking a LOCKED definition. Locked is
+            # locked; a name is superseded at its head, exactly once per version.
+            raise LifecycleViolation(f"{old}: already superseded by {new}")
         self._defs[new] = Definition(new, new_content_hash, supersedes=old)
         self._events.append(LifecycleEvent(new, None, State.DRAFT, new_content_hash,
                                            actor, authority, at))

@@ -128,13 +128,16 @@ The failure shape: a new producer version legitimately stops sending `gpu_util` 
 # WRONG — absence tolerated unconditionally:
 gpu = payload.get("gpu_util")    # any producer may now silently drop the field
 
-# RIGHT — absence meaningful only where the schema version declares it:
-if version >= 3:                 # v3 declared gpu_util absent-able
+# RIGHT — absence meaningful only where the schema version declares it,
+# and versions are ENUMERATED, never ranged (`>=` would parse a future v4
+# under v3 semantics — the fail-open gate schema-versioning-and-evolution.md
+# forbids; a new version joins this branch only after its changelog is read):
+if version == 3:                 # v3 declared gpu_util absent-able
     gpu = _tagged_metric(payload, "gpu_util")   # explicit Absent(...) allowed
 elif version == 2:               # v2 declares gpu_util mandatory
     gpu = _require_metric(payload, "gpu_util")  # absence here is a violation
 else:
-    raise ContractViolation(f"unsupported version {version}")
+    raise ContractViolation(f"unsupported version {version}")  # v4 lands here
 ```
 
 Under incident pressure this costs one extra branch over the `.get()` one-liner. That branch is the entire difference between "the fleet migrated" and "we stopped noticing when producers drop fields."
@@ -183,7 +186,7 @@ Encoding absence correctly is half the job. The consumer must then do something 
 | Scalar field, sometimes unmeasurable | Tagged union `Measured \| Absent(reason)`; reason is a closed enum |
 | Dense batch / tensor | Values + mandatory validity mask; poison masked cells; every aggregation consumes the mask |
 | Mandatory field missing from payload | Typed `ContractViolation` at the parser, naming field + producer + version |
-| Field legitimately absent in newer schema | Absence declared in schema version N; reader accepts absence only under `version >= N`; violation under older versions |
+| Field legitimately absent in newer schema | Absence declared in schema version N; reader accepts absence only under the enumerated versions that declare it (never a `>=` range); violation under versions that declare it mandatory; unknown versions fail closed |
 | Consumer missing a required input | Recorded abstain (`INSUFFICIENT_DATA`), never a decision from partial inputs presented as complete |
 | Stale value carried forward | Declared age budget; consumed value recorded as stale-with-age; carry-forward state recorded |
 | Imputed/renormalized substitute | Policy version bump; the substitution recorded on the output |

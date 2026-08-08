@@ -37,6 +37,7 @@ FACTIONS = ("axiom", "yzmir", "lyra", "muna", "ordis", "bravos", "meta")
 NOT_PACK_NAMES = {
     "meta-learning",      # the ML technique
     "meta-learner",
+    "meta-mining",        # data-mining research area (DMOP, prior-art-map)
     "meta-skill",         # "a meta-skill", generic prose
     "meta-skills",
     "meta-llama",         # Meta's Llama model IDs
