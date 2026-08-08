@@ -5,8 +5,8 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, product management, solution architecture, distributed systems, tensor compilers, game development, security, documentation, site design, and UX skills for Claude Code - 51 complete skillpacks with 400+ TDD-validated skills and reference sheets",
-    "version": "3.31.0",
+    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, product management, solution architecture, distributed systems, tensor compilers, game development, security, documentation, site design, and UX skills for Claude Code - 52 complete skillpacks with 400+ TDD-validated skills and reference sheets",
+    "version": "3.32.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -64,7 +64,7 @@
     {
       "name": "axiom-solution-architect",
       "source": "./plugins/axiom-solution-architect",
-      "description": "Forward solution architecture: brief/HLD/epic \u2192 traceable artifact set (ADRs, C4, NFRs, RTM, integration/migration, risks, TOGAF/ArchiMate, consolidated SAD). 9 skills, 2 agents, 2 commands.",
+      "description": "Forward solution architecture: brief/HLD/epic → traceable artifact set (ADRs, C4, NFRs, RTM, integration/migration, risks, TOGAF/ArchiMate, consolidated SAD). 9 skills, 2 agents, 2 commands.",
       "keywords": [
         "axiom",
         "solution-architect",
@@ -94,7 +94,7 @@
     {
       "name": "axiom-devops-engineering",
       "source": "./plugins/axiom-devops-engineering",
-      "description": "DevOps and platform engineering \u2014 the path from commit to healthy production: CI/CD pipelines and verification gates, zero-downtime deployment, infrastructure as code, container build hygiene, orchestration runtime, observability (metrics/logs/traces, SLI/SLO), incident response and on-call, release management and rollback, secrets and configuration, environment parity, DevSecOps and software supply-chain security, GitOps, and SRE/reliability. Router + 13 reference sheets, 3 commands (design-deployment, review-pipeline, audit-deployment), and 2 agents (deployment-strategist, pipeline-reviewer).",
+      "description": "DevOps and platform engineering — the path from commit to healthy production: CI/CD pipelines and verification gates, zero-downtime deployment, infrastructure as code, container build hygiene, orchestration runtime, observability (metrics/logs/traces, SLI/SLO), incident response and on-call, release management and rollback, secrets and configuration, environment parity, DevSecOps and software supply-chain security, GitOps, and SRE/reliability. Router + 13 reference sheets, 3 commands (design-deployment, review-pipeline, audit-deployment), and 2 agents (deployment-strategist, pipeline-reviewer).",
       "keywords": [
         "axiom",
         "devops",
@@ -206,7 +206,7 @@
     {
       "name": "axiom-tensor-compiler-engineering",
       "source": "./plugins/axiom-tensor-compiler-engineering",
-      "description": "Building compilers for tensor programs \u2014 lowering a canonical graph IR to executable PyTorch and proving the artifact still means what the IR meant. v0.1 ships router + 12 sheets, 3 commands (/scaffold-tensor-compiler, /verify-artifact-conformance, /diagnose-miscompile), 2 agents (tensor-compiler-architect, compiler-conformance-reviewer). Spine: compiler architecture (ingest \u2192 lower \u2192 optimise \u2192 codegen \u2192 artifact) with the conformance gate placed OUTSIDE the compiler, IR contracts and semantic identity (what a compiler may change vs must never change; carrying the semantic hash), numerical contracts with derived per-op tolerance budgets (never widened to make a test pass), and conformance testing \u2014 reference-vs-compiled execution, gradient conformance (float64 gradcheck + shared-cotangent comparison), zero-influence preservation, cross-device and cross-layout agreement. Implementation depth: torch.fx capture and pass composition (trace-time specialisation, in-place, dynamic shapes), torch.compile / dynamo guards / inductor / AOTAutograd joint forward+backward capture, operator lowering and kernel selection under a declared contract, fusion legality and memory planning over the joint graph, compilation manifests and reproducible builds, content-addressed artifact identity and caching, cost calibration and compile-time budgets with staleness policy, and a four-class miscompile taxonomy with pass bisection and per-node localisation. Producer-side sibling of axiom-static-analysis-engineering: that pack reads code and produces verdicts; this one transforms IR and produces executables.",
+      "description": "Building compilers for tensor programs — lowering a canonical graph IR to executable PyTorch and proving the artifact still means what the IR meant. v0.1 ships router + 12 sheets, 3 commands (/scaffold-tensor-compiler, /verify-artifact-conformance, /diagnose-miscompile), 2 agents (tensor-compiler-architect, compiler-conformance-reviewer). Spine: compiler architecture (ingest → lower → optimise → codegen → artifact) with the conformance gate placed OUTSIDE the compiler, IR contracts and semantic identity (what a compiler may change vs must never change; carrying the semantic hash), numerical contracts with derived per-op tolerance budgets (never widened to make a test pass), and conformance testing — reference-vs-compiled execution, gradient conformance (float64 gradcheck + shared-cotangent comparison), zero-influence preservation, cross-device and cross-layout agreement. Implementation depth: torch.fx capture and pass composition (trace-time specialisation, in-place, dynamic shapes), torch.compile / dynamo guards / inductor / AOTAutograd joint forward+backward capture, operator lowering and kernel selection under a declared contract, fusion legality and memory planning over the joint graph, compilation manifests and reproducible builds, content-addressed artifact identity and caching, cost calibration and compile-time budgets with staleness policy, and a four-class miscompile taxonomy with pass bisection and per-node localisation. Producer-side sibling of axiom-static-analysis-engineering: that pack reads code and produces verdicts; this one transforms IR and produces executables.",
       "keywords": [
         "axiom",
         "tensor-compiler",
@@ -237,7 +237,7 @@
     {
       "name": "axiom-static-analysis-engineering",
       "source": "./plugins/axiom-static-analysis-engineering",
-      "description": "Building static analyzers as engines: AST visitation patterns, taint-lattice (abstract-domain) design with monotonicity and finite height, three-phase inference (variable \u2192 function \u2192 callgraph) with termination proofs, plugin architecture for rules, false-positive economics with auditable suppression lifecycle, the static-vs-runtime boundary, callgraph construction (resolution rungs, dynamic features), cross-module flow with stub libraries, decorator-as-assertion (runtime + static dual enforcement), manifest-driven configuration with coherence validation, SARIF / CI integration, incremental analysis at scale, and LLM-assisted finding explanations as a pattern. v0.3 ships router + 13 sheets, 3 commands (/scaffold-analyzer, /design-tier-model, /design-rule-set), 2 agents (rule-designer, false-positive-analyst). Pattern pack \u2014 applies wherever you build an analyzer (linting, taint, contracts, governance, entity extraction).",
+      "description": "Building static analyzers as engines: AST visitation patterns, taint-lattice (abstract-domain) design with monotonicity and finite height, three-phase inference (variable → function → callgraph) with termination proofs, plugin architecture for rules, false-positive economics with auditable suppression lifecycle, the static-vs-runtime boundary, callgraph construction (resolution rungs, dynamic features), cross-module flow with stub libraries, decorator-as-assertion (runtime + static dual enforcement), manifest-driven configuration with coherence validation, SARIF / CI integration, incremental analysis at scale, and LLM-assisted finding explanations as a pattern. v0.3 ships router + 13 sheets, 3 commands (/scaffold-analyzer, /design-tier-model, /design-rule-set), 2 agents (rule-designer, false-positive-analyst). Pattern pack — applies wherever you build an analyzer (linting, taint, contracts, governance, entity extraction).",
       "keywords": [
         "axiom",
         "static-analysis",
@@ -262,7 +262,7 @@
     {
       "name": "axiom-rust-workspaces",
       "source": "./plugins/axiom-rust-workspaces",
-      "description": "Rust at workspace scope \u2014 multi-crate composition, not single-crate engineering. API-stable: router + 13 sheets, 3 commands, 1 agent. Architectural spine: workspace structure (layered / feature-grouped / domain-grouped), `[workspace.dependencies]` + resolver-2/3 with feature-graph semantics, `[workspace.lints]` + workspace-scope `clippy.toml`, workspace-scope `deny.toml` with waiver lifecycle, public-vs-internal crate boundaries with the internal-traits-crate / sealed-trait patterns, and the 10-pattern anti-pattern refusal list. Operational depth: feature-unification gotchas (the seven cases the headline rule misleads), Miri-on-subset (arena-crate isolation; nightly toolchain split), test organisation (per-crate vs workspace integration tests; fixtures crate; nextest), documentation architecture (rustdoc + mdbook 'book sits next to the crates'), release flow (synchronised vs independent versioning; cargo-release / release-plz; publish ordering), task-runner patterns (justfile + CI symmetry), workspace-scope coverage (cargo-llvm-cov + per-crate thresholds). Commands: /scaffold-workspace, /audit-workspace-deps, /validate-workspace-config. Agent: workspace-reviewer (SME Agent Protocol; sweeps all 13 sheets + 10 anti-patterns). Sibling to `axiom-rust-engineering` \u2014 that pack is single-crate-shaped; this pack composes those concerns at workspace scale.",
+      "description": "Rust at workspace scope — multi-crate composition, not single-crate engineering. API-stable: router + 13 sheets, 3 commands, 1 agent. Architectural spine: workspace structure (layered / feature-grouped / domain-grouped), `[workspace.dependencies]` + resolver-2/3 with feature-graph semantics, `[workspace.lints]` + workspace-scope `clippy.toml`, workspace-scope `deny.toml` with waiver lifecycle, public-vs-internal crate boundaries with the internal-traits-crate / sealed-trait patterns, and the 10-pattern anti-pattern refusal list. Operational depth: feature-unification gotchas (the seven cases the headline rule misleads), Miri-on-subset (arena-crate isolation; nightly toolchain split), test organisation (per-crate vs workspace integration tests; fixtures crate; nextest), documentation architecture (rustdoc + mdbook 'book sits next to the crates'), release flow (synchronised vs independent versioning; cargo-release / release-plz; publish ordering), task-runner patterns (justfile + CI symmetry), workspace-scope coverage (cargo-llvm-cov + per-crate thresholds). Commands: /scaffold-workspace, /audit-workspace-deps, /validate-workspace-config. Agent: workspace-reviewer (SME Agent Protocol; sweeps all 13 sheets + 10 anti-patterns). Sibling to `axiom-rust-engineering` — that pack is single-crate-shaped; this pack composes those concerns at workspace scale.",
       "keywords": [
         "axiom",
         "rust",
@@ -291,7 +291,7 @@
     {
       "name": "axiom-pyo3-interop",
       "source": "./plugins/axiom-pyo3-interop",
-      "description": "Production-grade Python \u2194 Rust interop via PyO3 \u2014 the FFI-boundary discipline, not single-crate Rust nor pure-Python work. v0.2 ships router + 13 sheets, 3 commands, 1 agent. Covers PyO3 fundamentals (`Bound<'py, T>`, GIL tokens, `#[pymodule]` / `#[pyclass]`), abi3 vs native and the wheel matrix, maturin inside a Cargo workspace, GIL release patterns, batched FFI to amortise crossing cost, zero-copy NumPy via the buffer protocol, Gymnasium environments backed by Rust, error mapping with traceback fidelity, lifecycle and teardown at interpreter shutdown, async across the boundary (`pyo3-async-runtimes`, tokio + asyncio), packaging and wheels (cibuildwheel, abi3, manylinux), debugging boundary panics / segfaults / GIL deadlocks, and the cost-of-crossing performance model. Commands: /scaffold-pyo3-crate, /profile-ffi-boundary, /audit-gil-discipline. Agent: pyo3-reviewer (SME Agent Protocol; sweeps all 13 sheets + 13 boundary anti-patterns). Sibling to `axiom-rust-engineering` (single-crate Rust) and `axiom-rust-workspaces` (multi-crate Rust); composes with both.",
+      "description": "Production-grade Python ↔ Rust interop via PyO3 — the FFI-boundary discipline, not single-crate Rust nor pure-Python work. v0.2 ships router + 13 sheets, 3 commands, 1 agent. Covers PyO3 fundamentals (`Bound<'py, T>`, GIL tokens, `#[pymodule]` / `#[pyclass]`), abi3 vs native and the wheel matrix, maturin inside a Cargo workspace, GIL release patterns, batched FFI to amortise crossing cost, zero-copy NumPy via the buffer protocol, Gymnasium environments backed by Rust, error mapping with traceback fidelity, lifecycle and teardown at interpreter shutdown, async across the boundary (`pyo3-async-runtimes`, tokio + asyncio), packaging and wheels (cibuildwheel, abi3, manylinux), debugging boundary panics / segfaults / GIL deadlocks, and the cost-of-crossing performance model. Commands: /scaffold-pyo3-crate, /profile-ffi-boundary, /audit-gil-discipline. Agent: pyo3-reviewer (SME Agent Protocol; sweeps all 13 sheets + 13 boundary anti-patterns). Sibling to `axiom-rust-engineering` (single-crate Rust) and `axiom-rust-workspaces` (multi-crate Rust); composes with both.",
       "keywords": [
         "axiom",
         "pyo3",
@@ -320,7 +320,7 @@
     {
       "name": "axiom-procedural-architecture",
       "source": "./plugins/axiom-procedural-architecture",
-      "description": "Structural reasoning for staged procedures \u2014 design, critique, and analyze decompositions of any procedure into composable stages, dependencies, decision points, and flow properties. Three roles (producer/critic/analyst) over one shared corpus. Router + 13 sheets, 3 commands, 2 agents.",
+      "description": "Structural reasoning for staged procedures — design, critique, and analyze decompositions of any procedure into composable stages, dependencies, decision points, and flow properties. Three roles (producer/critic/analyst) over one shared corpus. Router + 13 sheets, 3 commands, 2 agents.",
       "keywords": [
         "axiom",
         "procedural-architecture",
@@ -355,7 +355,7 @@
     {
       "name": "axiom-mcp-engineering",
       "source": "./plugins/axiom-mcp-engineering",
-      "description": "Engineering MCP (Model Context Protocol) servers as production-grade agent interfaces \u2014 tool API surface, idempotency and atomic claim semantics, structured error envelopes, schema versioning across model drift, stdio/HTTP transport, output-shape discipline (pagination, truncation), the four MCP primitives (tools/resources/prompts/sampling), composition across servers, observability, and golden-conversation testing. Router + 13 reference sheets, 3 commands (design-mcp-server, review-mcp-server, audit-mcp-tools), and 2 agents (mcp-server-architect, mcp-server-critic).",
+      "description": "Engineering MCP (Model Context Protocol) servers as production-grade agent interfaces — tool API surface, idempotency and atomic claim semantics, structured error envelopes, schema versioning across model drift, stdio/HTTP transport, output-shape discipline (pagination, truncation), the four MCP primitives (tools/resources/prompts/sampling), composition across servers, observability, and golden-conversation testing. Router + 13 reference sheets, 3 commands (design-mcp-server, review-mcp-server, audit-mcp-tools), and 2 agents (mcp-server-architect, mcp-server-critic).",
       "keywords": [
         "axiom",
         "mcp",
@@ -422,7 +422,7 @@
     {
       "name": "lyra-creative-writing",
       "source": "./plugins/lyra-creative-writing",
-      "description": "Workshop-voiced craft pack for prose narrative \u2014 fiction and creative nonfiction. Three explicit modes (draft, critique, plan) with mode-switching protocol. v0.2 ships router + 13 craft sheets + 9 genre sheets (mystery, thriller, sf, fantasy, horror, romance, literary-fiction, memoir-and-personal-essay, literary-journalism) + 3 commands + 11 agents. Genre sheets use a reader-contract three-move discipline: name the contract \u2192 name the cost of breaking \u2192 name books worth the cost. Roadmap: v0.3 other craft lineages, v0.4 format expansion (poetry, scripts, plays, comics, songwriting, IF). Composes with muna-panel-review for beta-reader simulation.",
+      "description": "Workshop-voiced craft pack for prose narrative — fiction and creative nonfiction. Three explicit modes (draft, critique, plan) with mode-switching protocol. v0.2 ships router + 13 craft sheets + 9 genre sheets (mystery, thriller, sf, fantasy, horror, romance, literary-fiction, memoir-and-personal-essay, literary-journalism) + 3 commands + 11 agents. Genre sheets use a reader-contract three-move discipline: name the contract → name the cost of breaking → name books worth the cost. Roadmap: v0.3 other craft lineages, v0.4 format expansion (poetry, scripts, plays, comics, songwriting, IF). Composes with muna-panel-review for beta-reader simulation.",
       "keywords": [
         "lyra",
         "creative-writing",
@@ -524,7 +524,7 @@
     {
       "name": "muna-panel-review",
       "source": "./plugins/muna-panel-review",
-      "description": "Simulated audience panel review \u2014 persona-driven editorial intelligence for document suites. 3 agents (persona-reader, panel-synthesiser, persona-designer), 1 orchestration skill, 3 slash commands",
+      "description": "Simulated audience panel review — persona-driven editorial intelligence for document suites. 3 agents (persona-reader, panel-synthesiser, persona-designer), 1 orchestration skill, 3 slash commands",
       "keywords": [
         "muna",
         "panel",
@@ -875,6 +875,26 @@
         "contract-testing",
         "typed-boundaries"
       ]
+    },
+    {
+      "name": "axiom-experiment-formalisation",
+      "source": "./plugins/axiom-experiment-formalisation",
+      "description": "Formalising an experiment as a machine-checkable record layer (router + 15 sheets, 4 commands, 2 agents) - EXPO (the ontology of scientific experiments) verified against its shipped OWL rather than its paper, SUMO or BFO as upper ontology, PROV-O for lineage. Two laws: verified vocabulary only (verified/unverified/refuted never collapsed) and the projection law (the ontology describes your typed contracts and never becomes runtime truth, enforced by a CI sync check). Tier 1 annotation layer is the default; competency questions before terms; controls, pairing and unit of analysis; absence that is never zero; provenance via PROV-O; governance, lifecycle and scaffold extension patterns; SHACL/OWL validation without vacuity; a verified prior-art map; and a page on adapting it all.",
+      "keywords": [
+        "axiom",
+        "experiment-formalisation",
+        "expo-ontology",
+        "sumo",
+        "prov-o",
+        "ontology-engineering",
+        "competency-questions",
+        "shacl",
+        "json-ld",
+        "reproducibility",
+        "provenance",
+        "experimental-design"
+      ],
+      "category": "development"
     }
   ]
 }

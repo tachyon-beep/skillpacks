@@ -1,0 +1,163 @@
+{
+ "$comment": "CURATED verification layer for axiom-experiment-formalisation. For EXPO CLASS NAMES the authoritative file is expo-owl-inventory.json, extracted mechanically from the shipped expo.owl - this file carries the curated judgements: SUMO terms checked by hand, the do-not-cite list, and the paper-vs-OWL discrepancies. A term absent from both files is UNVERIFIED, not refuted: verify it or mint it.",
+ "inventory_version": "2.1.0",
+ "verified_on": "2026-08-08",
+ "read_this_first": {
+  "the_figure_is_not_the_ontology": "The 2006 paper's Figure 2 is a hand-drawn fragment. Several names printed in the paper NEVER SHIPPED in the OWL (AdminInfoAboutExperiment, QualityControlStrategy, PlanExperimentalActions, TitleOfExperiment, MethodComparison, SubjectComparison, Factor), and several shipped names are misspelled in ways nobody would guess (FalsePpositive, PoblemAnalysis, InformationGethering, RecommendationSatus, EperimentalDesignTask). CITE THE OWL FRAGMENT, NOT THE FIGURE. The expo_corrections key below records 14 such discrepancies.",
+  "how_this_was_learned": "This pack's first inventory was built from the paper's figure and was wrong in 14 recorded places. It was corrected only by obtaining and parsing the shipped artifact. That is Law 1 applied to this pack itself: a secondary source is not a primary source, even when the secondary source is the authors' own paper."
+ },
+ "sources": {
+  "EXPO-OWL": {
+   "role": "AUTHORITATIVE for class and property names",
+   "artifact": "expo.owl",
+   "sha256": "57ede339e73af44ab1c07290402338748e782241f7dc19c4ae7029f555c99847",
+   "namespace": "http://www.hozo.jp/owl/EXPOApr19.xml/",
+   "counts": "324 owl:Class, 78 owl:ObjectProperty, 0 datatype properties, no multiple inheritance",
+   "obtained_from": "https://huggingface.co/datasets/SciKnowOrg/ontolearner-scholarly_knowledge/resolve/main/expo/expo.owl",
+   "canonical_home": "https://sourceforge.net/projects/expo/files/ - returned 403 to automated clients on 2026-08-08; retrieve through a browser to byte-verify before publication",
+   "extracted_to": "expo-owl-inventory.json"
+  },
+  "EXPO-paper": {
+   "role": "AUTHORITATIVE for design rationale and definitions; NOT for class names",
+   "citation": "Soldatova, L.N. & King, R.D. (2006) An ontology of scientific experiments. J. R. Soc. Interface 3(11):795-803. doi:10.1098/rsif.2006.0134",
+   "open_access": true
+  },
+  "SUMO-Merge": {
+   "role": "AUTHORITATIVE for SUMO core terms",
+   "citation": "ontologyportal/sumo, Merge.kif, retrieved 2026-08-08",
+   "url": "https://github.com/ontologyportal/sumo"
+  },
+  "SUMO-MILO": {
+   "role": "AUTHORITATIVE for SUMO mid-level terms",
+   "citation": "ontologyportal/sumo, Mid-level-ontology.kif, retrieved 2026-08-08"
+  }
+ },
+ "expo_corrections": {
+  "$comment": "Names commonly used (including in the paper's own prose and figure) that are WRONG as shipped. Left column is what people write; right column is the actual OWL fragment.",
+  "Factor": "ExperimentalFactor  (< Variable)",
+  "AdminInfoAboutExperiment": "AdminInfoExperiment  (< AdministrativeInformation)",
+  "PlanExperimentalActions": "PlanOfExperimentalActions",
+  "QualityControlStrategy": "QualityControl",
+  "TitleOfExperiment": "TitleExperiment",
+  "MethodComparison": "MethodsComparison",
+  "SubjectComparison": "SubjectsComparison",
+  "ParedComparison": "PairedComparison  (the figure's 'Pared' is a typo in the figure, not in the OWL)",
+  "FalsePositive": "FalsePpositive  (SIC - misspelled in the shipped OWL; FalseNegative is spelled correctly)",
+  "ComparisonControl/TargetGroups": "ComparisonControl_TargetGroups  (that string is the rdfs:label; the fragment uses an underscore)",
+  "DDC(Dewey)Classification": "DDC_Dewey_Classification",
+  "GalileanExp": "GalileanExperiment",
+  "BaconianExp": "BaconianExperiment",
+  "ComputationalExp.": "ComputationalExperiment  (see also ComputerSimulation, a subclass)"
+ },
+ "expo_present_but_widely_denied": {
+  "$comment": "Terms an earlier version of this pack, and other circulated analyses, wrongly reported as absent. All four are PRESENT in the shipped OWL. This is why 'unverified' must never be reported as 'refuted'.",
+  "IndependentVariable": "PRESENT - but NOT a kind of variable. IndependentVariable < Independence < AttributeOfVariable. It is an ATTRIBUTE you attach to a variable. The variable itself is ExperimentalFactor. Note Independence is disjoint with Controllability.",
+  "DependentVariable": "PRESENT - and, like IndependentVariable, it is an ATTRIBUTE, not a variable: DependentVariable < Independence < AttributeOfVariable. The measured-outcome class is TargetVariable < Variable.",
+  "ExperimentalProtocol": "PRESENT.",
+  "ExperimentalObservation": "PRESENT - and note it is a ROLE: ExperimentalObservation < ProductRole < Process-relatedRole < Role."
+ },
+ "expo_structural_facts": {
+  "$comment": "Verified structural facts that change how you model, not just what you name.",
+  "results_are_roles": "ExperimentalResults, ExperimentalObservation and Error are all < ProductRole < Process-relatedRole < Role. In EXPO an evidence record is a ROLE THAT DATA PLAYS IN A PROCESS, not a stored object. If your schema treats a result as an artifact, that is a real impedance mismatch to resolve deliberately.",
+  "execution_is_physical": "ExecutionOfExperiment < ScientificActivity, and ExperimentalAction < ExecutionOfExperiment. Branch and step share one subtree.",
+  "no_multiple_inheritance": "ZERO classes have more than one parent: 323 have exactly one and the root has none, matching the paper's stated FMA-derived rule.",
+  "error_subtree": "Error < ProductRole roots it, and it nests: Error > ObservationalError > MeasurementError > {RandomError > StatisticalError, SystematicError, CoarseError}; and Error > ResultError > {IncompleteDataError, ErrorOfConclusion, FaultyComparison, HypothesisAcceptanceMistake > FalsePpositive (sic) / FalseNegative}. ResultError is UNDER Error, not separate from it; ErrorOfConclusion and FaultyComparison are SIBLINGS, never a chain.",
+  "design_strategy_disjointness": "TimeCourse is disjointWith DoseResponse, Treated_Untreated, Normal_Disease, GeneKnock-in and GeneKnock-out; Treated_Untreated is disjointWith DoseResponse and the GeneKnock-* classes; ComparisonControl_TargetGroups is disjointWith PairedComparisonOfMatchingGroups and PairedComparisonOfSingleSampleGroups; PairedComparison is disjointWith QualityControl; NormalizationStrategy is disjointWith PairedComparison and QualityControl. CONSEQUENCE: one ExperimentalDesignStrategy instance CANNOT be several of these at once. A design needing a no-intervention control AND a dose ramp AND a staged schedule must attach SEVERAL strategy instances to one ExperimentalDesign, or a reasoner reports the ontology inconsistent.",
+  "hypothesis_disjointness": "ResearchHypothesis is disjointWith NullHypothesis and AlternativeHypothesis.",
+  "galilean_baconian_quirk": "The shipped OWL does NOT match the paper's tidy pairing. GalileanExperiment and BaconianExperiment are both < PhysicalExperiment (a SIBLING of ComputationalExperiment), so asserting either of a computational pipeline entails it is physical. And Hypothesis-formingExperiment is a child of GalileanExperiment, as is Hypothesis-drivenExperiment; BaconianExperiment has no children at all. Adopt the concept; do not assert the classes.",
+  "no_role_property": "The shipped OWL declares NO role object property - zero of its 78. Role exists only as a class hierarchy (Role, ActorRole, ProductRole, Process-relatedRole, TaskRole, SubjectRole). Use PROV-O's hadRole for agent roles."
+ },
+ "expo_useful_terms_for_computational_work": {
+  "$comment": "Verified classes that map unusually well to intervention pipelines and are easy to miss.",
+  "Treated_Untreated": "< ComparisonControl_TargetGroups. The nearest thing EXPO has to a no-intervention control arm.",
+  "DoseResponse": "A target group receiving a specified dose of a treatment - the natural home for a graded/partial intervention strength.",
+  "TimeCourse": "< ComparisonControl_TargetGroups. Staged schedules over time.",
+  "SplitSamples": "Comparison of groups split from a common origin - the closest EXPO term to branches forked from a shared ancestor state.",
+  "SequentialDesign": "< ExperimentalDesign. Staged designs.",
+  "ComputerSimulation": "< ComputationalExperiment.",
+  "ResultsEvaluation / ResultsInterpretation": "The evaluation and interpretation tasks. Use these rather than the non-existent DataAnalysis.",
+  "FactSupportResearchHypothesis / FactRejectResearchHypothesis": "Outcome classes.",
+  "HypothesisAcceptanceMistake": "With FalsePpositive (sic) and FalseNegative beneath it.",
+  "PermissionStatus": "< StatusExperimentalDocument. Document access permission - thin, and NOT a delegated authorisation from an adjudicator. Pair with PROV-O for the issuing act.",
+  "LevelOfSignificance": "< StatisticsCharacteristic.",
+  "Controllability / Independence": "< AttributeOfVariable, and disjoint with each other."
+ },
+ "do_not_cite": {
+  "$comment": "CONFIRMED ABSENT from all 324 classes of the shipped OWL. Several name real concepts EXPO genuinely lacks - minting those in your own namespace is correct and expected. What is never correct is citing them AS EXPO.",
+  "Control": "Absent. Use Treated_Untreated < ComparisonControl_TargetGroups. Note SUMO/MILO's experimentalControl predicate constrains argument 2 to Object, so it does not fit a process-shaped control arm either.",
+  "Replication": "Absent. Nearest is SplitSamples for common-origin groups. Mint replication kinds, and define the unit replicated over.",
+  "ReferenceExperiment": "Absent. Split the two senses: reference ARMS via GroupExperimentalObject/ObjectOfExperiment; published baselines via BiblioReference/DBReference.",
+  "ResultSet": "Absent. Use ExperimentalResults (plural; the singular ExperimentalResult also does not exist).",
+  "Measurement": "Absent as a class. EXPO has MeasurementError and ExperimentalObservation; SUMO has Measuring and the measure predicate.",
+  "ExperimentRecord": "Absent. Use AdminInfoExperiment plus PROV-O.",
+  "Lineage": "Absent. PROV-O: wasDerivedFrom / wasGeneratedBy / used.",
+  "DataAnalysis": "Absent. Use ResultsEvaluation and ResultsInterpretation.",
+  "HypothesisTesting": "Absent. Use the ExperimentalHypothesis family plus LevelOfSignificance; STATO for statistical-method semantics.",
+  "PolicyRecord": "Absent from EXPO and SUMO. Mint, or keep policy outside the ontology as a versioned contract record.",
+  "DataTransformation": "Absent. PROV-O Activity, P-Plan, or mint.",
+  "AuthorizationWarrant": "Absent. PermissionStatus is document access, not delegated authority. Mint - see governance-role-extensions.md.",
+  "LifecycleState": "Absent from EXPO and SUMO. Mint - see lifecycle-and-staged-protocol-extensions.md.",
+  "ReversibleIntervention": "Absent. Mint; DoseResponse covers strength but not reversibility.",
+  "CanonicalObservation": "Absent. Mint.",
+  "Scaffold": "Absent. Mint; SequentialDesign and TimeCourse cover staging but not withdrawal gates.",
+  "SemanticPreservation": "Absent. Mint."
+ },
+ "sumo_verified": {
+  "$comment": "Checked directly in Merge.kif / Mid-level-ontology.kif on 2026-08-08.",
+  "classes": {
+   "Entity": "root node",
+   "Physical": "(subclass Physical Entity) - 'An entity that has a location in space-time.'",
+   "Abstract": "(subclass Abstract Entity)",
+   "Object": "(subclass Object Physical)",
+   "Process": "(subclass Process Physical) - 'The class of things that happen and have temporal parts or stages.'",
+   "Quantity": "(subclass Quantity Abstract)",
+   "Attribute": "(subclass Attribute Abstract)",
+   "Proposition": "(subclass Proposition Abstract)",
+   "Procedure": "(subclass Procedure Proposition) - 'A sequence-dependent specification.'",
+   "Plan": "(subclass Plan Procedure) - 'A specification of a sequence of Processes ... at some future time.'",
+   "Argument": "(subclass Argument Proposition)",
+   "ContentBearingObject": "(subclass ContentBearingObject CorpuscularObject) AND (subclass ContentBearingObject ContentBearingPhysical) - two parents; reached from Object via SelfConnectedObject > CorpuscularObject.",
+   "PhysicalQuantity": "(subclass PhysicalQuantity FiniteQuantity), and FiniteQuantity < Quantity - not a direct child of Quantity.",
+   "ConstantQuantity": "(subclass ConstantQuantity PhysicalQuantity)",
+   "UnitOfMeasure": "(subclass UnitOfMeasure PhysicalQuantity)",
+   "TimeInterval": "'An interval of time'",
+   "Investigating": "(subclass Investigating IntentionalPsychologicalProcess)",
+   "Experimenting": "(subclass Experimenting Investigating) - 'Investigating the truth of a Proposition by constructing and observing a trial. Note that the trial may be either controlled or uncontrolled, blind or not blind.'",
+   "Measuring": "(subclass Measuring Calculating)",
+   "Reasoning": "(subclass Reasoning IntentionalPsychologicalProcess)",
+   "AutonomousAgent": "(subclass AutonomousAgent Object)",
+   "ArtificialIntelligenceAgent": "(subclass ArtificialIntelligenceAgent AutonomousAgent)",
+   "Laboratory": "(subclass Laboratory StationaryArtifact) - MILO"
+  },
+  "relations": {
+   "agent": "CaseRole - 'An active determinant of the Process.'",
+   "patient": "CaseRole",
+   "instrument": "CaseRole",
+   "result": "CaseRole. (result ?ACTION ?OUTPUT) means the OUTPUT is a product of the ACTION. There is no SUMO class named 'Action' - do not quote one.",
+   "experimentalControl": "MILO. CaseRole, subrelation of patient, (domain 1 Experimenting), (domain 2 Object). THE DOMAIN CONSTRAINT MATTERS: argument 2 must be an Object, so a process-shaped control arm does not fit.",
+   "realization": "(realization ?PROCESS ?PROP) - domain 1 Process, domain 2 Proposition, subrelation of represents; a Process EXPRESSING THE CONTENT OF a Proposition (examples: a performance of a score). Note the argument order and that the semantics are representational, not causal.",
+   "containsInformation": "BinaryPredicate",
+   "represents": "BinaryPredicate",
+   "refers": "BinaryPredicate",
+   "subProcess": "BinaryPredicate, PartialOrderingRelation",
+   "holdsDuring": "BinaryPredicate",
+   "hasPurpose": "BinaryPredicate",
+   "measure": "BinaryPredicate",
+   "before": "TemporalRelation, IrreflexiveRelation",
+   "confersNorm": "TernaryPredicate"
+  },
+  "not_found_where_expected": {
+   "$comment": "Searched Merge.kif and Mid-level-ontology.kif; zero occurrences. SUMO ships further domain .kif files that were not searched - treat as 'not found where expected', not 'absent from all of SUMO'.",
+   "Hypothesis": "No such class. Hypotheses come from EXPO (ExperimentalHypothesis, ResearchHypothesis, NullHypothesis), not SUMO.",
+   "Agent": "NOTE: 'Agent' IS a class in EXPO's OWL, but in SUMO the class is AutonomousAgent - lowercase 'agent' is a CaseRole predicate. Do not write sumo:Agent."
+  },
+  "deontic_layer": {
+   "$comment": "Merge.kif ships a deontic layer. Do NOT claim SUMO has no concept of authorisation - it names the phenomenon but supplies no record structure.",
+   "Permission": "(instance Permission DeonticAttribute) - 'Attribute that applies to Propositions that an AutonomousAgent is permitted, by some authority, to make true.'",
+   "Obligation": "(instance Obligation DeonticAttribute) - required, by some authority, to make true.",
+   "Prohibition": "(instance Prohibition DeonticAttribute) - forbidden, by some authority.",
+   "confersRight": "Relates a Formula, an Entity and a CognitiveAgent when the Entity authorizes the CognitiveAgent to bring it about that the Formula is true. This IS delegated authorisation - but over formulas, with no issuer/scope/bounds/expiry/revocation record.",
+   "holdsRight": "A CognitiveAgent has the right to bring it about that a Formula is true."
+  }
+ }
+}

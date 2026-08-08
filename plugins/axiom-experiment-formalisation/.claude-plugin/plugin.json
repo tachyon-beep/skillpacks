@@ -1,0 +1,25 @@
+{
+  "name": "axiom-experiment-formalisation",
+  "version": "0.1.0",
+  "description": "The discipline of formalising an experiment as a machine-checkable record layer — using EXPO (the ontology of scientific experiments), SUMO as upper ontology, PROV-O for lineage, and domain extensions where they run out. Governed by two laws: verified vocabulary only (a term is cited as EXPO/SUMO only if checked in a primary source; everything else is declared as your extension) and the projection law (the ontology describes your typed contracts, it never becomes the runtime source of truth — contracts win on disagreement, enforced by a CI sync-check). Tier 1 (competency questions, verified mapping, JSON-LD context) is the default; Tier 2 (OWL module, SHACL, reasoner CI) requires positive justification. Router + 15 sheets, 4 commands, 2 agents.",
+  "author": {
+    "name": "tachyon-beep",
+    "url": "https://github.com/tachyon-beep"
+  },
+  "repository": "https://github.com/tachyon-beep/skillpacks",
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "axiom",
+    "experiment-formalisation",
+    "expo-ontology",
+    "sumo",
+    "prov-o",
+    "ontology-engineering",
+    "competency-questions",
+    "shacl",
+    "json-ld",
+    "reproducibility",
+    "provenance",
+    "experimental-design"
+  ]
+}

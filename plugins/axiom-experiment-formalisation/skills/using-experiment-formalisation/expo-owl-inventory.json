@@ -1,0 +1,2344 @@
+{
+ "$comment": "EXPO term inventory extracted mechanically from the shipped expo.owl. THIS FILE, NOT THE PAPER'S FIGURE, IS AUTHORITATIVE FOR CLASS NAMES. Names are OWL URI fragments, reproduced exactly, including the source's misspellings. v2.1.0 FIX: the v1 extractor captured only the 160 rdfs:subClassOf axioms serialised in the FLAT form (<rdfs:subClassOf rdf:resource=...>) and silently dropped the 163 serialised in the NESTED form (<rdfs:subClassOf><owl:Class rdf:about=...>). subclass_of is now COMPLETE at 323 axioms. If you re-extract from any RDF/XML file, handle both serialisations or you will lose half your hierarchy without an error.",
+ "inventory_version": "2.1.0",
+ "verified_on": "2026-08-08",
+ "source": {
+  "artifact": "expo.owl",
+  "sha256": "57ede339e73af44ab1c07290402338748e782241f7dc19c4ae7029f555c99847",
+  "namespace": "http://www.hozo.jp/owl/EXPOApr19.xml/",
+  "declared_classes": 324,
+  "object_properties": 78,
+  "obtained_from": "https://huggingface.co/datasets/SciKnowOrg/ontolearner-scholarly_knowledge/resolve/main/expo/expo.owl",
+  "canonical_home": "https://sourceforge.net/projects/expo/files/ (returned 403 to automated clients on 2026-08-08; retrieve via browser to byte-verify)",
+  "paper": "Soldatova, L.N. & King, R.D. (2006) An ontology of scientific experiments. J. R. Soc. Interface 3(11):795-803. doi:10.1098/rsif.2006.0134",
+  "provenance_caveat": "Namespace matches the Hozo editor and April 2006 release described in the paper; class names, source typos and structure are internally consistent with it. If class names are load-bearing for a publication, download the official archive through a browser and diff.",
+  "counts": "324 owl:Class, 78 owl:ObjectProperty, 0 datatype properties. 402 distinct EXPO-namespace IRIs in total (324+78); every referenced IRI is declared - none dangling. 323 rdfs:subClassOf axioms; zero classes have more than one parent; every class except the root Entity has exactly one."
+ },
+ "classes": [
+  "AbductiveHypothesis",
+  "Abstract",
+  "Action-relatedRole",
+  "ActionComplexity",
+  "ActionGoal",
+  "ActionName",
+  "ActorRole",
+  "Adequacy",
+  "AdminInfoAuthor",
+  "AdminInfoExperiment",
+  "AdminInfoObjectOfExperiment",
+  "AdminInfoProvider",
+  "AdminInfoSubjectOfExperiment",
+  "AdminInfoSubmitter",
+  "AdminInfoUser",
+  "AdministrativeInformation",
+  "Agent",
+  "AlternativeHypothesis",
+  "Article",
+  "Artifact",
+  "ArtificialLanguage",
+  "AtomicAction",
+  "Attribute",
+  "AttributeGroup",
+  "AttributeOfAction",
+  "AttributeOfDocument",
+  "AttributeOfHypothesis",
+  "AttributeOfModel",
+  "AttributeOfVariable",
+  "AttributeRole",
+  "AttributeSample",
+  "Author",
+  "AuthorProtocol",
+  "AuthorSOP",
+  "BaconianExperiment",
+  "BiblioReference",
+  "Book",
+  "CalculableVariable",
+  "CapacityRequirements",
+  "Classification",
+  "ClassificationByDomain",
+  "ClassificationByModel",
+  "ClassificationOfDomains",
+  "ClassificationOfExperiments",
+  "Classifying",
+  "CoarseError",
+  "Collection",
+  "ComparisonControl_TargetGroups",
+  "ComplexAction",
+  "ComplexHypothesis",
+  "ComputationalData",
+  "ComputationalExperiment",
+  "ComputeGoal",
+  "ComputerSimulation",
+  "ConfirmGoal",
+  "ConstantQuantity",
+  "ContentBearingObject",
+  "ContentBearingPhysical",
+  "Controllability",
+  "CorporateName",
+  "CorpuscularObject",
+  "DBReference",
+  "DDC_Dewey_Classification",
+  "DataRepresentationStandard",
+  "DegreeOfModel",
+  "DependentVariable",
+  "DesigningExperiment",
+  "Device",
+  "Dispersion",
+  "DocumentStage",
+  "DomainAction",
+  "DomainModel",
+  "DomainOfExperiment",
+  "DoseResponse",
+  "DraftStatus",
+  "DuhemEffect",
+  "DynamicModel",
+  "DynamismOfModel",
+  "Entity",
+  "EnvironmentalRequirements",
+  "EperimentalDesignTask",
+  "Error",
+  "ErrorOfConclusion",
+  "ExecutionOfExperiment",
+  "ExperimentalAction",
+  "ExperimentalActionsPlanning",
+  "ExperimentalConclusion",
+  "ExperimentalDesign",
+  "ExperimentalDesignEffect",
+  "ExperimentalDesignStrategy",
+  "ExperimentalEquipment",
+  "ExperimentalEquipmentSelecting",
+  "ExperimentalFactor",
+  "ExperimentalGoal",
+  "ExperimentalHypothesis",
+  "ExperimentalMethod",
+  "ExperimentalModel",
+  "ExperimentalModelDesign",
+  "ExperimentalObjectSelecting",
+  "ExperimentalObservation",
+  "ExperimentalProtocol",
+  "ExperimentalRequirements",
+  "ExperimentalResults",
+  "ExperimentalRule",
+  "ExperimentalStandard",
+  "ExperimentalSubgoal",
+  "ExperimentalTechnology",
+  "ExperimenteeBias",
+  "ExperimenterBias",
+  "ExplainGoal",
+  "ExplicitHypothesis",
+  "Fact",
+  "FactRejectResearchHypothesis",
+  "FactSupportResearchHypothesis",
+  "FactorLevel",
+  "FactorialDesign",
+  "FalseNegative",
+  "FalsePpositive",
+  "FaultyComparison",
+  "FieldOfStudy",
+  "FinancialRequirements",
+  "FormingClassificationSystem",
+  "Formula",
+  "GalileanExperiment",
+  "GeneKnock-in",
+  "GeneKnock-out",
+  "GeneralityOfHypothesis",
+  "Goal",
+  "Group",
+  "GroupExperimentalObject",
+  "HandTool",
+  "Hardware",
+  "HawthorneEffect",
+  "HistoryEffect",
+  "Human",
+  "HumanLanguage",
+  "Hypothesis-drivenExperiment",
+  "Hypothesis-formingExperiment",
+  "HypothesisAcceptanceMistake",
+  "HypothesisComplexity",
+  "HypothesisExplicitness",
+  "HypothesisFormation",
+  "HypothesisForming",
+  "HypothesisRepresentation",
+  "IDExperiment",
+  "Image",
+  "ImplicitHypothesis",
+  "ImproperSampling",
+  "IncompleteDataError",
+  "Independence",
+  "IndependentVariable",
+  "InductiveHypothesis",
+  "InferableVariable",
+  "InformationGethering",
+  "InstrumentationEffect",
+  "InternalStatus",
+  "InterpretingResult",
+  "InvestigateGoal",
+  "Journal",
+  "Language",
+  "LevelOfSignificance",
+  "LibraryOfCongressClassification",
+  "LinearModel",
+  "LinguisticExpression",
+  "LogicalModelRepresentation",
+  "LoginName",
+  "Machine",
+  "MachineTool",
+  "Magazine",
+  "Materials",
+  "MathematicalModelRepresentation",
+  "MaturationEffect",
+  "MeasurementError",
+  "MetabolomicExperiment",
+  "MethodApplicabilityCondition",
+  "MethodGoal",
+  "MethodsComparison",
+  "MicroarrayExperiment",
+  "Model",
+  "ModelAssumption",
+  "ModelRepresentation",
+  "MortalityEffect",
+  "Multi-factorExperiment",
+  "NLMClassification",
+  "Name",
+  "NameEquipment",
+  "NaturalLanguage",
+  "NonRestrictedStatus",
+  "NonlinearModel",
+  "Normal_Disease",
+  "NormalizationStrategy",
+  "NullHypothesis",
+  "Number",
+  "Object",
+  "ObjectEffect",
+  "ObjectMethod",
+  "ObjectOfAction",
+  "ObjectOfExperiment",
+  "ObservableVariable",
+  "ObservationalError",
+  "One-factorExperiment",
+  "Organization",
+  "PairedComparison",
+  "PairedComparisonOfMatchingGroups",
+  "PairedComparisonOfSingleSampleGroups",
+  "Paper",
+  "ParentGroup",
+  "ParticlePhysicsExperiment",
+  "Password",
+  "PermissionStatus",
+  "PersonalName",
+  "Physical",
+  "PhysicalExperiment",
+  "PhysicalQuantity",
+  "Plan",
+  "PlanOfExperimentalActions",
+  "PoblemAnalysis",
+  "Predicate",
+  "PresentingSampling",
+  "Procedure",
+  "ProcedureExecuteExperiment",
+  "Proceedings",
+  "Process",
+  "Process-relatedRole",
+  "ProcessProblemAnalysis",
+  "ProductRole",
+  "Program",
+  "Proposition",
+  "ProteomicExperiment",
+  "Provider",
+  "PublicAcademicStatus",
+  "PublicStatus",
+  "QualityControl",
+  "Quantity",
+  "RandomError",
+  "RandomSampling",
+  "RecommendationSatus",
+  "RecordingAction",
+  "Reference",
+  "Region",
+  "RelatedDomain",
+  "Relation",
+  "RepresenationalMedium",
+  "Representation",
+  "RepresentationExperimentalExecutionProcedure",
+  "RepresentationExperimentalGoal",
+  "RepresentationExperimentalObservation",
+  "RepresentationExperimentalResults",
+  "RepresentationForm",
+  "Requirements",
+  "ResearchCouncilsUKClassification",
+  "ResearchHypothesis",
+  "ResearchMethod",
+  "RestrictedStatus",
+  "ResultError",
+  "ResultEvaluating",
+  "ResultsEvaluation",
+  "ResultsInterpretation",
+  "Robot",
+  "Robustness",
+  "Role",
+  "SUMOSynonym",
+  "Sample",
+  "SampleForming",
+  "SampleRepresentativeness",
+  "SampleSize",
+  "SamplingMethod",
+  "SamplingRule",
+  "ScientificActivity",
+  "ScientificExperiment",
+  "ScientificInvestigation",
+  "ScientificTask",
+  "SelfConnectedObject",
+  "Sentence",
+  "SentientAgent",
+  "SequentialDesign",
+  "SingleHypothesis",
+  "Software",
+  "Sound",
+  "SplitSamples",
+  "StandardOperatingProcedure",
+  "StaticModel",
+  "StatisticalError",
+  "StatisticsCharacteristic",
+  "StatusExperimentalDocument",
+  "StratifiedSampling",
+  "SubjectEffect",
+  "SubjectMethod",
+  "SubjectOfAction",
+  "SubjectOfExperiment",
+  "SubjectQualification",
+  "SubjectRole",
+  "SubjectsComparison",
+  "Submitter",
+  "Summary",
+  "SymmetricalMatching",
+  "SynonymousExternalConcept",
+  "SystematicError",
+  "SystematicSampling",
+  "TargetVariable",
+  "TaskRole",
+  "TechnicalDescription",
+  "TechnicalReport",
+  "TestingEffect",
+  "Text",
+  "TimeCourse",
+  "TimeDuration",
+  "TimeEffect",
+  "TimeInterval",
+  "TimeMeasure",
+  "TimePoint",
+  "TimePosition",
+  "Title",
+  "TitleExperiment",
+  "Tool",
+  "Treated_Untreated",
+  "Two-factorExperiment",
+  "URL",
+  "User",
+  "Validity",
+  "ValueEstimate",
+  "ValueOfVariable",
+  "Variability",
+  "Variable"
+ ],
+ "object_properties": [
+  "hasAttribute",
+  "hasPart",
+  "has_",
+  "has_EXPO_concept",
+  "has_ExperimentalDesign",
+  "has_ID",
+  "has_SUMO_sinonym",
+  "has__interpretation",
+  "has__name",
+  "has_action_complexity",
+  "has_address",
+  "has_admin_info",
+  "has_applicability",
+  "has_author",
+  "has_classification",
+  "has_complexity",
+  "has_content",
+  "has_description",
+  "has_error",
+  "has_evaluation",
+  "has_experiment",
+  "has_experimental_design",
+  "has_experimental_factor",
+  "has_experimental_requirements",
+  "has_explicitness",
+  "has_expression",
+  "has_fact",
+  "has_fax_number",
+  "has_generality",
+  "has_goal",
+  "has_hypothesis_formation",
+  "has_hypothesis_representation",
+  "has_information_gethering",
+  "has_inherited_variability",
+  "has_instrument",
+  "has_latest_modification",
+  "has_login",
+  "has_method",
+  "has_model",
+  "has_name",
+  "has_number",
+  "has_number_of_exp._objects",
+  "has_number_of_factors",
+  "has_object",
+  "has_observation_characteristic",
+  "has_organization",
+  "has_origin",
+  "has_pasword",
+  "has_plan",
+  "has_problem_analysis",
+  "has_procedure",
+  "has_qualification",
+  "has_reference",
+  "has_representation",
+  "has_representation_style",
+  "has_representativeness",
+  "has_result_evaluation",
+  "has_result_interpretation",
+  "has_sample",
+  "has_sample_size",
+  "has_sampling",
+  "has_sampling_rule",
+  "has_standard",
+  "has_statistics_characteristic",
+  "has_status",
+  "has_strategy",
+  "has_subgoal",
+  "has_subject",
+  "has_synonym",
+  "has_synonymousExternalConcept",
+  "has_target_variable",
+  "has_telephone_number",
+  "has_timing",
+  "has_title",
+  "has_unknown_variable",
+  "has_value_of_variable_",
+  "has_variability",
+  "has_webpage"
+ ],
+ "subclass_of": {
+  "Role": [
+   "Predicate"
+  ],
+  "PoblemAnalysis": [
+   "ScientificTask"
+  ],
+  "HypothesisComplexity": [
+   "AttributeOfHypothesis"
+  ],
+  "HawthorneEffect": [
+   "ObjectEffect"
+  ],
+  "AdminInfoSubjectOfExperiment": [
+   "AdministrativeInformation"
+  ],
+  "SamplingMethod": [
+   "ExperimentalMethod"
+  ],
+  "ObservationalError": [
+   "Error"
+  ],
+  "ActorRole": [
+   "Action-relatedRole"
+  ],
+  "RandomError": [
+   "MeasurementError"
+  ],
+  "TimeDuration": [
+   "TimeMeasure"
+  ],
+  "AttributeOfVariable": [
+   "Attribute"
+  ],
+  "ProteomicExperiment": [
+   "ClassificationByDomain"
+  ],
+  "MethodsComparison": [
+   "PairedComparisonOfSingleSampleGroups"
+  ],
+  "SymmetricalMatching": [
+   "PairedComparisonOfMatchingGroups"
+  ],
+  "RecommendationSatus": [
+   "NonRestrictedStatus"
+  ],
+  "ExperimentalEquipment": [
+   "Process-relatedRole"
+  ],
+  "ExperimentalModelDesign": [
+   "EperimentalDesignTask"
+  ],
+  "InternalStatus": [
+   "RestrictedStatus"
+  ],
+  "ExplicitHypothesis": [
+   "HypothesisExplicitness"
+  ],
+  "ScientificInvestigation": [
+   "Procedure"
+  ],
+  "DBReference": [
+   "Reference"
+  ],
+  "ComputationalData": [
+   "ExperimentalObservation"
+  ],
+  "Hypothesis-drivenExperiment": [
+   "GalileanExperiment"
+  ],
+  "ScientificActivity": [
+   "Process"
+  ],
+  "PhysicalQuantity": [
+   "Quantity"
+  ],
+  "ClassificationOfExperiments": [
+   "Classification"
+  ],
+  "GeneKnock-out": [
+   "ComparisonControl_TargetGroups"
+  ],
+  "MortalityEffect": [
+   "ObjectEffect"
+  ],
+  "SubjectEffect": [
+   "AlternativeHypothesis"
+  ],
+  "DesigningExperiment": [
+   "ScientificActivity"
+  ],
+  "LinguisticExpression": [
+   "ContentBearingPhysical"
+  ],
+  "RelatedDomain": [
+   "FieldOfStudy"
+  ],
+  "RepresentationExperimentalGoal": [
+   "Representation"
+  ],
+  "HandTool": [
+   "Tool"
+  ],
+  "FactRejectResearchHypothesis": [
+   "Fact"
+  ],
+  "PersonalName": [
+   "Name"
+  ],
+  "ResultError": [
+   "Error"
+  ],
+  "Software": [
+   "ExperimentalEquipment"
+  ],
+  "ResearchMethod": [
+   "Procedure"
+  ],
+  "SubjectOfExperiment": [
+   "SubjectRole"
+  ],
+  "ComputeGoal": [
+   "ExperimentalGoal"
+  ],
+  "LogicalModelRepresentation": [
+   "ModelRepresentation"
+  ],
+  "TimeInterval": [
+   "TimePosition"
+  ],
+  "MachineTool": [
+   "Tool"
+  ],
+  "IDExperiment": [
+   "Name"
+  ],
+  "RepresenationalMedium": [
+   "Role"
+  ],
+  "ExperimentalRule": [
+   "Procedure"
+  ],
+  "DoseResponse": [
+   "ComparisonControl_TargetGroups"
+  ],
+  "MetabolomicExperiment": [
+   "ClassificationByDomain"
+  ],
+  "Action-relatedRole": [
+   "Role"
+  ],
+  "Validity": [
+   "StatisticsCharacteristic"
+  ],
+  "DomainModel": [
+   "Model"
+  ],
+  "AuthorSOP": [
+   "Author"
+  ],
+  "AdminInfoObjectOfExperiment": [
+   "AdministrativeInformation"
+  ],
+  "Robot": [
+   "SentientAgent"
+  ],
+  "Language": [
+   "LinguisticExpression"
+  ],
+  "DataRepresentationStandard": [
+   "ExperimentalStandard"
+  ],
+  "Normal_Disease": [
+   "ComparisonControl_TargetGroups"
+  ],
+  "ParentGroup": [
+   "GroupExperimentalObject"
+  ],
+  "AdministrativeInformation": [
+   "Proposition"
+  ],
+  "Adequacy": [
+   "StatisticsCharacteristic"
+  ],
+  "NaturalLanguage": [
+   "HumanLanguage"
+  ],
+  "QualityControl": [
+   "ExperimentalDesignStrategy"
+  ],
+  "FalsePpositive": [
+   "HypothesisAcceptanceMistake"
+  ],
+  "GalileanExperiment": [
+   "PhysicalExperiment"
+  ],
+  "CoarseError": [
+   "MeasurementError"
+  ],
+  "ResearchCouncilsUKClassification": [
+   "ClassificationOfDomains"
+  ],
+  "Controllability": [
+   "AttributeOfVariable"
+  ],
+  "Sentence": [
+   "LinguisticExpression"
+  ],
+  "FactSupportResearchHypothesis": [
+   "Fact"
+  ],
+  "Process-relatedRole": [
+   "Role"
+  ],
+  "ObservableVariable": [
+   "Variable"
+  ],
+  "Variable": [
+   "Proposition"
+  ],
+  "Tool": [
+   "ExperimentalEquipment"
+  ],
+  "ConstantQuantity": [
+   "PhysicalQuantity"
+  ],
+  "Plan": [
+   "Procedure"
+  ],
+  "One-factorExperiment": [
+   "ClassificationByModel"
+  ],
+  "MeasurementError": [
+   "ObservationalError"
+  ],
+  "ExperimentalConclusion": [
+   "ExperimentalResults"
+  ],
+  "Hypothesis-formingExperiment": [
+   "GalileanExperiment"
+  ],
+  "Organization": [
+   "Group"
+  ],
+  "ResultEvaluating": [
+   "ScientificActivity"
+  ],
+  "Independence": [
+   "AttributeOfVariable"
+  ],
+  "PlanOfExperimentalActions": [
+   "Plan"
+  ],
+  "ErrorOfConclusion": [
+   "ResultError"
+  ],
+  "FieldOfStudy": [
+   "Proposition"
+  ],
+  "ComputationalExperiment": [
+   "ScientificExperiment"
+  ],
+  "Human": [
+   "SentientAgent"
+  ],
+  "Region": [
+   "Object"
+  ],
+  "FinancialRequirements": [
+   "ExperimentalRequirements"
+  ],
+  "ArtificialLanguage": [
+   "Language"
+  ],
+  "RepresentationExperimentalObservation": [
+   "Representation"
+  ],
+  "ComputerSimulation": [
+   "ComputationalExperiment"
+  ],
+  "NameEquipment": [
+   "Name"
+  ],
+  "Proposition": [
+   "Abstract"
+  ],
+  "Hardware": [
+   "Device"
+  ],
+  "PublicStatus": [
+   "NonRestrictedStatus"
+  ],
+  "MethodApplicabilityCondition": [
+   "Requirements"
+  ],
+  "ObjectOfAction": [
+   "ObjectOfExperiment"
+  ],
+  "ExperimentalEquipmentSelecting": [
+   "EperimentalDesignTask"
+  ],
+  "CapacityRequirements": [
+   "ExperimentalRequirements"
+  ],
+  "ComparisonControl_TargetGroups": [
+   "PairedComparison"
+  ],
+  "AlternativeHypothesis": [
+   "ExperimentalHypothesis"
+  ],
+  "SampleRepresentativeness": [
+   "AttributeSample"
+  ],
+  "ExperimentalDesign": [
+   "ExperimentalMethod"
+  ],
+  "MaturationEffect": [
+   "TimeEffect"
+  ],
+  "AdminInfoUser": [
+   "AdministrativeInformation"
+  ],
+  "GeneKnock-in": [
+   "ComparisonControl_TargetGroups"
+  ],
+  "FormingClassificationSystem": [
+   "ScientificActivity"
+  ],
+  "InterpretingResult": [
+   "ScientificActivity"
+  ],
+  "SubjectMethod": [
+   "SubjectRole"
+  ],
+  "Robustness": [
+   "StatisticsCharacteristic"
+  ],
+  "TitleExperiment": [
+   "Title"
+  ],
+  "NullHypothesis": [
+   "ExperimentalHypothesis"
+  ],
+  "ValueOfVariable": [
+   "Proposition"
+  ],
+  "AttributeSample": [
+   "AttributeGroup"
+  ],
+  "Submitter": [
+   "SubjectRole"
+  ],
+  "SampleForming": [
+   "DesigningExperiment"
+  ],
+  "Predicate": [
+   "Relation"
+  ],
+  "SplitSamples": [
+   "PairedComparisonOfMatchingGroups"
+  ],
+  "ExperimentalHypothesis": [
+   "Proposition"
+  ],
+  "ImproperSampling": [
+   "ObservationalError"
+  ],
+  "ExperimentalMethod": [
+   "ResearchMethod"
+  ],
+  "Magazine": [
+   "Text"
+  ],
+  "AtomicAction": [
+   "ActionComplexity"
+  ],
+  "HypothesisRepresentation": [
+   "Representation"
+  ],
+  "SubjectsComparison": [
+   "PairedComparisonOfSingleSampleGroups"
+  ],
+  "SampleSize": [
+   "AttributeSample"
+  ],
+  "FaultyComparison": [
+   "ResultError"
+  ],
+  "CorpuscularObject": [
+   "SelfConnectedObject"
+  ],
+  "ExperimentalTechnology": [
+   "Proposition"
+  ],
+  "Goal": [
+   "TaskRole"
+  ],
+  "SelfConnectedObject": [
+   "Object"
+  ],
+  "Requirements": [
+   "Proposition"
+  ],
+  "PairedComparison": [
+   "ExperimentalDesignStrategy"
+  ],
+  "DDC_Dewey_Classification": [
+   "ClassificationOfDomains"
+  ],
+  "Classification": [
+   "ScientificTask"
+  ],
+  "StatusExperimentalDocument": [
+   "AttributeOfDocument"
+  ],
+  "AttributeGroup": [
+   "Attribute"
+  ],
+  "AttributeOfHypothesis": [
+   "Attribute"
+  ],
+  "NonlinearModel": [
+   "DegreeOfModel"
+  ],
+  "SubjectRole": [
+   "ActorRole"
+  ],
+  "ExperimentalStandard": [
+   "Proposition"
+  ],
+  "SynonymousExternalConcept": [
+   "AttributeRole"
+  ],
+  "InductiveHypothesis": [
+   "GeneralityOfHypothesis"
+  ],
+  "ResultsEvaluation": [
+   "ScientificTask"
+  ],
+  "ObjectOfExperiment": [
+   "ActorRole"
+  ],
+  "RecordingAction": [
+   "ExperimentalAction"
+  ],
+  "AdminInfoAuthor": [
+   "AdministrativeInformation"
+  ],
+  "Image": [
+   "RepresentationForm"
+  ],
+  "SingleHypothesis": [
+   "HypothesisComplexity"
+  ],
+  "ExplainGoal": [
+   "ExperimentalGoal"
+  ],
+  "Agent": [
+   "Object"
+  ],
+  "AdminInfoSubmitter": [
+   "AdministrativeInformation"
+  ],
+  "MicroarrayExperiment": [
+   "ClassificationByDomain"
+  ],
+  "ExperimenterBias": [
+   "SubjectEffect"
+  ],
+  "Dispersion": [
+   "StatisticsCharacteristic"
+  ],
+  "TargetVariable": [
+   "Variable"
+  ],
+  "MethodGoal": [
+   "Goal"
+  ],
+  "Fact": [
+   "Proposition"
+  ],
+  "ContentBearingPhysical": [
+   "Physical"
+  ],
+  "DegreeOfModel": [
+   "AttributeOfModel"
+  ],
+  "Provider": [
+   "SubjectRole"
+  ],
+  "TimePosition": [
+   "TimeMeasure"
+  ],
+  "ProductRole": [
+   "Process-relatedRole"
+  ],
+  "Treated_Untreated": [
+   "ComparisonControl_TargetGroups"
+  ],
+  "ExperimentalObservation": [
+   "ProductRole"
+  ],
+  "TaskRole": [
+   "Role"
+  ],
+  "TestingEffect": [
+   "SubjectEffect"
+  ],
+  "Quantity": [
+   "Abstract"
+  ],
+  "StatisticalError": [
+   "RandomError"
+  ],
+  "TimeCourse": [
+   "ComparisonControl_TargetGroups"
+  ],
+  "ExecutionOfExperiment": [
+   "ScientificActivity"
+  ],
+  "AdminInfoExperiment": [
+   "AdministrativeInformation"
+  ],
+  "Formula": [
+   "Sentence"
+  ],
+  "Reference": [
+   "RepresentationForm"
+  ],
+  "Paper": [
+   "Artifact"
+  ],
+  "ContentBearingObject": [
+   "ContentBearingPhysical"
+  ],
+  "SentientAgent": [
+   "Agent"
+  ],
+  "LevelOfSignificance": [
+   "StatisticsCharacteristic"
+  ],
+  "Summary": [
+   "Text"
+  ],
+  "GroupExperimentalObject": [
+   "ObjectOfExperiment"
+  ],
+  "DependentVariable": [
+   "Independence"
+  ],
+  "PairedComparisonOfMatchingGroups": [
+   "PairedComparison"
+  ],
+  "DynamicModel": [
+   "DynamismOfModel"
+  ],
+  "HypothesisFormation": [
+   "ScientificTask"
+  ],
+  "LoginName": [
+   "Name"
+  ],
+  "AbductiveHypothesis": [
+   "GeneralityOfHypothesis"
+  ],
+  "ExperimentalAction": [
+   "ExecutionOfExperiment"
+  ],
+  "AttributeOfDocument": [
+   "Attribute"
+  ],
+  "Author": [
+   "SubjectRole"
+  ],
+  "ExperimentalRequirements": [
+   "Requirements"
+  ],
+  "RandomSampling": [
+   "SamplingMethod"
+  ],
+  "RepresentationExperimentalResults": [
+   "Representation"
+  ],
+  "DynamismOfModel": [
+   "AttributeOfModel"
+  ],
+  "Machine": [
+   "Device"
+  ],
+  "TimeEffect": [
+   "AlternativeHypothesis"
+  ],
+  "CalculableVariable": [
+   "Variable"
+  ],
+  "ExperimentalDesignStrategy": [
+   "Proposition"
+  ],
+  "Collection": [
+   "Object"
+  ],
+  "TechnicalReport": [
+   "Text"
+  ],
+  "ClassificationOfDomains": [
+   "Classification"
+  ],
+  "SamplingRule": [
+   "ExperimentalRule"
+  ],
+  "AttributeOfModel": [
+   "Attribute"
+  ],
+  "Password": [
+   "Name"
+  ],
+  "ExperimentalSubgoal": [
+   "Goal"
+  ],
+  "ExperimentalActionsPlanning": [
+   "EperimentalDesignTask"
+  ],
+  "Article": [
+   "Text"
+  ],
+  "ScientificTask": [
+   "Proposition"
+  ],
+  "ActionName": [
+   "Name"
+  ],
+  "HumanLanguage": [
+   "Language"
+  ],
+  "ComplexHypothesis": [
+   "HypothesisComplexity"
+  ],
+  "SubjectOfAction": [
+   "SubjectOfExperiment"
+  ],
+  "Multi-factorExperiment": [
+   "ClassificationByModel"
+  ],
+  "NonRestrictedStatus": [
+   "PermissionStatus"
+  ],
+  "DomainAction": [
+   "ExperimentalAction"
+  ],
+  "Name": [
+   "Attribute"
+  ],
+  "Device": [
+   "ExperimentalEquipment"
+  ],
+  "Attribute": [
+   "Abstract"
+  ],
+  "Classifying": [
+   "ScientificActivity"
+  ],
+  "Abstract": [
+   "Entity"
+  ],
+  "StratifiedSampling": [
+   "SamplingMethod"
+  ],
+  "Number": [
+   "Quantity"
+  ],
+  "Variability": [
+   "AttributeGroup"
+  ],
+  "SUMOSynonym": [
+   "SynonymousExternalConcept"
+  ],
+  "MathematicalModelRepresentation": [
+   "ModelRepresentation"
+  ],
+  "ExperimenteeBias": [
+   "ObjectEffect"
+  ],
+  "Program": [
+   "Artifact"
+  ],
+  "InstrumentationEffect": [
+   "ExperimentalDesignEffect"
+  ],
+  "BaconianExperiment": [
+   "PhysicalExperiment"
+  ],
+  "ExperimentalProtocol": [
+   "ProcedureExecuteExperiment"
+  ],
+  "ImplicitHypothesis": [
+   "HypothesisExplicitness"
+  ],
+  "RepresentationExperimentalExecutionProcedure": [
+   "Representation"
+  ],
+  "StandardOperatingProcedure": [
+   "ProcedureExecuteExperiment"
+  ],
+  "EnvironmentalRequirements": [
+   "ExperimentalRequirements"
+  ],
+  "Process": [
+   "Physical"
+  ],
+  "ResultsInterpretation": [
+   "ScientificTask"
+  ],
+  "ExperimentalModel": [
+   "Model"
+  ],
+  "ExperimentalDesignEffect": [
+   "AlternativeHypothesis"
+  ],
+  "FactorialDesign": [
+   "ExperimentalDesign"
+  ],
+  "AttributeOfAction": [
+   "Attribute"
+  ],
+  "NLMClassification": [
+   "ClassificationOfDomains"
+  ],
+  "RepresentationForm": [
+   "Role"
+  ],
+  "ModelAssumption": [
+   "Proposition"
+  ],
+  "InformationGethering": [
+   "ScientificTask"
+  ],
+  "ProcessProblemAnalysis": [
+   "ScientificActivity"
+  ],
+  "Representation": [
+   "ContentBearingObject"
+  ],
+  "Model": [
+   "Proposition"
+  ],
+  "HypothesisForming": [
+   "ScientificActivity"
+  ],
+  "Procedure": [
+   "Proposition"
+  ],
+  "StatisticsCharacteristic": [
+   "Attribute"
+  ],
+  "ExperimentalObjectSelecting": [
+   "EperimentalDesignTask"
+  ],
+  "RestrictedStatus": [
+   "PermissionStatus"
+  ],
+  "TechnicalDescription": [
+   "Representation"
+  ],
+  "DocumentStage": [
+   "StatusExperimentalDocument"
+  ],
+  "ClassificationByModel": [
+   "ClassificationOfExperiments"
+  ],
+  "Group": [
+   "Collection"
+  ],
+  "InferableVariable": [
+   "Variable"
+  ],
+  "StaticModel": [
+   "DynamismOfModel"
+  ],
+  "ActionComplexity": [
+   "AttributeOfAction"
+  ],
+  "ExperimentalResults": [
+   "ProductRole"
+  ],
+  "DraftStatus": [
+   "DocumentStage"
+  ],
+  "HypothesisAcceptanceMistake": [
+   "ResultError"
+  ],
+  "SystematicSampling": [
+   "SamplingMethod"
+  ],
+  "ObjectEffect": [
+   "AlternativeHypothesis"
+  ],
+  "NormalizationStrategy": [
+   "ExperimentalDesignStrategy"
+  ],
+  "ObjectMethod": [
+   "ObjectOfExperiment"
+  ],
+  "Book": [
+   "Text"
+  ],
+  "ComplexAction": [
+   "ActionComplexity"
+  ],
+  "PhysicalExperiment": [
+   "ScientificExperiment"
+  ],
+  "DomainOfExperiment": [
+   "FieldOfStudy"
+  ],
+  "URL": [
+   "Reference"
+  ],
+  "Object": [
+   "Physical"
+  ],
+  "FalseNegative": [
+   "HypothesisAcceptanceMistake"
+  ],
+  "AdminInfoProvider": [
+   "AdministrativeInformation"
+  ],
+  "LinearModel": [
+   "DegreeOfModel"
+  ],
+  "Materials": [
+   "ExperimentalEquipment"
+  ],
+  "ModelRepresentation": [
+   "Representation"
+  ],
+  "ScientificExperiment": [
+   "Procedure"
+  ],
+  "ResearchHypothesis": [
+   "ExperimentalHypothesis"
+  ],
+  "Physical": [
+   "Entity"
+  ],
+  "PairedComparisonOfSingleSampleGroups": [
+   "PairedComparison"
+  ],
+  "User": [
+   "SubjectRole"
+  ],
+  "Two-factorExperiment": [
+   "ClassificationByModel"
+  ],
+  "EperimentalDesignTask": [
+   "ScientificTask"
+  ],
+  "DuhemEffect": [
+   "ExperimentalDesignEffect"
+  ],
+  "AuthorProtocol": [
+   "Author"
+  ],
+  "CorporateName": [
+   "Name"
+  ],
+  "GeneralityOfHypothesis": [
+   "AttributeOfHypothesis"
+  ],
+  "Artifact": [
+   "CorpuscularObject"
+  ],
+  "AttributeRole": [
+   "Role"
+  ],
+  "ExperimentalFactor": [
+   "Variable"
+  ],
+  "PresentingSampling": [
+   "SamplingMethod"
+  ],
+  "ExperimentalGoal": [
+   "RepresentationForm"
+  ],
+  "FactorLevel": [
+   "ValueOfVariable"
+  ],
+  "ProcedureExecuteExperiment": [
+   "Procedure"
+  ],
+  "HypothesisExplicitness": [
+   "AttributeOfHypothesis"
+  ],
+  "ClassificationByDomain": [
+   "ClassificationOfExperiments"
+  ],
+  "InvestigateGoal": [
+   "ExperimentalGoal"
+  ],
+  "PublicAcademicStatus": [
+   "NonRestrictedStatus"
+  ],
+  "Title": [
+   "Name"
+  ],
+  "IndependentVariable": [
+   "Independence"
+  ],
+  "SubjectQualification": [
+   "Proposition"
+  ],
+  "Text": [
+   "Artifact"
+  ],
+  "ParticlePhysicsExperiment": [
+   "ClassificationByDomain"
+  ],
+  "ValueEstimate": [
+   "ComputationalData"
+  ],
+  "Proceedings": [
+   "Text"
+  ],
+  "TimeMeasure": [
+   "PhysicalQuantity"
+  ],
+  "TimePoint": [
+   "TimePosition"
+  ],
+  "Sample": [
+   "ObjectOfExperiment"
+  ],
+  "Sound": [
+   "RepresentationForm"
+  ],
+  "LibraryOfCongressClassification": [
+   "ClassificationOfDomains"
+  ],
+  "IncompleteDataError": [
+   "ResultError"
+  ],
+  "Error": [
+   "ProductRole"
+  ],
+  "SystematicError": [
+   "MeasurementError"
+  ],
+  "HistoryEffect": [
+   "TimeEffect"
+  ],
+  "SequentialDesign": [
+   "ExperimentalDesign"
+  ],
+  "ActionGoal": [
+   "Goal"
+  ],
+  "BiblioReference": [
+   "Reference"
+  ],
+  "Journal": [
+   "Text"
+  ],
+  "ConfirmGoal": [
+   "ExperimentalGoal"
+  ],
+  "PermissionStatus": [
+   "StatusExperimentalDocument"
+  ],
+  "Relation": [
+   "Abstract"
+  ]
+ },
+ "labels_differing_from_fragment": {
+  "Normal_Disease": "Normal/Disease",
+  "ComparisonControl_TargetGroups": "ComparisonControl/TargetGroups",
+  "DDC_Dewey_Classification": "DDC(Dewey)Classification",
+  "Treated_Untreated": "Treated/Untreated"
+ },
+ "disjoint_with": {
+  "MortalityEffect": [
+   "HawthorneEffect"
+  ],
+  "IDExperiment": [
+   "PersonalName"
+  ],
+  "DoseResponse": [
+   "GeneKnock-out"
+  ],
+  "AdminInfoObjectOfExperiment": [
+   "AdminInfoSubjectOfExperiment"
+  ],
+  "Normal_Disease": [
+   "DoseResponse",
+   "GeneKnock-out"
+  ],
+  "Adequacy": [
+   "Validity"
+  ],
+  "Sentence": [
+   "Language"
+  ],
+  "FactSupportResearchHypothesis": [
+   "FactRejectResearchHypothesis"
+  ],
+  "Variable": [
+   "AdministrativeInformation"
+  ],
+  "ResultEvaluating": [
+   "DesigningExperiment"
+  ],
+  "Independence": [
+   "Controllability"
+  ],
+  "FieldOfStudy": [
+   "AdministrativeInformation",
+   "Variable"
+  ],
+  "Human": [
+   "Robot"
+  ],
+  "RepresentationExperimentalObservation": [
+   "RepresentationExperimentalGoal"
+  ],
+  "NameEquipment": [
+   "IDExperiment",
+   "PersonalName"
+  ],
+  "ExperimentalEquipmentSelecting": [
+   "ExperimentalModelDesign"
+  ],
+  "CapacityRequirements": [
+   "FinancialRequirements"
+  ],
+  "AdminInfoUser": [
+   "AdminInfoObjectOfExperiment",
+   "AdminInfoSubjectOfExperiment"
+  ],
+  "GeneKnock-in": [
+   "DoseResponse",
+   "GeneKnock-out",
+   "Normal_Disease"
+  ],
+  "FormingClassificationSystem": [
+   "DesigningExperiment",
+   "ResultEvaluating"
+  ],
+  "InterpretingResult": [
+   "DesigningExperiment",
+   "FormingClassificationSystem",
+   "ResultEvaluating"
+  ],
+  "Robustness": [
+   "Adequacy",
+   "Validity"
+  ],
+  "NullHypothesis": [
+   "AlternativeHypothesis"
+  ],
+  "ValueOfVariable": [
+   "AdministrativeInformation",
+   "FieldOfStudy",
+   "Variable"
+  ],
+  "SplitSamples": [
+   "SymmetricalMatching"
+  ],
+  "ExperimentalHypothesis": [
+   "AdministrativeInformation",
+   "FieldOfStudy",
+   "ValueOfVariable",
+   "Variable"
+  ],
+  "HypothesisRepresentation": [
+   "RepresentationExperimentalGoal",
+   "RepresentationExperimentalObservation"
+  ],
+  "SubjectsComparison": [
+   "MethodsComparison"
+  ],
+  "SampleSize": [
+   "SampleRepresentativeness"
+  ],
+  "ExperimentalTechnology": [
+   "AdministrativeInformation",
+   "ExperimentalHypothesis",
+   "FieldOfStudy",
+   "ValueOfVariable",
+   "Variable"
+  ],
+  "Requirements": [
+   "AdministrativeInformation",
+   "ExperimentalHypothesis",
+   "ExperimentalTechnology",
+   "FieldOfStudy",
+   "ValueOfVariable",
+   "Variable"
+  ],
+  "PairedComparison": [
+   "QualityControl"
+  ],
+  "DDC_Dewey_Classification": [
+   "ResearchCouncilsUKClassification"
+  ],
+  "Classification": [
+   "PoblemAnalysis"
+  ],
+  "AttributeGroup": [
+   "AttributeOfVariable"
+  ],
+  "AttributeOfHypothesis": [
+   "AttributeGroup",
+   "AttributeOfVariable"
+  ],
+  "ExperimentalStandard": [
+   "AdministrativeInformation",
+   "ExperimentalHypothesis",
+   "ExperimentalTechnology",
+   "FieldOfStudy",
+   "Requirements",
+   "ValueOfVariable",
+   "Variable"
+  ],
+  "ResultsEvaluation": [
+   "Classification",
+   "PoblemAnalysis"
+  ],
+  "AdminInfoAuthor": [
+   "AdminInfoObjectOfExperiment",
+   "AdminInfoSubjectOfExperiment",
+   "AdminInfoUser"
+  ],
+  "ExplainGoal": [
+   "ComputeGoal"
+  ],
+  "AdminInfoSubmitter": [
+   "AdminInfoAuthor",
+   "AdminInfoObjectOfExperiment",
+   "AdminInfoSubjectOfExperiment",
+   "AdminInfoUser"
+  ],
+  "Dispersion": [
+   "Adequacy",
+   "Robustness",
+   "Validity"
+  ],
+  "Fact": [
+   "AdministrativeInformation",
+   "ExperimentalHypothesis",
+   "ExperimentalStandard",
+   "ExperimentalTechnology",
+   "FieldOfStudy",
+   "Requirements",
+   "ValueOfVariable",
+   "Variable"
+  ],
+  "TimePosition": [
+   "TimeDuration"
+  ],
+  "Treated_Untreated": [
+   "DoseResponse",
+   "GeneKnock-in",
+   "GeneKnock-out",
+   "Normal_Disease"
+  ],
+  "TestingEffect": [
+   "ExperimenterBias"
+  ],
+  "Quantity": [
+   "Proposition"
+  ],
+  "TimeCourse": [
+   "DoseResponse",
+   "GeneKnock-in",
+   "GeneKnock-out",
+   "Normal_Disease",
+   "Treated_Untreated"
+  ],
+  "ExecutionOfExperiment": [
+   "DesigningExperiment",
+   "FormingClassificationSystem",
+   "InterpretingResult",
+   "ResultEvaluating"
+  ],
+  "AdminInfoExperiment": [
+   "AdminInfoAuthor",
+   "AdminInfoObjectOfExperiment",
+   "AdminInfoSubjectOfExperiment",
+   "AdminInfoSubmitter",
+   "AdminInfoUser"
+  ],
+  "ContentBearingObject": [
+   "LinguisticExpression"
+  ],
+  "LevelOfSignificance": [
+   "Adequacy",
+   "Dispersion",
+   "Robustness",
+   "Validity"
+  ],
+  "PairedComparisonOfMatchingGroups": [
+   "ComparisonControl_TargetGroups"
+  ],
+  "HypothesisFormation": [
+   "Classification",
+   "PoblemAnalysis",
+   "ResultsEvaluation"
+  ],
+  "LoginName": [
+   "IDExperiment",
+   "NameEquipment",
+   "PersonalName"
+  ],
+  "AbductiveHypothesis": [
+   "InductiveHypothesis"
+  ],
+  "AttributeOfDocument": [
+   "AttributeGroup",
+   "AttributeOfHypothesis",
+   "AttributeOfVariable"
+  ],
+  "ExperimentalRequirements": [
+   "MethodApplicabilityCondition"
+  ],
+  "RepresentationExperimentalResults": [
+   "HypothesisRepresentation",
+   "RepresentationExperimentalGoal",
+   "RepresentationExperimentalObservation"
+  ],
+  "DynamismOfModel": [
+   "DegreeOfModel"
+  ],
+  "TimeEffect": [
+   "SubjectEffect"
+  ],
+  "ExperimentalDesignStrategy": [
+   "AdministrativeInformation",
+   "ExperimentalHypothesis",
+   "ExperimentalStandard",
+   "ExperimentalTechnology",
+   "Fact",
+   "FieldOfStudy",
+   "Requirements",
+   "ValueOfVariable",
+   "Variable"
+  ],
+  "ClassificationOfDomains": [
+   "ClassificationOfExperiments"
+  ],
+  "AttributeOfModel": [
+   "AttributeGroup",
+   "AttributeOfDocument",
+   "AttributeOfHypothesis",
+   "AttributeOfVariable"
+  ],
+  "Password": [
+   "IDExperiment",
+   "LoginName",
+   "NameEquipment",
+   "PersonalName"
+  ],
+  "ExperimentalActionsPlanning": [
+   "ExperimentalEquipmentSelecting",
+   "ExperimentalModelDesign"
+  ],
+  "ScientificTask": [
+   "AdministrativeInformation",
+   "ExperimentalDesignStrategy",
+   "ExperimentalHypothesis",
+   "ExperimentalStandard",
+   "ExperimentalTechnology",
+   "Fact",
+   "FieldOfStudy",
+   "Requirements",
+   "ValueOfVariable",
+   "Variable"
+  ],
+  "ActionName": [
+   "IDExperiment",
+   "LoginName",
+   "NameEquipment",
+   "Password",
+   "PersonalName"
+  ],
+  "HumanLanguage": [
+   "ArtificialLanguage"
+  ],
+  "ComplexHypothesis": [
+   "SingleHypothesis"
+  ],
+  "Multi-factorExperiment": [
+   "One-factorExperiment"
+  ],
+  "Name": [
+   "AttributeGroup",
+   "AttributeOfDocument",
+   "AttributeOfHypothesis",
+   "AttributeOfModel",
+   "AttributeOfVariable"
+  ],
+  "Attribute": [
+   "Proposition",
+   "Quantity"
+  ],
+  "Classifying": [
+   "DesigningExperiment",
+   "ExecutionOfExperiment",
+   "FormingClassificationSystem",
+   "InterpretingResult",
+   "ResultEvaluating"
+  ],
+  "Number": [
+   "PhysicalQuantity"
+  ],
+  "Variability": [
+   "AttributeSample"
+  ],
+  "ExperimenteeBias": [
+   "HawthorneEffect",
+   "MortalityEffect"
+  ],
+  "ImplicitHypothesis": [
+   "ExplicitHypothesis"
+  ],
+  "RepresentationExperimentalExecutionProcedure": [
+   "HypothesisRepresentation",
+   "RepresentationExperimentalGoal",
+   "RepresentationExperimentalObservation",
+   "RepresentationExperimentalResults"
+  ],
+  "EnvironmentalRequirements": [
+   "CapacityRequirements",
+   "FinancialRequirements"
+  ],
+  "Process": [
+   "ContentBearingPhysical"
+  ],
+  "ResultsInterpretation": [
+   "Classification",
+   "HypothesisFormation",
+   "PoblemAnalysis",
+   "ResultsEvaluation"
+  ],
+  "ExperimentalModel": [
+   "DomainModel"
+  ],
+  "ExperimentalDesignEffect": [
+   "SubjectEffect",
+   "TimeEffect"
+  ],
+  "AttributeOfAction": [
+   "AttributeGroup",
+   "AttributeOfDocument",
+   "AttributeOfHypothesis",
+   "AttributeOfModel",
+   "AttributeOfVariable",
+   "Name"
+  ],
+  "NLMClassification": [
+   "DDC_Dewey_Classification",
+   "ResearchCouncilsUKClassification"
+  ],
+  "ModelAssumption": [
+   "AdministrativeInformation",
+   "ExperimentalDesignStrategy",
+   "ExperimentalHypothesis",
+   "ExperimentalStandard",
+   "ExperimentalTechnology",
+   "Fact",
+   "FieldOfStudy",
+   "Requirements",
+   "ScientificTask",
+   "ValueOfVariable",
+   "Variable"
+  ],
+  "InformationGethering": [
+   "Classification",
+   "HypothesisFormation",
+   "PoblemAnalysis",
+   "ResultsEvaluation",
+   "ResultsInterpretation"
+  ],
+  "ProcessProblemAnalysis": [
+   "Classifying",
+   "DesigningExperiment",
+   "ExecutionOfExperiment",
+   "FormingClassificationSystem",
+   "InterpretingResult",
+   "ResultEvaluating"
+  ],
+  "Model": [
+   "AdministrativeInformation",
+   "ExperimentalDesignStrategy",
+   "ExperimentalHypothesis",
+   "ExperimentalStandard",
+   "ExperimentalTechnology",
+   "Fact",
+   "FieldOfStudy",
+   "ModelAssumption",
+   "Requirements",
+   "ScientificTask",
+   "ValueOfVariable",
+   "Variable"
+  ],
+  "HypothesisForming": [
+   "Classifying",
+   "DesigningExperiment",
+   "ExecutionOfExperiment",
+   "FormingClassificationSystem",
+   "InterpretingResult",
+   "ProcessProblemAnalysis",
+   "ResultEvaluating"
+  ],
+  "Procedure": [
+   "AdministrativeInformation",
+   "ExperimentalDesignStrategy",
+   "ExperimentalHypothesis",
+   "ExperimentalStandard",
+   "ExperimentalTechnology",
+   "Fact",
+   "FieldOfStudy",
+   "Model",
+   "ModelAssumption",
+   "Requirements",
+   "ScientificTask",
+   "ValueOfVariable",
+   "Variable"
+  ],
+  "StatisticsCharacteristic": [
+   "AttributeGroup",
+   "AttributeOfAction",
+   "AttributeOfDocument",
+   "AttributeOfHypothesis",
+   "AttributeOfModel",
+   "AttributeOfVariable",
+   "Name"
+  ],
+  "ExperimentalObjectSelecting": [
+   "ExperimentalActionsPlanning",
+   "ExperimentalEquipmentSelecting",
+   "ExperimentalModelDesign"
+  ],
+  "RestrictedStatus": [
+   "NonRestrictedStatus"
+  ],
+  "TechnicalDescription": [
+   "HypothesisRepresentation",
+   "RepresentationExperimentalExecutionProcedure",
+   "RepresentationExperimentalGoal",
+   "RepresentationExperimentalObservation",
+   "RepresentationExperimentalResults"
+  ],
+  "StaticModel": [
+   "DynamicModel"
+  ],
+  "ObjectEffect": [
+   "ExperimentalDesignEffect",
+   "SubjectEffect",
+   "TimeEffect"
+  ],
+  "NormalizationStrategy": [
+   "PairedComparison",
+   "QualityControl"
+  ],
+  "ComplexAction": [
+   "AtomicAction"
+  ],
+  "DomainOfExperiment": [
+   "RelatedDomain"
+  ],
+  "Object": [
+   "ContentBearingPhysical",
+   "Process"
+  ],
+  "AdminInfoProvider": [
+   "AdminInfoAuthor",
+   "AdminInfoExperiment",
+   "AdminInfoObjectOfExperiment",
+   "AdminInfoSubjectOfExperiment",
+   "AdminInfoSubmitter",
+   "AdminInfoUser"
+  ],
+  "LinearModel": [
+   "NonlinearModel"
+  ],
+  "ModelRepresentation": [
+   "HypothesisRepresentation",
+   "RepresentationExperimentalExecutionProcedure",
+   "RepresentationExperimentalGoal",
+   "RepresentationExperimentalObservation",
+   "RepresentationExperimentalResults",
+   "TechnicalDescription"
+  ],
+  "ResearchHypothesis": [
+   "AlternativeHypothesis",
+   "NullHypothesis"
+  ],
+  "Physical": [
+   "Abstract"
+  ],
+  "PairedComparisonOfSingleSampleGroups": [
+   "ComparisonControl_TargetGroups",
+   "PairedComparisonOfMatchingGroups"
+  ],
+  "Two-factorExperiment": [
+   "Multi-factorExperiment",
+   "One-factorExperiment"
+  ],
+  "EperimentalDesignTask": [
+   "Classification",
+   "HypothesisFormation",
+   "InformationGethering",
+   "PoblemAnalysis",
+   "ResultsEvaluation",
+   "ResultsInterpretation"
+  ],
+  "DuhemEffect": [
+   "InstrumentationEffect"
+  ],
+  "CorporateName": [
+   "ActionName",
+   "IDExperiment",
+   "LoginName",
+   "NameEquipment",
+   "Password",
+   "PersonalName"
+  ],
+  "GeneralityOfHypothesis": [
+   "HypothesisComplexity"
+  ],
+  "HypothesisExplicitness": [
+   "GeneralityOfHypothesis",
+   "HypothesisComplexity"
+  ],
+  "ClassificationByDomain": [
+   "ClassificationByModel"
+  ],
+  "InvestigateGoal": [
+   "ComputeGoal",
+   "ExplainGoal"
+  ],
+  "Title": [
+   "ActionName",
+   "CorporateName",
+   "IDExperiment",
+   "LoginName",
+   "NameEquipment",
+   "Password",
+   "PersonalName"
+  ],
+  "SubjectQualification": [
+   "AdministrativeInformation",
+   "ExperimentalDesignStrategy",
+   "ExperimentalHypothesis",
+   "ExperimentalStandard",
+   "ExperimentalTechnology",
+   "Fact",
+   "FieldOfStudy",
+   "Model",
+   "ModelAssumption",
+   "Procedure",
+   "Requirements",
+   "ScientificTask",
+   "ValueOfVariable",
+   "Variable"
+  ],
+  "TimeMeasure": [
+   "ConstantQuantity"
+  ],
+  "TimePoint": [
+   "TimeInterval"
+  ],
+  "LibraryOfCongressClassification": [
+   "DDC_Dewey_Classification",
+   "NLMClassification",
+   "ResearchCouncilsUKClassification"
+  ],
+  "HistoryEffect": [
+   "MaturationEffect"
+  ],
+  "ConfirmGoal": [
+   "ComputeGoal",
+   "ExplainGoal",
+   "InvestigateGoal"
+  ],
+  "PermissionStatus": [
+   "DocumentStage"
+  ],
+  "Relation": [
+   "Attribute",
+   "Proposition",
+   "Quantity"
+  ]
+ },
+ "class_comments": {
+  "Role": "(role ?OBJECT ?ENTITY) means that ?OBJECT - a Role holder, plays a Role ?ENTITY in some context. In EXPO we always consider the context: experiment. For example in context of experiment an object <human> can play the role <subject of experiment> if the human is \"one who executes the experiment\" (OED) or the role <object of experiment> if the human is one \"on whom an experiment is made.\" (OED).",
+  "PoblemAnalysis": "Problem analysis is the scientific task of reducing a problem's complexity. Reference: based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "HypothesisComplexity": "Hypothesis complexity is an attribute of an hypothesis which characterizes information content.",
+  "HawthorneEffect": "A Hawthorne effect is a object effect where results are due to subjects' expectations of desired behaviour in the research setting or the social psychology of the experiment. Reference: Davis, J., Psychological research methods.",
+  "AdminInfoSubjectOfExperiment": "Administrative information about a subject of an experiment is data about the subject of the experiment (a name, qualification, an organization, etc) used for administrative purposes such as to provide/ control storage of the experimental data etc.",
+  "SamplingMethod": "A sampling method is a way to form a sample, an object of the experiment.",
+  "ObservationalError": "An observational error is the difference between observations and their true values, or to values that are accepted as being true. Reference: USGS glossary: biology.usgs.gov/npsveg/glossary.html",
+  "ActorRole": "the concept is outside EXPO.",
+  "RandomError": "A random error is an error that is without any regularity or of unknown regularity. Reference: Arley, N. & Buch , K.R., Introduction to the theory of probability and statistics. New York : Wiley London. Chapman & Hall, 1950. 236p.",
+  "TimeDuration": "\"Any measure of length of time, with or without respect to the universal timeline.\" (SUMO)",
+  "AttributeOfVariable": "An attribute of a variable is an essential characteristic of a variable, e.g. <independence>, <controllability>.",
+  "ProteomicExperiment": "The concept is outside of EXPO.",
+  "MethodsComparison": "A methods comparison is a paired comparison of single sample groups experimental design strategy where the result of applying different methods to achieve the same goal are compared. Reference: Based on: Langley, R. Practical Statistics. David&Charles Ltd, Newton,1971.",
+  "SymmetricalMatching": "Symmetrical matching is a matching groups experimental design strategy where pairs are symmetrical parts of a body. For instance comparing the effect of 2 ointments applied to 2 arms. Reference: Based on: Langley, R. Practical Statistics. David&Charles Ltd, Newton,1971.",
+  "RecommendationSatus": "A recommendation \ufffdis a status of a proposal or suggestion, advice.? Reference: The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "ExperimentalEquipment": "Experimental equipment is the set of tools, devices, materials, computer systems assembled for performing the experiment. Reference: following Collins Softback English Dictionary, HarperCollins Publishers, Glasgow, 1993.",
+  "ExperimentalModelDesign": "Experimental model design is an experimental design task of construction a model of the experiment from the model of the experimental domain by fixating experimental factors and target variables.",
+  "InternalStatus": "An internal status is a status which controls the access to a SOP, a protocol, and/ or experimental results to within an organization.",
+  "ExplicitHypothesis": "An explicit hypothesis of an experimental hypothesis is a Boolean attribute which is true when the statement is written in the form of a text, for instance in terms of predicate logic.",
+  "ScientificInvestigation": "Scientific investigation is a systematic examination; careful and detailed research. Reference: The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "DBReference": "The concept is outside EXPO",
+  "ComputationalData": "Computational data is experimental observations \"represented in a form suitable for processing by computer.\" Reference: WordNet: http://www.answers.com",
+  "Hypothesis-drivenExperiment": "A hypothesis-driven experiment is a Galilean experiment designed to confirm or reject a given hypothesis. The deductive consequences of the hypothesis are compared with the experimental result, and the probability of the hypothesis increased (confirmed) or decreased (rejected).",
+  "ScientificActivity": "Scientific activity is the process of performing a scientific task.",
+  "PhysicalQuantity": "\"A PhysicalQuantity is a measure of some quantifiable aspect of the modeled world, such as 'the earth's diameter' (a constant length) and 'the stress in a loaded deformable solid' (a measure of stress, which is a function of three spatial coordinates). All PhysicalQuantities are either ConstantQuantities or FunctionQuantities. Instances of ConstantQuantity are dependent on a UnitOfMeasure, while i",
+  "ClassificationOfExperiments": "A classification of experiments is a hierarchical system of categories - types of experiments - according to their domains or used models of experiments.",
+  "GeneKnock-out": "A gene knock-out design strategy is a sub-class of a comparison control/ target groups strategy where a target group has one or more genes removed.",
+  "MortalityEffect": "A mortality effect is an object effect which occurs when subjects leave an experiment before it is complete (e.g. die) and so bias the experimental results. This is especially true when more subjects leave one treatment condition more than another. This leads to a kind of subject effect because the subjects in the different groups are no longer equivalent. Reference: Davis, J., Psychological resea",
+  "SubjectEffect": "A subject effect is an alternative hypothesis where an effect on the experimental results is due to difference in subjects or subjects? action or expectations.",
+  "DesigningExperiment": "Designing an experiment is the act of determining the relationship between factors affecting cause-effect relations between known and unknown variables. Reference: Based on Sigma: http://www.isixsigma.com/dictionary/Design_of_Experiments_-_DOE-41.htm",
+  "LinguisticExpression": "\"This is the subclass of ContentBearingPhysical which are language-related. Note that this Class encompasses both Language and the the elements of Languages, e.g. Words.\" SUMO: http://www.ontologyportal.org/",
+  "RelatedDomain": "A related domain of an experiment is a domain (field of study) to which belong used in the experiment methods, materials, experimental objects, or other entities involved into the experiment, but is not considered as the domain of the experiment.",
+  "RepresentationExperimentalGoal": "A representation of an experimental goal is a \"reproduction in some material or tangible form.\" Reference: The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "HandTool": "A hand tool is a small manual instrument traditionally operated by the muscular strength of the user. Reference: Encyclopaedia Britannica online: http://www.britannica.com/",
+  "FactRejectResearchHypothesis": "A fact which rejects a research hypothesis is a fact which decreases the probability of the hypothesis.",
+  "PersonalName": "The concept is outside of EXPO",
+  "ResultError": "A result error is an incorrectly inferred conclusion about: a research hypothesis, such as an hypothesis acceptance mistake (e.g. false positive); or about the phenomena involved in the experiment.",
+  "Software": "the concept is outside of EXPO",
+  "ResearchMethod": "A research method is a way to solve a scientific task \"based upon or regulated by science, as opposed to mere traditional rules or empirical dexterity.\" Reference: The Oxford English Dictionary http://dictionary.oed.com",
+  "SubjectOfExperiment": "A subject of an experimental is: \"one who executes the experiment\" For instance: a <human>, a <robot>. Reference: The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "ComputeGoal": "A compute-goal is an experimental goal of a computational experiment.",
+  "LogicalModelRepresentation": "A logical model is a representation of an experimental model where the relationship between the variables is logical.",
+  "TimeInterval": "\"An interval of time. Note that a TimeInterval has both an extent and a location on the universal timeline. Note too that a TimeInterval has no gaps, i.e. this class contains only convex time intervals.\" SUMO: http://www.ontologyportal.org/",
+  "MachineTool": "A machine tool is a power-driven mechanism used to cut, shape, or form materials such as wood and metal. Reference: Encyclopaedia Britannica online: http://www.britannica.com/",
+  "RepresenationalMedium": "the concept is outside EXPO.",
+  "ExperimentalRule": "An experimental rule is \"a customary form of procedure; regular course of actions; the common order of things.\" Reference: Collins Softback English Dictionary, HarperCollins Publishers, Glasgow, 1993.",
+  "DoseResponse": "A dose response design strategy is a sub-class of a comparison control/ target groups strategy where a target group receives a specified dose of a specified treatment.",
+  "MetabolomicExperiment": "The concept is outside of EXPO, it belongs to the metabolomic domain.",
+  "Action-relatedRole": "the concept is outside EXPO. Actor role (Any action). For example: Teaching Agent role (Teaching Action), Target object role (Action object)",
+  "Validity": "The concept is outside of EXPO. The extent to which a test measures what it suppose to measure. Georgetown: http://www.georgetown.edu/departments/psychology/researchmethods/glossary.htm#dependentvariable",
+  "DomainModel": "A domain model is a description of relationships (e.g. logical/ mathematical) between known and unknown variables of the experimental domain.",
+  "AuthorSOP": "An author of a SOP is the person (or a group) on whose authority the SOP is made. Reference: Based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "AdminInfoObjectOfExperiment": "Administrative information about an object of an experiment is data about the object of the experiment (a name, a code, etc) used for administrative purposes such as to provide/ control access/ storage of the experimental data etc. Note that the description of an experimental object itself belongs to the corresponding domain ontology.",
+  "Robot": "the concept is outside EXPO.",
+  "Language": "SUMO: http://www.ontologyportal.org/ \"A system of signs for expressing thought. The system can be either natural or artificial, i.e. something that emerges gradually as a cultural artifact or something that is intentionally created by a person or group of people.\"",
+  "DataRepresentationStandard": "A data representation standard is an accepted way of representing experimental data, e.g. the MIAME standard for representation of microarray experimental data.",
+  "Normal_Disease": "A normal/ disease design strategy is a sub-class of a comparison control/ target groups strategy, where the target group is group of experimental objects with a disease.",
+  "ParentGroup": "A parent group is a group of studying in a scientific investigation objects, which is used to form a sample as an object of the experiment.",
+  "AdministrativeInformation": "administrative information is data about an experimental subject, an experimental object, experimental documents etc., used for administrative purposes such as to provide/ control access/ storage of the experimental results/ protocols etc.",
+  "Adequacy": "The concept is outside of EXPO",
+  "NaturalLanguage": "\"The subclass of HumanLanguages which are not designed and which evolve from generation to generation. This Class includes all of the national languages, e.g. English, Spanish, Japanese, etc. Note that this class includes dialects of natural languages.\" SUMO: http://www.ontologyportal.org/",
+  "QualityControl": "Quality control in an experimental design strategy to control of the relative quality of the experimental results, for example independent biological replicates made from different individual biosources, or introduction of spikes into hybridizations. Reference: MGED http://mged.sourceforge.net/ontologies/MGEDontology.php",
+  "FalsePpositive": "A false positive is an hypothesis acceptance mistake where the hypothesis being tested is actually false and we conclude that it is. Reference: based on Introduction to Probability and Statistics. 4th ed. H.L. Alder, E.B. Roessler, W.H. Freeman & Co., 1968.",
+  "GalileanExperiment": "A Galilean experiment is a scientific experiment which involves explicit hypotheses. Reference: Medawar, P.B. Advice to a Young Scientist. Pan Books Ltd, London, 1981",
+  "CoarseError": "A coarse error is a measurement error which occurs through incorrect use of an instrument. Reference: Arley, N. & Buch , K.R., Introduction to the theory of probability and statistics. New York : Wiley London. Chapman & Hall, 1950. 236p.",
+  "ResearchCouncilsUKClassification": "The research councils UK classification is a classification of domains used by Britain's councils for academic research.",
+  "Controllability": "Controllability of a variable is an attribute which characterize whether a subject of the experiment can control/ vary the variable.",
+  "Sentence": "\"A syntactically well-formed formula of a Language. It includes, at minimum, a predicate and a subject (which may be explicit or implicit), and it expresses a Proposition.\" (SUMO)",
+  "FactSupportResearchHypothesis": "A fact which rejects a research hypothesis is a fact which increases the probability of the hypothesis.",
+  "Process-relatedRole": "Product role (Final output) Residue role (How it is processed)",
+  "ObservableVariable": "An observable variable is a variable where it is possible to directly observe (measure) the variable. Reference: based on Albar`ede, P. A theory of experiment. http://66.102.9.104/search?q=cache:ECOW7jEPfHAJ: arxiv.org/pdf/cs.AI/0201022++a+theory+of+experiment+Albarede&hl=en",
+  "Variable": "The concept is outside of EXPO",
+  "Tool": "A tool is an instrument for making material changes on other objects, as by cutting, shearing, striking, rubbing, grinding, squeezing, measuring, or other process. Reference: Encyclopaedia Britannica online: http://www.britannica.com/",
+  "ConstantQuantity": "\"A ConstantQuantity is a PhysicalQuantity which has a constant value, e.g. 3 meters and 5 hours. The magnitude (see MagnitudeFn) of every ConstantQuantity is a RealNumber. ConstantQuantities are distinguished from FunctionQuantities, which map ConstantQuantities to other ConstantQuantities. All ConstantQuantites are expressed with the BinaryFunction MeasureFn, which takes a Number and a UnitOfMeas",
+  "Plan": "The concept is outside of EXPO; SUMO: \"A specification of a sequence of Processes which is intended to satisfy a specified purpose at some future time.\" http://www.ontologyportal.org/",
+  "One-factorExperiment": "One-factor experiment is an experiment with a model containing one fixed controllable variable.",
+  "MeasurementError": "A measurement error is an error involving the observation of a physical quantity. Reference: Arley, N. & Buch , K.R., Introduction to the theory of probability and statistics. New York : Wiley London. Chapman & Hall, 1950. 236p.",
+  "ExperimentalConclusion": "An experimental conclusion is a conclusion inferred from experimental observations and other experimental data.",
+  "Hypothesis-formingExperiment": "A hypothesis-forming experiment is a Galilean experiment. It includes a hypotheses formation stage in which one or more hypotheses are formed using abduction or induction.",
+  "Organization": "SUMO: An Organization is a corporate or similar institution. The members of an Organization typically have a common purpose or function. Note that this class also covers divisions, departments, etc. of organizations. For example, both the Shell Corporation and the accounting department at Shell would both be instances of Organization. Note too that the existence of an Organization is dependent on ",
+  "ResultEvaluating": "Result evaluating is the act of determining the value of experimental results. Reference: Based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "PlanOfExperimentalActions": "A plan of experimental actions is an explicitly described sequence of experimental actions according to which the experiment is to be done. See also <protocol>, <SOP>. Reference: based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "ErrorOfConclusion": "An error of a conclusion is an incorrectly inferred conclusion about the phenomena involved in the experiment.",
+  "FieldOfStudy": "SUMO \"An academic or applied discipline with recognized experts and with a core of accepted theory or practice. Note that FieldOfStudy is a subclass of Proposition, because a FieldOfStudy is understood to be a body of abstract, informational content, with varying degrees of certainty attached to each element of this content.\" http://www.ontologyportal.org/",
+  "ComputationalExperiment": "A computational experiment is a scientific experiment which investigates cause-effect relations between known and unknown (target) variables by manipulating the computational (non-physical) domain adequate to the real-world domain.",
+  "Human": "SUMO: Modern man, the only remaining species of the Homo genus.\"http://www.ontologyportal.org/",
+  "Region": "\"A topographic location. Regions encompass surfaces of Objects, imaginary places, and GeographicAreas. Note that a Region is the only kind of Object which can be located at itself. Note too that Region is not a subclass of SelfConnectedObject, because some Regions, e.g. archipelagos, have parts which are not connected with one another.\" (SUMO)",
+  "FinancialRequirements": "Financial requirements are financial capacity and restrictions of a subject of the experiment.",
+  "ArtificialLanguage": "\"The subclass of Languages that are designed by Humans.\"SUMO: http://www.ontologyportal.org/",
+  "RepresentationExperimentalObservation": "A representation of experimental observations is a \ufffdreproduction of the observations in some material or tangible form? preferably according to a data representation standard. Reference: The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "ComputerSimulation": "Computer simulation is a computational experiment where the real domain of study is modeling by a computer program imitating \ufffdthe internal processes and not merely the results of the thing being simulated\". Reference: The Free Dictionary: http://www.thefreedictionary.com/computer+simulation",
+  "NameEquipment": "An equipment name is a name that refers to a piece of experimental equipment.",
+  "Proposition": "Propositions are Abstract entities that express a complete thought or a set of such thoughts. As an example, the formula ' (instance Yojo Cat)' expresses the Proposition that the entity named Yojo is an element of the Class of Cats. Note that propositions are not restricted to the content expressed by individual sentences of a Language. They may encompass the content expressed by theories, books, ",
+  "Hardware": "the concept is outside of EXPO",
+  "PublicStatus": "A public status allows the use of a SOP, a protocol, and/ or experimental results for all legal purposes.",
+  "MethodApplicabilityCondition": "A method applicability condition is an applicability condition that specifies the contexts in which the experimental method may be applied to achieve the method goal.",
+  "ObjectOfAction": "An object of an action is \"on whom an action is made\". For instance: a <plant>, a <robot>. The Oxford English Dictionary. Oxford University Press, 2 Ed., 1990",
+  "ExperimentalEquipmentSelecting": "Experimental equipment selecting is an experimental design task of selecting appropriate instruments and materials for experimental actions.",
+  "CapacityRequirements": "Capacity requirements are the ability of the experimental equipment, legal competency, qualification, and the ability of a subject of the experiment to provide execution of experimental actions in order to achieve an experimental goal. Reference: Based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "ComparisonControl_TargetGroups": "A comparison control/ target groups is a paired comparison experimental design strategy where two groups of experimental objects are used, a control group which is not affected by experimental factor(s), and a target group which is affected by the experimental factor(s).",
+  "AlternativeHypothesis": "An alternative hypothesis an experimental hypothesis that states that factors different from the known controlled variables have specified effect on the unknown (target) variables of the domain.",
+  "SampleRepresentativeness": "Sample representativeness is an attribute of a sample which characterizes how the sample is representative for analysis and estimation the characteristics of a the parent group.",
+  "ExperimentalDesign": "An experimental design is a structured, organized method for determining the relationship between factors affecting cause-effect relations between known and unknown variables. Reference: Sigma:http://www.isixsigma.com/dictionary/Design_of_Experiments_-_DOE-41.htm",
+  "MaturationEffect": "A maturation effect is a time effect where an effect on the experimental results is due to changes within subjects over time, e.g., growth, warm-up, fatigue, learning to learn. Reference: Davis, J., Psychological research methods.",
+  "AdminInfoUser": "Administrative information about a user of an experimental data/ protocols, etc. is data about the user (a name, an organization, contact data, login, password, etc.) used for administrative purposes such as to provide/ control access to experimental data etc.",
+  "GeneKnock-in": "A gene knock-in design strategy is a sub-class of a comparison control/ target groups strategy where a target group has one or more genes added.",
+  "FormingClassificationSystem": "Forming a classification system is the scientific activity to form a hierarchical system of categories.",
+  "InterpretingResult": "Interpreting a result is the act of interpreting or explaining, the meaning of an experimental result. Reference: Based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "SubjectMethod": "A subject of a method is: \"one who executes the method.\" For instance: a <human>, a <robot>. Reference: Based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "Robustness": "The concept is outside of EXPO",
+  "TitleExperiment": "The title of an experiment is a descriptive heading name that refers to the experiment.",
+  "NullHypothesis": "A null hypothesis is an experimental hypothesis that states that a known controlled variable or variables does not have a specified effect on the unknown (target) variable or variables of the domain.",
+  "ValueOfVariable": "A value of an experimental variable is \"the particular quantity, number or amount\" of the variable. Reference: Collins Softback English Dictionary, HarperCollins Publishers, Glasgow, 1993.",
+  "AttributeSample": "An attribute of a sample is an essential characteristic of a sample, e.g. <representativeness>.",
+  "Submitter": "A submitter of a protocol, a SOP, experimental results, etc. is the person (or a group) who submits the document. Reference: Based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "SampleForming": "Sample forming is an act of composing a sample for the experiment.",
+  "Predicate": "\"A Predicate is a sentence-forming Relation. Each tuple in the Relation is a finite, ordered sequence of objects. The fact that a particular tuple is an element of a Predicate is denoted by '(*predicate* arg_1 arg_2 .. arg_n)', where the arg_i are the objects so related. In the case of BinaryPredicates, the fact can be read as `arg_1 is *predicate* arg_2' or `a *predicate* of arg_1 is arg_2'.\" (SU",
+  "SplitSamples": "Split samples is a matching groups experimental design strategy where each member of a sample group of experimental objects is divided into two parts in order to form two groups for the experiment. Reference: Based on: Langley, R. Practical Statistics. David&Charles Ltd, Newton,1971.",
+  "ExperimentalHypothesis": "An experimental hypothesis is a statement about cause-effect relations between known and unknown (target) variables of the domain of the experiment \"that shall be in accordance with known facts*\" to be verified at the experiment. Reference: The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "ImproperSampling": "Improper sampling is an observational error due to mistakes in a forming a sample: applying sampling methods.",
+  "ExperimentalMethod": "An experimental method is a way to solve a scientific task by executing a scientific experiment.",
+  "Magazine": "Dublin Core: http://www.lub.lu.se/cgi-bin/nmdc.pl",
+  "AtomicAction": "An atomic action is an experimental action which is not decomposed on sub actions in terms of the domain.",
+  "HypothesisRepresentation": "An hypothesis representation is a \ufffdreproduction of the hypothesis in some material or tangible form? Reference: The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "SubjectsComparison": "A subjects comparison is a paired comparison of single sample groups experimental design strategy where effects on the results of different subjects of the experiment are compared. Reference: Based on: Langley, R. Practical Statistics. David&Charles Ltd, Newton,1971.",
+  "SampleSize": "The sample size is a number of members of the sample.",
+  "FaultyComparison": "A faulty comparison is a result error due to using invalid comparison procedures or applying valid comparison procedures to incomparable objects.",
+  "CorpuscularObject": "\"A SelfConnectedObject whose parts have properties that are not shared by the whole.\" (SUMO)",
+  "ExperimentalTechnology": "An experimental technology is the total knowledge (theory, methods, and practices), and machinery available to any object of an experiment. Reference: Based on the Collins Softback English Dictionary, HarperCollins Publishers, Glasgow, 1993.",
+  "Goal": "the concept is outside of EXPO",
+  "SelfConnectedObject": "\"A SelfConnectedObject is any Object that does not consist of two or more disconnected parts.\" (SUMO)",
+  "Requirements": "The concept is outside of EXPO",
+  "PairedComparison": "A paired comparison is an experimental design strategy where two groups of experimental objects are used to compare affects of the experimental factor(s). Reference: Based on: Langley, R. Practical Statistics. David&Charles Ltd, Newton,1971.",
+  "DDC_Dewey_Classification": "The Dewey Decimal Classification (DDC) is a system of library classification developed by Melvil Dewey (1851 - 1931) in 1876, and since greatly modified and expanded in the course of twenty-two major revisions occurred until 2004. Reference: Wikipedia: http://en.wikipedia.org/wiki/Dewey_Decimal_Classification",
+  "Classification": "Classification is the scientific task of forming a hierarchical system of categories.",
+  "StatusExperimentalDocument": "A status of an experimental document is a permission status or a document stage.",
+  "AttributeGroup": "An attribute of a group is an essential characteristic of a group, e.g. <variability>.",
+  "AttributeOfHypothesis": "An attribute of an hypothesis is an essential characteristic of an experimental hypothesis, e.g. <explicitness of an hypothesis>, <complexity of an hypothesis>.",
+  "NonlinearModel": "A nonlinear model is a mathematical model where the relationship between the variables is nonlinear.",
+  "SubjectRole": "the concept is outside EXPO.",
+  "ExperimentalStandard": "An experimental standard is \"an accepted or approved\" procedure in the domain of an experiment, for example a standard for data representation, or a standard for measurements. Reference: Collins Softback English Dictionary, HarperCollins Publishers, Glasgow, 1993.",
+  "SynonymousExternalConcept": "SUMO: http://www.ontologyportal.org/",
+  "InductiveHypothesis": "An inductive hypothesis is formalized as the generalization of examples by a predicate clause. Reference: Based on Abe A.: The Relation between Abductive Hypotheses and Inductive Hypotheses, Proc. of IJCAI97 Workshop on Abduction and Induction, pp. 1--6 (1997)",
+  "ResultsEvaluation": "Results evaluation is the scientific task to working out the value of an experimental result; or in general, to express the result in terms of something already known. Reference: Based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "ObjectOfExperiment": "An object of an experiment is \"on whom an experiment is made.\" For instance: a <plant>, a <robot>. The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "RecordingAction": "A recording action is an experimental action for preserving information about variables of the experiment for control, analysis, and interpretation of the experimental results.",
+  "AdminInfoAuthor": "Administrative information about an author of an experimental data/ protocols, etc. is data about the author (a name, an organization, contact data, etc.) used for administrative purposes such as to provide/ control access/ storage of experimental data etc.",
+  "Image": "Dublin Core: http://www.lub.lu.se/cgi-bin/nmdc.pl",
+  "SingleHypothesis": "A single hypothesis of an experimental hypothesis is a Boolean attribute which is true when the hypothesis can be formalized by a single clause.",
+  "ExplainGoal": "An explain-goal is an experimental goal of a hypothesis-forming experiment.",
+  "Agent": "\"Something or someone that can act on its own and produce changes in the world.\" (SUMO)",
+  "AdminInfoSubmitter": "Administrative information about a submitter of an experimental data/ protocols, etc. is data about the submitter (a name, an organization, contact data, etc.) used for administrative purposes such as to provide/ control access/ storage of experimental data etc.",
+  "MicroarrayExperiment": "The concept is outside of EXPO.",
+  "ExperimenterBias": "An experimenter bias is a subject effect, where results of an experiment are due to the experimenter's actions or expectations. A number of studies have shown that researchers tend to find the results they are looking for, a kind of self-fulfilling prophecy. Reference: Davis, J., Psychological research methods.",
+  "Dispersion": "The concept is outside of EXPO",
+  "TargetVariable": "A target variable is an unknown variable of the domain model about which the experiment is designed to discover new knowledge.",
+  "MethodGoal": "A method goal is the state that a plan of method actions is intended to achieve, and that (when achieved) terminates behavior intended to achieve it. Reference: Based on WordNet: http://www.cogsci.princeton.edu/cgi-bin/webwn2.0?stage=1&word=goal+",
+  "Fact": "The concept is outside EXPO; A fact is a particular truth known by actual observation or authentic testimony, as opposed to what is merely inferred, or to a conjecture or fiction; a datum of experience, as distinguished from the conclusions that may be based upon it. Reference: The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "ContentBearingPhysical": "\"Any Object or Process that expresses content. This covers Objects that contain a Proposition, such as a book, as well as ManualSignLanguage, which may similarly contain a Proposition.\" (SUMO)",
+  "DegreeOfModel": "A degree of a model is an attribute of a model which characterizes the dependency between its variables. For instance: a <linear model>, a <nonlinear model>.",
+  "Provider": "A provider is a person or organization that provides or supplies experimental materials, equipment, objects of an experiment, etc. Reference: Based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "TimePosition": "\"Any TimePoint or TimeInterval along the universal timeline from NegativeInfinity to PositiveInfinity.\" (SUMO)",
+  "ProductRole": "Final output",
+  "Treated_Untreated": "A treated/ untreated design strategy is a sub-class of a comparison control/ target groups strategy where the target group receives a specified treatment.",
+  "ExperimentalObservation": "An experimental observation is a direct observation of nature, the set of values of target variables (or other variables of the experiment model), \"prior to analysis; interpretation*\" (compare with experimental results). Reference: Based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989 * Collins Softback English Dictionary, HarperCollins Publishers, Glasgow, 1993.",
+  "TaskRole": "the concept is outside EXPO. EX: Symptom role (Fault Diagnosis; Conclusion role (Reasoning)",
+  "TestingEffect": "A testing effect is a subject effect where the results are due to the data gathering procedures. Reference: Davis, J., Psychological research methods.",
+  "Quantity": "\"Any specification of how many or how much of something there is. Accordingly, there are two subclasses of Quantity: Number (how many) and PhysicalQuantity (how much).\" (SUMO)",
+  "StatisticalError": "Statistical error is a random error which can be described by statistical laws.",
+  "TimeCourse": "A time course design strategy is a sub-class of a comparison control/ target groups strategy where an experimental factor is time.",
+  "ExecutionOfExperiment": "The execution of an experiment is the process of putting into effect a plan of experimental actions in order to archive an experimental goal. Reference: Based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "AdminInfoExperiment": "Administrative information about an experiment is data about the experiment (status, author, last modification, etc) used for administrative purposes such as to provide/ control access/ storage of the experimental results/ protocols etc.",
+  "Formula": "\"A syntactically well-formed formula in the SUO-KIF knowledge representation language.\" (SUMO) or other formal language.",
+  "Reference": "The concept is outside EXPO",
+  "Paper": "\"An Artifact made of cellulose pulp that is intended to contain a Text.\" (SUMO) It can play a role: RepresenationalMedium",
+  "ContentBearingObject": "\"Any SelfConnectedObject that expresses content. This content may be a Proposition, e.g. when the ContentBearingObject is a Sentence or Text, or it may be a representation of an abstract or physical object, as with an Icon, a Word or a Phrase.\" (SUMO)",
+  "SentientAgent": "\"An Agent that has rights but may or may not have responsibilities and the ability to reason. If the latter are present, then the Agent is also an instance of CognitiveAgent. Domesticated animals are an example of SentientAgents that are not also CognitiveAgents.\" (SUMO)",
+  "LevelOfSignificance": "The concept is outside of EXPO",
+  "Summary": "\"A short Text that is a summary of another, longer Text.\" Reference: SUMO: http://www.ontologyportal.org/",
+  "GroupExperimentalObject": "A group of experimental objects is a collection of studying in a scientific investigation objects.",
+  "DependentVariable": "The concept is outside of EXPO",
+  "PairedComparisonOfMatchingGroups": "A paired comparison of matching groups is a paired comparison experimental design strategy where each member of one group of experimental objects matches (by a definite rule) a member (a pair) of another group of experimental objects. Reference: Based on: Langley, R. Practical Statistics. David&Charles Ltd, Newton,1971.",
+  "DynamicModel": "A dynamic model of the experiment is a model which is changing during the period of the experiment.",
+  "HypothesisFormation": "Hypothesis formation is the scientific task \ufffdto frame a hypothesis or supposition*? on the basis of preliminary information gathering and problem analysis. Reference: The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "LoginName": "The concept is outside of EXPO",
+  "AbductiveHypothesis": "An abductive hypothesis is formalized as a prediction, or an explanation of an observation, usually by a propositional clause. Reference: Based on Abe A.: The Relation between Abductive Hypotheses and Inductive Hypotheses, Proc. of IJCAI97 Workshop on Abduction and Induction, pp. 1--6 (1997)",
+  "ExperimentalAction": "An experimental action is a process of manipulation in the domain of the experiment in order to achive a particular sub goal, which is a part of the goal of the experiment.",
+  "AttributeOfDocument": "An attribute of a document is an essential characteristic of a document, e.g. <status>.",
+  "Author": "An author of an experimental document is the person (or a group) who developed the document or on whose authority the document is made. Reference: Based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "ExperimentalRequirements": "Experimental requirements are conditions (legal, ethic, economic, etc.) for preparation and execution of an experiment which must be complied with. Reference: Based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "RandomSampling": "Random sampling is a sampling method where \"every single individual in the parent group has an equal chance to be chosen in the sample.\" Reference: Langley, R. Practical Statistics. David&Charles Ltd, Newton,1971.",
+  "RepresentationExperimentalResults": "A representation of experimental results is a \ufffdreproduction of the results in some material or tangible form? Reference: The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "DynamismOfModel": "Dynamism of a model is an attribute of a model which characterizes whether the model involves time. For instance: a <static model>, a <dynamic model>.",
+  "Machine": "Machines are Devices that have a well-defined resource and result and that automatically convert the resource into the result.\" Reference: SUMO: http://www.ontologyportal.org/",
+  "TimeEffect": "A time effect is an alternative hypothesis where an effect on the experimental results is due to uncontrolled changes over time.",
+  "CalculableVariable": "A calculable variable is a variable where there is an algorithm to determine the value of the variable. Reference: based on Albar`ede, P. A theory of experiment. http://66.102.9.104/search?q=cache:ECOW7jEPfHAJ: arxiv.org/pdf/cs.AI/0201022++a+theory+of+experiment+Albarede&hl=en",
+  "ExperimentalDesignStrategy": "An experimental design strategy is a collection of typical techniques applied to an experimental design, such as e.g. <comparison a control and a target groups>.",
+  "Collection": "\"Collections have members like Classes, but, unlike Classes, they have a position in space-time and members can be added and subtracted without thereby changing the identity of the Collection. Some examples are toolkits, football teams, and flocks of sheep.\" (SUMO)",
+  "TechnicalReport": "Dublin Core: http://www.lub.lu.se/cgi-bin/nmdc.pl",
+  "ClassificationOfDomains": "A classification of domains is a hierarchical system of categories - scientific domains.",
+  "SamplingRule": "A sampling rule is \"a prescribed method for finding\" a member of a sample. Reference: The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "AttributeOfModel": "An attribute of a model is an essential characteristic of an experimental model, e.g. <dynamism of a model>, <order of a model>.",
+  "Password": "The concept is outside of EXPO",
+  "ExperimentalSubgoal": "An experimental subgoal is a step to an experimental goal. Decomposition of an experimental goal onto subgoals corresponds to partition of the experiments onto stages, sub-stages, etc.",
+  "ExperimentalActionsPlanning": "Experimental actions' planning is an experimental design task of constructing a sequence of experimental actions in order to achieve an experimental goal.",
+  "Article": "\"A relatively short Text that either is unbound or is bound with other Articles in a Book.\" Reference: SUMO: http://www.ontologyportal.org/",
+  "ScientificTask": "A scientific task is a portion of scientific study. Reference: Based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "ActionName": "An action name is a name that refers to an action",
+  "HumanLanguage": "\"The subclass of Languages used by Humans.\" (SUMO)",
+  "ComplexHypothesis": "A complex hypothesis of an experimental hypothesis is a Boolean attribute which is false where the hypothesis can be formalized by a single clause.",
+  "SubjectOfAction": "A subject of an action is: \"one who executes the action\" For instance: a <human>, a <robot>. Reference: Based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "Multi-factorExperiment": "A multi-factor experiment is an experiment with a model containing 3, 4, or more fixed controllable variables.",
+  "NonRestrictedStatus": "A non restricted status is a status which allows the access to a SOP, a protocol, and/ or experimental results for legal purposes.",
+  "DomainAction": "A domain action is a manipulation in the domain of the experiment.",
+  "Name": "A name a word or phrase constituting the individual designation by which a particular person or thing is known, referred to, or addressed. Reference: The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "Device": "A device is an experimental equipment that processes data according to a set of instructions. Reference: Collins Softback English Dictionary, HarperCollins Publishers, Glasgow, 1993. SUMO: \"A Device is an Artifact whose purpose is to serve as an instrument in a specific subclass of Process.\"",
+  "Attribute": "The concept is outside of EXPO. \"Qualities which we cannot or choose not to reify into subclasses of Object.\" Reference: SUMO http://berkelium.teknowledge.com:8080/sigma/home.jsp",
+  "Classifying": "A process of classification is the act of classifying into given classes according to common characteristics. Reference:The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989 SUMO: \"The Class of IntentionalPsychologicalProcesses which involve attaching a name or category to a thing or set of things. Note that Classifying is distinguished from Learning by the fact that the latter cover",
+  "Abstract": "\"Properties or qualities as distinguished from any particular embodiment of the properties/qualities in a physical medium. Instances of Abstract can be said to exist in the same sense as mathematical objects such as sets and relations, but they cannot exist at a particular place and time without some physical encoding or embodiment.\" (SUMO)",
+  "StratifiedSampling": "Stratified sampling is a sampling method where a random sample is taking from different levels (strata) of the parent group. Reference: Based on Langley, R. Practical Statistics. David&Charles Ltd, Newton,1971.",
+  "Number": "\"A measure of how many things there are, or how much there is, of a certain kind. Numbers are subclassed into RealNumber, ComplexNumber, and ImaginaryNumber.\" (SUMO)",
+  "Variability": "Variability is an essential characteristic of a group of experimental objects, \"quality of being variable in some respect\". Reference: The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "SUMOSynonym": "A SUMO synonym is a synonymous concept between the SUMO ontology concept and the concept.",
+  "MathematicalModelRepresentation": "A mathematical model is a representation of an experimental model where the relationship between the variables is mathematical.",
+  "ExperimenteeBias": "An experimentee bias is an object effect where results of an experiment are due to systematic differences in research participants (\"experimetees\") assigned to different conditions or treatments. Reference: Davis, J., Psychological research methods.",
+  "InstrumentationEffect": "An instrumentation effect is an experimental design effect where an effect on the experimental results is due to an aberration in the measuring tools, either mechanical instrument or test. Reference: Davis, J., Psychological research methods.",
+  "BaconianExperiment": "A Baconian experiment is a scientific experiment which involves no explicit hypothesis. Reference: Medawar, P.B. Advice to a Young Scientist. Pan Books Ltd, London, 1981",
+  "ExperimentalProtocol": "An experimental protocol is an explicit detailed specification of (usually a part of) an experiment which describes a plan of experimental actions to achieve an experimental subgoal (goal).",
+  "ImplicitHypothesis": "An implicit hypothesis of an experimental hypothesis is a Boolean attribute which is false where the statement can be written in the form of a text.",
+  "RepresentationExperimentalExecutionProcedure": "A representation of the experimental execution procedure is the expression of a plan of experimental actions in some accepted scientific form. Reference: Based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "StandardOperatingProcedure": "A standard operating procedure is a prescribed procedure to be followed routinely. Reference: HyperDictionary: http://searchbox.hyperdictionary.com/dictionary/standard+operating+procedure",
+  "EnvironmentalRequirements": "Environmental requirements are external conditions or surroundings, esp. those in which people work or live, or a plant or animal lives; for instance food safety, hygiene. Reference: Collins Softback English Dictionary, HarperCollins Publishers, Glasgow, 1993.",
+  "Process": "The concept is out EXPO. \"Intuitively, the class of things that happen and have temporal parts or stages. Examples include extended events like a football match or a race, actions like Pursuing and Reading, and biological processes. The formal definition is: anything that lasts for a time but is not an Object. Note that a Process may have participants 'inside' it which are Objects, such as the pla",
+  "ResultsInterpretation": "Results interpretation is the scientific task of explaining, the meaning of experimental results. Reference: Based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "ExperimentalModel": "An experimental model is a description of dependencies (e.g. logical/mathematical) between experimental factors, others known variables, and unknown variables. The experimental model is obtained from the domain model by fixing experimental factors from the list of known controllable variables and the target variables from the list of unknown variables.",
+  "ExperimentalDesignEffect": "An experimental design effect is an alternative hypothesis where an effect on the experimental results is due to an inadequate experimental design.",
+  "FactorialDesign": "A factorial design is an experimental design where all the sample sizes of experimental objects are determined in advance, Two or more experimental factors of the experimental model, which the object of the experiment can control, are varied in order to determine of a value of target variables. Reference: Based on: Langley, R. Practical Statistics. David&Charles Ltd, Newton,1971.",
+  "AttributeOfAction": "An attribute of an action is an essential characteristic of an experimental action, e.g. <action complexity>.",
+  "NLMClassification": "The NML (National Library of Medicine) classification is a \ufffdproduct of the National Library of Medicine for the arrangement of library materials in the field of medicine and related sciences used internationally? Reference: NLM: http://wwwcf.nlm.nih.gov/class/",
+  "RepresentationForm": "The concept is outside EXPO",
+  "ModelAssumption": "A model assumption is an assumption about the domain used as a premise, it is necessarily explicit - written in the form of a text.",
+  "InformationGethering": "Information gathering is the scientific task of collecting information for further analysis or for other scientific purposes.",
+  "ProcessProblemAnalysis": "process of problem analysis is an act of reducing a problem's complexity. Reference: based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "Entity": "\"The universal class of individuals. This is the root node of the ontology.\" (SUMO)",
+  "Representation": "The concept is outside EXPO",
+  "Model": "The concept is outside of EXPO",
+  "HypothesisForming": "Hypothesis forming is the act \"to frame a hypothesis or supposition\"* on the basis of preliminary information gathering and problem analysis. Reference: The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "Procedure": "A sequence-dependent specification. Some examples are ComputerPrograms, finite-state machines, cooking recipes, musical scores, conference schedules, driving directions, and the scripts of plays and movies. Reference: SUMO http://berkelium.teknowledge.com:8080/sigma/home.jsp",
+  "StatisticsCharacteristic": "The concept is outside of EXPO",
+  "ExperimentalObjectSelecting": "Experimental object selecting is an experimental design task of selecting an appropriate to the experimental goal and experimental requirements an object of the experiment.",
+  "RestrictedStatus": "A restricted status is a status which controls in some way the access to a SOP, a protocol, and/ or experimental results.",
+  "TechnicalDescription": "A technical description is a representation of technical information about experimental equipment or a subject (robot) in order to provide the user with information about a technology's purpose and functions, components and construction, and operation and maintenance? Reference: UA: http://www.u.arizona.edu/~menchaca/engl308/assignments/descriptions.htm",
+  "DocumentStage": "A document stage is a status of an experimental document that specifies the current stage of development of the document, e.g. <draft>.",
+  "ClassificationByModel": "The classification by a model is a hierarchical system of categories - types of experiments - according to amount of factors in the design of the experiments, for instance <one-factor experiment >, <two-factor experiment>, <multi-factor experiment>.",
+  "Group": "\"A Collection of Agents, e.g. a flock of sheep, a herd of goats, or the local Boy Scout troop.\" (SUMO)",
+  "InferableVariable": "An inferable variable is an instance-of a variable where it is possible to make a computational inference about its value. Reference: based on Albar`ede, P. A theory of experiment. http://66.102.9.104/search?q=cache:ECOW7jEPfHAJ: arxiv.org/pdf/cs.AI/0201022++a+theory+of+experiment+Albarede&hl=en",
+  "StaticModel": "A static model of the experiment is a model which remains unchanged during the period of the experiment.",
+  "ActionComplexity": "Action complexity is an attribute of an experimental action which characterizes whether the action is composed of atomic actions.",
+  "ExperimentalResults": "Experimental results are the set of facts and conclusions, obtained as a result of the interpretation of the experimental observations, which increase/decrease the probability of a research hypothesis of the experiment.",
+  "DraftStatus": "A draft status means that the current SOP or a protocol is a preliminary description.",
+  "HypothesisAcceptanceMistake": "An hypothesis acceptance mistake is the incorrect acceptance or rejecting of the research hypothesis (H1).",
+  "SystematicSampling": "Systematic sampling is a sampling method where each member of a sample is selecting according to a definite rule (except of random choice).",
+  "ObjectEffect": "An object effect is an alternative hypothesis where an effect on the experimental results is due to uncontrolled object's action or expectations.",
+  "NormalizationStrategy": "A normalization strategy is an experimental design strategy to reduce experimental result variation.",
+  "ObjectMethod": "An object of a method is \"on whom?\"the method is applied. For instance: a <plant>, a <robot>. Reference: based on The Oxford English Dictionary http://dictionary.oed.com",
+  "Book": "\"A Text that has pages and is bound.\" Reference: SUMO: http://www.ontologyportal.org/",
+  "ComplexAction": "A complex action is a composition of atomic actions.",
+  "PhysicalExperiment": "A physical experiment is a scientific experiment which investigates cause-effect relations between known and unknown variables by manipulating the real-world (physical) domain.",
+  "DomainOfExperiment": "A domain of an experiment is a field of study in which an experiment is designed to discover new knowledge.",
+  "URL": "The concept is outside EXPO",
+  "Object": "SUMO: Corresponds roughly to the class of ordinary objects. Examples include normal physical objects, geographical regions, and locations of Processes, the complement of Objects in the Physical class. In a 4D ontology, an Object is something whose spatiotemporal extent is thought of as dividing into spatial parts roughly parallel to the time-axis.\"http://www.ontologyportal.org/",
+  "FalseNegative": "A false negative is an hypothesis acceptance mistake where the hypothesis being tested is actually true and we conclude that it is false. Reference: based on Introduction to Probability and Statistics. 4th ed. H.L. Alder, E.B. Roessler, W.H. Freeman & Co., 1968.",
+  "AdminInfoProvider": "administrative information about a provider of biological samples, experimental equipment etc, is data (a name, an organization, contact details etc.) used for administrative purposes such as to provide/ control access/ storage of the experimental results/ protocols etc.",
+  "LinearModel": "A linear model is a mathematical model where the relationship between the variables is linear.",
+  "Materials": "Materials are culture collections and chemicals used for executing of an experiment.",
+  "ModelRepresentation": "A model representation is a formalized description of the experimental model, for instance a text or formulas.",
+  "ScientificExperiment": "A scientific experiment is a research method which permits the investigation of cause-effect relations between known and unknown (target) variables of the field of study (domain). An experimental result cannot be known with certainty in advance.",
+  "ResearchHypothesis": "A research hypothesis is an experimental hypothesis that states that a known controlled variable or variables has/have a specified effect on the unknown (target) variable or variables of the domain.",
+  "Physical": "SUMO: http://www.ontologyportal.org/",
+  "PairedComparisonOfSingleSampleGroups": "A paired comparison of single sample groups is a paired comparison experimental design strategy where the same group of experimental objects is examined twice or more in order to compare the effects of experimental factors. Reference: Based on: Langley, R. Practical Statistics. David&Charles Ltd, Newton,1971.",
+  "User": "A user is a person or organization that makes use of a protocol, a SOP, experimental results, etc. Reference: Based on The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "Two-factorExperiment": "A two-factor experiment is an experiment with a model containing two fixed controllable variables.",
+  "EperimentalDesignTask": "An experimental design task is a scientific task of planning and organizing an experiment in order to achieve an experimental goal.",
+  "DuhemEffect": "A Duhem effect is an experimental design effect where an effect on the experimental results is due to an inconsistency between the physical world and the domain model. Reference: Philosophy of science: the central issues. Eds. Martine Curd, J.A. Cover, W.W. Norton & Co. N.Y. 1998.",
+  "AuthorProtocol": "An author of a protocol is the person (or a group) who developed the protocol.",
+  "CorporateName": "The concept is outside of EXPO",
+  "GeneralityOfHypothesis": "The generality of an hypothesis is an attribute of an experimental hypothesis which characterizes whether the hypothesis is inductive (more general) or abductive (less general).",
+  "Artifact": "\"A CorpuscularObject that is the product of a Making.\"",
+  "AttributeRole": "Ex: Height role: played by length (it depends on how to put, say, a cube)",
+  "ExperimentalFactor": "An experimental factor is a known variable of the model of the domain which the object of the experiment can control/vary in order to determine of a value of target variables.",
+  "PresentingSampling": "Presenting sampling is a sampling method where members of a sample are individuals available \"at present\". It is \"a common kind sampling in medical research, for instance, a doctor can report on the last 50 cases of appendicitis that he has seen.\" Reference: Based on Langley, R. Practical Statistics. David&Charles Ltd, Newton,1971.",
+  "ExperimentalGoal": "An experimental goal is the state that a plan is intended to achieve and that (when achieved) terminates behaviour intended to achieve it. Reference: WordNet: http://www.cogsci.princeton.edu/cgi-bin/webwn2.0?stage=1&word=goal+",
+  "FactorLevel": "A factor level is a value of the variable <Experimental factor>. \"The word <level> is used for the various strengths, quantities, or concentration of each factor\". Reference: Langley, R. Practical Statistics. David&Charles Ltd, Newton,1971.",
+  "ProcedureExecuteExperiment": "A procedure to execute an experiment is an explicit detailed specification of an experiment, which describes experimental methods, experimental equipment, a plan of experimental actions, a status of the procedure, etc.",
+  "HypothesisExplicitness": "Hypothesis explicitness is an attribute of an hypothesis which characterizes the explicitness of the statement; whether the statement is represented in a form of a text or not. For example: an <explicit hypothesis>, an <implicit hypothesis>.",
+  "ClassificationByDomain": "A classification by a domain is a hierarchical system of categories - types of experiments - according to their domains, e.g. microarray experiment, proteomic experiment.",
+  "InvestigateGoal": "An investigate-goal is an experimental goal of a Baconian experiment.",
+  "PublicAcademicStatus": "A public academic status restricts the use of a SOP, a protocol, and/or experimental results to academic purposes only.",
+  "Title": "The concept is outside of EXPO; \"The name given to the resource by the CREATOR or PUBLISHER.\" Reference: Dublin Core: http://www.lub.lu.se/cgi-bin/nmdc.pl",
+  "IndependentVariable": "The concept is outside of EXPO",
+  "SubjectQualification": "Subject qualification is a \"formal certification, issued by a relevant approved body, in recognition that a person has achieved competency relevant to identified individual, professional, industry or community needs.\" Reference: Training: www.training.wa.gov.au/publications/cbt/framework/glossary.htm",
+  "Text": "\"A LinguisticExpression or set of LinguisticExpressions that perform a specific function related to Communication, e.g. express a discourse about a particular topic, and that are inscribed in a CorpuscularObject by Humans.\" SUMO: http://www.ontologyportal.org/",
+  "ParticlePhysicsExperiment": "A particle physics experiment is a scientific experiment producing knowledge about the particle physics field of study.",
+  "ValueEstimate": "Value estimate is \"an approximate calculation of quantity or degree or worth\" of the value of a variable. Reference: WordNet: http://www.answers.com",
+  "Proceedings": "Dublin Core: http://www.lub.lu.se/cgi-bin/nmdc.pl",
+  "TimeMeasure": "\"The class of temporal durations (instances of TimeDuration) and positions of TimePoints and TimeIntervals along the universal timeline (instances of TimePosition).\" (SUMO)",
+  "TimePoint": "\"An extensionless point on the universal timeline. The TimePoints at which Processes occur can be known with various degrees of precision and approximation, but conceptually TimePoints are point-like and not interval-like. That is, it doesn't make sense to talk about how long a TimePoint lasts.\" SUMO: http://www.ontologyportal.org/",
+  "Sample": "A sample is \"a portion drawn from a population (EXPO: <parent group>), the study of which is intended to lead to statistical estimates of the attributes of the whole population.\" Reference: The Oxford English Dictionary. Oxford University Press, 2 Ed., 1989",
+  "Sound": "Dublin Core: http://www.lub.lu.se/cgi-bin/nmdc.pl",
+  "LibraryOfCongressClassification": "Library of Congress classification is the system of library organization developed during the reorganization of the U.S. Library of Congress. It consists of separate, mutually exclusive, special classifications, often having no connection save the accidental one of alphabetical notation. Reference: Encyclopedia Britannica online: http://www.britannica.com/",
+  "IncompleteDataError": "An incomplete data error is a result error due to the data being incapable of providing evidence for a research hypothesis.",
+  "Error": "An error is the difference between observations or computations from the true values, or to values that are accepted as being true. Reference: USGS glossary: biology.usgs.gov/npsveg/glossary.html",
+  "SystematicError": "A systematic error is an error due to a definite cause acting according to a definite law. Reference: Arley, N. & Buch , K.R., Introduction to the theory of probability and statistics. New York : Wiley London. Chapman & Hall, 1950. 236p.",
+  "HistoryEffect": "A history effect is a time effect where an effect on the experimental results is due to events outside the experiment. Some events that are not part of the research, i.e. a natural disaster, which occurs at the same time as executing the experiment could affect the results. Reference: Davis, J., Psychological research methods.",
+  "SequentialDesign": "A sequential design is an experimental design where a sample group size of experimental objects is not determined in advance. The experiment is continued until the moment when the results are conclusive according to predetermined degree of significance or non-significance. Reference: Based on Langley, R. Practical Statistics. David&Charles Ltd, Newton,1971. Reference: Based on: Langley, R. Practic",
+  "ActionGoal": "An action goal is the state that a plan of action is intended to achieve, and that (when achieved) terminates behavior intended to achieve it. Reference: Based on WordNet: http://www.cogsci.princeton.edu/cgi-bin/webwn2.0?stage=1&word=goal+",
+  "BiblioReference": "The concept is outside EXPO",
+  "Journal": "Dublin Core: http://www.lub.lu.se/cgi-bin/nmdc.pl",
+  "ConfirmGoal": "A confirm-goal is an experimental goal of a hypothesis-driven experiment.",
+  "PermissionStatus": "A permission status is a status of an experimental document that specifies current a condition or privilege allowing use of the experimental document, e.g. <public status>.",
+  "Relation": "\"The Class of relations. There are three kinds of Relation: Predicate, Function, and List. Predicates and Functions both denote sets of ordered n-tuples. The difference between these two Classes is that Predicates cover formula-forming operators, while Functions cover term-forming operators. A List, on the other hand, is a particular ordered n-tuple.\" (SUMO)"
+ },
+ "extraction_notes": {
+  "subclass_of": "COMPLETE: all 323 axioms, both flat and nested RDF/XML serialisations.",
+  "disjoint_with": "COMPLETE at pair level but ONE-DIRECTIONAL: each axiom is recorded under one of its two classes only. To test whether A and B are disjoint, check disjoint_with[A] for B AND disjoint_with[B] for A. A single key lookup silently passes.",
+  "labels_differing_from_fragment": "Only the 4 classes whose rdfs:label differs from the URI fragment. Not a full label index.",
+  "class_comments": "rdfs:comment where present, whitespace-normalised, truncated to 400 chars."
+ }
+}

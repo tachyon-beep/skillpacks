@@ -2,7 +2,7 @@
 
 ## Professional AI/ML, Python & Rust engineering, web backend, DevOps, SDLC, solution architecture, game development, security, documentation, and UX skills for Claude Code
 
-51 complete skillpacks • 200+ skills • Install what you need
+52 complete skillpacks • 200+ skills • Install what you need
 
 > **Recent additions (May 2026)**: 6 new packs — `yzmir-morphogenetic-rl`,
 > `axiom-determinism-and-replay`, `axiom-audit-pipelines`,
@@ -109,7 +109,7 @@ cd skillpacks
 - Derivation tracking, consistency auditing, evolution management
 - `/plugin install muna-wiki-management`
 
-### 🔬 Development (Axiom) - 22 Packs
+### 🔬 Development (Axiom) - 24 Packs
 
 **axiom-python-engineering** - 10 skills
 
@@ -301,6 +301,20 @@ cd skillpacks
 - Versioned policy parameters, definition lifecycle (draft → approved → locked),
   contract testing (golden fixtures, canonicalisation properties, authority tests)
 - `/plugin install axiom-contract-engineering`
+
+**axiom-experiment-formalisation** - router + 15 sheets, 4 commands, 2 agents _(new — August 2026, v0.1)_
+
+- Formalising an experiment as a machine-checkable record layer using EXPO (the
+  ontology of scientific experiments), SUMO or BFO as upper ontology, and PROV-O
+  for lineage — verified against EXPO's shipped OWL, not its published paper,
+  which disagrees with its own ontology
+- Two laws: verified vocabulary only (verified / unverified / refuted are three
+  distinct verdicts) and the projection law (the ontology describes your typed
+  contracts and never becomes runtime truth, enforced by a CI sync check)
+- Tier 1 annotation layer as the default; competency questions before terms;
+  controls, pairing and unit of analysis; absence that is never zero; governance,
+  lifecycle and scaffold extension patterns; validation without vacuity
+- `/plugin install axiom-experiment-formalisation`
 
 **axiom-tensor-compiler-engineering** - router + 12 sheets, 3 commands, 2 agents _(new — August 2026, v0.1)_
 
