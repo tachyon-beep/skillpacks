@@ -302,7 +302,7 @@ cd skillpacks
   contract testing (golden fixtures, canonicalisation properties, authority tests)
 - `/plugin install axiom-contract-engineering`
 
-**axiom-experiment-formalisation** - router + 15 sheets, 4 commands, 2 agents _(new — August 2026, v0.1)_
+**axiom-experiment-formalisation** - router + 15 sheets, 4 commands, 2 agents _(new — August 2026, v0.2)_
 
 - Formalising an experiment as a machine-checkable record layer using EXPO (the
   ontology of scientific experiments), SUMO or BFO as upper ontology, and PROV-O

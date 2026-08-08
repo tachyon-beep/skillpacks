@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, product management, solution architecture, distributed systems, tensor compilers, game development, security, documentation, site design, and UX skills for Claude Code - 52 complete skillpacks with 400+ TDD-validated skills and reference sheets",
-    "version": "3.32.0",
+    "version": "3.32.1",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
@@ -879,7 +879,7 @@
     {
       "name": "axiom-experiment-formalisation",
       "source": "./plugins/axiom-experiment-formalisation",
-      "description": "Formalising an experiment as a machine-checkable record layer (router + 15 sheets, 4 commands, 2 agents) - EXPO (the ontology of scientific experiments) verified against its shipped OWL rather than its paper, SUMO or BFO as upper ontology, PROV-O for lineage. Two laws: verified vocabulary only (verified/unverified/refuted never collapsed) and the projection law (the ontology describes your typed contracts and never becomes runtime truth, enforced by a CI sync check). Tier 1 annotation layer is the default; competency questions before terms; controls, pairing and unit of analysis; absence that is never zero; provenance via PROV-O; governance, lifecycle and scaffold extension patterns; SHACL/OWL validation without vacuity; a verified prior-art map; and a page on adapting it all.",
+      "description": "Formalising an experiment as a machine-checkable record layer (router + 15 sheets, 4 commands, 2 agents) - EXPO (the ontology of scientific experiments) verified against its shipped OWL rather than its paper, SUMO or BFO as upper ontology, PROV-O for lineage. Two laws: verified vocabulary only (verified/unverified/refuted never collapsed) and the projection law (the ontology describes your typed contracts and never becomes runtime truth, enforced by a CI sync check). Tier 1 annotation layer is the default; competency questions before terms; controls, pairing and unit of analysis; absence that is never zero; provenance via PROV-O; governance, lifecycle and scaffold extension patterns; SHACL/OWL validation without vacuity; a verified prior-art map; a page on adapting it all, and a RED-GREEN behavioural test record.",
       "keywords": [
         "axiom",
         "experiment-formalisation",

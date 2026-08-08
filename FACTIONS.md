@@ -372,6 +372,10 @@ The Axiom's dedication to making technology accessible through systematic proces
 
 - Typed cross-boundary contracts: silent-default elimination, fail-closed versioning, deterministic resolution, blinding by construction, canonical identity, contract testing (router + 10 sheets, 3 commands, 2 agents)
 
+**axiom-experiment-formalisation** - *The Assay Register*
+
+- Formalising an experiment as a machine-checkable record layer — EXPO (the ontology of scientific experiments) verified against its shipped OWL rather than its paper, SUMO or BFO above it, PROV-O for lineage. Verified vocabulary only, and the projection law: the ontology describes your typed contracts and never becomes runtime truth (router + 15 sheets, 4 commands, 2 agents). Consumes what *The Boundary Stone* enforces — that pack makes records impossible to violate, this one makes them interpretable
+
 **axiom-distributed-systems** - *The Quorum Works*
 
 - Architecture-level correctness under partial failure: consistency & CAP/PACELC, replication & quorums, consensus, partitioning, sagas & the outbox, delivery semantics, resilience, backpressure (router + 13 sheets, 3 commands, 2 agents)
