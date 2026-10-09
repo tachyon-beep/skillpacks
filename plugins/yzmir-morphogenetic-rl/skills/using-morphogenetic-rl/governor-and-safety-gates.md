@@ -1,6 +1,6 @@
 ---
 name: governor-and-safety-gates
-description: Use when designing NaN/Inf/loss-explosion gates that veto controller decisions — gate independence from the policy, the discipline that keeps the governor from being trained against, and the boundary between safety-gating (hard) and reward-shaping (soft).
+description: "Use when designing NaN/Inf/loss-explosion gates that veto controller decisions \u2014 gate independence from the policy, the discipline that keeps the governor from being trained against, and the boundary between safety-gating (hard) and reward-shaping (soft)."
 ---
 
 # Governor and Safety Gates
@@ -219,7 +219,7 @@ def trigger_rollback(panic_signal, controller_recommendation):
 
 These are different surface forms of the same violation: **the controller has been given veto power over the governor.** A policy with this power will, given enough optimization pressure, learn to use it.
 
-**Rule**: The governor's decision tree must not consume any output of the controller as input. The governor reads system state directly. If you find yourself wanting the controller's "confidence" or "recommendation" as a governor input, you are about to make this mistake.
+**Rule**: The governor may inspect the controller’s proposed action and arguments to decide whether that action is admissible. It obtains budget, legality and health evidence directly from trusted system state. Controller confidence, reward estimates or assurances cannot override those gates; proposal data is not proof of safety.
 
 The legitimate way to incorporate controller information is via the *reward* — see `rollback-as-rl-signal.md`. The governor is the wrong place.
 
@@ -240,22 +240,6 @@ The fix is not "let the expert controller tune gates." The fix is: if the gates 
 If after retuning the gates are still firing on actions the operator believes are safe, the answer is *more conservative training* until either the controller's actual proposal rate matches what the gates allow, or the operator's belief about safety is updated by the next post-event panic. The system survives the iteration; the controller does not get a tunable gate.
 
 The general form: **whenever the rationalization for relaxing a gate references the controller's competence, the answer is "no" without further consideration.** The competence claim is the surface; the underlying request is "give the controller veto power over its own safety layer," which is the anti-pattern.
-
----
-
-## Rationalization Resistance
-
-| Rationalization | Reality |
-|-----------------|---------|
-| "The controller will learn to avoid actions the governor would veto" | Possibly, eventually. The governor exists to keep training alive *until then*. |
-| "Tightening gates this much will prevent the controller from exploring" | The controller's job is not to explore at the cost of training survival. Tighten gates; let the controller learn within them. |
-| "We can let the controller adjust gate thresholds" | No. This is the anti-pattern. Gates are fixed or governor-set; never controller-set. |
-| "Our controller is an expert now; the gates are too conservative for it" | Calibration of the controller and calibration of the gates are different. The expert controller is exactly the one most able to learn the gate-relaxation pathway. Retune the gates from observed false-positive rate, not from controller confidence. |
-| "The governor's thresholds were chosen early; they should adapt" | Adaptive thresholds are fine — *if* the adaptation is governor-driven (e.g., from observed pre-event-window statistics) and never reads any controller output. |
-| "Most actions are safe; gates are overhead" | The unsafe ones cost orders of magnitude more than gate overhead. |
-| "We've never seen NaN" | You will. Add the gate before you do, not after. |
-| "Pre-flight failures clutter the logs" | They are signal. Log them structurally and analyze them. If volume is high, the controller is the problem. |
-| "Rollback is too expensive; let's just be careful" | "Careful" is a controller discipline. The governor is for when controller discipline fails, which it will. |
 
 ---
 

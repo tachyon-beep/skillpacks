@@ -1,6 +1,6 @@
 ---
 name: error-envelopes-and-recovery
-description: Use when an agent gives up after a tool failure, when a tool returns a 500 with a stack trace in the body, when error strings say "Internal server error" or "400 Bad Request: invalid field" with no recovery hint, when the agent retries an error it should not retry (or fails to retry one it should), when you cannot tell whether a failure is the agent's fault or the server's, when input-validation errors crash the connection instead of letting the model self-correct, or when you are auditing whether every error path tells the agent what to do next — retry, change args, or surface to the user.
+description: "Use when an agent gives up after a tool failure, when a tool returns a 500 with a stack trace in the body, when error strings say \"Internal server error\" or \"400 Bad Request: invalid field\" with no recovery hint, when the agent retries an error it should not retry (or fails to retry one it should), when you cannot tell whether a failure is the agent's fault or the server's, when input-validation errors crash the connection instead of letting the model self-correct, or when you are auditing whether every error path tells the agent what to do next \u2014 retry, change args, or surface to the user."
 ---
 
 # Error Envelopes and Recovery

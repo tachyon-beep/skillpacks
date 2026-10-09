@@ -1,6 +1,6 @@
 ---
 name: structural-verification
-description: Use when building or reviewing the legality gate a generated candidate must pass before compilation - shape inference, cycle/reachability checks, interface-contract checks, gradient-flow and trainability-mask validation, identity-at-birth/zero-influence proofs, and forbidden-operation detection - and when that gate needs to consume zero utility signal.
+description: "Use when building or reviewing the legality gate a generated candidate must pass before compilation - shape inference, cycle/reachability checks, interface-contract checks, gradient-flow and trainability-mask validation, identity-at-birth/zero-influence proofs, and forbidden-operation detection - and when that gate needs to consume zero utility signal."
 ---
 
 # Structural Verification
@@ -274,16 +274,6 @@ The invariant, stated as inputs rather than behavior, because it is easier to au
 - comparisons to other candidates in the same pool.
 
 If a verifier's function signature grows a parameter that isn't on that list, that is the moment to stop and ask why — see `synthesis-anti-patterns.md` for the full catalogue of ways this invariant erodes.
-
-## Rationalization Resistance
-
-| Rationalization | Reality |
-|---|---|
-| "The zero-influence pattern is standard, checking for its presence is enough" | Presence of the right graph shape proves the *possibility* of the property, not the property itself; only a numeric check on the actual birth parameters proves it |
-| "We'll add a soft penalty for candidates that use rare operators" | A penalty is a score, not a legality verdict; scores belong to the downstream evaluator, not the gate that decides whether a candidate is even eligible to be evaluated |
-| "Checking gradient flow is expensive, we'll skip it for small candidates" | A trainable parameter with no path to the loss silently wastes budget and produces a candidate that looks like it's learning and isn't; the check is cheap relative to that cost |
-| "The verifier can see which generator produced the candidate, that's just for logging" | If the field exists in the function's live inputs, it is one refactor away from being consulted in a decision; keep provenance in the audit trail, not the verifier's argument list |
-| "We ran out of budget for full shape inference, so we spot-check the output shape only" | Spot-checking the output catches nothing about a mismatch three nodes upstream that only manifests as a shape error at the least convenient possible time — at compile or first forward pass |
 
 ## Red Flags Checklist
 

@@ -1,6 +1,6 @@
 ---
 name: horizon-choice-and-divergence-noise
-description: Use when choosing how long to run matched branches before measuring, when short-horizon results contradict long-horizon ones, or when someone reports the horizon where the gap looked biggest. Covers the signal-to-divergence-noise trade-off, the interior optimum, multi-horizon endpoints without p-hacking, and horizon shopping.
+description: "Use when choosing how long to run matched branches before measuring, when short-horizon results contradict long-horizon ones, or when someone reports the horizon where the gap looked biggest. Covers the signal-to-divergence-noise trade-off, the interior optimum, multi-horizon endpoints without p-hacking, and horizon shopping."
 ---
 
 # Horizon Choice and Divergence Noise

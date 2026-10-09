@@ -1,7 +1,7 @@
 {
   "name": "bravos-systems-as-experience",
-  "version": "1.2.2",
-  "description": "Emergent gameplay and systemic game design - router + 8 specialist reference sheets, 3 commands, 2 agents",
+  "version": "2.0.0",
+  "description": "Use when gameplay depends on interacting mechanics, player experimentation, optimization, emergent stories or a modding ecosystem.",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

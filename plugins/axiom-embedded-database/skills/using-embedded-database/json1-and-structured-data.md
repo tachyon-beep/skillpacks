@@ -1,6 +1,6 @@
 ---
 name: json1-and-structured-data
-description: Use when storing or querying semi-structured data in SQLite — deciding between JSON columns and proper columns, indexing JSON paths via indexed expressions or generated columns, migrating JSON shape changes, and enforcing schema at the application boundary. Covers the full JSON1 function surface, the generated-columns pattern introduced in SQLite 3.31, and anti-patterns that make JSON columns silently slow or silently schemaless.
+description: "Use when storing or querying semi-structured data in SQLite \u2014 deciding between JSON columns and proper columns, indexing JSON paths via indexed expressions or generated columns, migrating JSON shape changes, and enforcing schema at the application boundary. Covers the full JSON1 function surface, the generated-columns pattern introduced in SQLite 3.31, and anti-patterns that make JSON columns silently slow or silently schemaless."
 ---
 
 # JSON1 and Structured Data

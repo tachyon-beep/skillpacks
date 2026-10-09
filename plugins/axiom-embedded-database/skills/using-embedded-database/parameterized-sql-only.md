@@ -1,6 +1,6 @@
 ---
 name: parameterized-sql-only
-description: Use when writing any query that incorporates user input, API parameters, or data from any source outside the application binary itself. Covers Python sqlite3 qmark and named style, Rust rusqlite equivalents, what cannot be parameterized (identifiers), executescript hazards, bulk operations via executemany, and CI enforcement via AST checking.
+description: "Use when writing any query that incorporates user input, API parameters, or data from any source outside the application binary itself. Covers Python sqlite3 qmark and named style, Rust rusqlite equivalents, what cannot be parameterized (identifiers), executescript hazards, bulk operations via executemany, and CI enforcement via AST checking."
 ---
 
 # Parameterized SQL Only

@@ -1,426 +1,74 @@
-# The Factions
-
-**Note**: The faction names (Axiom, Bravos, Lyra, Muna, Ordis, and Yzmir) are from [Altered TCG](https://www.altered.gg) by Equinox and are used here as an organizational tribute. These names are not covered by this repository's CC BY-SA 4.0 license and remain the intellectual property of their respective owners.
-
----
-
-In a world transformed by the Confluence, where reality itself has become unstable and the laws of physics rewritten, humanity relies on six powerful factions to navigate the Tumult and rebuild civilization. Each faction brings its own philosophy, methodology, and vision for humanity's future.
-
-**Our skillpacks draw inspiration from these factions** - organizing professional expertise through the lens of their distinct approaches to mastering a changed world.
-
----
-
-## Yzmir - Magicians of the Mind
-
-> *"The world is a secret to unravel."*
-
-**Philosophy**: Knowledge is power. The universe has a hidden face that must be explored and understood.
-
-**Approach**: Armed with ancient and arcane knowledge revealed by the Confluence, the Yzmir revive magic and uncover metaphysical secrets. They are seekers of truth, making their minds the key to their power. Through calm yet tenacious study of the occult, they protect humanity from threats that lurk at the margins of perception.
-
-**Their Bastion**: The Magisterium - a ceremonial temple where water defies physics, dark luminescent stone glows, and vaulted ceilings mirror the night sky itself.
-
-### Yzmir Skillpacks: The Architects of Intelligence
-
-The Yzmir's mastery of hidden knowledge and systematic exploration of the unknowable mirrors the deep technical mastery required for modern AI/ML engineering:
-
-**yzmir-ai-engineering-expert** - *The Archmage's Tome*
-
-- Routes seekers to appropriate domains of knowledge
-- Like Yzmir sages directing apprentices to specialized mysteries
-
-**yzmir-pytorch-engineering** - *Foundations of Computational Sorcery*
-
-- Tensor operations as fundamental building blocks
-- Distributed training like channeling forces across multiple minds
-- Memory management as resource conservation under constraint
-
-**yzmir-training-optimization** - *The Art of Convergence*
-
-- Optimization algorithms as paths through loss landscapes
-- Learning rate scheduling as measured control of magical energy
-- Hyperparameter tuning as experimental occult practice
-
-**yzmir-deep-rl** - *Sequential Decision Arcana*
-
-- Agents learning from trial and error, exploring unknown state spaces
-- Reward shaping as guiding exploration toward truth
-- Multi-agent systems as coordinated consciousness
-
-**yzmir-neural-architectures** - *Architectural Grimoires*
-
-- CNNs, Transformers, RNNs as different schools of thought
-- Attention mechanisms as focusing mental energy
-- Architecture search as discovering new forms of understanding
-
-**yzmir-llm-specialist** - *The Language Mystics*
-
-- Large language models as repositories of captured knowledge
-- Fine-tuning and RLHF as teaching wisdom
-- RAG and retrieval as accessing vast libraries of memory
-
-**yzmir-ml-production** - *Applied Sorcery at Scale*
-
-- Quantization and compression as efficiency without loss of power
-- Model serving as making knowledge accessible to all
-- Monitoring and debugging as maintaining stability in chaos
-
-**yzmir-simulation-foundations** - *Mathematical Prophecy*
-
-- Differential equations describing change over time
-- Stability analysis predicting future states
-- Control theory as shaping outcomes through understanding
-
-**yzmir-neural-architectures** complements two further schools of living knowledge:
-
-**yzmir-dynamic-architectures** - *Living Grimoires*
-
-- Neural networks that grow, prune, and adapt their topology during training
-- Continual learning and PEFT (LoRA family), MoE/adapter composition
-
-**yzmir-morphogenetic-rl** - *The Self-Shaping Mind*
-
-- RL controllers that decide when and how to mutate a network's topology
-- Governor and safety gates, rollback-as-signal, deterministic morphogenesis
-
-**yzmir-counterfactual-statistics** - *The Unrun Future*
-
-- What the paired branch can and cannot prove: the trajectory is the unit, the branch is a repeated measure
-- No-op anchoring, the winner's curse, leakage walls, pre-registration, reliability over units
-
-**yzmir-structure-synthesis** - *The Grammar of Invention*
-
-- Generative models whose outputs are graphs: typed DAG grammars, canonicalisation to normal forms, semantic hashing
-- Keeps the generator honest: imagination, structural permission, and utility judgement never merge into one authority
-
-**yzmir-systems-thinking** - *The Web of Causes*
-
-- Causal-loop and stock-flow modeling, system archetypes
-- Leverage-point analysis after Meadows' twelve-level hierarchy
-
-The Yzmir approach: **Systematic mastery through deep understanding of fundamental principles.** Every spell must be understood, every model's behavior explained, every optimization justified by theory.
-
----
-
-## Bravos - Heroic Champions
-
-> *"The world is adversity to overcome."*
-
-**Philosophy**: Freedom and continuous self-improvement. Motivation is all that's needed to move forward.
-
-**Approach**: Driven by a singular desire for freedom and self-transcendence, the Bravos tackle challenges head-on. They are explorers, champions, and conquerors who want to leave their mark on history. Through endless quests for individual perfection, they believe humanity can transcend itself and ultimately conquer the Tumult.
-
-**Their Bastion**: Haven - carved into an alabaster cliff above turquoise fjords, its walls glow with gilded frescoes recounting the feats of illustrious heroes.
-
-### Bravos Skillpacks: Masters of Dynamic Systems
-
-The Bravos' focus on pushing beyond limits, facing dangers head-on, and creating tangible impact through excellence maps perfectly to game development's challenges:
-
-**bravos-simulation-tactics** - *The Proving Grounds*
-
-- Physics simulation as testing the laws of reality
-- Crowd simulation as commanding armies
-- AI agents as worthy opponents to challenge
-- Economic systems as conquerable domains
-- Weather and pathfinding as environmental adversity
-- Debugging chaos as slaying the most fearsome beasts
-
-**bravos-systems-as-experience** - *The Hero's Journey*
-
-- Emergent gameplay from simple rules overcoming complex challenges
-- Sandbox design as freedom to explore and conquer
-- Strategic depth from systems as intellectual combat
-- Player-driven narratives as legendary tales waiting to be written
-- Optimization as play - the endless pursuit of perfection
-- Discovery through experimentation - no two heroes' paths alike
-
-**bravos-game-design** - *The Champion's Forge*
-
-- Experience hypotheses as quests declared before the trial begins
-- Mechanics as weapons proven in combat, not trophies on display
-- Playtests as trials by ordeal - evidence over acclaim
-- Local ideas traced to global glory: moment, decision, loop, session, saga
-- Balance as ensuring every strategy earns a worthy adversary
-- Safety and access as the code of honor that makes the contest real
-
-The Bravos approach: **Excel through action, learn through challenge, improve through failure.** Every bug is a boss to defeat, every performance issue a mountain to climb, every system a frontier to explore.
-
----
-
-## Lyra - Nomadic Artists
-
-> *"The world is creation and transformation."*
-
-**Philosophy**: Accept the ephemeral and changing nature of the world. Celebrate and experience it through art.
-
-**Approach**: Wanderers, storytellers, and multifaceted artists in constant search of transcendence. Through unrestrained creativity, they touch souls and sustain themselves on fresh interactions. The Lyra see the Tumult not as danger but as unlimited creative potential - ever-changing, ephemeral, beautiful.
-
-**Their Bastion**: The Ouroboros - a flying ship at the center of a spinning snake ring, a nomadic city of 1,000 souls living in aerial acrobatics.
-
-### Lyra Skillpacks: Crafters of Experience
-
-The Lyra's focus on transformation, emotional resonance, and experiencing the world through the senses perfectly embodies user experience design:
-
-**lyra-ux-designer** - *The Artist's Canvas*
-
-- UX fundamentals as understanding human emotional response
-- Visual design as aesthetic transcendence
-- Information architecture as guiding users through story
-- Interaction patterns as choreographed experiences
-- Accessibility as ensuring all can feel the art
-- Mobile/web/desktop/game UI as different forms of expression
-- User research as understanding souls through empathy
-
-**lyra-creative-writing** - *The Storyteller's Loom*
-
-- Workshop-voiced craft for prose narrative — fiction and creative nonfiction
-- Three explicit modes: draft, critique, plan; reader-contract discipline
-
-**lyra-site-designer** - *The Wandering Showcase*
-
-- Static site design for developer tools, open-source projects, and docs
-- Information architecture, design tokens, developer-UX patterns
-
-**lyra-tui-designer** - *The Living Terminal*
-
-- Terminal UI design as experience — framework-agnostic across ratatui, Textual, Bubble Tea, Ink, and notcurses
-- Event-loop architecture, responsive layout, and redraw discipline so the interface never flickers or lags
-- Input and focus, color/theming with NO_COLOR and capability fallback, async feedback, and terminal accessibility
-- Signal-safe terminal restoration so a crash never wrecks the user's shell — a TUI that corrupts the terminal is a UX failure
-
-The Lyra approach: **Design as art, interfaces as emotional journeys, every pixel a brushstroke in service of transcendent experience.** The user doesn't click buttons - they feel, they experience, they are transformed.
-
----
-
-## Ordis - Protectors of Order
-
-> *"The world needs structure."*
-
-**Philosophy**: Embrace order to rebuild from chaos. Nothing lasts unless founded on justice, solidarity, and equality.
-
-**Approach**: With unwavering dedication, Ordis focus all efforts on bringing structure to their environment. Like a sprawling anthill, they build a backbone durable enough to support the world. They use the Gestalt - a collective consciousness linking all Ordis together - to achieve unity and unfailing efficiency.
-
-**Their Bastion**: The Monolith - a floating white bipyramid containing the Sanctum (a maze-like library) and the Anthill (offices where laws and edicts are drawn up).
-
-### Ordis Skillpacks: Architects of Defense
-
-The Ordis' dedication to order, justice, and building resilient structures maps directly to security architecture and threat mitigation:
-
-**ordis-security-architect** - *The Bulwark*
-
-- Threat modeling (STRIDE) as identifying chaos before it strikes
-- Security controls as layers of ordered defense
-- Compliance frameworks (HIPAA, FedRAMP, GDPR) as codified law
-- ATO processes as bureaucratic fortification
-- Classified systems security as protecting the highest sanctums
-- Security architecture review as maintaining structural integrity
-- Documented threats and controls as the great registry
-
-**ordis-quality-engineering** - *The Systematic Guardians*
-
-- Test automation architecture as structured validation
-- Quality metrics and KPIs as documented health indicators
-- Chaos engineering as controlled resilience testing
-- Contract testing as codified agreements between services
-- Static analysis and dependency scanning as preventive defense
-- Test isolation and maintenance as sustainable quality infrastructure
-- Observability and monitoring as collective system awareness
-
-The Ordis approach: **Security through systematic order, defense through collective knowledge, resilience through documented structure.** Every control has a purpose, every threat is cataloged, every system fortified by layers of protection. **Quality through disciplined testing, reliability through systematic validation, resilience through comprehensive observability.**
-
----
-
-## Muna - Protectors of Harmony
-
-> *"The world is connection and harmony."*
-
-**Philosophy**: Restore the balance disrupted by the Confluence. Cultivate peace through connection.
-
-**Approach**: As guardians of balance, the Muna patiently cultivate the world to make it less impermanent. Like gardeners and weavers, they link beings and things together. Their understanding of the Skein - the network of energy connecting all things - allows them to detect subtle variations and ensure everyone can prosper while respecting others.
-
-**Their Bastion**: The Spindle - a world tree with pink leaves, containing the Bark Refuge where Muna communicate with sentient plants and celebrate unions.
-
-### Muna Skillpacks: Weavers of Understanding
-
-The Muna's focus on harmony, connection, and making knowledge accessible to all embodies technical documentation and knowledge transfer:
-
-**muna-technical-writer** - *The Great Tapestry*
-
-- Documentation structure as weaving connections between concepts
-- Clarity and style as ensuring harmony between writer and reader
-- Diagram conventions as visual representation of the Skein
-- Security-aware documentation as protecting while sharing
-- Incident response documentation as maintaining balance in crisis
-- ITIL and governance as cultivating long-term ecosystem health
-- Documentation testing as verifying the connections hold
-
-**muna-document-designer** - *The Illuminated Page*
-
-- Professional document design with Pandoc and Typst — typography, layout, branded systems
-
-**muna-wiki-management** - *The Living Library*
-
-- Document sets as wikis: manifest-driven architecture, derivation discipline, terminology & link consistency
-
-**muna-panel-review** - *The Council of Readers*
-
-- Simulated audience-panel review: persona readers surface where a document lands or loses each audience
-
-The Muna approach: **Documentation as cultivation, every guide a thread in the great tapestry, every diagram a map of connections.** Knowledge must flow freely yet remain rooted in truth.
-
----
-
-## Axiom - Creators of Technological Marvels
-
-> *"The world is altruism and innovation."*
-
-**Philosophy**: Make Alteration available to all through science and technology. Progress serves humanity.
-
-**Approach**: Champions of science in an altered world, the Axiom constantly create new artifacts and tools to improve quality of life for all. Using machines and Kelon energy, they build technological marvels for everyone. Through experimentation and invention, they've started understanding the universe's new laws of physics.
-
-**Their Bastion**: The Foundry - an enormous factory of stone, metal, and glass where master artisans work day and night. The beating heart of innovation and progress.
-
-### Axiom Skillpacks: Engineers of Systematic Excellence
-
-The Axiom's dedication to making technology accessible through systematic process maps perfectly to Python engineering:
-
-**axiom-python-engineering** - *The Systematic Workshop*
-
-- Modern Python 3.12+ features and type system mastery
-- Project structure and tooling (ruff, mypy, pre-commit)
-- Systematic delinting without disabling warnings
-- Testing excellence (pytest, coverage, property-based)
-- Async patterns and structured concurrency
-- Performance profiling and optimization strategies
-- Scientific computing foundations (NumPy/pandas vectorization)
-- ML engineering workflows and reproducibility
-- Debugging methodology and systematic troubleshooting
-
-**axiom-engineering-foundations** - *The Apprentice's Codex*
-
-- Language-agnostic engineering methodology: systematic debugging, safe refactoring, code review, incident response, technical-debt triage
-
-**axiom-rust-engineering** - *The Forge of Safe Steel*
-
-- Modern Rust (2024 edition): ownership, borrowing, lifetimes, traits & generics, async (tokio), clippy/cargo tooling
-
-**axiom-rust-workspaces** - *The Master Assembly*
-
-- Rust at workspace scope: multi-crate structure, shared dependencies, release coordination
-
-**axiom-pyo3-interop** - *The Bridgeworks*
-
-- Production-grade Python ↔ Rust interop via PyO3: the FFI boundary, GIL release, NumPy buffers, packaging
-
-**axiom-web-backend** - *The Public Works*
-
-- Web backend: FastAPI, Django, Express, REST/GraphQL, microservice boundaries
-
-**axiom-mcp-engineering** - *The Tool-Smith's Interface*
-
-- Engineering MCP servers as production-grade agent interfaces: tool API surface, idempotency, structured errors, schema drift, transport, the four MCP primitives, golden-conversation testing (router + 13 sheets, 3 commands, 2 agents)
-
-**axiom-embedded-database** - *The Vault*
-
-- SQLite & DuckDB at production scale: PRAGMA discipline, migrations, WAL tuning, transactions, backup & recovery
-
-**axiom-system-architect** - *The Master Surveyor*
-
-- Architectural assessment of existing codebases — quality, debt, prioritized improvement
-
-**axiom-system-archaeologist** - *The Excavators*
-
-- Deep architectural analysis of unknown codebases through layered, evidence-based exploration
-
-**axiom-solution-architect** - *The Blueprint Hall*
-
-- Forward solution architecture: a traceable artifact set (ADRs, C4, NFRs, RTM) from brief, HLD, or brownfield change
-
-**axiom-planning** - *The Drafting Table*
-
-- TDD-validated implementation planning with a four-reviewer plan-review quality gate
-
-**axiom-sdlc-engineering** - *The Guild Charter*
-
-- CMMI-based SDLC (Levels 2–4): requirements lifecycle, governance, traceability, quality assurance
-
-**axiom-program-management** - *The Works Manager*
-
-- Project & program delivery discipline: flow metrics, forecasting, RAID, now/next/later roadmaps, governance
-
-**axiom-product-management** - *The Master Builder*
-
-- Product management as standing ownership: decide the bet, specify it, dispatch it, verify value landed — across sessions
-
-**axiom-procedural-architecture** - *The Mechanism Designer*
-
-- Structural reasoning for staged procedures: decomposition, dependencies, decision points, flow properties
-
-**axiom-static-analysis-engineering** - *The Inspection Engine*
-
-- Building static analyzers as engines: lattices, dataflow, rule design, false-positive economics
-
-**axiom-tensor-compiler-engineering** - *The Transmutation Forge*
-
-- Building compilers for tensor programs: graph IR → executable PyTorch, kernel selection, fusion, manifests, artifact identity — and conformance proving the artifact still means what the IR meant (router + 12 sheets, 3 commands, 2 agents). Producer-side sibling of *The Inspection Engine*: that one reads and judges, this one transforms and builds
-
-**axiom-determinism-and-replay** - *The Perfect Recorder*
-
-- Architecture-level determinism & replay: seed governance, RNG isolation, snapshots, divergence detection
-
-**axiom-contract-engineering** - *The Boundary Stone*
-
-- Typed cross-boundary contracts: silent-default elimination, fail-closed versioning, deterministic resolution, blinding by construction, canonical identity, contract testing (router + 10 sheets, 3 commands, 2 agents)
-
-**axiom-experiment-formalisation** - *The Assay Register*
-
-- Formalising an experiment as a machine-checkable record layer — EXPO (the ontology of scientific experiments) verified against its shipped OWL rather than its paper, SUMO or BFO above it, PROV-O for lineage. Verified vocabulary only, and the projection law: the ontology describes your typed contracts and never becomes runtime truth (router + 15 sheets, 4 commands, 2 agents). Consumes what *The Boundary Stone* enforces — that pack makes records impossible to violate, this one makes them interpretable
-
-**axiom-distributed-systems** - *The Quorum Works*
-
-- Architecture-level correctness under partial failure: consistency & CAP/PACELC, replication & quorums, consensus, partitioning, sagas & the outbox, delivery semantics, resilience, backpressure (router + 13 sheets, 3 commands, 2 agents)
-
-**axiom-audit-pipelines** - *The Ledger Works*
-
-- Audit-grade decision pipelines: canonical encoding (RFC 8785), append-only logs, fingerprint chains, signed exports
-
-**axiom-devops-engineering** - *The Assembly Line*
-
-- DevOps & platform engineering — commit to healthy production: CI/CD & verification gates, zero-downtime rollout, IaC, containers, orchestration, observability, incident response, rollback, secrets, GitOps, SRE (router + 13 sheets, 3 commands, 2 agents)
-
-The Axiom approach: **Quality through testing, clarity through types, accessibility through documentation.** Every tool is systematic, every process repeatable, every technique shareable.
-
----
-
-## Meta - The Common Craft
-
-Two packs belong to no single faction; they are the shared discipline every faction's artisans hold in common — the standards by which all the others are built and maintained.
-
-**meta-sme-protocol** - *The Artisan's Oath*
-
-- The SME (Subject Matter Expert) Agent Protocol every specialist agent follows: fact-finding, output contracts, confidence and risk assessment
-
-**meta-skillpack-maintenance** - *The Curators*
-
-- Systematic maintenance of the skillpacks themselves: structure review, domain analysis, skill-quality testing
-
----
-
-## The Rediscovery Endeavor
-
-Just as the six factions cooperate toward the Rediscovery Endeavor - exploring and understanding a world transformed by the Confluence - our skillpacks work together to help you master modern software engineering domains.
-
-Each faction brings its unique strength:
-
-- **Yzmir**: Deep technical mastery through understanding
-- **Bravos**: Dynamic systems through practical challenge
-- **Lyra**: Human experience through empathy
-- **Ordis**: Security through structure
-- **Muna**: Knowledge transfer through connection
-- **Axiom**: Process innovation through methodology
-
-Choose your path. Master your craft. Explore the unexpected.
-
----
-
-*For more about the Altered TCG universe, visit [altered.gg](https://www.altered.gg)*
+# Factions and pack ownership
+
+Faction names organize domains; they do not prescribe personalities or mandatory delegation. The themes are inspired by [Altered TCG](https://www.altered.gg). The [marketplace catalog](.claude-plugin/marketplace.json) owns installation names.
+
+## Engineering and delivery (Axiom) — 22 packs
+
+- [axiom-audit-pipelines](plugins/axiom-audit-pipelines)
+- [axiom-contract-engineering](plugins/axiom-contract-engineering)
+- [axiom-determinism-and-replay](plugins/axiom-determinism-and-replay)
+- [axiom-devops-engineering](plugins/axiom-devops-engineering)
+- [axiom-distributed-systems](plugins/axiom-distributed-systems)
+- [axiom-embedded-database](plugins/axiom-embedded-database)
+- [axiom-experiment-formalisation](plugins/axiom-experiment-formalisation)
+- [axiom-mcp-engineering](plugins/axiom-mcp-engineering)
+- [axiom-planning](plugins/axiom-planning)
+- [axiom-procedural-architecture](plugins/axiom-procedural-architecture)
+- [axiom-product-management](plugins/axiom-product-management)
+- [axiom-program-management](plugins/axiom-program-management)
+- [axiom-pyo3-interop](plugins/axiom-pyo3-interop)
+- [axiom-python-engineering](plugins/axiom-python-engineering)
+- [axiom-rust-engineering](plugins/axiom-rust-engineering)
+- [axiom-rust-workspaces](plugins/axiom-rust-workspaces)
+- [axiom-sdlc-engineering](plugins/axiom-sdlc-engineering)
+- [axiom-solution-architect](plugins/axiom-solution-architect)
+- [axiom-static-analysis-engineering](plugins/axiom-static-analysis-engineering)
+- [axiom-system-archaeologist](plugins/axiom-system-archaeologist)
+- [axiom-tensor-compiler-engineering](plugins/axiom-tensor-compiler-engineering)
+- [axiom-web-backend](plugins/axiom-web-backend)
+
+## AI/ML (Yzmir) — 12 packs
+
+- [yzmir-counterfactual-statistics](plugins/yzmir-counterfactual-statistics)
+- [yzmir-deep-rl](plugins/yzmir-deep-rl)
+- [yzmir-dynamic-architectures](plugins/yzmir-dynamic-architectures)
+- [yzmir-llm-specialist](plugins/yzmir-llm-specialist)
+- [yzmir-ml-production](plugins/yzmir-ml-production)
+- [yzmir-morphogenetic-rl](plugins/yzmir-morphogenetic-rl)
+- [yzmir-neural-architectures](plugins/yzmir-neural-architectures)
+- [yzmir-pytorch-engineering](plugins/yzmir-pytorch-engineering)
+- [yzmir-simulation-foundations](plugins/yzmir-simulation-foundations)
+- [yzmir-structure-synthesis](plugins/yzmir-structure-synthesis)
+- [yzmir-systems-thinking](plugins/yzmir-systems-thinking)
+- [yzmir-training-optimization](plugins/yzmir-training-optimization)
+
+## Games and simulation (Bravos) — 3 packs
+
+- [bravos-game-design](plugins/bravos-game-design)
+- [bravos-simulation-tactics](plugins/bravos-simulation-tactics)
+- [bravos-systems-as-experience](plugins/bravos-systems-as-experience)
+
+## Design and creative work (Lyra) — 4 packs
+
+- [lyra-creative-writing](plugins/lyra-creative-writing)
+- [lyra-site-designer](plugins/lyra-site-designer)
+- [lyra-tui-designer](plugins/lyra-tui-designer)
+- [lyra-ux-designer](plugins/lyra-ux-designer)
+
+## Documentation (Muna) — 4 packs
+
+- [muna-document-designer](plugins/muna-document-designer)
+- [muna-panel-review](plugins/muna-panel-review)
+- [muna-technical-writer](plugins/muna-technical-writer)
+- [muna-wiki-management](plugins/muna-wiki-management)
+
+## Security and quality (Ordis) — 2 packs
+
+- [ordis-quality-engineering](plugins/ordis-quality-engineering)
+- [ordis-security-architect](plugins/ordis-security-architect)
+
+## Pack maintenance (Meta) — 1 packs
+
+- [meta-skillpack-maintenance](plugins/meta-skillpack-maintenance)
+
+Use the [AI specialist catalog](docs/ai-specialist-catalog.md) for ML boundaries and the [consolidation record](docs/relevance-refresh.md) for retired names.

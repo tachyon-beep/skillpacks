@@ -894,23 +894,6 @@ Example: Level 2 (Paradigm shift) to "quality is built in, not inspected in" add
 **Pattern:** Most archetypes respond to Levels 3-6 (Goals, Rules, Information, Feedback)
 
 
-## Red Flags - Rationalizations for Skipping Archetype Analysis
-
-If you catch yourself saying ANY of these, STOP and identify the archetype first:
-
-| Rationalization | Reality | Response |
-|-----------------|---------|----------|
-| "No time for archetype analysis in crisis" | 10 minutes of pattern matching saves weeks of wrong fixes | Crisis is EXACTLY when archetypes matter most - prevents accelerating the problem |
-| "My situation is unique, doesn't fit neat categories" | Uniqueness is in details, not structure - archetypes describe feedback loops | Test archetype predictions - if they match, it's the same structure |
-| "This fits multiple archetypes, any intervention works" | Multiple archetypes require identifying PRIMARY one first | Address dominant archetype first, then secondary reinforcing patterns |
-| "Archetypes are too academic/theoretical for real engineering" | Every archetype has software examples from production systems | This is pattern recognition, not theory - pragmatic shortcut to solutions |
-| "I already know the solution, archetype is overhead" | If solution is obvious, archetype confirms it in 2 minutes | Unknown solutions become obvious once archetype identified |
-| "We need action, not analysis" | Wrong action makes crisis worse (see: Fixes that Fail, Escalation) | Archetype analysis IS action - it prevents implementing failed patterns |
-
-**The pattern:** All rationalizations push you toward repeating known failure modes. The archetypes catalog exists because these patterns have been solved before.
-
-**The meta-trap:** "We're unique" is itself predicted by several archetypes (Shifting the Burden creates belief that quick fix is necessary, Drifting Goals creates post-hoc justification for lowered standards).
-
 ## The Bottom Line
 
 **Don't reinvent solutions to archetypal problems.**

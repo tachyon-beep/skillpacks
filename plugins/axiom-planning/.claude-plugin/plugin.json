@@ -1,7 +1,7 @@
 {
   "name": "axiom-planning",
-  "version": "1.2.1",
-  "description": "TDD-validated implementation planning with plan review quality gate (2 skills, 5 agents, 1 command) - write plans, validate against codebase reality before execution",
+  "version": "2.0.0",
+  "description": "Use when reviewing an implementation plan for source accuracy, missing dependencies, failure paths or acceptance evidence.",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

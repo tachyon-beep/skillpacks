@@ -1,6 +1,6 @@
 ---
 name: workspace-lints-and-clippy-config
-description: Use when declaring lint policy across a Rust workspace — `[workspace.lints]` for `rustc` and `clippy` lints applied uniformly, `clippy.toml` at workspace root for threshold tuning (cognitive complexity, type complexity, line length, MSRV-aware lint behaviour), and the per-crate override discipline that prevents lint policy drift. Produces `03-workspace-lints.md`.
+description: "Use when declaring lint policy across a Rust workspace \u2014 `[workspace.lints]` for `rustc` and `clippy` lints applied uniformly, `clippy.toml` at workspace root for threshold tuning (cognitive complexity, type complexity, line length, MSRV-aware lint behaviour), and the per-crate override discipline that prevents lint policy drift."
 ---
 
 # Workspace Lints and `clippy.toml`

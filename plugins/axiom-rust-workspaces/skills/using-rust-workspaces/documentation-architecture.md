@@ -1,6 +1,6 @@
 ---
 name: documentation-architecture
-description: Use when designing or restructuring a Rust workspace's documentation surface — rustdoc per crate, mdbook for narrative documentation, the "book sits next to the crates" pattern, cross-crate intra-doc links, doc-test policy, and the workspace-scope `cargo doc` invocation. Covers the docs.rs metadata for published crates, the dev-server pattern for browsing the workspace's docs locally, and the divergence between "API reference" (rustdoc) and "tutorial / explanation" (mdbook). Produces `09-documentation-architecture.md`.
+description: "Use when designing or restructuring a Rust workspace's documentation surface \u2014 rustdoc per crate, mdbook for narrative documentation, the \"book sits next to the crates\" pattern, cross-crate intra-doc links, doc-test policy, and the workspace-scope `cargo doc` invocation. Covers the docs.rs metadata for published crates, the dev-server pattern for browsing the workspace's docs locally, and the divergence between \"API reference\" (rustdoc) and \"tutorial / explanation\" (mdbook)."
 ---
 
 # Documentation Architecture

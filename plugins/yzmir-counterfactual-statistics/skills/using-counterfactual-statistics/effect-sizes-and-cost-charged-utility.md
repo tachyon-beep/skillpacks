@@ -1,6 +1,6 @@
 ---
 name: effect-sizes-and-cost-charged-utility
-description: Use when deciding what quantity to test, when a raw metric improvement ignores what it cost, or when a statistically significant result is too small to act on. Covers cost-charged utility with a real zero, admission versus retention weights, practical versus statistical significance, and why standardized effect sizes are not comparable across designs.
+description: "Use when deciding what quantity to test, when a raw metric improvement ignores what it cost, or when a statistically significant result is too small to act on. Covers cost-charged utility with a real zero, admission versus retention weights, practical versus statistical significance, and why standardized effect sizes are not comparable across designs."
 ---
 
 # Effect Sizes and Cost-Charged Utility

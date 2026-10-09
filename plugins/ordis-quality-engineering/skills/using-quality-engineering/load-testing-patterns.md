@@ -1,6 +1,6 @@
 ---
 name: load-testing-patterns
-description: Use when designing load tests, choosing tools (k6, JMeter, Gatling), calculating concurrent users from DAU, interpreting latency degradation, identifying bottlenecks, or running spike/soak/stress tests - provides test patterns, anti-patterns, and load calculation frameworks
+description: "Use when designing load tests, choosing tools (k6, JMeter, Gatling), calculating concurrent users from DAU, interpreting latency degradation, identifying bottlenecks, or running spike/soak/stress tests - provides test patterns, anti-patterns, and load calculation frameworks"
 ---
 
 # Load Testing Patterns

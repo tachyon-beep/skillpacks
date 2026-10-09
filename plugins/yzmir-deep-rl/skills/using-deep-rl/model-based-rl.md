@@ -1348,20 +1348,6 @@ FIX: Short horizons (k=5), real-time constraints
 - [ ] **No uncertainty estimates**: Can't detect when to stop rolling out
 
 
-## Part 11: Rationalization Resistance
-
-| Rationalization | Reality | Counter | Red Flag |
-|---|---|---|---|
-| "k=50 is better planning" | Errors compound, k=5 better | Use short rollouts, bootstrap value | Long horizons |
-| "I trained a model, done" | Missing planning algorithm | Use model for MPC/shooting/Dyna | No planning step |
-| "100% imagined data" | Model untrained, garbage quality | Start 100% real, gradually increase | No real data ratio |
-| "Single model fine" | Overconfident, plans in wrong regions | Ensemble provides uncertainty | Single model |
-| "Model-based always better" | Model errors + compute vs sample efficiency | Only help when real samples expensive | Unconditional belief |
-| "One model for life" | Policy improves, model becomes stale | Retrain every N steps | Static model |
-| "Dreamer works on pixels" | Needs good latent learning, complex tuning | MBPO simpler on state space | Wrong problem |
-| "Value function optional" | Pure rollout return = all model error | Bootstrap with learned value | No bootstrapping |
-
-
 ## Summary
 
 **You now understand**:

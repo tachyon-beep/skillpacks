@@ -1,6 +1,6 @@
 ---
 name: ci-cd-pipeline-architecture
-description: Use when setting up or reviewing a CI/CD pipeline, when a "deploy" job is a single step that pushes straight to production, when deployments cause downtime or require manual rollback, when CI feedback takes longer than a coffee break, when a bad merge can reach prod with no gate, when migrations break production, when there is no staging or staging does not match prod, or when an incident happens minutes after a release with no automatic recovery. Covers verification gates, progressive delivery (canary / blue-green), automated metric-driven rollback, environment promotion, build-once-deploy-everywhere artifacts, database migration expand/contract, and supply-chain attestation in the pipeline.
+description: "Use when setting up or reviewing a CI/CD pipeline, when a \"deploy\" job is a single step that pushes straight to production, when deployments cause downtime or require manual rollback, when CI feedback takes longer than a coffee break, when a bad merge can reach prod with no gate, when migrations break production, when there is no staging or staging does not match prod, or when an incident happens minutes after a release with no automatic recovery. Covers verification gates, progressive delivery (canary / blue-green), automated metric-driven rollback, environment promotion, build-once-deploy-everywhere artifacts, database migration expand/contract, and supply-chain attestation in the pipeline."
 ---
 
 # CI/CD Pipeline Architecture
@@ -366,7 +366,7 @@ If you hear yourself (or a teammate) say any of these, the pipeline is about to 
 - `/quality-engineering` — test pyramid (analyze-pyramid), flaky-test triage, and CI test-pipeline staging (setup-pipeline).
 - `/web-backend` — API contract tests in CI; database migration patterns at the data layer.
 - `/security-architect` — threat-modeling the deploy path and CI as an attack surface (supply-chain, secret exfil).
-- `/system-architect` — when deployment pain is actually an architecture/coupling problem.
+- `/solution-architect` — when deployment pain is actually an architecture/coupling problem.
 - This pack's `/design-deployment` command and `deployment-strategist` / `pipeline-reviewer` agents for hands-on design and review.
 
 ## Quick checklist

@@ -1,6 +1,6 @@
 ---
 name: taint-lattice-design
-description: Use when designing the abstract domain of a dataflow analyzer — the set of values the analyzer tracks for each variable and how they combine at control-flow joins. Covers lattice formalism (partial order, join, meet, top, bottom, monotonicity, finite ascending chains); the tier model and when to extend it; the dual-lattice problem (confidentiality vs integrity); and the most common anti-pattern: a "lattice" that is secretly Boolean wrapped in tier names. Produces `02-abstract-domain-spec.md`.
+description: "Use when designing the abstract domain of a dataflow analyzer \u2014 the set of values the analyzer tracks for each variable and how they combine at control-flow joins. Covers lattice formalism (partial order, join, meet, top, bottom, monotonicity, finite ascending chains); the tier model and when to extend it; the dual-lattice problem (confidentiality vs integrity); and the most common anti-pattern: a \"lattice\" that is secretly Boolean wrapped in tier names."
 ---
 
 # Taint Lattice Design

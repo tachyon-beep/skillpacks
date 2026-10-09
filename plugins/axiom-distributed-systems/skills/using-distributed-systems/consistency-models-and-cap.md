@@ -1,6 +1,6 @@
 ---
 name: consistency-models-and-cap
-description: Use when the team says "we use strong consistency" unscoped, inherits the datastore's default isolation undecided, or treats CAP as a one-time pick. Picks the guarantee PER OPERATION and treats CAP/PACELC as a real latency-vs-consistency cost, not a slogan. First sheet in the pack. Produces `01-consistency-contract.md`.
+description: "Use when the team says \"we use strong consistency\" unscoped, inherits the datastore's default isolation undecided, or treats CAP as a one-time pick. Picks the guarantee PER OPERATION and treats CAP/PACELC as a real latency-vs-consistency cost, not a slogan. First sheet in the pack."
 ---
 
 # Consistency Models and CAP/PACELC

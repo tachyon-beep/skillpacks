@@ -1,6 +1,6 @@
 ---
 name: input-keyboard-mouse-and-focus
-description: Use when keystrokes land in the wrong widget, Ctrl-C is swallowed or kills the app uncleanly, a multi-line paste arrives as a storm of individual keypresses (running commands or mangling input), there is no visible focus indicator between a filter box and a list, Tab/Shift-Tab focus order is wrong or traps the user, Esc lags or triggers the wrong action, Alt/Ctrl/Shift modifier combos or function keys are indistinguishable or unrecognized, mouse clicks/scroll/drag do nothing or leak escape garbage onto the screen, or you are wiring key bindings, chords, kitty keyboard protocol, bracketed paste, or mouse capture in a ratatui/Textual/Bubble Tea/Ink/notcurses TUI.
+description: "Use when keystrokes land in the wrong widget, Ctrl-C is swallowed or kills the app uncleanly, a multi-line paste arrives as a storm of individual keypresses (running commands or mangling input), there is no visible focus indicator between a filter box and a list, Tab/Shift-Tab focus order is wrong or traps the user, Esc lags or triggers the wrong action, Alt/Ctrl/Shift modifier combos or function keys are indistinguishable or unrecognized, mouse clicks/scroll/drag do nothing or leak escape garbage onto the screen, or you are wiring key bindings, chords, kitty keyboard protocol, bracketed paste, or mouse capture in a ratatui/Textual/Bubble Tea/Ink/notcurses TUI."
 ---
 
 # Input: Keyboard, Mouse, and Focus

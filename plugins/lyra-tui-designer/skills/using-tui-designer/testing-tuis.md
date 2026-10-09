@@ -1,6 +1,6 @@
 ---
 name: testing-tuis
-description: Use when a TUI's rendering, layout, input handling, or terminal restoration is verified only by hand ("I ran it and it looked right"), when a layout or color change shipped and silently broke a panel at 80 columns or under SIGWINCH, when there is no test that asserts what the screen actually shows, when reviewers say "TUIs can't really be tested" and skip coverage, when a resize/min-size regression slipped through, when input routing (filter vs list, focus, keybindings) has no automated check, or when you need golden-frame / snapshot / headless / in-memory-backend / CI testing for ratatui, Textual, Bubble Tea, Ink, or notcurses.
+description: "Use when a TUI's rendering, layout, input handling, or terminal restoration is verified only by hand (\"I ran it and it looked right\"), when a layout or color change shipped and silently broke a panel at 80 columns or under SIGWINCH, when there is no test that asserts what the screen actually shows, when reviewers say \"TUIs can't really be tested\" and skip coverage, when a resize/min-size regression slipped through, when input routing (filter vs list, focus, keybindings) has no automated check, or when you need golden-frame / snapshot / headless / in-memory-backend / CI testing for ratatui, Textual, Bubble Tea, Ink, or notcurses."
 ---
 
 # Testing TUIs

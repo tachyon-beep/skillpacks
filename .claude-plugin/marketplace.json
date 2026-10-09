@@ -5,15 +5,15 @@
     "url": "https://github.com/tachyon-beep"
   },
   "metadata": {
-    "description": "Professional AI/ML, Python engineering, Rust engineering, web backend, DevOps, SDLC process management, project & program management, product management, solution architecture, distributed systems, tensor compilers, game development, security, documentation, site design, and UX skills for Claude Code - 52 complete skillpacks with 400+ TDD-validated skills and reference sheets",
-    "version": "3.32.2",
+    "description": "48 specialist packs with 54 skill entrypoints and 530 optional reference sheets. Focused engineering, AI/ML, design, documentation and evidence workflows.",
+    "version": "4.0.0",
     "homepage": "https://github.com/tachyon-beep/skillpacks"
   },
   "plugins": [
     {
       "name": "axiom-python-engineering",
       "source": "./plugins/axiom-python-engineering",
-      "description": "Modern Python 3.12+ engineering: types, testing, async, scientific computing, ML workflows, Textual TUI - 10 reference sheets, 4 commands, 3 agents",
+      "description": "Use for Python-specific compatibility, type/lint repair, cancellation/resource handling, profiling, packaging or Textual lifecycle issues that need focused checks against a real project.",
       "keywords": [
         "axiom",
         "python",
@@ -24,7 +24,7 @@
     {
       "name": "axiom-rust-engineering",
       "source": "./plugins/axiom-rust-engineering",
-      "description": "Modern Rust 2024 edition engineering: ownership, traits, async (tokio), testing, clippy/cargo tooling, performance/unsafe/FFI, AI/ML interop (PyO3, candle). Router + 11 reference sheets, 5 commands, 3 agents.",
+      "description": "Use for Rust-specific ownership/API, async cancellation, unsafe/FFI soundness, feature/toolchain compatibility, diagnostics, packaging or profiling problems in a real crate.",
       "keywords": [
         "axiom",
         "rust",
@@ -40,7 +40,7 @@
     {
       "name": "axiom-system-archaeologist",
       "source": "./plugins/axiom-system-archaeologist",
-      "description": "Deep codebase architecture analysis (5 commands, 4 agents) - C4 diagrams, subsystem catalogs, security surface mapping, test infrastructure analysis, dependency visualization, incremental delta analysis, cross-pack specialist integration, ultralarge-tier per-module track for repos >100K LOC or >12 subsystems",
+      "description": "Use when reconstructing an existing codebase: source-linked architecture, dependency and risk findings, coverage limits and incremental refresh.",
       "keywords": [
         "axiom",
         "architecture",
@@ -49,22 +49,9 @@
       "category": "development"
     },
     {
-      "name": "axiom-system-architect",
-      "source": "./plugins/axiom-system-architect",
-      "description": "TDD-validated architectural assessment enforcing professional discipline - prevents diplomatic softening, analysis paralysis, and security priority compromise - router + 3 specialist sheets, 3 commands, 2 SME agents",
-      "keywords": [
-        "axiom",
-        "architecture",
-        "assessment",
-        "technical-debt",
-        "tdd-validated"
-      ],
-      "category": "development"
-    },
-    {
       "name": "axiom-solution-architect",
       "source": "./plugins/axiom-solution-architect",
-      "description": "Forward solution architecture: brief/HLD/epic → traceable artifact set (ADRs, C4, NFRs, RTM, integration/migration, risks, TOGAF/ArchiMate, consolidated SAD). 9 skills, 2 agents, 2 commands.",
+      "description": "Use when making or reviewing system design choices against measurable requirements, alternatives, migration constraints and source evidence.",
       "keywords": [
         "axiom",
         "solution-architect",
@@ -78,7 +65,7 @@
     {
       "name": "axiom-web-backend",
       "source": "./plugins/axiom-web-backend",
-      "description": "Web backend development expertise across FastAPI, Django, Express, REST/GraphQL APIs, microservices, and framework-level production patterns - router + specialist skills for modern web APIs (deployment/CI-CD lives in axiom-devops-engineering)",
+      "description": "Use when implementing or reviewing production API behavior: authorization, compatibility, transaction boundaries, retries, bounded results and contract tests.",
       "keywords": [
         "axiom",
         "web",
@@ -94,7 +81,7 @@
     {
       "name": "axiom-devops-engineering",
       "source": "./plugins/axiom-devops-engineering",
-      "description": "DevOps and platform engineering — the path from commit to healthy production: CI/CD pipelines and verification gates, zero-downtime deployment, infrastructure as code, container build hygiene, orchestration runtime, observability (metrics/logs/traces, SLI/SLO), incident response and on-call, release management and rollback, secrets and configuration, environment parity, DevSecOps and software supply-chain security, GitOps, and SRE/reliability. Router + 13 reference sheets, 3 commands (design-deployment, review-pipeline, audit-deployment), and 2 agents (deployment-strategist, pipeline-reviewer).",
+      "description": "Use when building or fixing delivery and operations: artifact identity, rollout health, rollback/restore evidence, infrastructure and runtime reliability.",
       "keywords": [
         "axiom",
         "devops",
@@ -106,25 +93,9 @@
       "category": "development"
     },
     {
-      "name": "axiom-engineering-foundations",
-      "source": "./plugins/axiom-engineering-foundations",
-      "description": "Universal software engineering methodology - systematic debugging, safe refactoring, code review, incident response, technical debt triage, codebase confidence building - 6 language-agnostic reference sheets",
-      "keywords": [
-        "axiom",
-        "debugging",
-        "refactoring",
-        "code-review",
-        "incident-response",
-        "technical-debt",
-        "engineering",
-        "methodology"
-      ],
-      "category": "development"
-    },
-    {
       "name": "axiom-sdlc-engineering",
       "source": "./plugins/axiom-sdlc-engineering",
-      "description": "CMMI-based SDLC framework (Levels 2-4) with GitHub/Azure DevOps integration (8 skills, 4 agents) - comprehensive process guidance for high-quality software development with specialist support for architecture decisions, quality assurance, bug triage, and process routing",
+      "description": "Use when an organization explicitly selects a software governance profile requiring lifecycle evidence, traceability, risk decisions or measurement.",
       "keywords": [
         "axiom",
         "sdlc",
@@ -141,7 +112,7 @@
     {
       "name": "axiom-planning",
       "source": "./plugins/axiom-planning",
-      "description": "TDD-validated implementation planning with plan review quality gate (2 skills, 5 agents, 1 command) - write plans, validate against codebase reality with 4 parallel reviewers before execution",
+      "description": "Use when reviewing an implementation plan for source accuracy, missing dependencies, failure paths or acceptance evidence.",
       "keywords": [
         "axiom",
         "planning",
@@ -155,7 +126,7 @@
     {
       "name": "axiom-audit-pipelines",
       "source": "./plugins/axiom-audit-pipelines",
-      "description": "TDD-validated audit-grade decision pipelines: canonical encoding (RFC 8785 JCS), append-only decision logs, fingerprint chains (linked-hash and Merkle), HMAC and Ed25519 signed exports, immutable storage, decision provenance (inputs/ruleset/code closure), threat model for the log itself, retention reconciled with right-to-be-forgotten, partial replay from trail, performance budgets. 11 reference sheets, 3 commands, 2 agents.",
+      "description": "Use when decisions require verifiable provenance, tamper-evident exports, or defensible retention and replay limits. Ordinary application logging does not require this workflow.",
       "keywords": [
         "axiom",
         "audit",
@@ -179,7 +150,7 @@
     {
       "name": "axiom-determinism-and-replay",
       "source": "./plugins/axiom-determinism-and-replay",
-      "description": "Architecture-level determinism and replay (router + 13 specialist sheets, 3 commands, 2 agents) - determinism-vs-reproducibility, seed governance, RNG isolation, snapshot strategy, divergence detection, replay infrastructure, concurrency strategies, floating-point policy, GPU determinism, external-effects substitution, canonical state encoding, property tests, and cost-of-determinism accounting; for RL substrates, multi-agent systems, multiplayer lockstep engines, and any simulation that must be re-run from inputs",
+      "description": "Use when past stateful execution must be reproduced or investigated: RNG isolation, snapshots, external-effect substitution, scheduling, rollback or first-divergence localization.",
       "keywords": [
         "axiom",
         "determinism",
@@ -206,7 +177,7 @@
     {
       "name": "axiom-tensor-compiler-engineering",
       "source": "./plugins/axiom-tensor-compiler-engineering",
-      "description": "Building compilers for tensor programs — lowering a canonical graph IR to executable PyTorch and proving the artifact still means what the IR meant. v0.1 ships router + 12 sheets, 3 commands (/scaffold-tensor-compiler, /verify-artifact-conformance, /diagnose-miscompile), 2 agents (tensor-compiler-architect, compiler-conformance-reviewer). Spine: compiler architecture (ingest → lower → optimise → codegen → artifact) with the conformance gate placed OUTSIDE the compiler, IR contracts and semantic identity (what a compiler may change vs must never change; carrying the semantic hash), numerical contracts with derived per-op tolerance budgets (never widened to make a test pass), and conformance testing — reference-vs-compiled execution, gradient conformance (float64 gradcheck + shared-cotangent comparison), zero-influence preservation, cross-device and cross-layout agreement. Implementation depth: torch.fx capture and pass composition (trace-time specialisation, in-place, dynamic shapes), torch.compile / dynamo guards / inductor / AOTAutograd joint forward+backward capture, operator lowering and kernel selection under a declared contract, fusion legality and memory planning over the joint graph, compilation manifests and reproducible builds, content-addressed artifact identity and caching, cost calibration and compile-time budgets with staleness policy, and a four-class miscompile taxonomy with pass bisection and per-node localisation. Producer-side sibling of axiom-static-analysis-engineering: that pack reads code and produces verdicts; this one transforms IR and produces executables.",
+      "description": "Use when tensor lowering/transforms, torch.fx/compile capture, numerical tolerances, artifact identity or cache behavior need reference-versus-compiled conformance checks.",
       "keywords": [
         "axiom",
         "tensor-compiler",
@@ -237,7 +208,7 @@
     {
       "name": "axiom-static-analysis-engineering",
       "source": "./plugins/axiom-static-analysis-engineering",
-      "description": "Building static analyzers as engines: AST visitation patterns, taint-lattice (abstract-domain) design with monotonicity and finite height, three-phase inference (variable → function → callgraph) with termination proofs, plugin architecture for rules, false-positive economics with auditable suppression lifecycle, the static-vs-runtime boundary, callgraph construction (resolution rungs, dynamic features), cross-module flow with stub libraries, decorator-as-assertion (runtime + static dual enforcement), manifest-driven configuration with coherence validation, SARIF / CI integration, incremental analysis at scale, and LLM-assisted finding explanations as a pattern. v0.3 ships router + 13 sheets, 3 commands (/scaffold-analyzer, /design-tier-model, /design-rule-set), 2 agents (rule-designer, false-positive-analyst). Pattern pack — applies wherever you build an analyzer (linting, taint, contracts, governance, entity extraction).",
+      "description": "Use when building analyzers or rules whose traversal, abstract domain, unknown-call handling, termination, incremental cache or findings output must have explicit guarantees.",
       "keywords": [
         "axiom",
         "static-analysis",
@@ -262,7 +233,7 @@
     {
       "name": "axiom-rust-workspaces",
       "source": "./plugins/axiom-rust-workspaces",
-      "description": "Rust at workspace scope — multi-crate composition, not single-crate engineering. API-stable: router + 13 sheets, 3 commands, 1 agent. Architectural spine: workspace structure (layered / feature-grouped / domain-grouped), `[workspace.dependencies]` + resolver-2/3 with feature-graph semantics, `[workspace.lints]` + workspace-scope `clippy.toml`, workspace-scope `deny.toml` with waiver lifecycle, public-vs-internal crate boundaries with the internal-traits-crate / sealed-trait patterns, and the 10-pattern anti-pattern refusal list. Operational depth: feature-unification gotchas (the seven cases the headline rule misleads), Miri-on-subset (arena-crate isolation; nightly toolchain split), test organisation (per-crate vs workspace integration tests; fixtures crate; nextest), documentation architecture (rustdoc + mdbook 'book sits next to the crates'), release flow (synchronised vs independent versioning; cargo-release / release-plz; publish ordering), task-runner patterns (justfile + CI symmetry), workspace-scope coverage (cargo-llvm-cov + per-crate thresholds). Commands: /scaffold-workspace, /audit-workspace-deps, /validate-workspace-config. Agent: workspace-reviewer (SME Agent Protocol; sweeps all 13 sheets + 10 anti-patterns). Sibling to `axiom-rust-engineering` — that pack is single-crate-shaped; this pack composes those concerns at workspace scale.",
+      "description": "Use when multi-crate Cargo composition, feature unification, workspace policy inheritance, internal/public APIs, publishing order or target-specific test subsets cause concrete problems.",
       "keywords": [
         "axiom",
         "rust",
@@ -291,7 +262,7 @@
     {
       "name": "axiom-pyo3-interop",
       "source": "./plugins/axiom-pyo3-interop",
-      "description": "Production-grade Python ↔ Rust interop via PyO3 — the FFI-boundary discipline, not single-crate Rust nor pure-Python work. v0.2 ships router + 13 sheets, 3 commands, 1 agent. Covers PyO3 fundamentals (`Bound<'py, T>`, GIL tokens, `#[pymodule]` / `#[pyclass]`), abi3 vs native and the wheel matrix, maturin inside a Cargo workspace, GIL release patterns, batched FFI to amortise crossing cost, zero-copy NumPy via the buffer protocol, Gymnasium environments backed by Rust, error mapping with traceback fidelity, lifecycle and teardown at interpreter shutdown, async across the boundary (`pyo3-async-runtimes`, tokio + asyncio), packaging and wheels (cibuildwheel, abi3, manylinux), debugging boundary panics / segfaults / GIL deadlocks, and the cost-of-crossing performance model. Commands: /scaffold-pyo3-crate, /profile-ffi-boundary, /audit-gil-discipline. Agent: pyo3-reviewer (SME Agent Protocol; sweeps all 13 sheets + 13 boundary anti-patterns). Sibling to `axiom-rust-engineering` (single-crate Rust) and `axiom-rust-workspaces` (multi-crate Rust); composes with both.",
+      "description": "Use when a PyO3 extension needs safe ownership/lifetimes, array exchange, thread attachment, async cancellation, interpreter teardown, wheel compatibility or measured FFI performance.",
       "keywords": [
         "axiom",
         "pyo3",
@@ -320,7 +291,7 @@
     {
       "name": "axiom-procedural-architecture",
       "source": "./plugins/axiom-procedural-architecture",
-      "description": "Structural reasoning for staged procedures — design, critique, and analyze decompositions of any procedure into composable stages, dependencies, decision points, and flow properties. Three roles (producer/critic/analyst) over one shared corpus. Router + 13 sheets, 3 commands, 2 agents.",
+      "description": "Use when designing or reviewing procedures, runbooks or interactive flows whose stages, decisions and handoffs must be correct for a particular audience.",
       "keywords": [
         "axiom",
         "procedural-architecture",
@@ -334,7 +305,7 @@
     {
       "name": "axiom-embedded-database",
       "source": "./plugins/axiom-embedded-database",
-      "description": "SQLite and DuckDB as application-embedded databases at production scale - PRAGMA discipline, schema migrations under SQLite's ALTER constraints, WAL tuning, transactions/isolation, single-writer concurrency, optimistic locking + claim leases, parameterized-SQL, JSON1, FTS5, DuckDB-for-OLAP, SQLCipher, backup/restore. Router + 13 sheets, 3 commands, 2 agents.",
+      "description": "Use when SQLite or DuckDB application behavior depends on connection configuration, write concurrency, atomic claims, migrations, backup/restore, FTS or query/storage boundaries.",
       "keywords": [
         "axiom",
         "embedded-database",
@@ -355,7 +326,7 @@
     {
       "name": "axiom-mcp-engineering",
       "source": "./plugins/axiom-mcp-engineering",
-      "description": "Engineering MCP (Model Context Protocol) servers as production-grade agent interfaces — tool API surface, idempotency and atomic claim semantics, structured error envelopes, schema versioning across model drift, stdio/HTTP transport, output-shape discipline (pagination, truncation), the four MCP primitives (tools/resources/prompts/sampling), composition across servers, observability, and golden-conversation testing. Router + 13 reference sheets, 3 commands (design-mcp-server, review-mcp-server, audit-mcp-tools), and 2 agents (mcp-server-architect, mcp-server-critic).",
+      "description": "Use when designing or reviewing MCP server surfaces: model-visible capability contracts, host negotiation, retries, authorization, bounded output and real task evaluation.",
       "keywords": [
         "axiom",
         "mcp",
@@ -376,7 +347,7 @@
     {
       "name": "bravos-simulation-tactics",
       "source": "./plugins/bravos-simulation-tactics",
-      "description": "Game simulation implementation patterns and tactics - router + 13 reference sheets, 3 commands, 2 agents",
+      "description": "Use when game simulation needs a fidelity/LOD decision, engine implementation, frame-budget evidence or desync diagnosis.",
       "keywords": [
         "bravos",
         "simulation",
@@ -387,7 +358,7 @@
     {
       "name": "bravos-systems-as-experience",
       "source": "./plugins/bravos-systems-as-experience",
-      "description": "Emergent gameplay and systemic game design - router + 8 specialist reference sheets, 3 commands, 2 agents",
+      "description": "Use when gameplay depends on interacting mechanics, player experimentation, optimization, emergent stories or a modding ecosystem.",
       "keywords": [
         "bravos",
         "systems",
@@ -398,7 +369,7 @@
     {
       "name": "bravos-game-design",
       "source": "./plugins/bravos-game-design",
-      "description": "End-to-end critical game design (router + 15 specialist reference sheets, 3 commands, 2 agents) - experience hypotheses before mechanics, decision/dynamics mapping, diagnosis before prescription, causally distinct alternatives, local-to-global coherence tracing at five scales (moment, decision, loop, session, whole game), balance and economies, social/narrative/embodied play, accessibility-safety-ethics as design not polish, four medium adapters (selection-and-translation, digital/asynchronous, tabletop/facilitated, live/physical), learning-and-training games, prototyping and playtesting with evidence discipline, and creation/test/review deliverables. Covers digital, board and card, TTRPG, LARP/live-embodied, physical and social, educational and training, asynchronous, and hybrid games. Commands: /design-game, /review-game-design, /plan-playtest. Agents: game-design-architect (producer), game-design-critic (critic). Composes with bravos-systems-as-experience (emergence as the experience), bravos-simulation-tactics (in-engine simulation), and lyra-ux-designer (game UI)",
+      "description": "Use when inventing, diagnosing, repairing, balancing, or playtesting games across digital, tabletop, live, physical, educational, asynchronous, or hybrid media.",
       "keywords": [
         "bravos",
         "game-design",
@@ -422,7 +393,7 @@
     {
       "name": "lyra-creative-writing",
       "source": "./plugins/lyra-creative-writing",
-      "description": "Workshop-voiced craft pack for prose narrative — fiction and creative nonfiction. Three explicit modes (draft, critique, plan) with mode-switching protocol. v0.2 ships router + 13 craft sheets + 9 genre sheets (mystery, thriller, sf, fantasy, horror, romance, literary-fiction, memoir-and-personal-essay, literary-journalism) + 3 commands + 11 agents. Genre sheets use a reader-contract three-move discipline: name the contract → name the cost of breaking → name books worth the cost. Roadmap: v0.3 other craft lineages, v0.4 format expansion (poetry, scripts, plays, comics, songwriting, IF). Composes with muna-panel-review for beta-reader simulation.",
+      "description": "Use when drafting, revising, critiquing, or planning prose fiction or creative nonfiction, especially when author voice, continuity, genre expectations, or truth claims need deliberate treatment.",
       "keywords": [
         "lyra",
         "creative-writing",
@@ -457,7 +428,7 @@
     {
       "name": "lyra-site-designer",
       "source": "./plugins/lyra-site-designer",
-      "description": "Static site design and implementation for developer tools, open-source projects, and technical documentation sites - information architecture, modern CSS (container queries, :has(), OKLCH, light-dark(), View Transitions), design tokens, docs-first frameworks (Starlight, VitePress, Docusaurus 3), developer UX patterns - 1 skill, 1 agent, 1 command, 6 reference sheets",
+      "description": "Use when building or maintaining static developer-tool, open-source, or documentation sites, including navigation, versioned URLs, code examples, theming, and build or deployment pipelines.",
       "keywords": [
         "lyra",
         "site",
@@ -473,7 +444,7 @@
     {
       "name": "lyra-tui-designer",
       "source": "./plugins/lyra-tui-designer",
-      "description": "Terminal UI (TUI) design best practice - design-led and framework-agnostic (ratatui, Textual, Bubble Tea, Ink, notcurses). Event-loop architecture, responsive layout, redraw discipline, input/focus, color/theming with NO_COLOR + capability fallback, affordances, async feedback, terminal accessibility, signal-safe terminal restoration, golden-frame testing, cross-environment delivery - 1 router + 13 sheets, 3 commands, 2 agents (tui-design-reviewer, tui-architect)",
+      "description": "Use when building or reviewing interactive terminal applications, especially capability detection, rendering, input/focus, terminal restoration, accessibility, and cross-environment behavior.",
       "keywords": [
         "lyra",
         "tui",
@@ -489,7 +460,7 @@
     {
       "name": "lyra-ux-designer",
       "source": "./plugins/lyra-ux-designer",
-      "description": "UX design fundamentals - visual design, WCAG 2.2 accessibility, modern web platform primitives (dialog/popover/:has/container queries), iOS 26 Liquid Glass and Material 3 Expressive mobile, AI-experience patterns (Trust Stack), first-principles audience-derived needs analysis - 11 specialist sheets, 3 commands, 3 agents (ux-critic, accessibility-auditor, ux-theorist)",
+      "description": "Use when designing or reviewing application interfaces, audience needs, interaction flows, accessibility, or AI surfaces across web, mobile, desktop, and games.",
       "keywords": [
         "lyra",
         "designer"
@@ -499,7 +470,7 @@
     {
       "name": "meta-skillpack-maintenance",
       "source": "./plugins/meta-skillpack-maintenance",
-      "description": "Systematic maintenance and enhancement of skill packs through investigative domain analysis, RED-GREEN-REFACTOR testing, and automated quality improvements",
+      "description": "Use when reviewing, simplifying, extending, or validating this marketplace\u2019s plugins, skills, commands, agents, references, hooks, or packaging.",
       "keywords": [
         "meta",
         "maintenance",
@@ -509,22 +480,9 @@
       "category": "meta"
     },
     {
-      "name": "meta-sme-protocol",
-      "source": "./plugins/meta-sme-protocol",
-      "description": "SME (Subject Matter Expert) Agent Protocol - mandatory protocol for all specialist agents defining fact-finding, output contracts, and confidence/risk assessment",
-      "keywords": [
-        "meta",
-        "sme",
-        "agent",
-        "protocol",
-        "specialist"
-      ],
-      "category": "meta"
-    },
-    {
       "name": "muna-panel-review",
       "source": "./plugins/muna-panel-review",
-      "description": "Simulated audience panel review — persona-driven editorial intelligence for document suites. 3 agents (persona-reader, panel-synthesiser, persona-designer), 1 orchestration skill, 3 slash commands",
+      "description": "Use for optional staged synthetic reader reviews: precommitted expectations, controlled exposure and evidence-linked hypotheses requiring human validation.",
       "keywords": [
         "muna",
         "panel",
@@ -538,7 +496,7 @@
     {
       "name": "muna-document-designer",
       "source": "./plugins/muna-document-designer",
-      "description": "Professional document design with Pandoc and Typst - typography, layout, templates, format conversion, 6 reference sheets (academic, accessibility, data-heavy, multilingual, print, standards) - 1 skill, 1 agent, 1 command",
+      "description": "Use when producing or validating Pandoc/Typst documents, reusable templates, print-ready PDFs, multilingual layouts, or accessible publication artifacts.",
       "keywords": [
         "muna",
         "document",
@@ -553,7 +511,7 @@
     {
       "name": "muna-technical-writer",
       "source": "./plugins/muna-technical-writer",
-      "description": "Documentation structure, clarity, register translation, security-aware docs, fact-checking, complex large-file edit pair - router + 9 sheets + 1 leaf skill, 4 commands, 5 agents",
+      "description": "Use when documentation accuracy, executable procedures, institutional register, sensitive information, or source-to-document traceability needs deliberate review.",
       "keywords": [
         "muna",
         "technical",
@@ -564,7 +522,7 @@
     {
       "name": "muna-wiki-management",
       "source": "./plugins/muna-wiki-management",
-      "description": "Document set management as wikis - architecture, derivation, consistency, evolution, governance for multi-document collections - 1 router + 6 reference sheets, 4 commands, 2 agents",
+      "description": "Use when related documents need explicit source lineage, audience-specific derivatives, claim consistency, reading paths, or controlled change propagation.",
       "keywords": [
         "muna",
         "wiki",
@@ -578,7 +536,7 @@
     {
       "name": "ordis-quality-engineering",
       "source": "./plugins/ordis-quality-engineering",
-      "description": "E2E, API, integration, performance, chaos, flaky-test, observability, mutation, coverage-gap, and modern supply-chain (Trivy/OSV/Syft/Cosign/SLSA) testing - 21 reference sheets, 5 commands, 3 agents",
+      "description": "Use when test reliability, isolation, coverage gaps, performance experiments, resilience, or release evidence needs investigation or a concrete verification strategy.",
       "keywords": [
         "ordis",
         "quality",
@@ -590,7 +548,7 @@
     {
       "name": "ordis-security-architect",
       "source": "./plugins/ordis-security-architect",
-      "description": "Threat modeling (STRIDE/CWE/CVSS/ATT&CK), security controls, defense-in-depth, compliance (NIST CSF 2.0, ISO 27001:2022, PCI-DSS v4.0.1, GDPR, NIS2, EU AI Act), ATO/RMF, LLM/AI security (OWASP LLM Top 10:2025, MITRE ATLAS), supply-chain (SLSA, SBOM, Sigstore) - 11 skills, 3 commands, 2 agents",
+      "description": "Use when system trust boundaries, threat models, control verification, AI/tool privileges, supply-chain assurance, classified information flows, or authorization evidence need design or review.",
       "keywords": [
         "ordis",
         "security",
@@ -605,20 +563,9 @@
       "category": "security"
     },
     {
-      "name": "yzmir-ai-engineering-expert",
-      "source": "./plugins/yzmir-ai-engineering-expert",
-      "description": "Primary router for all AI/ML engineering skillpacks - directs to specialized packs",
-      "keywords": [
-        "yzmir",
-        "engineering",
-        "expert"
-      ],
-      "category": "ai-ml"
-    },
-    {
       "name": "yzmir-deep-rl",
       "source": "./plugins/yzmir-deep-rl",
-      "description": "Reinforcement learning - DQN/Rainbow/BBF, PPO/GRPO, SAC/TD3/REDQ, DreamerV3/TD-MPC2 model-based, CQL/IQL/Decision Transformer offline, MAPPO/IPPO multi-agent, exploration, reward shaping, counterfactual credit assignment - 13 sheets, 3 commands, 2 agents",
+      "description": "Use when reinforcement-learning environment, reward, data-regime, algorithm or evaluation decisions need implementation checks.",
       "keywords": [
         "yzmir",
         "deep-rl",
@@ -634,7 +581,7 @@
     {
       "name": "yzmir-dynamic-architectures",
       "source": "./plugins/yzmir-dynamic-architectures",
-      "description": "Dynamic/morphogenetic neural networks - grow, prune, adapt topology during training. Continual learning, gradient isolation, modular composition, lifecycle orchestration - 7 reference sheets, 1 agent, 2 commands",
+      "description": "Use when a neural network grows, prunes, composes modules or adapts across tasks and needs lifecycle, gradient-isolation or state-integrity checks.",
       "keywords": [
         "yzmir",
         "dynamic",
@@ -647,7 +594,7 @@
     {
       "name": "yzmir-morphogenetic-rl",
       "source": "./plugins/yzmir-morphogenetic-rl",
-      "description": "RL-controlled neural-network morphogenesis - controllers that decide WHEN and HOW to grow a network during training. Covers controller action/observation/reward design, governor/safety-gate discipline, rollback-as-RL-signal, deterministic morphogenesis, ablation/evaluation under topology change. Companion to yzmir-dynamic-architectures.",
+      "description": "Use when an RL controller decides when or how to change neural-network topology and needs governor, rollback, replay or fair-evaluation checks.",
       "keywords": [
         "yzmir",
         "morphogenetic",
@@ -663,7 +610,7 @@
     {
       "name": "yzmir-counterfactual-statistics",
       "source": "./plugins/yzmir-counterfactual-statistics",
-      "description": "Statistical methodology for counterfactual and paired-branch ML experiments - the independent unit (the trajectory, not the branch), cluster-robust inference, paired tests against a zero-anchored no-op control, common random numbers, grouped splits and leakage, best-of-K winner's curse, abstention calibration, pre-registration, paired power analysis, and quality-cost-stability reliability reporting - router + 13 sheets, 3 commands, 2 agents.",
+      "description": "Use when paired or branched ML experiments need uncertainty estimates, grouped splits, selection-bias controls, power analysis, or abstention calibration.",
       "keywords": [
         "yzmir",
         "counterfactual",
@@ -682,7 +629,7 @@
     {
       "name": "yzmir-structure-synthesis",
       "source": "./plugins/yzmir-structure-synthesis",
-      "description": "Generative models whose outputs are graphs: typed DAG grammars with node/edge/cost ceilings, deterministic and latent-conditioned generation, best-of-K pools, mutation and recombination over lineages, canonicalisation to normal forms, equivalence detection, and semantic hashing. General to neural architecture search, program synthesis over typed IRs, and molecule/circuit generation. Keeps the generator honest by separating generation from structural verification from utility judgement - router + 13 sheets, 3 commands, 2 agents.",
+      "description": "Use when a generator emits typed graph/program candidates and needs legality, canonical identity, diversity or search-space checks.",
       "keywords": [
         "yzmir",
         "structure-synthesis",
@@ -704,7 +651,7 @@
     {
       "name": "yzmir-llm-specialist",
       "source": "./plugins/yzmir-llm-specialist",
-      "description": "LLM applications - prompting (incl. reasoning models), RAG, fine-tuning (SFT/DPO/GRPO + LoRA family), agentic patterns + MCP, context engineering, inference optimization (vLLM/SGLang), evaluation, and OWASP-LLM-2025 safety - 10 reference sheets, 3 commands, 2 agents",
+      "description": "Use when an LLM application needs model/configuration evaluation, retrieval, context/cost controls, fine-tuning, tool reliability or safety checks.",
       "keywords": [
         "yzmir",
         "llm",
@@ -715,7 +662,7 @@
     {
       "name": "yzmir-ml-production",
       "source": "./plugins/yzmir-ml-production",
-      "description": "Production ML - quantization, serving, MLOps, dataset curation, monitoring, debugging - 11 reference sheets, 3 commands, 2 agents",
+      "description": "Use when a model or ML dataset must be released, served, monitored or recovered with operational evidence.",
       "keywords": [
         "yzmir",
         "production",
@@ -726,7 +673,7 @@
     {
       "name": "yzmir-neural-architectures",
       "source": "./plugins/yzmir-neural-architectures",
-      "description": "Neural architectures - CNNs (ConvNeXt v2 / EfficientNetV2), Transformers, SSM/Mamba, MoE (Mixtral/DeepSeek), modern diffusion (SDXL/FLUX/DiT), multimodal (CLIP/SigLIP/LLaVA), SAM/SAM-2, equivariant GNNs - 9 reference sheets, 3 commands, 2 agents",
+      "description": "Use when neural architecture families or components must be compared against data, quality, compute, latency or adaptation constraints.",
       "keywords": [
         "yzmir",
         "neural",
@@ -737,7 +684,7 @@
     {
       "name": "yzmir-pytorch-engineering",
       "source": "./plugins/yzmir-pytorch-engineering",
-      "description": "PyTorch mastery - tensors, modules, distributed training, profiling - 8 reference sheets + 1 router, 3 commands, 2 agents",
+      "description": "Use when PyTorch code has tensor/gradient, checkpoint, AMP, compile, distributed, memory or profiling obligations.",
       "keywords": [
         "yzmir",
         "pytorch",
@@ -748,7 +695,7 @@
     {
       "name": "yzmir-simulation-foundations",
       "source": "./plugins/yzmir-simulation-foundations",
-      "description": "Game simulation mathematics - ODEs, stability, control theory - router + 8 sheets, 3 commands, 2 agents",
+      "description": "Use when a simulation needs numerical-model, integration, stability, control, stochastic or determinism checks.",
       "keywords": [
         "yzmir",
         "simulation",
@@ -759,7 +706,7 @@
     {
       "name": "yzmir-systems-thinking",
       "source": "./plugins/yzmir-systems-thinking",
-      "description": "Systems thinking methodology - patterns, leverage points, archetypes, modeling, visualization - router + 6 reference sheets, 3 commands, 2 agents (leverage-analyst, pattern-recognizer)",
+      "description": "Use when recurring interventions, feedback, delays or accumulation need a causal model and evidence-backed comparison.",
       "keywords": [
         "yzmir",
         "systems-thinking",
@@ -771,7 +718,7 @@
     {
       "name": "yzmir-training-optimization",
       "source": "./plugins/yzmir-training-optimization",
-      "description": "Training stability - modern optimizers (AdamW/Lion/Sophia/Muon/AdEMAMix/Schedule-Free/Prodigy/8-bit Adam), schedules (cosine/WSD), precision (BF16/FP8 E4M3/E5M2), batch sizing (B_crit, Chinchilla), gradients, convergence, hyperparameters (incl. muP), debugging. 11 skills + 3 commands + 2 agents.",
+      "description": "Use when a training run needs evidence about convergence, objective, gradients, regularization, search budget, batch or precision strategy.",
       "keywords": [
         "yzmir",
         "training",
@@ -782,7 +729,7 @@
     {
       "name": "axiom-program-management",
       "source": "./plugins/axiom-program-management",
-      "description": "Project and program management as a delivery discipline - lean/agile-leaning, honest about where program scale needs predictive structure. Project tier: flow (cadence, WIP, cycle-time/throughput, Monte-Carlo forecasting), scope/backlog control, lean estimation, stakeholder management, operational RAID logs, honest RAG/watermelon-resistant reporting, dependency coordination. Program tier: program structure and governance, benefits realization and OKRs, now/next/later roadmapping with WSJF/cost-of-delay, cross-project dependency and integration management, capacity/funding flow with stable teams, scaling/operating-model selection without framework dogma. Leans on axiom-planning (implementation planning) and axiom-sdlc-engineering (process maturity, traceability, formal governance). Router + 13 sheets, 3 commands, 2 agents.",
+      "description": "Use when coordinating delivery across workstreams with real dependency agreements, risks, capacity limits and evidence-based forecasts.",
       "keywords": [
         "axiom",
         "program-management",
@@ -805,7 +752,7 @@
     {
       "name": "axiom-product-management",
       "source": "./plugins/axiom-product-management",
-      "description": "Product management as standing ownership - for a Claude that takes control of a software product and owns it end-to-end across many sessions. Built on a structured operating system: a git-versioned product workspace (vision, intent-roadmap, append-only Product Decision Records, current-state brief, falsifiable metrics) and a resume/orient/decide/dispatch/accept/checkpoint loop, governed by an explicit authority boundary that escalates anything irreversible or outward-facing to the human owner. Owns the product disciplines: discovery and opportunity assessment (JTBD, problem validation, business case), vision/strategy/positioning and intent-roadmapping, PRDs with falsifiable acceptance criteria, delivery orchestration and acceptance (decide the bet, dispatch it, verify value landed), product-value metrics and experimentation, and the product anti-pattern catalog (build trap, feature factory, vanity metrics, HiPPO capture, autonomy overreach). Orchestrates rather than reimplements: hands sequencing/flow/WSJF to axiom-program-management, implementation plans to axiom-planning, solution/architecture to axiom-solution-architect, and research method to lyra-ux-designer. Router + 8 sheets, 3 commands, 2 agents.",
+      "description": "Use when deciding product value or maintaining product ownership across sessions: durable state, decision provenance, falsifiable acceptance and authority.",
       "keywords": [
         "axiom",
         "product-management",
@@ -828,7 +775,7 @@
     {
       "name": "axiom-distributed-systems",
       "source": "./plugins/axiom-distributed-systems",
-      "description": "Architecture-level distributed systems design (router + 13 specialist sheets, 3 commands, 2 agents) - consistency models and CAP/PACELC per operation, failure models and the eight fallacies, replication and quorums, consensus and coordination, partitioning and sharding, time/clocks/ordering, idempotency and deduplication, sagas and distributed transactions (with the outbox/inbox pattern), delivery and ordering semantics, resilience patterns, backpressure and flow control, fault-injection/linearizability/deterministic-simulation testing, and cost-and-when-not-to-distribute accounting; frames correctness-under-partition as a load-bearing architectural property. Composes with axiom-web-backend, axiom-devops-engineering, and axiom-determinism-and-replay; the most glaring architecture gap that those packs only graze",
+      "description": "Use when multiple processes or failure domains must remain correct through crashes, partitions, retries, duplicates, clock changes or overload.",
       "keywords": [
         "axiom",
         "distributed-systems",
@@ -860,7 +807,7 @@
     {
       "name": "axiom-contract-engineering",
       "source": "./plugins/axiom-contract-engineering",
-      "description": "The engineering discipline of typed cross-boundary contracts (router + 10 sheets, 3 commands, 2 agents) - contract-first boundaries with one authority per record class, silent-default elimination (absent != zero, validity masks, fail-loud readers), schema versioning where meaning changes fail closed, deterministic resolution with no covert channels, blinding by construction, canonical content-addressed identity, contract-layer dependency direction, versioned policy parameters, definition lifecycle, and contract testing (golden fixtures, canonicalisation properties, authority tests).",
+      "description": "Use when typed records cross subsystem authority boundaries and absence, meaning changes, blinded views, or derived decisions must remain explicit and reproducible.",
       "keywords": [
         "axiom",
         "contract-engineering",
@@ -879,7 +826,7 @@
     {
       "name": "axiom-experiment-formalisation",
       "source": "./plugins/axiom-experiment-formalisation",
-      "description": "Formalising an experiment as a machine-checkable record layer (router + 15 sheets, 4 commands, 2 agents) - EXPO (the ontology of scientific experiments) verified against its shipped OWL rather than its paper, SUMO or BFO as upper ontology, PROV-O for lineage. Two laws: verified vocabulary only (verified/unverified/refuted never collapsed) and the projection law (the ontology describes your typed contracts and never becomes runtime truth, enforced by a CI sync check). Tier 1 annotation layer is the default; competency questions before terms; controls, pairing and unit of analysis; absence that is never zero; provenance via PROV-O; governance, lifecycle and scaffold extension patterns; SHACL/OWL validation without vacuity; a verified prior-art map; a page on adapting it all, and a RED-GREEN behavioural test record.",
+      "description": "Use when experiment records need ontology interoperability, verified EXPO/SUMO/BFO/PROV mappings, executable competency questions or auditable description. Do not activate for ordinary experiment execution.",
       "keywords": [
         "axiom",
         "experiment-formalisation",

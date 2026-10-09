@@ -59,7 +59,7 @@ Without proper scaling:
 └─────────────────────────────────────────┘
 ```
 
-## Part 1: RED - Failures in Scaling (600-800 lines)
+## Part 1: RED - Failures in Scaling
 
 ### Failure 1: Single Instance Can't Handle Traffic Spikes
 
@@ -717,7 +717,7 @@ print(f"SAVINGS: ${savings:.2f}/month ({savings_percent:.0f}%)")
 | Wrong autoscaling metrics | Scale on CPU not GPU/queue | SLA violations, overprovisioning |
 | Cost ignorance | On-demand 24/7, overprovisioned | 40-60% wasted budget |
 
-## Part 2: GREEN - Correct Scaling Implementation (900-1200 lines)
+## Part 2: GREEN - Correct Scaling Implementation
 
 ### Solution 1: Horizontal Scaling with Load Balancing
 
@@ -2058,7 +2058,7 @@ cost_on_demand = optimizer_on_demand.calculate_monthly_cost()
 print("\nOption 1: All on-demand")
 print(f"Instances: {cost_on_demand['instance_count']['total']}× p3.2xlarge")
 print(f"Monthly cost: ${cost_on_demand['total_monthly']:,.2f}")
-print(f"Interruptions: 0 (guaranteed availability)")
+print(f"Interruptions: 0 in this simulated run (not an availability guarantee)")
 
 # Option 2: Mixed (30% on-demand, 70% spot) - RECOMMENDED
 optimizer_mixed = CostOptimizer(
@@ -2438,9 +2438,9 @@ print(planner.generate_capacity_plan())
 #    → Consider reserved instances for baseline
 ```
 
-## Part 3: REFACTOR - Pressure Tests (550-700 lines)
+## Part 3: Worked failure cases
 
-### Pressure Test 1: Traffic Spike (0 → 1000 RPS in 30 seconds)
+### Worked failure case 1: Traffic Spike (0 → 1000 RPS in 30 seconds)
 
 **Test:** Can the system scale fast enough to handle sudden traffic spike?
 
@@ -2625,7 +2625,7 @@ class TrafficSpikeTest:
                 print(f"  ✓ PASS: Success rate meets target")
 ```
 
-### Pressure Test 2: Instance Failures (50% capacity loss)
+### Worked failure case 2: Instance Failures (50% capacity loss)
 
 ```python
 # pressure_test_2_instance_failures.py
@@ -2745,7 +2745,7 @@ class InstanceFailureTest:
                 print(f"  {instance_id}: {count} requests")
 ```
 
-### Pressure Test 3-10: Additional Critical Scenarios
+### Worked failure case 3-10: Additional Critical Scenarios
 
 ```python
 # pressure_tests_3_to_10.py

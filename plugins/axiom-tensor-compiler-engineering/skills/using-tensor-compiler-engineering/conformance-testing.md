@@ -1,6 +1,6 @@
 ---
 name: conformance-testing
-description: Use when proving a compiled tensor artifact still implements the semantics of its source IR — reference-versus-compiled execution on declared inputs, gradient conformance (gradcheck and cotangent comparison), identity and zero-influence preservation, cross-device and cross-layout agreement — and when placing that gate independently of the compiler that produced the artifact.
+description: "Use when proving a compiled tensor artifact still implements the semantics of its source IR \u2014 reference-versus-compiled execution on declared inputs, gradient conformance (gradcheck and cotangent comparison), identity and zero-influence preservation, cross-device and cross-layout agreement \u2014 and when placing that gate independently of the compiler that produced the artifact."
 ---
 
 # Conformance Testing
@@ -19,19 +19,19 @@ This is the core sheet of the pack. Everything else produces an artifact; this i
 
 ## Core Principle
 
-**Conformance is five independent questions, asked by something that is not the compiler. Answering four of them is a pass rate of zero, because the one you skipped is the one that fails in production.**
+**Conformance uses an oracle independent of the transformation under test. Declare which dimensions are promised by the artifact and justify exclusions: gradients apply to training/autograd claims, and device/layout checks apply to supported devices/layouts. A skipped applicable obligation is a gap, not a pass.**
 
 The five:
 
 1. **Forward agreement** — same declared inputs, reference and compiled outputs agree inside the declared budget.
 2. **Gradient conformance** — the *backward* agrees. A separate program, separately capable of being wrong.
-3. **Structural preservation** — identity/zero-influence subgraphs still behave as identities; no semantic node invented or lost.
+3. **Structural preservation** — identity/zero-influence subgraphs still behave as identities; source semantics remain unchanged despite justified target rewrites.
 4. **Cross-device agreement** — every device the artifact claims to support produces the same answer inside budget.
-5. **Cross-layout agreement** — contiguous, channels-last, non-contiguous and strided inputs all agree.
+5. **Cross-layout agreement** — contiguous, channels-last, non-contiguous and strided inputs all supported layouts agree.
 
 ### The failure this prevents
 
-Forward-only conformance is the single most common hole in this domain, and it is invisible by construction. Here is it failing, verified on torch 2.9:
+For artifacts that promise training/autograd behavior, forward-only conformance cannot detect a wrong backward. Here is it failing, an illustrative test recorded against torch 2.9; rerun on the project version:
 
 ```python
 import torch, torch.nn as nn
@@ -112,7 +112,7 @@ Run against the `BadGelu` artifact above (with the seed shown), this reports `pa
 
 Three details that decide whether this harness works:
 
-- **One cotangent, shared.** Sampling `randn_like` separately for each side compares two different derivatives and always fails. This is the most common reason teams conclude "gradient conformance is too noisy to use".
+- **One cotangent, shared.** Sampling `randn_like` separately for each side generally compares different vector-Jacobian products and can create a spurious mismatch. This is the most common reason teams conclude "gradient conformance is too noisy to use".
 - **`allow_unused=True` plus the `None`-asymmetry check.** A pass that accidentally detaches a parameter produces `None` on one side. Without the explicit check, `zip` silently compares nothing and the test passes.
 - **Same parameter objects where possible.** If the artifact holds copies, compare by name, and verify the copies are bit-identical to the originals first — otherwise you are measuring initialisation noise.
 
@@ -136,7 +136,7 @@ The operational consequence matters more than the fact. A team that runs `gradch
 
 | Tool | Question | dtype |
 |------|----------|-------|
-| `gradcheck` | Is the analytic backward *mathematically* right? | float64, always |
+| `gradcheck` | Is the analytic backward *mathematically* right? | Usually float64 for finite-difference accuracy; verify supported precision/tolerances |
 | Cotangent comparison | Does the artifact's backward match the reference's? | the deployed dtype |
 | `gradgradcheck` | Is the double-backward right? | float64; only if you use it |
 
@@ -223,8 +223,7 @@ def cross_layout_conformance(module, x, rtol, atol, report):
 
 The layouts split into two classes, and knowing which is which is what makes the check usable (all figures measured on torch 2.9.1):
 
-- **Same-kernel layouts** — strided views of an unchanged memory format: row-padded slices, and transposed-then-materialised views whose inner-dimension stride is not 1 — must agree **bit-exactly**. Measured: `0.000e+00` against the contiguous baseline in every configuration tried (CPU and CUDA, narrow and wide convs). Any nonzero difference here is a real finding with no noise floor to hide in. Check that each variant you list is actually a distinct layout: a bare transpose round-trip (`x.transpose(-1,-2).transpose(-1,-2)`) is not — it returns `x`'s own storage, strides and contiguity, so it reports `0.000e+00` no matter how broken the compiler is.
-- **Kernel-changing layouts** — `channels_last`, which legitimately dispatches different convolution algorithms — are exact only when the backend happens to pick the same kernels. Measured on the same conv stack: `0.000e+00` on CPU at 8 channels, but `9.5e-07` on CPU at 64 channels (different oneDNN path), `4.1e-05` on CUDA with the default `cudnn.allow_tf32=True`, and `0.000e+00` on CUDA with it off. A channels-last difference inside the reassociation budget is a kernel-selection fact — record which kernel ran in the manifest and hold the diff to the budget; anything beyond budget, or any nonzero *same-kernel* difference, is a bug. If your pipeline pins kernel choice per layout, demand exactness everywhere and say so in the contract.
+- **Layout obligations** — test distinct supported layouts against the declared numerical contract. A transpose round trip may restore the original strides and fail to exercise a new layout. Changing strides can change indexing, scheduling or reduction order even when a kernel label is unchanged; require bitwise equality only when the implementation/contract justifies it. Compare channels-last and non-contiguous cases within derived budgets, recording backend choices where useful. Previously measured exactness in a small workload is not a universal guarantee.
 
 Cross-device agreement is never exact — different devices run different kernels by construction. Expect order `1e-07` for a small float32 conv stack CPU-versus-CUDA (measured `3.6e-07`), and orders more when TF32 flags differ (`4.5e-04` at 64 channels with `cudnn.allow_tf32=True` against `4.8e-07` with it off) — which is why the flags are asserted before any of this runs.
 
@@ -350,7 +349,7 @@ def test_conformance():
     assert report.passed, format_findings(report.findings)
 ```
 
-with `spec.declared_inputs()` supplying train-mode and eval-mode cases, `requires_grad=True` inputs, post-training parameter state loaded from a checkpoint, cancellation-heavy and large-magnitude cases, and both devices. The wrong backward is caught by the cotangent comparison on the first run after it is introduced — it is an order-1.0 error, not a subtle one. It was only subtle because nothing looked.
+with `spec.declared_inputs()` supplying train-mode and eval-mode cases, `requires_grad=True` inputs, post-training parameter state loaded from a checkpoint, cancellation-heavy and large-magnitude cases, and the declared supported devices. The wrong backward is caught by the cotangent comparison on the first run after it is introduced — it is an order-1.0 error, not a subtle one. It was only subtle because nothing looked.
 
 The generalisable lesson: **the bug was never hard to find. Every hole in that five-line test was a decision to not look somewhere.** Conformance design is mostly the discipline of enumerating where you are not looking.
 
@@ -361,8 +360,8 @@ The generalisable lesson: **the bug was never hard to find. Every hole in that f
 | Pattern | Why it fails | Fix |
 |---------|--------------|-----|
 | Conformance inside `compile()` | Self-certification | Sibling gate — `compiler-architecture-for-tensor-programs` |
-| Forward-only | Backward is a different program | Cotangent comparison, always |
-| `gradcheck` in float32 | Fails always; gets disabled as "flaky" | float64 copy for gradcheck |
+| Forward-only | Backward is a different program | Cotangent comparison for training/autograd claims |
+| `gradcheck` in float32 | Default finite-difference settings often fail; can be mislabeled flaky | float64 copy for gradcheck |
 | Fresh `randn_like` cotangent per side | Compares two different derivatives | One shared cotangent |
 | `allow_unused` without a `None`-asymmetry check | A detached parameter passes silently | Explicit asymmetry check |
 | Inputs from a compiler-owned helper | Tests the compiler author's assumptions | Inputs from the IR contract |

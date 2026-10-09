@@ -1,6 +1,6 @@
 ---
 name: three-phase-inference
-description: Use when designing the inference algorithm of a dataflow analyzer — how lattice values propagate from variable assignments, through function bodies, across the callgraph, until a fixed point is reached. Covers the variable → function → callgraph phasing rationale, the worklist algorithm, termination proofs grounded in lattice properties, cycle handling (recursion, mutually recursive callgraphs), and the whole-program vs incremental tradeoff. Produces `03-inference-pipeline-spec.md`.
+description: "Use when designing the inference algorithm of a dataflow analyzer \u2014 how lattice values propagate from variable assignments, through function bodies, across the callgraph, until a fixed point is reached. Covers the variable \u2192 function \u2192 callgraph phasing rationale, the worklist algorithm, termination proofs grounded in lattice properties, cycle handling (recursion, mutually recursive callgraphs), and the whole-program vs incremental tradeoff."
 ---
 
 # Three-Phase Inference

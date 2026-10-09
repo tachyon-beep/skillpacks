@@ -1,6 +1,6 @@
 ---
 name: replay-infrastructure-design
-description: Use when designing the replay loop itself — the distinction between read-only investigation and branching counterfactuals, replay-from-snapshot vs replay-from-zero, log shape, and the API a debugger / regression test / league system / auditor sees. Produces `06-replay-infrastructure-spec.md`.
+description: "Use when designing the replay loop itself \u2014 the distinction between read-only investigation and branching counterfactuals, replay-from-snapshot vs replay-from-zero, log shape, and the API a debugger / regression test / league system / auditor sees."
 ---
 
 # Replay Infrastructure Design

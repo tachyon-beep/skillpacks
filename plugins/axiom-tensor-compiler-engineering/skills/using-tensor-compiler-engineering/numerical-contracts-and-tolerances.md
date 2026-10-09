@@ -1,6 +1,6 @@
 ---
 name: numerical-contracts-and-tolerances
-description: Use when declaring the numerics of a compiled tensor program up front — dtype, accumulation order, floating-point non-associativity, nondeterministic kernels, per-op tolerance budgets — or when someone is about to widen a tolerance to make a failing conformance test pass.
+description: "Use when declaring the numerics of a compiled tensor program up front \u2014 dtype, accumulation order, floating-point non-associativity, nondeterministic kernels, per-op tolerance budgets \u2014 or when someone is about to widen a tolerance to make a failing conformance test pass."
 ---
 
 # Numerical Contracts and Tolerances

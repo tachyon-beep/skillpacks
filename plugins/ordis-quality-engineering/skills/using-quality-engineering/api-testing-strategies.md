@@ -1,6 +1,6 @@
 ---
 name: api-testing-strategies
-description: Use when testing REST/GraphQL APIs, designing API test suites, validating request/response contracts, testing authentication/authorization, handling API versioning, or choosing API testing tools - provides test pyramid placement, schema validation, and anti-patterns distinct from E2E browser testing
+description: "Use when testing REST/GraphQL APIs, designing API test suites, validating request/response contracts, testing authentication/authorization, handling API versioning, or choosing API testing tools - provides test pyramid placement, schema validation, and anti-patterns distinct from E2E browser testing"
 ---
 
 # API Testing Strategies

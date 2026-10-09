@@ -1,7 +1,7 @@
 {
   "name": "yzmir-neural-architectures",
-  "version": "1.4.0",
-  "description": "Neural architectures - CNNs (ConvNeXt v2 / EfficientNetV2), Transformers, SSM/Mamba, MoE (Mixtral/DeepSeek), modern diffusion (SDXL/FLUX/DiT), multimodal (CLIP/SigLIP/LLaVA), SAM/SAM-2, equivariant GNNs - 9 reference sheets, 3 commands, 2 agents",
+  "version": "2.0.0",
+  "description": "Use when neural architecture families or components must be compared against data, quality, compute, latency or adaptation constraints.",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

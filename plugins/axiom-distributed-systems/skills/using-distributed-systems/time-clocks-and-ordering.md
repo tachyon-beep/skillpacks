@@ -1,6 +1,6 @@
 ---
 name: time-clocks-and-ordering
-description: Use when events on different machines must be ordered, when "last write wins" is decided by a timestamp, when logs from two nodes interleave wrongly, when NTP skew or a clock jump corrupted a comparison, or when causality must survive replication. Names the trap of ordering by wall clock. Produces `06-ordering-spec.md`.
+description: "Use when events on different machines must be ordered, when \"last write wins\" is decided by a timestamp, when logs from two nodes interleave wrongly, when NTP skew or a clock jump corrupted a comparison, or when causality must survive replication. Names the trap of ordering by wall clock."
 ---
 
 # Time, Clocks, and Ordering

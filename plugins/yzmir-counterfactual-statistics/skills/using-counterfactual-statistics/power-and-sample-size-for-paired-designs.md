@@ -1,6 +1,6 @@
 ---
 name: power-and-sample-size-for-paired-designs
-description: Use when asked how many runs, seeds, or trajectories an experiment needs, when planning a fleet from pilot variance, or when a null result needs to be distinguished from an underpowered one. Covers power from the paired-difference SD at the unit level, minimum detectable effect, pilot-variance uncertainty, and why underpowered fleets exaggerate the effects they do find.
+description: "Use when asked how many runs, seeds, or trajectories an experiment needs, when planning a fleet from pilot variance, or when a null result needs to be distinguished from an underpowered one. Covers power from the paired-difference SD at the unit level, minimum detectable effect, pilot-variance uncertainty, and why underpowered fleets exaggerate the effects they do find."
 ---
 
 # Power and Sample Size for Paired Designs

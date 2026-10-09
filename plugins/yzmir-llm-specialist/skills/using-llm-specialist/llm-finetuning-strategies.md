@@ -29,7 +29,7 @@ The order of operations has not changed; the threshold for "good enough without 
   output schema where appropriate.
 ```
 
-If quality clears your bar (commonly ≥ 90% of human-rated examples) → **stop**. You don't need fine-tuning.
+If quality clears a task-specific, predeclared acceptance bar → **stop**. You don't need fine-tuning.
 
 ### Step 2: Add RAG, reasoning, or tool use
 
@@ -166,7 +166,7 @@ The technique generalizes: any time you have a stronger model that can rank outp
 
 ## LoRA Family — Modern PEFT
 
-Full fine-tuning rewrites every weight; **PEFT** (Parameter-Efficient Fine-Tuning) freezes the base and learns small adapters. This is the right default for ~99% of fine-tuning, including all the preference and RL methods above.
+Full fine-tuning rewrites every weight; **PEFT** (Parameter-Efficient Fine-Tuning) freezes the base and learns small adapters. Evaluate PEFT as a lower-cost baseline when compatible with the target model, objective and serving stack; compare full tuning when the task warrants it.
 
 ### LoRA (the foundation)
 

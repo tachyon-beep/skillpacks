@@ -1,6 +1,6 @@
 ---
 name: cost-of-determinism
-description: Use when accounting honestly for the cost of determinism — throughput, latency, hardware utilisation, library choice constraints, debug overhead — and deciding which costs are accepted, which are amortised, and which determine that a weaker determinism class is the right answer. Produces `13-cost-of-determinism.md`.
+description: "Use when accounting honestly for the cost of determinism \u2014 throughput, latency, hardware utilisation, library choice constraints, debug overhead \u2014 and deciding which costs are accepted, which are amortised, and which determine that a weaker determinism class is the right answer."
 ---
 
 # Cost of Determinism

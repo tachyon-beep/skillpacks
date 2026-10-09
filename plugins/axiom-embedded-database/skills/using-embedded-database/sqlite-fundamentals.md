@@ -1,6 +1,6 @@
 ---
 name: sqlite-fundamentals
-description: Use when standing up a new SQLite-backed component, inheriting an SQLite layer with surprising failure modes, or defending an SQLite choice against "just use Postgres". Covers the in-process execution model, connection lifecycle, ACID semantics in the embedded context, and thread/process concurrency rules. Foundation for every other sheet in the pack.
+description: "Use when standing up a new SQLite-backed component, inheriting an SQLite layer with surprising failure modes, or defending an SQLite choice against \"just use Postgres\". Covers the in-process execution model, connection lifecycle, ACID semantics in the embedded context, and thread/process concurrency rules. Foundation for every other sheet in the pack."
 ---
 
 # SQLite Fundamentals

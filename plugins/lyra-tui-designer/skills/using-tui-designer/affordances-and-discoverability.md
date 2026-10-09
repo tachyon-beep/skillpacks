@@ -1,6 +1,6 @@
 ---
 name: affordances-and-discoverability
-description: Use when a TUI's keybindings live only in the author's head, when users cannot tell which rows are selectable or where the cursor is, when there is no status bar / footer legend / key hint / help overlay / `?` screen, when features (filter `/`, PgUp/PgDn, Home/End, jump-to, multi-select) are invisible until someone reads the source, when reviewers say "how was I supposed to know that key existed", when the app needs a README just to operate, or when you are adding a command palette, on-screen hints, or first-run guidance to a ratatui / Textual / Bubble Tea / Ink / notcurses interface so it is learnable without a manual.
+description: "Use when a TUI's keybindings live only in the author's head, when users cannot tell which rows are selectable or where the cursor is, when there is no status bar / footer legend / key hint / help overlay / `?` screen, when features (filter `/`, PgUp/PgDn, Home/End, jump-to, multi-select) are invisible until someone reads the source, when reviewers say \"how was I supposed to know that key existed\", when the app needs a README just to operate, or when you are adding a command palette, on-screen hints, or first-run guidance to a ratatui / Textual / Bubble Tea / Ink / notcurses interface so it is learnable without a manual."
 ---
 
 # Affordances and Discoverability

@@ -8,17 +8,17 @@
 
 ## Core Concepts
 
-### The Optimization Hierarchy (Critical Order)
+### Optimization Options
 
-**ALWAYS optimize in this order** - each level provides 10-100× improvement:
+Establish a representative profile and frame-time budget, then choose the intervention that addresses the measured bottleneck. The options below have no universal order or speedup guarantee:
 
-1. **PROFILE FIRST** (0.5-1 hour investment)
+1. **Measure a baseline**
    - Identify actual bottleneck with profiler
    - Measure baseline performance
    - Set target frame time budgets
-   - **Never guess** - 80% of time is usually in 20% of code
+   - Inspect the measured time distribution; do not assume a fixed concentration
 
-2. **Algorithmic Optimizations** (10-100× improvement)
+2. **Algorithmic Optimizations**
    - Fix O(n²) → O(n) or O(n log n)
    - Spatial partitioning for proximity queries
    - Replace brute-force with smart algorithms

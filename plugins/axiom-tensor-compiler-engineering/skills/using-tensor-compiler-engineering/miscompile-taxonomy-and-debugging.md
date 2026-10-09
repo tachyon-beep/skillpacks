@@ -1,6 +1,6 @@
 ---
 name: miscompile-taxonomy-and-debugging
-description: Use when a compiled tensor artifact disagrees with its reference — classifying compile failure versus semantic drift versus conformance failure versus performance regression, localising a miscompile by pass bisection and per-node comparison, and reducing it to a minimal reproducer.
+description: "Use when a compiled tensor artifact disagrees with its reference \u2014 classifying compile failure versus semantic drift versus conformance failure versus performance regression, localising a miscompile by pass bisection and per-node comparison, and reducing it to a minimal reproducer."
 ---
 
 # Miscompile Taxonomy and Debugging

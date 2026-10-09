@@ -1,414 +1,65 @@
 ---
 name: using-ux-designer
-description: Use when starting any UX/UI design task — visual design, IA, interaction, accessibility (WCAG 2.2), user research across mobile, web, desktop, game, and AI surfaces, plus first-principles audience-derived needs analysis. Routes to 11 specialist sheets.
+description: "Use when designing or reviewing application interfaces, audience needs, interaction flows, accessibility, or AI surfaces across web, mobile, desktop, and games."
 ---
 
-# Using UX Designer
-
-## Overview
-
-This meta-skill routes you to the right UX design skills based on your situation. Load this skill when you need UX expertise but aren't sure which specific skill to use.
-
-**Core Principle**: Different UX tasks require different skills. Match your situation to the appropriate skill, load only what you need.
-
-## When to Use
-
-Load this skill when:
-- Starting any UX/UI design task
-- User mentions: "design", "UX", "UI", "interface", "user experience", "layout", "navigation"
-- You need to critique or review a design
-- You need to create a new interface or feature
-- User asks about UX principles or concepts
-
-**Don't use for**: Backend logic, database design, pure technical implementation without UX implications. For static documentation or marketing sites (developer-tool docs, landing pages, OSS project sites), route to the sibling `lyra-site-designer` pack instead — this pack is for **application** UI (interactive web apps, mobile, desktop, game, AI surfaces).
-
----
-
-## How to Access Reference Sheets
-
-**IMPORTANT**: All reference sheets are located in the SAME DIRECTORY as this SKILL.md file.
-
-When this skill is loaded from:
-  `skills/using-ux-designer/SKILL.md`
-
-Reference sheets like `ux-fundamentals.md` are at:
-  `skills/using-ux-designer/ux-fundamentals.md`
-
-NOT at:
-  `skills/ux-fundamentals.md` ← WRONG PATH
-
-When you see a link like `[ux-fundamentals.md](ux-fundamentals.md)`, read the file from the same directory as this SKILL.md.
-
----
-
-## Routing by Situation
-
-### Learning & Explanation
-
-**Symptoms**: "What is...", "Explain...", "Teach me about...", "How does X work in UX?"
-
-**Route to**: [ux-fundamentals.md](ux-fundamentals.md)
-
-**Examples**:
-- "What is information architecture?" → [ux-fundamentals.md](ux-fundamentals.md)
-- "Explain visual hierarchy" → [ux-fundamentals.md](ux-fundamentals.md)
-- "How do I think about accessibility?" → [ux-fundamentals.md](ux-fundamentals.md)
-
----
-
-### Design Critique & Review
-
-**Symptoms**: "Review this design", "Critique this interface", "Is this usable?", "Does this follow best practices?"
-
-**Route to**: Relevant competency skills based on critique focus
-
-**General Review** (no specific focus):
-- [visual-design-foundations.md](visual-design-foundations.md) (visual hierarchy, color, typography)
-- [information-architecture.md](information-architecture.md) (content organization, navigation)
-- [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md) (WCAG, inclusive design)
-
-**Specific Focus**:
-- Visual issues (color, contrast, hierarchy) → [visual-design-foundations.md](visual-design-foundations.md)
-- Navigation/findability issues → [information-architecture.md](information-architecture.md)
-- Interaction feedback, touch targets → [interaction-design-patterns.md](interaction-design-patterns.md)
-- Accessibility concerns → [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md)
-
-**Add platform extension** if design is platform-specific:
-- Mobile app → Add [mobile-design-patterns.md](mobile-design-patterns.md)
-- Web dashboard → Add [web-application-design.md](web-application-design.md)
-- Desktop software → Add [desktop-software-design.md](desktop-software-design.md)
-- Game interface → Add [game-ui-design.md](game-ui-design.md)
-
----
-
-### New Interface Design
-
-**Symptoms**: "Design a...", "Create interface for...", "Build a [feature] screen"
-
-**Route to**: Competency skills + platform extension
-
-**Standard Web/Mobile Feature**:
-1. [visual-design-foundations.md](visual-design-foundations.md) (layout, hierarchy, color)
-2. [interaction-design-patterns.md](interaction-design-patterns.md) (buttons, feedback, states)
-3. Platform-specific:
-   - Mobile → [mobile-design-patterns.md](mobile-design-patterns.md)
-   - Web app → [web-application-design.md](web-application-design.md)
-
-**Complex Navigation/IA**:
-1. [information-architecture.md](information-architecture.md) (content structure, nav systems)
-2. [visual-design-foundations.md](visual-design-foundations.md) (visual hierarchy)
-3. Platform extension as needed
-
-**Research Phase** (early discovery):
-1. [user-research-and-validation.md](user-research-and-validation.md) (understand users first)
-2. Then return to design skills once research complete
-
----
-
-### Specific UX Domains
-
-#### AI / LLM-Powered Interfaces
-
-**Symptoms**: "Chatbot UX", "AI assistant", "copilot", "agent", "RAG UI", "streaming output", "model output is wrong / overconfident", "citations", "tool-call confirmation"
-
-**Route to**: [ai-experience-patterns.md](ai-experience-patterns.md)
-
-**Add**:
-- [interaction-design-patterns.md](interaction-design-patterns.md) for streaming + modal patterns
-- [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md) for `aria-live` streaming + WCAG 2.2 SC 3.3.8 (don't gate AI behind cognitive auth tests)
-- Platform extension if surface is mobile / web / desktop
-
-**Examples**:
-- "Design a chat assistant with citations" → ai-experience-patterns + web-application-design
-- "Our agent silently sent the wrong refund" → ai-experience-patterns (Reversibility / preview-then-confirm)
-- "Users say the AI sounds too confident when it's wrong" → ai-experience-patterns (Calibration)
-
----
-
-#### Visual Design Issues
-
-**Symptoms**: "Colors don't work", "Typography feels off", "Hierarchy unclear", "Layout cramped"
-
-**Route to**: [visual-design-foundations.md](visual-design-foundations.md)
-
-**Add**: [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md) if contrast/readability concerns
-
----
-
-#### Navigation & Findability
-
-**Symptoms**: "Users can't find features", "Navigation confusing", "Menu structure", "Content organization"
-
-**Route to**: [information-architecture.md](information-architecture.md)
-
-**Add**: Platform extension for platform-specific nav patterns
-
----
-
-#### Interaction & Feedback
-
-**Symptoms**: "Button states unclear", "No loading feedback", "Micro-interactions", "Touch targets too small"
-
-**Route to**: [interaction-design-patterns.md](interaction-design-patterns.md)
-
-**Add**: Platform extension for platform-specific interaction conventions
-
----
-
-#### Accessibility & Inclusion
-
-**Symptoms**: "WCAG compliance", "Accessibility audit", "Colorblind-safe", "Keyboard navigation", "Screen reader"
-
-**Route to**: [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md)
-
-**Note**: This skill should be referenced by all other design decisions (accessibility is universal)
-
----
-
-#### User Research & Validation
-
-**Symptoms**: "Understand users", "User interviews", "Usability testing", "Mental models", "Journey mapping"
-
-**Route to**: [user-research-and-validation.md](user-research-and-validation.md)
-
-**Add**: Other skills once research informs design direction
-
----
-
-## Platform-Specific Routing
-
-### Mobile (iOS/Android)
-
-**Symptoms**: "Mobile app", "iOS", "Android", "Touch interface", "Phone", "Tablet"
-
-**Route to**:
-- Core competency skills (visual, IA, interaction) as needed
-- **Always add**: [mobile-design-patterns.md](mobile-design-patterns.md)
-
-**Mobile-Specific Concerns**:
-- Touch targets (44x44pt iOS, 48x48dp Android)
-- Gestures (swipe, pinch, long-press)
-- Platform conventions (iOS HIG vs Material Design)
-- One-handed use, thumb zones
-
----
-
-### Web Applications
-
-**Symptoms**: "Web app", "Dashboard", "SaaS", "Data visualization", "Admin panel", "Responsive design"
-
-**Route to**:
-- Core competency skills as needed
-- **Always add**: [web-application-design.md](web-application-design.md)
-
-**Web-Specific Concerns**:
-- Responsive breakpoints
-- Complex data display (tables, charts)
-- Keyboard shortcuts, power-user workflows
-- Multi-tasking (tabs, split views)
-
----
-
-### Desktop Software
-
-**Symptoms**: "Desktop app", "Electron", "Native application", "Multi-window", "Keyboard shortcuts"
-
-**Route to**:
-- Core competency skills as needed
-- **Always add**: [desktop-software-design.md](desktop-software-design.md)
-
-**Desktop-Specific Concerns**:
-- Window management (multi-window, panels)
-- Keyboard-first workflows
-- Workspace customization
-- Power-user features (preferences, scripting)
-
----
-
-### Game UI
-
-**Symptoms**: "Game", "HUD", "Menu system", "Game interface", "In-game UI", "Player experience"
-
-**Route to**:
-- Core competency skills as needed
-- **Always add**: [game-ui-design.md](game-ui-design.md)
-
-**Game-Specific Concerns**:
-- Visibility vs immersion (diegetic UI)
-- Controller/gamepad navigation
-- Readability during action
-- Performance impact (frame rate)
-
----
-
-## Multi-Skill Scenarios
-
-### Complete Feature Design (Mobile Login)
-
-**Load in order**:
-1. [visual-design-foundations.md](visual-design-foundations.md) (layout, button hierarchy)
-2. [interaction-design-patterns.md](interaction-design-patterns.md) (form feedback, button states)
-3. [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md) (form labels, contrast)
-4. [mobile-design-patterns.md](mobile-design-patterns.md) (touch targets, platform conventions)
-
----
-
-### Dashboard Redesign (Web)
-
-**Load in order**:
-1. [information-architecture.md](information-architecture.md) (organize data, navigation)
-2. [visual-design-foundations.md](visual-design-foundations.md) (hierarchy, chart design)
-3. [web-application-design.md](web-application-design.md) (responsive, data display patterns)
-4. [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md) (data table accessibility)
-
----
-
-### Game HUD Evaluation
-
-**Load in order**:
-1. [visual-design-foundations.md](visual-design-foundations.md) (readability, contrast)
-2. [game-ui-design.md](game-ui-design.md) (immersion, performance, input method)
-3. [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md) (colorblind-safe indicators)
-
----
-
-## Cross-Faction Integration
-
-### Lyra + Muna (Technical Writer)
-
-**When designing documentation UX**:
-- [information-architecture.md](information-architecture.md) (organize content for findability)
-- `/technical-writer` (content structure, microcopy, UI text)
-
-**Example**: "Design documentation site navigation" → Load IA here; route the writing-side structure to `/technical-writer`. If the surface is a static docs *site*, hand off to `/site-designer` (next section).
-
----
-
-### Lyra UX + Lyra Site (sibling pack)
-
-**When the surface is a static documentation site or marketing page** (not an interactive application):
-- Hand off to `lyra-site-designer` — owns information architecture, HTML/CSS, design tokens, and developer-UX patterns for docs-first frameworks (Starlight / VitePress / Docusaurus).
-
-**This pack stays in scope** for: SaaS dashboards, web applications, mobile apps, GUI desktop tools, game UI, AI / chat / agent surfaces.
-
----
-
-### Lyra UX + Lyra TUI (sibling pack)
-
-**When the surface is a terminal user interface** (a CLI-adjacent full-screen app, not a GUI desktop tool):
-- Hand off to `lyra-tui-designer` (`/tui-designer`) — owns framework-agnostic TUI design: cell-grid layout, keyboard-first interaction, colour under 16/256/truecolour degradation, and terminal accessibility constraints that WCAG's pixel-based criteria do not translate to directly.
-
-**This pack stays in scope** for the design *reasoning* — audience needs, IA, interaction model — which transfers across surfaces. Take the reasoning from here, the terminal-specific execution from there.
-
----
-
-### Lyra + Ordis (Security Architect)
-
-**When designing secure interfaces**:
-- [visual-design-foundations.md](visual-design-foundations.md) (secure feedback, error states)
-- `/security-architect` (threat modelling for authentication UX)
-
-**Example**: "Design login with MFA" → Load [interaction-design-patterns.md](interaction-design-patterns.md) + route threat modelling to `/security-architect`
-
----
-
-## Decision Tree
-
-```
-User Request
-    |
-    ├─ "What is...?" / "Explain..." → ux-fundamentals
-    |
-    ├─ "Review this design"
-    |   ├─ General → visual-design + IA + accessibility
-    |   └─ Specific concern → Relevant competency skill
-    |       └─ Add platform extension if platform-specific
-    |
-    ├─ "Design a [feature]"
-    |   ├─ Research phase? → user-research-and-validation first
-    |   └─ Design phase
-    |       ├─ Identify competencies needed (visual, IA, interaction)
-    |       ├─ Detect platform (mobile, web, desktop, game)
-    |       └─ Load competency + platform extension
-    |
-    └─ Specific domain
-        ├─ Visual → visual-design-foundations
-        ├─ Navigation → information-architecture
-        ├─ Interaction → interaction-design-patterns
-        ├─ Accessibility → accessibility-and-inclusive-design
-        ├─ AI / chatbot / agent / RAG / streaming → ai-experience-patterns
-        └─ Research → user-research-and-validation
-```
-
----
-
-## Common Patterns
-
-### Pattern 1: "I need general UX advice"
-**Load**: [ux-fundamentals.md](ux-fundamentals.md) (teaches principles)
-
-### Pattern 2: "Critique my [platform] design"
-**Load**: visual-design + IA + accessibility + [platform-extension]
-
-### Pattern 3: "Design [feature] for [platform]"
-**Load**: Relevant competencies + [platform-extension]
-
-### Pattern 4: "Is this accessible?"
-**Load**: [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md) (primary)
-**Reference**: visual-design (contrast), interaction-design (keyboard nav)
-
-### Pattern 5: "How do users navigate this?"
-**Load**: [information-architecture.md](information-architecture.md) (primary)
-**Add**: user-research-and-validation (if testing/validation needed)
-
----
-
-## Benefits of Routing
-
-**Focused expertise**: Load only what's needed for the task
-**Clear boundaries**: Each skill has distinct responsibility
-**Composable**: Combine skills for complex scenarios
-**Efficient**: Avoid loading all 11 specialist sheets at once
-**Explicit**: User sees which skills are active
-
----
-
-## UX Designer Specialist Skills Catalog
-
-After routing, load the appropriate specialist skill for detailed guidance:
-
-1. [ux-fundamentals.md](ux-fundamentals.md) - Core UX principles, teaching foundational concepts, design thinking
-2. [visual-design-foundations.md](visual-design-foundations.md) - Color theory, typography, visual hierarchy, layout, contrast
-3. [information-architecture.md](information-architecture.md) - Navigation systems, content organization, findability, menu structure
-4. [interaction-design-patterns.md](interaction-design-patterns.md) - Button states, feedback patterns, micro-interactions, touch targets
-5. [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md) - WCAG compliance, inclusive design, colorblind-safe, screen readers, keyboard navigation
-6. [user-research-and-validation.md](user-research-and-validation.md) - User interviews, usability testing, mental models, journey mapping, research methods
-7. [mobile-design-patterns.md](mobile-design-patterns.md) - iOS/Android patterns, touch gestures, platform conventions, thumb zones
-8. [web-application-design.md](web-application-design.md) - Responsive design, dashboards, data visualization, SaaS patterns, keyboard shortcuts
-9. [desktop-software-design.md](desktop-software-design.md) - Multi-window management, keyboard-first workflows, power-user features, workspace customization
-10. [game-ui-design.md](game-ui-design.md) - HUD design, diegetic UI, controller navigation, immersion vs visibility
-11. [ai-experience-patterns.md](ai-experience-patterns.md) - Conversational assistants, agent loops, RAG UIs, streaming output, citation/grounding, refusal UX, calibrated confidence, preview-then-confirm for tool actions
-
----
-
-## Commands
-
-This pack ships three slash commands that wrap common workflows over the sheets above:
-
-- `/lyra-ux-designer:design-review` - multi-competency critique across visual, IA, interaction, and accessibility; add `ai-experience-patterns` when the surface is a chat / agent / AI interface
-- `/lyra-ux-designer:create-interface` - design a new component with platform-aware patterns and accessibility built in; add `ai-experience-patterns` when the component is an AI surface
-- `/lyra-ux-designer:accessibility-audit` - full WCAG 2.2 AA audit using the 6-dimension Universal Access Model, including the new 2.2 success criteria (2.4.11, 2.5.7, 2.5.8, 3.2.6, 3.3.7, 3.3.8)
-
-## Agents
-
-Three SME agents are available for delegated review work; all follow the SME Agent Protocol with Confidence / Risk / Information Gaps / Caveats sections:
-
-- `ux-critic` - multi-competency design review against best practice (visual + IA + interaction + accessibility); the default critic
-- `accessibility-auditor` - WCAG 2.2 AA compliance specialist applying the Universal Access Model; produces remediation-prioritised findings
-- `ux-theorist` - first-principles needs derivation; invoke BEFORE design review when prior reviews keep waving inherited decisions through (premise relitigation)
-
----
-
-**Cross-faction**:
-- `/technical-writer` - Documentation UX and microcopy
-- `/security-architect` - Security-aware interface design
+# Application UX
+
+Ground design decisions in the product's purpose, actual audience, tasks, and
+observed constraints. Existing chrome and familiar patterns must earn their
+place; an attractive mockup is not usability evidence.
+
+## Choose the useful pass
+
+Infer the requested task from context. For a bounded edit, solve that interaction
+and its relevant states. For a broader review or redesign:
+
+1. Read product intent, current UI, constraints, and available user evidence.
+2. State consequential assumptions. Separate observed user needs from proposed
+   personas or preferences; ask only for information that changes the decision.
+3. Trace each proposed surface to a user goal and decision. Revisit inherited
+   premises when they no longer serve that goal; do not invent a quota of premises.
+4. Specify interaction states: initial/empty, loading, success, failure, partial
+   progress, permission denial, and recovery where applicable.
+5. Check input modes, focus order, readable hierarchy, labels, contrast, zoom,
+   reduced motion, and assistive-technology behavior relevant to the surface.
+6. Choose the smallest useful validation: browser interaction, keyboard test,
+   screen-reader test, observed task trial, or another discriminating experiment.
+   Record what was actually tested and what remains a design hypothesis.
+
+## Retrieve only a consequential reference
+
+References are beside this file. Basic design questions need no compulsory
+briefing. Read one or more sections only when they govern a material uncertainty.
+
+| Need | Reference |
+|---|---|
+| Accessibility criteria and validation | [accessibility-and-inclusive-design.md](accessibility-and-inclusive-design.md) |
+| User evidence and test design | [user-research-and-validation.md](user-research-and-validation.md) |
+| Streaming, sources, steering, agent actions | [ai-experience-patterns.md](ai-experience-patterns.md) |
+| Mobile, desktop, web, game-specific constraints | [mobile-design-patterns.md](mobile-design-patterns.md), [desktop-software-design.md](desktop-software-design.md), [web-application-design.md](web-application-design.md), [game-ui-design.md](game-ui-design.md) |
+| General rubric | [ux-fundamentals.md](ux-fundamentals.md), [visual-design-foundations.md](visual-design-foundations.md), [information-architecture.md](information-architecture.md), [interaction-design-patterns.md](interaction-design-patterns.md) |
+
+Use `lyra-tui-designer` for terminal substrate/lifecycle and
+`lyra-site-designer` for static documentation-site implementation.
+
+## AI and agent surfaces
+
+Show task state, sources, stop/steering controls, consequential action previews,
+results, and recovery. Distinguish retrieval evidence from model inference and
+avoid confidence decorations unsupported by reliability measurements. Approval
+friction should follow impact, reversibility, existing authorization, and the
+active platform's controls; ordinary authorized edits need no repeated modal.
+
+## Output and optional roles
+
+Return a decision, design artifact, or prioritized findings with the triggering
+state, evidence, consequence, and proposed remedy. Separate prototype/build,
+automated checks, accessibility evaluation, user validation, and live acceptance.
+Do not label a visual review a full accessibility audit or infer real audience
+reactions from simulated personas.
+
+`ux-critic`, `accessibility-auditor`, and `ux-theorist` are optional focused roles.
+Use the theorist for unsupported audience/premise assumptions, the auditor for
+criterion-based accessibility, and the critic for interaction review. Delegate
+only when independent coverage improves the decision; no panel is required.

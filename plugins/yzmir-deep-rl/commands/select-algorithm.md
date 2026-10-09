@@ -1,138 +1,29 @@
 ---
-description: Interactive algorithm selection wizard - match problem characteristics to the right RL algorithm
+description: Compare feasible RL algorithms with task-specific source and runtime evidence.
 allowed-tools: ["Read", "Skill", "AskUserQuestion"]
 argument-hint: ""
 ---
 
-# Select Algorithm Command
+# Compare feasible RL algorithms
 
-Interactive wizard to select the right RL algorithm based on problem characteristics.
+Apply this command to the requested artifact or failure. Inspect supplied sources and available run evidence before recommending changes. Keep scope proportional; use existing project/runtime conventions and ask only for missing facts that change the result. Additional agents are optional for bounded independent questions.
 
-## The Core Questions
+## Task-specific checks
 
-You MUST ask these questions before recommending an algorithm:
+Infer action/observation spaces, interaction or fixed-data regime, sample/compute budget and special requirements from supplied context. Compare a simple baseline and feasible families under those constraints. Recommend an initial experiment and acceptance metric; ask a question only if the missing fact changes the choice.
 
-### Question 1: Action Space
+## Evidence and deliverable
 
-**Ask**: "What actions can your agent take?"
+- Cite source paths, configuration/artifact identities and observed results for material claims. Separate confirmed behavior from hypotheses and estimates.
+- Report the result or concrete artifact/change, relevant verification and limits. State checks not run or dimensions that could not be assessed; include risk/uncertainty where it affects a decision.
+- For a review, a supported clean result is valid. Record relevant sweep coverage and counterevidence; never manufacture findings or prescribe a minimum number.
+- Execute writes, workloads and external actions within the user's requested scope and existing authorization. A template does not itself authorize a commit, deployment or expensive run.
 
-| Answer | Implication |
-|--------|-------------|
-| Discrete (buttons, menu choices, grid moves) | DQN family OR PPO |
-| Continuous (joint angles, forces, steering) | SAC, TD3, or PPO |
-| Mixed (some discrete, some continuous) | PPO (handles both) |
+## Optional depth
 
-**Critical Rule**: NEVER recommend DQN for continuous actions.
+Use the [pack contract](../skills/using-deep-rl/SKILL.md) when broader obligations matter. Select only references that resolve a concrete question; examples are not universal recipes. Verify time-sensitive APIs against the target environment and primary documentation.
 
-### Question 2: Data Regime
-
-**Ask**: "Can your agent interact with the environment during training, or do you have a fixed dataset?"
-
-| Answer | Implication |
-|--------|-------------|
-| Online (agent interacts, tries actions) | Standard algorithms (DQN, PPO, SAC) |
-| Offline (fixed dataset, no interaction) | CQL, IQL (offline-rl) - standard algorithms FAIL |
-
-**Critical Rule**: Offline data requires special algorithms. DQN/PPO/SAC will fail.
-
-### Question 3: Sample Efficiency
-
-**Ask**: "How many environment interactions can you afford?"
-
-| Answer | Implication |
-|--------|-------------|
-| Unlimited (fast simulator) | PPO (simple, stable) |
-| Limited (<100k steps, expensive sim) | SAC (off-policy, sample efficient) |
-| Very limited (<10k, real robot) | Model-based RL (MBPO, Dreamer) |
-
-### Question 4: Special Requirements
-
-**Ask**: "Any special requirements?"
-
-| Requirement | Algorithm |
-|-------------|-----------|
-| Multiple agents | QMIX, MADDPG (multi-agent-rl) |
-| Sparse rewards | Add curiosity/RND (exploration-strategies) |
-| Need interpretability | Consider simpler (DQN, REINFORCE) |
-| Must be deterministic | TD3 (deterministic policy) |
-
-## Decision Tree
-
-```
-START
-│
-├─ Offline data only?
-│  └─ YES → CQL or IQL (offline-rl)
-│
-├─ Continuous actions?
-│  ├─ YES + sample efficiency critical → SAC
-│  ├─ YES + stability critical → TD3
-│  └─ YES + simplicity preferred → PPO
-│
-├─ Discrete actions?
-│  ├─ Small action space (<100) → DQN, Double DQN
-│  └─ Large action space → PPO
-│
-├─ Multi-agent?
-│  ├─ Cooperative → MAPPO or IPPO (default), QMIX (value factorization)
-│  └─ Competitive/Mixed → MADDPG
-│
-└─ Extreme sample efficiency needed?
-   └─ YES → Model-based (MBPO, Dreamer)
-```
-
-## Output Format
-
-After gathering information:
-
-```markdown
-## Algorithm Recommendation
-
-### Problem Characteristics
-- Action space: [discrete/continuous]
-- Data regime: [online/offline]
-- Sample budget: [unlimited/limited/very limited]
-- Special requirements: [none/multi-agent/sparse rewards/etc.]
-
-### Recommended Algorithm: [NAME]
-
-**Why this algorithm:**
-- [Reason 1 based on action space]
-- [Reason 2 based on data regime]
-- [Reason 3 based on constraints]
-
-**Alternatives to consider:**
-- [Alternative 1]: Use if [condition]
-- [Alternative 2]: Use if [condition]
-
-### Next Steps
-1. Load [algorithm-skill].md for implementation details
-2. Use `/deep-rl:scaffold-experiment --algorithm=[name]` to scaffold
-3. Follow rl-debugging if training issues arise
-```
-
-## Common Mistakes to Prevent
-
-| User Says | Wrong Choice | Correct Choice | Why |
-|-----------|--------------|----------------|-----|
-| "I'll just use PPO" | PPO for everything | Depends on problem | PPO is good but not optimal everywhere |
-| "DQN for my robot arm" | DQN for continuous | SAC or TD3 | DQN requires discrete actions |
-| "I have logged data from production" | PPO on offline data | CQL or IQL | Offline needs conservative algorithms |
-| "I want the newest algorithm" | Latest paper | Problem-appropriate | Newer ≠ better for your problem |
-
-## Load Detailed Guidance
-
-For complete decision framework:
-```
-Load skill: yzmir-deep-rl:using-deep-rl
-Read: SKILL.md (contains full routing decision tree)
-```
-
-For specific algorithm details:
-```
-- value-based-methods.md (DQN family)
-- policy-gradient-methods.md (PPO, REINFORCE)
-- actor-critic-methods.md (SAC, TD3)
-- offline-rl.md (CQL, IQL)
-- multi-agent-rl.md (QMIX, MADDPG)
-```
+- [value-based-methods](../skills/using-deep-rl/value-based-methods.md)
+- [actor-critic-methods](../skills/using-deep-rl/actor-critic-methods.md)
+- [offline-rl](../skills/using-deep-rl/offline-rl.md)
+- [model-based-rl](../skills/using-deep-rl/model-based-rl.md)

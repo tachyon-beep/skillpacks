@@ -1,6 +1,6 @@
 ---
 name: cost-estimation-and-compilation-budgets
-description: Use when estimating the runtime cost of a compiled tensor artifact, calibrating static estimates against measured cost, setting compile-time budgets, or reasoning about staleness — when compilation latency makes an artifact obsolete before it can be used.
+description: "Use when estimating the runtime cost of a compiled tensor artifact, calibrating static estimates against measured cost, setting compile-time budgets, or reasoning about staleness \u2014 when compilation latency makes an artifact obsolete before it can be used."
 ---
 
 # Cost Estimation and Compilation Budgets

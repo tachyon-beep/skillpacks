@@ -1,6 +1,6 @@
 ---
 name: packaging-and-wheels
-description: Use when packaging PyO3 wheels for distribution — cibuildwheel, abi3 wheels, manylinux / musllinux / macosx universal2, ARM64 cross-builds, `auditwheel show`, glibc symbol versioning. Wheel packaging is a matrix problem (Python × OS × architecture × libc); cibuildwheel + abi3 collapses it. Produces `11-packaging-and-wheels.md`.
+description: "Use when packaging PyO3 wheels for distribution \u2014 cibuildwheel, abi3 wheels, manylinux / musllinux / macosx universal2, ARM64 cross-builds, `auditwheel show`, glibc symbol versioning. Wheel packaging is a matrix problem (Python \u00d7 OS \u00d7 architecture \u00d7 libc); cibuildwheel + abi3 collapses it."
 ---
 
 # Packaging and Wheels: cibuildwheel, abi3 Wheels, and the Distribution Matrix

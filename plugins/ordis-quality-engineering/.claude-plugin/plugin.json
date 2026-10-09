@@ -1,7 +1,7 @@
 {
   "name": "ordis-quality-engineering",
-  "version": "2.5.0",
-  "description": "Quality engineering: E2E, API, integration, performance, chaos, flaky tests, observability, mutation testing, coverage gap analysis, modern supply-chain (Trivy/OSV/Syft/Cosign/SLSA). 21 reference sheets, 5 commands, 3 agents.",
+  "version": "3.0.0",
+  "description": "Use when test reliability, isolation, coverage gaps, performance experiments, resilience, or release evidence needs investigation or a concrete verification strategy.",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

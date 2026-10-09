@@ -1,32 +1,7 @@
 ---
-description: Use when designing a reader panel config from a set of documents — dispatches the persona-designer agent to analyse documents, identify audiences and decision chains, and write a complete panel review config with persona specs, scenario framing, and panel controls
+description: "Design a small task-based reader lens configuration from actual documents and audience evidence."
 ---
 
-# Design a Reader Panel from Documents
+# Panel designer
 
-Spawn the persona-designer agent to analyse your documents and produce a complete panel review config file.
-
-## What this does
-
-The persona-designer reads your documents freely, identifies audiences, decision chains, and institutional perspectives, and writes a complete config file with persona specifications, scenario framing, and panel configuration.
-
-## What you need
-
-- Path to your document files (or a directory containing them)
-- Optional: context about intended audiences
-- Optional: desired panel size
-
-## How it works
-
-The designer produces a ready-to-use config file including:
-- Document suite table
-- Scenario framing with rationale
-- Full persona specs (all required fields)
-- Panel configuration (control, unreliable narrator, priority, collisions)
-- Panel gaps — audiences identified but not included, with reasoning
-
-Review the generated config, edit as needed, then run `/panel-review` with it.
-
-## Note
-
-The designer reads your documents in full. It proposes reading behaviour as a character trait prediction, not a content-informed route. The actual reading path is determined by each persona-reader at runtime.
+Read and apply the [task contract](../../plugins/muna-panel-review/commands/panel-designer.md) at `plugins/muna-panel-review/commands/panel-designer.md`. Use only the references needed for the requested work, preserve existing project constraints and authorization, and report relevant evidence and gaps. This is a repository shortcut; the linked plugin entrypoint is the content authority.

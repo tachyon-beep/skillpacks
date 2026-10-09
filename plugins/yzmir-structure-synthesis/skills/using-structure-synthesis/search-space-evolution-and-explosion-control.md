@@ -1,6 +1,6 @@
 ---
 name: search-space-evolution-and-explosion-control
-description: Use when deciding whether to grow a grammar's operator whitelist or topology freedom - gates, ceilings, and the verification-cost curve - and when recognising that search and verification are becoming intractable before that becomes the way you find out.
+description: "Use when deciding whether to grow a grammar's operator whitelist or topology freedom - gates, ceilings, and the verification-cost curve - and when recognising that search and verification are becoming intractable before that becomes the way you find out."
 ---
 
 # Search Space Evolution and Explosion Control
@@ -92,16 +92,6 @@ Warning signs, roughly in the order they tend to appear:
 4. New operators get added faster than the reliability-gate metrics are reviewed — the gate exists on paper but nobody is checking it before merging a whitelist change.
 
 Any one of these, caught early, is a config change (tighten a ceiling, pause expansion, fix a canonicalisation bug). Caught late, after several ungated expansions have compounded, it's a re-architecture of the verification pipeline under production pressure.
-
-## Rationalization Resistance
-
-| Rationalization | Reality |
-|---|---|
-| "It's just one more operator" | Verification cost is combinatorial in whitelist size against a fixed ceiling — "one more" is a multiplicative, not additive, change |
-| "The ceilings didn't change, so the space is still bounded" | Bounded and small are different properties; the space is bounded at every whitelist size, and still grows by orders of magnitude between them |
-| "We'll gate the NEXT expansion, this one's small enough to skip the check" | The gate's value is in being applied consistently; a skipped check is exactly how expansions compound unmeasured |
-| "Rejection rate is a training problem, not a grammar problem" | It's evidence about the pairing of generator and grammar at the current level; expanding the grammar changes that pairing further before the training problem is even diagnosed |
-| "We can always shrink the grammar back if this doesn't work out" | Removing operators after candidates and archives already reference them is a migration, not a revert — the cost is asymmetric |
 
 ## Red Flags Checklist
 

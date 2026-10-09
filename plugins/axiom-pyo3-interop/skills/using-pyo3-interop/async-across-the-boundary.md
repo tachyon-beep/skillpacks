@@ -1,6 +1,6 @@
 ---
 name: async-across-the-boundary
-description: Use when crossing async boundaries — `pyo3-async-runtimes`, tokio + asyncio interaction, executor-pinning hazards, two event loops in one process. The "tokio task hangs while asyncio is running" class of bugs. Produces `10-async-across-the-boundary.md`.
+description: "Use when crossing async boundaries \u2014 `pyo3-async-runtimes`, tokio + asyncio interaction, executor-pinning hazards, two event loops in one process. The \"tokio task hangs while asyncio is running\" class of bugs."
 ---
 
 # Async Across the Boundary: `pyo3-asyncio`, tokio, and asyncio

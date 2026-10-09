@@ -1,6 +1,6 @@
 ---
 name: rng-isolation-patterns
-description: Use when designing RNG hierarchy across components — refusing the "one big RNG" pattern, isolating logically-independent components into separate streams, and recording any shared RNG as an explicit accepted-risk with the divergence behaviour it permits. Produces `03-rng-isolation-spec.md`.
+description: "Use when designing RNG hierarchy across components \u2014 refusing the \"one big RNG\" pattern, isolating logically-independent components into separate streams, and recording any shared RNG as an explicit accepted-risk with the divergence behaviour it permits."
 ---
 
 # RNG Isolation Patterns

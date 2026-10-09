@@ -1,6 +1,6 @@
 ---
 name: workspace-dependencies-and-resolver
-description: Use when unifying dependency versions across a Rust workspace, declaring the cargo resolver, or diagnosing why `cargo build` and `cargo build -p some-crate` produce different binaries. Covers `[workspace.dependencies]`, per-crate `dep = { workspace = true }` inheritance, the resolver-1 / resolver-2 / resolver-3 distinctions and what each one actually changes about feature unification, and the operational consequences for binaries, dev-deps, and target-cfg deps. Produces `02-workspace-dependencies-and-resolver.md`.
+description: "Use when unifying dependency versions across a Rust workspace, declaring the cargo resolver, or diagnosing why `cargo build` and `cargo build -p some-crate` produce different binaries. Covers `[workspace.dependencies]`, per-crate `dep = { workspace = true }` inheritance, the resolver-1 / resolver-2 / resolver-3 distinctions and what each one actually changes about feature unification, and the operational consequences for binaries, dev-deps, and target-cfg deps."
 ---
 
 # Workspace Dependencies and the Resolver

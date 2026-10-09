@@ -1,6 +1,6 @@
 ---
 name: testing-distributed-systems
-description: Use when example-based tests pass but the system loses writes, splits brain, or duplicates effects under partition, reorder, or clock skew — when "it works in staging" is the only durability argument, when a claimed consistency level was never checked, or when fault injection and chaos are ad hoc. Produces `12-test-strategy.md`.
+description: "Use when example-based tests pass but the system loses writes, splits brain, or duplicates effects under partition, reorder, or clock skew \u2014 when \"it works in staging\" is the only durability argument, when a claimed consistency level was never checked, or when fault injection and chaos are ad hoc."
 ---
 
 # Testing Distributed Systems

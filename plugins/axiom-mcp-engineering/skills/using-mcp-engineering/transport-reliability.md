@@ -1,6 +1,6 @@
 ---
 name: transport-reliability
-description: Use when stdio bytes are dropped, interleaved, or corrupted; when a slow agent client stalls the server or the server stalls writing; when an MCP session reconnects mid-conversation and the server has forgotten what it was doing; when SSE streams die and the agent never sees the rest of a long tool result; when you cannot tell whether to use stdio or Streamable HTTP, whether the legacy HTTP+SSE dual-endpoint transport still applies, what session state survives a reconnect, how event-ID resumption works, or how to apply backpressure without deadlocking. Framing, transport selection, reconnection, resumability, and session-state recovery for an MCP server.
+description: "Use when stdio bytes are dropped, interleaved, or corrupted; when a slow agent client stalls the server or the server stalls writing; when an MCP session reconnects mid-conversation and the server has forgotten what it was doing; when SSE streams die and the agent never sees the rest of a long tool result; when you cannot tell whether to use stdio or Streamable HTTP, whether the legacy HTTP+SSE dual-endpoint transport still applies, what session state survives a reconnect, how event-ID resumption works, or how to apply backpressure without deadlocking. Framing, transport selection, reconnection, resumability, and session-state recovery for an MCP server."
 ---
 
 # Transport Reliability

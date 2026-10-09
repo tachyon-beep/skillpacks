@@ -1,6 +1,6 @@
 ---
 name: manifest-driven-configuration-with-coherence-validation
-description: Use when an analyzer needs *configuration* — which rules are enabled, at what severity, with what suppressions, with what stubs, with which framework recognitions, and which monkey-patches and decorator declarations are in play — and you need that configuration to be auditable, layered (workspace → project → package), and validated for coherence (a manifest cannot disable a rule it depends on, override a stub for a library not installed, declare a tier the lattice doesn't have). Covers the manifest schema, layering and overlays, validation passes, drift detection between manifest and codebase reality, and the manifest-as-decision discipline. Produces `10-manifest-and-coherence.md`.
+description: "Use when an analyzer needs *configuration* \u2014 which rules are enabled, at what severity, with what suppressions, with what stubs, with which framework recognitions, and which monkey-patches and decorator declarations are in play \u2014 and you need that configuration to be auditable, layered (workspace \u2192 project \u2192 package), and validated for coherence (a manifest cannot disable a rule it depends on, override a stub for a library not installed, declare a tier the lattice doesn't have). Covers the manifest schema, layering and overlays, validation passes, drift detection between manifest and codebase reality, and the manifest-as-decision discipline."
 ---
 
 # Manifest-Driven Configuration with Coherence Validation

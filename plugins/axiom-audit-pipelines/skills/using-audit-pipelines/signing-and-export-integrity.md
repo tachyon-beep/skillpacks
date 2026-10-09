@@ -1,6 +1,6 @@
 ---
 name: signing-and-export-integrity
-description: Use when designing the signature scheme, key-rotation discipline, signature granularity (per-entry / per-batch / per-export), and the protocol for exporting a subset of entries to a third-party verifier without breaking proofs over the rest of the trail. Produces `04-signing-and-export-spec.md`.
+description: "Use when designing the signature scheme, key-rotation discipline, signature granularity (per-entry / per-batch / per-export), and the protocol for exporting a subset of entries to a third-party verifier without breaking proofs over the rest of the trail."
 ---
 
 # Signing and Export Integrity

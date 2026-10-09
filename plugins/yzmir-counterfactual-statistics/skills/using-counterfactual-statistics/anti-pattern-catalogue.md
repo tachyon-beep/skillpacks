@@ -1,6 +1,6 @@
 ---
 name: anti-pattern-catalogue
-description: Use when auditing an analysis, eval harness, results table, or paper for statistical defects, or when you need a checklist of the ways counterfactual and paired-branch experiments go wrong. Twenty-one catalogued anti-patterns with symptom, mechanism, severity, a concrete detector, and the sheet that fixes each.
+description: "Use when auditing an analysis, eval harness, results table, or paper for statistical defects, or when you need a checklist of the ways counterfactual and paired-branch experiments go wrong. Twenty-one catalogued anti-patterns with symptom, mechanism, severity, a concrete detector, and the sheet that fixes each."
 ---
 
 # Anti-Pattern Catalogue
@@ -330,7 +330,7 @@ grep -nE 'print\(.*[0-9]\.[0-9]{2}\)|= 0\.9[0-9]' analysis.py   # hardcoded metr
 
 Each finding should carry: **ID and title · severity · evidence (file:line, table cell, commit, or query output) · the concrete failure it causes · the sheet that fixes it · what would change if fixed.** The last field is what makes an audit actionable rather than decorative — "with the unit corrected, `p` goes from 4.6e-06 to 0.091 and the interval includes zero" is a finding someone can act on; "clustering was not accounted for" is not.
 
-**Zero findings is a defect of the audit, not a clean bill of health.** Every real pipeline has at least a Medium somewhere — undeclared family size, missing MDE, mean-only reporting. An audit returning nothing has almost certainly not looked at the analysis code, only at the write-up.
+**A clean audit is a valid result.** Record which applicable checks were examined, the code/data evidence and scope, and any unassessed paths. Missing access or insufficient evidence warrants an explicit limitation, not an invented defect or severity quota. A zero-findings result means no supported defect was found within that scope; it does not prove universal correctness.
 
 ## Cross-References
 

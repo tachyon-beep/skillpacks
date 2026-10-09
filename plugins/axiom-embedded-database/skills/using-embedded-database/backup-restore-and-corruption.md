@@ -1,6 +1,6 @@
 ---
 name: backup-restore-and-corruption
-description: Use when setting up a backup procedure for a SQLite database, when your current backup is a plain file copy, when integrity_check has surfaced corruption, or before running any migration that mutates data. Covers VACUUM INTO, the sqlite3_backup Online Backup API, checkpoint-and-copy, filesystem snapshots, integrity_check vs quick_check, corruption recovery via sqlite3-recover, and a complete Python backup script.
+description: "Use when setting up a backup procedure for a SQLite database, when your current backup is a plain file copy, when integrity_check has surfaced corruption, or before running any migration that mutates data. Covers VACUUM INTO, the sqlite3_backup Online Backup API, checkpoint-and-copy, filesystem snapshots, integrity_check vs quick_check, corruption recovery via sqlite3-recover, and a complete Python backup script."
 ---
 
 # Backup, Restore, and Corruption

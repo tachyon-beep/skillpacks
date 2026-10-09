@@ -1,6 +1,6 @@
 ---
 name: lifecycle-and-teardown
-description: Use when designing teardown order for Rust-owned resources at interpreter shutdown — `Drop` ordering, `atexit` interactions, the segfault-on-exit class of bugs caused by a Rust `tokio::Runtime` or `Mutex` dropped after the interpreter has torn down the GIL state. Produces `09-lifecycle-and-teardown.md`.
+description: "Use when designing teardown order for Rust-owned resources at interpreter shutdown \u2014 `Drop` ordering, `atexit` interactions, the segfault-on-exit class of bugs caused by a Rust `tokio::Runtime` or `Mutex` dropped after the interpreter has torn down the GIL state."
 ---
 
 # Lifecycle and Teardown: Rust-Owned Resources at Interpreter Shutdown

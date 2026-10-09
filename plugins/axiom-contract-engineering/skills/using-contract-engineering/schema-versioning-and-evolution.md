@@ -1,6 +1,6 @@
 ---
 name: schema-versioning-and-evolution
-description: Use when changing any cross-boundary record — adding, removing, or renaming fields, changing units, meaning, normalisation, basis, or provenance — or when writing the reader-side version gate, planning a mixed-fleet migration, or tempted by a compatibility shim, dual-format fallback, or "old readers will just ignore it". Covers what counts as a version bump, fail-closed gates, and expand/contract migration without legacy code paths.
+description: "Use when changing any cross-boundary record \u2014 adding, removing, or renaming fields, changing units, meaning, normalisation, basis, or provenance \u2014 or when writing the reader-side version gate, planning a mixed-fleet migration, or tempted by a compatibility shim, dual-format fallback, or \"old readers will just ignore it\". Covers what counts as a version bump, fail-closed gates, and expand/contract migration without legacy code paths."
 ---
 
 # Schema Versioning and Evolution

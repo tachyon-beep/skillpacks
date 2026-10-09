@@ -1,6 +1,6 @@
 ---
 name: seed-governance
-description: Use when seeds are inputs, not implementation details — deciding where seeds live, how they propagate to every RNG-bearing component, and how sub-seeds are derived without code-path dependence. Produces `02-seed-governance-spec.md`.
+description: "Use when seeds are inputs, not implementation details \u2014 deciding where seeds live, how they propagate to every RNG-bearing component, and how sub-seeds are derived without code-path dependence."
 ---
 
 # Seed Governance

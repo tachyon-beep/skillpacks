@@ -1,6 +1,6 @@
 ---
 name: consensus-and-coordination
-description: Use when nodes must agree on a single value — leader election, cluster membership, config/metadata, a distributed lock, or a total order — or when a lock is used for correctness, a homegrown consensus protocol appears, or a consensus round has crept onto the request hot path. Decides where agreement is genuinely required and designs it away elsewhere. Produces `04-coordination-spec.md`.
+description: "Use when nodes must agree on a single value \u2014 leader election, cluster membership, config/metadata, a distributed lock, or a total order \u2014 or when a lock is used for correctness, a homegrown consensus protocol appears, or a consensus round has crept onto the request hot path. Decides where agreement is genuinely required and designs it away elsewhere."
 ---
 
 # Consensus and Coordination

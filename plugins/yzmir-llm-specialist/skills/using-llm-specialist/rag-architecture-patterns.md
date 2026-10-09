@@ -74,7 +74,7 @@ Before designing a pipeline, decide whether RAG is the right tool. The answer ch
 - Cost matters: RAG sends ~5k tokens of context, long-context sends ~500k.
 - Auditability is a hard requirement (regulated industries).
 
-Cross-references: `context-engineering-and-prompt-caching.md` for prompt-cache mechanics, `context-window-management.md` for stuffing strategies, and `agentic-patterns-and-mcp.md` for tool-call retrieval.
+Cross-references: `context-engineering-and-prompt-caching.md` for prompt-cache mechanics, `context-engineering-and-prompt-caching.md` for stuffing strategies, and `agentic-patterns-and-mcp.md` for tool-call retrieval.
 
 
 ## RAG Pipeline Anatomy

@@ -1,6 +1,6 @@
 ---
 name: chaos-engineering-principles
-description: Use when starting chaos engineering, designing fault injection experiments, choosing chaos tools, testing system resilience, or recovering from chaos incidents - provides hypothesis-driven testing, blast radius control, and anti-patterns for safe chaos
+description: "Use when starting chaos engineering, designing fault injection experiments, choosing chaos tools, testing system resilience, or recovering from chaos incidents - provides hypothesis-driven testing, blast radius control, and anti-patterns for safe chaos"
 ---
 
 # Chaos Engineering Principles

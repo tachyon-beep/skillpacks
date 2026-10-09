@@ -569,26 +569,6 @@ Useful for long training (100+ epochs) where early-training generalization matte
 - **Batch ↔ normalization:** BatchNorm needs SyncBN at small per-GPU batch; LayerNorm/GroupNorm batch-invariant.
 
 
-## Rationalization Table
-
-| Rationalization | Why It's Wrong | Correct Approach |
-|---|---|---|
-| "Larger batch is always better for speed" | Wall-clock = iterations × time/iter | Profile actual wall-clock |
-| "I'll tune batch size last" | Affects convergence and generalization early | Choose early, validate |
-| "Maximum batch that fits = optimal" | Generalization gap | 80% of max, validate |
-| "Linear scaling rule means I don't validate" | Convergence ≠ accuracy | Validate on holdout |
-| "Gradient accumulation is slow, don't use it" | True but situational | Use when memory bound |
-| "I don't need warmup" | Large LR jumps diverge | Add linear warmup |
-| "My paper used batch X, I'll use that" | Setup differs | Starting point only |
-| "Fine-tuning uses pretraining batch" | Erases pretraining | 10-20x smaller batch |
-| "Batch size only affects speed" | 1-4% accuracy gap | Validate at each batch |
-| "I increased batch, why is training slower?" | Per-iter cost grew faster than iter savings | Profile |
-| "I'll start with large batch to save iterations" | Generalization suffers | Start small, grow |
-| "Cosine + huge batch always works" | $B_{crit}$ caps useful batch | Estimate noise scale |
-| "FP8 is free 2x throughput" | Needs scaling recipe | Use Transformer Engine; validate |
-| "Chinchilla is outdated" | Frontier still informs trade-off | Know if you're over/under-training and why |
-
-
 ## Comprehensive Example: Modern Pretraining-Style Loop
 
 ```python

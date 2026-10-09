@@ -1,6 +1,6 @@
 ---
 name: replication-and-quorums
-description: Use when choosing a replication topology and the read/write/quorum rules that deliver the consistency contract — symptoms include stale reads, lost updates, read-your-writes breaking, conflicting concurrent writes, dual leaders after a failover, or "we use async replication but promise strong reads." Required at tier S+. Produces `03-replication-spec.md`.
+description: "Use when choosing a replication topology and the read/write/quorum rules that deliver the consistency contract \u2014 symptoms include stale reads, lost updates, read-your-writes breaking, conflicting concurrent writes, dual leaders after a failover, or \"we use async replication but promise strong reads.\" Required at tier S+."
 ---
 
 # Replication and Quorums

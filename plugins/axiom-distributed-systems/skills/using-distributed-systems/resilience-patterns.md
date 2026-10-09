@@ -1,6 +1,6 @@
 ---
 name: resilience-patterns
-description: Use when a remote call can hang, fail, or slow down — and you need to contain that partial failure with timeouts, safe retries, circuit breakers, bulkheads, and degradation instead of letting a blip cascade into a self-inflicted outage. Names retry storms, metastable failure, missing timeouts, and unsafe retries. Produces `10-resilience-spec.md`.
+description: "Use when a remote call can hang, fail, or slow down \u2014 and you need to contain that partial failure with timeouts, safe retries, circuit breakers, bulkheads, and degradation instead of letting a blip cascade into a self-inflicted outage. Names retry storms, metastable failure, missing timeouts, and unsafe retries."
 ---
 
 # Resilience Patterns

@@ -1,6 +1,6 @@
 ---
 name: contract-first-boundaries
-description: Use when designing or reviewing what crosses a subsystem boundary — when two subsystems both write the same record class, when a payload field is typed `dict[str, Any]` or `Mapping[str, object]`, when a live mutable object is handed across a boundary, when one record has grown fields for four unrelated consumers, when a nullable field plus a boolean flag can express states the domain forbids, or when review comments are the only thing stopping an illegal record from being emitted. Covers typed immutable records, single producing authority, plain-language role statements, and making illegal states unrepresentable rather than policed.
+description: "Use when designing or reviewing what crosses a subsystem boundary \u2014 when two subsystems both write the same record class, when a payload field is typed `dict[str, Any]` or `Mapping[str, object]`, when a live mutable object is handed across a boundary, when one record has grown fields for four unrelated consumers, when a nullable field plus a boolean flag can express states the domain forbids, or when review comments are the only thing stopping an illegal record from being emitted. Covers typed immutable records, single producing authority, plain-language role statements, and making illegal states unrepresentable rather than policed."
 ---
 
 # Contract-First Boundaries

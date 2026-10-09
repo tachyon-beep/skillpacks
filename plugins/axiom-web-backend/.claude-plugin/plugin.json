@@ -1,7 +1,7 @@
 {
   "name": "axiom-web-backend",
-  "version": "1.3.1",
-  "description": "Web backend: FastAPI, Django, Express, REST/GraphQL, microservices, auth, and framework-level production patterns. Router + specialist reference sheets for modern web APIs.",
+  "version": "2.0.0",
+  "description": "Use when implementing or reviewing production API behavior: authorization, compatibility, transaction boundaries, retries, bounded results and contract tests.",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

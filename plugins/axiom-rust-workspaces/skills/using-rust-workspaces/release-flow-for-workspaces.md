@@ -1,6 +1,6 @@
 ---
 name: release-flow-for-workspaces
-description: Use when designing or operating the release flow for a Rust workspace's published crates — independent vs synchronised versioning, the publish-order problem for inter-dependent crates, cargo-release vs release-plz tooling, tag schemes, and the changelog discipline that keeps a multi-crate release set sane. Covers the ordering algorithm cargo enforces, the dry-run workflow, the post-publish verification step, and the rollback options when a publish goes wrong. Produces `10-release-flow.md`.
+description: "Use when designing or operating the release flow for a Rust workspace's published crates \u2014 independent vs synchronised versioning, the publish-order problem for inter-dependent crates, cargo-release vs release-plz tooling, tag schemes, and the changelog discipline that keeps a multi-crate release set sane. Covers the ordering algorithm cargo enforces, the dry-run workflow, the post-publish verification step, and the rollback options when a publish goes wrong."
 ---
 
 # Release Flow for Workspaces

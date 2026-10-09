@@ -1,6 +1,6 @@
 ---
 name: pyo3-fundamentals
-description: Use when establishing the modern PyO3 (0.21+) surface — `Bound<'py, T>`, `Python<'py>` tokens, `#[pymodule]` / `#[pyclass]` / `#[pyfunction]`, `IntoPyObject`, and the lifetime contract between Rust and the Python heap. Migrating off legacy `&PyAny` / `IntoPy` / `ToPyObject`. Foundation for every other sheet in the pack. Produces `01-pyo3-fundamentals.md`.
+description: "Use when establishing the modern PyO3 (0.21+) surface \u2014 `Bound<'py, T>`, `Python<'py>` tokens, `#[pymodule]` / `#[pyclass]` / `#[pyfunction]`, `IntoPyObject`, and the lifetime contract between Rust and the Python heap. Migrating off legacy `&PyAny` / `IntoPy` / `ToPyObject`. Foundation for every other sheet in the pack."
 ---
 
 # PyO3 Fundamentals: Types, Errors, Lifetime / `'py` Discipline

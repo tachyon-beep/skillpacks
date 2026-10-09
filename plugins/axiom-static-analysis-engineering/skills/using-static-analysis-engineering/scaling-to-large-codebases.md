@@ -1,6 +1,6 @@
 ---
 name: scaling-to-large-codebases
-description: Use when whole-program analysis stops being affordable — codebase exceeds ~100k LoC, analyzer takes minutes per run, CI blocks for too long, IDE integration becomes impossible — and you need incremental analysis, caching of intermediate artifacts, parallelism within phases, watch-mode operation, and partition strategies that preserve soundness. Covers the cache key composition that survives lattice-version bumps, reverse-edge indexes for invalidation, parallel worklist algorithms, fan-out across modules, and the "incremental analysis silently lies" failure mode. Produces `12-scaling-and-incrementality.md`.
+description: "Use when whole-program analysis stops being affordable \u2014 codebase exceeds ~100k LoC, analyzer takes minutes per run, CI blocks for too long, IDE integration becomes impossible \u2014 and you need incremental analysis, caching of intermediate artifacts, parallelism within phases, watch-mode operation, and partition strategies that preserve soundness. Covers the cache key composition that survives lattice-version bumps, reverse-edge indexes for invalidation, parallel worklist algorithms, fan-out across modules, and the \"incremental analysis silently lies\" failure mode."
 ---
 
 # Scaling to Large Codebases

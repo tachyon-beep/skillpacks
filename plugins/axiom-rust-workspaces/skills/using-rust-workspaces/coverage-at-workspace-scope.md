@@ -1,6 +1,6 @@
 ---
 name: coverage-at-workspace-scope
-description: Use when measuring code coverage across a Rust workspace — `cargo-llvm-cov` (recommended modern default), `cargo-tarpaulin` (legacy alternative), per-crate vs workspace-merged coverage reports, integration with Codecov / Coveralls, the per-crate threshold model, and the workspace-scope coverage trap (gaming the number with weak tests). Covers the merge-across-crates problem, the doc-test inclusion question, and the gating policy. Produces `12-coverage-at-workspace-scope.md`.
+description: "Use when measuring code coverage across a Rust workspace \u2014 `cargo-llvm-cov` (recommended modern default), `cargo-tarpaulin` (legacy alternative), per-crate vs workspace-merged coverage reports, integration with Codecov / Coveralls, the per-crate threshold model, and the workspace-scope coverage trap (gaming the number with weak tests). Covers the merge-across-crates problem, the doc-test inclusion question, and the gating policy."
 ---
 
 # Coverage at Workspace Scope

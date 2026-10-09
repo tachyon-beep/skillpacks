@@ -1,6 +1,6 @@
 ---
 name: deterministic-morphogenesis
-description: Use when reproducing morphogenesis runs across topology changes — same-seed-same-graft guarantees, RNG isolation between policy/governor/network, replay across shape changes, and the cross-pack interaction with axiom-determinism-and-replay.
+description: "Use when reproducing morphogenesis runs across topology changes \u2014 same-seed-same-graft guarantees, RNG isolation between policy/governor/network, replay across shape changes, and the cross-pack interaction with axiom-determinism-and-replay."
 ---
 
 # Deterministic Morphogenesis
@@ -300,20 +300,6 @@ When the test fails, the first divergence point is the bug. Walk back through th
 | Governor reads `time.time()` for cooldowns | Wall-clock ≠ deterministic | Use `step` count |
 | `random.shuffle` on a Python list as a slot tiebreak | Uses Python's RNG, not your stream | Pass an explicit `random.Random` instance |
 | Action fields contain CUDA tensors | Broadcast object list non-deterministic | Move to CPU; round if floats |
-
----
-
-## Rationalization Resistance
-
-| Rationalization | Reality |
-|-----------------|---------|
-| "Determinism is a nice-to-have; we'll add it later" | You will not. Adding it later means rewriting the controller, governor, and host trainer simultaneously. |
-| "Setting `torch.manual_seed` is enough" | It controls one stream. Morphogenesis has at least three. |
-| "The controller's decisions are noisy anyway, exact reproduction is unrealistic" | "Noisy when you want it" and "non-deterministic always" are different. The noise should be *reproducible* noise. |
-| "Distributed training is inherently non-deterministic" | It is harder, not impossible. Single-rank determinism is the floor; distributed determinism is engineering work, not a wall. |
-| "Bit-reproducibility is too expensive" | Probably true. Aim for deterministic-given-seed instead. They are different goals. |
-| "We log losses; we can debug from those" | Losses are an aggregate. Debugging the controller needs the action sequence, which you do not have. |
-| "We can re-derive the topology from final weights" | You cannot. Two different decision sequences can produce identical final shapes by coincidence and very different ones by design. |
 
 ---
 

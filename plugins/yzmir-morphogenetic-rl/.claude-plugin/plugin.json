@@ -1,7 +1,7 @@
 {
   "name": "yzmir-morphogenetic-rl",
-  "version": "1.2.2",
-  "description": "RL-controlled neural-network morphogenesis - design controllers that decide WHEN and HOW to grow a network during training. Covers controller action/observation/reward design, governor/safety-gate discipline, rollback-as-RL-signal shaping, deterministic morphogenesis, ablation/evaluation under topology change. Companion to yzmir-dynamic-architectures (which covers HOW the growable network trains).",
+  "version": "2.0.0",
+  "description": "Use when an RL controller decides when or how to change neural-network topology and needs governor, rollback, replay or fair-evaluation checks.",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

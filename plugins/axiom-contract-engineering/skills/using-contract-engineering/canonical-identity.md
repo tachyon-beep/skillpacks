@@ -1,6 +1,6 @@
 ---
 name: canonical-identity
-description: Use when the same semantic object arrives twice and the system treats it as two things — duplicate work, broken dedup, equivalence classes that don't hold — or when an edited record keeps its old identifier, or when a downstream stage cannot join its output back to the input that produced it, or when "which raw input did this come from" has no recorded answer. Covers semantic vs storage identity, canonicalisation before hashing, false-split and false-merge as testable properties, hash-function versioning, chain binding, and raw-to-canonical traceability.
+description: "Use when the same semantic object arrives twice and the system treats it as two things \u2014 duplicate work, broken dedup, equivalence classes that don't hold \u2014 or when an edited record keeps its old identifier, or when a downstream stage cannot join its output back to the input that produced it, or when \"which raw input did this come from\" has no recorded answer. Covers semantic vs storage identity, canonicalisation before hashing, false-split and false-merge as testable properties, hash-function versioning, chain binding, and raw-to-canonical traceability."
 ---
 
 # Canonical Identity

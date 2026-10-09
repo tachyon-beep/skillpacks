@@ -1338,7 +1338,7 @@ rnd = RandomNetworkDistillation(state_dim)
 - Count-based only for small discrete state spaces
 
 
-## Part 10: Red Flags and Pressure Tests
+## Part 10: Red Flags and Worked failure cases
 
 ### Red Flags Checklist
 
@@ -1353,7 +1353,7 @@ rnd = RandomNetworkDistillation(state_dim)
 - [ ] **ICM on pixel-randomness environment**: Forward model tries to predict noise
 - [ ] **Ignoring sparse rewards**: Using ε-greedy only, no intrinsic motivation
 
-### Pressure Test Scenario 1: "My Agent Stuck in Local Optimum"
+### Worked failure case 1: "My Agent Stuck in Local Optimum"
 
 **User Query:** "I trained my agent and it found a solution giving +10 reward. But I know the optimal solution is +100. Agent is stuck at +10. How do I fix it?"
 
@@ -1388,7 +1388,7 @@ epsilon = epsilon_linear(step, total_steps=1_000_000,
                          epsilon_start=1.0, epsilon_end=0.05)
 ```"
 
-### Pressure Test Scenario 2: "Which Exploration for Montezuma's Revenge?"
+### Worked failure case 2: "Which Exploration for Montezuma's Revenge?"
 
 **User Query:** "I'm training on Montezuma's Revenge (classic sparse reward benchmark). ε-Greedy isn't working (agent never finds first coin). What exploration strategy should I use?"
 
@@ -1440,7 +1440,7 @@ for step in training_steps:
 - lambda_intrinsic: Start 0.01, increase if agent doesn't explore enough
 - RND learning rate: Usually 1e-4 (much smaller than main agent)"
 
-### Pressure Test Scenario 3: "ε-Greedy Decay Schedule"
+### Worked failure case 3: "ε-Greedy Decay Schedule"
 
 **User Query:** "I'm using ε-greedy but not sure about the decay schedule. I have 100k training steps. Should I decay epsilon linearly? Over how many steps? To what final value?"
 
@@ -1498,7 +1498,7 @@ epsilon = epsilon_linear(step, total_steps=50_000,
                         epsilon_start=1.0, epsilon_end=0.01)
 ```"
 
-### Pressure Test Scenario 4: "ICM vs RND vs ε-Greedy"
+### Worked failure case 4: "ICM vs RND vs ε-Greedy"
 
 **User Query:** "I have sparse rewards and a deterministic environment. Should I use ε-greedy, ICM curiosity, or RND? How do I decide?"
 
@@ -1542,7 +1542,7 @@ epsilon = epsilon_linear(step, total_steps=50_000,
 **My Recommendation:**
 Start ε-greedy. If not working after tuning decay schedules, switch to RND. Only use ICM if environment is fully deterministic and you care about learning dynamics."
 
-### Pressure Test Scenario 5: "Computational Cost of Curiosity"
+### Worked failure case 5: "Computational Cost of Curiosity"
 
 **User Query:** "I want to add curiosity-driven exploration (ICM) to my agent. What's the computational overhead? Will it slow down training significantly?"
 
@@ -1598,24 +1598,6 @@ Use RND instead of ICM:
 
 **Bottom Line:**
 ICM costs 2-3× training time. If you can afford it and rewards are very sparse, worth it. Otherwise try RND or even ε-greedy with slower decay first."
-
-
-## Part 11: Rationalization Resistance Table
-
-| Rationalization | Reality | Counter-Guidance | Red Flag |
-|-----------------|---------|------------------|----------|
-| "ε-Greedy works everywhere" | Fails on sparse rewards, large spaces | Use ε-greedy for dense/small, intrinsic motivation for sparse/large | Applying ε-greedy to Montezuma's Revenge |
-| "Higher epsilon is better" | High ε → too random, doesn't exploit | Use decay schedule (ε high early, low late) | Using constant ε=0.5 throughout training |
-| "Decay epsilon to zero" | Agent needs residual exploration | Keep ε_end=0.01-0.1 always | Setting ε_final=0 (pure exploitation) |
-| "Curiosity always helps" | Can break with stochasticity (model tries to predict noise) | Use RND for stochastic, ICM for deterministic | Agent learns to explore random noise instead of task |
-| "RND is just ICM simplified" | RND is fundamentally different (frozen random vs learned model) | Understand frozen network prevents overfitting/noise | Not grasping why RND frozen network matters |
-| "More intrinsic reward = faster exploration" | Too much intrinsic reward drowns out task signal | Balance with λ=0.01-0.1, tune on task performance | Agent explores forever, ignores task |
-| "Count-based works anywhere" | Only works tabular (can't count unique images) | Use RND for continuous/high-dimensional spaces | Trying count-based on Atari images |
-| "Boltzmann is always better than ε-greedy" | Boltzmann smoother but harder to tune | Use ε-greedy for simplicity (it works well) | Switching to Boltzmann without clear benefit |
-| "Test with ε>0 for exploration" | Test should use learned policy, not explore | ε=0 or greedy policy at test time | Variable test performance from exploration |
-| "Longer decay is always better" | Very slow decay wastes time in early training | Match decay to task difficulty (faster for easy, slower for hard) | Decaying over 10M steps when training only 1M |
-| "Skip exploration, increase learning rate" | Learning rate is for optimization, exploration for coverage | Use both: exploration strategy + learning rate | Agent oscillates without exploration |
-| "ICM is the SOTA exploration" | RND simpler and more robust | Use RND unless you need environment model | Implementing ICM when RND would suffice |
 
 
 ## Part 12: Summary and Decision Framework

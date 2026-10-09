@@ -1903,20 +1903,6 @@ def profile_communication_overhead(model, data_loader, optimizer, criterion,
 > bucket sizes.
 
 
-## Common Rationalizations (Don't Do These)
-
-| Excuse | Reality | Correct Response |
-|--------|---------|------------------|
-| "User is rushed" | Wrong fix wastes 30+ min | Follow systematic methodology |
-| "Senior engineer says use DataParallel" | DataParallel is objectively slower; docs say not-recommended | Recommend DDP with evidence |
-| "FairScale worked last year" | FairScale is unmaintained | Use FSDP1 / FSDP2 |
-| "FSDP2 is bleeding edge" | FSDP2 is the recommended path for new code in 2.9+, and FSDP1 is deprecated as of 2.11 | Use FSDP2; only stay on FSDP1 for existing code you have not migrated yet |
-| "Profiling takes time" | Profiling finds exact bottleneck in minutes | Always profile before optimizing |
-| "Network must be the issue" | Could be config, NCCL, or code | Check network AFTER code checks |
-| "Just use fewer GPUs" | Likely a configuration issue | Fix configuration |
-| "I'll move model after FSDP wrap" | FSDP places shards itself | Pass `device_id=...`, don't pre-place |
-
-
 ## Quick Reference: Setup Checklists
 
 ### DDP

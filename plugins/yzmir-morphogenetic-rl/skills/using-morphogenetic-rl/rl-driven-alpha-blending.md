@@ -1,6 +1,6 @@
 ---
 name: rl-driven-alpha-blending
-description: Use when an RL controller decides the alpha schedule for blending in a new seed/module — observation space against blending state, action shape (rate vs absolute alpha), reward shaping against integration outcome, and the boundary against fixed-schedule blending.
+description: "Use when an RL controller decides the alpha schedule for blending in a new seed/module \u2014 observation space against blending state, action shape (rate vs absolute alpha), reward shaping against integration outcome, and the boundary against fixed-schedule blending."
 ---
 
 # RL-Driven Alpha Blending
@@ -190,19 +190,6 @@ If conservative collapse appears specifically on the α factor (controller pins 
 | Direct α-reward ("α reached 1 = +1.0") | Controller races to α=1, ignores stability | Remove direct α-reward; let downstream effects do the work |
 | Per-step α emission with default γ | Credit-assignment inside watch window collapses | Either parameterization 1, or set γ such that γ^W ≥ 0.5 (see `rollback-as-rl-signal.md`) |
 | Governor cap implemented as a reward penalty only | Controller learns to flirt with the cap; sometimes exceeds it | Cap must be enforced structurally; reward penalty is supplementary |
-
----
-
-## Rationalization Resistance
-
-| Rationalization | Reality |
-|-----------------|---------|
-| "The controller knows best how fast to blend; let it pick freely" | The controller's mistakes here destabilize the host trainer, and the rollback signal arrives too late to teach against the specific α trajectory that caused it. |
-| "A hard cap on α-rate is over-restrictive; the controller will learn the cap" | A per-step constraint cannot be learned from a per-event signal fast enough to prevent damage. The cap is structural, not pedagogical. |
-| "If we reward α=1 the controller will learn to commit grafts faster" | It will commit grafts faster *and* less safely. The reward measures the wrong thing. |
-| "Per-step α (parameterization 2) is more general; we should start there" | Generality and learnability are different properties. Parameterization 2 is general; parameterization 1 is what learns. |
-| "Fixed schedules are for systems too primitive to have a controller" | Fixed schedules are for any case where per-event adaptation is not the bottleneck. Most cases. |
-| "α-oscillation is the controller exploring; it will settle" | Oscillation between α and host is a coordination failure, not exploration. It does not self-resolve; it requires a structural fix (parameterization 1, or a longer watch-window settling period). |
 
 ---
 

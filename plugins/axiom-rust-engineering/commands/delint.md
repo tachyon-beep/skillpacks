@@ -1,76 +1,20 @@
 ---
-description: Systematically fix clippy warnings using category-by-category approach
+description: "Delint for the affected rust engineering contract, with scoped source and verification evidence."
 allowed-tools: ["Read", "Edit", "Bash", "Glob", "Grep", "Skill"]
 argument-hint: "[package spec] - optional `-p <name>` package selector; defaults to current workspace"
 ---
 
-# Delint Command
+# Delint
 
-Apply systematic delinting following the Rust engineering methodology. Fix warnings by category, not by file.
+Carry out the requested task within existing authorization and policy. Scaffolding applies to an authorized new component; preserve existing project state.
 
-## Process
+## Work
 
-1. **Assess current state**
-   ```bash
-   # $ARGUMENTS is an optional package selector like `-p my-crate`; leave empty to scan the whole workspace.
-   cargo clippy --all-targets --all-features --workspace $ARGUMENTS -- -W clippy::all 2>&1 | grep "warning:"
-   ```
+1. Establish the requested result, affected artifacts, consumers and existing constraints. Ask only for information that materially changes the result and cannot be established from context.
+2. Read the [pack contract](../skills/using-rust-engineering/SKILL.md) and only the reference sections needed for this task.
+3. Use the crate edition, MSRV, features and targets. Trace ownership, errors, cancellation and unsafe invariants where affected. Resolve diagnostics without broad suppression and verify relevant downstream/target behavior.
+4. Complete the bounded task. Use focused checks that distinguish the relevant failure; broaden only when the affected boundary requires it. Do not manufacture unrelated reports, tests or reviewer assignments.
 
-2. **Group by rule category**
-   - Count warnings per category: `correctness`, `suspicious`, `style`, `complexity`, `perf`, `pedantic`
-   - Identify the most common category
-   - Note which files are affected most frequently
+## Result
 
-3. **Fix one category at a time**
-   - Start with `correctness` (logic bugs)
-   - Move to `perf` (performance issues)
-   - Then `complexity` (readability and maintainability)
-   - Then `style` (formatting and conventions)
-   - Finally `pedantic` (nitpicks)
-   - Fix ALL instances of that category across the codebase
-   - Re-run clippy to verify fixes and catch new issues
-   - Move to next category
-
-4. **Never suppress without justification**
-   - Do NOT add `#[allow(clippy::LINT_NAME)]` unless the warning is genuinely unfixable
-   - If suppression is needed, add a `// Why:` comment explaining why at the narrowest possible scope
-   - Document architectural reasons for allowing specific lints
-
-## Success Criteria
-
-Move to the next category only when `cargo clippy` shows **zero warnings in the current category**. The full delint is complete when `cargo clippy --all-targets --all-features -- -D warnings` exits 0, or when every remaining warning has a scoped `#[allow]` / `#[expect]` with a justification comment.
-
-## Key Principles
-
-- **Category-first**: Fix by rule category, not by file. This builds pattern recognition.
-- **Verify each pass**: Run clippy after fixing each category to confirm fixes and catch new issues.
-- **Root cause fixes**: Address why the pattern exists, don't just silence it.
-- **Scope narrowly**: Use `#[allow(...)]` on specific items (functions, structs, constants) not entire modules.
-
-## Load Detailed Guidance
-
-For comprehensive delinting patterns and anti-patterns:
-```
-Load skill: axiom-rust-engineering:using-rust-engineering
-Then read: systematic-delinting.md
-```
-
-## Example Session
-
-```
-User: /rust-engineering:delint
-
-Claude:
-1. Running cargo clippy --all-targets --all-features -- -W clippy::all
-2. Found 42 warnings:
-   - correctness: 8
-   - perf: 12
-   - complexity: 15
-   - style: 5
-   - pedantic: 2
-
-3. Starting with correctness (most critical)...
-   [fixes all logic/correctness issues]
-
-4. Re-running clippy... correctness cleared. Moving to perf...
-```
+Lead with the outcome. Give paths/source evidence for material claims, executed checks and results, and unresolved assumptions or unavailable checks. For reviews, order findings by impact and identify the concrete trigger and consequence; do not treat absence of findings as an audit failure. Distinguish recommendation, local implementation/test evidence and external acceptance. Match any output format required by the caller.

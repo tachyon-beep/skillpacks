@@ -1,6 +1,6 @@
 ---
 name: static-vs-runtime-tradeoffs
-description: Use when deciding whether an invariant should be enforced statically (analyzer rule), at runtime (assertion / contract), or both — and to write down the boundary explicitly so future contributors do not silently move checks between the two. Covers what static analysis can and cannot decide (the Rice-theorem ceiling), the dual-enforcement pattern (decorator-as-assertion), the cost model (developer time, build time, runtime overhead, blast radius), and the discipline of keeping the boundary statement testable. Produces `06-static-runtime-boundary.md`.
+description: "Use when deciding whether an invariant should be enforced statically (analyzer rule), at runtime (assertion / contract), or both \u2014 and to write down the boundary explicitly so future contributors do not silently move checks between the two. Covers what static analysis can and cannot decide (the Rice-theorem ceiling), the dual-enforcement pattern (decorator-as-assertion), the cost model (developer time, build time, runtime overhead, blast radius), and the discipline of keeping the boundary statement testable."
 ---
 
 # Static vs Runtime Tradeoffs

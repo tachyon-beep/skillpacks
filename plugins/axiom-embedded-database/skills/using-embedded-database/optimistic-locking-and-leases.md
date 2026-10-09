@@ -1,6 +1,6 @@
 ---
 name: optimistic-locking-and-leases
-description: Use when multiple workers compete to claim the same row — job queues, distributed task runners, claim-and-process patterns — and you need at-most-one semantics without holding a write lock across user think-time or network I/O. Covers version-column compare-and-swap, claim leases with expiry, atomic find-and-claim via RETURNING, heartbeat discipline, and the dead-worker recovery pattern.
+description: "Use when multiple workers compete to claim the same row \u2014 job queues, distributed task runners, claim-and-process patterns \u2014 and you need at-most-one semantics without holding a write lock across user think-time or network I/O. Covers version-column compare-and-swap, claim leases with expiry, atomic find-and-claim via RETURNING, heartbeat discipline, and the dead-worker recovery pattern."
 ---
 
 # Optimistic Locking and Claim Leases

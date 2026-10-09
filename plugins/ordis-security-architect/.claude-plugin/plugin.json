@@ -1,7 +1,7 @@
 {
   "name": "ordis-security-architect",
-  "version": "1.3.1",
-  "description": "Threat modeling, security controls, compliance, ATO, LLM/AI security, supply-chain (SLSA/SBOM/Sigstore) - 11 skills, 3 commands, 2 agents",
+  "version": "2.0.0",
+  "description": "Use when system trust boundaries, threat models, control verification, AI/tool privileges, supply-chain assurance, classified information flows, or authorization evidence need design or review.",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

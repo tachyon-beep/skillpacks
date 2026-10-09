@@ -1,6 +1,6 @@
 ---
 name: false-positive-economics
-description: Use when an analyzer is shipping or has shipped and you face the operational reality of false positives — suppressions accumulating, developer trust eroding, or the question "should we refine the rule or just suppress?" Covers suppression-vs-refinement decision making, the waiver lifecycle (granted, reviewed, expired, re-granted), the FP-rate budget, and the cross-link to audit-pipelines for waiver-as-decision. Produces `05-false-positive-economics.md`.
+description: "Use when an analyzer is shipping or has shipped and you face the operational reality of false positives \u2014 suppressions accumulating, developer trust eroding, or the question \"should we refine the rule or just suppress?\" Covers suppression-vs-refinement decision making, the waiver lifecycle (granted, reviewed, expired, re-granted), the FP-rate budget, and the cross-link to audit-pipelines for waiver-as-decision."
 ---
 
 # False-Positive Economics

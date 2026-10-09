@@ -1,6 +1,6 @@
 ---
 name: workspace-anti-patterns
-description: Use when reviewing a Rust workspace for structural and hygiene issues — the refusal list of compositional shapes that never work and the diagnostic-and-remediation playbook for each. Covers god-crate, leaky internal API, version drift, cyclic features, single-package workspace, accidental publication, deny.toml shadowing, clippy.toml shadowing, the per-crate-exception explosion, and the "we'll consolidate later" trap. Produces `13-workspace-anti-patterns.md`.
+description: "Use when reviewing a Rust workspace for structural and hygiene issues \u2014 the refusal list of compositional shapes that never work and the diagnostic-and-remediation playbook for each. Covers god-crate, leaky internal API, version drift, cyclic features, single-package workspace, accidental publication, deny.toml shadowing, clippy.toml shadowing, the per-crate-exception explosion, and the \"we'll consolidate later\" trap."
 ---
 
 # Workspace Anti-Patterns
@@ -9,15 +9,15 @@ description: Use when reviewing a Rust workspace for structural and hygiene issu
 
 Most workspace problems are not novel. They are recurrences of a small set of compositional shapes that never work. Pattern-matching on intake — "this looks like a god-crate" or "this is the leaky-internal-API problem" — closes a problem in minutes that would take days to diagnose from symptoms.
 
-`13-workspace-anti-patterns.md` is the refusal list. Every workspace runs the sweep at intake and at every material restructuring. An anti-pattern present in the workspace is either *absent* (sweep passes), *present-and-fixed* (the remediation landed in this PR), or *present-with-waiver* (a documented exception with a re-evaluation trigger). Silent presence is the failure mode this sheet exists to prevent.
+`13-workspace-anti-patterns.md` is the refusal list. Use the relevant checks for the affected composition boundary. An anti-pattern present in the workspace is either *absent* (sweep passes), *present-and-fixed* (the remediation landed in this PR), or *present-with-waiver* (a documented exception with a re-evaluation trigger). Silent presence is the failure mode this sheet exists to prevent.
 
-The anti-patterns below are ordered by frequency, not severity. The first three account for ~80% of workspace failures in the wild.
+The examples below are diagnostic leads, not automatic findings. Frequency varies by project; use observed coupling and failure evidence rather than this list as a ranking.
 
 ## 1. The God-Crate
 
 **Symptom.** One crate (often the first or oldest) holds shared types, shared traits, shared utilities, the error type, the configuration struct, the prelude, and an increasing number of helpers. Every other crate depends on it. A one-line change to it triggers a workspace-wide rebuild and takes 8 minutes. Nobody dares refactor it.
 
-**Diagnosis.** Run `cargo tree --workspace --duplicates --invert` (or just `cargo tree -i <crate>`) for the suspected god-crate. If it has more reverse dependencies than any other workspace member, it is the god-crate. Confirmation: count `pub` items in its `lib.rs`; if there are more than ~30, it is doing too much.
+**Diagnosis.** Inspect `cargo tree -i <crate>` and actual change/rebuild coupling. Many reverse dependencies or public items are leads, not proof of harmful design. Establish whether unrelated changes force consumers to rebuild/change and whether splitting would improve a real boundary.
 
 **Remediation.** Split by *axis of change*: types that change together stay together; types that change independently move out. Common splits:
 

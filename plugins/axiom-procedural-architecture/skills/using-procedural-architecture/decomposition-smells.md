@@ -1,6 +1,6 @@
 ---
 name: decomposition-smells
-description: Canonical catalog of nine decomposition smells (god-step, mystery-step, decision-without-information, audience-amnesia, ladder-of-trivials, premature-commitment, orphan-state, fake-branch, re-entrancy-blindness), each with definition, diagnostic signal, false-positive caveat, and recommended remediation. This is the definitive source other critic and producer sheets defer to for smell names, false-positive calibration, and fix patterns.
+description: "Canonical catalog of nine decomposition smells (god-step, mystery-step, decision-without-information, audience-amnesia, ladder-of-trivials, premature-commitment, orphan-state, fake-branch, re-entrancy-blindness), each with definition, diagnostic signal, false-positive caveat, and recommended remediation. This is the definitive source other critic and producer sheets defer to for smell names, false-positive calibration, and fix patterns."
 ---
 
 # Decomposition Smells
@@ -94,7 +94,7 @@ Remediation: [specific action; see individual smell entries for patterns]
 
 **Diagnostic signal.** The consumer reads consecutive stages and thinks "I would just do these together — they're one move." Formally: if three or more consecutive stages each have exit artifacts that the target consumer would produce in a single continuous action without pausing to verify intermediate state, the sequence is a ladder-of-trivials cluster.
 
-**False-positive caveat.** Fine grain is correct for high-error-cost, low-working-memory audiences. What looks like a ladder-of-trivials for a senior engineer is correct granularity for a novice who needs explicit intermediate verification — and required for an LLM agent that needs machine-verifiable checkpoints to avoid drift. The smell fires only when the grain is finer than the declared audience actually needs: when the audience's working-memory can comfortably span the cluster and the error cost is low enough that intermediate verification adds no safety value. Evaluate against the declared audience parameters before merging.
+**False-positive caveat.** Fine grain is correct for high-error-cost, low-working-memory audiences. What looks like a ladder-of-trivials for a senior engineer is correct granularity for a novice who needs explicit intermediate verification — or for an agent whose observed tool/context constraints require explicit checkpoints. The smell fires only when the grain is finer than the declared audience actually needs: when the audience's working-memory can comfortably span the cluster and the error cost is low enough that intermediate verification adds no safety value. Evaluate against the declared audience parameters before merging.
 
 **Remediation.** Identify the ladder cluster — the consecutive trivial stages — and merge them into a single stage with a richer exit artifact that incorporates all the intermediate artifacts as components or verification criteria. The merged stage's name should describe the coherent unit of work, not enumerate its sub-stages. Verify the merged stage passes the grain-size test: can the target consumer execute it in one focused attempt with no ambiguity about what "done" looks like? If not, the merge went too far — a god-step is waiting on the other side. Full grain calibration guidance is in `granularity-calibration.md`.
 

@@ -1,6 +1,6 @@
 ---
 name: boundary-and-when-to-leave
-description: Use when an embedded-database layer is showing strain and the question is whether to fix it or replace it. Covers observable leave signals, migration paths to Postgres and MySQL/MariaDB, what changes operationally after migration, and the over-leave anti-pattern — most "we outgrew SQLite" stories are actually "we misconfigured SQLite" stories.
+description: "Use when an embedded-database layer is showing strain and the question is whether to fix it or replace it. Covers observable leave signals, migration paths to Postgres and MySQL/MariaDB, what changes operationally after migration, and the over-leave anti-pattern \u2014 most \"we outgrew SQLite\" stories are actually \"we misconfigured SQLite\" stories."
 ---
 
 # Boundary and When to Leave

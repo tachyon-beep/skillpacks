@@ -1,6 +1,6 @@
 ---
 name: canonicalisation-and-normal-forms
-description: Use when reducing generated graphs to a stable normal form - dead-node elimination, duplicate/identity removal, deterministic node ordering, canonical parameter layout - and when a canonicaliser needs to prove it never changes what a candidate computes and never splits one structure into two identities.
+description: "Use when reducing generated graphs to a stable normal form - dead-node elimination, duplicate/identity removal, deterministic node ordering, canonical parameter layout - and when a canonicaliser needs to prove it never changes what a candidate computes and never splits one structure into two identities."
 ---
 
 # Canonicalisation and Normal Forms
@@ -451,22 +451,6 @@ So the shipped `leaf_budget=10_000` admits up to **seven** fully interchangeable
 Three mitigations, in order of preference: (1) bound branch multiplicity in the grammar itself (`typed-graph-grammars.md` ceilings) — most NAS cells top out at 4–6 branches, comfortably inside the default; (2) keep the explicit `leaf_budget` and let it **raise**, never silently fall back to a raw-ID tie-break, because a canonicaliser that degrades under load produces exactly the false splits it was built to prevent — a loud stop is a bug report, a quiet downgrade is corrupted archive data; (3) if graphs genuinely get large and symmetric, move to a real automorphism-pruning implementation (nauty, bliss, or a port of their orbit-pruning) rather than reinventing it. Note also what the canonicaliser does *not* do: it never validates acyclicity. `nx.ancestors` and the refinement loop both run on a cyclic graph and return a plausible-looking form, so the cheap legality checks must reject cycles before canonicalisation ever sees the candidate.
 
 The asymmetry of consequences is what justifies paying that cost at all: when the canonical forms of two equivalent graphs *match*, downstream is correct; when they falsely *split*, no later check catches it — the exact-isomorphism fallback in `equivalence-detection-and-semantic-hashing.md` only fires when hashes already agree. False splits are the failure mode you must test for proactively, because nothing downstream will ever surface them for you. Generate the symmetric structures your grammar can actually express — parallel branches at **every depth your grammar permits**, port permutations of commutative merges, repeated subblocks — and assert their relabeled variants unify. Any pair that doesn't is a canonicaliser bug.
-
-## Rationalization Resistance
-
-| Rationalization | Reality |
-|---|---|
-| "This node is obviously a pass-through, I can see it in the diagram" | Visual resemblance is not proof; the deleted-relu bug looks identical to a real pass-through until you check the operator |
-| "Refining from predecessors is enough — a node is what its inputs make it" | Two nodes with identical upstream worlds can play different downstream roles (RED Scenario 2); a mainstream graph library shipped this exact blindness for years |
-| "Refinement is bidirectional now, so breaking the leftover ties by node ID is safe" | Only for twins whose bare transposition is itself an automorphism. Same-orbit is weaker than that, and two orbits resolved independently pick a non-automorphism — Property 6's counterexample |
-| "The nodes are in the same orbit, so it doesn't matter which one we call `n0`" | It matters as soon as a *second* tied orbit exists: the automorphism that swaps one pair may be forced to move the other pair too, and independent choices break the correspondence |
-| "The node computes the identity, so splicing it out is provably safe" | Two proofs are needed, not one: the operator is an identity **and** the spliced edge does not already exist. On a `DiGraph` the second failure overwrites a real edge and changes what the candidate computes |
-| "Checking `canon(canon(x)) == canon(x)` is redundant, I already tested it once" | Idempotence must hold for every input class the generator can produce, not once on a hand-picked example; test it as a property |
-| "Python's `hash()` is faster than sha256 for signature compression" | Builtin string hashing is randomized per process; the canonical order would differ between runs, and every persisted identity built on it dies with the process that made it |
-| "We'll canonicalise for speed, so a little extra pruning is fine" | Extra pruning beyond provable equivalence is optimization, not canonicalisation — it belongs in the compiler/lowering stage, not here |
-| "The grammar doesn't have many identity ops, so degree-based pruning is close enough" | "Close enough" silently corrupts exactly the candidates that don't fit the common case — those are the ones worth generating |
-| "Sorting the inputs of every add/merge node is obviously safe" | Only for operators the grammar *declares* commutative; `concat` and weighted merges are port-sensitive, and sorting them changes semantics |
-| "We can canonicalise the parameters after the graph shape is fixed" | Parameter-layout canonicalisation carries the same proof discipline as structural canonicalisation — a "cleaner" layout that changes values is a different candidate |
 
 ## Red Flags Checklist
 

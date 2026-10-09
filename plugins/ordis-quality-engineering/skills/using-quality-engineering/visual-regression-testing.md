@@ -1,6 +1,6 @@
 ---
 name: visual-regression-testing
-description: Use when testing UI changes, preventing visual bugs, setting up screenshot comparison, handling flaky visual tests, testing responsive layouts, or choosing visual testing tools (Percy, Chromatic, BackstopJS) - provides anti-flakiness strategies and component visual testing patterns
+description: "Use when testing UI changes, preventing visual bugs, setting up screenshot comparison, handling flaky visual tests, testing responsive layouts, or choosing visual testing tools (Percy, Chromatic, BackstopJS) - provides anti-flakiness strategies and component visual testing patterns"
 ---
 
 # Visual Regression Testing

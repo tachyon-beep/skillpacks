@@ -1,6 +1,6 @@
 ---
 name: process-algebra-and-workflow-nets
-description: Analyst-cluster sheet — when formal procedural verification earns its cost (regulated, safety-critical, concurrency-heavy) vs the informal checklist in procedural-invariants-and-correctness. Workflow nets at recognition depth: three soundness properties (proper completion, no orphan tokens, no dead transitions), ASCII Petri-net diagrams, and a worked incident-response example that exposes an orphan-token violation the informal checklist would have missed. Process calculi (CSP/CCS/π-calculus) at recognition level only.
+description: "Analyst-cluster sheet \u2014 when formal procedural verification earns its cost (regulated, safety-critical, concurrency-heavy) vs the informal checklist in procedural-invariants-and-correctness. Workflow nets at recognition depth: three soundness properties (proper completion, no orphan tokens, no dead transitions), ASCII Petri-net diagrams, and a worked incident-response example that exposes an orphan-token violation the informal checklist would have missed. Process calculi (CSP/CCS/\u03c0-calculus) at recognition level only."
 ---
 
 # Process Algebra and Workflow Nets
@@ -63,13 +63,15 @@ A token begins in `start`. When `validate` fires, the token moves to `validated`
 
 ### The Three Soundness Properties
 
-A workflow net is **sound** if and only if all three properties hold for every possible execution:
+Classic workflow-net soundness requires the following properties from an initial marking with one token in the source place:
 
-**1. Proper completion.** Starting from one token in the source place, it is always possible to reach a state where one token is in the sink place. Every execution path terminates.
+**1. Option to complete.** From every reachable marking, some firing sequence reaches the final marking with one token in the sink and none elsewhere. This does not guarantee that every possible choice sequence terminates.
 
-**2. No orphan tokens at termination.** When the sink place holds a token, no tokens remain anywhere else in the net. There are no leftover tokens in side-branches or intermediate places — no dangling execution threads.
+**2. Proper completion.** When the sink place holds a token, no tokens remain anywhere else in the net. There are no leftover tokens in side-branches or intermediate places — no dangling execution threads.
 
 **3. Every transition is reachable.** From the source place with one token, every transition in the net can fire in at least one execution. There is no dead code in the net — no transition that can never fire regardless of the execution path taken.
+
+See [van der Aalst et al., workflow-net soundness definitions](https://www.vdaalst.com/publications/p628.pdf). Fairness, bounded retries and termination of every execution are separate obligations; analyze them explicitly when promised.
 
 If any of these three properties fails, the net is unsound. A net that satisfies properties 1 and 3 but violates property 2 has an orphan-token problem: the procedure "completes" but leaves a thread of execution unresolved — exactly the failure the worked example below exposes.
 

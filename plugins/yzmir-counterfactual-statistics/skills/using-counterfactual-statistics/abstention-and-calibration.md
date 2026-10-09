@@ -1,6 +1,6 @@
 ---
 name: abstention-and-calibration
-description: Use when evaluating a judge or screener that may decline to act, when choosing an admission threshold, or when a confidence score is used as if it were a probability. Covers no-op precision and recall, false-intervention rate, expected regret as the threshold objective, reliability diagrams and ECE, and freezing calibration before confirmatory runs.
+description: "Use when evaluating a judge or screener that may decline to act, when choosing an admission threshold, or when a confidence score is used as if it were a probability. Covers no-op precision and recall, false-intervention rate, expected regret as the threshold objective, reliability diagrams and ECE, and freezing calibration before confirmatory runs."
 ---
 
 # Abstention and Calibration

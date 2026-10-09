@@ -1,6 +1,6 @@
 ---
 name: discrete-event-simulation-for-procedures
-description: Analyst-cluster sheet — when DES earns its cost over closed-form queueing, the three questions DES answers well (throughput under realistic distributions, sensitivity, what-if redesigns), a static-review/queueing/DES boundary table, and a worked support-ticket pipeline with fast-track lane showing why M/M/1 misleads.
+description: "Analyst-cluster sheet \u2014 when DES earns its cost over closed-form queueing, the three questions DES answers well (throughput under realistic distributions, sensitivity, what-if redesigns), a static-review/queueing/DES boundary table, and a worked support-ticket pipeline with fast-track lane showing why M/M/1 misleads."
 ---
 
 # Discrete-Event Simulation for Procedures

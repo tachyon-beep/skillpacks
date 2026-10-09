@@ -1,6 +1,6 @@
 ---
 name: divergence-detection-and-localisation
-description: Use when designing the protocol that points at the *first* differing operation between two runs — not just "they diverged," but where, on which RNG stream, after which input. Bisection, state-hash cadence, narrowing protocol. Produces `05-divergence-protocol.md`.
+description: "Use when designing the protocol that points at the *first* differing operation between two runs \u2014 not just \"they diverged,\" but where, on which RNG stream, after which input. Bisection, state-hash cadence, narrowing protocol."
 ---
 
 # Divergence Detection and Localisation

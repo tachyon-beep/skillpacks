@@ -1,6 +1,6 @@
 ---
 name: growth-telemetry-and-ablation
-description: Use when designing the logging schema that survives shape changes — additivity over topology change, ablation-friendly fields (so a grown vs static comparison is meaningful), and the metrics that distinguish controller signal from network signal.
+description: "Use when designing the logging schema that survives shape changes \u2014 additivity over topology change, ablation-friendly fields (so a grown vs static comparison is meaningful), and the metrics that distinguish controller signal from network signal."
 ---
 
 # Growth Telemetry and Ablation
@@ -288,21 +288,6 @@ A morphogenetic run can easily produce hundreds of thousands of events. Every by
 | `pending` events never closed | Aggregations include null `post_event_window_summary` | Close at run-end (commit or rollback explicitly) |
 | Reward mode encoded only in `run_id` string | Cannot filter across an experiment grid | First-class column |
 | One log file per growth event | Filesystem dies; queries become file-walks | One stream per table, partitioned by run |
-
----
-
-## Rationalization Resistance
-
-| Rationalization | Reality |
-|-----------------|---------|
-| "I'll add columns when modules appear; my dashboard handles it" | The dashboard handles it for that run. The next ablation across runs breaks. |
-| "Only the final loss matters; I don't need per-event data" | You will, the first time you try to attribute the loss change to a specific decision. |
-| "Replay logs and telemetry are redundant" | They are not. Replay logs reproduce; telemetry analyzes. Different jobs. |
-| "JSON in the events table is fine for analysis" | Until you have 10k events and want to filter on a JSON key in production. Structured columns where you query, JSON for opaque payloads. |
-| "I'll figure out the schema after I see what the controller does" | The first ablation request is when. By then it is too late. |
-| "I'll store one row per (step, module) — that's flexible" | You just made the step table grow with topology. See: previous mistake. |
-| "Per-module stats can live in a separate file per module" | The cross-module aggregation is the point of the sidecar; per-file storage destroys it. |
-| "Event-grain and step-grain in the same table is convenient" | It is, until you join across runs and the row counts are run-dependent. |
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: pragma-discipline
-description: Use when configuring a SQLite database for production — covers journal_mode, synchronous, busy_timeout, foreign_keys, cache_size, mmap_size, temp_store, application_id, user_version, and the critical distinction between connection-scoped and database-scoped settings. The correct shape for a production PRAGMA block is shown in Python and Rust.
+description: "Use when configuring a SQLite database for production \u2014 covers journal_mode, synchronous, busy_timeout, foreign_keys, cache_size, mmap_size, temp_store, application_id, user_version, and the critical distinction between connection-scoped and database-scoped settings. The correct shape for a production PRAGMA block is shown in Python and Rust."
 ---
 
 # PRAGMA Discipline
@@ -37,7 +37,7 @@ Read this sheet when:
 
 **Failure mode if mis-set.** With the default `DELETE` mode and any multi-reader or multi-writer workload: readers block writers and writers block readers. A long-running read transaction causes every write attempt to return `SQLITE_BUSY` immediately. The application appears to have a lock contention problem; the root cause is a missing one-line PRAGMA.
 
-**Caveat.** WAL mode is unsafe on network filesystems (NFS, SMB, CIFS). The WAL protocol requires shared-memory coordination via the `.db-shm` file, which uses POSIX memory-mapped locking semantics that NFS implementations routinely violate. On NFS, WAL mode can produce silent corruption. If the filesystem is a network mount, use `DELETE` mode with `busy_timeout` and accept the concurrency constraints — or move the database off the network filesystem.
+**Caveat.** Standard WAL requires same-host shared-memory coordination; do not use it for cross-host network filesystems. Inspect the returned journal mode because unsupported VFS behavior may reject the change. Rollback journaling still requires reliable locking and durability, so `DELETE` is not a blanket network-filesystem safety fix. Prefer local storage or a server database. Verify the installed SQLite/vendor patch status as well as effective settings; see [the WAL contract and current release notes](https://sqlite.org/wal.html).
 
 **WAL sidecar files.** In WAL mode, SQLite creates two additional files alongside the database: `.db-wal` (the write-ahead log) and `.db-shm` (a shared-memory coordination file). These are not independent backups. A backup that copies only the `.db` file while the database is open is corrupt. The Online Backup API handles this correctly; see `backup-restore-and-corruption.md`.
 
@@ -274,7 +274,7 @@ Both examples apply all connection-scoped PRAGMAs before returning the connectio
 
 - **Setting connection-scoped PRAGMAs once at app boot and assuming they persist.** `busy_timeout`, `foreign_keys`, `synchronous`, `cache_size`, and `temp_store` are per-connection, not per-file. Setting them on the first connection does nothing for the second connection opened in a different thread. Every connection must go through `setup_pragmas` on open.
 
-- **`journal_mode=WAL` on a network filesystem.** WAL mode depends on shared-memory coordination via `.db-shm`, which requires POSIX locking semantics. NFS and SMB do not implement these reliably. The result is silent corruption, not an error on open. If the database lives on a network mount, use `DELETE` journal mode and accept the concurrency constraints.
+- **`journal_mode=WAL` on a network filesystem.** WAL mode depends on shared-memory coordination via `.db-shm`, which requires POSIX locking semantics. NFS and SMB do not implement these reliably. Unsupported coordination risks failure or corruption; opening successfully is insufficient. Moving to `DELETE` does not repair unreliable locks. Prefer a supported local/server-owned store.
 
 - **`synchronous=OFF` for performance.** Disabling fsync means the OS page cache holds your committed writes. Any OS crash or power event loses them. There is no error, no warning, and no recovery path — the writes simply did not happen from the database's perspective. `synchronous=NORMAL` with `journal_mode=WAL` provides strong durability for ordinary OS crash scenarios and is the correct performance trade-off.
 

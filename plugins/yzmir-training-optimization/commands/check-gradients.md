@@ -1,184 +1,26 @@
 ---
-description: Check gradient health - detect vanishing, exploding, or NaN gradients before they cause training failure
+description: Check gradient flow and update health with task-specific source and runtime evidence.
 allowed-tools: ["Read", "Bash", "Grep", "Glob", "Skill"]
 argument-hint: "[training_script.py]"
 ---
 
-# Check Gradients Command
+# Check gradient flow and update health
 
-Monitor gradient health to detect problems before they cause training failure.
+Apply this command to the requested artifact or failure. Inspect supplied sources and available run evidence before recommending changes. Keep scope proportional; use existing project/runtime conventions and ask only for missing facts that change the result. Additional agents are optional for bounded independent questions.
 
-## Core Principle
+## Task-specific checks
 
-**Gradient issues cause 80% of "unexplained" training failures.**
+Inspect representative forward/backward passes and record per-module finite values, missing gradients, scale/norm distributions and parameter changes. Interpret magnitudes relative to objective/precision rather than universal thresholds. Check accumulation normalization, detach/freeze ownership and unscale/clip/step ordering; verify a targeted repair on the failing case.
 
-Checking gradients proactively catches:
-- Exploding gradients → NaN loss
-- Vanishing gradients → No learning
-- Dead neurons → Wasted capacity
+## Evidence and deliverable
 
-## Gradient Health Check
+- Cite source paths, configuration/artifact identities and observed results for material claims. Separate confirmed behavior from hypotheses and estimates.
+- Report the result or concrete artifact/change, relevant verification and limits. State checks not run or dimensions that could not be assessed; include risk/uncertainty where it affects a decision.
+- For a review, a supported clean result is valid. Record relevant sweep coverage and counterevidence; never manufacture findings or prescribe a minimum number.
+- Execute writes, workloads and external actions within the user's requested scope and existing authorization. A template does not itself authorize a commit, deployment or expensive run.
 
-### Step 1: Add Gradient Monitoring
+## Optional depth
 
-Add this to training loop (after `loss.backward()`, before `optimizer.step()`):
+Use the [pack contract](../skills/using-training-optimization/SKILL.md) when broader obligations matter. Select only references that resolve a concrete question; examples are not universal recipes. Verify time-sensitive APIs against the target environment and primary documentation.
 
-```python
-def check_gradient_health(model, step):
-    total_norm = 0.0
-    num_params = 0
-    nan_count = 0
-    zero_count = 0
-
-    for name, param in model.named_parameters():
-        if param.grad is not None:
-            param_norm = param.grad.data.norm(2).item()
-            total_norm += param_norm ** 2
-            num_params += 1
-
-            if torch.isnan(param.grad).any():
-                nan_count += 1
-                print(f"  NaN gradient in: {name}")
-
-            if param_norm == 0:
-                zero_count += 1
-
-    total_norm = total_norm ** 0.5
-
-    # Report
-    print(f"Step {step}: grad_norm={total_norm:.4f}, nan={nan_count}, zero={zero_count}")
-
-    return {
-        'total_norm': total_norm,
-        'nan_count': nan_count,
-        'zero_count': zero_count,
-        'num_params': num_params
-    }
-```
-
-### Step 2: Interpret Results
-
-| Finding | Status | Meaning | Action |
-|---------|--------|---------|--------|
-| grad_norm 0.1-10 | ✅ Healthy | Normal range | None needed |
-| grad_norm > 100 | ⚠️ Warning | Potentially exploding | Add clipping (max_norm=1.0) |
-| grad_norm > 1000 | ❌ Critical | Exploding | Clip immediately, reduce LR |
-| grad_norm < 0.001 | ⚠️ Warning | Potentially vanishing | Check architecture, initialization |
-| grad_norm = 0 | ❌ Critical | No learning happening | Check frozen params, dead ReLUs |
-| nan_count > 0 | ❌ Critical | NaN gradients | Check loss function, reduce LR |
-| zero_count > 50% | ⚠️ Warning | Many dead parameters | Check initialization, use LeakyReLU |
-
-### Step 3: Common Fixes
-
-**For Exploding Gradients (norm > 100):**
-
-```python
-# Add gradient clipping
-torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-
-# Or use per-parameter clipping
-torch.nn.utils.clip_grad_value_(model.parameters(), clip_value=1.0)
-```
-
-**For Vanishing Gradients (norm < 0.001):**
-
-```python
-# Check for frozen parameters
-for name, param in model.named_parameters():
-    if not param.requires_grad:
-        print(f"Frozen: {name}")
-
-# Consider initialization
-def init_weights(m):
-    if isinstance(m, nn.Linear):
-        nn.init.xavier_uniform_(m.weight)
-
-model.apply(init_weights)
-```
-
-**For NaN Gradients:**
-
-```python
-# Add numerical stability to loss
-loss = F.cross_entropy(logits, targets, label_smoothing=0.1)
-
-# Or for custom loss
-def safe_log(x, eps=1e-8):
-    return torch.log(x + eps)
-```
-
-### Step 4: Gradient Norm Over Time
-
-Log gradient norms across training to spot trends:
-
-```python
-# During training
-grad_norms = []
-for step, (x, y) in enumerate(dataloader):
-    # ... forward, backward ...
-
-    # After backward, before step
-    total_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=float('inf'))
-    grad_norms.append(total_norm.item())
-
-    optimizer.step()
-
-# Plot or analyze
-import matplotlib.pyplot as plt
-plt.plot(grad_norms)
-plt.xlabel('Step')
-plt.ylabel('Gradient Norm')
-plt.title('Gradient Norm Over Training')
-```
-
-| Trend | Meaning | Action |
-|-------|---------|--------|
-| Stable around 1-10 | Healthy training | Continue |
-| Increasing steadily | Building to explosion | Add clipping preemptively |
-| Decreasing to near 0 | Vanishing, training stalling | Check LR, architecture |
-| Spikes | Unstable, specific batches problematic | Clip, check data quality |
-
-## Output Format
-
-```markdown
-## Gradient Health Report
-
-### Summary
-| Metric | Value | Status |
-|--------|-------|--------|
-| Total grad norm | X.XX | ✅/⚠️/❌ |
-| NaN parameters | X | ✅/⚠️/❌ |
-| Zero-grad parameters | X% | ✅/⚠️/❌ |
-
-### Issues Detected
-1. [Issue with severity and affected layers]
-
-### Recommendations
-1. [Specific fix]
-
-### Code to Add
-```python
-[Gradient clipping or fix code]
-```
-```
-
-## When to Check Gradients
-
-**Proactively (before problems):**
-- New model architecture
-- New loss function
-- Switching to mixed precision
-- Training Transformers, RNNs, or very deep networks
-
-**Reactively (when problems occur):**
-- Loss becomes NaN
-- Loss stuck at plateau
-- Training unstable/oscillating
-
-## Load Detailed Guidance
-
-For comprehensive gradient management:
-```
-Load skill: yzmir-training-optimization:using-training-optimization
-Then read: gradient-management.md
-```
+- [gradient-management](../skills/using-training-optimization/gradient-management.md)

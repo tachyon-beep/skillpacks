@@ -1,6 +1,6 @@
 ---
 name: ast-visitation-patterns
-description: Use when designing the substrate of a static analyzer — choosing how the engine walks the AST. Covers visitor (double dispatch over node types), walker (depth-first traversal with parent tracking), and transformer (rewrite, in-place or copy-on-write); the lossless-vs-structural AST distinction; what gets visited, what doesn't, and the gotchas (synthetic nodes from desugaring, comment placement, source-position preservation, parent pointers, fixed-point iteration during rewrite). Produces `01-visitation-strategy.md`.
+description: "Use when designing the substrate of a static analyzer \u2014 choosing how the engine walks the AST. Covers visitor (double dispatch over node types), walker (depth-first traversal with parent tracking), and transformer (rewrite, in-place or copy-on-write); the lossless-vs-structural AST distinction; what gets visited, what doesn't, and the gotchas (synthetic nodes from desugaring, comment placement, source-position preservation, parent pointers, fixed-point iteration during rewrite)."
 ---
 
 # AST Visitation Patterns

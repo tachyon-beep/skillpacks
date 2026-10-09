@@ -1,3 +1,5 @@
+> Historical review of the version named below; it is not an assessment of marketplace 4.0.0. See [the current consolidation record](../../docs/relevance-refresh.md). Retired pack names and old process requirements are historical.
+
 # Report Card — muna-document-designer
 
 **Version:** 1.2.0 · **Track:** S (Soft / Judgment — document design), graded with the H lens applied to the Typst/Pandoc code (which is technical and verifiable)

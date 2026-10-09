@@ -1574,24 +1574,6 @@ After mastering foundations, route to:
 **Solution**: Weight by P(s'|s,a) in stochastic environments.
 
 
-## Part 10: Rationalization Resistance
-
-### Rationalization Table
-
-| Rationalization | Reality | Counter-Guidance | Red Flag |
-|-----------------|---------|------------------|----------|
-| "I'll just copy Q-learning code" | Doesn't understand Q(s,a) meaning, cannot debug | "Let's understand what Q represents: expected cumulative reward. Why does Bellman equation have max?" | Jumping to code without theory |
-| "V(s) is the reward at state s" | V is cumulative, r is immediate | "V(s) = E[r + γr' + ...], not just r. Value is long-term." | Confusing value and reward |
-| "γ=0.9 is standard" | γ depends on task horizon | "What's your task horizon? γ=0.9 means ~10 steps. Need more?" | Arbitrary discount factor |
-| "I don't need exploration, greedy is fine" | Gets stuck in local optimum | "Without exploration, you never try new actions. Use ε-greedy." | No exploration strategy |
-| "Value iteration for Atari" | Atari doesn't have model (P, R unknown) | "Value iteration needs full model. Use model-free (DQN)." | DP on model-free problem |
-| "Monte Carlo for continuing task" | MC requires episodes (termination) | "MC needs complete episodes. Use TD for continuing tasks." | MC on continuing task |
-| "Q-learning and SARSA are the same" | Q-learning off-policy, SARSA on-policy | "Q-learning learns optimal, SARSA learns policy followed." | Confusing on-policy and off-policy |
-| "I'll test with ε-greedy (ε=0.1)" | Test should be greedy (exploit only) | "Exploration is for learning. Test with ε=0 (greedy)." | Exploration at test time |
-| "Bellman equation is just a formula" | It's the foundation of all algorithms | "Derive it. Understand why V(s) = r + γV(s'). Enables debugging." | Black-box understanding |
-| "Deterministic transition, no need for P" | Correct, but must recognize when stochastic | "If stochastic, must weight by P(s'|s,a). Check environment." | Ignoring stochasticity |
-
-
 ## Part 11: Red Flags
 
 Watch for these signs of misunderstanding:

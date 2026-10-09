@@ -1,30 +1,7 @@
 ---
-name: fact-check
-description: Fact-check a research paper with dual-verified web search
-arguments:
-  - name: files
-    description: File path(s) to the research paper
-    required: true
+description: "Use when the user asks to verify factual claims, quantitative statements, or attributed citations in a paper or document against external evidence."
 ---
 
-# Fact-Check: Dual-Verified Research Paper Verification
+# Fact check
 
-You have been asked to fact-check a research paper. This is a deliberately expensive, token-heavy operation that dual-verifies every claim.
-
-**Input files:** $ARGUMENTS
-
-## Instructions
-
-1. Load the `muna-technical-writer:fact-checking` skill using the Skill tool
-2. Follow the skill's four-phase pipeline exactly:
-   - Phase 1: Extract all verifiable claims
-   - Phase 2: Research-verify each claim batch (web search)
-   - Phase 3: Adversarial-verify each claim batch (web search, parallel with Phase 2)
-   - Phase 4: Reconcile and produce output
-3. Write both output files:
-   - `fact-check-results.json` (structured data)
-   - `fact-check-exceptions.md` (human-readable exceptions only)
-
-**File paths to check:** $ARGUMENTS
-
-Begin by reading the input files, then proceed to Phase 1 (claim extraction).
+Read and apply the [task contract](../../plugins/muna-technical-writer/skills/fact-checking/SKILL.md) at `plugins/muna-technical-writer/skills/fact-checking/SKILL.md`. Use only the references needed for the requested work, preserve existing project constraints and authorization, and report relevant evidence and gaps. This is a repository shortcut; the linked plugin entrypoint is the content authority.

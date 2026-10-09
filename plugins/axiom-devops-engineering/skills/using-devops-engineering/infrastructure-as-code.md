@@ -1,6 +1,6 @@
 ---
 name: infrastructure-as-code
-description: Use when provisioning cloud infrastructure by hand or clicking through a console, when nobody can say what a server's config actually is, when prod and staging have silently diverged, when a "quick fix" was made live and never written down, when terraform plan shows changes nobody made, when state is locked/corrupt/shared from a laptop, when copy-pasted Terraform modules drift apart, or when choosing between Terraform, OpenTofu, and Pulumi — covers declarative desired-state, idempotency, remote state and locking, drift detection, plan/apply review gates, and module design.
+description: "Use when provisioning cloud infrastructure by hand or clicking through a console, when nobody can say what a server's config actually is, when prod and staging have silently diverged, when a \"quick fix\" was made live and never written down, when terraform plan shows changes nobody made, when state is locked/corrupt/shared from a laptop, when copy-pasted Terraform modules drift apart, or when choosing between Terraform, OpenTofu, and Pulumi \u2014 covers declarative desired-state, idempotency, remote state and locking, drift detection, plan/apply review gates, and module design."
 ---
 
 # Infrastructure as Code

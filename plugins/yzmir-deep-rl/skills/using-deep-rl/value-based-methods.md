@@ -1110,23 +1110,7 @@ When you see these, suspect bugs:
 - [ ] **Training loss increasing**: Learning rate too high, divergence
 
 
-## Part 11: Pitfall Rationalization
-
-| Rationalization | Reality | Counter-Guidance | Red Flag |
-|-----------------|---------|------------------|----------|
-| "I'll skip target network, save memory" | Causes instability/divergence | Target network critical, minimal memory cost | "Target network optional" |
-| "DQN works for continuous actions" | Breaks fundamental assumption (enumerate all actions) | Value methods discrete-only, use SAC/TD3 for continuous | Continuous action DQN attempt |
-| "Uniform replay is fine" | Wastes learning on boring transitions | Prioritized replay better, but uniform adequate for many tasks | Always recommending prioritized |
-| "I'll use tiny replay buffer, it's faster" | High correlation, poor learning | 100k+ buffer typical, speed tradeoff acceptable | Buffer < 10k for Atari |
-| "Frame stacking unnecessary, CNN sees motion" | Single frame Markov-violating | Frame stacking required for velocity from pixels | Single frame policy |
-| "Rainbow is just DQN + tricks" | Missing that components solve specific problems | Each component fixes identified issue (overestimation, architecture, sampling) | Jumping to Rainbow without understanding |
-| "Clip rewards, I saw it in a paper" | Clips away important reward information | Only clip for {-1,0,+1} Atari-style, normalize otherwise | Blind reward clipping |
-| "Larger network will learn faster" | Overfitting, slower gradients, memory issues | Standard architecture (32-64-64 CNN) works, don't over-engineer | Unreasonably large networks |
-| "Policy gradient would be simpler here" | Value methods discrete-only right choice | Know when each applies (discrete → value, continuous → policy) | Wrong method choice for action space |
-| "Epsilon decay is a hyperparameter like any other" | decay schedule should match task complexity | Tune decay to problem (game length), not arbitrary | Epsilon decay without reasoning |
-
-
-## Part 12: Pressure Test Scenarios
+## Part 12: Worked failure case
 
 ### Scenario 1: Continuous Action Space
 

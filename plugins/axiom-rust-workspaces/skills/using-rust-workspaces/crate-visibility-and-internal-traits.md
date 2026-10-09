@@ -1,6 +1,6 @@
 ---
 name: crate-visibility-and-internal-traits
-description: Use when deciding which crates in a Rust workspace are public (publishable, semver-stable, externally consumed) and which are internal (workspace-only, refactor-freely), and how to keep internal types from leaking through public crates. Covers `publish = false`, the internal-traits-crate pattern, sealed traits, `doc(hidden)`, semver implications of re-exports, and the discipline that prevents accidental crates.io publication. Produces `06-crate-visibility-and-internals.md`.
+description: "Use when deciding which crates in a Rust workspace are public (publishable, semver-stable, externally consumed) and which are internal (workspace-only, refactor-freely), and how to keep internal types from leaking through public crates. Covers `publish = false`, the internal-traits-crate pattern, sealed traits, `doc(hidden)`, semver implications of re-exports, and the discipline that prevents accidental crates.io publication."
 ---
 
 # Crate Visibility and the Internal-Traits Pattern

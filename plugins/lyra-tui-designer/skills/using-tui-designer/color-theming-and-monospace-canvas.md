@@ -1,6 +1,6 @@
 ---
 name: color-theming-and-monospace-canvas
-description: Use when picking colors for a TUI, hardcoding ANSI escape codes or hex/RGB SGR sequences, defining a theme or color palette, when output looks wrong over SSH or in tmux/screen or on a 16-color terminal, when NO_COLOR / COLORTERM / TERM is set and ignored, when an error is shown as red text only, when box-drawing characters or borders render as garbage (mojibake) or misaligned, when CJK / emoji / combining / wide glyphs truncate or smear a row, when light-terminal users see unreadable low-contrast text, or when "it looked fine on my machine" but breaks on someone else's terminal.
+description: "Use when picking colors for a TUI, hardcoding ANSI escape codes or hex/RGB SGR sequences, defining a theme or color palette, when output looks wrong over SSH or in tmux/screen or on a 16-color terminal, when NO_COLOR / COLORTERM / TERM is set and ignored, when an error is shown as red text only, when box-drawing characters or borders render as garbage (mojibake) or misaligned, when CJK / emoji / combining / wide glyphs truncate or smear a row, when light-terminal users see unreadable low-contrast text, or when \"it looked fine on my machine\" but breaks on someone else's terminal."
 ---
 
 # Color, Theming, and the Monospace Canvas

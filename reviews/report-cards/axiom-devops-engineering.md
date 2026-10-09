@@ -1,3 +1,5 @@
+> Historical review of the version named below; it is not an assessment of marketplace 4.0.0. See [the current consolidation record](../../docs/relevance-refresh.md). Retired pack names and old process requirements are historical.
+
 # Report Card — axiom-devops-engineering
 
 **Version:** 1.2.0 · **Track:** P (Process / Hybrid, borrowing H for the tool/code-bearing sheets) · **Graded:** 2026-06-22

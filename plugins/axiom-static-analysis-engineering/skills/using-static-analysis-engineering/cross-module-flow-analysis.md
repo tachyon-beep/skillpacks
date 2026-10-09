@@ -1,6 +1,6 @@
 ---
 name: cross-module-flow-analysis
-description: Use when the analyzer must propagate lattice values across module / package / project / language boundaries — your application code calls third-party libraries, framework callbacks reach back into your code, plugins load at runtime, or an ML pipeline crosses Python/Rust/C++ boundaries. Covers the module boundary as a first-class lattice operation, function-summary representation at the boundary, hand-written library stubs, framework-callback handling, the precision/soundness/cost triangle for stub libraries, and the boundary-statement discipline. Produces `08-cross-module-flow.md`.
+description: "Use when the analyzer must propagate lattice values across module / package / project / language boundaries \u2014 your application code calls third-party libraries, framework callbacks reach back into your code, plugins load at runtime, or an ML pipeline crosses Python/Rust/C++ boundaries. Covers the module boundary as a first-class lattice operation, function-summary representation at the boundary, hand-written library stubs, framework-callback handling, the precision/soundness/cost triangle for stub libraries, and the boundary-statement discipline."
 ---
 
 # Cross-Module Flow Analysis

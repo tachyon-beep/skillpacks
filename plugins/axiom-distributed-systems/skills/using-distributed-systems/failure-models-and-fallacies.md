@@ -1,6 +1,6 @@
 ---
 name: failure-models-and-fallacies
-description: Use when a design assumes the network is reliable, treats a timeout as proof of death, only handles whole-node crashes, or has never written down what it assumes can fail. Names the fault taxonomy, the eight fallacies, partial and gray failure, and the dead-or-slow problem. The fault model is an input to every other sheet. Produces `02-failure-model.md`.
+description: "Use when a design assumes the network is reliable, treats a timeout as proof of death, only handles whole-node crashes, or has never written down what it assumes can fail. Names the fault taxonomy, the eight fallacies, partial and gray failure, and the dead-or-slow problem. The fault model is an input to every other sheet."
 ---
 
 # Failure Models and the Fallacies

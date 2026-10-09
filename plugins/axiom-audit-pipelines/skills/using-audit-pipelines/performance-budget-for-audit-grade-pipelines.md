@@ -1,6 +1,6 @@
 ---
 name: performance-budget-for-audit-grade-pipelines
-description: Use when sizing the performance budget for an audit-grade pipeline — characterising load, computing per-entry cost, identifying amortisation opportunities (batching, async fan-out, periodic anchoring, checkpointing), and reasoning about burst behaviour without trading correctness for throughput. Produces `10-performance-budget.md`.
+description: "Use when sizing the performance budget for an audit-grade pipeline \u2014 characterising load, computing per-entry cost, identifying amortisation opportunities (batching, async fan-out, periodic anchoring, checkpointing), and reasoning about burst behaviour without trading correctness for throughput."
 ---
 
 # Performance Budget for Audit-Grade Pipelines

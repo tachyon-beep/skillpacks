@@ -1,6 +1,6 @@
 ---
 name: accessibility-in-the-terminal
-description: Use when a TUI signals state with color alone (red = error, green = ok), when you are about to claim a terminal app is "accessible" or "screen-reader friendly" without testing it, when reviewing color choices for color-vision deficiency / contrast / NO_COLOR, when adding animations/spinners/transitions, when state changes off-screen with no non-visual notification, or when keyboard focus is invisible — covers honest screen-reader reality in the terminal, color-blind-safe palettes, 16/256-color contrast, reduced-motion, visible focus, and the NO_COLOR convention.
+description: "Use when a TUI signals state with color alone (red = error, green = ok), when you are about to claim a terminal app is \"accessible\" or \"screen-reader friendly\" without testing it, when reviewing color choices for color-vision deficiency / contrast / NO_COLOR, when adding animations/spinners/transitions, when state changes off-screen with no non-visual notification, or when keyboard focus is invisible \u2014 covers honest screen-reader reality in the terminal, color-blind-safe palettes, 16/256-color contrast, reduced-motion, visible focus, and the NO_COLOR convention."
 ---
 
 # Accessibility in the Terminal

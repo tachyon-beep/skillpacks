@@ -1,6 +1,6 @@
 ---
 name: duckdb-for-analytics
-description: Use when a SQLite database is choking on aggregate queries over millions of rows, when you want to query Parquet files without a server, or when you need OLAP capability alongside an existing SQLite OLTP layer. Covers when DuckDB earns its cost, the OLTP vs OLAP engine choice, the hybrid SQLite+DuckDB pattern with ATTACH, Parquet-without-ingestion, schema design for columnar stores, memory and parallelism settings, and a worked telemetry pipeline example.
+description: "Use when a SQLite database is choking on aggregate queries over millions of rows, when you want to query Parquet files without a server, or when you need OLAP capability alongside an existing SQLite OLTP layer. Covers when DuckDB earns its cost, the OLTP vs OLAP engine choice, the hybrid SQLite+DuckDB pattern with ATTACH, Parquet-without-ingestion, schema design for columnar stores, memory and parallelism settings, and a worked telemetry pipeline example."
 ---
 
 # DuckDB for Analytics

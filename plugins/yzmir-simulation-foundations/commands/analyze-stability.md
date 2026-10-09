@@ -1,210 +1,27 @@
 ---
-description: Analyze equilibrium stability using linearization, Jacobian eigenvalues, and Lyapunov methods
+description: Analyze stability under the required horizon with task-specific source and runtime evidence.
 allowed-tools: ["Read", "Grep", "Glob", "Bash", "Task"]
 argument-hint: "[system_file_or_equations]"
 ---
 
-# Stability Analysis Command
+# Analyze stability under the required horizon
 
-You are analyzing the stability of a dynamical system. Follow the systematic approach: Linearize → Jacobian → Eigenvalues → Classify.
+Apply this command to the requested artifact or failure. Inspect supplied sources and available run evidence before recommending changes. Keep scope proportional; use existing project/runtime conventions and ask only for missing facts that change the result. Additional agents are optional for bounded independent questions.
 
-## Core Principle
+## Task-specific checks
 
-**Formulate first, tune second. Math predicts, empiricism confirms.**
+Extract model/update equations, units, equilibrium/boundaries and timestep policy. Check local conditions and their assumptions, discrete-step amplification and nonlinear/constraint behavior. Compare analytical predictions with bounded perturbation/long-horizon runs; report local, numerical and observed conclusions separately.
 
-Local behavior near equilibria is determined by eigenvalues. Get this right before any simulation tuning.
+## Evidence and deliverable
 
-## Analysis Workflow
+- Cite source paths, configuration/artifact identities and observed results for material claims. Separate confirmed behavior from hypotheses and estimates.
+- Report the result or concrete artifact/change, relevant verification and limits. State checks not run or dimensions that could not be assessed; include risk/uncertainty where it affects a decision.
+- For a review, a supported clean result is valid. Record relevant sweep coverage and counterevidence; never manufacture findings or prescribe a minimum number.
+- Execute writes, workloads and external actions within the user's requested scope and existing authorization. A template does not itself authorize a commit, deployment or expensive run.
 
-### Step 1: Identify the System
+## Optional depth
 
-Search for system definition:
+Use the [pack contract](../skills/using-simulation-foundations/SKILL.md) when broader obligations matter. Select only references that resolve a concrete question; examples are not universal recipes. Verify time-sensitive APIs against the target environment and primary documentation.
 
-```bash
-# Find state derivatives
-grep -rn "dx/dt\|dy/dt\|dv/dt\|def derivative\|def dynamics" --include="*.py"
-
-# Find differential equations
-grep -rn "odeint\|solve_ivp\|RK4\|euler" --include="*.py" -A5
-```
-
-Identify:
-- State variables (x, v, θ, etc.)
-- Parameters (mass, damping, spring constants)
-- Nonlinear terms (sin, x², cross-products)
-
-### Step 2: Find Equilibria
-
-Set all derivatives to zero and solve:
-
-```python
-# For system: dx/dt = f(x, y), dy/dt = g(x, y)
-# Equilibria satisfy: f(x*, y*) = 0 AND g(x*, y*) = 0
-
-from sympy import symbols, solve, Eq
-
-x, y = symbols('x y')
-# Define your system
-f = x * (1 - x) - x * y  # Example: predator-prey
-g = y * (x - 0.5)
-
-equilibria = solve([Eq(f, 0), Eq(g, 0)], [x, y])
-print(f"Equilibria: {equilibria}")
-```
-
-### Step 3: Compute Jacobian
-
-Linearize around each equilibrium:
-
-```python
-from sympy import Matrix, diff
-
-# Jacobian matrix
-J = Matrix([
-    [diff(f, x), diff(f, y)],
-    [diff(g, x), diff(g, y)]
-])
-
-# Evaluate at equilibrium point
-J_at_eq = J.subs([(x, x_eq), (y, y_eq)])
-print(f"Jacobian at ({x_eq}, {y_eq}):")
-print(J_at_eq)
-```
-
-### Step 4: Analyze Eigenvalues
-
-```python
-eigenvalues = J_at_eq.eigenvals()
-print(f"Eigenvalues: {eigenvalues}")
-
-# Classification
-for ev in eigenvalues:
-    re_part = complex(ev).real
-    im_part = complex(ev).imag
-    print(f"  λ = {ev}: Re = {re_part:.4f}, Im = {im_part:.4f}")
-```
-
-### Step 5: Classify Stability
-
-| Eigenvalue Pattern | Classification | Behavior |
-|--------------------|----------------|----------|
-| All Re(λ) < 0, Im = 0 | Stable node | Exponential decay |
-| All Re(λ) < 0, Im ≠ 0 | Stable spiral | Damped oscillation |
-| All Re(λ) > 0, Im = 0 | Unstable node | Exponential growth |
-| All Re(λ) > 0, Im ≠ 0 | Unstable spiral | Growing oscillation |
-| Re(λ) mixed signs | Saddle point | Unstable |
-| Re(λ) = 0, Im ≠ 0 | Center | Periodic orbits (marginal) |
-
-## Quick Reference: Common Systems
-
-### Damped Harmonic Oscillator
-
-```
-ẍ + 2ζωₙẋ + ωₙ²x = 0
-
-Eigenvalues: λ = -ζωₙ ± ωₙ√(ζ² - 1)
-
-ζ < 1: Underdamped (stable spiral)
-ζ = 1: Critically damped (stable node)
-ζ > 1: Overdamped (stable node)
-```
-
-### Lotka-Volterra (Predator-Prey)
-
-```
-ẋ = αx - βxy  (prey)
-ẏ = δxy - γy  (predator)
-
-Equilibrium (γ/δ, α/β): Center (marginally stable)
-Sensitive to numerical integration method!
-```
-
-### Van der Pol Oscillator
-
-```
-ẍ - μ(1 - x²)ẋ + x = 0
-
-μ > 0: Unstable equilibrium, stable limit cycle
-```
-
-## Lyapunov Functions
-
-For systems where linearization fails (center, zero eigenvalues):
-
-```python
-def verify_lyapunov(V, f, g, x, y):
-    """
-    V: Candidate Lyapunov function
-    f, g: System dynamics (dx/dt, dy/dt)
-
-    Stability if:
-    1. V(0,0) = 0
-    2. V(x,y) > 0 for (x,y) ≠ (0,0)
-    3. V̇ = ∂V/∂x·f + ∂V/∂y·g ≤ 0
-    """
-    from sympy import diff
-
-    V_dot = diff(V, x) * f + diff(V, y) * g
-    V_dot_simplified = V_dot.simplify()
-
-    print(f"V = {V}")
-    print(f"V̇ = {V_dot_simplified}")
-
-    # Check if V_dot is negative semidefinite
-    return V_dot_simplified
-```
-
-**Common Lyapunov candidates:**
-- Energy: V = ½(ẋ² + ωₙ²x²)
-- Quadratic: V = ax² + bxy + cy²
-- Logarithmic: V = x - ln(x) + y - ln(y) (for population models)
-
-## Output Format
-
-```markdown
-## Stability Analysis Report
-
-**System**: [Name or equations]
-**State Variables**: [x, y, ...]
-**Parameters**: [α, β, ...]
-
-### Equilibria Found
-1. (x*, y*) = [values]
-2. ...
-
-### Stability Classification
-
-| Equilibrium | Eigenvalues | Type | Stability |
-|-------------|-------------|------|-----------|
-| (0, 0) | λ₁, λ₂ | [type] | [stable/unstable] |
-| ... | ... | ... | ... |
-
-### Phase Portrait Behavior
-- Near [equilibrium]: [description]
-- Global behavior: [description]
-
-### Recommendations
-1. [Numerical integration implications]
-2. [Parameter sensitivity notes]
-3. [Bifurcation warnings if applicable]
-```
-
-## Related Packs
-
-For implementation guidance after the stability analysis — game simulation patterns — route to `bravos-simulation-tactics` (`/simulation-tactics`). If it is not in your available skills, recommend installing it from the skillpacks marketplace.
-
-**In this pack:** `/select-integrator` covers numerical integration selection.
-
-## Scope Boundaries
-
-**This command covers:**
-- Equilibrium finding
-- Jacobian computation
-- Eigenvalue analysis
-- Stability classification
-- Lyapunov function verification
-
-**Not covered:**
-- Numerical integration (use /select-integrator)
-- Game implementation (use bravos-simulation-tactics)
-- Bifurcation diagrams (advanced topic)
+- [stability-analysis](../skills/using-simulation-foundations/stability-analysis.md)
+- [numerical-methods](../skills/using-simulation-foundations/numerical-methods.md)

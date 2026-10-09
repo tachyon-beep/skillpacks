@@ -1,6 +1,6 @@
 ---
 name: composition-and-namespaces
-description: Use when your MCP server runs alongside other MCP servers in one agent's context and tool names collide, when two servers expose `search`/`get`/`list`/`create` and the model picks the wrong one, when a generic tool name shadows another server's tool, when capability negotiation behaves differently per connection, when adding a server silently changes how the model uses yours, when an aggregating gateway flattens several servers into one tool list, or when you cannot predict which servers will be mounted beside you. Covers namespacing, prefix discipline, name-collision resolution, per-connection capability negotiation, aggregation/proxy gateways, and how your surface interacts with surfaces you do not control.
+description: "Use when your MCP server runs alongside other MCP servers in one agent's context and tool names collide, when two servers expose `search`/`get`/`list`/`create` and the model picks the wrong one, when a generic tool name shadows another server's tool, when capability negotiation behaves differently per connection, when adding a server silently changes how the model uses yours, when an aggregating gateway flattens several servers into one tool list, or when you cannot predict which servers will be mounted beside you. Covers namespacing, prefix discipline, name-collision resolution, per-connection capability negotiation, aggregation/proxy gateways, and how your surface interacts with surfaces you do not control."
 ---
 
 # Composition and Namespaces

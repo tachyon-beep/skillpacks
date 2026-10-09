@@ -1,6 +1,6 @@
 ---
 name: cost-and-when-not-to-distribute
-description: Use when a system is being distributed for fashion, FOMO, or "scale" the workload does not have; when a single node plus a managed replicated datastore would do; when reaching for a distributed transaction where one DB transaction suffices; or when no one can say why each distributed choice was made. The honesty sheet. Produces `13-cost-and-boundary.md`.
+description: "Use when a system is being distributed for fashion, FOMO, or \"scale\" the workload does not have; when a single node plus a managed replicated datastore would do; when reaching for a distributed transaction where one DB transaction suffices; or when no one can say why each distributed choice was made. The honesty sheet."
 ---
 
 # Cost and When NOT to Distribute

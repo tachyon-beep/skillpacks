@@ -1,3 +1,5 @@
+> Historical review of the version named below; it is not an assessment of marketplace 4.0.0. See [the current consolidation record](../../docs/relevance-refresh.md). Retired pack names and old process requirements are historical.
+
 # Report Card — meta-sme-protocol
 
 **Version:** 1.1.0 (plugin.json) · **Track:** P (Process / Hybrid — explicitly listed in rubric §3)

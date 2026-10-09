@@ -1,6 +1,6 @@
 ---
 name: decomposition-fundamentals
-description: The five structural properties of a good decomposition — MECE-ish coverage, grain consistency, dependency correctness, reversibility-ordered staging, progressive disclosure — with definitions, signals, and a worked Postgres-setup example showing the bad-and-good versions.
+description: "The five structural properties of a good decomposition \u2014 MECE-ish coverage, grain consistency, dependency correctness, reversibility-ordered staging, progressive disclosure \u2014 with definitions, signals, and a worked Postgres-setup example showing the bad-and-good versions."
 ---
 
 # Decomposition Fundamentals

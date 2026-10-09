@@ -1,6 +1,6 @@
 ---
 name: compilation-manifests-and-reproducibility
-description: Use when recording what a tensor compiler did — every pass, kernel choice, flag, version and environment pin — so that recompilation is deterministic and any behavioural difference between two artifacts can be traced to a specific decision. Read when "why does this artifact behave differently?" has no answer.
+description: "Use when recording what a tensor compiler did \u2014 every pass, kernel choice, flag, version and environment pin \u2014 so that recompilation is deterministic and any behavioural difference between two artifacts can be traced to a specific decision. Read when \"why does this artifact behave differently?\" has no answer."
 ---
 
 # Compilation Manifests and Reproducibility

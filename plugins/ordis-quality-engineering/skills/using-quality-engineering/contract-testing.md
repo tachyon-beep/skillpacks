@@ -1,6 +1,6 @@
 ---
 name: contract-testing
-description: Use when implementing Pact contracts, choosing consumer-driven vs provider-driven approaches, handling breaking API changes, setting up contract brokers, or preventing service integration issues - provides tool selection, anti-patterns, and workflow patterns
+description: "Use when implementing Pact contracts, choosing consumer-driven vs provider-driven approaches, handling breaking API changes, setting up contract brokers, or preventing service integration issues - provides tool selection, anti-patterns, and workflow patterns"
 ---
 
 # Contract Testing

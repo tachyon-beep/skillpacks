@@ -1,6 +1,6 @@
 ---
 name: multi-seed-coordination-rl
-description: Use when multiple seeds compete for the same slot or interact during integration — coordination between controllers, slot-allocation policy, and the multi-agent RL shape (cooperative vs competitive) that the morphogenesis system implicitly requires.
+description: "Use when multiple seeds compete for the same slot or interact during integration \u2014 coordination between controllers, slot-allocation policy, and the multi-agent RL shape (cooperative vs competitive) that the morphogenesis system implicitly requires."
 ---
 
 # Multi-Seed Coordination in RL
@@ -313,21 +313,6 @@ The hysteresis *parameters* — `cooldown_self`, `cooldown_neighbor`, the neighb
 | No cross-slot hysteresis | Rollback at A immediately followed by attempt at neighbor B | Neighbor graph + `cooldown_neighbor` in governor |
 | Per-seed value heads trained on per-seed pseudo-rewards | Implicit competitive dynamics | One critic on global return |
 | Treating K seeds as a multi-agent RL problem from the start | All the costs of MARL with none of the benefits | Single-agent framing first; reach for MARL only if the problem genuinely is multi-agent |
-
----
-
-## Rationalization Resistance
-
-| Rationalization | Reality | Counter-Guidance |
-|-----------------|---------|------------------|
-| "I'll just run K independent PPO agents — it's simpler" | Simpler to write, harder to make work. Compound non-stationarity, no joint budget enforcement, no correlated-decision capability. | One factored policy. K independent policies is a regression from the single-controller baseline, not an advance. |
-| "Whoever has highest probability wins on contention" | The policy now controls the governor's tie-break. It will learn to inflate confidence on whichever slot it most wants to grow. Same anti-pattern as the controller-disables-gate. | Tie-break uses per-event RNG, not policy output. |
-| "Per-seed reward shaping will help with credit assignment" | It distributes the global signal in a way that creates competition among cooperative seeds. Credit assignment without competition requires counterfactual replay, not per-seed reward. | Single global reward. Use counterfactual replay for credit. |
-| "MARL is more general — let's use it for flexibility" | Generality without need is overhead. MARL solves problems your system does not have and introduces stationarity issues your system would otherwise avoid. | Single-policy factored action until you have evidence it cannot represent the decision. |
-| "Random tie-breaks will average out over training" | They average over many runs; they do not reproduce a single run. Replay, ablation, and debugging all break. | Deterministic per-event RNG. |
-| "Each seed should have its own value head for sample efficiency" | A value head as a function approximator is fine. A value head trained on a per-seed pseudo-reward is competitive shaping in disguise. | Joint value head, or per-seed heads trained on the same global return. |
-| "Budget contention is rare; let the policy figure it out" | It is rare in late training because the policy has learned to avoid it. It is common in early training, which is when it destroys runs. | Governor enforces budget pre-flight from step 1. |
-| "Cross-slot hysteresis will slow exploration" | Yes, intentionally, near a known instability. The alternative is repeated rollbacks at related slots. | Cross-slot hysteresis on; tune `cooldown_neighbor` if too aggressive. |
 
 ---
 

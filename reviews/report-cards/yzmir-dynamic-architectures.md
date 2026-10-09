@@ -1,3 +1,5 @@
+> Historical review of the version named below; it is not an assessment of marketplace 4.0.0. See [the current consolidation record](../../docs/relevance-refresh.md). Retired pack names and old process requirements are historical.
+
 # Report Card — yzmir-dynamic-architectures
 
 **Version:** 1.3.0 (plugin.json)  **Track:** H — Hard / Technical (yzmir AI/ML)

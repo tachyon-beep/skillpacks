@@ -1,13 +1,13 @@
 ---
 name: sagas-and-distributed-transactions
-description: Use when a business operation must stay correct across multiple services or databases without a global ACID transaction — symptoms include "update the DB then publish an event", 2PC across microservices, half-finished workflows, ghost or lost messages after a crash, or rolling back work already committed elsewhere. Produces `08-transaction-spec.md`.
+description: "Use when a business operation must stay correct across multiple services or databases without a global ACID transaction \u2014 symptoms include \"update the DB then publish an event\", 2PC across microservices, half-finished workflows, ghost or lost messages after a crash, or rolling back work already committed elsewhere."
 ---
 
 # Sagas and Distributed Transactions
 
 ## Overview
 
-**There is no global ACID transaction across services; there is only a sequence of local transactions plus an explicit plan for what happens when one of them fails.** A saga is that plan: a sequence of local transactions, each with a compensating action that semantically undoes it. The companion problem is the dual write — updating a database and publishing a message as two separate operations — which the transactional outbox solves by making "change state" and "emit event" a single local transaction.
+**When independently committing services do not share a transaction coordinator, correctness requires an explicit plan for partial local commits.** Distributed transactions exist, but impose participant, coordination and availability constraints; assess them against the operation contract. A saga is that plan: a sequence of local transactions, each with a compensating action that semantically undoes it. The companion problem is the dual write — updating a database and publishing a message as two separate operations — which the transactional outbox solves by making "change state" and "emit event" a single local transaction.
 
 This sheet covers why 2PC/XA is usually wrong across services, orchestration vs choreography sagas, compensation design, the dual-write bug and the outbox/inbox cure, CDC as an alternative, the isolation anomalies sagas inherit from giving up ACID-I, and the saga lifecycle (timeouts, retries, dead-letter, transaction classification). The deliverable is `08-transaction-spec.md`. Required at tier M+.
 
@@ -32,7 +32,7 @@ Do not use this sheet for:
 
 ## Core Principle
 
-> Across a service boundary you do not get atomicity for free — you choose between blocking everyone (2PC) and tolerating intermediate states (sagas). Pick sagas, make every step's compensation idempotent, and never let "write state" and "emit event" be two separate operations.
+> Across a service boundary you do not get atomicity for free — you choose between blocking everyone (2PC) and tolerating intermediate states (sagas). Choose from the required isolation, participant support and failure/availability contract. For sagas, make compensation explicit and idempotent; for dual writes, use an outbox or another justified atomicity/reconciliation protocol.
 
 ## Why 2PC/XA Is Usually the Wrong Answer
 

@@ -1,6 +1,6 @@
 ---
 name: idempotency-and-deduplication
-description: Use when a retried request might run twice — double charges, duplicate orders, repeated emails, double-applied writes — or when someone claims a broker gives "exactly-once" and skips defensive design. Covers exactly-once effect via idempotency keys, dedup tables, idempotent consumers, and the at-least-once-plus-idempotent recipe. Produces `07-idempotency-spec.md`.
+description: "Use when a retried request might run twice \u2014 double charges, duplicate orders, repeated emails, double-applied writes \u2014 or when someone claims a broker gives \"exactly-once\" and skips defensive design. Covers exactly-once effect via idempotency keys, dedup tables, idempotent consumers, and the at-least-once-plus-idempotent recipe."
 ---
 
 # Idempotency and Deduplication

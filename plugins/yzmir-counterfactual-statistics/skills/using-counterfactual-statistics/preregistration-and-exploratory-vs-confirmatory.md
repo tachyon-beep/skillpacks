@@ -1,6 +1,6 @@
 ---
 name: preregistration-and-exploratory-vs-confirmatory
-description: Use before launching a confirmatory experiment, when deciding what may change after seeing data, or when an exploratory finding is about to be reported as a confirmed one. Covers the pre-registration artifact, frozen thresholds and cost weights, the researcher degrees of freedom that inflate error rates, and how to amend a plan honestly.
+description: "Use before launching a confirmatory experiment, when deciding what may change after seeing data, or when an exploratory finding is about to be reported as a confirmed one. Covers the pre-registration artifact, frozen thresholds and cost weights, the researcher degrees of freedom that inflate error rates, and how to amend a plan honestly."
 ---
 
 # Pre-registration and Exploratory vs Confirmatory

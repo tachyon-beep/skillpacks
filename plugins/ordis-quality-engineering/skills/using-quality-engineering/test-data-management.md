@@ -1,6 +1,6 @@
 ---
 name: test-data-management
-description: Use when fixing flaky tests from data pollution, choosing between fixtures and factories, setting up test data isolation, handling PII in tests, or seeding test databases - provides isolation strategies and anti-patterns
+description: "Use when fixing flaky tests from data pollution, choosing between fixtures and factories, setting up test data isolation, handling PII in tests, or seeding test databases - provides isolation strategies and anti-patterns"
 ---
 
 # Test Data Management

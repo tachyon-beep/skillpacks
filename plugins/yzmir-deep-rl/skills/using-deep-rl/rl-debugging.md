@@ -34,7 +34,7 @@ Invoke this skill when you encounter:
 **The most important insight in RL debugging:**
 
 ```
-80% of RL failures are in:
+Check these common failure boundaries:
   1. Environment design (agent can't see true state)
   2. Reward function (misaligned or wrong scale)
   3. Observation/action representation (missing information)
@@ -1360,22 +1360,6 @@ MINOR RED FLAGS (Watch for patterns):
 [ ] Agent behavior seems random even late in training
     → Check: Entropy not decaying, exploration not stopping
 ```
-
-
-## Part 8: Rationalization Resistance
-
-| Rationalization | Reality | Counter-Guidance |
-|-----------------|---------|------------------|
-| "Higher learning rate will speed up learning" | Can cause instability, often slows learning | Start with 3e-4, measure effect, don't assume |
-| "Bigger network always learns better" | Oversized networks overfit, slow training | Start small (64-256 units), increase only if needed |
-| "Random seed doesn't matter, RL is random anyway" | High variance indicates instability, not inherent randomness | Run 5+ seeds, variance should be low, not high |
-| "I'll try all hyperparameters (grid search)" | Combinatorial explosion, wastes time, no diagnosis | Check environment/reward FIRST, then tune one param at a time |
-| "Adding regularization helps unstable training" | Regularization is for overfitting, not instability | Instability usually LR or reward scale, not overfitting |
-| "My algorithm is broken" | 80% chance environment, reward, or observation is broken | Check those FIRST before blaming algorithm |
-| "More training always helps" | If reward plateaus, more training won't help | Check if training converged, if not why |
-| "Skip observation normalization, network will learn to normalize" | Network should not spend capacity learning normalization | Normalize observations before network |
-| "Test with epsilon > 0 to reduce variance" | Test should use learned policy, exploration harms test | Use greedy policy at test time |
-| "If loss doesn't decrease, algorithm is broken" | More likely: reward scale wrong, gradient clipping needed | Check reward scale, enable gradient clipping before changing algorithm |
 
 
 ## Key Takeaways

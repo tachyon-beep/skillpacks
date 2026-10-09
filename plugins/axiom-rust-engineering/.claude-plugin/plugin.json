@@ -1,7 +1,7 @@
 {
   "name": "axiom-rust-engineering",
-  "version": "1.2.0",
-  "description": "Modern Rust (2024 edition) engineering: ownership, borrowing, lifetimes, traits and generics, async (tokio), testing, clippy/cargo tooling, performance/unsafe/FFI soundness, AI/ML interop (PyO3, candle). Router skill + 11 reference sheets, 5 commands, 3 agents.",
+  "version": "2.0.0",
+  "description": "Use for Rust-specific ownership/API, async cancellation, unsafe/FFI soundness, feature/toolchain compatibility, diagnostics, packaging or profiling problems in a real crate.",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"
