@@ -1,6 +1,6 @@
 ---
 name: grouped-splits-and-leakage
-description: Use when assigning data to roles in a multi-stage experiment, when a random split might put two derived samples from the same source on both sides, or when a held-out number looks too good. Covers the four data roles, grouped splitting by generating unit, the leakage taxonomy, and detectors that catch each class.
+description: "Use when assigning data to roles in a multi-stage experiment, when a random split might put two derived samples from the same source on both sides, or when a held-out number looks too good. Covers the four data roles, grouped splitting by generating unit, the leakage taxonomy, and detectors that catch each class."
 ---
 
 # Grouped Splits and Leakage

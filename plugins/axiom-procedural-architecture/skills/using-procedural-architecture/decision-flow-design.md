@@ -1,6 +1,6 @@
 ---
 name: decision-flow-design
-description: When to force a decision now versus defer it; information-readiness gating; escape-hatch discipline for "Other"; re-asking under state change. Producer-side sheet — owns where decision points are placed and whether they fire. The critic-side mirror is branching-and-mece-review.md.
+description: "When to force a decision now versus defer it; information-readiness gating; escape-hatch discipline for \"Other\"; re-asking under state change. Producer-side sheet \u2014 owns where decision points are placed and whether they fire. The critic-side mirror is branching-and-mece-review.md."
 ---
 
 # Decision Flow Design

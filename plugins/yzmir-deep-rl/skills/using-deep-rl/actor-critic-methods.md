@@ -1506,7 +1506,7 @@ Transfer learning: Pre-train on many tasks, fine-tune on new task
 ```
 
 
-## Part 12: Rationalization Common Mistakes
+## Part 12: Failure modes Common Mistakes
 
 Users often make systematic errors in actor-critic reasoning. Here's how to prevent them:
 
@@ -1654,21 +1654,6 @@ if step % N == 0:
 Hard update can cause temporary divergence when copied. Soft update is smoother.
 
 **Reality**: Soft update is preferred. Use τ ≈ 0.005 for continuous stability.
-
-
-## Part 13: Rationalization Decision Table
-
-When users ask "Should I use X or Y?", use this table:
-
-| Question | A | B | Decision |
-|----------|---|---|----------|
-| Stochastic or Deterministic? | Stochastic (SAC) | Deterministic (TD3) | Both valid, SAC more robust |
-| Off-policy or On-policy? | Off-policy (SAC/TD3) | On-policy (A2C) | Off-policy for sample efficiency |
-| Sample efficiency critical? | Yes (SAC/TD3) | No (A2C) | Use off-policy if data expensive |
-| Manual tuning tolerance? | Minimal (SAC) | Moderate (TD3) | SAC: fewer hyperparameters |
-| Exploration strategy? | Entropy (SAC) | Policy smoothing (TD3) | SAC: automatic entropy |
-| Computation budget? | Higher (SAC) | Lower (TD3) | SAC: slightly more, worth it |
-| First time AC method? | SAC (recommended) | TD3 (alternative) | Start with SAC |
 
 
 ## Part 14: Common Pitfall Deep Dives

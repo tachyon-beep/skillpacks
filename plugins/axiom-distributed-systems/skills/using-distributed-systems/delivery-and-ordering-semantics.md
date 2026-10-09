@@ -1,6 +1,6 @@
 ---
 name: delivery-and-ordering-semantics
-description: Use when designing message/event delivery between services or through a queue and someone says "exactly-once", "in order", or "we won't get duplicates" — pins at-least/at-most/effectively-once, what ordering is and is NOT guaranteed, redelivery and visibility-timeout reality, poison-message handling, and where the outbox sits. Produces `09-delivery-spec.md`.
+description: "Use when designing message/event delivery between services or through a queue and someone says \"exactly-once\", \"in order\", or \"we won't get duplicates\" \u2014 pins at-least/at-most/effectively-once, what ordering is and is NOT guaranteed, redelivery and visibility-timeout reality, poison-message handling, and where the outbox sits."
 ---
 
 # Delivery and Ordering Semantics

@@ -1,6 +1,6 @@
 ---
 name: frontier-and-reliability-reporting
-description: Use when writing up a counterfactual experiment, when a single mean is about to stand in for a distribution, or when null and negative results are being quietly dropped. Covers the reliability report (mean, median, IQR, worst decile, failure rate, all with CIs over units), quality-cost-stability Pareto frontiers, and negative results as first-class output.
+description: "Use when writing up a counterfactual experiment, when a single mean is about to stand in for a distribution, or when null and negative results are being quietly dropped. Covers the reliability report (mean, median, IQR, worst decile, failure rate, all with CIs over units), quality-cost-stability Pareto frontiers, and negative results as first-class output."
 ---
 
 # Frontier and Reliability Reporting

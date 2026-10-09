@@ -1,6 +1,6 @@
 ---
 name: schema-migrations
-description: Use when changing a SQLite schema — adding constraints, changing column types, dropping columns on pre-3.35 builds, or building a versioned migration runner. Covers the 12-step rebuild-table pattern, user_version and application_id discipline, migration-as-code tradeoffs, three required tests per migration version, and anti-patterns that silently corrupt or stall a migration.
+description: "Use when changing a SQLite schema \u2014 adding constraints, changing column types, dropping columns on pre-3.35 builds, or building a versioned migration runner. Covers the 12-step rebuild-table pattern, user_version and application_id discipline, migration-as-code tradeoffs, three required tests per migration version, and anti-patterns that silently corrupt or stall a migration."
 ---
 
 # Schema Migrations

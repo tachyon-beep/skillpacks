@@ -1,6 +1,6 @@
 ---
 name: callgraph-construction
-description: Use when Phase 3 of the inference pipeline (`three-phase-inference.md`) needs an actual callgraph and the language has features that make construction non-trivial — virtual dispatch, dynamic imports, decorators that rewrite the callable, monkey-patching, `getattr`/`__getattr__`, `eval`, callable objects, plug-in loaders. Covers resolution strategies (name-based, type-based, points-to-driven), the conservativeness ladder, monomorphisation, dynamic-feature handling, and how the chosen resolution depth shows up as a soundness/completeness statement in `99-`. Produces `07-callgraph-construction.md`.
+description: "Use when Phase 3 of the inference pipeline (`three-phase-inference.md`) needs an actual callgraph and the language has features that make construction non-trivial \u2014 virtual dispatch, dynamic imports, decorators that rewrite the callable, monkey-patching, `getattr`/`__getattr__`, `eval`, callable objects, plug-in loaders. Covers resolution strategies (name-based, type-based, points-to-driven), the conservativeness ladder, monomorphisation, dynamic-feature handling, and how the chosen resolution depth shows up as a soundness/completeness statement in `99-`."
 ---
 
 # Callgraph Construction

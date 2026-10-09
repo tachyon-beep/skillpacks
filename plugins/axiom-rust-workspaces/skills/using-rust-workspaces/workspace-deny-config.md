@@ -1,6 +1,6 @@
 ---
 name: workspace-deny-config
-description: Use when configuring `cargo deny` at workspace scope — supply-chain policy across the union of every crate's transitive deps. Covers the four `deny.toml` sections (advisories, licenses, bans, sources), how each one composes at workspace scale, the waiver / exception lifecycle, and the relationship to per-crate `axiom-rust-engineering:audit`. Produces `04-workspace-deny-config.md`.
+description: "Use when configuring `cargo deny` at workspace scope \u2014 supply-chain policy across the union of every crate's transitive deps. Covers the four `deny.toml` sections (advisories, licenses, bans, sources), how each one composes at workspace scale, the waiver / exception lifecycle, and the relationship to per-crate `axiom-rust-engineering:audit`."
 ---
 
 # Workspace `deny.toml` Configuration

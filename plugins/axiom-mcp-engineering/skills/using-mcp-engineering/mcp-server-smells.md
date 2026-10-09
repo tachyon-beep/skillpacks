@@ -1,6 +1,6 @@
 ---
 name: mcp-server-smells
-description: Use when an MCP server's tools confuse or get misused by an agent, when CRUD-named tools mirror database tables, when errors arrive as stack traces or "internal server error", when an agent cannot fill a required parameter, when a tool result blows the context budget or gets truncated, when retries double-execute a side effect, when a schema changed without a capability bump, when tool names collide with another server, or when you cannot decide whether something should be a tool or a resource — the catalogued anti-pattern smell list and critic checklist for MCP tool surfaces.
+description: "Use when an MCP server's tools confuse or get misused by an agent, when CRUD-named tools mirror database tables, when errors arrive as stack traces or \"internal server error\", when an agent cannot fill a required parameter, when a tool result blows the context budget or gets truncated, when retries double-execute a side effect, when a schema changed without a capability bump, when tool names collide with another server, or when you cannot decide whether something should be a tool or a resource \u2014 the catalogued anti-pattern smell list and critic checklist for MCP tool surfaces."
 ---
 
 # MCP Server Smells
@@ -161,7 +161,7 @@ This catalog is authoritative for smell naming. Severity is contextual — a `re
 
 ### 10. Tool-That-Should-Be-A-Resource
 
-**Symptom.** Static or slowly-changing context is exposed as a **tool** the agent must remember to call, instead of as a resource the host attaches automatically. Signal: a zero-or-trivial-argument tool like `get_project_readme()`, `get_coding_conventions()`, `get_schema_doc()` that returns the same content every time. Tighter signal: the agent forgets to call it and reasons without context it should always have had.
+**Symptom.** Static or slowly-changing context is exposed as a **tool** the agent must remember to call, instead of using a resource where the actual host supports reliable attachment. Signal: a zero-or-trivial-argument tool like `get_project_readme()`, `get_coding_conventions()`, `get_schema_doc()` that returns the same content every time. Tighter signal: the agent forgets to call it and reasons without context it should always have had.
 
 **Why it hurts.** Making the agent *call* for context it always needs adds a turn, a retry surface, and a forgetting-failure: if the model does not think to call `get_coding_conventions()`, it writes code that violates them. Context the agent should *always* have should be *attached*, not *requested*. It also pollutes the tool namespace (smell 8) with pseudo-tools and inflates the tool list the model has to scan on every turn, which dilutes attention on the tools that actually do things.
 
@@ -338,13 +338,13 @@ The decision rule that resolves both: **who chooses the arguments, and when?** H
 
 ## Common Mistakes
 
-- **Running the catalog as a vibe-check, not a list.** "I looked and it seems fine" is not running the catalog. Enumerate all ten against every tool; a smell you did not name is a smell you did not check. The Gate treats "no smells found" without enumeration as a skipped (= failed) check.
+- **Unsupported coverage claims.** State which tools/concerns were inspected and which were not. Use the relevant catalog entries for the requested scope; do not call unread areas clean.
 - **Treating a smell as a confirmed bug.** A smell is *probable* trouble, not certain trouble. Every entry has a false-positive check for a reason. Record why a smell is acceptable here; do not "fix" a paginated detail-tool that was already correct.
 - **Auditing the server in isolation and declaring namespace clean.** Smell 8 is invisible alone. You must audit against the real multi-server deployment, or at minimum against the host's actual rendered tool list.
 - **Confusing technical-looking with unfillable.** A `cursor` looks technical and is perfectly fillable (the agent has it from the last page). An `internal_user_id` looks similar and is not. The test is *can the agent obtain this value from context?*, not *does it look like an identifier?*
 - **Fixing retry-amplification at the agent layer.** "We told the agent not to retry" is not a fix; hosts and networks retry regardless of the agent's intent. Idempotency lives on the server.
 - **Findings without severity or evidence.** A critic finding that does not name the tool, quote the schema/trace, and rate severity is a vibe. The producer cannot act on it and the disagreement record is empty.
-- **Zero architect-critic disagreement and calling it a pass.** Per the router: if the critic agrees with everything, the critic is reading the surface the way the architect wrote it. A clean run on a non-trivial surface is evidence of theatre, not health.
+- **Unsupported review conclusions.** Require scope, evidence and checks behind findings or a clean result. Agreement alone establishes neither rigor nor theatre.
 
 ---
 
@@ -367,11 +367,11 @@ If you catch yourself or a teammate saying any of these, stop and run the releva
 ## Counters to the Rationalizations for Skipping This Pass
 
 - *"The surface is small, I can eyeball it."* — Smells 4, 6, and 7 are invisible to eyeballing because they fire under conditions (impossible arguments, retries, cached contracts) you are not simulating when you read the list. Small surfaces still ship retry-amplification.
-- *"We have tests, so the smells would show up."* — Only if the tests are golden conversations that exercise retries, rare arguments, and large inputs. A happy-path smoke test ("it worked once") passes over smells 5 and 6 entirely. See `testing-mcp-servers.md`.
+- *"We have tests, so the smells would show up."* — Only if tests exercise the relevant retries, rare arguments and large inputs; frozen calls test response contracts, while model tasks test interpretation. A happy-path smoke test ("it worked once") passes over smells 5 and 6 entirely. See `testing-mcp-servers.md`.
 - *"The model is smart enough to handle ambiguity."* — Tool selection (smells 1, 8) and error recovery (smell 3) are exactly the places where "smart enough" varies by model version and by phrasing. Designing for the smart case is designing for a non-deterministic best case you do not control.
-- *"This is the same as REST review, our API people already looked at it."* — REST review assumes a human reads the docs and writes client code once. Every smell in this catalog is about an LLM reading the surface on every turn with no human in the loop. REST review structurally cannot catch them; that asymmetry is the whole point of this pack (see the router's pipeline contrast with `/web-backend`).
+- *"This is the same as REST review, our API people already looked at it."* — Ordinary API review can cover permissions, retries and contract drift. Add MCP-specific checks for negotiated host support, model-visible intent, discovery and real task interpretation.
 - *"We'll fix smells when they cause incidents."* — Smells 6 and 7 cause *silent* incidents (duplicate side effects, contract drift) that surface as a customer complaint or a corrupted counter weeks later, with no stack trace pointing back to the cause. The catalog is cheaper than the forensics.
-- *"The critic found nothing, so we're clean."* — A no-finding critic pass on a non-trivial surface is a defect of the critic, not a property of the server. Re-run with a fresh frame; the absence of disagreement between architect and critic is itself a red flag.
+- *"The critic found nothing, so all behavior is proven."* — A clean review supports only its inspected scope and checks. Report evidence and limits; do not manufacture findings or rerun solely to force disagreement.
 
 ---
 

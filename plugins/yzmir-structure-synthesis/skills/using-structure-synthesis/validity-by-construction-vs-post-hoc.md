@@ -1,6 +1,6 @@
 ---
 name: validity-by-construction-vs-post-hoc
-description: Use when deciding how much illegality to prevent by grammar-constrained decoding versus catching after generation with a verifier - the cost/coverage tradeoff, and why a post-hoc structural verifier remains mandatory even when decoding is fully constrained.
+description: "Use when deciding how much illegality to prevent by grammar-constrained decoding versus catching after generation with a verifier - the cost/coverage tradeoff, and why a post-hoc structural verifier remains mandatory even when decoding is fully constrained."
 ---
 
 # Validity by Construction vs. Post-Hoc
@@ -80,16 +80,6 @@ print(f"local-only total={local_total} (over budget) | budget-aware total={aware
 ```
 
 Carrying the budget through decoding fixes *this* property. It does not fix every global property a grammar might declare — a shape contract requiring the final node's output to match the declared input shape, for instance, can depend on a choice made at the very last step in a way no earlier mask can fully anticipate without lookahead the decoder doesn't have. That is why `structural-verification.md`'s full checklist still runs on every completed candidate, even one produced by budget-aware constrained decoding. Constrained decoding reduces how often the verifier finds something wrong; it does not reduce the verifier's job description.
-
-## Rationalization Resistance
-
-| Rationalization | Reality |
-|---|---|
-| "Every token our decoder offers is grammar-legal, so the output must be legal" | Local legality at every step does not compose into global legality for properties that are sums, contracts, or lookahead-dependent |
-| "We don't need a verifier, decoding already handles it" | Decoding at best matches the properties someone remembered to encode into the mask; the verifier is the place those omissions get caught before they cost anything downstream |
-| "Constrained decoding is strictly better, so more constraints in the mask is always good" | Every constraint carried through decoding adds state and cost to every step, even for candidates that would never have violated it; put only what's cheap and genuinely local in the mask |
-| "The verifier is redundant if decoding already enforces the same rule" | Decode-time masks have their own bugs (see the RED scenario); a verifier that re-checks a decode-time-enforced property is a regression test for the decoder, not redundant work |
-| "This property is global, so it can only be checked post-hoc, no point trying to constrain it in decoding" | Some global properties (running totals, prefix-derivable contracts) can be carried through decoding cheaply — check before assuming it can't be done |
 
 ## Red Flags Checklist
 

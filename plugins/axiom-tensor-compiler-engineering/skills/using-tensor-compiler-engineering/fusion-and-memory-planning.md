@@ -1,6 +1,6 @@
 ---
 name: fusion-and-memory-planning
-description: Use when deciding whether a fusion is legal, optimising layout, constant folding, or planning memory and buffer reuse in a tensor compiler — and when establishing how each optimisation earns its entry in the compilation manifest.
+description: "Use when deciding whether a fusion is legal, optimising layout, constant folding, or planning memory and buffer reuse in a tensor compiler \u2014 and when establishing how each optimisation earns its entry in the compilation manifest."
 ---
 
 # Fusion and Memory Planning

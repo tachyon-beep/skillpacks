@@ -1,6 +1,6 @@
 ---
 name: torch-fx-capture-and-transformation
-description: Use when capturing a model or IR into torch.fx and transforming it — symbolic tracing, fx.Graph surgery, writing and composing passes, GraphModule round-trips — and when tracing fails or misbehaves on control flow, dynamic shapes, or in-place operations.
+description: "Use when capturing a model or IR into torch.fx and transforming it \u2014 symbolic tracing, fx.Graph surgery, writing and composing passes, GraphModule round-trips \u2014 and when tracing fails or misbehaves on control flow, dynamic shapes, or in-place operations."
 ---
 
 # torch.fx Capture and Transformation

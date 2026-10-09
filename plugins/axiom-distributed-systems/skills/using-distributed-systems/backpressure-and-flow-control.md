@@ -1,6 +1,6 @@
 ---
 name: backpressure-and-flow-control
-description: Use when a service buffers work it cannot drain — growing queues, climbing tail latency, OOM under load spikes, retry storms amplifying overload, or a slow dependency dragging the whole system down. Names unbounded queues, missing load shedding, strict-FIFO collapse, and coordinated omission. Produces `11-backpressure-spec.md`.
+description: "Use when a service buffers work it cannot drain \u2014 growing queues, climbing tail latency, OOM under load spikes, retry storms amplifying overload, or a slow dependency dragging the whole system down. Names unbounded queues, missing load shedding, strict-FIFO collapse, and coordinated omission."
 ---
 
 # Backpressure and Flow Control

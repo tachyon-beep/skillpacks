@@ -1,6 +1,6 @@
 ---
 name: multiple-comparisons-and-sequential-testing
-description: Use when a trial produces many p-values across candidates, horizons, and metrics, when someone peeks at results mid-run and stops early, or when choosing between familywise and false-discovery control. Covers family definition, Bonferroni/Holm/BH, alpha spending for interim looks, and why peeking without a boundary invalidates the nominal alpha.
+description: "Use when a trial produces many p-values across candidates, horizons, and metrics, when someone peeks at results mid-run and stops early, or when choosing between familywise and false-discovery control. Covers family definition, Bonferroni/Holm/BH, alpha spending for interim looks, and why peeking without a boundary invalidates the nominal alpha."
 ---
 
 # Multiple Comparisons and Sequential Testing

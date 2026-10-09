@@ -1,6 +1,6 @@
 ---
 name: paired-comparison-methods
-description: Use when comparing an intervention against a control that was run from the same starting state, when choosing between paired t / Wilcoxon / bootstrap, or when someone runs a two-sample test on data that was collected in pairs. Covers zero-anchored controls, the aggregate-then-test rule, distribution-free alternatives, and the conditions under which pairing silently breaks.
+description: "Use when comparing an intervention against a control that was run from the same starting state, when choosing between paired t / Wilcoxon / bootstrap, or when someone runs a two-sample test on data that was collected in pairs. Covers zero-anchored controls, the aggregate-then-test rule, distribution-free alternatives, and the conditions under which pairing silently breaks."
 ---
 
 # Paired Comparison Methods

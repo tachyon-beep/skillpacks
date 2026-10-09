@@ -1,6 +1,6 @@
 ---
 name: versioned-policy-parameters
-description: Use when a threshold, weight, operating point, tie-break preference, hysteresis band, staleness budget, or escalation criterion lives as a code constant or config literal — or when retuning one, when a decision record carries a schema version but nothing says which rules produced it, when an incident tempts a formula edit to cope with a missing input, when admission and retention gates on the same quantity flap, or when two decision paths each hold their own copy of "the" weight. Covers policy records, decision-side version binding, veto-versus-weight parameters, deliberate hysteresis, and shared-term identity.
+description: "Use when a threshold, weight, operating point, tie-break preference, hysteresis band, staleness budget, or escalation criterion lives as a code constant or config literal \u2014 or when retuning one, when a decision record carries a schema version but nothing says which rules produced it, when an incident tempts a formula edit to cope with a missing input, when admission and retention gates on the same quantity flap, or when two decision paths each hold their own copy of \"the\" weight. Covers policy records, decision-side version binding, veto-versus-weight parameters, deliberate hysteresis, and shared-term identity."
 ---
 
 # Versioned Policy Parameters

@@ -1,7 +1,7 @@
 {
   "name": "axiom-python-engineering",
-  "version": "1.8.0",
-  "description": "Modern Python 3.12+ engineering with uv-first tooling: types (mypy / pyright / ty / pyrefly), testing, async, scientific computing, ML workflows, Textual TUI. Includes 10 reference sheets, 4 commands (delint, profile, typecheck, create-project-scaffold), 3 agents (python-code-reviewer, delinting-specialist, refactoring-architect).",
+  "version": "2.0.0",
+  "description": "Use for Python-specific compatibility, type/lint repair, cancellation/resource handling, profiling, packaging or Textual lifecycle issues that need focused checks against a real project.",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

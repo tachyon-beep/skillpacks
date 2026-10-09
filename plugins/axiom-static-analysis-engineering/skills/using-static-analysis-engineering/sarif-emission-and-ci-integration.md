@@ -1,6 +1,6 @@
 ---
 name: sarif-emission-and-ci-integration
-description: Use when the analyzer must integrate with CI / code-review tooling — GitHub Code Scanning, GitLab Code Quality, Azure DevOps, Jenkins, IDE extensions — and the integration discipline matters: SARIF (Static Analysis Results Interchange Format) as the lingua franca, exit-code semantics that distinguish "error", "infrastructure failure", and "config error", suppression round-tripping (manifest waivers ↔ SARIF suppressions ↔ inline comments), severity mapping, fingerprint stability across runs, baseline comparison, and the GitHub Code Scanning idioms that the format does and does not specify. Produces `11-sarif-and-ci.md`.
+description: "Use when the analyzer must integrate with CI / code-review tooling \u2014 GitHub Code Scanning, GitLab Code Quality, Azure DevOps, Jenkins, IDE extensions \u2014 and the integration discipline matters: SARIF (Static Analysis Results Interchange Format) as the lingua franca, exit-code semantics that distinguish \"error\", \"infrastructure failure\", and \"config error\", suppression round-tripping (manifest waivers \u2194 SARIF suppressions \u2194 inline comments), severity mapping, fingerprint stability across runs, baseline comparison, and the GitHub Code Scanning idioms that the format does and does not specify."
 ---
 
 # SARIF Emission and CI Integration

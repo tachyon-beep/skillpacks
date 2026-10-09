@@ -1,6 +1,6 @@
 ---
 name: task-runner-patterns
-description: Use when designing the task-runner layer for a Rust workspace — `justfile` (the recommended modern default), cargo aliases (`.cargo/config.toml`), shell scripts under `scripts/`, or some combination. Covers the ergonomics tradeoffs, the CI-symmetry rule, the recipe-naming conventions that survive a year of maintenance, and the "one command does everything" trap. Produces `11-task-runner-patterns.md`.
+description: "Use when designing the task-runner layer for a Rust workspace \u2014 `justfile` (the recommended modern default), cargo aliases (`.cargo/config.toml`), shell scripts under `scripts/`, or some combination. Covers the ergonomics tradeoffs, the CI-symmetry rule, the recipe-naming conventions that survive a year of maintenance, and the \"one command does everything\" trap."
 ---
 
 # Task-Runner Patterns

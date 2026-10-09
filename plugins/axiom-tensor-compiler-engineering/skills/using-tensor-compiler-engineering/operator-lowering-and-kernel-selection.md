@@ -1,6 +1,6 @@
 ---
 name: operator-lowering-and-kernel-selection
-description: Use when mapping IR operators onto target operations — decompositions, dtype and device dispatch, choosing among kernels under a declared numerical contract, and designing fallback paths that fail loudly rather than silently changing precision or device.
+description: "Use when mapping IR operators onto target operations \u2014 decompositions, dtype and device dispatch, choosing among kernels under a declared numerical contract, and designing fallback paths that fail loudly rather than silently changing precision or device."
 ---
 
 # Operator Lowering and Kernel Selection

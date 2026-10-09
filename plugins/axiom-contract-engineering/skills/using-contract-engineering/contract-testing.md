@@ -1,6 +1,6 @@
 ---
 name: contract-testing
-description: Use when a contract has a test suite that passes while producers and consumers disagree in production, when reviewing tests that build their fixtures from the schema's own constructors, when a version bump or unit change shipped green, when absence, rejection, or authority paths appear in the schema but never in the tests, or when someone asks what a boundary's test suite must contain before the contract can be trusted. Covers golden per-version wire fixtures, meaning-pinning hashes, absence-path and fail-closed version-gate tests, equivalence/separation property tests, schema-invalid rejection, authority and blinded-view canaries, resolver replay, and the coverage rule.
+description: "Use when a contract has a test suite that passes while producers and consumers disagree in production, when reviewing tests that build their fixtures from the schema's own constructors, when a version bump or unit change shipped green, when absence, rejection, or authority paths appear in the schema but never in the tests, or when someone asks what a boundary's test suite must contain before the contract can be trusted. Covers golden per-version wire fixtures, meaning-pinning hashes, absence-path and fail-closed version-gate tests, equivalence/separation property tests, schema-invalid rejection, authority and blinded-view canaries, resolver replay, and the coverage rule."
 ---
 
 # Contract Testing

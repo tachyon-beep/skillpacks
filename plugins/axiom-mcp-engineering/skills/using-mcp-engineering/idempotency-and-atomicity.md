@@ -1,6 +1,6 @@
 ---
 name: idempotency-and-atomicity
-description: Use when an MCP tool double-executes after a network blip, a timeout, or an agent retry; when two concurrent tool calls corrupt shared state, lost-update or interleave; when you cannot answer "was that one execution or four?"; when a side-effecting tool has no idempotency guarantee, no idempotency key, no expected_version, no claim lease; when retries amplify side effects (charges twice, posts twice, increments twice); when a tool needs exactly-once-under-retry semantics or a stated concurrency contract.
+description: "Use when an MCP tool double-executes after a network blip, a timeout, or an agent retry; when two concurrent tool calls corrupt shared state, lost-update or interleave; when you cannot answer \"was that one execution or four?\"; when a side-effecting tool has no idempotency guarantee, no idempotency key, no expected_version, no claim lease; when retries amplify side effects (charges twice, posts twice, increments twice); when a tool needs exactly-once-under-retry semantics or a stated concurrency contract."
 ---
 
 # Idempotency and Atomicity
@@ -262,7 +262,7 @@ The **fencing token** is the non-obvious part. A holder whose lease expired (it 
 
 ## State a concurrency contract per tool
 
-The router's gate is explicit: **"Undefined" is a defect, not a contract.** A concurrency contract answers three questions in one or two sentences, in the tool description:
+The declared contract is explicit: **"Undefined" is a defect, not a contract.** A concurrency contract answers three questions in one or two sentences, in the tool description:
 
 1. **Safe to call concurrently with itself?** (e.g. "yes, serialised on `idempotency_key`" / "yes, optimistic-locked on `expected_version`" / "no, undefined behaviour — host must serialise.")
 2. **Safe to call concurrently with related tools?** (e.g. "`close_issue` and `update_issue` on the same id race; close wins via the same version check.")
@@ -308,7 +308,7 @@ If any of these are true, stop and fix before shipping:
 
 ## For the critic
 
-When auditing for this sheet, produce **finding / severity / evidence** triples (per the SME Agent Protocol and the router's gate):
+When auditing this concern, report actionable finding / consequence / evidence and relevant severity within the inspected scope:
 
 - **blocker** — a side-effecting tool with a real-money / irreversible effect (charge, deploy, delete, external post) and no idempotency mechanism. Evidence: the handler source showing an unconditional side effect, plus the absent guarantee word in the manifest.
 - **major** — read-modify-write tool with no `expected_version` / CAS; TTL lease without fencing; dedup record and side effect in separate transactions; concurrency contract stated as "undefined."

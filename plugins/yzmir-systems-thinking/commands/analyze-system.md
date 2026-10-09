@@ -1,235 +1,28 @@
 ---
-description: Initiate systematic systems analysis with pattern recognition, archetype matching, and intervention design
+description: Analyze a recurring system problem with task-specific source and runtime evidence.
 allowed-tools: ["Read", "Grep", "Glob", "Bash", "Task", "Write", "AskUserQuestion"]
 argument-hint: "[problem_description_or_domain]"
 ---
 
-# Analyze System Command
+# Analyze a recurring system problem
 
-You are initiating a systematic systems analysis. Follow the layered workflow to understand complex, interconnected problems and design effective interventions.
+Apply this command to the requested artifact or failure. Inspect supplied sources and available run evidence before recommending changes. Keep scope proportional; use existing project/runtime conventions and ask only for missing facts that change the result. Additional agents are optional for bounded independent questions.
 
-## Core Principle
+## Task-specific checks
 
-**Small shifts at high leverage points beat massive efforts at low leverage points.**
+Define decision/boundary/horizon and observed behavior. Construct only the causal or stock-flow model needed; distinguish evidence from assumptions and test alternatives. Compare intervention scenarios with parameter bounds/sensitivity; produce a falsifiable recommendation rather than an obligatory archetype or crisis date.
 
-Systems are governed by archetypal structures. Recognize the pattern, apply the known intervention.
+## Evidence and deliverable
 
-## When to Use Systems Thinking
+- Cite source paths, configuration/artifact identities and observed results for material claims. Separate confirmed behavior from hypotheses and estimates.
+- Report the result or concrete artifact/change, relevant verification and limits. State checks not run or dimensions that could not be assessed; include risk/uncertainty where it affects a decision.
+- For a review, a supported clean result is valid. Record relevant sweep coverage and counterevidence; never manufacture findings or prescribe a minimum number.
+- Execute writes, workloads and external actions within the user's requested scope and existing authorization. A template does not itself authorize a commit, deployment or expensive run.
 
-**Use this when:**
-- Problems persist despite repeated fixes
-- Solutions create new problems (unintended consequences)
-- System behavior is counter-intuitive
-- Multiple stakeholders with conflicting incentives
-- Long delays between action and result
-- "The harder we push, the harder the system pushes back"
+## Optional depth
 
-**Don't use when:**
-- Simple, isolated problems with clear cause-effect
-- One-time decisions with immediate results
-- Pure optimization without feedback dynamics
+Use the [pack contract](../skills/using-systems-thinking/SKILL.md) when broader obligations matter. Select only references that resolve a concrete question; examples are not universal recipes. Verify time-sensitive APIs against the target environment and primary documentation.
 
-## Systematic Analysis Workflow
-
-### Phase 1: Pattern Recognition (15-30 min)
-
-**Goal:** Identify the dominant patterns driving behavior
-
-1. **Identify key variables** (states, not actions)
-   - What can increase or decrease?
-   - What accumulates over time?
-
-2. **Map feedback loops**
-   - Reinforcing (R): Amplifies change
-   - Balancing (B): Resists change
-
-3. **Find delays**
-   - Where does action → result take time?
-   - Information delays? Material delays?
-
-4. **Recognize signatures**
-   - S-curve growth? Oscillation? Death spiral?
-
-### Phase 2: Archetype Matching (20-30 min)
-
-**Goal:** Match to known patterns with proven solutions
-
-**Check against 10 archetypes:**
-
-| Pattern | Signature |
-|---------|-----------|
-| Fixes that Fail | Solution works temporarily, returns worse |
-| Shifting the Burden | Quick fix prevents fundamental solution |
-| Escalation | Two parties making it worse |
-| Success to the Successful | Winner gets more resources |
-| Tragedy of the Commons | Individual optimization degrades shared resource |
-| Accidental Adversaries | Good intentions, mutual harm |
-| Drifting Goals | Standards erode from complacency |
-| Limits to Growth | Growth stops at constraint |
-| Growth and Underinvestment | Growth stops from underinvestment |
-| Eroding Goals | Standards erode from pressure |
-
-**Diagnostic questions for each archetype** guide identification.
-
-**Note:** Drifting Goals and Eroding Goals are one canonical archetype (the literature uses the names interchangeably); this pack splits them by driver because the interventions differ. See systems-archetypes-reference for the caveat.
-
-### Phase 3: Quantitative Analysis (45-60 min)
-
-**Goal:** Calculate concrete predictions
-
-Using stocks-and-flows modeling:
-- What is current state?
-- What is rate of change?
-- When will crisis/opportunity hit?
-- What is equilibrium?
-
-**Output:** Specific numbers (e.g., "6.7 weeks to crisis at current rate")
-
-### Phase 4: Leverage Point Identification (20-30 min)
-
-**Goal:** Find high-impact intervention points
-
-**Meadows' hierarchy (weakest to strongest):**
-12. Parameters (numbers, budgets)
-11. Buffers (reserve capacity)
-10. Structure (physical systems)
-9. Delays (feedback timing)
-8. Balancing loops (error correction)
-7. Reinforcing loops (amplification)
-6. Information flows (visibility)
-5. Rules (incentives, constraints)
-4. Self-organization (evolution)
-3. Goals (system purpose)
-2. Paradigms (mental models)
-1. Transcending paradigms
-
-**Rule:** Generate alternatives at multiple levels before choosing.
-
-### Phase 5: Intervention Design (30 min)
-
-**Goal:** Design actionable interventions
-
-For each proposed intervention:
-- What leverage level?
-- What archetype does it address?
-- Prerequisites required?
-- Expected resistance?
-- Time to impact?
-
-### Phase 6: Communication Prep (30 min)
-
-**Goal:** Create stakeholder-ready outputs
-
-**Behavior-over-time graphs:**
-- Current trajectory
-- Intervention scenario
-- With concrete numbers and dates
-
-## Analysis Output Format
-
-```markdown
-# Systems Analysis: [Problem Domain]
-
-## Executive Summary
-[2-3 sentences: Pattern identified, key insight, recommended intervention]
-
-## Pattern Recognition
-
-### Key Variables
-- [Variable 1]: [Description, measurement]
-- [Variable 2]: [Description, measurement]
-
-### Feedback Loops
-- R1: [Description of reinforcing loop]
-- B1: [Description of balancing loop]
-
-### Delays
-- [Delay 1]: [Duration, impact]
-
-## Archetype Match
-
-**Primary:** [Archetype name]
-**Evidence:** [Why this pattern matches]
-**Known intervention:** [What works for this archetype]
-
-**Secondary (if applicable):** [Archetype name]
-
-## Quantitative Predictions
-
-- Current state: [Value]
-- Rate of change: [Value/time]
-- Crisis timing: [Date/duration]
-- Equilibrium: [Value if no intervention]
-
-## Leverage Analysis
-
-| Level | Intervention | Expected Impact | Risk |
-|-------|--------------|-----------------|------|
-| [#] | [Description] | [Impact] | [Risk] |
-
-## Recommended Intervention
-
-**Primary action:** [Description]
-**Leverage level:** [#] - [Level name]
-**Why this level:** [Justification]
-
-**Prerequisites:**
-- [What must be in place first]
-
-**Expected resistance:**
-- [Where pushback will come from]
-
-**Timeline:**
-- [When impact expected]
-
-## Behavior Over Time
-
-[ASCII graph or description showing trajectories]
-
-## Limitations
-
-- [What wasn't analyzed]
-- [Confidence gaps]
-- [Recommended deeper analysis]
-```
-
-## Time-Constrained Analysis
-
-**For 60-minute deadline:**
-
-| Time | Activity |
-|------|----------|
-| 0-15 min | Pattern recognition (key variables, loops) |
-| 15-35 min | Archetype matching (check signatures) |
-| 35-50 min | Leverage points (generate 3+ options) |
-| 50-60 min | Summary + recommended intervention |
-
-**Output:** Pattern + archetype + recommended intervention
-**Trade-off:** No quantitative modeling
-
-## Related Packs
-
-If the analysis needs to move beyond conceptual systems thinking, hand off to a sibling pack: `/simulation-foundations` (yzmir-simulation-foundations) for numerically implementing stock/flow models, and `/system-architect` (axiom-system-architect) for code-level architecture assessment.
-
-## Red Flags - Stop and Reconsider
-
-| Thought | Response |
-|---------|----------|
-| "Just add more resources" | Resource additions are lowest leverage (Level 12) |
-| "This isn't a system, it's simple" | Persistent "simple" problems have hidden loops |
-| "We don't have time for analysis" | Wrong action makes crisis worse |
-| "Our situation is unique" | Most recurring problems match a known archetype |
-
-## Scope Boundaries
-
-**This command covers:**
-- Pattern recognition
-- Archetype matching
-- Leverage point identification
-- Intervention design
-- Stakeholder communication prep
-
-**Not covered:**
-- Detailed stock-flow calculations (use /map-dynamics)
-- Implementation planning (use project management)
-- Code architecture (use axiom-system-architect)
+- [causal-loop-diagramming](../skills/using-systems-thinking/causal-loop-diagramming.md)
+- [stocks-and-flows-modeling](../skills/using-systems-thinking/stocks-and-flows-modeling.md)
+- [leverage-points-mastery](../skills/using-systems-thinking/leverage-points-mastery.md)

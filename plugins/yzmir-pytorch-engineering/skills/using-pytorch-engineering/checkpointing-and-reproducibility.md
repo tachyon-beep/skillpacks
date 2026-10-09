@@ -1782,24 +1782,6 @@ set_seed(42)
 ```
 
 
-## Rationalization Resistance
-
-### Table: Shortcuts vs Consequences
-
-| Rationalization | Why It Seems Right | Actual Consequence | Counter-Argument |
-|----------------|-------------------|-------------------|-----------------|
-| "Just save model_state_dict, that's the important part" | Model weights are the "learned" part | Optimizer momentum buffers lost, training diverges on resume. SGD without momentum ≠ SGD with momentum. | Optimizer state contains momentum buffers (SGD momentum, Adam first/second moments). Without this, optimizer effectively resets, changing training dynamics. Example: Adam optimizer state is often 2x model size. |
-| "torch.manual_seed(42) makes results reproducible" | PyTorch controls model randomness | cuDNN uses non-deterministic algorithms by default. NumPy/Python seeds not set. Results vary across runs. | Requires 7 seeds: torch CPU, torch CUDA, numpy, python, cuDNN deterministic, cuDNN benchmark, PYTHONHASHSEED. Missing any breaks reproducibility. |
-| "Checkpointing is simple, don't overthink" | Save occasionally, load when needed | Missing scheduler → LR resets. Missing RNG states → data order differs. Off-by-one → re-runs epoch. Training diverges. | Checkpointing has 10+ components and 5+ pitfalls. Each omission causes different failure mode. Need systematic checklist, not "simple" approach. |
-| "Save every epoch to be safe" | More checkpoints = more recovery points | Disk fills up (100 epochs * 500MB = 50GB). I/O overhead slows training. Most checkpoints never used. | Strategic saving (best + last + periodic) provides same recovery capability with 10-20x less storage. Cleanup policy essential. |
-| "Rank 0 saves, that's all I need to know for DDP" | One rank saving prevents conflicts | Without dist.barrier(), rank 0 may save mid-step. Other ranks continue, gradients out of sync. Checkpoint inconsistent. | Need barrier BEFORE (sync training step) and AFTER (wait for save). Also need model.module.state_dict() to unwrap DDP. 3+ DDP-specific considerations. |
-| "strict=False handles version incompatibility" | Loads despite key mismatches | Missing keys = uninitialized parameters. Model may forward successfully but outputs are wrong. Silent failure. | Must LOG missing/unexpected keys and VALIDATE model output. strict=False is last resort after understanding incompatibility. |
-| "RNG states don't matter much" | Randomness averages out | Data augmentation differs, affecting training. Dropout differs, affecting gradients. Initialization differs. Results not reproducible. | RNG states control data order, augmentation, dropout, initialization. Without restoration, resume follows different random trajectory, breaking reproducibility and potentially convergence. |
-| "I'll checkpoint after I finish debugging" | Don't want checkpoint code cluttering debug | Training crashes at epoch 47, lose all progress. Or checkpoint code added hastily, incomplete, causes resume issues. | Implement checkpointing FIRST as part of training loop. Debugging with checkpoints allows resuming after OOM/crashes. Later addition is rushed and error-prone. |
-| "Model-only checkpoints are sufficient" | Can always retrain optimizer from checkpoint | Optimizer without momentum buffers has different convergence. Fine-tuning from checkpoint diverges. | Model-only checkpoints are fine for inference or transfer learning (new optimizer anyway). For resuming SAME training run, need full checkpoint with optimizer/scheduler. |
-| "Cloud storage is too slow for checkpoints" | Local disk is faster | Local disk full → training stops. Hardware failure → checkpoints lost. No backup strategy. | Save locally for speed, async sync to cloud for backup. Best of both: fast local access, cloud durability. Losing checkpoints from 2-week training is unacceptable. |
-
-
 ## Red Flags: Checkpoint Issues Checklist
 
 When reviewing checkpointing implementation or debugging checkpoint-related issues, watch for these red flags:

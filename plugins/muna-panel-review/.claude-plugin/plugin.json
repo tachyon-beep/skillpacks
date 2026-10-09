@@ -1,7 +1,7 @@
 {
   "name": "muna-panel-review",
-  "version": "0.4.1",
-  "description": "Simulated audience panel review \u2014 persona-driven editorial intelligence for document suites. 3 agents (persona-reader, panel-synthesiser, persona-designer), 1 orchestration skill, 3 slash commands.",
+  "version": "1.0.0",
+  "description": "Use for optional staged synthetic reader reviews: precommitted expectations, controlled exposure and evidence-linked hypotheses requiring human validation.",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

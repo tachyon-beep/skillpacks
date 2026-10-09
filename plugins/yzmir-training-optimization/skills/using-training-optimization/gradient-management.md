@@ -2343,40 +2343,6 @@ clip_grad_norm_(model.parameters(), max_norm=5.0)  # Clips outliers only
 ```
 
 
-## Rationalization Prevention Table
-
-| When Agent Wants To Say | STOP - Say This Instead |
-|-------------------------|-------------------------|
-| "Just lower the learning rate" | "This is likely exploding gradients. Add gradient clipping: `clip_grad_norm_(model.parameters(), max_norm=1.0)` BEFORE optimizer.step(). Then adjust LR if still needed." |
-| "Try a smaller model to save memory" | "Use gradient accumulation to train with larger effective batch size: Scale loss by `accumulation_steps` and update every N batches. This is standard practice." |
-| "Gradient accumulation is complicated" | "It's actually simple: `(loss / accumulation_steps).backward()` to accumulate, `optimizer.step()` every N batches. MUST scale loss - this is critical." |
-| "Mixed precision doesn't work with clipping" | "AMP + clipping work together perfectly. You MUST unscale before clipping: `scaler.unscale_(optimizer)` then `clip_grad_norm_()`. This is documented and standard." |
-| "Your gradients are too small, just increase LR" | "This is vanishing gradients. Architectural fixes are needed: Use ReLU/GELU activations, proper initialization (He/Xavier), BatchNorm, and residual connections. Increasing LR alone won't fix it." |
-| "Clipping is a hack, don't use it" | "Clipping is standard practice in Transformers, RNNs, and RL. Every major paper (BERT, GPT, etc.) uses gradient clipping. It's essential for training stability, not a hack." |
-| "The paper didn't use clipping, so you shouldn't" | "Papers don't always document all techniques. Clipping may have been used but not mentioned. If you observe instability (NaN, spikes), add clipping regardless of what paper says." |
-| "Try different optimizer, maybe SGD works better" | "Switching optimizer doesn't fix exploding gradients. Add gradient clipping first, then compare optimizers. Clipping works with any optimizer." |
-| "Gradient issues are mysterious and hard to debug" | "Gradient issues are systematic: Check gradient norms. >100 = exploding (clip). <1e-6 = vanishing (fix activations/init). NaN = numerical instability (check loss/model). Clear diagnosis → clear solution." |
-| "You can clip anytime in the training loop" | "Clipping MUST happen after backward(), before step(). Timing is critical: backward() creates gradients, clip() modifies them, step() consumes them. Wrong order = useless clipping." |
-| "Scale gradients instead of loss for accumulation" | "Scale LOSS, not gradients: `(loss / accumulation_steps).backward()`. Scaling gradients manually is error-prone and inefficient. Loss scaling is the standard, correct way." |
-| "Batch norm is optional for deep networks" | "BatchNorm is critical for very deep networks (>20 layers). It normalizes activations and stabilizes gradients. Essential for training stability. Use unless you have specific reason not to." |
-| "Residual connections are just a fancy trick" | "Residual connections are fundamental to training deep networks (>50 layers). They provide direct gradient path, preventing vanishing gradients. ResNet, Transformer - all use residuals." |
-| "Just clip more aggressively (max_norm=0.01)" | "Too-aggressive clipping limits all gradients, slowing learning. Monitor typical gradient norms. Set max_norm to clip outliers (>100) without affecting normal gradients (1-10)." |
-| "DDP handles everything automatically" | "DDP synchronizes gradients on backward(). For accumulation, use `model.no_sync()` on intermediate steps to avoid unnecessary synchronization. Only sync on final accumulation step." |
-| "Your model is too complex, that's why training fails" | "Model complexity alone doesn't cause training failure. Gradient issues do. Diagnose gradients first. Most complex models (GPT-3, etc.) train successfully with proper gradient management." |
-| "Checkpointing and clipping don't work together" | "They're fully compatible. Checkpoint affects forward/backward computation. Clipping affects gradients after backward(). No interaction - use both together freely." |
-| "You need expensive GPUs for large batches" | "Use gradient accumulation for larger effective batches on any GPU. Accumulate over N steps = N× batch size, same memory. Standard technique for training large models on consumer hardware." |
-| "Loss → NaN means your data has NaN" | "Usually exploding gradients, not data. Check gradient norms. If >100, add clipping. Data NaN would cause issues immediately, not after several epochs." |
-| "Transformers just don't train stably" | "Transformers train extremely well with proper gradient management. BERT, GPT, T5 - all trained successfully. Use gradient clipping (max_norm=1.0), proper LR, and you'll have stable training." |
-| "Clipping is expensive, will slow training significantly" | "Clipping overhead is <1%, not 5-10%. It's computing gradient norms (one pass) then scaling. Much cheaper than backward pass. 1% cost to prevent catastrophic training failure is excellent trade-off." |
-| "I added clipping but still get NaN, it doesn't work" | "Check if loss is NaN BEFORE backward(). If yes, problem is in loss function (add epsilon to divisions/logs), not gradients. If no, check clipping placement and AMP unscaling." |
-| "Accumulation scaling depends on batch content" | "NO. Accumulation scaling is ALWAYS `accumulation_steps` (constant). Sample weighting is separate concern (handled in loss function). Don't confuse these two independent concepts." |
-| "Paper doesn't mention clipping, so I shouldn't use it" | "Papers don't document all implementation details. Clipping may have been used but not mentioned. Check official code if available. If your training is unstable, add clipping - stable training is prerequisite for valid comparison." |
-| "Different sources give conflicting advice on clipping" | "Context matters. Transformers/RNNs usually need clipping. CNNs usually don't. Decide based on YOUR architecture and stability. Monitor gradient norms. If you see spikes >100 or NaN, add clipping. Empiricism over dogma." |
-| "Use PyTorch Lightning so I need to manually add clipping" | "Lightning has built-in clipping: `Trainer(gradient_clip_val=1.0, gradient_clip_algorithm='norm')`. No manual code needed. Check your framework docs - most have built-in gradient management features." |
-| "My model is complex so gradients will always be problematic" | "Model complexity doesn't determine gradient behavior. GPT-3 (175B parameters) trains successfully. Proper gradient management (clipping, architecture, initialization) enables training ANY size model. Complexity is not the issue." |
-| "Small gradients mean training is broken" | "Only if training is stuck. If loss is decreasing and metrics improving, small absolute gradient values are OK. What matters: relative gradients across layers and whether learning is happening. Don't fix what isn't broken." |
-
-
 ## Red Flags Checklist
 
 When you see these patterns, IMMEDIATELY suggest gradient management solutions:

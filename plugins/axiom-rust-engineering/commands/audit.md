@@ -1,65 +1,20 @@
 ---
-description: Run cargo-audit and cargo-deny to check advisories, licenses, bans, and sources
+description: "Audit for the affected rust engineering contract, with scoped source and verification evidence."
 allowed-tools: ["Read", "Edit", "Bash", "Skill"]
 argument-hint: "[workspace root] - defaults to current directory"
 ---
 
-# Audit Command
+# Audit
 
-Run `cargo audit` (RustSec advisories) and `cargo deny check` (advisories, licenses, bans, sources) for supply-chain hygiene.
+Carry out the requested task within existing authorization and policy. Scaffolding applies to an authorized new component; preserve existing project state.
 
-## Prerequisites
+## Work
 
-- `cargo audit` and `cargo deny` installed: `cargo install cargo-audit cargo-deny`
-- `deny.toml` committed at the workspace root. If missing, bootstrap with `cargo deny init` and tighten the allowlist/bans before running the audit — see `project-structure-and-tooling.md` for a complete template.
+1. Establish the requested result, affected artifacts, consumers and existing constraints. Ask only for information that materially changes the result and cannot be established from context.
+2. Read the [pack contract](../skills/using-rust-engineering/SKILL.md) and only the reference sections needed for this task.
+3. Use the crate edition, MSRV, features and targets. Trace ownership, errors, cancellation and unsafe invariants where affected. Resolve diagnostics without broad suppression and verify relevant downstream/target behavior.
+4. Complete the bounded task. Use focused checks that distinguish the relevant failure; broaden only when the affected boundary requires it. Do not manufacture unrelated reports, tests or reviewer assignments.
 
-## Process
+## Result
 
-1. **Run `cargo audit`**
-
-   ```bash
-   cargo audit --json
-   ```
-
-   Each finding shows the RUSTSEC ID, affected crate, version range, severity, and fix.
-
-2. **Run `cargo deny check`**
-
-   ```bash
-   cargo deny check advisories licenses bans sources
-   ```
-
-   | Check | Catches |
-   |-------|---------|
-   | advisories | Known CVEs and unmaintained crates |
-   | licenses | GPL, proprietary, or disallowed licenses |
-   | bans | Crates blacklisted by the policy |
-   | sources | Git/path dependencies outside the allowlist |
-
-3. **Triage each finding**
-   - **Critical/High advisories**: upgrade (`cargo update <crate>`) or replace the dependency. Re-run step 1.
-   - **License violations**: swap to a permissive-licensed alternative, or add an `exceptions` entry with legal-review justification.
-   - **Bans**: replace with the approved alternative listed in `deny.toml`.
-   - **Unknown sources**: move the dependency to a released crates.io version, or add it to `allow-git` with an explanation.
-   - **Unmaintained / yanked** with no fix available: add to `[advisories] ignore` with a `reason` comment explaining why it is acceptable.
-
-## Success Criteria
-
-The audit is complete when:
-
-- `cargo audit --json` exits 0.
-- `cargo deny check advisories licenses bans sources` exits 0.
-- Every `ignore` entry or `exceptions` entry added to `deny.toml` in this pass carries a comment stating the justification.
-
-**Report back**: list each finding, its severity, and the action taken (upgraded, replaced, waived with reason, or deferred with a ticket reference).
-
-## Load Detailed Guidance
-
-For supply-chain threat patterns, `deny.toml` design, and CI integration:
-
-```
-Load skill: axiom-rust-engineering:using-rust-engineering
-Then read: project-structure-and-tooling.md
-```
-
-References: <https://rustsec.org>, <https://embarkstudios.github.io/cargo-deny/>
+Lead with the outcome. Give paths/source evidence for material claims, executed checks and results, and unresolved assumptions or unavailable checks. For reviews, order findings by impact and identify the concrete trigger and consequence; do not treat absence of findings as an audit failure. Distinguish recommendation, local implementation/test evidence and external acceptance. Match any output format required by the caller.

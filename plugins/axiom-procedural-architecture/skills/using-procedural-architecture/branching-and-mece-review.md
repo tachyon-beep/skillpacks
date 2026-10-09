@@ -1,6 +1,6 @@
 ---
 name: branching-and-mece-review
-description: Critic-side audit of a decision point's option set — the four MECE/branching checks (coverage, mutual exclusivity, escape-hatch discipline, fake branches), the audit procedure, and the finding output format. Worked cloud-storage wizard example with three subtly-broken decision points produces four findings.
+description: "Critic-side audit of a decision point's option set \u2014 the four MECE/branching checks (coverage, mutual exclusivity, escape-hatch discipline, fake branches), the audit procedure, and the finding output format. Worked cloud-storage wizard example with three subtly-broken decision points produces four findings."
 ---
 
 # Branching and MECE Review

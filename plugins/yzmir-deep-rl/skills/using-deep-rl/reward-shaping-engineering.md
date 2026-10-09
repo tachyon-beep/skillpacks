@@ -873,7 +873,7 @@ def validate_reward_function(reward_fn, env, agent_class, n_trials=5):
 | Learning suddenly stops | Reward scale issue | Check normalization |
 
 
-## Part 9: Common Pitfalls and Rationalizations
+## Part 9: Common Pitfalls and Failure modes
 
 ### Pitfall 1: "Let me just add distance reward"
 

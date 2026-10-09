@@ -16,7 +16,7 @@ Invoke this skill when you need to:
 - **Enforce Action Bounds**: Properly clip or scale actions
 - **Catch Common Pitfalls**: Avoid 10+ common environment implementation mistakes
 
-**Core Problem**: Environments are the foundation of RL training. Broken environments cause 80% of RL failures, but environment bugs are often missed because they don't error—they silently break training. This skill systematically teaches correct environment design and provides a debugging methodology.
+**Core Problem**: Environments are the foundation of RL training. Environment bugs can silently corrupt training without raising an error; establish environment semantics before interpreting learning curves. This skill systematically teaches correct environment design and provides a debugging methodology.
 
 ## Do NOT Use This Skill For
 
@@ -1333,52 +1333,7 @@ envs.close()  # or use try/finally
 ```
 
 
-## Part 9: Rationalization Resistance
-
-**Common Wrong Beliefs About Environments:**
-
-**Claim 1**: "My custom environment should just work without testing"
-
-- **Reality**: 80% of RL failures are environment bugs. Test before training.
-- **Evidence**: Standard validation checklist catches bugs 95% of the time
-
-**Claim 2**: "Reward scaling doesn't matter, only matters for learning rate"
-
-- **Reality**: Reward scale affects gradient magnitudes directly. Too large = instability.
-- **Evidence**: Scaling reward by 100x often breaks training even with correct learning rate
-
-**Claim 3**: "Wrappers are optional complexity I don't need"
-
-- **Reality**: Wrappers enforce separation of concerns. Without them, environments become unmaintainable.
-- **Evidence**: Real RL code uses 3-5 wrappers (TimeLimit, Normalize, ClipAction, etc)
-
-**Claim 4**: "Vectorized environments are always faster"
-
-- **Reality**: Parallelization overhead for small envs can make them slower.
-- **Evidence**: For cheap envs (CartPole), SyncVectorEnv beats AsyncVectorEnv — IPC per step costs more than the env step itself
-
-**Claim 5**: "My environment is correct if the agent learns something"
-
-- **Reality**: Agent can learn to game a broken reward signal.
-- **Evidence**: Agent learning ≠ environment correctness. Run tests.
-
-**Claim 6**: "AsyncVectorEnv doesn't need explicit close()"
-
-- **Reality**: Processes leak if not closed, draining system resources.
-- **Evidence**: Unmanaged AsyncVectorEnv with 16+ processes brings systems to halt
-
-**Claim 7**: "Observation normalization breaks training"
-
-- **Reality**: Unnormalized large observations (like [0, 255]) break training.
-- **Evidence**: Normalizing [0, 255] images to [0, 1] is standard practice
-
-**Claim 8**: "I don't need to validate action space enforcement"
-
-- **Reality**: Network outputs can violate bounds, causing physics errors.
-- **Evidence**: Unclipped continuous actions often cause simulation failures
-
-
-## Part 10: Pressure Test Scenarios
+## Part 10: Worked failure case
 
 ### Scenario 1: Custom Environment Debugging
 
@@ -1866,7 +1821,7 @@ class EnvironmentDebugger:
 
 **This skill prevents:**
 
-- 80% of RL bugs (environment issues)
+- Environment contract failures
 - Silent training failures from broken environments
 - Vectorization-related data corruption
 - Observation/action space mismatches

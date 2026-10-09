@@ -1,6 +1,6 @@
 ---
 name: differential-equations-for-games
-description: Formulating and solving ordinary differential equations for game systems - physics, ecosystems, resource flows, AI behaviour, and economy dynamics
+description: "Formulating and solving ordinary differential equations for game systems - physics, ecosystems, resource flows, AI behaviour, and economy dynamics"
 ---
 
 # Differential Equations for Games
@@ -1825,7 +1825,7 @@ def test_performance_budget():
 ```
 
 
-## REFACTOR Phase: Pressure Testing with Real Scenarios
+## Worked failure case with Real Scenarios
 
 ### Scenario 1: Rimworld Ecosystem Collapse
 
@@ -2275,7 +2275,7 @@ for year in range(50):
 **RED Failure Resolved**: Economy stable across player counts, no manual tuning needed.
 
 
-### REFACTOR Summary: Validation Results
+### Summary: Validation Results
 
 | Scenario | RED Failure | GREEN Solution | Result |
 |----------|-------------|----------------|--------|

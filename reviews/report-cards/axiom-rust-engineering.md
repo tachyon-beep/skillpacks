@@ -1,3 +1,5 @@
+> Historical review of the version named below; it is not an assessment of marketplace 4.0.0. See [the current consolidation record](../../docs/relevance-refresh.md). Retired pack names and old process requirements are historical.
+
 # Report Card — axiom-rust-engineering
 
 **Version:** 1.1.0 (`plugins/axiom-rust-engineering/.claude-plugin/plugin.json`)

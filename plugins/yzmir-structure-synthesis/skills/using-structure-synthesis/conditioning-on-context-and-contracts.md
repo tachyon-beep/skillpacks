@@ -1,6 +1,6 @@
 ---
 name: conditioning-on-context-and-contracts
-description: Use when designing the request a generator conditions on - diagnostic context, interface contracts, and budgets - and when a request field is at risk of naming the answer instead of constraining what may be built, which quietly turns generation into rubber-stamping a pre-chosen structure.
+description: "Use when designing the request a generator conditions on - diagnostic context, interface contracts, and budgets - and when a request field is at risk of naming the answer instead of constraining what may be built, which quietly turns generation into rubber-stamping a pre-chosen structure."
 ---
 
 # Conditioning on Context and Contracts
@@ -84,16 +84,6 @@ The GREEN request contains no field a human could read to correctly guess the fa
 ## Interface Contracts: Constrain the Boundary, Not the Interior
 
 An interface contract declares what a candidate's boundary must look like — typically a shape-preserving insertion requirement (output shape equals input shape, so the candidate can be spliced into an existing computation without touching anything else) — without constraining what happens between the boundary and the output. This is the difference between "the candidate must accept and return a `(batch, 64)` tensor" (legitimate — it's a boundary condition any correct candidate must satisfy) and "the candidate must be a convolution that accepts and returns a `(batch, 64)` tensor" (illegitimate — the second clause names the answer). `structural-verification.md` checks the boundary contract on every candidate; the request is what declares it.
-
-## Rationalization Resistance
-
-| Rationalization | Reality |
-|---|---|
-| "We're just giving the generator a hint, it can still ignore it" | A field the model was trained to condition on is not a hint it can freely ignore — training makes the correlation real, whether or not it was intended |
-| "The preferred-family field is just a default, generation can override it" | If "override" never happens in practice — check the actual output distribution — the field is functioning as an answer regardless of its documented intent |
-| "Diagnostic context is basically the same as naming the answer anyway" | Context describes a measured deficit; an answer names a fix. If they're indistinguishable in your schema, the schema needs the human-guessability test in this sheet applied to it |
-| "The contract should specify the exact op type so downstream compilation is simpler" | Compilation-time convenience is not a reason to give up the entire value of generation; if a specific op type is truly required, that's a different, more constrained grammar (`typed-graph-grammars.md`), not a request field |
-| "We removed the obvious blueprint field, we're fine" | Audit every field with the guessability test — a field named `hint`, `bias`, `prior_structure`, or `initialization_strategy` can smuggle the same problem under a different name |
 
 ## Red Flags Checklist
 

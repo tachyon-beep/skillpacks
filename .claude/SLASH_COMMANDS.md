@@ -1,143 +1,57 @@
-# Slash Commands Reference
+# Repository command shortcuts
 
-This document maps the router skills to their slash command equivalents.
+These thin shortcuts load the linked plugin contract. They are conveniences for this checkout; plugin commands remain in their pack. Routine work does not need a routing step. No context-limit or model-performance claim is implied.
 
-## Why Slash Commands?
-
-Router skills were converted to slash commands due to context limit issues. Skills have a limited context budget, and comprehensive router skills exceeded this limit. Slash commands are user-invoked (explicit) rather than model-invoked (automatic), which works better for navigation/routing scenarios.
-
-## Available Slash Commands
-
-All router skills from the 18 plugins are now available as slash commands:
-
-### Python Engineering (Axiom)
-- **`/python-engineering`** - Routes to Python expertise (testing, packaging, async, performance, etc.)
-
-### Architecture Analysis (Axiom)
-- **`/system-archaeologist`** - Routes to codebase architecture analysis and documentation
-- **`/system-architect`** - Routes to architectural assessment and technical debt analysis
-
-### Web Backend Development (Axiom)
-- **`/web-backend`** - Routes to web backend development (FastAPI, Django, Express, APIs, microservices)
-- **`/mcp-engineering`** - Routes to MCP (Model Context Protocol) server engineering (tool API design, idempotency, error envelopes, transport, testing)
-
-### DevOps & Platform Engineering (Axiom)
-- **`/devops-engineering`** - Routes to DevOps reference sheets (CI/CD, deployment, IaC, containers, orchestration, observability, incident response, rollback, secrets, GitOps, reliability)
-
-### SDLC Engineering (Axiom)
-- **`/sdlc-engineering`** - Routes to CMMI process areas: requirements, design, quality, governance, risk, metrics, platform integration
-
-### Product Management (Axiom)
-- **`/product-management`** - Routes to product ownership, discovery, PRDs, delivery acceptance, metrics, experimentation, and continuity
-
-### Program Management (Axiom)
-- **`/program-management`** - Routes to delivery flow, forecasting, scope, RAID, status, dependencies, governance, benefits, and program coordination
-
-### Game Development (Bravos)
-- **`/simulation-tactics`** - Routes to simulation and game development tactics
-- **`/systems-as-experience`** - Routes to game systems design and player experience
-
-### UX Design (Lyra)
-- **`/ux-designer`** - Routes to UX design, accessibility, and user research
-- **`/site-designer`** - Routes to static site design for developer tools and documentation
-- **`/tui-designer`** - Routes to terminal UI (TUI) design across ratatui, Textual, Bubble Tea, Ink, notcurses
-
-### Documentation (Muna)
-- **`/technical-writer`** - Routes to technical documentation and API docs
-- **`/wiki-manager`** - Routes to document set management (architecture, derivation, consistency, evolution, governance)
-
-### Security (Ordis)
-- **`/security-architect`** - Routes to security architecture and threat modeling
-
-### AI/ML Engineering (Yzmir)
-- **`/ai-engineering`** - Master router for all AI/ML engineering tasks
-- **`/pytorch-engineering`** - Routes to PyTorch-specific skills
-- **`/training-optimization`** - Routes to model training and optimization
-- **`/deep-rl`** - Routes to deep reinforcement learning algorithms
-- **`/llm-specialist`** - Routes to LLM fine-tuning and deployment
-- **`/neural-architectures`** - Routes to neural architecture selection
-- **`/ml-production`** - Routes to ML deployment and production
-- **`/simulation-foundations`** - Routes to simulation fundamentals
-- **`/systems-thinking`** - Routes to systems thinking methodology and modeling
-- **`/counterfactual-statistics`** - Routes to statistics for counterfactual and paired-branch ML experiments (units, pairing, splits, winner's curse, power, reporting)
-- **`/structure-synthesis`** - Routes to generative models whose outputs are graphs (typed DAG grammars, canonicalisation, equivalence detection, semantic hashing, generator/verifier/judge separation)
-
-### Compilers & IR (Axiom)
-- **`/tensor-compiler-engineering`** - Routes to tensor-compiler engineering (graph IR, lowering, kernel selection, conformance testing)
-
-### Contracts & Formalisation (Axiom)
-- **`/contract-engineering`** - Routes to typed cross-boundary contract discipline (schema design, fail-closed versioning, deterministic resolution, blinding, canonical identity, contract testing)
-- **`/experiment-formalisation`** - Routes to experiment formalisation with EXPO/SUMO/PROV-O (verified vocabulary only, projection law, competency questions, validation and conformance)
-
-### Marketplace Maintenance (Meta)
-- **`/skillpack-maintenance`** - Routes to skillpack maintenance methodology (domain analysis, structure review with fitness scorecard, RED-GREEN-REFACTOR behavioral testing, scoped quality improvements)
-
-## Usage
-
-Simply type the slash command in Claude Code to load the router skill:
-
-```
-/ai-engineering
-```
-
-The router will then guide you to the appropriate specialized skill for your task.
-
-## Mapping Table
-
-| Plugin | Original Skill | Slash Command |
-|--------|----------------|---------------|
-| axiom-devops-engineering | using-devops-engineering | /devops-engineering |
-| axiom-mcp-engineering | using-mcp-engineering | /mcp-engineering |
-| axiom-product-management | using-product-management | /product-management |
-| axiom-program-management | using-program-management | /program-management |
-| axiom-python-engineering | using-python-engineering | /python-engineering |
-| axiom-sdlc-engineering | using-sdlc-engineering | /sdlc-engineering |
-| axiom-system-archaeologist | using-system-archaeologist | /system-archaeologist |
-| axiom-system-architect | using-system-architect | /system-architect |
-| axiom-web-backend | using-web-backend | /web-backend |
-| bravos-simulation-tactics | using-simulation-tactics | /simulation-tactics |
-| bravos-systems-as-experience | using-systems-as-experience | /systems-as-experience |
-| lyra-site-designer | using-site-designer | /site-designer |
-| lyra-tui-designer | using-tui-designer | /tui-designer |
-| lyra-ux-designer | using-ux-designer | /ux-designer |
-| muna-technical-writer | using-technical-writer | /technical-writer |
-| muna-wiki-management | using-wiki-manager | /wiki-manager |
-| ordis-security-architect | using-security-architect | /security-architect |
-| axiom-tensor-compiler-engineering | using-tensor-compiler-engineering | /tensor-compiler-engineering |
-| axiom-contract-engineering | using-contract-engineering | /contract-engineering |
-| axiom-experiment-formalisation | using-experiment-formalisation | /experiment-formalisation |
-| yzmir-ai-engineering-expert | using-ai-engineering | /ai-engineering |
-| yzmir-counterfactual-statistics | using-counterfactual-statistics | /counterfactual-statistics |
-| yzmir-deep-rl | using-deep-rl | /deep-rl |
-| yzmir-llm-specialist | using-llm-specialist | /llm-specialist |
-| yzmir-ml-production | using-ml-production | /ml-production |
-| yzmir-neural-architectures | using-neural-architectures | /neural-architectures |
-| yzmir-pytorch-engineering | using-pytorch-engineering | /pytorch-engineering |
-| yzmir-simulation-foundations | using-simulation-foundations | /simulation-foundations |
-| yzmir-structure-synthesis | using-structure-synthesis | /structure-synthesis |
-| yzmir-systems-thinking | using-systems-thinking | /systems-thinking |
-| yzmir-training-optimization | using-training-optimization | /training-optimization |
-| meta-skillpack-maintenance | using-skillpack-maintenance | /skillpack-maintenance |
-
-## Implementation Details
-
-- **Source**: Router skills from `plugins/*/skills/using-*/SKILL.md`
-- **Target**: Slash commands in `.claude/commands/*.md`
-- **Conversion**: YAML frontmatter removed, content preserved
-- **Naming**: "using-" prefix removed from skill names
-
-## Benefits
-
-1. **No context limits** - Slash commands don't count against skill discovery context
-2. **Explicit invocation** - User controls when routers are loaded
-3. **Faster discovery** - No need for Claude to scan descriptions
-4. **Cleaner workflow** - Router → specialized skill is now explicit
-
-## Maintenance
-
-To update a slash command:
-1. Edit the source skill: `plugins/[plugin]/skills/using-[name]/SKILL.md`
-2. Re-run conversion script: `./convert-routers-to-commands.sh`
-3. Slash command automatically updates
-
-Or edit the slash command directly in `.claude/commands/[name].md`
+| Shortcut | Contract |
+|---|---|
+| `/audit-pipelines` | [source](../plugins/axiom-audit-pipelines/skills/using-audit-pipelines/SKILL.md) |
+| `/axiom-planning` | [source](../plugins/axiom-planning/skills/implementation-planning/SKILL.md) |
+| `/contract-engineering` | [source](../plugins/axiom-contract-engineering/skills/using-contract-engineering/SKILL.md) |
+| `/counterfactual-statistics` | [source](../plugins/yzmir-counterfactual-statistics/skills/using-counterfactual-statistics/SKILL.md) |
+| `/creative-writing` | [source](../plugins/lyra-creative-writing/skills/using-creative-writing/SKILL.md) |
+| `/deep-rl` | [source](../plugins/yzmir-deep-rl/skills/using-deep-rl/SKILL.md) |
+| `/determinism-and-replay` | [source](../plugins/axiom-determinism-and-replay/skills/using-determinism-and-replay/SKILL.md) |
+| `/devops-engineering` | [source](../plugins/axiom-devops-engineering/skills/using-devops-engineering/SKILL.md) |
+| `/distributed-systems` | [source](../plugins/axiom-distributed-systems/skills/using-distributed-systems/SKILL.md) |
+| `/document-designer` | [source](../plugins/muna-document-designer/skills/using-document-designer/SKILL.md) |
+| `/dynamic-architectures` | [source](../plugins/yzmir-dynamic-architectures/skills/using-dynamic-architectures/SKILL.md) |
+| `/embedded-database` | [source](../plugins/axiom-embedded-database/skills/using-embedded-database/SKILL.md) |
+| `/experiment-formalisation` | [source](../plugins/axiom-experiment-formalisation/skills/using-experiment-formalisation/SKILL.md) |
+| `/fact-check` | [source](../plugins/muna-technical-writer/skills/fact-checking/SKILL.md) |
+| `/game-design` | [source](../plugins/bravos-game-design/skills/using-game-design/SKILL.md) |
+| `/llm-specialist` | [source](../plugins/yzmir-llm-specialist/skills/using-llm-specialist/SKILL.md) |
+| `/mcp-engineering` | [source](../plugins/axiom-mcp-engineering/skills/using-mcp-engineering/SKILL.md) |
+| `/ml-production` | [source](../plugins/yzmir-ml-production/skills/using-ml-production/SKILL.md) |
+| `/morphogenetic-rl` | [source](../plugins/yzmir-morphogenetic-rl/skills/using-morphogenetic-rl/SKILL.md) |
+| `/neural-architectures` | [source](../plugins/yzmir-neural-architectures/skills/using-neural-architectures/SKILL.md) |
+| `/panel-config` | [source](../plugins/muna-panel-review/commands/panel-config.md) |
+| `/panel-designer` | [source](../plugins/muna-panel-review/commands/panel-designer.md) |
+| `/panel-review` | [source](../plugins/muna-panel-review/skills/reader-panel-review/SKILL.md) |
+| `/procedural-architecture` | [source](../plugins/axiom-procedural-architecture/skills/using-procedural-architecture/SKILL.md) |
+| `/product-management` | [source](../plugins/axiom-product-management/skills/using-product-management/SKILL.md) |
+| `/program-management` | [source](../plugins/axiom-program-management/skills/using-program-management/SKILL.md) |
+| `/pyo3-interop` | [source](../plugins/axiom-pyo3-interop/skills/using-pyo3-interop/SKILL.md) |
+| `/python-engineering` | [source](../plugins/axiom-python-engineering/skills/using-python-engineering/SKILL.md) |
+| `/pytorch-engineering` | [source](../plugins/yzmir-pytorch-engineering/skills/using-pytorch-engineering/SKILL.md) |
+| `/quality-engineering` | [source](../plugins/ordis-quality-engineering/skills/using-quality-engineering/SKILL.md) |
+| `/rust-engineering` | [source](../plugins/axiom-rust-engineering/skills/using-rust-engineering/SKILL.md) |
+| `/rust-workspaces` | [source](../plugins/axiom-rust-workspaces/skills/using-rust-workspaces/SKILL.md) |
+| `/sdlc-engineering` | [source](../plugins/axiom-sdlc-engineering/skills/using-sdlc-engineering/SKILL.md) |
+| `/security-architect` | [source](../plugins/ordis-security-architect/skills/using-security-architect/SKILL.md) |
+| `/simulation-foundations` | [source](../plugins/yzmir-simulation-foundations/skills/using-simulation-foundations/SKILL.md) |
+| `/simulation-tactics` | [source](../plugins/bravos-simulation-tactics/skills/using-simulation-tactics/SKILL.md) |
+| `/site-designer` | [source](../plugins/lyra-site-designer/skills/using-site-designer/SKILL.md) |
+| `/skillpack-maintenance` | [source](../plugins/meta-skillpack-maintenance/skills/using-skillpack-maintenance/SKILL.md) |
+| `/solution-architect` | [source](../plugins/axiom-solution-architect/skills/using-solution-architect/SKILL.md) |
+| `/static-analysis-engineering` | [source](../plugins/axiom-static-analysis-engineering/skills/using-static-analysis-engineering/SKILL.md) |
+| `/structure-synthesis` | [source](../plugins/yzmir-structure-synthesis/skills/using-structure-synthesis/SKILL.md) |
+| `/system-archaeologist` | [source](../plugins/axiom-system-archaeologist/skills/using-system-archaeologist/SKILL.md) |
+| `/systems-as-experience` | [source](../plugins/bravos-systems-as-experience/skills/using-systems-as-experience/SKILL.md) |
+| `/systems-thinking` | [source](../plugins/yzmir-systems-thinking/skills/using-systems-thinking/SKILL.md) |
+| `/technical-writer` | [source](../plugins/muna-technical-writer/skills/using-technical-writer/SKILL.md) |
+| `/tensor-compiler-engineering` | [source](../plugins/axiom-tensor-compiler-engineering/skills/using-tensor-compiler-engineering/SKILL.md) |
+| `/training-optimization` | [source](../plugins/yzmir-training-optimization/skills/using-training-optimization/SKILL.md) |
+| `/tui-designer` | [source](../plugins/lyra-tui-designer/skills/using-tui-designer/SKILL.md) |
+| `/ux-designer` | [source](../plugins/lyra-ux-designer/skills/using-ux-designer/SKILL.md) |
+| `/web-backend` | [source](../plugins/axiom-web-backend/skills/using-web-backend/SKILL.md) |
+| `/wiki-manager` | [source](../plugins/muna-wiki-management/skills/using-wiki-manager/SKILL.md) |

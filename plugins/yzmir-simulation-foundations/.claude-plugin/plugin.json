@@ -1,7 +1,7 @@
 {
   "name": "yzmir-simulation-foundations",
-  "version": "1.4.0",
-  "description": "Game simulation mathematics - ODEs, stability, control theory - router + 8 sheets, 3 commands, 2 agents",
+  "version": "2.0.0",
+  "description": "Use when a simulation needs numerical-model, integration, stability, control, stochastic or determinism checks.",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

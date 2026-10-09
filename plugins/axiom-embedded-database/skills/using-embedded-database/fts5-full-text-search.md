@@ -1,6 +1,6 @@
 ---
 name: fts5-full-text-search
-description: Use when implementing full-text search in SQLite — virtual table creation, tokenizer selection (unicode61, porter, trigram), contentless and external-content modes, bm25 ranking with column weights, trigger-based sync, and query syntax (phrase, prefix, NEAR, column filter). Covers the sync complexity of each content mode and anti-patterns that silently leave FTS5 out of date.
+description: "Use when implementing full-text search in SQLite \u2014 virtual table creation, tokenizer selection (unicode61, porter, trigram), contentless and external-content modes, bm25 ranking with column weights, trigger-based sync, and query syntax (phrase, prefix, NEAR, column filter). Covers the sync complexity of each content mode and anti-patterns that silently leave FTS5 out of date."
 ---
 
 # FTS5 Full-Text Search

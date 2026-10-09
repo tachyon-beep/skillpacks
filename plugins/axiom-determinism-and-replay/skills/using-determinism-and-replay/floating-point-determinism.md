@@ -1,6 +1,6 @@
 ---
 name: floating-point-determinism
-description: Use when floating-point reproducibility is load-bearing — non-associativity, fused multiply-add, denormals, rounding modes, library divergence (libm vs glibc vs musl), reductions, and the choice between bit-exact and tolerance-bounded equivalence. Produces `08-floating-point-policy.md`.
+description: "Use when floating-point reproducibility is load-bearing \u2014 non-associativity, fused multiply-add, denormals, rounding modes, library divergence (libm vs glibc vs musl), reductions, and the choice between bit-exact and tolerance-bounded equivalence."
 ---
 
 # Floating-Point Determinism

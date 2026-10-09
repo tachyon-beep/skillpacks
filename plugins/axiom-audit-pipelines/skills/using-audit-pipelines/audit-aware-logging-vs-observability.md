@@ -1,6 +1,6 @@
 ---
 name: audit-aware-logging-vs-observability
-description: Use when delineating audit-grade events from ordinary observability events — a stable, testable rule a developer can apply to a new event class, not a slogan. Prevents audit obligations from being crammed into the observability stack and observability noise from being routed through the audit pipeline. Produces `09-audit-vs-observability-boundary.md`.
+description: "Use when delineating audit-grade events from ordinary observability events \u2014 a stable, testable rule a developer can apply to a new event class, not a slogan. Prevents audit obligations from being crammed into the observability stack and observability noise from being routed through the audit pipeline."
 ---
 
 # Audit-Aware Logging vs Observability

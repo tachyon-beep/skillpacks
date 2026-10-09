@@ -1,7 +1,7 @@
 {
   "name": "muna-technical-writer",
-  "version": "1.6.0",
-  "description": "Documentation structure, clarity, register translation, security-aware docs, fact-checking, complex large-file edit pair - router + 9 sheets + 1 leaf skill, 4 commands, 5 agents",
+  "version": "2.0.0",
+  "description": "Use when documentation accuracy, executable procedures, institutional register, sensitive information, or source-to-document traceability needs deliberate review.",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

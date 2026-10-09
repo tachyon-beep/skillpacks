@@ -1,6 +1,6 @@
 ---
 name: queueing-theory-for-procedures
-description: Analyst-cluster sheet — Little's Law, M/M/1 utilization intuition, and bottleneck identification for multi-stage procedural flows. Teaches when closed-form queueing earns its cost over structural review alone. Worked 3-stage approval flow with utilization per stage, bottleneck identification, and three redesign options.
+description: "Analyst-cluster sheet \u2014 Little's Law, M/M/1 utilization intuition, and bottleneck identification for multi-stage procedural flows. Teaches when closed-form queueing earns its cost over structural review alone. Worked 3-stage approval flow with utilization per stage, bottleneck identification, and three redesign options."
 ---
 
 # Queueing Theory for Procedures
@@ -135,7 +135,7 @@ The immediate consequence: adding reviewers to stage 2 (the obvious target becau
 
 **Option A: Add capacity at the bottleneck stages.**
 
-For triage (ρ = 2.0): requires a second triage server to reach ρ = 1.0, or a third to reach ρ = 0.67 (comfortable). For sign-off (ρ = 5.0): requires five sign-off approvers to reach ρ = 1.0, or six to reach ρ = 0.83. Cost is real — headcount or time allocation. Gain is proportional and predictable: halving the bottleneck ρ halves the wait contribution from that stage. This is the right answer when the structural staging is sound and the only issue is under-investment relative to arrival rate.
+For triage (ρ = 2.0): requires a second triage server to reach ρ = 1.0, or a third to reach ρ = 0.67 (comfortable). For sign-off (ρ = 5.0): requires five sign-off approvers to reach ρ = 1.0, or six to reach ρ = 0.83. Cost is real — headcount or time allocation. Wait changes nonlinearly and depends on the queue model. For M/M/1 at fixed service rate, reducing ρ from 0.8 to 0.4 changes Wq from 4/μ to (2/3)/μ, a sixfold reduction. Adding servers changes c and requires the M/M/c calculation; overloaded stages have no finite steady-state wait. This is the right answer when the structural staging is sound and the only issue is under-investment relative to arrival rate.
 
 **Option B: Batch differently to parallelize the bottleneck stage.**
 

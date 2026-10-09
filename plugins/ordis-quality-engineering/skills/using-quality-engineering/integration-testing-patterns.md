@@ -1,6 +1,6 @@
 ---
 name: integration-testing-patterns
-description: Use when testing component integration, database testing, external service integration, test containers, testing message queues, microservices testing, or designing integration test suites - provides boundary testing patterns and anti-patterns between unit and E2E tests
+description: "Use when testing component integration, database testing, external service integration, test containers, testing message queues, microservices testing, or designing integration test suites - provides boundary testing patterns and anti-patterns between unit and E2E tests"
 ---
 
 # Integration Testing Patterns

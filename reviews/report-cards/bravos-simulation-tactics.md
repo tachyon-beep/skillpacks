@@ -1,3 +1,5 @@
+> Historical review of the version named below; it is not an assessment of marketplace 4.0.0. See [the current consolidation record](../../docs/relevance-refresh.md). Retired pack names and old process requirements are historical.
+
 # Report Card — bravos-simulation-tactics
 
 **Version:** 1.2.0 (plugin.json)  ·  **Track:** H — Hard / Technical (game-simulation implementation; correctness = sound algorithms + engine-accurate APIs)  ·  **Graded:** 2026-06-22

@@ -1,6 +1,6 @@
 ---
 name: learning-objectives-for-generators
-description: Use when choosing the training objective for a structure generator - reconstruction, functional-effect matching, min-over-K/ranking, contrastive learning from failures - and when a generator's own auxiliary utility head is at risk of filtering its own output pool, which is the generator grading its own examination.
+description: "Use when choosing the training objective for a structure generator - reconstruction, functional-effect matching, min-over-K/ranking, contrastive learning from failures - and when a generator's own auxiliary utility head is at risk of filtering its own output pool, which is the generator grading its own examination."
 ---
 
 # Learning Objectives for Generators
@@ -16,7 +16,7 @@ This sheet is about training the generator; `generation-strategies.md` covers ho
 
 ## Core Principle
 
-**A generator may learn to predict its own candidates' utility. It must never use that prediction to decide which candidates leave the building.** An auxiliary utility head is legitimate as a training signal (it can shape what the generator learns to produce more of) and illegitimate as a pool filter (it decides what the downstream judge is even allowed to see). The moment the second use happens, the generator has started grading its own examination — filtering exactly the candidates whose true utility it might have gotten wrong, using the same imperfect model that got them wrong in the first place.
+**Distinguish an unranked proposal API from a utility-guided search API.** When the contract promises an unfiltered proposal pool for independent downstream evaluation, silently applying an auxiliary utility threshold violates that contract. A declared search policy may legitimately filter or rank by predicted utility; report the proposal budget, selection rule and withheld candidates as relevant, and evaluate the complete selected pipeline on held-out tasks. Predicted utility cannot substitute for structural legality or independent evidence of quality.
 
 ## Objective Families
 
@@ -28,11 +28,11 @@ This sheet is about training the generator; `generation-strategies.md` covers ho
 | **Ranking / pairwise preference** | Relative ordering between two candidates whose true utility is known | When absolute utility is hard to calibrate but relative comparisons are reliable |
 | **Contrastive from failures** | Pull generation away from structures a downstream judge has rejected | Using the full history — including failures — as training signal (see `lineage-mutation-and-recombination.md` on archiving failures, not just winners) |
 
-None of these require or justify the generator filtering its own output at serving time. They shape what the generator is likely to produce; they are not a substitute for actually letting the pool be evaluated.
+Training objectives do not by themselves define the sampling contract. Choose and document whether evaluation receives unranked proposals or the output of a declared search/selection policy.
 
 ## The RED Scenario: An Auxiliary Head That Filters Its Own Pool
 
-A generator with an auxiliary utility-prediction head — trained to help it learn, entirely legitimately — that is then also used to decide what makes it into the returned pool:
+This example assumes the API promises the full proposal pool. An auxiliary head silently removes candidates before independent evaluation:
 
 ```python
 from dataclasses import dataclass
@@ -88,25 +88,15 @@ assert best_from_filtered.name != "B"
 assert best_from_honest.name == "B"
 ```
 
-Nothing about the generator's architecture, training, or auxiliary head needs to change. The fix is entirely about the function's contract: an auxiliary utility prediction is data attached to a candidate, never a gate on whether the candidate exists as far as the rest of the pipeline is concerned.
+For an unranked-pool API, return the requested proposals and attach auxiliary scores as metadata. For a search API, an alternative repair is to expose the filtering contract and evaluate its recall, cost and held-out utility against an unfiltered baseline; returning everything is not universally optimal.
 
-## What Legitimate Use of an Auxiliary Head Looks Like
+## Checks for an Unranked Proposal Contract
 
 - **Training-time only**: shapes gradients during generator training, never called at serving/sampling time to decide pool membership.
 - **Reported, not applied**: if computed at serving time at all (e.g., for logging or research), it is attached to the candidate record and passed downstream unfiltered — the receiving system decides what to do with it, and that system is not this pack's concern (it's a downstream evaluator's job — the same boundary drawn in `structural-verification.md`).
 - **Retrained on the judge's actual verdicts, not on its own prior predictions**: an aux head that bootstraps from its own past outputs rather than ground truth will confidently reinforce its own biases, including the exact bias that caused the RED scenario above.
 
-## Rationalization Resistance
-
-| Rationalization | Reality |
-|---|---|
-| "The aux head is trained on real outcomes, it's basically as good as the judge" | If it were as good as the judge, there would be no need for a separate judge — the entire reason a downstream evaluator exists is that a fast internal proxy can't be fully trusted |
-| "We're just filtering out the obviously bad ones to save the judge's time" | "Obviously bad" according to what signal? If it's the aux head, this is the anti-pattern with better marketing |
-| "This isn't self-judging, it's just an efficiency optimization" | The mechanism is identical regardless of the stated motivation — the generator is deciding what utility-relevant information the rest of the system gets to see |
-| "The judge can always ask for a bigger pool if it's not satisfied" | It can't ask for candidates it was never told existed; silent filtering removes that option entirely |
-| "Our contrastive-from-failures training already handles bad candidates" | Contrastive training shapes what the generator produces *in the future*; it says nothing about whether *this* pool's candidates should be shown *now* |
-
-## Red Flags Checklist
+## Contract-Violation Checks for an Unranked Proposal API
 
 - [ ] **A generator function's return value is filtered by any internally-computed utility, quality, or confidence score**
 - [ ] **An auxiliary head trained on the generator's own past predictions** rather than ground-truth judge verdicts

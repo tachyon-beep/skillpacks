@@ -1,6 +1,6 @@
 ---
 name: property-based-testing
-description: Use when testing invariants, validating properties across many inputs, using Hypothesis (Python) or fast-check (JavaScript), defining test strategies, handling shrinking, or finding edge cases - provides property definition patterns and integration strategies
+description: "Use when testing invariants, validating properties across many inputs, using Hypothesis (Python) or fast-check (JavaScript), defining test strategies, handling shrinking, or finding edge cases - provides property definition patterns and integration strategies"
 ---
 
 # Property-Based Testing

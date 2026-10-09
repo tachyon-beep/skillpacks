@@ -1,6 +1,6 @@
 ---
 name: lineage-mutation-and-recombination
-description: Use when generating candidates by mutating or recombining an archive of prior structures rather than from scratch - parent selection, grammar-respecting mutation operators, interface-compatible crossover, and provenance tracking. Use when a mutation operator risks producing an illegal graph (a cycle, a broken contract) that must still pass the full verification gate.
+description: "Use when generating candidates by mutating or recombining an archive of prior structures rather than from scratch - parent selection, grammar-respecting mutation operators, interface-compatible crossover, and provenance tracking. Use when a mutation operator risks producing an illegal graph (a cycle, a broken contract) that must still pass the full verification gate."
 ---
 
 # Lineage, Mutation, and Recombination
@@ -95,17 +95,7 @@ Recombination — splicing a subgraph from one archived candidate into another �
 
 ## Provenance: Recorded, Never Consulted by the Gates
 
-Every mutated or recombined candidate should carry its parent lineage — which archive entries it derived from, which operator produced it — for audit, debugging, and archive-quality analysis. This provenance must never be read by `structural-verification.md`'s legality decision or by any utility judgement: "this candidate's parent was previously accepted" is not evidence the offspring is legal, and treating it as such is the retrieval-as-approval-path failure this sheet is about. Provenance is retained for humans and for training signal (`learning-objectives-for-generators.md`'s contrastive-from-failures objective, for instance) — never for gating.
-
-## Rationalization Resistance
-
-| Rationalization | Reality |
-|---|---|
-| "The parent was verified, so a small mutation of it should be fine" | Verification is a property of the exact candidate checked, not something that survives an edit by proximity |
-| "We only keep the winning candidates in the archive, why store the losers" | Discarding rejected lineages is survivorship bias in the search process itself — future mutation will re-explore and re-reject the same dead ends |
-| "Crossover between two legal candidates must produce something legal" | Legal parents with incompatible splice boundaries produce an illegal child; legality doesn't compose across an edit that wasn't checked |
-| "Provenance is just for logging, it doesn't affect any decision" | If the field exists on a candidate object passed into a decision function, it's one refactor away from being read there — see `structural-verification.md`'s parallel warning |
-| "This mutation operator is simple, it can't introduce a cycle" | The RED scenario's operator is about as simple as a mutation operator gets, and it introduces a cycle on the very first back-edge it happens to pick |
+Every mutated or recombined candidate should carry its parent lineage — which archive entries it derived from, which operator produced it — for audit, debugging, and archive-quality analysis. Parent acceptance is not proof that the offspring is legal: the structural gate must verify the offspring itself. Provenance may be a legitimate feature for a declared search or utility policy, but disclose that dependence and evaluate it independently; do not let lineage bypass legality checks or leak held-out outcomes. Retain rejected and failed descendants for audit and training rather than archiving only winners.
 
 ## Red Flags Checklist
 

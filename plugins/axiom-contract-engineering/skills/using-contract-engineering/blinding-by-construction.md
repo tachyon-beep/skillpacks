@@ -1,6 +1,6 @@
 ---
 name: blinding-by-construction
-description: Use when a consumer must not see some field a producer holds — a blinded evaluation or QA harness that must not learn which vendor produced a candidate, a reviewer service that must not see a regulated provider field, an adjudicator that must not learn who submitted what — or when someone proposes redacting a value at serialization, popping a key from a dict copy, marking a field "deprecated, nobody reads it", or passing a free-text note beside carefully typed fields. Covers separate view types, allowlist projection, field-policy closure, canary tests, covert channels, and the producer-side mirror (fields a producer must not be able to say).
+description: "Use when a consumer must not see some field a producer holds \u2014 a blinded evaluation or QA harness that must not learn which vendor produced a candidate, a reviewer service that must not see a regulated provider field, an adjudicator that must not learn who submitted what \u2014 or when someone proposes redacting a value at serialization, popping a key from a dict copy, marking a field \"deprecated, nobody reads it\", or passing a free-text note beside carefully typed fields. Covers separate view types, allowlist projection, field-policy closure, canary tests, covert channels, and the producer-side mirror (fields a producer must not be able to say)."
 ---
 
 # Blinding by Construction

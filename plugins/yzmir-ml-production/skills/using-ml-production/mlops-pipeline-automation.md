@@ -696,9 +696,9 @@ tiers:
 The config is consumed by your orchestrator/runtime; bumping a tier is a config-only change with full CI eval coverage before promotion.
 
 
-## REFACTOR: Pressure Tests
+## Worked failure cases
 
-### Pressure Test 1: Scale to 100+ Models
+### Worked failure case 1: Scale to 100+ Models
 
 ```python
 def test_scale_to_100_models():
@@ -708,7 +708,7 @@ def test_scale_to_100_models():
     pass
 ```
 
-### Pressure Test 2: Deploy 10 Times Per Day
+### Worked failure case 2: Deploy 10 Times Per Day
 
 ```python
 def test_deploy_10_per_day():
@@ -717,7 +717,7 @@ def test_deploy_10_per_day():
     pass
 ```
 
-### Pressure Test 3: Detect Bad Data in < 1 Hour
+### Worked failure case 3: Detect Bad Data in < 1 Hour
 
 ```python
 def test_data_quality_incident():
@@ -726,7 +726,7 @@ def test_data_quality_incident():
     # Pipeline blocks; alert sent; no bad model trained
 ```
 
-### Pressure Test 4: Auto-Retrain on Degradation
+### Worked failure case 4: Auto-Retrain on Degradation
 
 ```python
 def test_auto_retrain():
@@ -735,7 +735,7 @@ def test_auto_retrain():
     assert should and "performance_degradation" in reason
 ```
 
-### Pressure Test 5: Feature Store at 1000 QPS
+### Worked failure case 5: Feature Store at 1000 QPS
 
 ```python
 def test_fs_qps():
@@ -744,7 +744,7 @@ def test_fs_qps():
     pass
 ```
 
-### Pressure Test 6: Rollback in < 5 Minutes
+### Worked failure case 6: Rollback in < 5 Minutes
 
 ```python
 def test_rollback():
@@ -753,7 +753,7 @@ def test_rollback():
     assert not ok  # validation blocks deployment
 ```
 
-### Pressure Test 7: Drift-Triggered Retraining < 24h
+### Worked failure case 7: Drift-Triggered Retraining < 24h
 
 ```python
 def test_drift_retrain():
@@ -761,7 +761,7 @@ def test_drift_retrain():
     assert sum(drift_detector.detect_drift(drifted).values()) >= 10
 ```
 
-### Pressure Test 8: CI/CD < 10 Minutes
+### Worked failure case 8: CI/CD < 10 Minutes
 
 ```python
 def test_cicd_speed():
@@ -770,7 +770,7 @@ def test_cicd_speed():
     assert ok and time.time() - t0 < 600
 ```
 
-### Pressure Test 9: Train-Serve Feature Consistency
+### Worked failure case 9: Train-Serve Feature Consistency
 
 ```python
 def test_feature_consistency():
@@ -780,7 +780,7 @@ def test_feature_consistency():
     assert train == serve
 ```
 
-### Pressure Test 10: Eval-Set Regression in LLM CI
+### Worked failure case 10: Eval-Set Regression in LLM CI
 
 ```python
 def test_llm_eval_gate():

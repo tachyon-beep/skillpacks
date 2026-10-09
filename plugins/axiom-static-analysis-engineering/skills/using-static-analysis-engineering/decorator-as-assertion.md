@@ -1,6 +1,6 @@
 ---
 name: decorator-as-assertion
-description: Use when designing decorators (Python), attributes (C#), annotations (Java), proc-macros (Rust) that are *both* a runtime check and a static rule trigger — `@authenticated`, `@validates(schema)`, `@requires_capability(X)`, `@idempotent`, `@pure`. Covers the agreement contract between runtime and static enforcement, the descriptor-pattern implementation that keeps the decorated callable introspectable by the analyzer, the metadata schema that makes the decorator a first-class lattice/rule input, and the failure modes when runtime and static disagree about what was enforced. Produces `09-decorator-as-assertion-spec.md`.
+description: "Use when designing decorators (Python), attributes (C#), annotations (Java), proc-macros (Rust) that are *both* a runtime check and a static rule trigger \u2014 `@authenticated`, `@validates(schema)`, `@requires_capability(X)`, `@idempotent`, `@pure`. Covers the agreement contract between runtime and static enforcement, the descriptor-pattern implementation that keeps the decorated callable introspectable by the analyzer, the metadata schema that makes the decorator a first-class lattice/rule input, and the failure modes when runtime and static disagree about what was enforced."
 ---
 
 # Decorator as Assertion

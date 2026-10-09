@@ -1,6 +1,6 @@
 ---
 name: stochastic-simulation
-description: Probability distributions, Monte Carlo methods, stochastic differential equations, variance reduction, and randomness patterns for game systems
+description: "Probability distributions, Monte Carlo methods, stochastic differential equations, variance reduction, and randomness patterns for game systems"
 ---
 
 # Stochastic Simulation for Games
@@ -1272,7 +1272,7 @@ def test_crit_streak_fairness():
 ```
 
 
-### REFACTOR Scenarios: 6+ Applications
+### Scenarios: 6+ Applications
 
 #### Scenario 1: Gacha Loot System
 **Goal**: 3% 5-star, pity at 90, soft pity at 75, fairness across all players

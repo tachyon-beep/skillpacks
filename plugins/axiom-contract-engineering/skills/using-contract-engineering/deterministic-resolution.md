@@ -1,6 +1,6 @@
 ---
 name: deterministic-resolution
-description: Use when one record is derived from others across a boundary — a request resolved from an intent plus constraints, a decision computed from evidence, a config materialised from layered policies — and the derivation must be reproducible, auditable, or replayable. Covers pure resolvers over recorded inputs, canonical outputs, covert-channel closure (serialisation, aliases, ordering, batch position), narrow-only authority, and eliminating hidden resolver state.
+description: "Use when one record is derived from others across a boundary \u2014 a request resolved from an intent plus constraints, a decision computed from evidence, a config materialised from layered policies \u2014 and the derivation must be reproducible, auditable, or replayable. Covers pure resolvers over recorded inputs, canonical outputs, covert-channel closure (serialisation, aliases, ordering, batch position), narrow-only authority, and eliminating hidden resolver state."
 ---
 
 # Deterministic Resolution

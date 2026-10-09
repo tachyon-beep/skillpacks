@@ -1,6 +1,6 @@
 ---
 name: layout-and-responsive-composition
-description: Use when a TUI hardcodes 80x24 or any fixed dimensions, when content gets clipped or smeared after a terminal resize, when rows go stale or overlap after dragging the window, when the layout breaks in a narrow split pane or a maximized 4K terminal, when long lines neither wrap nor truncate cleanly, when there is no SIGWINCH/resize reflow, when panes overlap or vanish, or when the app crashes / renders garbage in a tiny terminal — covers constraint and flex layout, min-size and "terminal too small" states, overflow (scroll regions, ellipsis truncation), and reflow on resize.
+description: "Use when a TUI hardcodes 80x24 or any fixed dimensions, when content gets clipped or smeared after a terminal resize, when rows go stale or overlap after dragging the window, when the layout breaks in a narrow split pane or a maximized 4K terminal, when long lines neither wrap nor truncate cleanly, when there is no SIGWINCH/resize reflow, when panes overlap or vanish, or when the app crashes / renders garbage in a tiny terminal \u2014 covers constraint and flex layout, min-size and \"terminal too small\" states, overflow (scroll regions, ellipsis truncation), and reflow on resize."
 ---
 
 # Layout and Responsive Composition

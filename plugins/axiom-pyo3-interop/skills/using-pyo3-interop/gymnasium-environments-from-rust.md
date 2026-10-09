@@ -1,6 +1,6 @@
 ---
 name: gymnasium-environments-from-rust
-description: Use when exposing a Rust simulation as a Gymnasium environment — observation/action contracts, episode boundaries, reset semantics, vectorised environments, observation-copy avoidance. The canonical PyO3-for-RL bridge pattern. Produces `07-gymnasium-environments-from-rust.md`.
+description: "Use when exposing a Rust simulation as a Gymnasium environment \u2014 observation/action contracts, episode boundaries, reset semantics, vectorised environments, observation-copy avoidance. The canonical PyO3-for-RL bridge pattern."
 ---
 
 # Gymnasium Environments Backed by Rust

@@ -1,6 +1,6 @@
 ---
 name: error-mapping-and-traceback-fidelity
-description: Use when designing how Rust errors cross the FFI as Python exceptions — `PyResult` → exception type matrix, chained errors, traceback preservation, panic handling in `#[pyfunction]` bodies. A user should see a Python exception with a useful traceback, not "ValueError: <opaque rust error>". Produces `08-error-mapping-and-traceback-fidelity.md`.
+description: "Use when designing how Rust errors cross the FFI as Python exceptions \u2014 `PyResult` \u2192 exception type matrix, chained errors, traceback preservation, panic handling in `#[pyfunction]` bodies. A user should see a Python exception with a useful traceback, not \"ValueError: <opaque rust error>\"."
 ---
 
 # Error Mapping and Traceback Fidelity

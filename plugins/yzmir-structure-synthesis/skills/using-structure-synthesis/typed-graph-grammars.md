@@ -1,6 +1,6 @@
 ---
 name: typed-graph-grammars
-description: Use when defining the operator whitelist, typing/shape rules, and node/edge/parameter/memory ceilings a generator may emit within - and when deciding whether to expand a grammar to a new expressiveness level, staged behind a reliability gate rather than opened all at once.
+description: "Use when defining the operator whitelist, typing/shape rules, and node/edge/parameter/memory ceilings a generator may emit within - and when deciding whether to expand a grammar to a new expressiveness level, staged behind a reliability gate rather than opened all at once."
 ---
 
 # Typed Graph Grammars
@@ -111,16 +111,6 @@ knobs = {
 ```
 
 This space has `3 × 3 × 2 × 2 = 36` distinct structural configurations — small enough to exhaustively enumerate for verification testing, large enough to give the generator real choice. Contrast with jumping straight to level 3 (arbitrary DAG over 6+ operators with up to 12 nodes): the reachable structural space is combinatorially larger, and the verifier's cost — cycle detection, shape inference, zero-influence proof, all run per-candidate — grows with it. Staging is what makes the level-2 space fully testable before the level-3 space is attempted at all.
-
-## Rationalization Resistance
-
-| Rationalization | Reality |
-|---|---|
-| "Node count is a reasonable proxy for graph cost" | A dense 6-node graph can carry more parameters and edges than a sparse 40-node chain; proxies fail exactly where the generator explores boundaries a human wouldn't picture |
-| "We'll add this one operator, it's a small addition" | Verification cost is a function of the whitelist's interactions, not its size — see `search-space-evolution-and-explosion-control.md` for why "small" additions have caused explosion before |
-| "Level 3 gives the generator more freedom, why not start there" | More freedom without a demonstrated-reliable verifier at the previous level just means a bigger space of illegal or duplicate candidates to discover the hard way |
-| "The interface contract is obvious from context, we don't need to declare it" | An undeclared contract is unenforceable — `structural-verification.md` cannot check what the grammar never wrote down |
-| "Memory ceiling doesn't matter if parameter ceiling is respected" | Activation memory scales with graph width and depth, not parameter count alone; a parameter-cheap but deep/wide graph can still blow the memory budget |
 
 ## Red Flags Checklist
 

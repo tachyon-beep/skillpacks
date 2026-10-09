@@ -1,6 +1,6 @@
 ---
 name: release-management-and-rollback
-description: Use when a release is rebuilt separately for staging and production, when you cannot say exactly which commit and which bytes are running in prod right now, when "the version" is a moving tag like :latest or :prod, when shipping a fix means cutting a brand-new build instead of promoting one that already passed, when a release cannot be undone because the only artifact that existed was overwritten, when rolling back means rebuilding the old version from source and hoping it compiles the same, when nobody can answer "do we roll back or roll forward" without a 40-minute argument during an incident, when an approval is a Slack thumbs-up nobody can reconstruct later, when change management is either a rubber-stamp CAB that approves everything or a freeze that blocks everything, or when versioning is ad-hoc and consumers cannot tell a breaking change from a patch. Covers immutable artifact and version-identity discipline, build-once promote-everywhere across environments, semantic versioning and release channels, change management without theatre, the rollback-versus-roll-forward decision, automated rollback triggers and release health gates, and making every release reversible by construction.
+description: "Use when a release is rebuilt separately for staging and production, when you cannot say exactly which commit and which bytes are running in prod right now, when \"the version\" is a moving tag like :latest or :prod, when shipping a fix means cutting a brand-new build instead of promoting one that already passed, when a release cannot be undone because the only artifact that existed was overwritten, when rolling back means rebuilding the old version from source and hoping it compiles the same, when nobody can answer \"do we roll back or roll forward\" without a 40-minute argument during an incident, when an approval is a Slack thumbs-up nobody can reconstruct later, when change management is either a rubber-stamp CAB that approves everything or a freeze that blocks everything, or when versioning is ad-hoc and consumers cannot tell a breaking change from a patch. Covers immutable artifact and version-identity discipline, build-once promote-everywhere across environments, semantic versioning and release channels, change management without theatre, the rollback-versus-roll-forward decision, automated rollback triggers and release health gates, and making every release reversible by construction."
 ---
 
 # Release Management and Rollback
@@ -131,8 +131,9 @@ spec:
 ```
 
 ```yaml
-# Argo CD verifies the signature/attestation BEFORE it will sync the digest to prod.
-# Unsigned or unverifiable artifact => sync is refused => unverifiable bytes never reach prod.
+# This Application configures reconciliation only; it does NOT verify signatures.
+# Configure a separate admission/signature policy or verified promotion gate,
+# then test that unsigned, invalid and wrong-identity artifacts are rejected.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata: { name: orders-prod }
@@ -144,9 +145,9 @@ spec:
     automated: { prune: true, selfHeal: true }   # continuously reconciled (OpenGitOps)
 ```
 
-The release ledger is now **the git history of the prod repo**: every line says which digest, who changed it, when, and the reverting commit is one click. That is build-once-promote-everywhere and reversible-by-construction in one artifact.
+The desired-state release ledger is **the git history of the prod repo** (verify actual cluster state separately): every line says which digest, who changed it, when, and the reverting commit is one click. That is build-once-promote-everywhere and reversible-by-construction in one artifact.
 
-> Why GitOps here, not a deploy script: declarative + versioned + pulled + continuously reconciled (the OpenGitOps principles) makes "what is running" equal to "what the repo says," and makes rollback a revert. A push-based deploy script leaves no immutable record of *what* was pushed *when* by *whom*.
+> Why GitOps here, not a deploy script: declarative + versioned + pulled + continuously reconciled (the OpenGitOps principles) provides a versioned desired state and reconciliation mechanism. Verify observed cluster/artifact state separately; rollback may also require data/schema recovery. Push-based delivery can also preserve immutable identity and an audit trail when designed to do so.
 
 > IaC note: the platform these releases run on is itself versioned state. Pin providers and modules; treat the state as immutable history. Prefer **OpenTofu** (MPL-2.0, CNCF-hosted) as the open default and name the reason — **Terraform ships under the non-OSI BSL 1.1 since 1.6**; it is no longer open source. Pulumi is the general-purpose-language alternative (Python/TS/Go).
 

@@ -1,6 +1,6 @@
 ---
 name: testing-in-production
-description: Use when implementing feature flags, canary deployments, shadow traffic, A/B testing, choosing blast radius limits, defining rollback criteria, or monitoring production experiments - provides technique selection, anti-patterns, and kill switch frameworks
+description: "Use when implementing feature flags, canary deployments, shadow traffic, A/B testing, choosing blast radius limits, defining rollback criteria, or monitoring production experiments - provides technique selection, anti-patterns, and kill switch frameworks"
 ---
 
 # Testing in Production

@@ -1,6 +1,6 @@
 ---
 name: output-shape-and-pagination
-description: Use when a tool's return shape grows with the database, when an agent runs out of context after one tool call, when a list tool dumps every row, when responses are unbounded blobs of JSON, when there is no cursor and no page size, when you cannot tell whether a result was truncated, when you are deciding between summary fields and full detail, when structured output (structuredContent / outputSchema) is missing or unvalidated, or when you need to choose what a tool returns versus what it links to as a resource.
+description: "Use when a tool's return shape grows with the database, when an agent runs out of context after one tool call, when a list tool dumps every row, when responses are unbounded blobs of JSON, when there is no cursor and no page size, when you cannot tell whether a result was truncated, when you are deciding between summary fields and full detail, when structured output (structuredContent / outputSchema) is missing or unvalidated, or when you need to choose what a tool returns versus what it links to as a resource."
 ---
 
 # Output Shape and Pagination

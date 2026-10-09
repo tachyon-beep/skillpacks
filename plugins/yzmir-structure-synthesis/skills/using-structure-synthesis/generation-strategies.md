@@ -1,6 +1,6 @@
 ---
 name: generation-strategies
-description: Use when choosing how a generator samples candidates - deterministic direct generation, latent-conditioned sampling, stochastic best-of-K pools, or mutation/recombination - and when deciding whether a demonstrated coverage failure actually justifies escalating to a flow or diffusion model rather than fixing the simpler generator.
+description: "Use when choosing how a generator samples candidates - deterministic direct generation, latent-conditioned sampling, stochastic best-of-K pools, or mutation/recombination - and when deciding whether a demonstrated coverage failure actually justifies escalating to a flow or diffusion model rather than fixing the simpler generator."
 ---
 
 # Generation Strategies
@@ -22,15 +22,15 @@ This is the most common way a generation strategy silently fails: the code looks
 
 ## The Escalation Ladder
 
-Start at the bottom. Move up only when the level below has been tried and has a *demonstrated* coverage failure — not a suspicion, not "it seems limited," an actual measured gap between what the task needs and what the simpler generator can produce.
+Choose a strategy from task structure, existing evidence, available implementations and cost. Simpler baselines help explain gains, but there is no requirement to implement every preceding method before using a justified advanced one.
 
 1. **Deterministic direct generation** — one request in, one candidate out, no randomness. Cheapest to train, cheapest to debug, cheapest to verify (one candidate per request means the verifier's load is minimal). Sufficient whenever the request itself, plus diagnostic context, determines a good-enough answer.
 2. **Latent-conditioned generation** — an explicit latent variable conditions the output; sampling the latent produces different candidates from the same request. This is where genuine best-of-K sampling starts being possible.
 3. **Stochastic best-of-K pools** — K latent draws (or K samples from a stochastic decoding process) per request, with downstream selection choosing among them. Requires the latent conditioning from level 2 to actually be effective — see the RED scenario below for what happens when it isn't.
 4. **Retrieved-parent mutation / lineage recombination** — see `lineage-mutation-and-recombination.md`; sampling starts from an archive of prior candidates rather than from scratch.
-5. **Flow or diffusion models** — last resort, justified only by a demonstrated coverage failure of levels 1–4 on the actual task distribution.
+5. **Flow or diffusion models** — candidates when their representation, pretrained capabilities or measured coverage/cost fit the task. Compare against relevant simpler baselines.
 
-The ladder exists because verification cost, debuggability, and training cost all increase climbing it, while the actual coverage need for most structure-synthesis tasks is met well below the top. A small deterministic or latent-conditioned generator that covers the grammar's useful region is strictly preferable to a diffusion model that also covers it, because everything downstream — verification, canonicalisation, diversity measurement — is cheaper against a smaller, better-understood generator.
+The list describes options, not a universal cost ordering. Training, proposal and verification cost depend on the implementation, pool size and validity rate. Prefer the simplest approach that meets measured coverage, quality and resource requirements.
 
 ## The RED Scenario: Best-of-K With No Actual K
 
@@ -78,17 +78,6 @@ For any stochastic generator (levels 2 and up), sampling temperature is the chea
 1. **Temperature trades diversity against validity, and the trade must be measured, not assumed.** Raising temperature pushes probability mass toward the distribution's tails — which contain both the novel structures you want and the illegal or incoherent ones you don't. Structural-rejection rate (`structural-verification.md`) rises with temperature. The honest way to set it: sweep temperature, and for each setting plot distinct-canonical-forms-per-K against rejection rate. Pick the operating point from that curve. A temperature chosen because it's the framework default, or because the samples "looked varied," has not been chosen at all.
 2. **Temperature-induced diversity must survive canonicalisation to count.** Higher temperature reliably increases *raw* variation. Whether it increases *canonical* diversity is an empirical question with a specific failure mode: if distinct-canonical count barely moves as temperature rises while raw variation soars, the extra entropy is being spent on relabeling, reordering, and other differences the canonicaliser strips — heat without light. Measure with `diversity-and-mode-collapse.md`'s duplicate-rate metric at each temperature setting, never with raw-sample inspection.
 3. **Temperature is a serving-time knob, not a repair for a collapsed model.** If the pool is collapsed at *every* temperature — distinct-canonical count stays near 1 across the sweep — the generator's conditional distribution is degenerate, and no amount of sampling entropy will conjure modes the model doesn't have. That is a training-objective problem: see `learning-objectives-for-generators.md` for min-over-K and contrastive remedies.
-
-## Rationalization Resistance
-
-| Rationalization | Reality |
-|---|---|
-| "We call generate() K times in a loop, so it's best-of-K" | Best-of-K requires K sources of variation the generator responds to, not K function calls |
-| "Dropout gives us enough randomness for diversity" | Dropout noise that doesn't reach the topology-determining part of the model produces K samples that canonicalise to the same structure — see `diversity-and-mode-collapse.md` for how to check |
-| "Diffusion models are strictly more expressive, we should just use one" | Expressiveness isn't the bottleneck for most structure-synthesis tasks; verification and debugging cost scale with model complexity regardless of whether the extra expressiveness is used |
-| "Our deterministic generator seems limited, let's add a latent" | "Seems limited" is a hypothesis; measure the actual coverage gap against real requests before adding the complexity of levels 2+ |
-| "Best-of-K with K=32 must be diverse, that's a big pool" | Pool size and diversity are different numbers; see `diversity-and-mode-collapse.md` for the honest metric (duplicate rate after canonicalisation) |
-| "We'll just turn up the temperature until the pool is diverse enough" | Temperature buys tail mass, which contains illegal candidates as well as novel ones — and its raw variation may canonicalise away entirely; measure the distinct-canonical vs. rejection curve before trusting the knob |
 
 ## Red Flags Checklist
 

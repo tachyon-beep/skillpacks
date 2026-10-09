@@ -1,6 +1,6 @@
 ---
 name: equivalence-detection-and-semantic-hashing
-description: Use when detecting whether two generated structures compute the same function, assigning equivalence-class identity, or designing a semantic hash - and when that hash needs to survive serialization-order changes, library upgrades, and canonicaliser revisions rather than merely working on today's test graphs.
+description: "Use when detecting whether two generated structures compute the same function, assigning equivalence-class identity, or designing a semantic hash - and when that hash needs to survive serialization-order changes, library upgrades, and canonicaliser revisions rather than merely working on today's test graphs."
 ---
 
 # Equivalence Detection and Semantic Hashing
@@ -369,18 +369,6 @@ An equivalence-class ID is the semantic hash, reused: every candidate that canon
 1. **Raw identity** — the exact graph the generator emitted, before any canonicalisation.
 2. **Canonical semantic identity** — the equivalence-class ID / semantic hash, stable across serialization and generator noise.
 3. **Compiled/executable identity** (if a lowering stage exists downstream) — a specific device- and dtype-targeted implementation of the canonical semantics. Out of scope for this pack, but worth flagging: two different compiled artefacts may implement the same canonical semantic identity, and a compiled artefact must never be trusted to still implement that identity without independent conformance verification after compilation.
-
-## Rationalization Resistance
-
-| Rationalization | Reality |
-|---|---|
-| "`is_isomorphic()` is the standard networkx isomorphism check, it must be doing the right thing" | It checks topology only by default; operator labels require `node_match` explicitly |
-| "We pinned the networkx version, so the hash function is stable" | Pinning helps, but the hash is still attribute-blind unless `node_attr` is passed — a version pin does not fix a missing argument |
-| "Hash collision is astronomically unlikely, we don't need the isomorphism fallback" | Collision probability is about the hash function; it says nothing about bugs in canonicalisation, serialization, or the surrounding code — the fallback catches those too |
-| "We tested that identical structures hash the same, that's the important direction" | Test it on *adversarial* identicals — relabelings, port permutations, symmetric branches — not just renamed chains; and the other direction is just as load-bearing |
-| "Hashes disagree but the graphs look equivalent — probably fine, the hash is conservative" | A false split is invisible to every downstream check, forever; "conservative" here means "silently double-counting candidates" |
-| "The canonicaliser change is small, old hashes are probably still valid" | "Probably still valid" across a canonicalisation change is exactly the silent invalidation the version field exists to prevent; bump it and migrate |
-| "We'll bump the hash version when we remember to" | Golden-hash fixtures fail the build the moment behavior changes — that, not memory, is the control |
 
 ## Red Flags Checklist
 

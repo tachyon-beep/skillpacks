@@ -1,6 +1,6 @@
 ---
 name: numerical-methods
-description: Euler, Runge-Kutta, symplectic integrators, fixed-point arithmetic, and integration stability for game and simulation physics
+description: "Euler, Runge-Kutta, symplectic integrators, fixed-point arithmetic, and integration stability for game and simulation physics"
 ---
 
 # Numerical Methods for Simulation

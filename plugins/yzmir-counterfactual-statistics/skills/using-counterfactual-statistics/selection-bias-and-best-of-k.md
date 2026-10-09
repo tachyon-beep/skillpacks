@@ -1,6 +1,6 @@
 ---
 name: selection-bias-and-best-of-k
-description: Use when reporting the effect of the best of several candidates, when a screening stage picks a winner, or when a promising result fails to reproduce. Covers the winner's curse, why the screen winner's measured effect is biased upward, independent audit data as the only assumption-free fix, and what analytic bias corrections actually assume.
+description: "Use when reporting the effect of the best of several candidates, when a screening stage picks a winner, or when a promising result fails to reproduce. Covers the winner's curse, why the screen winner's measured effect is biased upward, independent audit data as the only assumption-free fix, and what analytic bias corrections actually assume."
 ---
 
 # Selection Bias and Best-of-K

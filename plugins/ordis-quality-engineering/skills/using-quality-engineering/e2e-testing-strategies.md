@@ -1,6 +1,6 @@
 ---
 name: e2e-testing-strategies
-description: Use when designing E2E test architecture, choosing between Cypress/Playwright/Selenium, prioritizing which flows to test, fixing flaky E2E tests, or debugging slow E2E test suites - provides production-tested patterns and anti-patterns
+description: "Use when designing E2E test architecture, choosing between Cypress/Playwright/Selenium, prioritizing which flows to test, fixing flaky E2E tests, or debugging slow E2E test suites - provides production-tested patterns and anti-patterns"
 ---
 
 # E2E Testing Strategies

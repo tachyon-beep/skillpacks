@@ -1,6 +1,6 @@
 ---
 name: stability-analysis
-description: Equilibrium analysis, eigenvalue methods, Lyapunov stability, and bifurcation detection for game economies, ecosystems, AI controllers, and physics systems
+description: "Equilibrium analysis, eigenvalue methods, Lyapunov stability, and bifurcation detection for game economies, ecosystems, AI controllers, and physics systems"
 ---
 
 # Stability Analysis for Game Systems
@@ -15,7 +15,7 @@ You do not need to derive a Lyapunov function from scratch to ship a stable simu
 2. **Linearize around them** — compute the Jacobian matrix and its eigenvalues.
 3. **Read off the verdict** — eigenvalues with positive real parts mean *unstable*; negative mean *stable*; pure imaginary means *marginal* (oscillates forever).
 
-That recipe catches roughly 90% of stability bugs before launch. The remaining 10% — limit cycles, strange attractors, multistability, hysteresis — require a richer toolkit, but they're also rare in practice.
+Local linear analysis is informative near the stated equilibrium under its regularity assumptions. It does not establish global stability or exclude limit cycles, chaotic attractors, multistability or hysteresis. Nonhyperbolic equilibria and trajectories far from the linearization point require additional analysis or numerical evidence.
 
 **Key insight**: If you can't write down a fixed point of your system, you don't understand it well enough to stabilize it. Most "balance" bugs are actually "no equilibrium exists" or "the equilibrium is unstable."
 
@@ -1960,7 +1960,7 @@ Before shipping, verify:
 - [ ] **Comparative testing** - Old vs new balance patch, check eigenvalue changes
 
 
-## REFACTOR Phase: 6 Pressure Tests
+## 6 Worked failure cases
 
 ### Test 1: Rimworld Ecosystem Stability
 

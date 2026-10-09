@@ -1,3 +1,5 @@
+> Historical review of the version named below; it is not an assessment of marketplace 4.0.0. See [the current consolidation record](../../docs/relevance-refresh.md). Retired pack names and old process requirements are historical.
+
 # Report Card — axiom-system-archaeologist
 
 **Version:** 1.6.2  **Track:** P (Process / Hybrid)  **Graded:** 2026-06-22

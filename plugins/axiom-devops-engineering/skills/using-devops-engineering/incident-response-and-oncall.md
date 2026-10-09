@@ -1,6 +1,6 @@
 ---
 name: incident-response-and-oncall
-description: Use when an outage is being fought over chat with nobody clearly in charge, when the same incident keeps recurring and no root-cause analysis was ever written, when one engineer is the only person who can fix prod and gets paged at 3am every week, when postmortems name a person instead of a cause or quietly never happen, when there are no severity levels so a cosmetic bug and a full outage get the same response, when on-call means thrashing through dashboards with no runbook, when "the deploy is frozen" has no defined trigger and stays frozen forever, when nobody can say whether you can afford to ship this week, or when the team brags about heroics while burning out. Covers severity classification, incident command, runbooks, incident comms and status updates, blameless postmortems and corrective-action tracking, SLOs and error budgets governing release pace, on-call rotation health and toil reduction.
+description: "Use when an outage is being fought over chat with nobody clearly in charge, when the same incident keeps recurring and no root-cause analysis was ever written, when one engineer is the only person who can fix prod and gets paged at 3am every week, when postmortems name a person instead of a cause or quietly never happen, when there are no severity levels so a cosmetic bug and a full outage get the same response, when on-call means thrashing through dashboards with no runbook, when \"the deploy is frozen\" has no defined trigger and stays frozen forever, when nobody can say whether you can afford to ship this week, or when the team brags about heroics while burning out. Covers severity classification, incident command, runbooks, incident comms and status updates, blameless postmortems and corrective-action tracking, SLOs and error budgets governing release pace, on-call rotation health and toil reduction."
 ---
 
 # Incident Response and On-Call
@@ -211,3 +211,10 @@ A rotation that burns people out is a reliability risk: exhausted responders mak
 - `ci-cd-pipeline-architecture` — the build-once, signed-artifact pipeline whose gates the error budget governs; a frozen budget freezes the release pipeline.
 - `infrastructure-as-code` — recovery from infra loss depends on environments being rebuildable from versioned code, not reconstructed from memory under incident pressure.
 - For the vendor-neutral telemetry powering SLO alerts, burn-rate calculation, and postmortem timelines, instrument with OpenTelemetry (OTLP → Collector) — never a vendor SDK.
+
+
+## Investigation and custody checks
+
+Preserved from engineering foundations: establish the observed impact and baseline, contain the incident within actual authority, and preserve useful evidence before changing state. Separate mitigation from root-cause diagnosis. Use discriminating reproduction/instrumentation to falsify hypotheses; inspect runtime directly when tools permit rather than assuming the user must gather all logs.
+
+Keep a timestamped decision/action trail, artifact/environment identity, affected state and recovery limits. Verify recovery against real health/traffic and data integrity, then record residual risk and a regression/restore check. Timing examples in this sheet are illustrative; actual escalation policy and current authorization govern. Do not broaden cleanup or reset unrelated resources.

@@ -1,226 +1,28 @@
 ---
-description: Scaffold a structure generator + verifier + canonicaliser skeleton with failing-first tests for round-trip, canonicalisation idempotence, and hash equivalence in both directions
+description: Scaffold generation and verification contracts with task-specific source and runtime evidence.
 allowed-tools: ["Read", "Write", "Bash", "Skill"]
 argument-hint: "<project-name> [--representation=pointer-based|edge-list|latent-decoder]"
 ---
 
-# Scaffold Structure Generator
+# Scaffold generation and verification contracts
 
-Create a new structure-synthesis pipeline with the module separation and failing-first test discipline this domain requires: a generator that never filters its own output, a canonicaliser that never becomes a generator, a verifier that consumes no utility signal, and a hasher whose stability is tested in both directions before anything else is built on top of it.
+Apply this command to the requested artifact or failure. Inspect supplied sources and available run evidence before recommending changes. Keep scope proportional; use existing project/runtime conventions and ask only for missing facts that change the result. Additional agents are optional for bounded independent questions.
 
-## What Gets Created
+## Task-specific checks
 
-```
-project-name/
-├── grammar.py              # Operator whitelist, shape rules, ceilings
-├── generator.py            # Emits raw candidates -- no self-filtering
-├── canonicalizer.py        # Semantics-preserving normal form only
-├── hasher.py                # Versioned semantic hash over the canonical form
-├── verifier.py              # Legality gate -- consumes NO utility/reward/provenance
-├── archive.py                # Lineage storage, keyed on canonical identity, retains failures
-├── tests/
-│   ├── test_round_trip.py            # encode(decode(x)) == x, and vice versa
-│   ├── test_canonicalisation.py      # idempotence + order-independence + false-split regression
-│   ├── test_hash_equivalence.py      # both directions: equal-semantics/equal-hash,
-│   │                                  # distinct-semantics/distinct-hash
-│   ├── test_verifier_boundary.py     # verifier signature accepts no utility/reward input
-│   └── test_generator_boundary.py    # generator never returns fewer candidates than requested
-├── requirements.txt
-└── README.md
-```
+Fit existing project abstractions. Implement a bounded representation/generator, cheap legality checks, canonicalizer/full verifier and versioned identity at explicit boundaries. Add meaningful round-trip, cycle/type/budget, idempotence, equivalence/separation and mutation checks. Treat predicted-utility-guided search as an explicit selection policy when required, not an unobservable verifier preference.
 
-This layout is non-negotiable in spirit — file names may change, but the categories may not be omitted. Each file represents a discipline this pack documents:
+## Evidence and deliverable
 
-| File | Discipline |
-|------|------------|
-| `grammar.py` | `typed-graph-grammars.md` |
-| `generator.py` | `generation-strategies.md`, `learning-objectives-for-generators.md` |
-| `canonicalizer.py` | `canonicalisation-and-normal-forms.md` |
-| `hasher.py` | `equivalence-detection-and-semantic-hashing.md` |
-| `verifier.py` | `structural-verification.md` |
-| `archive.py` | `lineage-mutation-and-recombination.md` |
+- Cite source paths, configuration/artifact identities and observed results for material claims. Separate confirmed behavior from hypotheses and estimates.
+- Report the result or concrete artifact/change, relevant verification and limits. State checks not run or dimensions that could not be assessed; include risk/uncertainty where it affects a decision.
+- For a review, a supported clean result is valid. Record relevant sweep coverage and counterevidence; never manufacture findings or prescribe a minimum number.
+- Execute writes, workloads and external actions within the user's requested scope and existing authorization. A template does not itself authorize a commit, deployment or expensive run.
 
-## Key Principles
+## Optional depth
 
-### 1. Tests Are Failing-First
+Use the [pack contract](../skills/using-structure-synthesis/SKILL.md) when broader obligations matter. Select only references that resolve a concrete question; examples are not universal recipes. Verify time-sensitive APIs against the target environment and primary documentation.
 
-Every test file starts as a **known-failing** stub against the scaffold's initial no-op implementations — the point is to write the test before the implementation exists, so the implementation is built to satisfy a test that was already articulated, not retrofitted to whatever the implementation happens to do.
-
-```python
-# tests/test_canonicalisation.py — starts failing, stays in the suite permanently
-def test_idempotence():
-    g = make_example_graph()
-    outputs = {"out"}
-    c1 = canonicalise(g, outputs)
-    c2 = canonicalise(c1, outputs=infer_outputs(c1))
-    assert canonical_bytes(c1) == canonical_bytes(c2), "canonicalisation is not idempotent"
-
-def test_order_independence():
-    g1, g2 = make_example_graph(), make_reordered_equivalent_graph()
-    assert canonical_bytes(canonicalise(g1, {"out"})) == canonical_bytes(canonicalise(g2, {"out"}))
-
-def test_no_false_split_on_symmetric_structures():
-    # Class 1 -- port-asymmetric pair: identical SINGLE-node branches feeding a
-    # merge, port assignment swapped between the two copies. Catches
-    # predecessor-only refinement. Isomorphic graphs MUST canonicalise
-    # identically -- a split here is invisible to every downstream check.
-    g1, g2 = make_port_swapped_symmetric_pair()
-    assert canonical_bytes(canonicalise(g1, {"out"})) == canonical_bytes(canonicalise(g2, {"out"}))
-
-def test_no_false_split_on_deep_same_port_branches():
-    # Class 2 -- repeated MULTI-node branches feeding the SAME port of a
-    # commutative merge (in -> relu -> sigmoid -> merge, twice), with the
-    # mid-chain wiring swapped between copies. Class 1 passes on any
-    # bidirectional refinement; THIS is the pair that fails when the leftover
-    # ties are broken by raw node ID, because the relus are one tied orbit and
-    # the sigmoids another and resolving them independently is not an
-    # automorphism. Parameterise over every branch depth and multiplicity the
-    # grammar can express.
-    g1, g2 = make_same_port_deep_branch_pair()
-    assert labeled_isomorphic(g1, g2)   # the fixture's own precondition
-    assert canonical_bytes(canonicalise(g1, {"out"})) == canonical_bytes(canonicalise(g2, {"out"}))
-
-def test_identity_splice_does_not_collapse_a_parallel_edge():
-    # out = residual_add(a via port 1, identity(a) via port 0) -- computes 2a.
-    # On a DiGraph the splice's add_edge would OVERWRITE the existing (a, out)
-    # edge, dropping the merge to one input. Semantics-changing rewrite AND a
-    # false merge with a genuinely single-input residual_add(a).
-    g = make_residual_passthrough_graph()
-    canon = canonicalise(g, {"out"})
-    merge = next(n for n in canon.nodes if canon.nodes[n]["op"] == "residual_add")
-    assert canon.in_degree(merge) == 2, "splice collapsed 2a into a"
-    assert semantic_hash(g, {"out"}) != semantic_hash(make_single_input_add(), {"out"})
-```
-
-Reference implementation for these functions — why the refinement must fold in both in-edges and out-edges, why bidirectional refinement is necessary but **not sufficient** without an orbit-aware individualization tie-break, and why the identity splice needs a `has_edge` guard: `canonicalisation-and-normal-forms.md`'s executable decision procedure.
-
-### 2. Hash Equivalence Tested in BOTH Directions
-
-```python
-# tests/test_hash_equivalence.py
-def test_equal_semantics_equal_hash():
-    g1, g2 = equivalent_but_differently_labeled_graphs()
-    assert semantic_hash(g1, out1) == semantic_hash(g2, out2)
-
-def test_distinct_semantics_distinct_hash():
-    g1, g2 = structurally_similar_but_semantically_different_graphs()
-    assert semantic_hash(g1, out1) != semantic_hash(g2, out2)
-
-def test_bare_isomorphism_is_not_used_anywhere():
-    # grep-based regression guard: nx.is_isomorphic without node_match must not
-    # appear anywhere near candidate-equivalence code. Note: this is a plain
-    # substring grep followed by a Python-side filter, not a single regex with
-    # negative lookahead -- `(?!...)` is a PCRE feature that POSIX `grep -E`
-    # rejects with an error (exit status 2, message on stderr). The danger is
-    # not that the grep is quiet; it is that a harness reading only stdout sees
-    # the rejection as an empty result and reports zero findings forever. Hence
-    # the explicit returncode check below: grep exits 0 on match, 1 on no match,
-    # >=2 on error, and only the first two are answers.
-    import subprocess
-    result = subprocess.run(
-        ["grep", "-rn", "is_isomorphic(", "."],
-        capture_output=True, text=True,
-    )
-    assert result.returncode in (0, 1), (
-        f"grep failed (exit {result.returncode}): {result.stderr.strip()} "
-        "-- a guard that cannot run is not a passing guard"
-    )
-    suspicious = [l for l in result.stdout.splitlines() if "node_match" not in l]
-    assert not suspicious, f"bare isomorphism check found: {suspicious}"
-```
-
-A hash test suite that only checks one direction has only half-verified the hash. See `equivalence-detection-and-semantic-hashing.md` for why both directions fail differently and both matter.
-
-### 3. Generator Boundary Is Structurally Enforced
-
-```python
-# tests/test_generator_boundary.py
-def test_pool_size_matches_request_regardless_of_internal_scores():
-    pool = generator.generate_pool(request, k=8)
-    assert len(pool) == 8, "generator must never silently drop candidates by internal score"
-
-def test_generator_signature_has_no_utility_filter_path():
-    import inspect
-    sig = inspect.signature(generator.generate_pool)
-    assert "utility_threshold" not in sig.parameters
-    assert "min_predicted_score" not in sig.parameters
-```
-
-Soft tests — they make the anti-pattern visible in CI rather than in the failure mode it causes. See `learning-objectives-for-generators.md`.
-
-### 4. Verifier Boundary Is Structurally Enforced
-
-```python
-# tests/test_verifier_boundary.py
-def test_verifier_signature_has_no_utility_or_provenance_input():
-    import inspect
-    sig = inspect.signature(verifier.verify)
-    forbidden = {"reward", "predicted_utility", "generator_id", "source", "future_utility"}
-    assert not (forbidden & set(sig.parameters)), \
-        f"verifier consumes forbidden inputs: {forbidden & set(sig.parameters)}"
-```
-
-Static, structural check — same discipline as `yzmir-morphogenetic-rl`'s governor-invariant tests, applied to the generation/verification boundary this pack owns. See `structural-verification.md`.
-
-### 5. Archive Retains Failures, Keyed on Canonical Identity
-
-```python
-# archive.py
-@dataclass
-class ArchiveEntry:
-    canonical_hash: str        # from hasher.py — the retrieval key
-    raw_candidate: RawGraph
-    outcome: Literal["accepted", "rejected_structural", "rejected_downstream"]
-    lineage: list[str]         # parent hashes, for audit -- never read by verifier/generator
-```
-
-No `winners_only` mode. See `lineage-mutation-and-recombination.md` on why survivorship bias in the archive corrupts future search.
-
-## Post-Scaffold Checklist
-
-Before generating a single real candidate:
-
-1. **Run the round-trip test**: `pytest tests/test_round_trip.py -v`
-2. **Run the canonicalisation tests**: `pytest tests/test_canonicalisation.py -v`
-3. **Run the hash-equivalence tests, both directions**: `pytest tests/test_hash_equivalence.py -v`
-4. **Run the boundary-enforcement tests**: `pytest tests/test_verifier_boundary.py tests/test_generator_boundary.py -v`
-5. **Confirm the grammar's ceilings are all independently checked** — node, edge, parameter, memory — not just node count
-6. **Confirm the archive schema has no `winners_only` code path**
-
-If any of (1)–(6) fails, fix it before generating real candidates. A pipeline built on top of a broken canonicaliser or an unverified hash direction produces results that look fine and are quietly wrong.
-
-## Anti-Patterns This Scaffold Prevents
-
-| Anti-pattern | How the scaffold prevents it |
-|---|---|
-| Generator self-filters its pool | `test_generator_boundary.py` asserts returned pool size matches requested size |
-| Verifier consumes reward/provenance | `test_verifier_boundary.py` structurally checks the function signature |
-| Canonicaliser is non-idempotent or order-dependent | `test_canonicalisation.py` runs both properties as tests, not assumptions |
-| Hash only tested in one direction | `test_hash_equivalence.py` requires both `test_equal_semantics_equal_hash` and `test_distinct_semantics_distinct_hash` |
-| Bare unlabeled isomorphism used anywhere | `test_bare_isomorphism_is_not_used_anywhere` greps for it as a regression guard |
-| Archive discards failed/rejected candidates | `ArchiveEntry.outcome` has no `winners_only` mode; rejected entries are first-class |
-
-## Load Detailed Guidance
-
-For the canonicaliser and hasher (the technical core, get these right first):
-```
-Load skill: yzmir-structure-synthesis:using-structure-synthesis
-Then read: canonicalisation-and-normal-forms.md
-Then read: equivalence-detection-and-semantic-hashing.md
-```
-
-For the verifier:
-```
-Then read: structural-verification.md
-```
-
-For the generator and its training objective:
-```
-Then read: generation-strategies.md
-Then read: learning-objectives-for-generators.md
-```
-
-For the archive:
-```
-Then read: lineage-mutation-and-recombination.md
-```
+- [graph-representations-for-generation](../skills/using-structure-synthesis/graph-representations-for-generation.md)
+- [structural-verification](../skills/using-structure-synthesis/structural-verification.md)
+- [canonicalisation-and-normal-forms](../skills/using-structure-synthesis/canonicalisation-and-normal-forms.md)

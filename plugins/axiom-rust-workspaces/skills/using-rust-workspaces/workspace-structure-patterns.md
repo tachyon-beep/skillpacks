@@ -1,6 +1,6 @@
 ---
 name: workspace-structure-patterns
-description: Use when designing or restructuring a multi-crate Rust workspace — choosing the topology (which crates exist, which depend on which, where the public surface lives). Covers the three workable patterns (layered, feature-grouped, domain-grouped), the `workspace.members` glob trap, the role of a root binary crate vs a workspace-without-binary, and the structural moves that prevent cyclic dependencies. Produces `01-workspace-structure.md`.
+description: "Use when designing or restructuring a multi-crate Rust workspace \u2014 choosing the topology (which crates exist, which depend on which, where the public surface lives). Covers the three workable patterns (layered, feature-grouped, domain-grouped), the `workspace.members` glob trap, the role of a root binary crate vs a workspace-without-binary, and the structural moves that prevent cyclic dependencies."
 ---
 
 # Workspace Structure Patterns
@@ -242,7 +242,7 @@ A complete `01-` artifact:
 
 | Mistake | Symptom | Fix |
 |---------|---------|-----|
-| Single-package workspace (one member) | The `[workspace]` table buys nothing; cognitive overhead with no benefit | Remove the workspace table; move the crate to root; load `/rust-engineering`. See `13-`. |
+| Single-package workspace (one member) | Can be intentional for inherited policy, tooling or planned composition | Keep it when it serves a concrete purpose; do not split crates or remove workspace policy merely to fit a template. |
 | Glob members without excludes | A `scratch/` directory pollutes the lockfile | Add `exclude = [...]`; or switch to explicit list; or delete the directory |
 | God-crate at the bottom of the layering | A one-line change recompiles everything | Split the god-crate; the trait-crate pattern almost always applies. See `13-` § "god-crate" |
 | `pub use` from a layer-3 crate of a layer-0 type | The public API surface leaks into a higher layer; semver becomes ambiguous | Move the type, or wrap it. See `06-` § "the leaky internal API anti-pattern" |

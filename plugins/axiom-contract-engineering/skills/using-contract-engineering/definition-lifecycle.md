@@ -1,6 +1,6 @@
 ---
 name: definition-lifecycle
-description: Use when a named, versioned artefact governs behaviour across a boundary — a schema version, a policy record, an evaluation rubric, a grammar or profile in a registry — and someone is about to edit it in place, fix a typo in it, promote it to production, delete an old version, reference it as "latest", or ship it before anyone approved it. Also use when the same definition name means different things in two environments, or when an audit cannot say which content was in force when a past record was produced. Covers draft/approved/locked semantics, append-only transition events, content-hash drift detection, consumer pinning, and supersession instead of edit.
+description: "Use when a named, versioned artefact governs behaviour across a boundary \u2014 a schema version, a policy record, an evaluation rubric, a grammar or profile in a registry \u2014 and someone is about to edit it in place, fix a typo in it, promote it to production, delete an old version, reference it as \"latest\", or ship it before anyone approved it. Also use when the same definition name means different things in two environments, or when an audit cannot say which content was in force when a past record was produced. Covers draft/approved/locked semantics, append-only transition events, content-hash drift detection, consumer pinning, and supersession instead of edit."
 ---
 
 # Definition Lifecycle

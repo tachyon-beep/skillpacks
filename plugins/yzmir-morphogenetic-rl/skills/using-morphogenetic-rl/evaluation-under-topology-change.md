@@ -1,6 +1,6 @@
 ---
 name: evaluation-under-topology-change
-description: Use when comparing checkpoints whose architectures differ — parameter-budget controls, FLOPs-budget controls, capacity-matched baselines, and the discipline that prevents "morphogenesis improves over static" from meaning "morphogenesis used more parameters."
+description: "Use when comparing checkpoints whose architectures differ \u2014 parameter-budget controls, FLOPs-budget controls, capacity-matched baselines, and the discipline that prevents \"morphogenesis improves over static\" from meaning \"morphogenesis used more parameters.\""
 ---
 
 # Evaluation Under Topology Change
@@ -19,24 +19,24 @@ For general RL evaluation methodology (statistical significance, multiple seeds,
 
 ## Core Principle
 
-**Two checkpoints with different shapes are not directly comparable on raw loss, raw reward, or raw FLOPs. Comparison requires a control variable, and "the controller's run" is not one.**
+**State the estimand before equalizing resources.** End-to-end system quality, quality at fixed compute, capacity efficiency and controller attribution are different questions. Raw endpoints can describe a system result; they cannot by themselves attribute it to controller decisions.
 
-A morphogenetic system that grows from 1M to 4M parameters and outperforms a static 1M baseline has demonstrated nothing about the controller. It has demonstrated that 4M outperforms 1M, which was already known. The interesting question — *did the controller do better than naïve scaling?* — requires the right baseline.
+If a run grows from 1M to 4M parameters and beats a static 1M baseline, the observed system improvement may involve capacity, growth, schedule, data exposure or controller decisions. More parameters do not guarantee better quality. To claim controller value, compare against relevant scaling and no-controller controls.
 
-There are four dimensions along which fairness must be controlled:
+Record four resource/state dimensions and decide which must be held fixed for the claim:
 
 1. **Parameter count** at every checkpoint of comparison
 2. **Compute budget** (FLOPs or wall-clock) per evaluation
 3. **Data exposure** (number of training samples seen)
 4. **Optimizer state** (warmup, schedule position) at the moment of evaluation
 
-A claim that controls one of these and ignores the others is a partial result. Be explicit about which axis you have controlled.
+These cannot always all be equalized simultaneously. State which are controlled, which are outcomes or mediators, and which remain different; do not adjust away the mechanism whose total effect is being estimated.
 
 ---
 
 ## The Right Baselines
 
-Three baselines matter. A morphogenetic claim should beat at least one of them; ideally all three.
+Select from the following baselines according to the claim and budget; a negative or inconclusive result is valid. Report all planned comparisons, including losses.
 
 ### Baseline 1: Static Final Architecture
 
@@ -46,7 +46,7 @@ Train a static network whose architecture matches the morphogenetic run's *final
 
 **What it does not test**: Architecture-search value. If the answer is "no, static-final wins," it might be because morphogenesis is wasting early compute exploring the wrong shape.
 
-This baseline is the most informative and the most expensive. Run it.
+This estimates a useful architecture-informed comparator. A final architecture selected from the same evaluation runs is an oracle/selected comparator; record its selection cost and evaluate on independent tasks or splits before treating it as an ordinary deployment baseline.
 
 ### Baseline 2: Static Initial Architecture
 
@@ -56,7 +56,7 @@ Train a static network at the morphogenetic run's *initial* shape, for the same 
 
 **What it does not test**: Whether morphogenesis is better than a hand-picked larger architecture.
 
-If morphogenesis loses to the static-initial baseline despite ending with more parameters, the controller is harmful — you would have been better off not growing at all. (See `when-not-to-grow.md`.)
+A worse point estimate against static-initial is evidence to investigate controller overhead or ineffective growth. Claim harm only with an appropriate uncertainty analysis and materially worse effect for the target workload; distinguish the controller from other harness differences. (See `when-not-to-grow.md`.)
 
 ### Baseline 3: Naïve Scaling Schedule
 
@@ -64,27 +64,27 @@ Train a network that follows a hand-coded growth schedule — e.g., grow at fixe
 
 **What it tests**: Does the *learned* controller beat a naïve fixed schedule that ends at the same shape?
 
-This is the strongest test of controller value. It controls for total parameter count, total FLOPs, and the fact of growth itself. The only variable is *whether the controller is learning*.
+This is a useful controller comparator when event budgets, compute accounting and harness behavior are matched. A hand-coded schedule may differ in timing, shape, data exposure and adaptation as well as learning; disclose those differences. Replaying a learned schedule tests adaptation to new conditions, but a schedule chosen using evaluation outcomes creates selection bias.
 
-A morphogenetic result that beats baselines 1 and 2 but loses to a fixed schedule has shown that the *act* of growing helped, but the controller's *decisions* did not. That is still a result — but it is a different result than "our controller works."
+If growth beats static controls but a fixed schedule matches or exceeds the learned controller, report that the tested controller has no demonstrated advantage over that schedule at the measured precision. This does not prove its decisions never matter on other tasks or budgets.
 
 ### The Off-Switch Baseline
 
-Run the same morphogenetic system with the controller disabled — actions are no-ops, the system never grows. Compare loss curves. This is the cheapest and most damning test: if the off-switch baseline matches the controller's run, the controller did nothing. (See `when-not-to-grow.md`.)
+Run the same harness with controller actions disabled and record whether controller inference/observation overhead remains. Compare matched task outcomes and resource curves. Similar point estimates establish neither equivalence nor that the controller did nothing: use uncertainty and a predeclared practical-equivalence margin to support a no-material-benefit claim. (See `when-not-to-grow.md`.)
 
 ---
 
 ## What to Equalize When Comparing
 
-For a fair comparison between morphogenetic run M and baseline B:
+Choose the relevant controls for morphogenetic run M and baseline B; some rows describe different estimands:
 
 | Equalize | How | Why |
 |----------|-----|-----|
-| **Parameter count at evaluation** | Evaluate B at the param count M reached | Loss-vs-params curves are roughly monotonic; comparing different points is meaningless |
-| **Total training FLOPs** | Run B for the same compute as M | A bigger network with more compute should win; that's not a controller result |
-| **Wall-clock budget** | If FLOPs unavailable, use wall-clock | Worse than FLOPs, but acceptable if hardware is identical |
+| **Parameter count at evaluation** | Evaluate B at the param count M reached | Separates capacity from quality; equal count does not guarantee equal architecture quality |
+| **Total training FLOPs** | Run B for the same compute as M | Tests quality at a compute budget; larger models need not win |
+| **Wall-clock budget** | If FLOPs unavailable, use wall-clock | Measures elapsed-budget value; report hardware, load and controller/runtime overhead |
 | **Data exposure** | Same dataset epochs / token count | Morphogenesis should not get extra data |
-| **Random seed strategy** | Multiple seeds per condition (≥3, ideally ≥10) | Morphogenetic variance is high; single-seed results are unreliable |
+| **Random seed strategy** | Independent matched units sized for variance, effect size and power | Morphogenetic variance is high; single-seed results are unreliable |
 | **Evaluation point** | Compare at multiple param-count milestones, not just final | Early-vs-late dynamics differ |
 
 The first item is the one most often skipped. People train static-2M and morphogenetic-final-4M and compare them as if they are equivalent claims. They are not.
@@ -100,13 +100,13 @@ A morphogenetic result is a *curve*, not a number. Report at minimum:
 - **Param count vs step**: When the controller chose to grow
 - **Cumulative param-budget consumption**: How quickly the controller spent its growth budget
 
-A single "final loss = 0.47, baseline = 0.51" comparison is uninterpretable. The full curves let a reader see whether morphogenesis was systematically better, occasionally better, or worse-but-cheaper-late.
+A single endpoint comparison can answer a predeclared endpoint question, but it cannot describe unmeasured learning dynamics. The full curves let a reader see whether morphogenesis was systematically better, occasionally better, or worse-but-cheaper-late.
 
 ### What Pareto Curves Reveal
 
-Plot loss vs param count for many runs (morphogenetic + baselines). The Pareto frontier shows the loss-vs-cost tradeoff. Morphogenesis is interesting only if it shifts the frontier — i.e., for some param count, morphogenetic runs achieve lower loss than any static run at that count.
+Plot loss vs param count for many runs (morphogenetic + baselines). The Pareto frontier shows the loss-vs-cost tradeoff. A frontier shift is one quality/resource benefit; adaptation speed, reliability or deployment constraints can support other predeclared benefits. Estimate frontier uncertainty and account for selected runs.
 
-A morphogenetic curve that lies *on* the static frontier is a null result: the controller learned nothing the static baseline didn't already know.
+A curve on the measured static frontier shows no observed quality/resource advantage over those comparators; uncertainty, selection and unmeasured operating conditions limit broader claims.
 
 ---
 
@@ -119,7 +119,7 @@ When endpoint comparison is unavoidable (e.g., for a leaderboard cell), normaliz
 | **Compute-equalized loss** | Loss at fixed FLOP budget across runs | Standard for compute-controlled comparisons |
 | **Param-equalized loss** | Loss when the static baseline is shrunk/grown to match M's param count at evaluation | Standard for capacity-controlled comparisons |
 
-Report **both**, and explain the disagreement (there will be disagreement). Picking one and hiding the other is a smell.
+Report the comparison matching the estimand; provide other resource tradeoffs when they matter. Explain observed disagreements rather than assuming they must exist.
 
 ### The Ratio Trap
 
@@ -127,7 +127,7 @@ You will be tempted by `loss / param_count` and `loss / total_train_flops`. Both
 
 Loss is better when it is *lower*. Dividing loss by the resource makes a run that spent **more** parameters or **more** compute score better at equal loss — the ratio rewards exactly the resource it claims to control for. A morphogenetic run that grows freely and lands at the same loss as the static baseline will "win" on loss-per-FLOP purely by burning more FLOPs. That is the opposite of the comparison you wanted.
 
-If you want the resource in the denominator, put a quantity that *improves* with magnitude in the numerator instead. Using the M-vs-B notation above, `(loss_B − loss_M) / (flops_M − flops_B)` is a genuine marginal-return-on-compute measure: it rises when the extra compute bought real loss reduction and goes negative when growth hurt — which is the behaviour you want from a fairness statistic and exactly what the raw ratios cannot do.
+For strictly positive additional compute, `(loss_B − loss_M) / (flops_M − flops_B)` can describe marginal loss reduction per extra FLOP. It becomes unstable near a zero denominator and changes interpretation for negative additional compute; report raw quality and cost differences with uncertainty rather than treating the ratio as a universal fairness statistic.
 
 The raw ratios are usable as a one-directional smell test and nothing more: if `loss / param_count` collapses while loss itself is flat, the controller is buying parameters that do no work. Report that as a diagnostic observation, never as the headline comparison.
 
@@ -135,19 +135,16 @@ The raw ratios are usable as a one-directional smell test and nothing more: if `
 
 ## Multi-Seed Discipline
 
-Morphogenetic runs are higher-variance than static runs because the controller's exploration decisions compound. A single morphogenetic result is unreliable.
+Controller exploration and topology changes can add variance. Estimate variance on representative independent units; one seed can illustrate feasibility but cannot characterize a population effect.
 
-### Minimum Seed Counts
+### Plan Replication
 
-| Claim | Minimum seeds per condition |
-|-------|-----------------------------|
-| "It works in principle" (proof of concept) | 3 |
-| "It beats the baseline" (publishable claim) | 10 |
+Choose independent-unit counts from the smallest meaningful effect, variability, pairing and desired precision/power. No fixed seed count makes a claim publishable. A small pilot is exploratory and should report its uncertainty.
 | "It robustly beats the baseline" (deployment-grade) | 30+ |
 
 These numbers are conservative for static RL. For morphogenetic RL, they are floors, not targets.
 
-**Seeds are the independent unit; branches, candidates, and horizons are not.** If your harness forks matched branches from a shared snapshot, the branches are repeated measures of one seed — counting them as independent samples understates the standard error by roughly the square root of the branches-per-seed and is the most common way a morphogenetic result gets published without being real. This sheet fixes *which comparisons to run*; for what `n` is, how to test a paired difference, how to size the fleet, and how much of a best-of-K result is selection bias, see `yzmir-counterfactual-statistics`.
+**Seeds are the independent unit; branches, candidates, and horizons are not.** If your harness forks matched branches from a shared snapshot, the branches are repeated measures of one seed — counting them as independent samples can understate uncertainty; the magnitude depends on within-seed correlation and the analysis design. This sheet fixes *which comparisons to run*; for what `n` is, how to test a paired difference, how to size the fleet, and how much of a best-of-K result is selection bias, see `yzmir-counterfactual-statistics`.
 
 ### What to Report Per Condition
 
@@ -160,13 +157,13 @@ condition: morphogenetic, reward_mode=utility_minus_cost
   rollback_rate: 4.7% ± 1.2%
 ```
 
-The parameter-count standard deviation matters. If different seeds end at very different shapes, your condition is not really a single condition — the controller's variance is half the result.
+Parameter-count variability matters when topology is an outcome of the treatment. Report its distribution alongside quality and resource use; do not silently discard unusual shapes.
 
 ### Statistical Tests
 
-For "morphogenetic > baseline" claims, use a non-parametric test (Mann-Whitney U on per-seed final loss) rather than t-tests. Morphogenetic loss distributions are skewed (occasional catastrophic runs); means lie.
+Choose the estimand and independent units first. Matched seeds/snapshots call for a paired analysis of within-unit differences; preserve that pairing when resampling or randomizing. Mann–Whitney U is an option for an appropriate unpaired distributional question, not a universal replacement for a mean-effect test. Inspect heavy tails and catastrophic runs, report effect sizes and uncertainty, and disclose exclusions. See `yzmir-counterfactual-statistics` for design and selection corrections.
 
-For per-step comparison, bootstrap confidence intervals on the loss-vs-step curve. Many published RL results that look significant lose significance when properly bootstrapped.
+For learning curves, resample independent units while preserving each unit’s repeated trajectory and matched branches. Distinguish pointwise intervals from simultaneous bands; predeclare the endpoint or account for repeated looks before claiming a curve-wide improvement.
 
 ---
 
@@ -174,7 +171,7 @@ For per-step comparison, bootstrap confidence intervals on the loss-vs-step curv
 
 The central question of morphogenetic evaluation: **did the controller's choices matter, or would any growth schedule reaching the same final shape have worked?**
 
-The decomposition:
+A bookkeeping contrast (not an automatically identified additive causal decomposition):
 
 ```
 total_morphogenetic_lift = lift_from_having_grown + lift_from_choosing_well
@@ -185,15 +182,15 @@ To isolate `lift_from_choosing_well`:
 1. Record M's final architecture and its growth schedule (when each event fired, what shape resulted)
 2. Train a static baseline at M's final architecture (`Baseline 1` above) — this gives you `lift_from_having_grown`
 3. Train a fixed-schedule baseline that reproduces M's growth events but without controller learning (`Baseline 3`)
-4. The remaining gap between M and Baseline 3 is `lift_from_choosing_well`
+4. The remaining gap is an enabled-versus-fixed-schedule contrast; its attribution depends on matched harnesses and independent schedule selection
 
 A common finding: `lift_from_having_grown` is large; `lift_from_choosing_well` is small. The honest reporting acknowledges this.
 
 ### When the Controller Is the Point
 
-If the research claim is "our controller learns better policies," then the relevant baseline is the fixed-schedule one. Beating Baseline 1 alone is not enough — that just shows growth is useful, which is the precondition for studying controllers, not the result.
+If the research claim is "our controller learns better policies," then the relevant baseline is the fixed-schedule one. Beating Baseline 1 alone does not isolate learned-policy skill; growth, optimization path and the selected architecture can also contribute.
 
-If the research claim is "morphogenesis is a useful technique," then beating any of the baselines suffices, and the decomposition tells you *which version* of the claim is supported.
+For an end-to-end usefulness claim, a meaningful improvement over a relevant practical baseline may suffice; report effect uncertainty, total resource/search cost and the scope of that comparator.
 
 ---
 
@@ -229,13 +226,13 @@ If morphogenesis had a larger network for the second half, it consumed more FLOP
 
 > "We ran morphogenetic 5 times; the best run reached 0.47."
 
-This is not a result. Report mean and variance over all seeds.
+This is a selected result. Report all runs and the selection budget; estimate selected-policy performance on independent evaluation units.
 
 ### Pitfall 6: Skipping the Off-Switch Baseline
 
 > "Morphogenetic improves over static."
 
-If the same harness with the controller disabled also beats static, the controller did nothing — your harness is the result.
+If the disabled-controller harness also beats static, the static comparison alone cannot attribute the improvement to the controller. Compare enabled versus disabled directly with uncertainty.
 
 ### Pitfall 7: Conflating Final and Best
 
@@ -251,7 +248,7 @@ When the question is "does controller A beat controller B?", the architectures m
 
 - **Same total event budget**: each controller gets the same number of allowed grow events
 - **Same gate configuration**: governor thresholds equal across conditions
-- **Same starting architecture and seed**: divergence comes from controller differences only
+- **Matched starting architecture and random-stream policy**: controller choices can alter subsequent RNG consumption; a shared seed alone does not guarantee matched stochastic inputs
 - **Same reward function** (or, if comparing reward functions, only that varies)
 
 If you are sweeping reward functions across controllers, you need a 2D ablation grid. Report it as a grid.
@@ -263,28 +260,13 @@ If you are sweeping reward functions across controllers, you need a 2D ablation 
 | Mistake | Effect | Fix |
 |---------|--------|-----|
 | Compare endpoints only | Hides whether morphogenesis was systematically better | Report curves |
-| Single seed per condition | Variance hidden | At least 3 for proof-of-concept, 10 for claims |
+| Single seed per condition | Variance hidden | Size independent units for the effect and precision; disclose pilot limitations |
 | No fixed-schedule baseline | Cannot attribute lift to controller skill | Add Baseline 3 |
 | `loss / param_count` or `loss / FLOPs` reported as the normalization | Inverted — the ratio rewards the run that spent *more* of the resource | Report compute-equalized and param-equalized loss; keep ratios as smell tests only |
 | Hide rollback events from the loss curve | Loss curve looks artificially smooth | Mark events on the curve |
 | Best-of-N reporting | Unfair to baselines that did not get the same selection | Report all seeds; if best-of-N is intentional, be explicit |
 | Compare to a "standard baseline" from the literature | Different data, different framework, meaningless | Run your own baseline in your harness |
 | Ignore param-count variance across morphogenetic seeds | Treats high-variance condition as low-variance | Report `final_param_count ± std` |
-
----
-
-## Rationalization Resistance
-
-| Rationalization | Reality |
-|-----------------|---------|
-| "Our morphogenetic model has more parameters and gets lower loss — that's the point" | Trivially true and trivially expected. The interesting claim is at *equalized* parameters or *equalized* compute — not a loss/resource ratio, which flatters whichever run spent more. |
-| "We can't run all those baselines, the compute is too expensive" | Then you have a partial result. Report it as such. Not running the baseline does not mean the baseline would have lost. |
-| "The variance comes from the controller, that's a feature" | High-variance methods need more seeds, not fewer. |
-| "The static baseline didn't converge in the same time" | Fix it: equalize FLOPs, not steps. Or report at convergence. |
-| "Final loss is what users care about" | Maybe. Researchers care about attribution. State what you are claiming. |
-| "We did 3 seeds, that's standard for RL" | It's the floor. For morphogenetic, the floor is higher because the variance is higher. |
-| "The fixed-schedule baseline isn't standard" | It is the only baseline that isolates controller skill. Add it. |
-| "Off-switch baseline is silly, of course it loses" | Then it's free to run. Run it and confirm. The cases where it doesn't lose are the most interesting cases in this space. |
 
 ---
 
@@ -307,8 +289,8 @@ If you are sweeping reward functions across controllers, you need a 2D ablation 
 ## Diagnostic Questions
 
 1. **Across your seeds, what is the parameter-count variance at end-of-training?** If high, your condition is two conditions.
-2. **At the parameter count of your morphogenetic checkpoint, where does the static-trained Baseline 1 land?** That's the fair comparison.
-3. **Have you run the off-switch baseline?** If not, you do not yet know the controller did anything.
+2. **At the parameter count of your morphogenetic checkpoint, where does the static-trained Baseline 1 land?** This is a capacity-matched comparison; state whether it answers the intended claim.
+3. **Have you run the off-switch baseline?** Without it or an equivalent identifying design, attribute any enabled-controller advantage cautiously.
 4. **Have you run the fixed-schedule baseline?** If not, you cannot isolate controller skill from growth-itself.
 5. **Are your seeds enough?** If you cannot bootstrap a confidence interval that excludes zero, you do not have the result you think.
 6. **Are you equalizing on FLOPs or on steps?** If steps, your bigger network got more compute.

@@ -1085,7 +1085,7 @@ for name, model in architectures:
 4. Measure batch size trade-off (smaller may be better for CPU)
    ↓
 5. If still not meeting requirements:
-   - Quantize to INT8 → 2-3x speedup on CPU
+   - Benchmark INT8 quantization on the target CPU; check operator coverage, quality and observed latency
    - Consider model compression
    - Scale horizontally
 ```

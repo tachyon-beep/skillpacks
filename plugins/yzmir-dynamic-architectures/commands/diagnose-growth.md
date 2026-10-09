@@ -1,114 +1,28 @@
 ---
-description: Diagnose issues with dynamic architecture growth, pruning, or integration
+description: Diagnose growth or integration faults with task-specific source and runtime evidence.
 argument-hint: "[optional: the symptom or growth/pruning issue you are seeing]"
 allowed-tools: ["Read", "Glob", "Grep", "Bash", "WebSearch"]
 ---
 
-# Diagnose Dynamic Architecture Issues
+# Diagnose growth or integration faults
 
-Systematically diagnose problems with dynamic neural architecture - growth triggers, pruning decisions, gradient isolation, and module integration.
+Apply this command to the requested artifact or failure. Inspect supplied sources and available run evidence before recommending changes. Keep scope proportional; use existing project/runtime conventions and ask only for missing facts that change the result. Additional agents are optional for bounded independent questions.
 
-## Diagnostic Protocol
+## Task-specific checks
 
-### Phase 1: Identify the Symptom
+Locate the first bad mutation/integration event and compare host/module gradients, parameters, buffers and optimizer state before/after. Check gate triggers, blending/warmup, forgetting, budgets and rollback completeness. Reproduce with mutation disabled or a fixed event schedule where useful and verify the smallest repair.
 
-First, clarify what's happening:
+## Evidence and deliverable
 
-| Symptom Category | Examples |
-|------------------|----------|
-| Growth issues | Not growing when expected, growing too fast, wrong capacity added |
-| Pruning issues | Pruning too aggressively, keeping dead modules, thrashing |
-| Integration issues | New modules destabilize training, regression after integration |
-| Gradient issues | Gradients exploding/vanishing, host being affected by seed training |
-| Lifecycle issues | Stuck in state, transitions not triggering, wrong gate failures |
+- Cite source paths, configuration/artifact identities and observed results for material claims. Separate confirmed behavior from hypotheses and estimates.
+- Report the result or concrete artifact/change, relevant verification and limits. State checks not run or dimensions that could not be assessed; include risk/uncertainty where it affects a decision.
+- For a review, a supported clean result is valid. Record relevant sweep coverage and counterevidence; never manufacture findings or prescribe a minimum number.
+- Execute writes, workloads and external actions within the user's requested scope and existing authorization. A template does not itself authorize a commit, deployment or expensive run.
 
-### Phase 2: Gather Evidence
+## Optional depth
 
-**Find relevant code:**
-```
-Glob: **/train*.py, **/model*.py, **/grow*.py, **/prune*.py, **/lifecycle*.py
-Grep: "detach|freeze|requires_grad|alpha|blend|gate|transition"
-```
+Use the [pack contract](../skills/using-dynamic-architectures/SKILL.md) when broader obligations matter. Select only references that resolve a concrete question; examples are not universal recipes. Verify time-sensitive APIs against the target environment and primary documentation.
 
-**Check training logs/metrics if available:**
-```
-Glob: **/logs/**, **/*.log, **/metrics*
-```
-
-**Look for configuration:**
-```
-Glob: **/config*.py, **/config*.yaml, **/config*.json
-```
-
-### Phase 3: Check Common Failure Modes
-
-#### Growth Failures
-
-| Check | How to Verify | Fix |
-|-------|---------------|-----|
-| Plateau detector too sensitive | Loss history shows continued improvement | Increase patience |
-| Plateau detector too insensitive | Loss flat for many epochs before growth | Decrease patience/threshold |
-| No available slots | Check slot state management | Add slots or fix recycling |
-| Budget exhausted | Count current params vs budget | Increase budget or prune first |
-| Warmup too short | Instability after growth | Extend warmup period |
-
-#### Pruning Failures
-
-| Check | How to Verify | Fix |
-|-------|---------------|-----|
-| Contribution measurement broken | All modules show same contribution | Fix counterfactual measurement |
-| Threshold too aggressive | Good modules being pruned | Raise contribution threshold |
-| Threshold too lenient | Dead modules kept | Lower threshold or add time limit |
-| No cooldown | Same slot repeatedly fails | Add embargo period |
-
-#### Gradient Isolation Failures
-
-| Check | How to Verify | Fix |
-|-------|---------------|-----|
-| Missing detach | Host params have grads from seed path | Add detach at isolation point |
-| Wrong detach location | Seed not receiving gradients | Move detach to correct tensor |
-| Optimizer includes frozen params | Frozen params in optimizer groups | Filter optimizer params |
-| BatchNorm updating during freeze | Running stats changing | Set BN to eval mode |
-
-#### Lifecycle Failures
-
-| Check | How to Verify | Fix |
-|-------|---------------|-----|
-| Gate always failing | Log gate check results | Debug specific gate condition |
-| Missing state transitions | State history shows gaps | Add missing transition rules |
-| Thrashing between states | Rapid state changes in log | Add hysteresis/cooldown |
-| Stuck in state | No transitions for many epochs | Check transition triggers |
-
-### Phase 4: Report Findings
-
-Structure your diagnosis:
-
-```markdown
-## Diagnosis Report
-
-### Symptom
-[What the user reported]
-
-### Evidence Found
-- [File:line] - [What you found]
-- [Metric/log] - [What it shows]
-
-### Root Cause
-[The actual problem based on evidence]
-
-### Recommended Fix
-[Specific changes with code examples]
-
-### Verification
-[How to confirm the fix worked]
-```
-
-## Using the Dynamic Architecture Advisor
-
-For complex issues, invoke the full advisor agent:
-
-```
-Load agent: dynamic-architecture-advisor
-```
-
-The advisor will do deeper investigation and can search for prior art in literature.
+- [dynamic-architecture-patterns](../skills/using-dynamic-architectures/dynamic-architecture-patterns.md)
+- [gradient-isolation-techniques](../skills/using-dynamic-architectures/gradient-isolation-techniques.md)
+- [progressive-training-strategies](../skills/using-dynamic-architectures/progressive-training-strategies.md)

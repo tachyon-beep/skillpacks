@@ -1,6 +1,6 @@
 ---
 name: miri-on-workspace-subset
-description: Use when running Miri (the MIR interpreter for undefined-behaviour detection) against part of a Rust workspace — typically the unsafe-bearing crates while leaving safe-only crates on the regular toolchain. Covers the arena-crate isolation pattern, the nightly-toolchain split, the CI integration that runs Miri only where it can run (and skips where it can't, like FFI / network / disk I/O), and how to prevent Miri-incompatible code from creeping into Miri-blessed crates. Produces `07-miri-on-subset.md`.
+description: "Use when running Miri (the MIR interpreter for undefined-behaviour detection) against part of a Rust workspace \u2014 typically the unsafe-bearing crates while leaving safe-only crates on the regular toolchain. Covers the arena-crate isolation pattern, the nightly-toolchain split, the CI integration that runs Miri only where it can run (and skips where it can't, like FFI / network / disk I/O), and how to prevent Miri-incompatible code from creeping into Miri-blessed crates."
 ---
 
 # Miri on a Workspace Subset

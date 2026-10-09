@@ -608,7 +608,7 @@ Implementation: natural gradient + conjugate gradient optimization
 | **Implementation** | Complex (Fisher-vector products) | Simple (few lines) |
 | **When to use** | Research/specialized | Production/practical |
 
-**Rule of thumb**: Use PPO in 99% of cases. TRPO useful when:
+**Rule of thumb**: PPO is a practical baseline for many on-policy tasks. Consider TRPO when:
 
 - Researching trust regions
 - Very high-dimensional problems where KL constraint matters
@@ -1034,22 +1034,6 @@ class ContinuousPolicy(nn.Module):
 11. **Learning Rate Sensitivity** across discrete and continuous
 12. **Value Network Architecture** impact on baseline quality
 13. **Policy vs Value Method Selection** framework validation
-
-
-## Part 11: Rationalization Table - When Users Get It Wrong
-
-| User Claim | Rationalization | Correct Approach |
-|-----------|-----------------|------------------|
-| "DQN should work for continuous actions, I'll discretize" | Can discretize but: curse of dimensionality (7D joint→7^n combos), loses continuous structure, very inefficient | Use policy gradients (PPO, SAC) naturally designed for continuous |
-| "REINFORCE is too slow, must be something wrong" | REINFORCE has high variance by design. Problem: not using baseline | Add value network baseline (variance reduction) or switch to PPO |
-| "PPO clip ratio 0.5 is more aggressive, should converge faster" | Larger clip ratio = larger trust region = less stability. Faster ≠ better | Use 0.2 (standard) or 0.15-0.3 range. Larger can diverge |
-| "Policy gradients have huge variance, value-based better for all problems" | Confusion: policy gradients handle continuous actions, DQN doesn't | Choose based on action space: discrete→consider DQN, continuous→policy gradients |
-| "I should use very small learning rate like 0.0001 to be safe" | Too conservative: policy learns very slowly, gets stuck in local minima | Use 0.001-0.0003 for discrete, 0.0003-0.0001 for continuous. Test decay. |
-| "Unnormalized advantages are fine, I'll just use small learning rate" | Small LR doesn't fix variance explosion in gradients, just masks problem | Normalize advantages: `(A - mean) / (std + ε)` properly |
-| "I'll use huge batch size (100k) for stability" | Diminishing returns: beyond 2048 doesn't improve stability, wastes computation | Use 256-4096 depending on problem complexity |
-| "Policy should converge to deterministic (low std) for best performance" | Common misconception: deterministic policies get stuck, can't explore | Keep some exploration: entropy bonus prevents premature convergence |
-| "TRPO is better than PPO because it's more sophisticated" | Confusing complexity with effectiveness: PPO achieves ~95% TRPO performance with 10% complexity | Use PPO for production unless researching KL constraints |
-| "My value network loss oscillates, means gradients bad" | Value oscillation normal during learning. Only problematic if diverging | Add value loss decay, reduce coeff: `loss = policy + 0.1 * value_loss` |
 
 
 ## Summary: What You Need to Know

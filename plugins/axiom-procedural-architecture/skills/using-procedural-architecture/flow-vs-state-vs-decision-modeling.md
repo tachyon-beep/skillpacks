@@ -1,6 +1,6 @@
 ---
 name: flow-vs-state-vs-decision-modeling
-description: Analyst-cluster sheet — the five common procedural modelling formalisms (flowchart, state machine, BPMN, decision table, sequence diagram) with what each reveals and hides, a choosing heuristic table, and a worked user-signup example showing the same procedure in three abstractions.
+description: "Analyst-cluster sheet \u2014 the five common procedural modelling formalisms (flowchart, state machine, BPMN, decision table, sequence diagram) with what each reveals and hides, a choosing heuristic table, and a worked user-signup example showing the same procedure in three abstractions."
 ---
 
 # Flow vs State vs Decision Modeling

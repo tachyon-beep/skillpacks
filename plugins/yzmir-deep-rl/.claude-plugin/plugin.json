@@ -1,7 +1,7 @@
 {
   "name": "yzmir-deep-rl",
-  "version": "1.4.3",
-  "description": "Reinforcement learning - DQN/Rainbow/R2D2/BBF, PPO/GRPO, SAC/TD3/REDQ/DroQ/CrossQ, DreamerV3/TD-MPC2 model-based, CQL/IQL/TD3+BC/AWAC/Decision Transformer offline, MAPPO/IPPO multi-agent, Go-Explore/NGU exploration, reward shaping, counterfactual reasoning. Includes 13 reference sheets, 3 commands (diagnose, scaffold-experiment, select-algorithm), 2 agents (rl-training-diagnostician, reward-function-reviewer).",
+  "version": "2.0.0",
+  "description": "Use when reinforcement-learning environment, reward, data-regime, algorithm or evaluation decisions need implementation checks.",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

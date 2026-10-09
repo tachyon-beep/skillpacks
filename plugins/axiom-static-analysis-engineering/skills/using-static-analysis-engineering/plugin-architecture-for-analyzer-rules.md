@@ -1,6 +1,6 @@
 ---
 name: plugin-architecture-for-analyzer-rules
-description: Use when designing the extension surface of an analyzer — how third parties (or your own future team) add rules without forking the engine. Covers rule discovery (entry points, decorator registry, manifest enumeration), the rule lifecycle (load → validate → enable → fire → emit → unload), the metadata schema (id, severity, category, taxonomy alignment with CWE/CWE), conflict resolution when multiple rules fire on the same node, output schema versioning, and the deprecation lifecycle. Produces `04-rule-plugin-spec.md`.
+description: "Use when designing the extension surface of an analyzer \u2014 how third parties (or your own future team) add rules without forking the engine. Covers rule discovery (entry points, decorator registry, manifest enumeration), the rule lifecycle (load \u2192 validate \u2192 enable \u2192 fire \u2192 emit \u2192 unload), the metadata schema (id, severity, category, taxonomy alignment with CWE/CWE), conflict resolution when multiple rules fire on the same node, output schema versioning, and the deprecation lifecycle."
 ---
 
 # Plugin Architecture for Analyzer Rules

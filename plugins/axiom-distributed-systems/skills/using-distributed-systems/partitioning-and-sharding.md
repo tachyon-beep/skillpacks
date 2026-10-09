@@ -1,6 +1,6 @@
 ---
 name: partitioning-and-sharding
-description: Use when one node can no longer hold the data or absorb the write/throughput load, when one shard is melting while others idle (hot key / celebrity problem), when adding capacity reshuffles almost every key, or when a once-cheap query became a cross-shard scatter-gather. Picks a scheme, a rebalancing strategy, and a routing tier. Produces `05-partitioning-spec.md`.
+description: "Use when one node can no longer hold the data or absorb the write/throughput load, when one shard is melting while others idle (hot key / celebrity problem), when adding capacity reshuffles almost every key, or when a once-cheap query became a cross-shard scatter-gather. Picks a scheme, a rebalancing strategy, and a routing tier."
 ---
 
 # Partitioning and Sharding

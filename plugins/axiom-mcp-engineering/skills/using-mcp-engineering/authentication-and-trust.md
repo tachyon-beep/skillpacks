@@ -1,6 +1,6 @@
 ---
 name: authentication-and-trust
-description: Use when an MCP server needs auth, scoping, or an agent trust boundary — OAuth 2.1 on the HTTP transport, per-user / per-project scoping, capability tokens, on-whose-behalf decisions; or when reviewing for confused-deputy, token passthrough, tool-poisoning / prompt-injection via tool descriptions, missing consent gates, or exposing user-credentials-as-resource. Symptoms: a tool acts with more authority than the caller has, an upstream token is forwarded blindly, a tool description carries hidden instructions, an agent reaches another tenant's data, secrets show up in resource contents, or HTTP requests skip Origin validation.
+description: "Use when an MCP server needs auth, scoping, or an agent trust boundary \u2014 OAuth 2.1 on the HTTP transport, per-user / per-project scoping, capability tokens, on-whose-behalf decisions; or when reviewing for confused-deputy, token passthrough, tool-poisoning / prompt-injection via tool descriptions, missing consent gates, or exposing user-credentials-as-resource. Symptoms: a tool acts with more authority than the caller has, an upstream token is forwarded blindly, a tool description carries hidden instructions, an agent reaches another tenant's data, secrets show up in resource contents, or HTTP requests skip Origin validation."
 ---
 
 # Authentication and Trust

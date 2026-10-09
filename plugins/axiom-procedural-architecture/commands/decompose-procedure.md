@@ -1,87 +1,14 @@
 ---
-description: Producer pipeline — take a goal description and audience parameters, produce a structured decomposition with stages, dependencies, decision points, and exit artifacts.
-allowed-tools: ["Read", "Grep", "Glob", "Bash", "Task", "Write", "Edit", "AskUserQuestion"]
+description: "Design a procedure with correct decision readiness and stage handoffs."
 argument-hint: "[goal_description_or_file]"
 ---
 
-# Decompose Procedure Command
+# Decompose Procedure
 
-You are running the producer pipeline for `axiom-procedural-architecture`: goal description + audience parameters → structured decomposition (stage list, decision-point inventory, dependency graph, exit artifacts). Not for critiquing an existing procedure (use `/review-decomposition`) or soundness/capacity analysis (use `/analyze-procedure`).
+Identify goal/audience, inputs, decisions, outputs/owners and reachable completion. Allow guarded bounded/convergent loops; deliver a flow/stage table and walkthrough checks.
 
-## When to Use
+Read [the relevant pack contract](../skills/using-procedural-architecture/SKILL.md) and only the optional references needed for the question. Use supplied arguments/context and inspect current project evidence. Infer routine scope/output choices; ask only for a missing decision that materially blocks progress.
 
-Use when designing a new wizard, troubleshooting tree, training curriculum, configuration flow, decision pipeline, or any staged procedure with gates and handoffs.
+Honor task authorization, existing policy and unrelated state. Review/design requests do not authorize deployment or external messages. When implementation is already authorized, continue through concrete changes and appropriate verification without a routing-choice permission checkpoint.
 
-Do **not** use to critique an existing procedure → `/review-decomposition`. Do **not** use for capacity, soundness, or formal correctness → `/analyze-procedure`.
-
-## Required Input
-
-Before running, collect both:
-
-1. **Goal description** — what the procedure accomplishes, for whom, in what context. Inline text or file path.
-2. **Audience parameter declaration** — the YAML block from `audience-modeling-for-procedures.md`:
-
-```yaml
-audience:
-  prerequisites:
-    - <one item per line; what they already have/know/have done>
-  working_memory_capacity: <low | medium | high> — <one-sentence justification>
-  error_cost: <low | medium | high> — <one-sentence justification with example consequence>
-  reversibility_appetite: <low | medium | high> — <one-sentence justification>
-  latency_tolerance: <low | medium | high> — <one-sentence justification>
-  recovery_options:
-    - <one item per line; what they can do if a stage fails>
-```
-
-If either is missing, use `AskUserQuestion` before proceeding.
-
-## Pipeline
-
-Run steps in order. Read each sheet before using its guidance — do not rely on memory.
-
-**Step 1 — Router orientation.** Read `using-procedural-architecture` SKILL.md: confirm available sheets, the Consistency Gate checklist, and which checks this pipeline must satisfy.
-
-**Step 2 — Audience modeling.** Read `audience-modeling-for-procedures.md`. Fill the audience block from user input. If any field is unclear, ask — audience mismatches drive grain and branching errors.
-
-**Step 3 — Draft stage list.** Read `decomposition-fundamentals.md`. For each stage declare: name, single-sentence purpose, inputs, exit artifact, and preliminary dependency links.
-
-**Step 4 — Calibrate granularity.** Read `granularity-calibration.md`. Merge stages too fine for the audience; split stages that exceed the cognitive-load budget; flag any stage with an ambiguous exit artifact.
-
-**Step 5 — Place decision points.** Read `decision-flow-design.md`. For each branch point record: triggering condition, exhaustive option set (MECE), declared preconditions, and destination stage per branch.
-
-**Step 6 — Consistency Gate.** Run the gate from the router. Verify: every stage has inputs + exit artifact + dependency declaration; every decision point has an exhaustive option set + preconditions; no circular dependencies; granularity matches audience; all branches terminate. Fix failures and re-run; do not emit with known gate failures.
-
-**Step 7 — Emit.** Write the decomposition document (see Output Format).
-
-## Output Format
-
-A self-contained document with four sections:
-
-**Audience Parameter Declaration** — the filled YAML block, no prose.
-
-**Stage List** — one entry per stage:
-```
-Stage N: <Name>
-  Purpose:       <single sentence>
-  Inputs:        <list>
-  Exit artifact: <concrete deliverable or verified condition>
-  Depends on:    <stage numbers or "none">
-```
-
-**Decision-Point Inventory** — one entry per decision point:
-```
-DP-N (after Stage X): <triggering question>
-  Preconditions: <what must hold>
-  Options: A. <label> → Stage Y  |  B. <label> → Stage Z
-```
-
-**Dependency Graph** — ASCII or textual adjacency list:
-```
-Stage 1 → Stage 2 → DP-1 → [A: Stage 3, B: Stage 4]
-Stage 3 → Stage 5 → END
-Stage 4 → Stage 5
-```
-
-## Hand-off
-
-After emitting, recommend: run `/review-decomposition` on the output as an adversarial check — it stress-tests MECE branching, dependency ordering, grain consistency, and boundary conditions the producer pipeline does not catch.
+Return a concise result with source/baseline, outcome or proposal, material findings/risks, checks performed/omitted and remaining uncertainty. Delegate a bounded independent question only when useful. No fixed fan-out, minimum duration/comment/finding count or mandatory disagreement applies.

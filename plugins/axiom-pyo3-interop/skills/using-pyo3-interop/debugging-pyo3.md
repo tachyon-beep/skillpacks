@@ -1,6 +1,6 @@
 ---
 name: debugging-pyo3
-description: Use when the boundary segfaults on import or exit, hangs under load, loses an exception across the FFI, or panics without a Python traceback. Covers gdb / lldb on the Python parent, `RUST_BACKTRACE` *via* the Python launch, symbol files for the .so, and the boundary-debugging tool matrix. Produces `12-debugging-pyo3.md`.
+description: "Use when the boundary segfaults on import or exit, hangs under load, loses an exception across the FFI, or panics without a Python traceback. Covers gdb / lldb on the Python parent, `RUST_BACKTRACE` *via* the Python launch, symbol files for the .so, and the boundary-debugging tool matrix."
 ---
 
 # Debugging PyO3: Panics, Segfaults, GIL Deadlocks, and Missing Tracebacks

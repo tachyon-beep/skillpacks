@@ -1,3 +1,5 @@
+> Historical review of the version named below; it is not an assessment of marketplace 4.0.0. See [the current consolidation record](../../docs/relevance-refresh.md). Retired pack names and old process requirements are historical.
+
 # Report Card — axiom-static-analysis-engineering
 
 **Version:** 0.3.0 (plugin.json) — see Form finding: a bare version bump; all content/surfaces still say v0.2.0

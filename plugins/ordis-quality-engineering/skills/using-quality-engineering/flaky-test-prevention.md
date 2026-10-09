@@ -1,6 +1,6 @@
 ---
 name: flaky-test-prevention
-description: Use when debugging intermittent test failures, choosing between retries vs fixes, quarantining flaky tests, calculating flakiness rates, or preventing non-deterministic behavior - provides root cause diagnosis, anti-patterns, and systematic debugging
+description: "Use when debugging intermittent test failures, choosing between retries vs fixes, quarantining flaky tests, calculating flakiness rates, or preventing non-deterministic behavior - provides root cause diagnosis, anti-patterns, and systematic debugging"
 ---
 
 # Flaky Test Prevention

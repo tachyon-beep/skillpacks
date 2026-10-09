@@ -1,3 +1,5 @@
+> Historical review of the version named below; it is not an assessment of marketplace 4.0.0. See [the current consolidation record](../docs/relevance-refresh.md). Retired pack names and old process requirements are historical.
+
 # Review: meta-skillpack-maintenance
 **Version:** 2.1.0  **Reviewed:** 2026-05-22  **Reviewer:** general-purpose subagent
 

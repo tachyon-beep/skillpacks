@@ -1,6 +1,6 @@
 ---
 name: fuzz-testing
-description: Use when testing input validation, discovering edge cases, finding security vulnerabilities, testing parsers/APIs with random inputs, or integrating fuzzing tools (AFL, libFuzzer, Atheris) - provides fuzzing strategies, tool selection, and crash triage workflows
+description: "Use when testing input validation, discovering edge cases, finding security vulnerabilities, testing parsers/APIs with random inputs, or integrating fuzzing tools (AFL, libFuzzer, Atheris) - provides fuzzing strategies, tool selection, and crash triage workflows"
 ---
 
 # Fuzz Testing

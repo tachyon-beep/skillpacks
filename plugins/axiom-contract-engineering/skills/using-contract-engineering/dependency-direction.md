@@ -1,6 +1,6 @@
 ---
 name: dependency-direction
-description: Use when deciding what belongs in a shared contracts package, when a contract module needs "just one" import from a subsystem, when contracts and a subsystem have developed an import cycle or must deploy together, when a shared enum or helper is being duplicated to avoid an import, or when a generated/IDL contract package pulls in subsystem code. Covers the leaf-package rule, what contracts may and may not contain, a working import-linter CI gate, the leak paths that survive the gate, and the codegen equivalent.
+description: "Use when deciding what belongs in a shared contracts package, when a contract module needs \"just one\" import from a subsystem, when contracts and a subsystem have developed an import cycle or must deploy together, when a shared enum or helper is being duplicated to avoid an import, or when a generated/IDL contract package pulls in subsystem code. Covers the leaf-package rule, what contracts may and may not contain, a working import-linter CI gate, the leak paths that survive the gate, and the codegen equivalent."
 ---
 
 # Dependency Direction

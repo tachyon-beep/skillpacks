@@ -1401,22 +1401,6 @@ def staged_offline_to_online_deployment(offline_policy, env):
 | p-value reported without effect size | Statistically significant but practically irrelevant | Check Cohen's d |
 
 
-## Rationalization Table
-
-| Rationalization | Why It's Wrong | Counter |
-|-----------------|----------------|---------|
-| "RL papers commonly use single seed, so it's acceptable" | Common ≠ correct. Field is improving standards. | "Newer venues require multi-seed. Improve rigor." |
-| "Our algorithm is deterministic, variance is low" | Algorithm determinism ≠ environment/initialization determinism | "Environment randomness still causes variance." |
-| "We don't have compute for 10 seeds" | Then don't make strong performance claims | "Report 3-5 seeds with caveats, or wait for compute." |
-| "Evaluation on training set is faster" | Speed < correctness | "Fast wrong answer is worse than slow right answer." |
-| "We care about final performance, not sample efficiency" | Depends on application, often sample efficiency matters | "Clarify deployment constraints. Samples usually matter." |
-| "Stochastic/deterministic doesn't matter" | 10-30% difference is common | "Specify mode, ensure fair comparison." |
-| "10 eval episodes is enough" | Standard error likely > 10% of mean | "Compute SEM, use power analysis." |
-| "Our environment is simple, doesn't need generalization testing" | Deployment is rarely identical to training | "Test at least 2-3 distribution shifts." |
-| "Offline RL Q-values are accurate" | Only for in-distribution, not OOD | "Q-values extrapolate. Need online validation." |
-| "We reported the best run, but all were similar" | Then report all and show they're similar | "Show mean ± std to prove similarity." |
-
-
 ## Decision Trees
 
 ### Decision Tree 1: How Many Seeds?

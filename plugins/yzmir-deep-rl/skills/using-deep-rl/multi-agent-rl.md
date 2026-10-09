@@ -1421,22 +1421,6 @@ class MultiAgentReplayBuffer:
 15. **Reward structure not matching algorithm**: Cooperative/competitive mismatch
 
 
-## Part 13: 10+ Rationalization Patterns
-
-Users often rationalize MARL mistakes:
-
-1. **"Independent agents should work"**: Doesn't understand non-stationarity
-2. **"My algorithm converged to something"**: Might be local optima due to credit ambiguity
-3. **"Communication improved rewards"**: Might be learned deception, not coordination
-4. **"QMIX should work everywhere"**: Doesn't check problem for monotonicity
-5. **"More agents = more parallelism"**: Ignores centralized training bottleneck
-6. **"Rewards are subjective anyway"**: Credit assignment is objective (factorization)
-7. **"I'll just add more training"**: Non-stationarity can't be fixed by more epochs
-8. **"Other agents are fixed"**: But they're learning too (environment is non-stationary)
-9. **"Communication bandwidth doesn't matter"**: In real systems, it does
-10. **"Nash equilibrium is always stable"**: No, it's just best-response equilibrium
-
-
 ## Part 14: MAPPO and IPPO — Modern Cooperative Baselines
 
 Since 2022, **MAPPO** has become the default cooperative-MARL baseline (StarCraft Multi-Agent Challenge, Hanabi, MPE). It is consistently competitive with or stronger than QMIX/MADDPG while being conceptually simpler.

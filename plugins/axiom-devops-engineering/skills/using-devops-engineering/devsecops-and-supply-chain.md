@@ -1,6 +1,6 @@
 ---
 name: devsecops-and-supply-chain
-description: Use when artifacts ship unsigned, when dependencies reach production unscanned, when a CI runner has admin/cloud-owner credentials or a self-hosted runner runs untrusted PRs, when there is no SBOM and a CVE drops with no way to tell which images are affected, when security is a manual review at the end instead of a gate in the pipeline, when "pin your dependencies" is aspirational, when a typosquatted or compromised package could be pulled at build time, when secrets leak through build logs or image layers, when SAST/DAST/SCA findings are warnings nobody blocks on, when policy is a wiki page instead of code, or when you cannot prove how a deployed artifact was built (provenance/SLSA), who signed it, or what is inside it.
+description: "Use when artifacts ship unsigned, when dependencies reach production unscanned, when a CI runner has admin/cloud-owner credentials or a self-hosted runner runs untrusted PRs, when there is no SBOM and a CVE drops with no way to tell which images are affected, when security is a manual review at the end instead of a gate in the pipeline, when \"pin your dependencies\" is aspirational, when a typosquatted or compromised package could be pulled at build time, when secrets leak through build logs or image layers, when SAST/DAST/SCA findings are warnings nobody blocks on, when policy is a wiki page instead of code, or when you cannot prove how a deployed artifact was built (provenance/SLSA), who signed it, or what is inside it."
 ---
 
 # DevSecOps and Software Supply Chain
@@ -135,7 +135,7 @@ grype sbom:sbom.cdx.json --vex vex.json --fail-on high
 
 ## Provenance and SLSA: prove how it was built
 
-SBOM answers *what is inside*. **Provenance** answers *how it was made* — which source commit, which builder, which parameters — as a signed, tamper-evident attestation. The framework is **SLSA v1.0**; the bar that matters is **Build Level 3** (the U.S. federal-procurement floor):
+SBOM answers *what is inside*. **Provenance** answers *how it was made* — which source commit, which builder, which parameters — as a signed, tamper-evident attestation. The table illustrates **SLSA v1.0** build levels. Select the applicable framework edition and assurance level from actual requirements; this is not a universal procurement or legal obligation:
 
 | SLSA v1.0 Build Level | Guarantee | What it demands |
 |---|---|---|
@@ -355,7 +355,7 @@ Say (or hear) any of these and a supply-chain incident is being set up. Stop and
 - `/security-architect` — threat-modeling the build/deploy path as an attack surface; designing the controls (this sheet *implements* them in the pipeline).
 - `/quality-engineering` — wiring SAST/SCA/DAST stages into the test pipeline (setup-pipeline) and keeping gates non-flaky.
 - `/python-engineering`, `/rust-engineering` — language-level dependency locking, hashing, and lint-based SAST rules at the source.
-- `/system-architect` — when supply-chain pain is actually an architecture problem (sprawling deps, no internal proxy, no trust boundaries).
+- `/solution-architect` — when supply-chain pain is actually an architecture problem (sprawling deps, no internal proxy, no trust boundaries).
 
 ## Quick checklist
 

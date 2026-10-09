@@ -1,6 +1,6 @@
 ---
 name: rendering-and-redraw-discipline
-description: Use when a TUI flickers, tears, or jitters; when the screen visibly repaints, blinks, or "blanks" on every keypress or tick; when CPU sits high while the UI is idle; when a fan spins or an SSH/remote session lags because the app floods the terminal with bytes; when scrolling a long list, log tail, table, or tree feels janky; when you're writing a render/draw/paint loop, calling `clear()` then redrawing everything, doing raw `print`/`stdout.write`/ANSI escapes by hand, or rendering all N rows instead of the visible viewport; when frames update faster than the eye or terminal can keep up; or when you're choosing between immediate-mode and retained-mode rendering.
+description: "Use when a TUI flickers, tears, or jitters; when the screen visibly repaints, blinks, or \"blanks\" on every keypress or tick; when CPU sits high while the UI is idle; when a fan spins or an SSH/remote session lags because the app floods the terminal with bytes; when scrolling a long list, log tail, table, or tree feels janky; when you're writing a render/draw/paint loop, calling `clear()` then redrawing everything, doing raw `print`/`stdout.write`/ANSI escapes by hand, or rendering all N rows instead of the visible viewport; when frames update faster than the eye or terminal can keep up; or when you're choosing between immediate-mode and retained-mode rendering."
 ---
 
 # Rendering & Redraw Discipline

@@ -3438,9 +3438,9 @@ Most LLM cost spikes are not "more requests" — they are **bigger requests**. T
 5. **Treat detected attacks as security incidents**, not engineering bugs. Cross-ref `yzmir-llm-specialist/llm-safety-alignment.md` for adversarial-eval and `ordis-security-architect` (`using-security-architect`, `design-controls`, `threat-model`) for incident response, defense-in-depth, and threat modeling.
 
 
-## REFACTOR Phase: Pressure Tests
+## Worked failure cases
 
-### Pressure Test 1: Random Changes Without Investigation
+### Worked failure case 1: Random Changes Without Investigation
 
 **Scenario:** Model latency spiked from 100ms to 500ms. Engineer makes random changes hoping to fix it.
 
@@ -3456,7 +3456,7 @@ Most LLM cost spikes are not "more requests" — they are **bigger requests**. T
 **Failure mode:** Makes parameter changes without profiling or understanding root cause.
 
 
-### Pressure Test 2: No Profiling Before Optimization
+### Worked failure case 2: No Profiling Before Optimization
 
 **Scenario:** API is slow. Engineer says "Database is probably the bottleneck, let's add caching."
 
@@ -3471,7 +3471,7 @@ Most LLM cost spikes are not "more requests" — they are **bigger requests**. T
 **Failure mode:** Optimizes based on intuition without profiling data.
 
 
-### Pressure Test 3: Useless Logging
+### Worked failure case 3: Useless Logging
 
 **Scenario:** Production error occurred but logs don't have enough context to debug.
 
@@ -3486,7 +3486,7 @@ Most LLM cost spikes are not "more requests" — they are **bigger requests**. T
 **Failure mode:** Logs "Error occurred" with no context, making debugging impossible.
 
 
-### Pressure Test 4: Immediate Rollback Without Evidence
+### Worked failure case 4: Immediate Rollback Without Evidence
 
 **Scenario:** Error rate increased to 2%. Engineer wants to rollback immediately.
 
@@ -3501,7 +3501,7 @@ Most LLM cost spikes are not "more requests" — they are **bigger requests**. T
 **Failure mode:** Rollbacks immediately without preserving evidence or assessing severity.
 
 
-### Pressure Test 5: No Root Cause Analysis
+### Worked failure case 5: No Root Cause Analysis
 
 **Scenario:** API returns 500 errors. Engineer fixes symptom (restart service) but not root cause.
 
@@ -3516,7 +3516,7 @@ Most LLM cost spikes are not "more requests" — they are **bigger requests**. T
 **Failure mode:** Fixes symptom (restart) but root cause remains, issue repeats.
 
 
-### Pressure Test 6: A/B Test Without Statistical Significance
+### Worked failure case 6: A/B Test Without Statistical Significance
 
 **Scenario:** A/B test with 50 samples per variant shows 5% improvement. Engineer wants to ship.
 
@@ -3531,7 +3531,7 @@ Most LLM cost spikes are not "more requests" — they are **bigger requests**. T
 **Failure mode:** Ships based on insufficient data or non-significant results.
 
 
-### Pressure Test 7: Model Edge Case Ignored
+### Worked failure case 7: Model Edge Case Ignored
 
 **Scenario:** Model fails on all-caps input but works on normal case. Engineer ignores edge case.
 
@@ -3546,7 +3546,7 @@ Most LLM cost spikes are not "more requests" — they are **bigger requests**. T
 **Failure mode:** Ignores edge cases as "not important" without investigation.
 
 
-### Pressure Test 8: Skip Post-Mortem
+### Worked failure case 8: Skip Post-Mortem
 
 **Scenario:** Incident resolved. Engineer closes ticket and moves on without post-mortem.
 
@@ -3561,7 +3561,7 @@ Most LLM cost spikes are not "more requests" — they are **bigger requests**. T
 **Failure mode:** Skips post-mortem, incident repeats, no learning.
 
 
-### Pressure Test 9: No Metrics Correlation
+### Worked failure case 9: No Metrics Correlation
 
 **Scenario:** Latency spike at 2pm. Engineer looks at logs but not metrics or traces.
 
@@ -3576,7 +3576,7 @@ Most LLM cost spikes are not "more requests" — they are **bigger requests**. T
 **Failure mode:** Only looks at logs, misses critical information in traces/metrics.
 
 
-### Pressure Test 10: High Confidence Wrong Predictions Ignored
+### Worked failure case 10: High Confidence Wrong Predictions Ignored
 
 **Scenario:** Model makes high-confidence (>95%) wrong predictions. Engineer says "accuracy is good overall."
 

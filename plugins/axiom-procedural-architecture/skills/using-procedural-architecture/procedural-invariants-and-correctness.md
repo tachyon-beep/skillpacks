@@ -1,6 +1,6 @@
 ---
 name: procedural-invariants-and-correctness
-description: Critic-side correctness gate for a proposed decomposition — five structural invariants (termination, definedness of exit artifact, reachability, no implicit carried state, defined "I don't know" branch), each with its check, failure mode, and a concrete violation example. Supplies a minimal numbered checklist that an auditor can run mechanically against any decomposition before approving it. Defers to process-algebra-and-workflow-nets.md for formal verification in safety-critical contexts.
+description: "Critic-side correctness gate for a proposed decomposition \u2014 five structural invariants (termination, definedness of exit artifact, reachability, no implicit carried state, defined \"I don't know\" branch), each with its check, failure mode, and a concrete violation example. Supplies a minimal numbered checklist that an auditor can run mechanically against any decomposition before approving it. Defers to process-algebra-and-workflow-nets.md for formal verification in safety-critical contexts."
 ---
 
 # Procedural Invariants and Correctness

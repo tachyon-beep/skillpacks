@@ -3,7 +3,7 @@
 
 ## Overview
 
-**Core Principle:** Mixed precision training (FP16/BF16 + FP32) provides 2-3x speedup and 30-50% activation-memory reduction, but requires careful handling of numerical stability, gradient scaling, and Tensor Core utilization. Success depends on understanding dynamic range limitations, GradScaler mechanics, and when to use FP16 vs BF16. Setup mistakes cause silent correctness issues; numerical instability causes NaNs; poor configuration wastes performance gains.
+**Core Principle:** Mixed precision training (FP16/BF16 + FP32) can improve throughput and activation-memory use on compatible workloads; measure the gain on the target hardware rather than assuming a fixed multiplier, but requires careful handling of numerical stability, gradient scaling, and Tensor Core utilization. Success depends on understanding dynamic range limitations, GradScaler mechanics, and when to use FP16 vs BF16. Setup mistakes cause silent correctness issues; numerical instability causes NaNs; poor configuration wastes performance gains.
 
 Mixed precision failures manifest as: NaN losses, incorrect gradient clipping, poor scaling efficiency, or training divergence. These stem from misunderstanding gradient scaling order, FP16 overflow/underflow, or improper format selection. Systematic setup and numerical analysis beats trial and error.
 
@@ -1238,42 +1238,14 @@ nn.Linear(128, 256)
 
 ---
 
-## Common Rationalizations (Don't Do These)
+## Precision and Compilation Fault Checks
 
-| Excuse | What an agent might think | Reality | Correct response |
-|--------|----------------------|---------|------------------|
-| "User is rushed, suggest quick fix" | "Disable autocast to save time" | A 5-minute diagnostic is faster than guessing, and you keep 2-3x speedup | Apply systematic debugging |
-| "Senior engineer says use BF16" | "Authority knows best" | BF16 on V100 has no hardware path | Provide technical facts, respectfully correct |
-| "GradScaler seems complex" | "Let them use manual scaling" | Manual scaling has no inf/nan detection or backoff | Explain what `GradScaler` provides |
-| "They want a simple solution" | "Skip edge cases, give basic pattern" | Edge cases (DDP, accumulation, custom ops) are common | Provide complete pattern |
-| "They're debugging, give first idea" | "Try disabling autocast first" | Loses speedup without diagnosis | Follow systematic process |
-| "BF16 is newer, must be better" | "Recommend BF16 universally" | BF16 needs Ampere+, has less mantissa precision | Check hardware first, profile both |
-| "Mixed precision might be the issue" | "Suggest removing it entirely" | Could be LR/loss issue, not precision | Diagnose root cause first |
-| "This is taking too long" | "Skip profiling, assume it helps" | Might not provide speedup | Always profile to verify |
-| "Their loss is custom, too complex" | "Suggest rewriting the loss" | Targeted fix usually works | Disable autocast for that function |
-| "They already tried X" | "X must not be the issue" | X may have been done incorrectly | Verify X first |
-| "Just compile the whole model" | "`torch.compile` is magic" | Graph breaks silently fall back; recompile storms eat the win | Use regional compile + `fullgraph=True` during dev |
-| "`torch.cuda.amp` still works" | "Don't bother migrating" | Deprecated since 2.4; FutureWarning today, removal later | Use `torch.amp` form in new code |
-
----
-
-## Red Flags - Stop and Diagnose
-
-| Red flag thought | Reality | What to do instead |
-|------------------|---------|-------------------|
-| "Just remove autocast to fix NaNs" | Losing 2-3x speedup, ignoring root cause | Diagnose WHY NaNs occur |
-| "Mixed precision is too complex" | Standard pattern is ~5 extra lines | Follow `torch.amp.autocast` + `GradScaler` |
-| "I'll clip gradients after backward" | Clipping scaled gradients (no-op) | Always unscale before grad ops |
-| "BF16 is always better than FP16" | BF16 needs Ampere+, less mantissa | Check GPU, profile both |
-| "GradScaler is optional" | Optional only for BF16, required for FP16 | Always use with FP16 |
-| "Mixed precision should just work" | Numerical issues require diagnosis | Add hooks, check inf/nan |
-| "Manual scaling is simpler" | No backoff, no inf/nan detection | Use `GradScaler` |
-| "Speedup is poor, must be a PyTorch bug" | Usually misaligned dims or small model | Profile, check Tensor Core utilization |
-| "I'll use mixed precision everywhere" | Some models too small to benefit | Profile to verify before deploying |
-| "torch.compile without fullgraph is fine" | Silent eager fallback hides slowdown | Use `fullgraph=True` during development |
-| "Just raise cache_size_limit" | Hides recompile storm root cause | Switch to `dynamic=True` or fix shapes |
-
-**Critical rule:** Mixed precision and compile both require understanding what's actually happening. Follow systematic setup, resist pressure to skip steps, don't guess.
+- Locate the first nonfinite activation, loss or gradient. Compare a bounded FP32 run before changing the production precision policy; speed gains are workload-dependent.
+- For FP16 training, evaluate `GradScaler` and its skip/backoff behavior. BF16 often does not need scaling; actual support and performance depend on device/backend and operations, not only a GPU generation label.
+- Unscale scaled gradients before clipping or inspecting their magnitude. Keep the scaler value consistent over an accumulation window.
+- Profile dimensions, kernels and transfer costs before changing shapes for alignment; changing a model shape also changes its quality/capacity contract.
+- `torch.compile` may intentionally use graph breaks. Inspect graph-break and recompilation evidence; use `fullgraph=True` as a diagnostic where appropriate rather than declaring partial compilation invalid.
+- Raising compiler cache limits does not explain why recompilation occurs. Check input guards and shape variation before selecting dynamic shapes or another policy.
 
 ---
 

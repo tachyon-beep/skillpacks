@@ -1,6 +1,6 @@
 ---
 name: dependency-and-ordering-audit
-description: Critic-side audit of a proposed decomposition's ordering correctness — the four ordering checks (preconditions met before use, no premature commitment, cheap-decisions-early/expensive-decisions-gated, no hidden coupling), the audit procedure, and the finding output format (stage / defect class / severity / evidence / remediation). Worked broken-SSH-wizard example produces five findings.
+description: "Critic-side audit of a proposed decomposition's ordering correctness \u2014 the four ordering checks (preconditions met before use, no premature commitment, cheap-decisions-early/expensive-decisions-gated, no hidden coupling), the audit procedure, and the finding output format (stage / defect class / severity / evidence / remediation). Worked broken-SSH-wizard example produces five findings."
 ---
 
 # Dependency and Ordering Audit

@@ -1,6 +1,6 @@
 ---
 name: synthesis-anti-patterns
-description: Use when auditing an existing structure-synthesis pipeline end to end - the eight recurring ways generation, verification, and utility judgement re-merge, each with the sheet that names the discipline and the fix. Use for a pre-ship review, a design retrospective, or when something about a generator/verifier split feels off but you can't yet name why.
+description: "Use when auditing an existing structure-synthesis pipeline end to end - the eight recurring ways generation, verification, and utility judgement re-merge, each with the sheet that names the discipline and the fix. Use for a pre-ship review, a design retrospective, or when something about a generator/verifier split feels off but you can't yet name why."
 ---
 
 # Synthesis Anti-Patterns
@@ -18,7 +18,7 @@ This is the catalogue sheet. Each entry cross-references the sheet that covers t
 
 ### 1. Generator grades its own examination
 
-The generator filters, ranks, or drops its own candidates using an internally-computed utility signal — predicted score, confidence, an auxiliary head's guess — before the pool ever reaches a downstream evaluator.
+An API that promises unranked proposals silently filters, ranks or drops candidates using internally predicted utility before returning the pool. This is a contract violation. A declared utility-guided search policy is legitimate when selection, cost and held-out evaluation are explicit; do not label guided search itself a defect.
 
 **Why it's dangerous**: the candidates most likely to be filtered are exactly the ones the generator's own (imperfect) model is most likely to be wrong about. Silent filtering removes them before anyone with better information gets a chance to disagree.
 
@@ -98,9 +98,9 @@ A generator emits freely and relies entirely on a post-generation verifier to ca
 
 ## How to Use This Catalogue in a Review
 
-Run it as a checklist, in order — patterns 1–2 are the sharpest boundary violations and worth ruling out first: a pipeline that fails either one has a design-level problem that no amount of correctness on patterns 3–8 can compensate for:
+Choose applicable patterns from the declared system contract. In an unranked proposal pipeline, hidden utility filtering and a utility-dependent legality verdict are boundary violations; guided search with an explicit selection policy is a different contract:
 
-1. Trace every path where a generated candidate's fate (returned, filtered, ranked) is decided. Does any of that logic read a self-produced or internally-predicted utility signal? → Pattern 1.
+1. Trace every path where a generated candidate's fate (returned, filtered, ranked) is decided. Does utility influence a path that promises unranked proposals, without an explicit selection contract? → Pattern 1.
 2. Read the verifier's function signature and decision branches. Does anything besides the candidate, its birth parameters, the grammar, and the interface contract reach the accept/reject decision? → Pattern 2.
 3. Find every canonicalisation rule and the refinement loop. Does each rewrite cite a specific proof obligation (an operator-identity membership check, a proven-dead-code condition), or does any rely on structural resemblance alone? Does the refinement fold in both in-edges and out-edges? → Pattern 3, both directions.
 4. Find every diversity or duplicate-rate metric in logs, dashboards, or papers. Is it computed before or after canonicalisation? → Pattern 4.
@@ -109,7 +109,7 @@ Run it as a checklist, in order — patterns 1–2 are the sharpest boundary vio
 7. If canonical-diversity numbers look healthy, spot-check functional diversity on a probe set. Does the gap suggest the canonicaliser itself under-normalizes? → Pattern 7.
 8. Look at the structural-rejection rate's breakdown by check type. Are locally-decidable failures (whitelist, budget) a large share of it? → Pattern 8.
 
-A review that finds zero instances of any of these eight patterns in a nontrivial pipeline is itself worth treating with suspicion — either the pipeline genuinely has excellent discipline (possible, and worth documenting exactly how, as a template for the next one) or the review didn't look hard enough. Per `synthesis-integrity-reviewer`'s design (see the router `SKILL.md`), a zero-findings audit run is treated as a defect of the audit, not a clean bill of health, until the reviewer can positively demonstrate why each pattern doesn't apply.
+A review may legitimately find no defects. Record the applicable patterns examined, source evidence and any unavailable paths; mark patterns outside the declared contract as not applicable. Distinguish a supported clean result within that scope from an incomplete review. Do not require a finding or a minimum severity.
 
 ## Cross-References
 

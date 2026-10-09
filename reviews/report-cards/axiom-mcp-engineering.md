@@ -1,3 +1,5 @@
+> Historical review of the version named below; it is not an assessment of marketplace 4.0.0. See [the current consolidation record](../../docs/relevance-refresh.md). Retired pack names and old process requirements are historical.
+
 # Report Card — axiom-mcp-engineering
 
 **Version:** 0.2.0 (feature-complete) · **Track:** H (Hard / Technical)

@@ -1,6 +1,6 @@
 ---
 name: concurrent-access-patterns
-description: Use when multiple threads or processes write to the same SQLite database; when you have seen SQLITE_CORRUPT after a cross-platform deploy; when choosing between a write-coordinator process and SQLite's built-in locks; or when reasoning about portalocker, fcntl, WAL checkpointing, or NFS hazards. Covers the WAL contract, per-thread connection patterns, multi-process access, cross-platform file locking, and the single-writer queue pattern.
+description: "Use when multiple threads or processes write to the same SQLite database; when you have seen SQLITE_CORRUPT after a cross-platform deploy; when choosing between a write-coordinator process and SQLite's built-in locks; or when reasoning about portalocker, fcntl, WAL checkpointing, or NFS hazards. Covers the WAL contract, per-thread connection patterns, multi-process access, cross-platform file locking, and the single-writer queue pattern."
 ---
 
 # Concurrent Access Patterns
@@ -32,7 +32,7 @@ Write-Ahead Logging reorders the sequence of I/O without weakening its guarantee
 
 The default checkpoint mode is PASSIVE: SQLite copies as many WAL frames as possible into the main file without blocking any reader or writer. If a reader holds a snapshot that pins early WAL frames, those frames are left in place and the checkpoint makes partial progress. PASSIVE never blocks; it simply skips frames that are in use. The WAL file shrinks only up to the point no reader currently holds a snapshot over. Manual checkpoint modes — FULL, RESTART, TRUNCATE — are not triggered by `wal_autocheckpoint`; they must be invoked explicitly. FULL waits for readers to drain before checkpointing all pages — the checkpoint call itself blocks during the drain, but writers are not blocked during that wait. RESTART does what FULL does and additionally briefly blocks new writers during the WAL reset phase. TRUNCATE does what RESTART does and additionally truncates the WAL file to zero bytes after the reset. For most workloads, PASSIVE is the right mode and requires no application changes.
 
-**The NFS caveat.** WAL requires two processes (or threads in different processes) to coordinate through the `.db-shm` shared-memory file, which uses POSIX memory-mapped locking semantics. NFS, SMB, CIFS, and many FUSE implementations do not implement these semantics correctly or at all. Enabling WAL mode on a network filesystem is not a configuration choice that degrades gracefully — it produces silent corruption. The discipline is binary: WAL is for local-host filesystems only. If you must use a network filesystem, use `DELETE` journal mode with `busy_timeout` and accept the read/write serialisation.
+**The filesystem boundary.** Ordinary WAL requires shared memory among database processes on the same host and is not supported for cross-host network-filesystem access. Enabling WAL may be rejected by the VFS or an unsupported arrangement may fail or corrupt data; corruption is not an inevitable result of the pragma itself. Verify the returned journal mode. Switching to rollback journaling does not repair unreliable locking or durability: prefer local storage or a server-owned database for remote access. See [SQLite WAL](https://sqlite.org/wal.html) and [corruption/locking guidance](https://sqlite.org/howtocorrupt.html).
 
 ## Multi-thread, single-process
 
@@ -335,7 +335,7 @@ Batching trades latency (the submitter waits slightly longer for the batch to fi
 
 ## Anti-patterns
 
-- **WAL on NFS or SMB.** WAL mode's shared-memory coordination relies on POSIX lock semantics that network filesystems do not implement correctly. The failure mode is silent corruption, not an error on open. Do not put a WAL-mode SQLite database on a network filesystem, regardless of what the filesystem vendor claims.
+- **WAL on NFS or SMB.** WAL mode's shared-memory coordination relies on POSIX lock semantics that network filesystems do not implement correctly. Unsupported coordination can fail or corrupt data; a successful open is not validation. Use a supported same-host arrangement and verify VFS/durability guarantees.
 
 - **One connection shared across multiple threads without serialisation.** Passing `check_same_thread=False` to Python's `sqlite3.connect()` disables the guard, not the hazard. Interleaved transactions from two threads sharing one connection produce transaction boundaries that neither thread intended. Use per-thread connections.
 

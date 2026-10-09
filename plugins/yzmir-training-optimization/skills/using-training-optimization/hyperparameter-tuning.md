@@ -942,20 +942,6 @@ for lr in learning_rates:
 **Lesson**: Fine-tuning is LR-dominated; architecture matters less for pretrained
 
 
-## Rationalization Table: How to Handle Common Arguments
-
-| User Says | What They Mean | Reality | What to Do |
-|-----------|---|---|---|
-| "Grid search is most thorough" | Should check all combinations | Grid is O(k^n), explodes | Show random search beats grid in 5+ dims |
-| "More hyperparameters = more flexibility" | Want to tune everything | Most don't matter | Show importance hierarchy, tune LR first |
-| "I'll tune architecture first" | Want to find model size | Bad LR confounds results | Insist on fixing LR first |
-| "Linear spacing is uniform" | Want equal coverage | Effect is exponential | Show log scale finds optimal 3-5% better |
-| "Longer training gives better results" | Can't prune early | Bad config won't improve | Show early stopping pruning saves 70% |
-| "I ran 5 configs and found best" | Early results seem good | Variance of 5 runs is high | Need 20+ to be confident |
-| "This LR seems good" | One training run looks ok | Might just be lucky run | Run 3 seeds, report mean ± std |
-| "My compute is limited" | Can't do full search | Limited budget favors random | Allocate to many configs × 1 seed |
-
-
 ## Red Flags: When Something is Wrong
 
 🚩 **Red Flag 1**: Training loss is extremely noisy (spikes up and down)

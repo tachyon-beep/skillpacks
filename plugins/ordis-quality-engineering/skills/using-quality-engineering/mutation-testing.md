@@ -1,6 +1,6 @@
 ---
 name: mutation-testing
-description: Use when validating test effectiveness, measuring test quality beyond coverage, choosing mutation testing tools (Stryker, PITest, mutmut), interpreting mutation scores, or improving test suites - provides mutation operators, score interpretation, and integration patterns
+description: "Use when validating test effectiveness, measuring test quality beyond coverage, choosing mutation testing tools (Stryker, PITest, mutmut), interpreting mutation scores, or improving test suites - provides mutation operators, score interpretation, and integration patterns"
 ---
 
 # Mutation Testing

@@ -1,6 +1,6 @@
 ---
 name: artifact-identity-and-caching
-description: Use when designing content-addressed compiled artifacts and their cache — keying on canonical semantic hash plus device, dtype and compiler version, invalidation rules, and reusing artifacts across runs or trials without semantic risk. Read when a compilation cache returns a stale or wrong artifact.
+description: "Use when designing content-addressed compiled artifacts and their cache \u2014 keying on canonical semantic hash plus device, dtype and compiler version, invalidation rules, and reusing artifacts across runs or trials without semantic risk. Read when a compilation cache returns a stale or wrong artifact."
 ---
 
 # Artifact Identity and Caching

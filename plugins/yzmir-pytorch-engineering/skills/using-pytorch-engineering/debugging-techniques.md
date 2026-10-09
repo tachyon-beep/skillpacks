@@ -1710,26 +1710,6 @@ if DEBUG:
 **Counter:** Remove debug code after fixing (detect_anomaly, hooks, verbose logging). Or gate with environment variable.
 
 
-## Rationalization Table
-
-| Rationalization | Why It's Wrong | Counter-Argument | Red Flag |
-|----------------|----------------|------------------|----------|
-| "Error message is clear, I know what's wrong" | Error shows symptom, not root cause | Read full error including shapes/stack trace to find root cause | Jumping to fix without reading full error |
-| "User needs quick fix, no time for debugging" | Systematic debugging is FASTER than random trial-and-error | Hypothesis-driven debugging finds issue in minutes vs hours of guessing | Making changes without hypothesis |
-| "This is obviously a shape error, just need to reshape" | Arbitrary reshaping corrupts data or fails | Calculate actual shapes needed, understand WHY mismatch occurs | Adding reshape without understanding |
-| "Let me try changing X randomly" | Random changes without hypothesis waste time | Form testable hypothesis, verify with targeted debugging | Suggesting parameter changes without evidence |
-| "I'll add prints to see what's happening" | Prints are overwhelming and lack strategy | Use assertions for verification, hooks for selective monitoring | Adding print statements everywhere |
-| "Hooks are too complex for this issue" | Hooks provide targeted inspection without code modification | Hooks are MORE efficient than scattered prints, show exactly where issue is | Avoiding proper debugging tools |
-| "detect_anomaly is slow, skip it" | Only used during debugging, not production | Performance doesn't matter during debugging; finding NaN source quickly saves hours | Skipping tools because of performance |
-| "Error only happens sometimes, hard to debug" | Intermittent errors can be made deterministic | Fix random seed, save failing batch, reproduce reliably | Giving up on intermittent errors |
-| "Just move everything to CPU to avoid CUDA errors" | Moving to CPU hides root cause, doesn't fix it | CPU error messages are clearer for diagnosis, but fix device placement, don't avoid GPU | Avoiding diagnosis by changing environment |
-| "Add try/except to handle the error" | Hiding errors doesn't fix them, will fail later | Catch exception for debugging, not to hide; fix root cause | Using try/except to hide problems |
-| "Model not learning, must be learning rate" | Many causes for not learning, need diagnosis | Check if optimizer.step() is called, if gradients exist, if weights update | Suggesting hyperparameter changes without diagnosis |
-| "It worked in the example, so I'll copy exactly" | Copying without understanding leads to cargo cult coding | Understand WHY fix works, adapt to your specific case | Copying code without understanding |
-| "Too many possible causes, I'll try all solutions" | Trying everything wastes time and obscures actual fix | Form hypothesis, test systematically, narrow down to root cause | Suggesting multiple fixes simultaneously |
-| "Error in PyTorch internals, must be PyTorch bug" | 99% of errors are in user code, not PyTorch | Read stack trace to find YOUR code that triggered error | Blaming framework instead of investigating |
-
-
 ## Red Flags Checklist
 
 **Stop and debug systematically when you observe:**

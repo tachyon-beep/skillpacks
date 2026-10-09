@@ -1,6 +1,6 @@
 ---
 name: transactions-and-isolation
-description: Use when choosing between BEGIN DEFERRED, IMMEDIATE, and EXCLUSIVE; when SQLITE_BUSY appears under concurrent load; when a read inside a transaction unexpectedly sees a partial commit; or when a write-then-read pattern produces stale data under contention. Covers the three BEGIN flavours, the lock ladder, SQLITE_BUSY retry discipline, savepoints, read-only snapshot semantics, and the write-then-read anti-pattern. Assumes WAL mode is configured (pragma-discipline.md).
+description: "Use when choosing between BEGIN DEFERRED, IMMEDIATE, and EXCLUSIVE; when SQLITE_BUSY appears under concurrent load; when a read inside a transaction unexpectedly sees a partial commit; or when a write-then-read pattern produces stale data under contention. Covers the three BEGIN flavours, the lock ladder, SQLITE_BUSY retry discipline, savepoints, read-only snapshot semantics, and the write-then-read anti-pattern. Assumes WAL mode is configured (pragma-discipline.md)."
 ---
 
 # Transactions and Isolation

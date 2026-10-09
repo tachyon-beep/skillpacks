@@ -3,7 +3,7 @@
 
 ## Overview
 
-**Core Principle:** Optimization without measurement is guessing. Profile systematically (whole → component → operation) using the right tools to identify actual bottlenecks before attempting fixes. 90% of runtime is usually in 10% of code - find that 10% with profiling, not intuition.
+**Core Principle:** Optimization without measurement is guessing. Profile systematically (whole → component → operation) using the right tools to identify actual bottlenecks before attempting fixes. Measure the runtime distribution on the target workload; do not assume a fixed concentration of bottlenecks.
 
 Performance issues stem from: data loading bottlenecks (CPU-bound), inefficient operations (GPU-bound), memory bandwidth limits (memory-bound), or I/O bottlenecks. Profiling reveals which category applies. Guessing leads to optimizing the wrong thing, wasting hours on marginal improvements while real bottleneck remains.
 
@@ -1194,7 +1194,7 @@ from torch.amp import autocast
 with autocast("cuda"):
     output = model(data)
     loss = criterion(output, target)
-# 2-3x speedup for large models
+# Measure speedup on the target model and workload
 
 # Solution 2: Tensor Core alignment
 # Multiple follows element size: 8 for 16-bit (FP16 AND BF16 - both 2 bytes),
@@ -1522,19 +1522,6 @@ with profile() as prof:
 4. ALWAYS profile data loading separately from computation
 5. ALWAYS report statistics (mean, std, percentiles), not just average
 6. ALWAYS use CUDA Events for GPU timing, never `time.time()`
-
-
-## Common Rationalizations (Don't Do These)
-
-| Excuse | What Really Happens | Correct Approach |
-|--------|-------------------|------------------|
-| "User seems rushed, skip profiling" | Guessing wastes MORE time than profiling | 10 min profiling saves hours |
-| "I already profiled once" | Might have used wrong tool or granularity | Re-profile with systematic methodology |
-| "Profiling overhead will skew results" | Use schedule to minimize overhead | `schedule(wait=1, warmup=2, active=3)` |
-| "This worked on another model" | Different models have different bottlenecks | Profile THIS model, not assumptions |
-| "Documentation says X is slow" | Depends on context, hardware, data | Verify with profiling on YOUR setup |
-| "Just trust the profiler output" | Must interpret correctly | Understand what metrics mean |
-| "The model is the bottleneck" | Often it's data loading | Always check data loading vs compute |
 
 
 ## Complete Profiling Example

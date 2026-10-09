@@ -1,7 +1,7 @@
 {
   "name": "yzmir-training-optimization",
-  "version": "1.4.0",
-  "description": "Training stability - modern optimizers (AdamW/Lion/Sophia/Muon/AdEMAMix/Schedule-Free/Prodigy/8-bit Adam), schedules (cosine/WSD), precision (BF16/FP8 E4M3/E5M2), batch sizing (B_crit, Chinchilla), gradients, convergence, hyperparameters (incl. muP), debugging. 11 skills + 3 commands + 2 agents.",
+  "version": "2.0.0",
+  "description": "Use when a training run needs evidence about convergence, objective, gradients, regularization, search budget, batch or precision strategy.",
   "author": {
     "name": "tachyon-beep",
     "url": "https://github.com/tachyon-beep"

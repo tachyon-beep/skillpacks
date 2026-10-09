@@ -1,6 +1,6 @@
 ---
 name: maturin-in-cargo-workspace
-description: Use when laying out a PyO3 crate inside a Cargo workspace — the hybrid Python-package + Rust-crate layout, `maturin develop` flow, target-dir / virtualenv interaction, editable-install gotchas. Where most "works on my machine, fails in CI" boundary bugs originate. Produces `03-maturin-in-cargo-workspace.md`.
+description: "Use when laying out a PyO3 crate inside a Cargo workspace \u2014 the hybrid Python-package + Rust-crate layout, `maturin develop` flow, target-dir / virtualenv interaction, editable-install gotchas. Where most \"works on my machine, fails in CI\" boundary bugs originate."
 ---
 
 # Maturin Inside a Cargo Workspace

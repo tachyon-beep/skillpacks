@@ -1,3 +1,5 @@
+> Historical review of the version named below; it is not an assessment of marketplace 4.0.0. See [the current consolidation record](../../docs/relevance-refresh.md). Retired pack names and old process requirements are historical.
+
 # Report Card — yzmir-systems-thinking
 
 **Version:** 1.2.0 (plugin.json)  **Track:** S — Soft / Judgment  **Graded:** 2026-06-22

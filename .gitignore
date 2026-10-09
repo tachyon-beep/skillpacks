@@ -1,11 +1,11 @@
 # Worktree directories
 .worktrees/
 
-# Router skills (phased out - use slash commands in .claude/commands/)
+# Historical router-conversion helper
 convert-routers-to-commands.sh
 
 # TDD test artifacts and planning docs
-docs/
+/docs/*
 ARCHITECTURE*.md
 temp/
 **/test-scenarios.md
@@ -19,6 +19,9 @@ TDD-METHODOLOGY.md
 PLUGIN-SUMMARY.md
 plugins/.claude/settings.local.json
 !docs/sdlc-prescription-cmmi-levels-2-4.md
+!docs/sme-agent-protocol.md
+!docs/ai-specialist-catalog.md
+!docs/relevance-refresh.md
 
 # Plugin development artifacts (reports, summaries, verification docs)
 plugins/**/.*.md

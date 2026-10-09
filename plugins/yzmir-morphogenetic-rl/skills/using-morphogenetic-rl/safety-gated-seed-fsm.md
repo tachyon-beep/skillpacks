@@ -1,6 +1,6 @@
 ---
 name: safety-gated-seed-fsm
-description: Use when designing the finite-state machine that governs a seed's lifecycle — proposed → admitted → grown → blended → integrated → retired (or aborted) — with the safety gates between transitions and the controller's observation/action surface against the FSM.
+description: "Use when designing the finite-state machine that governs a seed's lifecycle \u2014 proposed \u2192 admitted \u2192 grown \u2192 blended \u2192 integrated \u2192 retired (or aborted) \u2014 with the safety gates between transitions and the controller's observation/action surface against the FSM."
 ---
 
 # Safety-Gated Seed FSM
@@ -212,19 +212,6 @@ This is the canonical statement of the boundary; `governor-and-safety-gates.md`,
 | Pre-flight veto leaves slot in `Pending` | Slot never returns to `Dormant`, blocks future proposals | Veto path explicitly transitions `Pending → Dormant` |
 | Governor approves without reading FSM | Approves transitions illegal from current state | Governor's pre-flight inputs include `fsm.state_of(slot_id)` |
 | Multiple in-flight watches per slot | Conflicting commits/rollbacks on the same slot | FSM forbids `Watching → Watching`; one in-flight per slot |
-
----
-
-## Rationalization Resistance
-
-| Rationalization | Reality |
-|-----------------|---------|
-| "The FSM is internal plumbing; the controller can shortcut it for speed" | The shortcut is the bug. The FSM exists so safety properties hold by construction. |
-| "We can let the controller skip Pending if it's confident" | The whole point of Pending is the governor's pre-flight. Skipping it is skipping the governor. |
-| "Cooldown is a hint to the controller, not a hard rule" | Hints are unenforceable against an optimization process. Cooldown is an FSM state or it does not exist. |
-| "We'll mirror FSM state in the controller for fast reads" | The mirror will desynchronize. The controller reads FSM state through the observation, like everything else. |
-| "Two controllers can co-own a slot's transitions if we're careful" | "Careful" is not a primitive. One owner per slot, mediated by the FSM. |
-| "Rollback can just restore weights; the FSM will catch up" | The FSM is the source of truth. If it disagrees with the weights, the disagreement is the bug. |
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: silent-default-elimination
-description: Use when designing or reviewing any cross-boundary record where a field can be unmeasured, unavailable, or omitted — metrics, telemetry, sensor readings, optional measurements — or when a consumer crashes on a missing field and the tempting fix is a default value or a lenient .get(). Covers explicit absence encoding, validity masks, version-gated absence semantics, and the prohibition on tolerant readers.
+description: "Use when designing or reviewing any cross-boundary record where a field can be unmeasured, unavailable, or omitted \u2014 metrics, telemetry, sensor readings, optional measurements \u2014 or when a consumer crashes on a missing field and the tempting fix is a default value or a lenient .get(). Covers explicit absence encoding, validity masks, version-gated absence semantics, and the prohibition on tolerant readers."
 ---
 
 # Silent-Default Elimination

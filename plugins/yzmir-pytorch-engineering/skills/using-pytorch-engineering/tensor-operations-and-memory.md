@@ -521,18 +521,6 @@ torch.cuda.memory._record_memory_history(enabled=None)
 **Critical rule:** Memory issues have root causes. Systematic diagnosis ALWAYS faster than guessing.
 
 
-## Common Rationalizations (Don't Do These)
-
-| Excuse | What Really Happens | Correct Approach |
-|--------|-------------------|------------------|
-| "User seems rushed, skip methodology" | Guessing wastes MORE time than systematic diagnosis | 5 minutes of diagnosis saves hours of guessing |
-| "I already tried profiling" | May have looked at wrong metrics or misinterpreted | Re-profile with specific focus from methodology |
-| "This worked on smaller model" | Scaling exposes hidden issues | Same methodology applies, just reveals different bugs |
-| "Documentation says to do X" | May be misunderstanding context or outdated | Check PyTorch version, verify applicability |
-| "I'll optimize later" | Memory issues prevent finishing now | Fix memory first, then optimize if still needed |
-| "It's a CUDA bug" | 99.9% of time it's your code | Assume your bug until proven otherwise |
-
-
 ## Common Pitfalls
 
 ### Consolidated Pitfall Table

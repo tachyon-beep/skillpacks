@@ -1,274 +1,36 @@
 ---
 name: implementation-planning
-description: Use when you have specifications or requirements for multi-step implementation tasks requiring comprehensive documentation for handoff
+description: "Use when a multi-step change needs an implementable plan or handoff with dependencies, acceptance criteria and verification."
 ---
 
 # Implementation Planning
 
-## Overview
+Turn a chosen outcome into executable work. A small change may need only a short checklist; a cross-system migration may need a durable plan.
 
-Write comprehensive implementation plans assuming the engineer is skilled but unfamiliar with the codebase and project conventions. Document everything they need: which files to touch for each task, complete code examples, testing commands, documentation to reference, and verification steps. Break work into atomic, committable units following DRY, YAGNI, and TDD principles.
+## Workflow
 
-**Announce at start:** "I'm using the implementation-planning skill to create the implementation plan."
+1. Read the relevant repository instructions, current implementation, tests and supplied requirements. Record the target state and any important mismatch with the brief.
+2. Define completion in observable terms: changed behavior, acceptance checks, relevant non-goals and authority boundaries.
+3. Break work at useful integration or verification boundaries. Name affected paths/interfaces, prerequisites, expected result and a focused check for each unit.
+4. Order dependencies; identify migrations, compatibility constraints, rollback limitations and external decisions. Separate blocking questions from assumptions that can be tested while progressing.
+5. Include code only where an interface, algorithm or tricky constraint needs a concrete example. Do not write a speculative full implementation or invent line numbers before inspecting the source.
+6. Review uncertainty and one-way doors. For a risky or unfamiliar area use a relevant independent review; reviewer count follows unresolved risk, not a fixed panel.
+7. If execution is authorized, continue into implementation and verification. If asked only for a plan, deliver the plan and stop at that boundary. Worktrees and commits follow actual repository needs, not a planning prerequisite.
 
-**Context:** Plans should be created in a dedicated worktree for isolation.
+## Handoff shape
 
-**Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md`
+- Outcome and acceptance evidence.
+- Current-state evidence and assumptions.
+- Ordered work units: location, change, prerequisite, check.
+- Material risks, migration/recovery and pending decisions.
+- Completion state: planned, implemented, locally verified, integrated, released or accepted.
 
-## When to Use
+A durable file is useful when another session/person will execute the plan; otherwise use the response. Do not require five-minute steps, one-action tasks, full code, separate code/doc commits, particular executors or model credits.
 
-**Use implementation-planning when:**
-- Multi-step implementation (3+ distinct tasks)
-- Complex integration requiring file-level navigation guidance
-- Handoff to another developer or future execution session
-- TDD cycle needs documentation for consistency across tasks
-- Clear requirements exist and architecture approach is defined
+Optional [plan review](../plan-review/SKILL.md) checks implementability and consequences. Review lenses in `../../agents/` are available when useful, not required roles.
 
-**Don't use for:**
-- Single-file changes (just implement directly)
-- Well-established patterns with existing guides (reference those instead)
-- Exploratory prototyping (plans constrain necessary experimentation)
-- Unclear requirements (use brainstorming first)
+## Working contract
 
-## Atomic Task Granularity
+Use the smallest deliverable that makes the decision or change reviewable. Existing project records can satisfy these fields; do not create duplicate documents. Read only references needed for the unresolved question. Ordinary work does not require loading a specialist, delegating, or asking a routing question.
 
-**Each step is one atomic action:**
-- Focused on single outcome
-- Independently testable
-- Committable as logical unit
-- Has clear Definition of Done
-
-**Examples of atomic steps:**
-- "Write the failing test" - one step
-- "Run it to verify failure" - one step
-- "Implement minimal code to make test pass" - one step
-- "Run tests and verify they pass" - one step
-- "Commit changes" - one step
-
-**NOT atomic:**
-- "Write and run tests" - two steps combined
-- "Implement feature with error handling" - multiple concerns
-- "Update code and documentation" - separate commits
-
-## Plan Document Header
-
-**Every plan MUST start with this header:**
-
-```markdown
-# [Feature Name] Implementation Plan
-
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
-
-**Goal:** [One sentence describing what this builds]
-
-**Architecture:** [2-3 sentences about approach]
-
-**Tech Stack:** [Key technologies/libraries]
-
-**Prerequisites:**
-- [Any setup needed before starting]
-- [Dependencies that must be installed]
-
----
-```
-
-## Task Structure
-
-Each task follows this template:
-
-```markdown
-### Task N: [Component Name]
-
-**Files:**
-- Create: `exact/path/to/file.py`
-- Modify: `exact/path/to/existing.py:123-145` (lines if known)
-- Test: `tests/exact/path/to/test.py`
-- Docs: `docs/path/to/reference.md` (if relevant)
-
-**Step 1: Write the failing test**
-
-```python
-def test_specific_behavior():
-    # Arrange
-    input_data = create_test_input()
-
-    # Act
-    result = function(input_data)
-
-    # Assert
-    assert result == expected_output
-```
-
-**Why this test:** [Explain what behavior this verifies]
-
-**Step 2: Run test to verify it fails**
-
-Run: `pytest tests/path/test.py::test_specific_behavior -v`
-
-Expected output:
-```
-FAILED - NameError: name 'function' is not defined
-```
-
-**Step 3: Write minimal implementation**
-
-```python
-def function(input_data):
-    """Brief docstring explaining purpose."""
-    # Minimal code to make test pass
-    return expected_output
-```
-
-**Why minimal:** [Explain what's deliberately omitted for now]
-
-**Step 4: Run test to verify it passes**
-
-Run: `pytest tests/path/test.py::test_specific_behavior -v`
-
-Expected output:
-```
-PASSED
-```
-
-**Step 5: Commit**
-
-```bash
-git add tests/path/test.py src/path/file.py
-git commit -m "feat: add specific feature
-
-- Implements [specific behavior]
-- Tests verify [specific condition]
-
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
-```
-
-**Definition of Done:**
-- [ ] Test written and fails for right reason
-- [ ] Implementation makes test pass
-- [ ] No other tests broken
-- [ ] Code committed with clear message
-```
-
-## Quality Standards
-
-**Every task MUST include:**
-
-1. **Exact file paths** - No "update the config file" without path
-2. **Complete code** - No "add validation logic" without showing the code
-3. **Exact commands** - Full command with flags, not "run tests"
-4. **Expected output** - What success/failure looks like
-5. **Definition of Done** - Checklist for task completion
-
-**Code examples must be:**
-- Complete and runnable
-- Include necessary imports
-- Show actual logic, not pseudocode
-- Have minimal comments (code should be self-explanatory)
-
-## Cross-Skill References
-
-**Reference skills using requirement markers, NOT @ syntax:**
-
-```markdown
-# ✅ GOOD: Explicit requirement marker
-**REQUIRED SUB-SKILL:** Use superpowers:test-driven-development
-
-**BACKGROUND:** Understanding superpowers:systematic-debugging helps with troubleshooting
-
-# ❌ BAD: @ syntax force-loads and burns context
-@skills/test-driven-development/SKILL.md
-```
-
-## Common Mistakes
-
-| Mistake | Impact | Fix |
-|---------|--------|-----|
-| Vague tasks ("add validation") | Engineer doesn't know what to implement | Include complete validation code in plan |
-| Missing file paths | Time wasted searching codebase | Exact path for every file touched |
-| "Run tests" without specifics | Wrong tests run, or none at all | Exact command with file::function and expected output |
-| Generic commit messages | Hard to review, poor history | Follow conventional commits with context |
-| Skipping test failure verification | False confidence (test might not work) | Always verify RED before implementing GREEN |
-| Combining multiple actions in one step | Unclear what to commit, harder to debug | Each step = one atomic action |
-| Assuming context knowledge | Engineer unfamiliar with codebase stuck | Document which files define types, where utilities live |
-| Incomplete code examples | "Figure it out" wastes time | Complete, runnable code in plan |
-
-## Red Flags - STOP and Revise Plan
-
-These thoughts mean incomplete plan:
-
-| Excuse | Reality |
-|--------|---------|
-| "They'll figure out the details" | Details ARE the plan. Document them. |
-| "File path is obvious from context" | Not obvious to someone unfamiliar. State it explicitly. |
-| "Standard validation, doesn't need code" | What's standard to you is unclear to others. Show the code. |
-| "Test command is straightforward" | Exact command eliminates ambiguity. Specify it. |
-| "This step is quick, combine with next" | Atomic steps = atomic commits. Keep separate. |
-
-**If you catch yourself using these rationalizations, STOP and add the missing details.**
-
-## Validate Before Execution
-
-For high-risk or high-complexity work, validate the plan against codebase reality before any execution:
-
-**RECOMMENDED SUB-SKILL:** Run `/review-plan docs/plans/<filename>.md` (plan-review skill).
-
-It spawns reality/architecture/quality/systems reviewers and returns one of three verdicts:
-
-- **APPROVED** — proceed to Execution Handoff.
-- **APPROVED_WITH_WARNINGS** — proceed, but address the noted warnings during execution.
-- **CHANGES_REQUESTED** — do not execute. Revise the plan first (see below).
-
-Skip review only for low-risk, low-complexity plans; reserve it for work where a wrong assumption is expensive.
-
-## Revising After CHANGES_REQUESTED
-
-When `/review-plan` returns `CHANGES_REQUESTED`, treat it as a revision loop, not a one-shot gate:
-
-1. Work the findings in priority order (the synthesizer ranks them by `Severity × Likelihood × Reversibility`).
-2. For each finding, edit the affected task in place — apply the same Quality Standards as the original plan (exact paths, complete code, exact commands). Do not paper over a hallucinated symbol or wrong path with a vague step.
-3. Note unresolved findings explicitly if a reviewer flagged an information gap you cannot close — record the assumption in the plan rather than hiding it.
-4. Re-run `/review-plan` on the revised plan. Repeat until the verdict is `APPROVED` or `APPROVED_WITH_WARNINGS`.
-
-Only then proceed to Execution Handoff.
-
-## Execution Handoff
-
-After the plan is saved (and reviewed, for high-risk work), offer execution choice:
-
-**"Plan complete and saved to `docs/plans/<filename>.md`. Two execution options:**
-
-**1. Subagent-Driven (this session)** - I dispatch fresh subagent per task with code review between tasks for fast iteration
-
-**2. Parallel Session (separate)** - Open new session with executing-plans for batch execution with checkpoints
-
-**Which approach?"**
-
-**If Subagent-Driven chosen:**
-- **REQUIRED SUB-SKILL:** Use superpowers:subagent-driven-development
-- Stay in this session
-- Fresh subagent per task + code review after each
-
-**If Parallel Session chosen:**
-- Guide them to open new session in the worktree
-- **REQUIRED SUB-SKILL:** New session uses superpowers:executing-plans
-- Batch execution with review checkpoints
-
-## Principles Summary
-
-**DRY (Don't Repeat Yourself):**
-- Extract common utilities rather than duplicating code
-- Reference existing patterns instead of reinventing
-
-**YAGNI (You Aren't Gonna Need It):**
-- Implement only what's specified in requirements
-- Don't add "nice to have" features preemptively
-
-**TDD (Test-Driven Development):**
-- Always test first, implementation second
-- Watch test fail before writing production code
-- Keep implementation minimal to pass test
-
-**Frequent Commits:**
-- Each atomic step = one commit
-- Clear, conventional commit messages
-- Commits tell the story of implementation
+Use tools and current project evidence where available. Distinguish observed facts, inferences and unknowns. Report material findings with a source, consequence and proposed action; report a supported clean result when appropriate. State checks run, checks omitted and residual uncertainty without mandatory report sections. Honor current user authorization and applicable project policy; ask only when a missing decision materially blocks progress.

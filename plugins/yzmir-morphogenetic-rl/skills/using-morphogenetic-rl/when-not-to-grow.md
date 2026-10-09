@@ -1,6 +1,6 @@
 ---
 name: when-not-to-grow
-description: Use when deciding the network has reached its useful capacity, the controller is growing into pathology, or the problem doesn't benefit from morphogenesis — refusal patterns, capacity-saturation signals, and the boundary against "always grow more."
+description: "Use when deciding the network has reached its useful capacity, the controller is growing into pathology, or the problem doesn't benefit from morphogenesis \u2014 refusal patterns, capacity-saturation signals, and the boundary against \"always grow more.\""
 ---
 
 # When Not to Grow
@@ -174,25 +174,6 @@ If morphogenesis is in your system and the diagnostics say it should not be, the
 | Compare morphogenetic-best-of-5 to static-mean | Selection bias dressed as a comparison | Compare distributions to distributions |
 | Conflate "growth events fired" with "controller decisions mattered" | Growth events fire whether the controller is good or random | Run the fixed-schedule baseline |
 | Avoid the off-switch baseline because "it's obviously going to lose" | Then it costs nothing to run and the result is published | Run it |
-
----
-
-## Rationalization Resistance
-
-These are the rationalizations that keep morphogenesis around when it should be removed. Each one is a reason to *do the test*, not to skip it.
-
-| Rationalization | Reality | Counter |
-|-----------------|---------|---------|
-| "Morphogenesis is the future of ML" | A research direction is not a default. The default is static. | Run the off-switch. If it matches, you have a non-result. |
-| "We just need to tune the reward function more" | After three reward iterations, you are not tuning, you are searching. | Stop tuning. Run baselines. If they match, the issue is methodological, not hyperparametric. |
-| "The static baseline is unfair because it had perfect architecture knowledge" | Fixed-schedule baseline does not have that. Compare to it. | If fixed-schedule matches morphogenetic, the controller did not learn. |
-| "Variance is high but the best seed is great" | Best-of-N is not a fair comparison. The fair comparison is mean and variance. | Report all seeds. If mean is no better, single great seeds are noise, not signal. |
-| "We didn't run the off-switch because it's obviously worse" | Then the experiment is cheap and confirms the prior. | Run it. The cases where it isn't worse are the most interesting and most often missed. |
-| "Morphogenesis works in principle, our specific implementation is just early" | "In principle" is unfalsifiable. The implementation is what is being tested. | If the implementation does not work, the implementation is the result. |
-| "Disabling morphogenesis means giving up" | It means moving compute to better targets. | Stopping a failed experiment is not failure. Continuing one is. |
-| "The controller is interpretable so it must be doing something" | Interpretability of a policy is independent of whether the policy is useful. | A policy can be interpretable and inert. Off-switch baseline distinguishes. |
-| "Sunk cost — we've already trained the controller" | Sunk cost is not an argument for future cost. | Walk it back. Keep the harness, drop the controller. |
-| "It might help eventually with more data" | If your evaluation is at the data scale you have, that is the result. | Either run at the bigger scale or stop the claim. |
 
 ---
 

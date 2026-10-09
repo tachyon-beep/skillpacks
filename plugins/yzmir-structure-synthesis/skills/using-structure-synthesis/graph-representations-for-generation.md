@@ -1,6 +1,6 @@
 ---
 name: graph-representations-for-generation
-description: Use when choosing the encoding a generator actually emits - op sequences, edge lists, adjacency, or a latent code plus decoder - and when a representation choice silently loses information a downstream stage needs, such as branching structure a sequence-only encoding can't express.
+description: "Use when choosing the encoding a generator actually emits - op sequences, edge lists, adjacency, or a latent code plus decoder - and when a representation choice silently loses information a downstream stage needs, such as branching structure a sequence-only encoding can't express."
 ---
 
 # Graph Representations for Generation
@@ -112,16 +112,6 @@ Work from `typed-graph-grammars.md` outward, not the other way around:
 2. Is node count bounded and small? Adjacency matrices become viable and simple; at larger bounds they waste tensor capacity on mostly-zero entries.
 3. Does the generation strategy need smooth interpolation between candidates (for mutation, see `lineage-mutation-and-recombination.md`, or exploration)? A latent-code representation supports that; discrete token sequences do not, without extra machinery.
 4. Whatever is chosen, **write the round-trip test before training anything.** It is cheap, and it is the only thing that catches a representational blind spot before a generator has spent a training run learning to live inside it.
-
-## Rationalization Resistance
-
-| Rationalization | Reality |
-|---|---|
-| "The model's loss is going down, the representation must be fine" | A representation with a blind spot trains a generator that never produces the excluded structures — and loss reflects what the representation *can* express, not what the grammar allows |
-| "We'll add branching support later if we need it" | Adding it later means re-encoding the entire training corpus and retraining, not a config flag |
-| "Adjacency matrices are simple, let's just use those" | Simple at small node counts; the ceiling from `typed-graph-grammars.md` determines whether that holds — check the node ceiling before committing |
-| "A latent-code decoder is more flexible, so it's strictly better" | Flexibility shifts the round-trip-fidelity burden onto the decoder network, which now needs its own faithfulness testing — it isn't free, it's relocated |
-| "We tested round-trip on a few examples and it worked" | Test round-trip on the structures that stress the representation specifically — branching, the deepest allowed graph, the widest allowed graph — not just typical examples |
 
 ## Red Flags Checklist
 

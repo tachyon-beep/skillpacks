@@ -1,35 +1,7 @@
 ---
-description: Use when writing a panel review config interactively — defines the document suite, designs personas across the decision chain, drafts scenario framing, and configures panel controls (control persona, unreliable narrator, collision pairings). For automated config generation from documents use /panel-designer instead.
+description: "Create or inspect the configuration for a bounded simulated reader experiment."
 ---
 
-# Create a Panel Review Config
+# Panel config
 
-Help me write a config file for a reader panel review.
-
-## What this does
-
-Guides you through creating a panel review configuration: defining the document suite, designing personas that span the decision chain, writing scenario framing, and setting up panel controls (control persona, unreliable narrator, collision pairings).
-
-## How to use
-
-Tell me:
-1. **What documents** you want reviewed (paths, or describe them)
-2. **Who the audiences are** — who reads this, who decides based on it, who is affected by it
-3. **The institutional context** (optional) — how readers received the documents, what status they have
-
-I'll help you design personas and write a config file following the format in `plugins/muna-panel-review/config-template.md`.
-
-Alternatively, if you have the documents ready and want automated panel design, use `/panel-designer` to spawn the persona-designer agent directly.
-
-## Design principles
-
-- **Span the decision chain** — from the person who decides to the person most affected
-- **Include someone talked about but not talked to** — they surface the largest editorial gaps
-- **Define blind spots explicitly** — this is what prevents all personas sounding the same
-- **Give each persona a distinct voice sample** — one sentence in character, how they talk to a peer
-
-## References
-
-- `plugins/muna-panel-review/config-template.md` — config format with field descriptions
-- `plugins/muna-panel-review/config.md` — fully worked 6-persona example
-- `plugins/muna-panel-review/process.md` Phase 1 — panel design principles
+Read and apply the [task contract](../../plugins/muna-panel-review/commands/panel-config.md) at `plugins/muna-panel-review/commands/panel-config.md`. Use only the references needed for the requested work, preserve existing project constraints and authorization, and report relevant evidence and gaps. This is a repository shortcut; the linked plugin entrypoint is the content authority.

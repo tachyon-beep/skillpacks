@@ -1,3 +1,5 @@
+> Historical review of the version named below; it is not an assessment of marketplace 4.0.0. See [the current consolidation record](../docs/relevance-refresh.md). Retired pack names and old process requirements are historical.
+
 # Review: axiom-rust-workspaces
 
 **Version:** 1.0.2 (per `plugins/axiom-rust-workspaces/.claude-plugin/plugin.json:3`)

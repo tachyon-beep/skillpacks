@@ -68,7 +68,7 @@ Without safe deployment:
 ```
 
 
-## RED Phase: What Goes Wrong (600-800 lines)
+## RED Phase: What Goes Wrong
 
 ### Failure 1: Instant 100% Deployment
 
@@ -1027,7 +1027,7 @@ print(result)
 **Core insight:** Safe deployment requires automation, metrics, gradual rollout, and instant rollback. Each step must validate before proceeding.
 
 
-## GREEN Phase: Safe Deployment Patterns (900-1200 lines)
+## GREEN Phase: Safe Deployment Patterns
 
 ### Pattern 1: A/B Testing with Statistical Validation
 
@@ -2523,9 +2523,9 @@ if __name__ == "__main__":
 | Agreement rate (shadow) | > 85% | Promote to canary |
 
 
-## REFACTOR Phase: Pressure Tests (550-700 lines)
+## Worked failure cases
 
-### Pressure Test 1: Deploy Without Baseline Metrics
+### Worked failure case 1: Deploy Without Baseline Metrics
 
 **Scenario:** Engineer tries to start canary without establishing baseline.
 
@@ -2587,7 +2587,7 @@ Day 4: Full rollout 100%
 **Principle: Always establish baseline before deploying. Baseline = ground truth for detecting regressions.**"
 
 
-### Pressure Test 2: Tiny Sample Size for A/B Test
+### Worked failure case 2: Tiny Sample Size for A/B Test
 
 **Scenario:** Engineer runs A/B test with insufficient data.
 
@@ -2656,7 +2656,7 @@ Options:
 **Principle: Calculate required sample size BEFORE running A/B test. Don't trust small samples.**"
 
 
-### Pressure Test 3: Ignore Latency Regression in Canary
+### Worked failure case 3: Ignore Latency Regression in Canary
 
 **Scenario:** New model has acceptable error rate but 3× worse latency.
 
@@ -2726,7 +2726,7 @@ threshold_p50 = 150ms * 1.2 = 180ms
 **Principle: Latency regressions kill UX. Don't expand canary with >1.5× latency increase.**"
 
 
-### Pressure Test 4: Shadow Mode Agreement = 70%
+### Worked failure case 4: Shadow Mode Agreement = 70%
 
 **Scenario:** Shadow mode shows 70% agreement (below 85% threshold).
 
@@ -2806,7 +2806,7 @@ c) Run A/B test (let users decide via engagement metrics)
 **Principle: Shadow mode < 85% agreement = investigate before promoting. Understand why models disagree.**"
 
 
-### Pressure Test 5: Rollback During A/B Test
+### Worked failure case 5: Rollback During A/B Test
 
 **Scenario:** A/B test running, model B starts degrading after 3 days.
 
@@ -2883,7 +2883,7 @@ Action:
 **Principle: Rollback immediately when metrics degrade during A/B test. Don't wait for "test completion" if users are impacted.**"
 
 
-### Pressure Test 6: Deploy to 100% After Shadow Mode
+### Worked failure case 6: Deploy to 100% After Shadow Mode
 
 **Scenario:** Engineer wants to skip canary and go straight to 100%.
 
@@ -2959,7 +2959,7 @@ If canary used:
 **Principle: Shadow mode validates behavior, canary validates production scale. Always use canary before full deployment.**"
 
 
-### Pressure Test 7: Feature Flag at 100% Forever
+### Worked failure case 7: Feature Flag at 100% Forever
 
 **Scenario:** Feature flag stuck at 100% rollout, never promoted.
 
@@ -3040,7 +3040,7 @@ Total flag lifetime: 7 days (not 3 months!)
 **Principle: Feature flags are temporary. Promote to production and remove flag after 48h at 100%.**"
 
 
-### Pressure Test 8: Rollback Without Testing
+### Worked failure case 8: Rollback Without Testing
 
 **Scenario:** Rollback procedure never tested until emergency.
 
@@ -3145,7 +3145,7 @@ schedule.every().week.do(test_rollback_procedure)
 **Principle: Test rollback before deploying. Rollback is the safety net—test the net before jumping.**"
 
 
-### Pressure Test 9: A/B Test With Different Traffic Types
+### Worked failure case 9: A/B Test With Different Traffic Types
 
 **Scenario:** A/B test splits traffic but doesn't account for user segments.
 
@@ -3236,7 +3236,7 @@ def predict(request, user_segment):
 **Principle: Always analyze A/B tests by segment. Aggregate metrics hide important patterns. Consider multi-model strategies.**"
 
 
-### Pressure Test 10: Production Drift After 3 Months
+### Worked failure case 10: Production Drift After 3 Months
 
 **Scenario:** Model deployed 3 months ago, performance degrading due to data drift.
 
@@ -3372,7 +3372,7 @@ Action Required:
 **Principle: Models degrade over time due to data drift. Monitor continuously, retrain monthly (or on drift), redeploy via canary.**"
 
 
-## Summary of REFACTOR Phase
+## Summary of Phase
 
 **10 Pressure Tests Covered:**
 

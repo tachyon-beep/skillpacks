@@ -1,6 +1,6 @@
 ---
 name: feature-unification-gotchas
-description: Use when diagnosing or designing around cargo's feature unification at workspace scope — the cases where features are *not* additive, where resolver-2 fails to isolate, where mutually-exclusive features collide, and where `default-features = false` is silently undone by a sibling crate. Covers the feature-graph math, the seven canonical gotchas, the diagnostic procedure (`cargo tree -e features`), and the structural fixes (feature renaming, namespace separation, runtime selection). Produces `05-feature-unification-gotchas.md`.
+description: "Use when diagnosing or designing around cargo's feature unification at workspace scope \u2014 the cases where features are *not* additive, where resolver-2 fails to isolate, where mutually-exclusive features collide, and where `default-features = false` is silently undone by a sibling crate. Covers the feature-graph math, the seven canonical gotchas, the diagnostic procedure (`cargo tree -e features`), and the structural fixes (feature renaming, namespace separation, runtime selection)."
 ---
 
 # Feature Unification Gotchas

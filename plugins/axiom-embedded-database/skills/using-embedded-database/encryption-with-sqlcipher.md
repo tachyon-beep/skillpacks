@@ -1,6 +1,6 @@
 ---
 name: encryption-with-sqlcipher
-description: Use when you need to protect a SQLite database file at rest — covers threat-model scoping, SQLCipher 4.x cryptographic construction, PBKDF2 key derivation, key rotation via rekey, building Python wheels, operational hazards, and anti-patterns. The correct mental model: SQLCipher protects the cold artifact, not the running process.
+description: "Use when you need to protect a SQLite database file at rest \u2014 covers threat-model scoping, SQLCipher 4.x cryptographic construction, PBKDF2 key derivation, key rotation via rekey, building Python wheels, operational hazards, and anti-patterns. The correct mental model: SQLCipher protects the cold artifact, not the running process."
 ---
 
 # Encryption with SQLCipher

@@ -1,3 +1,5 @@
+> Historical review of the version named below; it is not an assessment of marketplace 4.0.0. See [the current consolidation record](../docs/relevance-refresh.md). Retired pack names and old process requirements are historical.
+
 # Review: axiom-embedded-database
 
 **Version:** 0.1.0 (`/home/john/skillpacks/plugins/axiom-embedded-database/.claude-plugin/plugin.json:3`)

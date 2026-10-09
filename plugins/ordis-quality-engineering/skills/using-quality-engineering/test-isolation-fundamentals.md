@@ -1,6 +1,6 @@
 ---
 name: test-isolation-fundamentals
-description: Use when tests fail together but pass alone, diagnosing test pollution, ensuring test independence and idempotence, managing shared state, or designing parallel-safe tests - provides isolation principles, database/file/service patterns, and cleanup strategies
+description: "Use when tests fail together but pass alone, diagnosing test pollution, ensuring test independence and idempotence, managing shared state, or designing parallel-safe tests - provides isolation principles, database/file/service patterns, and cleanup strategies"
 ---
 
 # Test Isolation Fundamentals
@@ -399,7 +399,7 @@ pytest --random-order
 ```
 
 **Interpretation:**
-- Passes 100/100 → Not flaky
+- Passes 100/100 → No failure observed in these sampled conditions; this does not prove non-flakiness
 - Passes 95/100 → Flaky (5% failure rate)
 - Failures are random → Parallel unsafe OR order-dependent
 

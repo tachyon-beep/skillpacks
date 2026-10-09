@@ -208,20 +208,22 @@ def main() -> int:
                     f"{rel(path)}:{lineno}: references command '/{cmd}', which does not exist"
                 )
 
-    # ---- 4. report-card coverage -----------------------------------------
-    card_dir = os.path.join(ROOT, "reviews", "report-cards")
-    if os.path.isdir(card_dir):
-        cards = {f[:-3] for f in os.listdir(card_dir) if f.endswith(".md")} - {"INDEX"}
-        for pack in sorted(packs - cards):
-            warnings.append(f"{pack}: no report card in reviews/report-cards/")
+    # ---- 4. current decision coverage and user discovery ------------------
+    # Report cards are explicitly historical. The current consolidation record
+    # covers the entire original portfolio; requiring fresh copies of old cards
+    # would confuse historical assessments with current evidence.
+    record_path = os.path.join(ROOT, "docs", "relevance-refresh.md")
+    if os.path.exists(record_path):
+        with open(record_path, encoding="utf-8") as fh:
+            covered = set(PACK_TOKEN.findall(fh.read()))
+        for pack in sorted(packs - covered):
+            warnings.append(f"{pack}: absent from current consolidation record")
 
-    # ---- 5. discovery orphans --------------------------------------------
-    for pack in sorted(packs):
-        if referenced[pack] == 0:
-            warnings.append(
-                f"{pack}: referenced by no other pack -- reachable only if the user "
-                f"already knows it exists"
-            )
+    # Independent packs need catalog discovery, not mandatory cross-pack links.
+    with open(os.path.join(ROOT, "README.md"), encoding="utf-8") as fh:
+        discovered = set(PACK_TOKEN.findall(fh.read()))
+    for pack in sorted(packs - discovered):
+        warnings.append(f"{pack}: absent from user-facing README catalog")
 
     # ---- report -----------------------------------------------------------
     print(f"packs: {len(dirs)}   marketplace entries: {len(market_names)}   commands: {len(commands)}")

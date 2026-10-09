@@ -1,6 +1,6 @@
 ---
 name: test-organisation-at-workspace-scope
-description: Use when deciding where tests live in a Rust workspace — per-crate unit tests, per-crate integration tests under `tests/`, workspace-level integration tests in a dedicated test crate, doc-tests, shared test fixtures, and the cargo-nextest configuration that makes the whole pile run sanely. Covers the four placement options, the shared-fixtures crate pattern, the cross-crate property-test pattern, and the runner choice. Produces `08-test-organisation.md`.
+description: "Use when deciding where tests live in a Rust workspace \u2014 per-crate unit tests, per-crate integration tests under `tests/`, workspace-level integration tests in a dedicated test crate, doc-tests, shared test fixtures, and the cargo-nextest configuration that makes the whole pile run sanely. Covers the four placement options, the shared-fixtures crate pattern, the cross-crate property-test pattern, and the runner choice."
 ---
 
 # Test Organisation at Workspace Scope

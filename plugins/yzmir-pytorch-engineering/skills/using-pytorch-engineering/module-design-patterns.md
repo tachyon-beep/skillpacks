@@ -1556,24 +1556,6 @@ torch.save(model.state_dict(), 'model.pth')  # ✅ Includes buffers
 **Rule:** Use `register_buffer()` for tensors that aren't parameters but should be saved/moved.
 
 
-## Common Rationalizations (Don't Do These)
-
-| Excuse | Reality | Correct Approach |
-|--------|---------|------------------|
-| "User wants quick solution, I'll use None" | Quick becomes slow when DDP breaks | Always use nn.Identity(), same speed |
-| "It's just a prototype, proper patterns later" | Prototype becomes production, tech debt compounds | Build correctly from start, no extra time |
-| "F.relu() is more Pythonic/simpler" | True, but prevents hooks and modification | Use nn.ReLU() if any chance of needing hooks |
-| "I'll fix initialization in training loop" | Defeats purpose of reset_parameters() | Put in reset_parameters(), 5 extra lines |
-| "Bias is almost always there" | False! Many models use bias=False | Check if bias is not None, always |
-| "Hooks are advanced, user won't use them" | Until they need debugging or feature extraction | Design hookable from start, no cost |
-| "I'll clean up hooks manually later" | Later never comes, memory leaks persist | Context manager takes 10 lines, bulletproof |
-| "This module is simple, no need for modularity" | Simple modules get extended and reused | Substitutable components from start |
-| "State dict loading always matches architecture" | False! Checkpoints get reused across versions | Implement reset_parameters() for partial loads |
-| "In-place ops are fine, I'll remember detach+clone" | Won't remember under pressure | Document decision in code, add comment |
-
-**Critical insight:** "Shortcuts for simplicity" become "bugs in production." Proper patterns take seconds more, prevent hours of debugging.
-
-
 ## Decision Frameworks
 
 ### Framework 1: Module vs Functional Operations
@@ -1696,7 +1678,7 @@ Examples:
 ```
 
 
-## Pressure Testing Scenarios
+## Worked failure case
 
 ### Scenario 1: Time Pressure
 

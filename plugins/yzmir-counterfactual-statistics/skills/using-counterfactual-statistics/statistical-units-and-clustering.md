@@ -1,6 +1,6 @@
 ---
 name: statistical-units-and-clustering
-description: Use when deciding what counts as one independent observation in a branched or paired experiment, when someone reports n in the hundreds from a handful of runs, or when confidence intervals look implausibly tight. Covers the independent unit, repeated measures, intraclass correlation and design effect, cluster-robust inference, and pseudo-replication as the cardinal sin.
+description: "Use when deciding what counts as one independent observation in a branched or paired experiment, when someone reports n in the hundreds from a handful of runs, or when confidence intervals look implausibly tight. Covers the independent unit, repeated measures, intraclass correlation and design effect, cluster-robust inference, and pseudo-replication as the cardinal sin."
 ---
 
 # Statistical Units and Clustering

@@ -738,9 +738,9 @@ Reproducibility checklist:
 - [x] For LLM work: prompt hash, eval-set version, model tier, resolved model ID
 
 
-## Part 5: REFACTOR — Pressure Tests
+## Part 5: Worked failure cases
 
-### Pressure Test 1: Lost Experiment Recovery
+### Worked failure case 1: Lost Experiment Recovery
 
 ```python
 def test_lost_experiment_recovery():
@@ -756,7 +756,7 @@ def test_lost_experiment_recovery():
         assert p in best and not pd.isna(best[p]), f"Missing {p}"
 ```
 
-### Pressure Test 2: Production Model Identification
+### Worked failure case 2: Production Model Identification
 
 ```python
 def test_production_model_id():
@@ -767,7 +767,7 @@ def test_production_model_id():
     assert "val_acc" in mv.tags
 ```
 
-### Pressure Test 3: Multi-User Comparison
+### Worked failure case 3: Multi-User Comparison
 
 ```python
 def test_multi_user_comparison():
@@ -777,7 +777,7 @@ def test_multi_user_comparison():
     assert len(users) >= 2
 ```
 
-### Pressure Test 4: Data-Change Detection
+### Worked failure case 4: Data-Change Detection
 
 ```python
 def test_data_change_detection():
@@ -792,7 +792,7 @@ def test_data_change_detection():
             print(f"data {h[:8]}: mean val_acc = {sl['metrics.val_acc'].mean():.2f}")
 ```
 
-### Pressure Test 5: Rollback (Alias-Based)
+### Worked failure case 5: Rollback (Alias-Based)
 
 ```python
 def test_alias_rollback():
@@ -805,7 +805,7 @@ def test_alias_rollback():
     assert client.get_model_version_by_alias("cifar10-resnet18", "champion").version == target
 ```
 
-### Pressure Test 6: Prediction Audit
+### Worked failure case 6: Prediction Audit
 
 ```python
 def test_prediction_audit():
@@ -819,7 +819,7 @@ def test_prediction_audit():
         assert f in inf and not pd.isna(inf[f]), f"Missing {f}"
 ```
 
-### Pressure Test 7: Hyperparameter Search Analysis
+### Worked failure case 7: Hyperparameter Search Analysis
 
 ```python
 def test_search_analysis():
@@ -831,7 +831,7 @@ def test_search_analysis():
     assert hp_cols, "No hyperparameters logged"
 ```
 
-### Pressure Test 8: Long-Term Reproducibility
+### Worked failure case 8: Long-Term Reproducibility
 
 ```python
 def test_long_term_repro():
@@ -848,7 +848,7 @@ def test_long_term_repro():
         assert f in old and not pd.isna(old[f]), f"Missing {f}"
 ```
 
-### Pressure Test 9: Artifact Cleanup
+### Worked failure case 9: Artifact Cleanup
 
 ```python
 def test_artifact_cleanup():
@@ -860,7 +860,7 @@ def test_artifact_cleanup():
     assert len(keep) == 5
 ```
 
-### Pressure Test 10: Team Onboarding
+### Worked failure case 10: Team Onboarding
 
 ```python
 def test_onboarding():
@@ -870,7 +870,7 @@ def test_onboarding():
     assert total > 0  # New hires can browse this history
 ```
 
-### Pressure Test 11 (LLM): Reproduce a Prompt-Eval Comparison
+### Worked failure case 11 (LLM): Reproduce a Prompt-Eval Comparison
 
 ```python
 def test_reproduce_prompt_eval():

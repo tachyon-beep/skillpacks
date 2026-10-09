@@ -1,6 +1,6 @@
 ---
 name: observability-for-tool-calls
-description: Use when you cannot tell whether a slow or retried tool ran once or four times, when a side effect appears to have happened twice but the logs only show one request, when an idempotency key is enforced but never traced through to whether it suppressed a duplicate, when a dashboard shows tool latency but not retry amplification, when progress notifications and cancellations vanish without a trace, when a deprecated parameter is "removed" but nothing counts how often agents still pass it, or when a post-incident review asks "was that one execution or four?" and the telemetry has no answer.
+description: "Use when you cannot tell whether a slow or retried tool ran once or four times, when a side effect appears to have happened twice but the logs only show one request, when an idempotency key is enforced but never traced through to whether it suppressed a duplicate, when a dashboard shows tool latency but not retry amplification, when progress notifications and cancellations vanish without a trace, when a deprecated parameter is \"removed\" but nothing counts how often agents still pass it, or when a post-incident review asks \"was that one execution or four?\" and the telemetry has no answer."
 ---
 
 # Observability for Tool Calls

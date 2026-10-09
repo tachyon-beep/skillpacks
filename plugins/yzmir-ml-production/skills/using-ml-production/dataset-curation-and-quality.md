@@ -64,7 +64,7 @@ A dataset release is not the rows. It is the rows plus all of this, versioned to
    **`model-assisted` means a human label on a machine-suggested candidate, or a human-authored row lightly normalised by a model — the human judgement is still the source.** A human row *rewritten* by a model is `synthetic` with the original in `seed_row_ids`. The distinction is load-bearing for Part 5: only `human` rows count as real data accruing for the purpose of the model-collapse mitigation. If a regeneration pass overwrote your human examples rather than adding to them, the real-data population did not grow — it was displaced, which is the condition the mitigation warns against.
 3. **Provenance** — source systems, extraction code pinned to a commit, time window, sampling and exclusion rules with their rationale. Any downsampling ratio must be stated alongside the prior-correction it implies, or every calibrated probability downstream is wrong.
 4. **Label definition** — what each label means operationally, the guideline document, who adjudicated, measured agreement (Part 4), and label-maturity lag where labels arrive late.
-5. **Split policy as executable code, not prose.** The grouping key and temporal cutoff must live in the pipeline. A split rule in a README is violated within two retrain cycles.
+5. **Split policy as executable code, not prose.** The grouping key and temporal cutoff must live in the pipeline. Test the executable split against the intended grouping and time policy on each dataset release; prose alone does not enforce it.
 6. **Inference-unsafe field list** — columns present in the historical dump that do not exist, or exist differently, at scoring time. This is the single most common route to an excellent offline model that dies in production.
 7. **Rights** — licence, consent basis, retention and deletion terms, permitted recipients and purposes, PII inventory (direct identifiers, quasi-identifiers, protected-attribute proxies). Croissant 1.1's structured usage policies encode this machine-readably; use it rather than a sentence in a wiki.
 8. **Known defects** — measured label-error rate, residual near-duplicate fraction, known-missing slices, open issues. A release with no known-defects section has not been examined.
@@ -289,7 +289,7 @@ This sheet specifies more work than most teams can do at once. Ordered by how mu
 
 ---
 
-## Pressure Tests
+## Worked failure cases
 
 **PT1 — "The schema checks all pass, the data is fine."**
 Schema validation proves well-formedness. It cannot see duplication, label error, missing slices, or contamination. Run the Part 3–6 checks; report the measured label-error rate and near-duplicate fraction as numbers, not assurances.

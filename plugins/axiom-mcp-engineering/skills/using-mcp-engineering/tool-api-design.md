@@ -1,6 +1,6 @@
 ---
 name: tool-api-design
-description: Use when an agent mis-calls tools, picks the wrong one of two similar tools, leaves required parameters blank or guesses them, ignores a tool it should have used, or treats your server like a database CRUD panel — and when you are naming a new tool, writing its description, deciding its granularity, or shaping its parameters for a model that has never seen your source code. Covers workflow-verb naming, agent-voice intent statements, tool-description-as-prompt-fragment, parameter shapes the agent can actually fill, granularity (when to split vs merge tools), and the CRUD-mirror anti-pattern.
+description: "Use when an agent mis-calls tools, picks the wrong one of two similar tools, leaves required parameters blank or guesses them, ignores a tool it should have used, or treats your server like a database CRUD panel \u2014 and when you are naming a new tool, writing its description, deciding its granularity, or shaping its parameters for a model that has never seen your source code. Covers workflow-verb naming, agent-voice intent statements, tool-description-as-prompt-fragment, parameter shapes the agent can actually fill, granularity (when to split vs merge tools), and the CRUD-mirror anti-pattern."
 ---
 
 # Tool API Design

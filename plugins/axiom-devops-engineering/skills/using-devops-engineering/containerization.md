@@ -1,6 +1,6 @@
 ---
 name: containerization
-description: Use when a container image is hundreds of megabytes or ships a full OS, when it runs as root, when secrets or build tokens end up baked into a layer, when image scans flood with CVEs from packages the app never calls, when builds are slow because every change busts the cache, when two builds of the same commit produce different digests, when `latest` is deployed and nobody knows what's actually running, when an unsigned image with no SBOM reaches prod, or when choosing a base image — covers multi-stage builds, distroless/Wolfi/Chainguard minimal bases, non-root, BuildKit layer caching, reproducible builds, image scanning, signing, and registry hygiene.
+description: "Use when a container image is hundreds of megabytes or ships a full OS, when it runs as root, when secrets or build tokens end up baked into a layer, when image scans flood with CVEs from packages the app never calls, when builds are slow because every change busts the cache, when two builds of the same commit produce different digests, when `latest` is deployed and nobody knows what's actually running, when an unsigned image with no SBOM reaches prod, or when choosing a base image \u2014 covers multi-stage builds, distroless/Wolfi/Chainguard minimal bases, non-root, BuildKit layer caching, reproducible builds, image scanning, signing, and registry hygiene."
 ---
 
 # Containerization

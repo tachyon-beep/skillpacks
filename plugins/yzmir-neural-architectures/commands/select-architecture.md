@@ -1,158 +1,28 @@
 ---
-description: Guided architecture selection based on data modality, task type, and constraints
+description: Select a feasible architecture baseline with task-specific source and runtime evidence.
 allowed-tools: ["Read", "Grep", "Glob", "Bash", "Task", "AskUserQuestion"]
 argument-hint: "[modality] [task] [constraints]"
 ---
 
-# Architecture Selection Command
+# Select a feasible architecture baseline
 
-You are guiding architecture selection for a machine learning task. Follow the systematic selection framework.
+Apply this command to the requested artifact or failure. Inspect supplied sources and available run evidence before recommending changes. Keep scope proportional; use existing project/runtime conventions and ask only for missing facts that change the result. Additional agents are optional for bounded independent questions.
 
-## Core Principle
+## Task-specific checks
 
-**Architecture comes BEFORE training optimization. Wrong architecture = no amount of training will fix it.**
+Infer modality, task, data/pretraining and deployment budget from context. Compare a simple baseline with plausible families and state the distinguishing tradeoffs. Choose an initial measurable experiment; resolve only missing facts that affect selection rather than running a fixed wizard.
 
-Match architecture's inductive biases to the problem's structure.
+## Evidence and deliverable
 
-## Selection Framework
+- Cite source paths, configuration/artifact identities and observed results for material claims. Separate confirmed behavior from hypotheses and estimates.
+- Report the result or concrete artifact/change, relevant verification and limits. State checks not run or dimensions that could not be assessed; include risk/uncertainty where it affects a decision.
+- For a review, a supported clean result is valid. Record relevant sweep coverage and counterevidence; never manufacture findings or prescribe a minimum number.
+- Execute writes, workloads and external actions within the user's requested scope and existing authorization. A template does not itself authorize a commit, deployment or expensive run.
 
-### Step 1: Clarify Data Modality
+## Optional depth
 
-Ask the user if not clear:
-- **Images** → CNN family (ResNet, EfficientNet, MobileNet)
-- **Sequences** → Sequential models (LSTM, Transformer, TCN)
-- **Graphs** → GNN (GCN, GAT, GraphSAGE)
-- **Generation** → Generative models (GAN, VAE, Diffusion)
-- **Tabular** → MLP or gradient boosting
-- **Multiple modalities** → Custom fusion architecture
+Use the [pack contract](../skills/using-neural-architectures/SKILL.md) when broader obligations matter. Select only references that resolve a concrete question; examples are not universal recipes. Verify time-sensitive APIs against the target environment and primary documentation.
 
-### Step 2: Clarify Constraints
-
-**MUST ask these before recommending:**
-
-| Constraint | Question | Impact |
-|------------|----------|--------|
-| **Dataset size** | How many training samples? | Small (<10k) → Simple models, Large (>100k) → Complex OK |
-| **Deployment** | Where will it run? | Cloud → Any, Edge → Efficient, Mobile → MobileNet |
-| **Latency** | Speed requirement? | Real-time (<10ms) → MobileNet, Batch → Any |
-| **Compute** | GPU available? VRAM? | Limited → Smaller models, Unlimited → Any |
-| **Accuracy** | How critical? | Maximum → Larger models, Production → Balanced |
-
-### Step 3: Apply Decision Tree
-
-```
-Data Modality?
-│
-├─ IMAGES
-│  ├─ Dataset size?
-│  │  ├─ Small (<10k) → ResNet-18 or EfficientNet-B0
-│  │  ├─ Medium (10k-100k) → ResNet-50 or EfficientNet-B2
-│  │  └─ Large (>100k) → EfficientNet-B4 or ViT
-│  └─ Deployment?
-│     ├─ Cloud → Any above
-│     ├─ Edge → EfficientNet-Lite or MobileNetV3-Large
-│     └─ Mobile → MobileNetV3-Small + INT8 quantization
-│
-├─ SEQUENCES
-│  ├─ Sequence length?
-│  │  ├─ Short (<100) → LSTM/GRU
-│  │  ├─ Medium (100-1000) → Transformer
-│  │  └─ Long (>1000) → Transformer + FlashAttention + RoPE scaling
-│  │                     (exact attention is fine to 128k+; SSM/hybrid
-│  │                      only for streaming or constant-memory needs)
-│  └─ Latency?
-│     ├─ Real-time → LSTM or TCN
-│     └─ Batch → Transformer
-│
-├─ GRAPHS
-│  └─ Graph size?
-│     ├─ Small (<1000 nodes) → GCN or GAT
-│     └─ Large → GraphSAGE (sampling)
-│
-├─ GENERATION
-│  └─ Priority?
-│     ├─ Quality → Diffusion
-│     ├─ Speed → GAN
-│     └─ Latent space → VAE
-│
-└─ TABULAR
-   └─ Dataset size?
-      ├─ Tiny (<1000) → Linear/Ridge
-      ├─ Small (1k-100k) → 2-3 layer MLP or XGBoost
-      └─ Large (>100k) → Deeper MLP or gradient boosting
-```
-
-## Recency Bias Warning
-
-**Resist recommending "trendy" architectures:**
-
-| Trendy Choice | When NOT to Use | Better Alternative |
-|---------------|-----------------|-------------------|
-| Vision Transformer (ViT) | Small dataset (<10k) | CNN (ResNet, EfficientNet) |
-| Vision Transformer (ViT) | Edge/mobile deployment | MobileNet, EfficientNet-Lite |
-| Transformers (general) | Very small datasets | LSTM, CNN (less capacity) |
-| Diffusion Models (undistilled, 50-1000 steps) | Real-time generation | Distilled diffusion (LCM / Turbo / consistency, 1-4 steps) first; GAN only if 1-step and no distilled checkpoint exists |
-| Diffusion Models | Limited training compute | VAE (faster training) |
-| Graph Transformers | Small graphs (<100 nodes) | Standard GNN (simpler) |
-
-**Counter-narrative**: "New ≠ better for your use case. Match architecture to constraints."
-
-## Capacity Matching
-
-**There is no parameters-to-samples ratio to satisfy.** Overparameterization
-is normal and works (ResNet-50 = 21× ImageNet's sample count; a fine-tuned
-7B LLM ≈ 10⁶× its instruction set). What decides the outcome is whether the
-backbone is **pretrained**, whether you **regularize and augment**, and the
-**absolute** sample count if training from scratch.
-
-Typical backbone sizes by dataset size, **assuming a pretrained
-initialization** (the 2026 default):
-
-| Dataset Size | Typical Backbone | Example |
-|--------------|------------------|---------|
-| < 1,000 | Frozen features + linear probe, or classical ML | Linear/gradient boosting on DINOv2 features |
-| 1,000-10,000 | Small pretrained backbone, freeze early layers | ResNet-18, EfficientNet-B0, ViT-S |
-| 10,000-100,000 | Medium pretrained backbone, full fine-tune | ResNet-50, EfficientNet-B2, ViT-B |
-| 100,000-1,000,000 | Large pretrained backbone | ConvNeXt-B, EfficientNetV2-M, ViT-L |
-| > 1,000,000 | Any; from-scratch training becomes viable | ConvNeXt-L, ViT-L/H |
-
-**If training from scratch**, shift one row *down* and add heavy
-augmentation — and below ~50k samples, seriously reconsider: a pretrained
-backbone will almost always win.
-
-**Diagnose empirically.** A large train/val gap means regularize, augment,
-or pretrain (in that order) before shrinking the model. Both metrics low
-means the model is too small or undertrained — add capacity or train longer.
-
-## Output Format
-
-After gathering requirements, provide:
-
-```markdown
-## Architecture Recommendation
-
-**Selected Architecture**: [Name]
-**Why**: [Justification based on constraints]
-
-### Key Specs
-- Parameters: [count]
-- Expected latency: [ms] on [device]
-- Dataset requirement: [minimum samples]
-
-### Alternatives Considered
-1. [Alternative 1]: Not selected because [reason]
-2. [Alternative 2]: Not selected because [reason]
-
-### Next Steps
-1. Verify memory budget: [calculation]
-2. Start with pretrained weights if available
-3. For training optimization → yzmir-training-optimization
-4. For PyTorch implementation → yzmir-pytorch-engineering
-
-### Red Flags to Watch
-- [Potential issue based on constraints]
-```
-
-## Related Packs
-
-After architecture selection, optimizer and LR selection go to `yzmir-training-optimization` (`/training-optimization`), implementation to `yzmir-pytorch-engineering` (`/pytorch-engineering`), and quantization/serving to `yzmir-ml-production` (`/ml-production`). If any of these is not in your available skills, recommend installing it from the skillpacks marketplace.
+- [architecture-design-principles](../skills/using-neural-architectures/architecture-design-principles.md)
+- [multimodal-architectures](../skills/using-neural-architectures/multimodal-architectures.md)
+- [sequence-models-comparison](../skills/using-neural-architectures/sequence-models-comparison.md)

@@ -1,6 +1,6 @@
 ---
 name: diversity-and-mode-collapse
-description: Use when measuring whether a generated pool is actually diverse - diversity must be measured in canonical or functional space, never raw syntax, and duplicate rate after canonicalisation is the honest metric. Use when a best-of-K pool looks varied but might be one candidate wearing K different serializations.
+description: "Use when measuring whether a generated pool is actually diverse - diversity must be measured in canonical or functional space, never raw syntax, and duplicate rate after canonicalisation is the honest metric. Use when a best-of-K pool looks varied but might be one candidate wearing K different serializations."
 ---
 
 # Diversity and Mode Collapse
@@ -77,16 +77,6 @@ Canonical diversity catches structural duplication. It does not catch **function
 2. **An explicit min-over-K or winner-take-all training objective** — rather than training every sample toward the same target, train only the closest sample per example, which pressures the K samples to spread out and cover different regions of plausible structure. See `learning-objectives-for-generators.md`.
 3. **A contrastive term from prior failures/duplicates** — penalize the generator for producing something that canonicalises to a hash already common in its own recent output.
 4. **Widen the grammar, cautiously** — sometimes the space genuinely doesn't contain enough distinct useful structures at the current expressiveness level; see `search-space-evolution-and-explosion-control.md` before doing this, since it has its own cost curve.
-
-## Rationalization Resistance
-
-| Rationalization | Reality |
-|---|---|
-| "Every candidate in the pool has a different ID/hash in our logs" | Row identity is not structural identity; two rows can be the same candidate with different bookkeeping |
-| "We measured diversity and it's 100%, so mode collapse isn't happening" | Ask what the diversity metric was computed on — raw serialization always reports near-100% for any generator emitting fresh IDs |
-| "Canonicalisation is expensive, we'll just eyeball the raw graphs for variety" | Eyeballing raw graphs with different node IDs is exactly how the collapse in the RED scenario goes unnoticed |
-| "Functional diversity is too expensive to measure, canonical is close enough" | Canonical diversity is a reasonable floor to report by default; just don't claim it's the ceiling — name the gap as an open question rather than silently assuming it's zero |
-| "K=32 is a big pool, it must be diverse" | Pool size and distinct-canonical-form count are different numbers; report both, always |
 
 ## Red Flags Checklist
 

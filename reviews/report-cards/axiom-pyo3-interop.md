@@ -1,3 +1,5 @@
+> Historical review of the version named below; it is not an assessment of marketplace 4.0.0. See [the current consolidation record](../../docs/relevance-refresh.md). Retired pack names and old process requirements are historical.
+
 # Report Card — axiom-pyo3-interop
 
 **Version:** 0.1.2 (`plugins/axiom-pyo3-interop/.claude-plugin/plugin.json:3`)

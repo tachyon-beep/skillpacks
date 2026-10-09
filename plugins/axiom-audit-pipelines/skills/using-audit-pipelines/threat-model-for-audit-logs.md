@@ -1,6 +1,6 @@
 ---
 name: threat-model-for-audit-logs
-description: Use when threat-modelling the audit log itself — adversaries who tamper, replay, time-shift, suppress, repudiate, leak, or compel access; controls that defend the evidence; and residual risks an honest spec accepts. Cross-references the system threat model in ordis-security-architect rather than duplicating it. Produces `07-threat-model.md`.
+description: "Use when threat-modelling the audit log itself \u2014 adversaries who tamper, replay, time-shift, suppress, repudiate, leak, or compel access; controls that defend the evidence; and residual risks an honest spec accepts. Cross-references the system threat model in ordis-security-architect rather than duplicating it."
 ---
 
 # Threat Model for Audit Logs

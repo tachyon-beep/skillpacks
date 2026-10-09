@@ -1,6 +1,6 @@
 ---
 name: decision-provenance
-description: Use when binding an entry's output to its inputs commitment, ruleset id/version, and code version so that "given the same inputs and ruleset on the same code, you would produce the same output" is a verifiable claim. Covers ML-model rulesets and version-pinning discipline. Produces `05-provenance-bindings.md`.
+description: "Use when binding an entry's output to its inputs commitment, ruleset id/version, and code version so that \"given the same inputs and ruleset on the same code, you would produce the same output\" is a verifiable claim. Covers ML-model rulesets and version-pinning discipline."
 ---
 
 # Decision Provenance
@@ -97,9 +97,9 @@ Three model-specific provenance traps:
 
 1. **Inference nondeterminism.** Two GPUs producing slightly different outputs for the same model and inputs is a violation of "same causes → same effect." Either fix the inference path (deterministic kernels, batch-size pinning, dtype pinning) or include the inference environment in `code_version`. The naive fix — "round the model output" — is a schema-layer choice, not a substitute for closure.
 2. **Pre/post-processing.** Tokenisation, normalisation, calibration tables, output decoding — are they part of the model (`ruleset_version`) or part of the code (`code_version`)? Pick once and document. Half-and-half is unreproducible.
-3. **Stochastic models.** Models that sample (LLMs at temperature > 0, generative models with randomness) cannot satisfy "same causes → same effect" without capturing the seed. Capture the seed in `inputs_commitment`. Without it, the entry records a sample, not a decision; raise this in `00-` if the decision-shape is in fact non-determined.
+3. **Stochastic models.** Models that sample (LLMs at temperature > 0, generative models with randomness) cannot satisfy "same causes → same effect" without capturing the seed. Capture the seed in `inputs_commitment`. Capture sampling state when available; a seed alone may not reproduce provider, device or scheduler behavior. Otherwise retain the observed output and environment with explicit replay limits. A sampled output can still be a decision; do not imply that provenance guarantees deterministic reproduction.
 
-For LLM-driven decisions: the prompt, the model identity, the inference parameters (temperature, top-p, max tokens, seed if supported, system prompt) all belong in `inputs_commitment` and the parts that change with deployment belong in `ruleset_version`. See also `yzmir-ai-engineering-expert` (`/ai-engineering`) if this is a primary design concern.
+For LLM-driven decisions: the prompt, the model identity, the inference parameters (temperature, top-p, max tokens, seed if supported, system prompt) all belong in `inputs_commitment` and the parts that change with deployment belong in `ruleset_version`. See also `yzmir-llm-specialist` (`/llm-specialist`) if this is a primary design concern.
 
 ## Bindings Beyond the Entry
 

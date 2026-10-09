@@ -1,6 +1,6 @@
 ---
 name: common-random-numbers-and-matching
-description: Use when forking branches from a shared snapshot, deciding what must be held identical between treatment and control, or explaining why matched-seed comparisons need far fewer runs. Covers common random numbers as variance reduction, the matching contract, RNG-stream discipline, and the pitfalls where CRN silently stops applying.
+description: "Use when forking branches from a shared snapshot, deciding what must be held identical between treatment and control, or explaining why matched-seed comparisons need far fewer runs. Covers common random numbers as variance reduction, the matching contract, RNG-stream discipline, and the pitfalls where CRN silently stops applying."
 ---
 
 # Common Random Numbers and Matching

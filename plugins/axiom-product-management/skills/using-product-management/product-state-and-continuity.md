@@ -1,12 +1,12 @@
 # Product State and Continuity
 
-**Standing ownership is a stateful job run by a stateless agent — so the state must live on disk, in git, in a fixed shape the next session can resume cold. If continuity depends on what a previous session "remembers," ownership has already failed; the only durable memory is the workspace, and the only proof a decision was made deliberately is its written provenance.** This sheet defines that workspace: five artifacts with exact schemas, the Product Decision Record, the resume and checkpoint protocols that load and persist it, and the tracker adapter that lets the workspace reference a backlog it never duplicates.
+**Standing ownership is a stateful job run by a stateless agent — so the state needs a durable, inspectable home the next session can resume cold. If continuity depends on what a previous session "remembers," ownership has already failed; the only durable memory is the workspace, and the only proof a decision was made deliberately is its written provenance.** This sheet defines that workspace: five example artifact schemas (combine/adapt them where continuity remains clear), the Product Decision Record, the resume and checkpoint protocols that load and persist it, and the tracker adapter that lets the workspace reference a backlog it never duplicates.
 
 This sheet owns the *state I/O* — the file shapes and the load/persist protocols at their ends. It does **not** own the operating loop's judgment steps or the authority boundary's escalation taxonomy; those are `product-ownership-operating-model.md`. RESUME and CHECKPOINT appear here because they are the loop's read and write ends — continuity is this sheet's job — but their *meaning* inside the loop lives in the operating-model sheet.
 
-## The workspace: git-versioned, default `docs/product/`
+## The workspace: durable state in the existing system
 
-The product workspace is a directory of plain Markdown, versioned in the product's own repository (default `docs/product/`, configurable). Git is the continuity substrate, not incidental: every checkpoint ends in a commit, so the workspace carries its own audit trail — who changed the bet, when, and (via the PDR) why. A workspace that lives in a wiki, a doc tool, or an agent's scratch memory loses the one property that makes ownership defensible: an inspectable, reversible history.
+Use the product's existing durable system with inspectable history, stable references and appropriate access controls. The Markdown layout below is one example; a versioned wiki/document system can satisfy the same continuity contract. Git commits are a publication/checkpoint mechanism only where the selected workflow and current authorization call for them. Persist a reviewable draft without committing when that is the authorized scope.
 
 ```
 docs/product/
@@ -23,7 +23,7 @@ Two rules govern everything below. **One:** the workspace holds *strategy and pr
 
 ## `vision.md` — purpose, who-it-serves, anti-goals, authority grant
 
-Vision states what the product is *for*, who it serves, what it deliberately refuses to be, and — the load-bearing part for an autonomous owner — the explicit grant that says what the agent may do alone and what it must escalate. The grant is a *slot* here; the taxonomy of what counts as irreversible or outward-facing is defined in `product-ownership-operating-model.md`. Show the structure, route the semantics.
+Vision states what the product is *for*, who it serves, what it deliberately refuses to be, and — the load-bearing part for an autonomous owner — the explicit grant that says what the agent may do alone and what it must escalate. The grant records actual delegated authority and current user instructions. The examples below are configurable, not a default prohibition on already authorized work.
 
 ```markdown
 # Vision — <product name>
@@ -44,29 +44,28 @@ One paragraph: the change in the world this product exists to make.
 Granted by: <human owner name/handle>     Last reviewed: <YYYY-MM-DD>
 Review cadence: <e.g. monthly, or on any vision change>
 
-Autonomous within strategy — the agent MAY, without asking:
-  prioritize the backlog, write PRDs, dispatch delivery, accept against
-  criteria, reprioritize, kill a failing bet per metrics.md.
+Authorized actions and conditions:
+  <list the actual delegated actions, including any release, external or
+  irreversible actions explicitly authorized; reference session instructions>.
 
-Escalate BEFORE acting — the agent MUST get owner sign-off for:
-  changing this vision/strategy, public release or announcement,
-  deprecating a feature users depend on, pricing/commercial change,
-  data deletion, anything touching an external party.
-  (Taxonomy + rationale: product-ownership-operating-model.md.)
+Decisions reserved to the owner:
+  <list actual reserved decisions and conditions; do not add categories merely
+  because this template mentions them>.
+
+Earlier authorization persists; request only a genuinely missing decision.
 ```
 
 The grant is product-specific and inspectable by design — not hardcoded in the pack — so a human can read exactly what they delegated and tighten or widen it in one diff.
 
 ## `roadmap.md` — Now/Next/Later as intent (sequencing routed out)
 
-This is the *file schema*, not the roadmapping discipline. The Now/Next/Later bands, the confidence-decreases-with-horizon honesty, theme-based bets, and the cost-of-delay/WSJF arithmetic are owned by `/program-management` (`roadmapping-and-prioritization.md`) and shaped in the sibling `vision-strategy-and-roadmap.md`. The workspace file records *intent and sequence as the owner currently believes it*; the dated commitment and the WSJF computation are produced downstream.
+This is the *file schema*, not the roadmapping discipline. Use current delivery evidence for Now/Next/Later, uncertainty and any prioritization arithmetic; `/program-management` is an optional reference, alongside `vision-strategy-and-roadmap.md`. The workspace file records *intent and sequence as the owner currently believes it*; the dated commitment and the WSJF computation are produced downstream.
 
 ```markdown
 # Roadmap — <product name>            Updated: <YYYY-MM-DD> (PDR-0007)
 
-> Sequencing, WSJF / cost-of-delay, and dated forecasts are produced by
-> /axiom-program-management. This file records bets as INTENT, not a delivery
-> schedule. Do not compute WSJF here; hand the committed bet over for sequencing.
+> This example records intent separately from dated delivery commitments.
+> Link the current delivery evidence; no mandatory specialist handoff applies.
 
 ## Now  (committed, in-flight)
 - **<theme / outcome bet>** — why it's the bet · tracker: #142 · metric: north-star
@@ -79,7 +78,7 @@ This is the *file schema*, not the roadmapping discipline. The Now/Next/Later ba
 - **<theme>** — on the map; not shaped or sized
 ```
 
-Each Now/Next item points at its tracker reference, not at a copied task list. When a Now bet is committed for delivery, the seam fires: hand it to `/program-management` for sequencing and forecast — the roadmap cell never becomes a date.
+Each Now/Next item points at its tracker reference, not at a copied task list. When a Now bet is committed for delivery, the seam fires: coordinate sequencing and forecast using current delivery evidence (program-management is optional) — the roadmap cell never becomes a date.
 
 ## `decisions/` — the Product Decision Record (PDR)
 
@@ -119,7 +118,7 @@ Append-only is a discipline, not a convenience: superseding PDR-0003 means writi
 This is the single file RESUME reads first, CHECKPOINT rewrites last, and `/own-product` emits. It is the hand-off note from the last session to the next: what is in flight, what is undecided, where the pointers go. It is refreshed in place — only the present matters — and it never duplicates the backlog; it *points* at it.
 
 ```markdown
-# Current State — <product name>        Checkpoint: <YYYY-MM-DD HH:MM> · commit <sha>
+# Current State — <product name>        Checkpoint: <YYYY-MM-DD HH:MM> · revision <id if applicable>
 
 ## The bet right now
 One line: the Now theme and the metric it's meant to move.
@@ -207,21 +206,21 @@ If the workspace and the tracker disagree, RESUME surfaces the discrepancy — i
 
 ## The CHECKPOINT protocol
 
-CHECKPOINT persists the session's changes so the next RESUME is clean. Durability is the git commit — until then nothing is saved. Step by step:
+CHECKPOINT persists material state changes so the next session can resume. Use the selected storage/revision mechanism and current authorization. A saved file or document draft can be durable without a Git commit. Adapt the sequence below to the changed state:
 
-1. **Append PDRs** for every decision made this session — new numbered files in `decisions/`, with reversal triggers. Decisions not written did not happen.
+1. **Append PDRs** for material decisions that need continuity/provenance — new numbered files in `decisions/`, with reversal triggers. Unrecorded decisions cannot be reliably reconstructed.
 2. **Update `roadmap.md`** if a bet moved horizon (Later→Next→Now) — and only the *intent*; never inject a date or a WSJF score the workspace doesn't own.
 3. **Refresh `metrics.md`** with any new readings, dated. Note any reading that crosses a PDR reversal trigger.
 4. **Reconcile the tracker** — `create` / `update` / `close` items so tracker reality matches what the session actually did; fix any pointer in `current-state.md` that drifted.
 5. **Rewrite `current-state.md`** last — it summarizes the new present: in-flight, open questions, what this checkpoint did, where to start next. This is the file that makes the next resume cheap.
-6. **Commit** the workspace with a message naming the bet and the PDRs touched (e.g. `product: move metered-tier to Now; PDR-0007`). The commit is the checkpoint; an uncommitted workspace is an unsaved one.
+6. **Persist and identify** the changed records. Use a Git commit only when that is the authorized workflow; otherwise report the saved draft/revision and any pending publication separately.
 7. **Emit the status summary** for the human owner — the present bet, what changed, anything awaiting their sign-off.
 
-Checkpoint at the end of every session and before any escalation, so the owner reviews against a committed, inspectable state — not against an agent's recollection.
+Checkpoint material changes at a useful handoff or recovery boundary. Do not commit unrelated work or delay a needed escalation to manufacture a checkpoint.
 
 ## Anti-Patterns
 
-1. **State in the agent's head, not on disk.** The session "remembers" the bet, the open questions, the last decision — so nothing is written down, and the next cold session inherits nothing. It feels efficient because writing state is overhead the current session doesn't need. It is fatal because continuity is the entire job. *Fix: CHECKPOINT every session and commit; the workspace is the only memory — see the CHECKPOINT protocol above.*
+1. **State in the agent's head, not on disk.** The session "remembers" the bet, the open questions, the last decision — so nothing is written down, and the next cold session inherits nothing. It feels efficient because writing state is overhead the current session doesn't need. It is fatal because continuity is the entire job. *Fix: persist material state in the selected durable system — see the CHECKPOINT protocol above.*
 
 2. **The backlog copied into the workspace.** Tasks get pasted into `roadmap.md` or `current-state.md` "so it's all in one place." Seductive because a single file feels tidier than a link. It guarantees the workspace and the tracker diverge — two sources of truth for one backlog, and neither can be trusted. *Fix: reference tracker IDs in the verified format; the tracker adapter owns the detail.*
 
@@ -231,7 +230,7 @@ Checkpoint at the end of every session and before any escalation, so the owner r
 
 5. **Unfalsifiable targets in `metrics.md`.** Metrics read "improve engagement," "better performance" — directional words with no number and no date. Seductive because vague targets are never wrong. They make acceptance and PDR reversal triggers impossible to fire, so bets never get killed. *Fix: every target gets a number and a date against a BASELINE; reject anything you cannot falsify — kill/keep logic in product-metrics-and-experimentation.md.*
 
-6. **A roadmap that drifts into a delivery schedule.** Dates and WSJF scores creep into `roadmap.md` because a stakeholder wanted precision. Seductive because it looks like control. It duplicates `/program-management`'s job, decays the moment reality moves, and turns honest intent into a broken promise. *Fix: keep `roadmap.md` as intent-only with the routing banner; hand the committed bet to `/program-management` for sequencing and the forecast.*
+6. **A roadmap that drifts into a delivery schedule.** Dates and WSJF scores creep into `roadmap.md` because a stakeholder wanted precision. Seductive because it looks like control. It duplicates `/program-management`'s job, decays the moment reality moves, and turns honest intent into a broken promise. *Fix: distinguish intent from dated commitments and use current delivery evidence; program-management guidance is optional.*
 
 ## Cross-References
 
@@ -239,5 +238,5 @@ Checkpoint at the end of every session and before any escalation, so the owner r
 - `product-metrics-and-experimentation.md` — the kill/keep logic and experiment design behind a PDR's reversal trigger and `metrics.md`'s targets; this sheet stores the durable scoreboard, that sheet decides what it means.
 - `vision-strategy-and-roadmap.md` — shapes the strategy and the Now/Next/Later bets this sheet records as a file; the workspace is where that thinking is persisted.
 - `prd-and-acceptance-criteria.md` — PRDs are the spec a Now bet hands to delivery; `current-state.md` references them by ID and acceptance is judged against their criteria.
-- `/program-management` — owns Now/Next/Later mechanics, WSJF / cost-of-delay arithmetic, flow metrics, and the dated forecast. The committed bet is handed over for sequencing; the roadmap file never computes it. See its `roadmapping-and-prioritization.md`.
+- `/program-management` — optional sequencing, flow and forecast checks when the delivery decision needs them. Keep the underlying evidence linked, without a required handoff or duplicate records.
 - `/axiom-planning` — turns the top bet's PRD into an executable, codebase-validated plan; `current-state.md` records what was dispatched to it.
