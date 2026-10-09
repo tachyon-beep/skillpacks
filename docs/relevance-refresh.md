@@ -176,3 +176,58 @@ The reviews found and resolved retained-reference defects in free-threaded detac
 The executable checks above were local, deterministic checks. No controlled no-skill/current/reduced model comparison, training run, wheel-build matrix, deployment, hosted CI or exhaustive retained-snippet execution was performed. Version-sensitive examples require task-time verification; links to primary guidance support specific corrections rather than certifying whole packs.
 
 Marketplace 4.0.0 and retained plugin major bumps make removed entrypoints and changed default contracts explicit. Historical per-pack reports remain labeled as historical. Previous tutorial/process material is recoverable in Git history.
+
+## Release version audit — 9 October 2026
+
+Marketplace version is `4.0.0`. Every retained plugin has an independent stable release version newer than the previous main baseline (`ca22e854b09ff02cb3b85140b709c3dc22718b6a`). All 48 manifests were checked for valid numeric `major.minor.patch` serials, matching catalog names and matching version overrides when present. Retired plugins are removed rather than assigned new versions.
+
+| Plugin | Previous version | Released version |
+|---|---|---|
+| `axiom-audit-pipelines` | 1.0.3 | 2.0.0 |
+| `axiom-contract-engineering` | 0.1.1 | 1.0.0 |
+| `axiom-determinism-and-replay` | 1.1.0 | 2.0.0 |
+| `axiom-devops-engineering` | 1.2.2 | 2.0.0 |
+| `axiom-distributed-systems` | 0.1.2 | 1.0.0 |
+| `axiom-embedded-database` | 0.2.1 | 1.0.0 |
+| `axiom-experiment-formalisation` | 0.2.1 | 1.0.0 |
+| `axiom-mcp-engineering` | 0.3.0 | 1.0.0 |
+| `axiom-planning` | 1.2.1 | 2.0.0 |
+| `axiom-procedural-architecture` | 0.3.0 | 1.0.0 |
+| `axiom-product-management` | 0.1.4 | 1.0.0 |
+| `axiom-program-management` | 0.1.3 | 1.0.0 |
+| `axiom-pyo3-interop` | 0.2.0 | 1.0.0 |
+| `axiom-python-engineering` | 1.8.0 | 2.0.0 |
+| `axiom-rust-engineering` | 1.2.0 | 2.0.0 |
+| `axiom-rust-workspaces` | 1.1.1 | 2.0.0 |
+| `axiom-sdlc-engineering` | 1.2.0 | 2.0.0 |
+| `axiom-solution-architect` | 1.1.1 | 2.0.0 |
+| `axiom-static-analysis-engineering` | 0.3.0 | 1.0.0 |
+| `axiom-system-archaeologist` | 1.7.0 | 2.0.0 |
+| `axiom-tensor-compiler-engineering` | 0.1.1 | 1.0.0 |
+| `axiom-web-backend` | 1.3.1 | 2.0.0 |
+| `bravos-game-design` | 0.2.0 | 1.0.0 |
+| `bravos-simulation-tactics` | 1.3.0 | 2.0.0 |
+| `bravos-systems-as-experience` | 1.2.2 | 2.0.0 |
+| `lyra-creative-writing` | 0.2.3 | 1.0.0 |
+| `lyra-site-designer` | 1.2.1 | 2.0.0 |
+| `lyra-tui-designer` | 0.1.1 | 1.0.0 |
+| `lyra-ux-designer` | 1.5.0 | 2.0.0 |
+| `meta-skillpack-maintenance` | 2.1.1 | 3.0.0 |
+| `muna-document-designer` | 1.2.1 | 2.0.0 |
+| `muna-panel-review` | 0.4.1 | 1.0.0 |
+| `muna-technical-writer` | 1.6.0 | 2.0.0 |
+| `muna-wiki-management` | 1.1.2 | 2.0.0 |
+| `ordis-quality-engineering` | 2.5.0 | 3.0.0 |
+| `ordis-security-architect` | 1.3.1 | 2.0.0 |
+| `yzmir-counterfactual-statistics` | 0.1.1 | 1.0.0 |
+| `yzmir-deep-rl` | 1.4.3 | 2.0.0 |
+| `yzmir-dynamic-architectures` | 1.4.0 | 2.0.0 |
+| `yzmir-llm-specialist` | 1.4.0 | 2.0.0 |
+| `yzmir-ml-production` | 1.4.0 | 2.0.0 |
+| `yzmir-morphogenetic-rl` | 1.2.2 | 2.0.0 |
+| `yzmir-neural-architectures` | 1.4.0 | 2.0.0 |
+| `yzmir-pytorch-engineering` | 1.3.0 | 2.0.0 |
+| `yzmir-simulation-foundations` | 1.4.0 | 2.0.0 |
+| `yzmir-structure-synthesis` | 0.2.0 | 1.0.0 |
+| `yzmir-systems-thinking` | 1.3.0 | 2.0.0 |
+| `yzmir-training-optimization` | 1.4.0 | 2.0.0 |
